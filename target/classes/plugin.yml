@@ -1,0 +1,17 @@
+name: ForceItemBattleTeams
+version: '2.0'
+main: forceitembattle.ForceItemBattle
+api-version: 1.18
+commands:
+  start:
+    permission: battle.forceitem.command.start
+  settings:
+    permission: battle.forceitem.command.settings
+  skip:
+    permission: battle.forceitem.command.skip
+  reset:
+    permission: battle.forceitem.command.reset
+  bp:
+  result:
+  stoptimer:
+    permission: battle.forceitem.command.stoptimer
