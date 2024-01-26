@@ -1,4 +1,4 @@
-name: ForceItemBattleTeams
+name: ForceItemBattle
 version: '${project.version}'
 main: forceitembattle.ForceItemBattle
 api-version: 1.18
