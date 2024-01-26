@@ -341,7 +341,7 @@ public class ItemDifficultiesManager {
                 Material.NETHERRACK,
                 Material.NOTE_BLOCK,
                 Material.OAK_BOAT,
-                Material.OAK_CHEST_BOAT
+                Material.OAK_CHEST_BOAT,
                 Material.OAK_BUTTON,
                 Material.OAK_DOOR,
                 Material.OAK_FENCE,
