@@ -725,7 +725,6 @@ public class ItemDifficultiesManager {
                 Material.LILY_PAD,
                 Material.LIME_BANNER,
                 Material.LIME_BED,
-                Material.LIME_CANDLE_CAKE,
                 Material.LIME_CARPET,
                 Material.LIME_CONCRETE,
                 Material.LIME_CONCRETE_POWDER,
