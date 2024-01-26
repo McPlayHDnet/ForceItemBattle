@@ -13,5 +13,6 @@ commands:
     permission: battle.forceitem.command.reset
   bp:
   result:
+  items:
   stoptimer:
     permission: battle.forceitem.command.stoptimer

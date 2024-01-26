@@ -28,6 +28,8 @@ public class InventoryBuilder implements InventoryHolder {
 
     private Predicate<Player> closeFilter;
 
+    private Player player;
+
     public InventoryBuilder(int size) {
         this(owner -> Bukkit.createInventory(owner, size));
     }
@@ -139,6 +141,7 @@ public class InventoryBuilder implements InventoryHolder {
 
 
     public void open(Player player) {
+        this.player = player;
         player.openInventory(this.inventory);
     }
 
@@ -164,6 +167,10 @@ public class InventoryBuilder implements InventoryHolder {
     @Override
     public @Nonnull Inventory getInventory() {
         return this.inventory;
+    }
+
+    public Player getPlayer() {
+        return this.player;
     }
 
     public void handleOpen(InventoryOpenEvent e) {

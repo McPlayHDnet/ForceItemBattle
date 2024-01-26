@@ -1,6 +1,9 @@
 package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.apache.commons.text.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -20,7 +23,6 @@ public class FinishInventory extends InventoryBuilder {
 
 
     public FinishInventory(Player targetPlayer, @Nullable Map<UUID, Integer> place, boolean firstTime) {
-        // Create a new inventory, with no owner (as this isn't a real inventory), a size of nine, called example
         super(9*6, "§8» §6Items §8● §7" + targetPlayer.getName());
 
         HashMap<Integer, ItemStack[]> pages = new HashMap<>();
@@ -59,7 +61,7 @@ public class FinishInventory extends InventoryBuilder {
 
 
                     ForceItem forceItem = ForceItemBattle.getGamemanager().getItemList(targetPlayer).get(placedItems[0]);
-                    setItem(startSlot[0], new ItemBuilder(forceItem.getMaterial()).setDisplayName(WordUtils.capitalize(forceItem.getMaterial().name().replace("_", " ").toLowerCase()) + " §8» §6" + forceItem.getTimeNeeded()).getItemStack());
+                    setItem(startSlot[0], new ItemBuilder(forceItem.material()).setDisplayName(WordUtils.capitalize(forceItem.material().name().replace("_", " ").toLowerCase()) + " §8» §6" + forceItem.timeNeeded()).getItemStack());
 
                     Bukkit.getOnlinePlayers().forEach(players -> players.playSound(players.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1, 1));
 
@@ -77,9 +79,15 @@ public class FinishInventory extends InventoryBuilder {
                                         players.closeInventory();
                                     }
 
-                                    players.sendTitle(ForceItemBattle.getGamemanager().sortByValue(ForceItemBattle.getGamemanager().getScore(), true).size() + ". " + targetPlayer.getName(), "§6" + placedItems[0] + " Items found", 15, 35, 15);
+                                    players.sendTitle(ForceItemBattle.getGamemanager().sortByValue(ForceItemBattle.getGamemanager().getScore(), true).size() + ". " + targetPlayer.getName(), "§6" + (placedItems[0] + 1) + " Items found", 15, 35, 15);
 
                                 });
+
+                                TextComponent placementText = new TextComponent(ForceItemBattle.getGamemanager().sortByValue(ForceItemBattle.getGamemanager().getScore(), true).size() + ". " + targetPlayer.getName() + " ");
+                                TextComponent textComponent = new TextComponent("§8[§bInventory§8]");
+                                textComponent.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/result" + placementText.getText().substring(placementText.getText().lastIndexOf(". ") + 1)));
+
+                                getPlayer().spigot().sendMessage(placementText, textComponent);
 
                                 ForceItemBattle.getGamemanager().getScore().remove(targetPlayer.getUniqueId());
                                 //place.remove(targetPlayer.getUniqueId());
