@@ -92,7 +92,7 @@ public class RecipeInventory {
     private static List<Inventory> createInventories(Player player, ItemStack item) {
         List<Inventory> inventories = new ArrayList<>();
         for (Recipe recipe : Bukkit.getServer().getRecipesFor(item)) {
-            Inventory inventory = createRecipeInventory(item, recipe);
+            Inventory inventory = createFancyRecipeInventory(item, recipe);
 
             if (inventory == null) {
                 player.sendMessage("§cCould not find inventory for recipe type §f" + recipe.getClass().getSimpleName());
@@ -121,26 +121,32 @@ Slots visualisation for values below:
 
     private static Inventory createFancyRecipeInventory(ItemStack item, Recipe recipe) {
         String itemName = WordUtils.capitalize(item.getType().name().replace("_", " ").toLowerCase());
-        Inventory inventory = Bukkit.createInventory(null, 5,  itemName);
-
+        Inventory inventory = Bukkit.createInventory(null, 5 * 9,  itemName);
 
         List<ItemStack> ingredients = new ArrayList<>();
 
         if (recipe instanceof ShapedRecipe shaped) {
-            for (RecipeChoice recipeChoice : shaped.getChoiceMap().values()) {
-                if (recipeChoice instanceof RecipeChoice.MaterialChoice materialChoice) {
-                    materialChoice.getChoices().forEach(material -> {
-                        ItemStack fixed = new ItemStack(material, 1);
-                        ingredients.add(fixed);
-                    });
+            String[] shape = shaped.getShape();
+
+            int rowIndex = 0;
+            for (String row : shape) {
+                int charIndex = 0;
+                for (char c : row.toCharArray()) {
+                    int slot = WORKBENCH_FIRST_ITEM_SLOT + rowIndex * 9 + charIndex;
+
+                    RecipeChoice choice = shaped.getChoiceMap().get(c);
+                    if (choice instanceof RecipeChoice.MaterialChoice materialChoice) {
+                        ItemStack fixed = new ItemStack(materialChoice.getChoices().get(0), 1);
+
+                        inventory.setItem(slot, fixed);
+                    } else if (choice != null) {
+                        inventory.setItem(slot, new ItemStack(choice.getItemStack()));
+                    }
+                    charIndex++;
                 }
+                rowIndex++;
             }
 
-            int index = 0;
-            for (ItemStack ingredient : ingredients) {
-                inventory.setItem(convertItemIndexToInventorySlot(WORKBENCH_FIRST_ITEM_SLOT, index), ingredient);
-                index++;
-            }
         } else if (recipe instanceof ShapelessRecipe shapeless) {
             for (RecipeChoice recipeChoice : shapeless.getChoiceList()) {
                 if (recipeChoice instanceof RecipeChoice.MaterialChoice materialChoice) {
@@ -158,8 +164,7 @@ Slots visualisation for values below:
                 index++;
             }
         } else if (recipe instanceof CookingRecipe<?> furnace) {
-            ItemStack fixed = new ItemStack(furnace.getInput().getType(), 1, (byte) 0);
-            ingredients.add(fixed);
+            ItemStack fixed = new ItemStack(furnace.getInput().getType(), 1);
 
             inventory.setItem(OTHER_FIRST_ITEM_SLOT, fixed);
 
@@ -211,7 +216,7 @@ Slots visualisation for values below:
             return null;
         }
 
-        inventory.setItem(RESULT_SLOT, item);
+        inventory.setItem(RESULT_SLOT, new ItemStack(item.getType(), 1));
         inventory.setItem(STATION_SLOT, getStationItem(recipe));
 
         return inventory;
