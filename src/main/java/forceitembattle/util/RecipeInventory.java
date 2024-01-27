@@ -150,11 +150,10 @@ Slots visualisation for values below:
         } else if (recipe instanceof ShapelessRecipe shapeless) {
             for (RecipeChoice recipeChoice : shapeless.getChoiceList()) {
                 if (recipeChoice instanceof RecipeChoice.MaterialChoice materialChoice) {
-                    materialChoice.getChoices().forEach(material -> {
-                        ItemStack fixed = new ItemStack(material, 1);
-                        ingredients.add(fixed);
-                    });
-
+                    ItemStack fixed = new ItemStack(materialChoice.getChoices().get(0), 1);
+                    ingredients.add(fixed);
+                } else if (recipeChoice != null) {
+                    ingredients.add(new ItemStack(recipeChoice.getItemStack()));
                 }
             }
 
@@ -324,6 +323,6 @@ Slots visualisation for values below:
     }
 
     private static int convertItemIndexToInventorySlot(int firstItemSlot, int itemIndex) {
-        return firstItemSlot + itemIndex / 3 + 9 * (itemIndex % 3);
+        return firstItemSlot + itemIndex % 3 + 9 * (itemIndex / 3);
     }
 }
