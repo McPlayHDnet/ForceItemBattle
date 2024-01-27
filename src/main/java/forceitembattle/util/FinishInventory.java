@@ -23,7 +23,7 @@ import java.util.UUID;
 public class FinishInventory extends InventoryBuilder {
 
 
-    public FinishInventory(Player targetPlayer, @Nullable Map<UUID, Integer> place, boolean firstTime) {
+    public FinishInventory(Player targetPlayer, Integer place, boolean firstTime) {
         super(9*6, "§8» §6Items §8● §7" + targetPlayer.getName());
 
         HashMap<Integer, ItemStack[]> pages = new HashMap<>();
@@ -79,23 +79,23 @@ public class FinishInventory extends InventoryBuilder {
 
                             @Override
                             public void run() {
+
+                                TextComponent placementText = new TextComponent(place + ". " + targetPlayer.getName() + " ");
+                                TextComponent textComponent = new TextComponent("§8[§bInventory§8]");
+                                textComponent.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/result" + placementText.getText().substring(placementText.getText().lastIndexOf(". ") + 1)));
+
                                 Bukkit.getOnlinePlayers().forEach(players -> {
                                     if(players.getOpenInventory().getTopInventory() == getInventory()) {
                                         players.closeInventory();
                                     }
 
-                                    players.sendTitle(ForceItemBattle.getGamemanager().sortByValue(ForceItemBattle.getGamemanager().getScore(), true).size() + ". " + targetPlayer.getName(), "§6" + (placedItems + 1) + " Items found", 15, 35, 15);
-
+                                    players.sendTitle(place + ". " + targetPlayer.getName(), "§6" + (placedItems + 1) + " Items found", 15, 35, 15);
                                 });
 
-                                TextComponent placementText = new TextComponent(ForceItemBattle.getGamemanager().sortByValue(ForceItemBattle.getGamemanager().getScore(), true).size() + ". " + targetPlayer.getName() + " ");
-                                TextComponent textComponent = new TextComponent("§8[§bInventory§8]");
-                                textComponent.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/result" + placementText.getText().substring(placementText.getText().lastIndexOf(". ") + 1)));
 
                                 getPlayer().spigot().sendMessage(placementText, textComponent);
 
                                 ForceItemBattle.getGamemanager().getScore().remove(targetPlayer.getUniqueId());
-                                //place.remove(targetPlayer.getUniqueId());
                                 ForceItemBattle.getGamemanager().savedInventory.put(targetPlayer.getUniqueId(), pages);
                             }
                         }.runTaskLater(ForceItemBattle.getInstance(), 60L);
