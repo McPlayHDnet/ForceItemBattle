@@ -14,5 +14,6 @@ commands:
   bp:
   result:
   items:
+  info:
   stoptimer:
     permission: battle.forceitem.command.stoptimer
