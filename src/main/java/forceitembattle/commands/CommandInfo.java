@@ -2,6 +2,7 @@ package forceitembattle.commands;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.util.RecipeInventory;
+import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -15,11 +16,18 @@ public class CommandInfo implements CommandExecutor {
     public boolean onCommand(CommandSender commandSender, Command command, String s, String[] strings) {
         if (!(commandSender instanceof Player player)) return false;
 
-        if (!ForceItemBattle.getTimer().isRunning()) {
+        ItemStack item;
+        if (ForceItemBattle.getTimer().isRunning()) {
+            item = new ItemStack(ForceItemBattle.getGamemanager().getCurrentMaterial(player));
+        } else {
+            item = player.getInventory().getItemInMainHand();
+        }
+
+        if (item.getType() == Material.AIR) {
+            player.sendMessage("§cYou need to hold an item in your hand!");
             return false;
         }
 
-        ItemStack item = new ItemStack(ForceItemBattle.getGamemanager().getCurrentMaterial(player));
         RecipeInventory.showRecipe(player, item);
 
         return false;

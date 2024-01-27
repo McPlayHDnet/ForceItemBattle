@@ -53,7 +53,7 @@ public class RecipeInventory {
         List<Inventory> inventories = createInventories(player, item);
 
         if (inventories.isEmpty()) {
-            player.sendMessage("§cThere were recipes for this item that we cannot display, for some reason! §fTry /wikihelp");
+            player.sendMessage("§cThere were recipes for this item that we cannot display, for some reason! §fTry /infowiki");
             return;
         }
 
