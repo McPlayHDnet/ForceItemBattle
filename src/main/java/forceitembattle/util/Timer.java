@@ -1,20 +1,16 @@
 package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.util.color.ColorManager;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.apache.commons.text.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Color;
 import org.bukkit.Sound;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
 import org.bukkit.entity.Player;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.HashMap;
@@ -83,7 +79,7 @@ public class Timer {
 
                     /////////////////////////////////////// TEAMS ///////////////////////////////////////
                     player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(ChatColor.GOLD.toString() +
-                            ChatColor.BOLD + formatSeconds(getTime()) + " | " + ForceItemBattle.getGamemanager().getTeamScoreFromPlayer(player)));
+                            ChatColor.BOLD + formatSeconds(getTime()) + " §8| §aTeam score: §f" + ForceItemBattle.getGamemanager().getTeamScoreFromPlayer(player)));
 
                     //String material = ForceItemBattle.getColorManager().rgbGradient(ForceItemBattle.getGamemanager().getMaterialTeamsFromPlayer(player).toString().replace("_", " ").toLowerCase(), new java.awt.Color(34, 0, 241), new java.awt.Color(138, 2, 40), ForceItemBattle.getColorManager()::linear);
                     String material = ForceItemBattle.getGamemanager().getMaterialTeamsFromPlayer(player).toString().replace("_", " ").toLowerCase();
@@ -99,24 +95,26 @@ public class Timer {
                         bossBar.get(player.getUniqueId()).addPlayer(player);
                     }
                 } else {
-                    player.setPlayerListName(player.getName() + " §7[§6" + WordUtils.capitalize(ForceItemBattle.getGamemanager().getCurrentMaterial(player).toString().replace("_", " ").toLowerCase()) + "§7]");
+                    player.setPlayerListName(player.getName() + " §7[§6" + ForceItemBattle.getGamemanager().getCurrentMaterialName(player) + "§7]");
 
                     player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(ChatColor.GOLD.toString() +
-                            ChatColor.BOLD + formatSeconds(getTime()) + " | " + ForceItemBattle.getGamemanager().getScore(player)));
+                            ChatColor.BOLD + formatSeconds(getTime()) + " §8| §aYour score: §f" + ForceItemBattle.getGamemanager().getScore(player)));
 
                     //String material = ForceItemBattle.getColorManager().rgbGradient(ForceItemBattle.getGamemanager().getCurrentMaterial(player).toString().replace("_", " ").toLowerCase(), new java.awt.Color(34, 0, 241), new java.awt.Color(138, 2, 40), ForceItemBattle.getColorManager()::linear);
-                    String material = ForceItemBattle.getGamemanager().getCurrentMaterial(player).toString().replace("_", " ").toLowerCase();
+                    String material = ForceItemBattle.getGamemanager().getCurrentMaterialName(player);
+                    String bossBarTitle = "§a§l" + material;
 
                     try {
-                        if (!bossBar.get(player.getUniqueId()).getTitle().equalsIgnoreCase("§l" + WordUtils.capitalize(material))) {
-                            bossBar.get(player.getUniqueId()).setTitle("§l" + WordUtils.capitalize(material));
-                            bossBar.get(player.getUniqueId()).addPlayer(player);
+                        BossBar bar = bossBar.get(player.getUniqueId());
+                        if (!bar.getTitle().equalsIgnoreCase(bossBarTitle)) {
+                            bar.removePlayer(player);
+                            bar.setTitle(bossBarTitle);
+                            bar.addPlayer(player);
                         }
                     } catch (NullPointerException e) {
-
-                        BossBar bar = Bukkit.createBossBar("§l" + WordUtils.capitalize(material), BarColor.WHITE, BarStyle.SOLID);
+                        BossBar bar = Bukkit.createBossBar(bossBarTitle, BarColor.WHITE, BarStyle.SOLID);
+                        bar.addPlayer(player);
                         bossBar.put(player.getUniqueId(), bar);
-                        bossBar.get(player.getUniqueId()).addPlayer(player);
                     }
                 }
             } else {

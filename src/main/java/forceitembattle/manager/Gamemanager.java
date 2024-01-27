@@ -1,7 +1,6 @@
 package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.util.FinishInventory;
 import forceitembattle.util.ForceItem;
 import org.apache.commons.text.WordUtils;
 import org.bukkit.*;
@@ -10,12 +9,9 @@ import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.potion.Potion;
 import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.ScoreboardManager;
 import org.bukkit.scoreboard.Team;
@@ -138,6 +134,10 @@ public class Gamemanager {
 
     public Material getCurrentMaterial(Player player) {
         return currentMaterial.get(player.getUniqueId());
+    }
+
+    public String getCurrentMaterialName(Player player) {
+        return WordUtils.capitalizeFully(getCurrentMaterial(player).toString().replace("_", " "));
     }
 
     public void initializeMaps() {
