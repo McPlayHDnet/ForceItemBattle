@@ -2,7 +2,9 @@ package forceitembattle;
 
 import forceitembattle.commands.*;
 import forceitembattle.listener.Listeners;
-import forceitembattle.manager.*;
+import forceitembattle.listener.RecipeListener;
+import forceitembattle.manager.Gamemanager;
+import forceitembattle.manager.ItemDifficultiesManager;
 import forceitembattle.util.*;
 import forceitembattle.util.color.ColorManager;
 import org.bukkit.Bukkit;
@@ -124,6 +126,7 @@ public final class ForceItemBattle extends JavaPlugin {
 
         PluginManager manager = Bukkit.getPluginManager();
         manager.registerEvents(new Listeners(), this);
+        manager.registerEvents(new RecipeListener(), this);
         manager.registerEvents(invTeamVote, this);
         manager.registerEvents(invTeleport, this);
 

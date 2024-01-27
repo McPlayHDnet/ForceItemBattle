@@ -1,9 +1,11 @@
 package forceitembattle.listener;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.commands.CommandInfo;
 import forceitembattle.util.InventoryBuilder;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
+import org.bukkit.Material;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -15,13 +17,10 @@ import org.bukkit.event.entity.*;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
-import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.inventory.CraftingInventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.potion.Potion;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
@@ -95,18 +94,16 @@ public class Listeners implements Listener {
     /* Click-Event for my inventory builder */
     @EventHandler
     public void onInventoyClick(InventoryClickEvent inventoryClickEvent) {
-        if(inventoryClickEvent.getClickedInventory() == null) return;
-
-        if(!(inventoryClickEvent.getWhoClicked() instanceof Player player)) return;
-
-        if(CommandInfo.crafting.get(player.getUniqueId())) {
-            inventoryClickEvent.setCancelled(true);
+        if (inventoryClickEvent.getClickedInventory() == null) {
             return;
         }
 
-        if(inventoryClickEvent.getInventory().getHolder() instanceof InventoryBuilder inventoryBuilder) {
-            inventoryBuilder.handleClick(inventoryClickEvent);
+        if (!(inventoryClickEvent.getWhoClicked() instanceof Player player)) {
+            return;
+        }
 
+        if (inventoryClickEvent.getInventory().getHolder() instanceof InventoryBuilder inventoryBuilder) {
+            inventoryBuilder.handleClick(inventoryClickEvent);
             return;
         }
 
@@ -114,19 +111,13 @@ public class Listeners implements Listener {
 
     @EventHandler
     public void onClose(InventoryCloseEvent inventoryCloseEvent) {
-        if(!(inventoryCloseEvent.getPlayer() instanceof Player player)) return;
-
-        if(CommandInfo.crafting.get(player.getUniqueId())) {
-            inventoryCloseEvent.getInventory().clear();
-            CommandInfo.crafting.remove(player.getUniqueId());
+        if (!(inventoryCloseEvent.getPlayer() instanceof Player player)) {
             return;
         }
 
-        if(inventoryCloseEvent.getInventory().getHolder() instanceof InventoryBuilder inventoryBuilder) {
+        if (inventoryCloseEvent.getInventory().getHolder() instanceof InventoryBuilder inventoryBuilder) {
 
-
-
-            if(inventoryBuilder.handleClose(inventoryCloseEvent)) {
+            if (inventoryBuilder.handleClose(inventoryCloseEvent)) {
                 Bukkit.getScheduler().runTask(ForceItemBattle.getInstance(), () -> inventoryBuilder.open((Player) inventoryCloseEvent.getPlayer()));
                 return;
 
