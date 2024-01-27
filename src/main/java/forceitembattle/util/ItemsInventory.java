@@ -23,7 +23,7 @@ public class ItemsInventory extends InventoryBuilder {
 
 
     public ItemsInventory(Player player) {
-        super(9*6, "§8» §6Items §8● §7Settings");
+        super(9*6, "§8» §6Items §7(" + ForceItemBattle.getItemDifficultiesManager().getAllItems().size() + ") §8● §7Settings");
 
         HashMap<Integer, HashMap<Integer, ItemStack>> pages = new HashMap<>();
         HashMap<Integer, ItemStack> itemStackHashMap = new HashMap<>();
@@ -69,7 +69,7 @@ public class ItemsInventory extends InventoryBuilder {
                     pages.put(initialPages, itemStackHashMap);
                 }
 
-                itemStackHashMap.put(startSlot, new ItemStack(materials));
+                itemStackHashMap.put(startSlot, new ItemBuilder(materials).setGlowing((ForceItemBattle.getItemDifficultiesManager().itemInList(materials))).getItemStack());
 
                 startSlot++;
 
