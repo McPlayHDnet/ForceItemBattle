@@ -980,6 +980,7 @@ public class ItemDifficultiesManager {
                 Material.DEEPSLATE_LAPIS_ORE,
                 Material.DEEPSLATE_REDSTONE_ORE,
                 Material.DIAMOND_ORE,
+                Material.DRAGON_HEAD,
                 Material.ELYTRA,
                 Material.EMERALD_ORE,
                 Material.ENCHANTED_GOLDEN_APPLE,
