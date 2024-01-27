@@ -49,7 +49,7 @@ public class RecipeListener implements Listener {
             return;
         }
 
-        if (RecipeInventory.isShowingRecipe(player)) {
+        if (RecipeInventory.isShowingRecipe(player) && !RecipeInventory.ignoreInventoryClosed(player)) {
             inventoryCloseEvent.getInventory().clear();
             RecipeInventory.handleRecipeClose(player);
         }

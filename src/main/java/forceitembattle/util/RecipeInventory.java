@@ -1,10 +1,13 @@
 package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
+import org.apache.commons.text.WordUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.*;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
@@ -12,20 +15,26 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
+@SuppressWarnings("duplicate")
 public class RecipeInventory {
 
     /**
      * Player UUD -> remove on close.
-     * If value is true, remove the key on inventory close, otherwise
+     * If value is true, ignore close inventory
      */
-    private static HashMap<UUID, Boolean> crafting = new HashMap<>();
+    private static final HashMap<UUID, Boolean> ignoreCloseHandler = new HashMap<>();
+
+    public static boolean ignoreInventoryClosed(Player player) {
+        return ignoreCloseHandler.getOrDefault(player.getUniqueId(), false);
+    }
 
     public static boolean isShowingRecipe(Player player) {
-        return crafting.containsKey(player.getUniqueId());
+        return closeHandlers.containsKey(player.getUniqueId());
     }
 
     public static void handleRecipeClose(Player player) {
         Runnable closeHandler = closeHandlers.remove(player.getUniqueId());
+        ignoreCloseHandler.remove(player.getUniqueId());
 
         closeHandler.run();
     }
@@ -33,7 +42,7 @@ public class RecipeInventory {
     /**
      * Player UUID -> handle inventory being closed by the player
      */
-    public static HashMap<UUID, Runnable> closeHandlers = new HashMap<>();
+    private static final HashMap<UUID, Runnable> closeHandlers = new HashMap<>();
 
     public static void showRecipe(Player player, ItemStack item) {
         if (Bukkit.getRecipesFor(item).isEmpty()) {
@@ -41,7 +50,7 @@ public class RecipeInventory {
             return;
         }
 
-        List<Inventory> inventories = createRecipeInventories(player, item);
+        List<Inventory> inventories = createInventories(player, item);
 
         if (inventories.isEmpty()) {
             player.sendMessage("§cThere were recipes for this item that we cannot display, for some reason! §fTry /wikihelp");
@@ -52,7 +61,7 @@ public class RecipeInventory {
             handleRecipeClose(player);
         }
 
-        crafting.put(player.getUniqueId(), true);
+        ignoreCloseHandler.put(player.getUniqueId(), false);
 
         BukkitTask task = Bukkit.getScheduler().runTaskTimer(ForceItemBattle.getInstance(), new Runnable() {
 
@@ -65,22 +74,22 @@ public class RecipeInventory {
                 }
 
                 Inventory inventory = inventories.get(inventoryIndex);
+                ignoreCloseHandler.put(player.getUniqueId(), true);
                 player.openInventory(inventory);
 
+                ignoreCloseHandler.put(player.getUniqueId(), false);
 
                 inventoryIndex++;
             }
-        }, 0, 40);
+        }, 0, 20);
 
         closeHandlers.put(player.getUniqueId(), () -> {
             task.cancel();
-            crafting.remove(player.getUniqueId());
+            ignoreCloseHandler.remove(player.getUniqueId());
         });
-
-        return;
     }
 
-    private static List<Inventory> createRecipeInventories(Player player, ItemStack item) {
+    private static List<Inventory> createInventories(Player player, ItemStack item) {
         List<Inventory> inventories = new ArrayList<>();
         for (Recipe recipe : Bukkit.getServer().getRecipesFor(item)) {
             Inventory inventory = createRecipeInventory(item, recipe);
@@ -93,6 +102,150 @@ public class RecipeInventory {
         }
 
         return inventories;
+    }
+    /*
+Slots visualisation for values below:
+
+ 0  1  2  3  4  5  6  7  8
+ 9 XX XX XX 13 14 15 16 17
+18 XX SS XX 22 ST 24 RS 26
+27 XX XX XX 31 32 33 34 35
+36 37 38 39 40 41 42 43 44
+
+ */
+    private static final int RESULT_SLOT = 25;
+    private static final int STATION_SLOT = 23;
+    private static final int WORKBENCH_FIRST_ITEM_SLOT = 10;
+    private static final int SMITHING_FIRST_ITEM_SLOT = 19;
+    private static final int OTHER_FIRST_ITEM_SLOT = 20;
+
+    private static Inventory createFancyRecipeInventory(ItemStack item, Recipe recipe) {
+        String itemName = WordUtils.capitalize(item.getType().name().replace("_", " ").toLowerCase());
+        Inventory inventory = Bukkit.createInventory(null, 5,  itemName);
+
+
+        List<ItemStack> ingredients = new ArrayList<>();
+
+        if (recipe instanceof ShapedRecipe shaped) {
+            for (RecipeChoice recipeChoice : shaped.getChoiceMap().values()) {
+                if (recipeChoice instanceof RecipeChoice.MaterialChoice materialChoice) {
+                    materialChoice.getChoices().forEach(material -> {
+                        ItemStack fixed = new ItemStack(material, 1);
+                        ingredients.add(fixed);
+                    });
+                }
+            }
+
+            int index = 0;
+            for (ItemStack ingredient : ingredients) {
+                inventory.setItem(convertItemIndexToInventorySlot(WORKBENCH_FIRST_ITEM_SLOT, index), ingredient);
+                index++;
+            }
+        } else if (recipe instanceof ShapelessRecipe shapeless) {
+            for (RecipeChoice recipeChoice : shapeless.getChoiceList()) {
+                if (recipeChoice instanceof RecipeChoice.MaterialChoice materialChoice) {
+                    materialChoice.getChoices().forEach(material -> {
+                        ItemStack fixed = new ItemStack(material, 1);
+                        ingredients.add(fixed);
+                    });
+
+                }
+            }
+
+            int index = 0;
+            for (ItemStack ingredient : ingredients) {
+                inventory.setItem(convertItemIndexToInventorySlot(WORKBENCH_FIRST_ITEM_SLOT, index), ingredient);
+                index++;
+            }
+        } else if (recipe instanceof CookingRecipe<?> furnace) {
+            ItemStack fixed = new ItemStack(furnace.getInput().getType(), 1, (byte) 0);
+            ingredients.add(fixed);
+
+            inventory.setItem(OTHER_FIRST_ITEM_SLOT, fixed);
+
+        } else if (recipe instanceof SmithingTrimRecipe smithing) {
+            ingredients.add(smithing.getBase().getItemStack());
+            ingredients.add(smithing.getTemplate().getItemStack());
+            ingredients.add(smithing.getAddition().getItemStack());
+
+            int index = 0;
+            for (ItemStack ingredient : ingredients) {
+                inventory.setItem(OTHER_FIRST_ITEM_SLOT + index, ingredient);
+                index++;
+            }
+
+        }  else if (recipe instanceof SmithingTransformRecipe smithing) {
+            ingredients.add(smithing.getBase().getItemStack());
+            ingredients.add(smithing.getTemplate().getItemStack());
+            ingredients.add(smithing.getAddition().getItemStack());
+
+            int index = 0;
+            for (ItemStack ingredient : ingredients) {
+                inventory.setItem(SMITHING_FIRST_ITEM_SLOT + index, ingredient);
+                index++;
+            }
+
+        } else if (recipe instanceof SmithingRecipe smithing) {
+            // Unknown smithing recipe?
+            ingredients.add(smithing.getAddition().getItemStack());
+            ingredients.add(smithing.getBase().getItemStack());
+
+            int index = 0;
+            for (ItemStack ingredient : ingredients) {
+                inventory.setItem(SMITHING_FIRST_ITEM_SLOT + index, ingredient);
+                index++;
+            }
+
+        } else if (recipe instanceof MerchantRecipe merchant) {
+            ItemStack fixed = new ItemStack(merchant.getResult().getType(), 1, (byte) 0);
+            ingredients.add(fixed);
+
+            inventory.setItem(OTHER_FIRST_ITEM_SLOT, fixed);
+
+        } else if (recipe instanceof StonecuttingRecipe stonecutting) {
+            ItemStack fixed = new ItemStack(stonecutting.getInput());
+            ingredients.add(fixed);
+
+            inventory.setItem(OTHER_FIRST_ITEM_SLOT, fixed);
+        } else {
+            return null;
+        }
+
+        inventory.setItem(RESULT_SLOT, item);
+        inventory.setItem(STATION_SLOT, getStationItem(recipe));
+
+        return inventory;
+    }
+
+    private static ItemStack getStationItem(Recipe recipe) {
+        if (recipe instanceof ShapedRecipe) {
+            return new ItemStack(Material.CRAFTING_TABLE);
+        } else if (recipe instanceof ShapelessRecipe) {
+            return new ItemStack(Material.CRAFTING_TABLE);
+        } else if (recipe instanceof FurnaceRecipe) {
+            return new ItemStack(Material.FURNACE);
+        } else if (recipe instanceof SmithingRecipe) {
+            return new ItemStack(Material.SMITHING_TABLE);
+        } else if (recipe instanceof SmokingRecipe) {
+            return new ItemStack(Material.SMOKER);
+        } else if (recipe instanceof BlastingRecipe) {
+            return new ItemStack(Material.BLAST_FURNACE);
+        } else if (recipe instanceof CampfireRecipe) {
+            return new ItemStack(Material.CAMPFIRE);
+        } else if (recipe instanceof StonecuttingRecipe) {
+            return new ItemStack(Material.STONECUTTER);
+        } else if (recipe instanceof MerchantRecipe) {
+            return new ItemStack(Material.VILLAGER_SPAWN_EGG);
+        } else {
+            ItemStack item = new ItemStack(Material.BARRIER);
+            ItemMeta meta = item.getItemMeta();
+            if (meta != null) {
+                meta.setDisplayName("§cUnknown recipe type: §f" + recipe.getClass().getSimpleName());
+                item.setItemMeta(meta);
+            }
+
+            return item;
+        }
     }
 
     private static Inventory createRecipeInventory(ItemStack item, Recipe recipe) {
