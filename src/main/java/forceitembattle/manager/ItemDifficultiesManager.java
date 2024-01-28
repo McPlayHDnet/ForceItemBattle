@@ -819,7 +819,6 @@ public class ItemDifficultiesManager {
                 Material.POLISHED_BLACKSTONE_SLAB,
                 Material.POLISHED_BLACKSTONE_STAIRS,
                 Material.POLISHED_BLACKSTONE_WALL,
-                Material.POWDER_SNOW,
                 Material.POWDER_SNOW_BUCKET,
                 Material.PRISMARINE,
                 Material.PRISMARINE_BRICK_SLAB,
@@ -966,8 +965,6 @@ public class ItemDifficultiesManager {
                 Material.CHORUS_FRUIT,
                 Material.COAL_ORE,
                 Material.COPPER_ORE,
-                Material.CREEPER_BANNER_PATTERN,
-                Material.CREEPER_HEAD,
                 Material.CUT_RED_SANDSTONE,
                 Material.CUT_RED_SANDSTONE_SLAB,
                 Material.CYAN_CANDLE,
@@ -1069,7 +1066,6 @@ public class ItemDifficultiesManager {
                 Material.REDSTONE_ORE,
                 Material.SHULKER_BOX,
                 Material.SHULKER_SHELL,
-                Material.SKELETON_SKULL,
                 Material.SKULL_BANNER_PATTERN,
                 Material.SCULK_SENSOR,
                 Material.SCULK_CATALYST,
@@ -1100,7 +1096,6 @@ public class ItemDifficultiesManager {
                 Material.WHITE_CANDLE,
                 Material.WHITE_SHULKER_BOX,
                 Material.YELLOW_CANDLE,
-                Material.YELLOW_SHULKER_BOX,
-                Material.ZOMBIE_HEAD);
+                Material.YELLOW_SHULKER_BOX);
     }
 }
