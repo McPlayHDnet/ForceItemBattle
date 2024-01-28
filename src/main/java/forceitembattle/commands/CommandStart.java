@@ -94,6 +94,7 @@ public class CommandStart implements CommandExecutor {
             player.setLevel(0);
             player.setExp(0);
             player.setWalkSpeed(0.2f);
+            player.setStatistic(Statistic.TIME_SINCE_REST, 3);
             player.getPassengers().forEach(Entity::remove);
             player.getActivePotionEffects().forEach(potionEffect -> player.removePotionEffect(potionEffect.getType()));
             player.setGameMode(GameMode.SURVIVAL);
