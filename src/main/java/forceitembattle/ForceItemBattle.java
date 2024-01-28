@@ -2,7 +2,9 @@ package forceitembattle;
 
 import forceitembattle.commands.*;
 import forceitembattle.listener.Listeners;
-import forceitembattle.manager.*;
+import forceitembattle.listener.RecipeListener;
+import forceitembattle.manager.Gamemanager;
+import forceitembattle.manager.ItemDifficultiesManager;
 import forceitembattle.util.*;
 import forceitembattle.util.color.ColorManager;
 import org.bukkit.Bukkit;
@@ -124,18 +126,26 @@ public final class ForceItemBattle extends JavaPlugin {
 
         PluginManager manager = Bukkit.getPluginManager();
         manager.registerEvents(new Listeners(), this);
+        manager.registerEvents(new RecipeListener(), this);
         manager.registerEvents(invTeamVote, this);
         manager.registerEvents(invTeleport, this);
 
-        getCommand("reset").setExecutor(new CommandReset());
         getCommand("start").setExecutor(new CommandStart());
-        getCommand("result").setExecutor(new CommandResult());
-        getCommand("stoptimer").setExecutor(new CommandStopTimer());
-        getCommand("skip").setExecutor(new CommandSkip());
-        getCommand("bp").setExecutor(new CommandBp());
         getCommand("settings").setExecutor(new CommandSettings());
+        getCommand("skip").setExecutor(new CommandSkip());
+        getCommand("reset").setExecutor(new CommandReset());
+        getCommand("bp").setExecutor(new CommandBp());
+        getCommand("result").setExecutor(new CommandResult());
+        getCommand("info").setExecutor(new CommandInfo());
+        getCommand("items").setExecutor(new CommandItems());
+        getCommand("info").setExecutor(new CommandInfo());
+        getCommand("stoptimer").setExecutor(new CommandStopTimer());
+        getCommand("infowiki").setExecutor(new CommandInfoWiki());
 
-        Bukkit.getWorlds().forEach(world -> world.setGameRule(GameRule.KEEP_INVENTORY, getConfig().getBoolean("settings.keepinventory")));
+        Bukkit.getWorlds().forEach(world -> {
+            world.setGameRule(GameRule.KEEP_INVENTORY, getConfig().getBoolean("settings.keepinventory"));
+            world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
+        });
     }
 
     @Override

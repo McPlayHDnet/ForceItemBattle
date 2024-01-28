@@ -35,6 +35,14 @@ public class ItemDifficultiesManager {
         return newList.get(random.nextInt(newList.size()));
     }
 
+    public List<Material> getAllItems() {
+        return Stream.of(this.easy, this.medium, this.hard).flatMap(Collection::stream).collect(Collectors.toList());
+    }
+
+    public boolean itemInList(Material material) {
+        return this.getAllItems().contains(material);
+    }
+
     public ItemDifficultiesManager() {
         this.easy = Arrays.asList(
                 Material.ACTIVATOR_RAIL,
@@ -120,6 +128,8 @@ public class ItemDifficultiesManager {
                 Material.CHEST,
                 Material.CHEST_MINECART,
                 Material.CHISELED_BOOKSHELF,
+                Material.CHISELED_BOOKSHELF,
+                Material.CHISELED_COPPER,
                 Material.CHISELED_DEEPSLATE,
                 Material.CHISELED_SANDSTONE,
                 Material.CHISELED_STONE_BRICKS,

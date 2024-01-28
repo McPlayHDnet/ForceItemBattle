@@ -10,11 +10,19 @@ import org.bukkit.entity.Player;
 public class CommandBp implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender commandSender, Command command, String s, String[] strings) {
-        if (!ForceItemBattle.getInstance().getConfig().getBoolean("settings.backpack")) return false;
-        if (!ForceItemBattle.getTimer().isRunning()) return false;
-        if (!(commandSender instanceof Player)) return false;
-        Player p = Bukkit.getPlayer(commandSender.getName());
-        ForceItemBattle.getBackpack().openBackpack(p);
+
+        if(commandSender instanceof Player player) {
+            if (ForceItemBattle.getTimer().isRunning()) {
+                if(ForceItemBattle.getInstance().getConfig().getBoolean("settings.backpack")) {
+                    ForceItemBattle.getBackpack().openPlayerBackpack(player);
+                } else {
+                    player.sendMessage("§cBackpacks are disabled in this round!");
+                }
+            } else {
+                player.sendMessage("§cThe game has not started yet!");
+            }
+        }
+
         return false;
     }
 }

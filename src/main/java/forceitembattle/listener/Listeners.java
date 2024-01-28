@@ -1,28 +1,33 @@
 package forceitembattle.listener;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.manager.Gamemanager;
 import forceitembattle.util.InventoryBuilder;
+import forceitembattle.util.ItemBuilder;
 import org.bukkit.*;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.*;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
-import org.bukkit.event.player.PlayerDropItemEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.potion.Potion;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 public class Listeners implements Listener {
+
+    private Map<UUID, ItemStack> remainingJokers = new HashMap<>();
+
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         if (ForceItemBattle.getTimer().isRunning()) {
@@ -56,6 +61,11 @@ public class Listeners implements Listener {
     }
 
     @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent playerQuitEvent) {
+        playerQuitEvent.getPlayer().getPassengers().forEach(Entity::remove);
+    }
+
+    @EventHandler
     public void onClick(PlayerInteractEvent e) { // triggered if a joker is used
         if (!ForceItemBattle.getTimer().isRunning()) return;
         if (e.getPlayer().getInventory().getItemInMainHand().getType() != Material.BARRIER) return;
@@ -64,42 +74,54 @@ public class Listeners implements Listener {
             e.getPlayer().sendMessage(ChatColor.RED + "Please wait a second.");
             return;
         }
-        ItemStack stack = e.getPlayer().getInventory().getItem(e.getPlayer().getInventory().first(Material.BARRIER));
-        if (stack.getAmount() > 1) {
-            stack.setAmount(stack.getAmount() - 1);
-        } else {
-            stack.setType(Material.AIR);
-        }
-        Material mat;
-        if (ForceItemBattle.getInstance().getConfig().getBoolean("settings.isTeamGame")) {
-            /////////////////////////////////////// TEAMS ///////////////////////////////////////
-            mat = ForceItemBattle.getGamemanager().getMaterialTeamsFromPlayer(e.getPlayer());
-        } else {
-            mat = ForceItemBattle.getGamemanager().getCurrentMaterial(e.getPlayer());
-        }
-        e.getPlayer().getInventory().setItem(e.getPlayer().getInventory().first(Material.BARRIER), stack);
-        e.getPlayer().getInventory().addItem(new ItemStack(mat));
-        if (!e.getPlayer().getInventory().contains(mat)) {
-            e.getPlayer().getWorld().dropItemNaturally(e.getPlayer().getLocation(), new ItemStack(mat));
-        }
-        ForceItemBattle.getTimer().sendActionBar();
-        ForceItemBattle.getGamemanager().setDelay(e.getPlayer(), 2);
 
-        ArmorStand armorStand = (ArmorStand) e.getPlayer().getPassengers().get(0);
-        armorStand.getEquipment().setHelmet(new ItemStack(mat));
+        if(e.getAction() == Action.RIGHT_CLICK_AIR) {
+            ItemStack stack = e.getPlayer().getInventory().getItem(e.getPlayer().getInventory().first(Material.BARRIER));
+            if (stack.getAmount() > 1) {
+                stack.setAmount(stack.getAmount() - 1);
+            } else {
+                stack.setType(Material.AIR);
+            }
+            Material mat;
+            if (ForceItemBattle.getInstance().getConfig().getBoolean("settings.isTeamGame")) {
+                /////////////////////////////////////// TEAMS ///////////////////////////////////////
+                mat = ForceItemBattle.getGamemanager().getMaterialTeamsFromPlayer(e.getPlayer());
+            } else {
+                mat = ForceItemBattle.getGamemanager().getCurrentMaterial(e.getPlayer());
+            }
+            e.getPlayer().getInventory().setItem(e.getPlayer().getInventory().first(Material.BARRIER), stack);
+            e.getPlayer().getInventory().addItem(new ItemStack(mat));
+            if (!e.getPlayer().getInventory().contains(mat)) {
+                e.getPlayer().getWorld().dropItemNaturally(e.getPlayer().getLocation(), new ItemStack(mat));
+            }
+            ForceItemBattle.getTimer().sendActionBar();
+            ForceItemBattle.getGamemanager().setDelay(e.getPlayer(), 2);
+
+            ArmorStand armorStand = (ArmorStand) e.getPlayer().getPassengers().get(0);
+            armorStand.getEquipment().setHelmet(new ItemStack(mat));
+
+            ForceItemBattle.getGamemanager().getJokers().put(e.getPlayer().getUniqueId(), ForceItemBattle.getGamemanager().getJokers().get(e.getPlayer().getUniqueId()) - 1);
+
+        } else if(e.getAction() == Action.RIGHT_CLICK_BLOCK) {
+            e.getPlayer().sendMessage("§cClick it in the air");
+        }
+
+
     }
 
     /* Click-Event for my inventory builder */
     @EventHandler
     public void onInventoyClick(InventoryClickEvent inventoryClickEvent) {
-        if(inventoryClickEvent.getClickedInventory() == null) return;
+        if (inventoryClickEvent.getClickedInventory() == null) {
+            return;
+        }
 
-        if(!(inventoryClickEvent.getWhoClicked() instanceof Player player)) return;
+        if (!(inventoryClickEvent.getWhoClicked() instanceof Player player)) {
+            return;
+        }
 
-
-        if(inventoryClickEvent.getInventory().getHolder() instanceof InventoryBuilder inventoryBuilder) {
+        if (inventoryClickEvent.getInventory().getHolder() instanceof InventoryBuilder inventoryBuilder) {
             inventoryBuilder.handleClick(inventoryClickEvent);
-
             return;
         }
 
@@ -107,9 +129,13 @@ public class Listeners implements Listener {
 
     @EventHandler
     public void onClose(InventoryCloseEvent inventoryCloseEvent) {
-        if(inventoryCloseEvent.getInventory().getHolder() instanceof InventoryBuilder inventoryBuilder) {
+        if (!(inventoryCloseEvent.getPlayer() instanceof Player player)) {
+            return;
+        }
 
-            if(inventoryBuilder.handleClose(inventoryCloseEvent)) {
+        if (inventoryCloseEvent.getInventory().getHolder() instanceof InventoryBuilder inventoryBuilder) {
+
+            if (inventoryBuilder.handleClose(inventoryCloseEvent)) {
                 Bukkit.getScheduler().runTask(ForceItemBattle.getInstance(), () -> inventoryBuilder.open((Player) inventoryCloseEvent.getPlayer()));
                 return;
 
@@ -126,8 +152,30 @@ public class Listeners implements Listener {
     }
 
     @EventHandler
-    public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
+    public void onDeath(PlayerDeathEvent playerDeathEvent) {
+        Player player = playerDeathEvent.getEntity();
+        player.getPassengers().forEach(Entity::remove);
+    }
 
+    @EventHandler
+    public void onRespawn(PlayerRespawnEvent playerRespawnEvent) {
+        Player player = playerRespawnEvent.getPlayer();
+        ItemStack jokers = new ItemBuilder(Material.BARRIER).setAmount(ForceItemBattle.getGamemanager().getJokers().get(player.getUniqueId())).setDisplayName("§5Skip").getItemStack();
+        player.getInventory().setItem(4, jokers);
+
+        ArmorStand itemDisplay = (ArmorStand) player.getWorld().spawnEntity(player.getLocation().add(0, 2, 0), EntityType.ARMOR_STAND);
+        itemDisplay.getEquipment().setHelmet(new ItemStack(ForceItemBattle.getGamemanager().getCurrentMaterial(player)));
+        itemDisplay.setInvisible(true);
+        itemDisplay.setInvulnerable(true);
+        itemDisplay.setGravity(false);
+        player.addPassenger(itemDisplay);
+    }
+
+    @EventHandler
+    public void onArmorInteract(PlayerInteractAtEntityEvent playerInteractAtEntityEvent) {
+        if(playerInteractAtEntityEvent.getRightClicked() instanceof ArmorStand armorStand) {
+            if(armorStand.isInvisible()) playerInteractAtEntityEvent.setCancelled(true);
+        }
     }
 
     @EventHandler
@@ -158,8 +206,8 @@ public class Listeners implements Listener {
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
-        if (ForceItemBattle.getTimer().isRunning()) return;
         if(event.getBlock().getType() == Material.BARRIER) event.setCancelled(true);
+        if (ForceItemBattle.getTimer().isRunning()) return;
         event.setCancelled(true);
     }
 

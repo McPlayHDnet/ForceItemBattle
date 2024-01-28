@@ -14,6 +14,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
+@SuppressWarnings("unused")
 public class InventoryBuilder implements InventoryHolder {
 
     private final Map<Integer, Consumer<InventoryClickEvent>> itemHandlers = new HashMap<>();
@@ -27,6 +28,8 @@ public class InventoryBuilder implements InventoryHolder {
     private String title;
 
     private Predicate<Player> closeFilter;
+
+    private Player player;
 
     public InventoryBuilder(int size) {
         this(owner -> Bukkit.createInventory(owner, size));
@@ -139,6 +142,7 @@ public class InventoryBuilder implements InventoryHolder {
 
 
     public void open(Player player) {
+        this.player = player;
         player.openInventory(this.inventory);
     }
 
@@ -164,6 +168,10 @@ public class InventoryBuilder implements InventoryHolder {
     @Override
     public @Nonnull Inventory getInventory() {
         return this.inventory;
+    }
+
+    public Player getPlayer() {
+        return this.player;
     }
 
     public void handleOpen(InventoryOpenEvent e) {
