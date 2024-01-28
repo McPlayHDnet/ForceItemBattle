@@ -1,12 +1,15 @@
 package forceitembattle.listener;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.manager.Gamemanager;
 import forceitembattle.util.InventoryBuilder;
+import forceitembattle.util.ItemBuilder;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -17,14 +20,19 @@ import org.bukkit.event.entity.*;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
-import org.bukkit.event.player.PlayerDropItemEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 public class Listeners implements Listener {
+
+    private Map<UUID, ItemStack> remainingJokers = new HashMap<>();
+
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         if (ForceItemBattle.getTimer().isRunning()) {
@@ -89,6 +97,8 @@ public class Listeners implements Listener {
 
         ArmorStand armorStand = (ArmorStand) e.getPlayer().getPassengers().get(0);
         armorStand.getEquipment().setHelmet(new ItemStack(mat));
+
+        ForceItemBattle.getGamemanager().getJokers().put(e.getPlayer().getUniqueId(), ForceItemBattle.getGamemanager().getJokers().get(e.getPlayer().getUniqueId()) - 1);
     }
 
     /* Click-Event for my inventory builder */
@@ -134,8 +144,30 @@ public class Listeners implements Listener {
     }
 
     @EventHandler
-    public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
+    public void onDeath(PlayerDeathEvent playerDeathEvent) {
+        Player player = playerDeathEvent.getEntity();
+        player.getPassengers().forEach(Entity::remove);
+    }
 
+    @EventHandler
+    public void onRespawn(PlayerRespawnEvent playerRespawnEvent) {
+        Player player = playerRespawnEvent.getPlayer();
+        ItemStack jokers = new ItemBuilder(Material.BARRIER).setAmount(ForceItemBattle.getGamemanager().getJokers().get(player.getUniqueId())).setDisplayName("§5Skip").getItemStack();
+        player.getInventory().setItem(4, jokers);
+
+        ArmorStand itemDisplay = (ArmorStand) player.getWorld().spawnEntity(player.getLocation().add(0, 2, 0), EntityType.ARMOR_STAND);
+        itemDisplay.getEquipment().setHelmet(new ItemStack(ForceItemBattle.getGamemanager().getCurrentMaterial(player)));
+        itemDisplay.setInvisible(true);
+        itemDisplay.setInvulnerable(true);
+        itemDisplay.setGravity(false);
+        player.addPassenger(itemDisplay);
+    }
+
+    @EventHandler
+    public void onArmorInteract(PlayerInteractAtEntityEvent playerInteractAtEntityEvent) {
+        if(playerInteractAtEntityEvent.getRightClicked() instanceof ArmorStand armorStand) {
+            if(armorStand.isInvisible()) playerInteractAtEntityEvent.setCancelled(true);
+        }
     }
 
     @EventHandler
