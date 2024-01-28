@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 
 public class Gamemanager {
     private static Map<UUID, Integer> score = new HashMap<UUID, Integer>();
+    private static Map<UUID, Integer> jokers = new HashMap<>();
     private static Map<UUID, Material> currentMaterial = new HashMap<UUID, Material>();
     private static Map<UUID, ArrayList<ForceItem>> itemList = new HashMap<UUID, ArrayList<ForceItem>>();
     private static Map<UUID, Integer> delay = new HashMap<UUID, Integer>();
@@ -468,6 +469,10 @@ public class Gamemanager {
 
     public Map<UUID, Integer> getScore() {
         return score;
+    }
+
+    public Map<UUID, Integer> getJokers() {
+        return jokers;
     }
 
     public Map<UUID, Map<Integer, ItemStack[]>> getSavedInventory() {
