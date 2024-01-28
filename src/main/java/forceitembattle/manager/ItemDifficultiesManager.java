@@ -1067,7 +1067,6 @@ public class ItemDifficultiesManager {
                 Material.REDSTONE_ORE,
                 Material.SHULKER_BOX,
                 Material.SHULKER_SHELL,
-                Material.SKELETON_SKULL,
                 Material.SKULL_BANNER_PATTERN,
                 Material.SCULK_SENSOR,
                 Material.SCULK_CATALYST,
