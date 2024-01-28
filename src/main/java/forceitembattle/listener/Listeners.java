@@ -67,6 +67,11 @@ public class Listeners implements Listener {
     }
 
     @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent playerQuitEvent) {
+        playerQuitEvent.getPlayer().getPassengers().forEach(Entity::remove);
+    }
+
+    @EventHandler
     public void onClick(PlayerInteractEvent e) { // triggered if a joker is used
         if (!ForceItemBattle.getTimer().isRunning()) return;
         if (e.getPlayer().getInventory().getItemInMainHand().getType() != Material.BARRIER) return;

@@ -80,6 +80,7 @@ public class CommandStart implements CommandExecutor {
             player.sendMessage("  §8● §7Joker §8» §a" + joker);
             player.sendMessage("  §8● §7Food §8» §a" + (ForceItemBattle.getInstance().getConfig().getBoolean("settings.food") ? "§2✔" : "§4✘"));
             player.sendMessage("  §8● §7Keep Inventory §8» §a" + (ForceItemBattle.getInstance().getConfig().getBoolean("settings.keepinventory") ? "§2✔" : "§4✘"));
+            player.sendMessage("  §8● §7Backpack §8» §a" + (ForceItemBattle.getInstance().getConfig().getBoolean("settings.backpack") ? "§2✔" : "§4✘"));
             player.sendMessage(" ");
             player.sendMessage(" §8● §7Useful Commands:");
             player.sendMessage("  §8» §6/info");
@@ -101,6 +102,10 @@ public class CommandStart implements CommandExecutor {
             player.playSound(player, Sound.BLOCK_END_PORTAL_SPAWN, 1, 1);
 
             ForceItemBattle.getGamemanager().getJokers().put(player.getUniqueId(), joker);
+
+            if(ForceItemBattle.getInstance().getConfig().getBoolean("settings.backpack")) {
+                ForceItemBattle.getBackpack().createBackpack(player);
+            }
 
             ArmorStand itemDisplay = (ArmorStand) player.getWorld().spawnEntity(player.getLocation().add(0, 2, 0), EntityType.ARMOR_STAND);
             itemDisplay.getEquipment().setHelmet(new ItemStack(ForceItemBattle.getGamemanager().getCurrentMaterial(player)));
