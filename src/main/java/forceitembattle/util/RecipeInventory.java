@@ -1,6 +1,8 @@
 package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.apache.commons.text.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -53,7 +55,11 @@ public class RecipeInventory {
         List<Inventory> inventories = createInventories(player, item);
 
         if (inventories.isEmpty()) {
-            player.sendMessage("§cThere were recipes for this item that we cannot display, for some reason! §fTry /infowiki");
+            TextComponent message = new TextComponent("§cThere were recipes for this item that we cannot display, for some reason! ");
+            TextComponent infoWiki = new TextComponent("§fTry /infowiki");
+            infoWiki.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/infowiki"));
+
+            player.spigot().sendMessage(message, infoWiki);
             return;
         }
 
