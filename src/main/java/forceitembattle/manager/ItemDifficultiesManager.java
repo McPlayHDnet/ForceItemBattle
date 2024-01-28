@@ -819,7 +819,6 @@ public class ItemDifficultiesManager {
                 Material.POLISHED_BLACKSTONE_SLAB,
                 Material.POLISHED_BLACKSTONE_STAIRS,
                 Material.POLISHED_BLACKSTONE_WALL,
-                Material.POWDER_SNOW,
                 Material.POWDER_SNOW_BUCKET,
                 Material.PRISMARINE,
                 Material.PRISMARINE_BRICK_SLAB,
