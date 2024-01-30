@@ -467,6 +467,14 @@ public class Gamemanager {
         return itemList.get(player.getUniqueId());
     }
 
+    public Map<UUID, ArrayList<ForceItem>> getItemList() {
+        return itemList;
+    }
+
+    public Map<UUID, Material> getCurrentMaterial() {
+        return currentMaterial;
+    }
+
     public Map<UUID, Integer> getScore() {
         return score;
     }

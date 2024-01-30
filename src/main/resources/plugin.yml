@@ -12,6 +12,7 @@ commands:
   reset:
     permission: battle.forceitem.command.reset
   bp:
+    aliases: [backpack]
   result:
   items:
   info:

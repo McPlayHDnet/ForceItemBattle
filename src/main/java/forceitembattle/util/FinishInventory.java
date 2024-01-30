@@ -24,7 +24,7 @@ public class FinishInventory extends InventoryBuilder {
 
 
     public FinishInventory(Player targetPlayer, Integer place, boolean firstTime) {
-        super(9*6, "§8» §6Items §8● §7" + targetPlayer.getName());
+        super(9*6, "§8» §6Items §8● §7§k" + targetPlayer.getName());
 
         HashMap<Integer, ItemStack[]> pages = new HashMap<>();
 
@@ -65,7 +65,7 @@ public class FinishInventory extends InventoryBuilder {
                         setItem(startSlot, new ItemBuilder(Material.BARRIER).setDisplayName("§cNo Items found").getItemStack());
                     } else {
                         ForceItem forceItem = items.get(placedItems);
-                        setItem(startSlot, new ItemBuilder(forceItem.material()).setDisplayName(WordUtils.capitalize(forceItem.material().name().replace("_", " ").toLowerCase()) + " §8» §6" + forceItem.timeNeeded()).getItemStack());
+                        setItem(startSlot, new ItemBuilder(forceItem.material()).setDisplayName(WordUtils.capitalize(forceItem.material().name().replace("_", " ").toLowerCase()) + (forceItem.usedSkip() ? " §c§lSKIPPED" : "") + " §8» §6" + forceItem.timeNeeded()).setGlowing(forceItem.usedSkip()).getItemStack());
                     }
 
                     Bukkit.getOnlinePlayers().forEach(players -> players.playSound(players.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1, 1));
@@ -98,7 +98,7 @@ public class FinishInventory extends InventoryBuilder {
                                 ForceItemBattle.getGamemanager().getScore().remove(targetPlayer.getUniqueId());
                                 ForceItemBattle.getGamemanager().savedInventory.put(targetPlayer.getUniqueId(), pages);
                             }
-                        }.runTaskLater(ForceItemBattle.getInstance(), 60L);
+                        }.runTaskLater(ForceItemBattle.getInstance(), 100L);
 
 
                         cancel();

@@ -2,6 +2,7 @@ package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -25,6 +26,7 @@ public class Backpack {
 
     public void createBackpack(Player player) {
         this.playerBackpack.put(player.getUniqueId(), Bukkit.createInventory(null, ForceItemBattle.getInstance().getConfig().getInt("standard.backpackSize"), "§8» §6Backpack §8● §7Menu"));
+        player.getInventory().setItem(8, new ItemBuilder(Material.BUNDLE).setDisplayName("§8» §eBackpack").getItemStack());
     }
 
     public void openPlayerBackpack(Player player) {

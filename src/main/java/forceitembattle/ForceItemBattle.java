@@ -45,6 +45,7 @@ public final class ForceItemBattle extends JavaPlugin {
         if (!getConfig().contains("settings.keepinventory")) { getConfig().set("settings.keepinventory", false); }
         if (!getConfig().contains("settings.food")) { getConfig().set("settings.food", true); }
         if (!getConfig().contains("settings.backpack")) { getConfig().set("settings.backpack", true); }
+        if (!getConfig().contains("settings.pvp")) { getConfig().set("settings.pvp", true); }
         if (!getConfig().contains("standard.countdown")) { getConfig().set("standard.countdown", 30); }
         if (!getConfig().contains("standard.jokers")) { getConfig().set("standard.jokers", 3); }
         if (!getConfig().contains("standard.backpackSize")) { getConfig().set("standard.backpackSize", 27); }
