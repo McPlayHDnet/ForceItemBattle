@@ -10,7 +10,6 @@ import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 
 public class CommandStart implements CommandExecutor {
@@ -71,6 +70,10 @@ public class CommandStart implements CommandExecutor {
     }
 
     private void startGame(Integer joker) {
+        World world = Bukkit.getWorld("world");
+        Location spawnLocation = world.getSpawnLocation();
+        ForceItemBattle.setSpawnLocation(spawnLocation);
+
         Bukkit.getOnlinePlayers().forEach(player -> {
 
             player.sendMessage(" ");
@@ -103,7 +106,7 @@ public class CommandStart implements CommandExecutor {
             player.getPassengers().forEach(Entity::remove);
             player.getActivePotionEffects().forEach(potionEffect -> player.removePotionEffect(potionEffect.getType()));
             player.setGameMode(GameMode.SURVIVAL);
-            player.teleport(Bukkit.getWorld("world").getSpawnLocation());
+            player.teleport(spawnLocation);
             player.setScoreboard(ForceItemBattle.getGamemanager().getBoard());
             player.playSound(player, Sound.BLOCK_END_PORTAL_SPAWN, 1, 1);
 
