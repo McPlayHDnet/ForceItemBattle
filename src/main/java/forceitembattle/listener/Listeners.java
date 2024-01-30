@@ -2,12 +2,14 @@ package forceitembattle.listener;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.event.FoundItemEvent;
-import forceitembattle.manager.Gamemanager;
 import forceitembattle.util.ForceItem;
 import forceitembattle.util.InventoryBuilder;
 import forceitembattle.util.ItemBuilder;
 import org.apache.commons.text.WordUtils;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
+import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -241,11 +243,61 @@ public class Listeners implements Listener {
 
     @EventHandler
     public void onEntityDamage(EntityDamageEvent event) {
-        if (ForceItemBattle.getTimer().isRunning()) {
-            if (!(event.getEntity() instanceof Player)) return;
+        if (!ForceItemBattle.getTimer().isRunning()) {
+            event.setCancelled(true);
+        }
 
-            event.setCancelled(!ForceItemBattle.getInstance().getConfig().getBoolean("settings.pvp"));
-        } else event.setCancelled(true);
+        if (isPvpEnabled() || !(event.getEntity() instanceof Player)) {
+            return;
+        }
+
+        // Disable Fire damage if pvp disabled and there's another player nearby
+        if (event.getCause() == EntityDamageEvent.DamageCause.FIRE || event.getCause() == EntityDamageEvent.DamageCause.FIRE_TICK || event.getCause() == EntityDamageEvent.DamageCause.LAVA) {
+            for (Entity nearby : event.getEntity().getNearbyEntities(5, 5, 5)) {
+                if (!(nearby instanceof Player)) {
+                    continue;
+                }
+
+                boolean isSameAsDamaged = nearby.getName().equalsIgnoreCase(event.getEntity().getName());
+                if (!isSameAsDamaged) {
+                    event.setCancelled(true);
+                    return;
+                }
+            }
+        }
+    }
+
+    private boolean isPvpEnabled() {
+        return ForceItemBattle.getInstance().getConfig().getBoolean("settings.pvp");
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onPvpDisabled(EntityDamageByEntityEvent event) {
+        if (isPvpEnabled()) {
+            return;
+        }
+
+        if (!(event.getEntity() instanceof Player)) {
+            return;
+        }
+
+        if (!(getEntityOrigin(event.getDamager()) instanceof Player)) {
+            return;
+        }
+
+        event.setCancelled(true);
+    }
+
+    private Object getEntityOrigin(Entity entity) {
+        if (entity instanceof Projectile) {
+            return ((Projectile) entity).getShooter();
+        }
+
+        if (entity instanceof TNTPrimed) {
+            return ((TNTPrimed) entity).getSource();
+        }
+
+        return entity;
     }
 
     @EventHandler
