@@ -34,7 +34,7 @@ public class CommandResult implements CommandExecutor {
 
                 if(place == -1) place = sortedMapDesc.size();
 
-                Bukkit.getOnlinePlayers().forEach(players -> new FinishInventory(Objects.requireNonNull(Bukkit.getPlayer(uuid)), place, true).open(players));
+                Bukkit.getOnlinePlayers().forEach(players -> new FinishInventory(Objects.requireNonNull(Bukkit.getPlayer(uuid) != null ? Bukkit.getPlayer(uuid) : Bukkit.getOfflinePlayer(uuid).getPlayer()), place, true).open(players));
                 place--;
             } else if (args.length == 1) {
                 if (Bukkit.getPlayer(args[0]) != null) {

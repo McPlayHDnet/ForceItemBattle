@@ -45,6 +45,7 @@ public final class ForceItemBattle extends JavaPlugin {
         if (!getConfig().contains("settings.keepinventory")) { getConfig().set("settings.keepinventory", false); }
         if (!getConfig().contains("settings.food")) { getConfig().set("settings.food", true); }
         if (!getConfig().contains("settings.backpack")) { getConfig().set("settings.backpack", true); }
+        if (!getConfig().contains("settings.pvp")) { getConfig().set("settings.pvp", true); }
         if (!getConfig().contains("standard.countdown")) { getConfig().set("standard.countdown", 30); }
         if (!getConfig().contains("standard.jokers")) { getConfig().set("standard.jokers", 3); }
         if (!getConfig().contains("standard.backpackSize")) { getConfig().set("standard.backpackSize", 27); }
@@ -141,6 +142,7 @@ public final class ForceItemBattle extends JavaPlugin {
         getCommand("info").setExecutor(new CommandInfo());
         getCommand("stoptimer").setExecutor(new CommandStopTimer());
         getCommand("infowiki").setExecutor(new CommandInfoWiki());
+        getCommand("spawn").setExecutor(new CommandSpawn());
 
         Bukkit.getWorlds().forEach(world -> {
             world.setGameRule(GameRule.KEEP_INVENTORY, getConfig().getBoolean("settings.keepinventory"));

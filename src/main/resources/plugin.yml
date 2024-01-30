@@ -12,9 +12,11 @@ commands:
   reset:
     permission: battle.forceitem.command.reset
   bp:
+    aliases: [backpack]
   result:
   items:
   info:
   infowiki:
+  spawn:
   stoptimer:
     permission: battle.forceitem.command.stoptimer

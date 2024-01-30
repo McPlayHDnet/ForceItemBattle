@@ -150,7 +150,7 @@ public class Timer {
                             }
                         } else {
                             if (player.getInventory().contains(ForceItemBattle.getGamemanager().getCurrentMaterial(player))) {
-                                ForceItemBattle.getGamemanager().checkItem(player, ForceItemBattle.getGamemanager().getCurrentMaterial(player), false);
+                                //ForceItemBattle.getGamemanager().checkItem(player, ForceItemBattle.getGamemanager().getCurrentMaterial(player), false);
                             }
                         }
                     }

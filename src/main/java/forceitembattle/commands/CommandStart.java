@@ -81,6 +81,7 @@ public class CommandStart implements CommandExecutor {
             player.sendMessage("  §8● §7Food §8» §a" + (ForceItemBattle.getInstance().getConfig().getBoolean("settings.food") ? "§2✔" : "§4✘"));
             player.sendMessage("  §8● §7Keep Inventory §8» §a" + (ForceItemBattle.getInstance().getConfig().getBoolean("settings.keepinventory") ? "§2✔" : "§4✘"));
             player.sendMessage("  §8● §7Backpack §8» §a" + (ForceItemBattle.getInstance().getConfig().getBoolean("settings.backpack") ? "§2✔" : "§4✘"));
+            player.sendMessage("  §8● §7PvP §8» §a" + (ForceItemBattle.getInstance().getConfig().getBoolean("settings.pvp") ? "§2✔" : "§4✘"));
             player.sendMessage(" ");
             player.sendMessage(" §8● §7Useful Commands:");
             player.sendMessage("  §8» §6/info");
@@ -90,11 +91,15 @@ public class CommandStart implements CommandExecutor {
             player.setHealth(20);
             player.setSaturation(20);
             player.getInventory().clear();
-            player.getInventory().setItem(4, new ItemBuilder(Material.BARRIER).setAmount(joker).setDisplayName("§5Skip").getItemStack());
+            player.getInventory().setItem(4, new ItemBuilder(Material.BARRIER).setAmount(joker).setDisplayName("§8» §5Skip").getItemStack());
+
+            player.getInventory().addItem(new ItemStack(Material.STONE_AXE));
+            player.getInventory().addItem(new ItemStack(Material.STONE_PICKAXE));
+
             player.setLevel(0);
             player.setExp(0);
             player.setWalkSpeed(0.2f);
-            player.setStatistic(Statistic.TIME_SINCE_REST, 3);
+            player.setStatistic(Statistic.TIME_SINCE_REST, 72000); // 1hr = 3600 seconds * 20 ticks
             player.getPassengers().forEach(Entity::remove);
             player.getActivePotionEffects().forEach(potionEffect -> player.removePotionEffect(potionEffect.getType()));
             player.setGameMode(GameMode.SURVIVAL);
