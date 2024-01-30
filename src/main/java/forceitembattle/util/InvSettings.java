@@ -91,6 +91,8 @@ public class InvSettings extends InventoryBuilder {
                     ForceItemBattle.getInstance().getConfig().set("settings.keepinventory", !ForceItemBattle.getInstance().getConfig().getBoolean("settings.keepinventory"));
                     ForceItemBattle.getInstance().saveConfig();
 
+                    Bukkit.getWorlds().forEach(worlds -> worlds.setGameRule(GameRule.KEEP_INVENTORY, ForceItemBattle.getInstance().getConfig().getBoolean("settings.keepinventory")));
+
                     this.setItem(21, new ItemBuilder(Material.TOTEM_OF_UNDYING).setDisplayName("§8» " + (ForceItemBattle.getInstance().getConfig().getBoolean("settings.keepinventory") ? "§aKeep Inventory §2✔" : "§cKeep Inventory §4✘")).getItemStack());
 
                 } else if(inventoryClickEvent.getSlot() == 23) {
