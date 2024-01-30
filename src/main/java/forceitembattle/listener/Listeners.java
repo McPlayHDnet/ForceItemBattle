@@ -149,7 +149,7 @@ public class Listeners implements Listener {
                 int jokers = ForceItemBattle.getGamemanager().getJokers().get(e.getPlayer().getUniqueId());
                 if (jokers > 0) {
 
-                    ForceItemBattle.getGamemanager().getJokers().put(e.getPlayer().getUniqueId(), jokers - 1);
+                    jokers--;
 
                     ItemStack stack = e.getPlayer().getInventory().getItem(e.getPlayer().getInventory().first(Material.BARRIER));
                     if (stack.getAmount() > 1) {
@@ -180,6 +180,8 @@ public class Listeners implements Listener {
                     foundItemEvent.skipped(true);
 
                     Bukkit.getPluginManager().callEvent(foundItemEvent);
+
+                    ForceItemBattle.getGamemanager().getJokers().put(e.getPlayer().getUniqueId(), jokers);
                 } else {
                     e.getPlayer().sendMessage("§cNo more skips left.");
                 }
