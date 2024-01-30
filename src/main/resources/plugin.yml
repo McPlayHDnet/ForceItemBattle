@@ -16,5 +16,6 @@ commands:
   items:
   info:
   infowiki:
+  spawn:
   stoptimer:
     permission: battle.forceitem.command.stoptimer

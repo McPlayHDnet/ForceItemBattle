@@ -141,6 +141,7 @@ public final class ForceItemBattle extends JavaPlugin {
         getCommand("info").setExecutor(new CommandInfo());
         getCommand("stoptimer").setExecutor(new CommandStopTimer());
         getCommand("infowiki").setExecutor(new CommandInfoWiki());
+        getCommand("spawn").setExecutor(new CommandSpawn());
 
         Bukkit.getWorlds().forEach(world -> {
             world.setGameRule(GameRule.KEEP_INVENTORY, getConfig().getBoolean("settings.keepinventory"));
