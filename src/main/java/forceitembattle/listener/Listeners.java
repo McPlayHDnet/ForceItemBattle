@@ -17,6 +17,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.*;
+import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
@@ -192,24 +193,33 @@ public class Listeners implements Listener {
 
     /* Click-Event for my inventory builder */
     @EventHandler
-    public void onInventoyClick(InventoryClickEvent inventoryClickEvent) {
-        if (inventoryClickEvent.getClickedInventory() == null) {
+    public void onInventoyClick(InventoryClickEvent event) {
+        if (event.getClickedInventory() == null) {
             return;
         }
 
-        if (!(inventoryClickEvent.getWhoClicked() instanceof Player player)) {
+        if (!(event.getWhoClicked() instanceof Player player)) {
             return;
         }
 
-        if(inventoryClickEvent.getCurrentItem() == null) return;
+        ItemStack movedItem = event.getCurrentItem();
 
-        if(inventoryClickEvent.getCurrentItem().getType() == Material.BARRIER || inventoryClickEvent.getCurrentItem().getType() == Material.BUNDLE) {
-            inventoryClickEvent.setCancelled(true);
-            return;
+        if (event.getAction() == InventoryAction.HOTBAR_SWAP) {
+            movedItem = event.getCurrentItem() == null || event.getCurrentItem().getType() == Material.AIR ?
+                    event.getWhoClicked().getInventory().getItem(event.getHotbarButton())
+                    : event.getCurrentItem();
         }
 
-        if (inventoryClickEvent.getInventory().getHolder() instanceof InventoryBuilder inventoryBuilder) {
-            inventoryBuilder.handleClick(inventoryClickEvent);
+        if (movedItem != null) {
+            if (movedItem.getType() == Material.BARRIER || movedItem.getType() == Material.BUNDLE) {
+                event.setCancelled(true);
+                return;
+            }
+        }
+
+
+        if (event.getInventory().getHolder() instanceof InventoryBuilder inventoryBuilder) {
+            inventoryBuilder.handleClick(event);
             return;
         }
 
