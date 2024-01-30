@@ -17,6 +17,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.*;
+import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
@@ -133,8 +134,8 @@ public class Listeners implements Listener {
     @EventHandler
     public void onClick(PlayerInteractEvent e) { // triggered if a joker is used
         if (!ForceItemBattle.getTimer().isRunning()) return;
-        if (e.getPlayer().getInventory().getItemInMainHand().getType() != Material.BARRIER) return;
         if (!ForceItemBattle.getGamemanager().isPlayerInMaps(e.getPlayer())) return;
+        if(e.getItem() == null) return;
         /*
         if (ForceItemBattle.getGamemanager().hasDelay(e.getPlayer())) {
             e.getPlayer().sendMessage(ChatColor.RED + "Please wait a second.");
@@ -142,74 +143,87 @@ public class Listeners implements Listener {
         }
         */
 
-        if(e.getAction() == Action.RIGHT_CLICK_AIR) {
-            if(e.getPlayer().getInventory().getItemInMainHand().getType() == Material.BARRIER) {
-                ItemStack stack = e.getPlayer().getInventory().getItem(e.getPlayer().getInventory().first(Material.BARRIER));
-                if (stack.getAmount() > 1) {
-                    stack.setAmount(stack.getAmount() - 1);
+
+        if(e.getItem().getType() == Material.BARRIER) {
+            if(e.getAction() == Action.RIGHT_CLICK_AIR) {
+                int jokers = ForceItemBattle.getGamemanager().getJokers().get(e.getPlayer().getUniqueId());
+                if (jokers > 0) {
+
+                    jokers--;
+
+                    ItemStack stack = e.getPlayer().getInventory().getItem(e.getPlayer().getInventory().first(Material.BARRIER));
+                    if (stack.getAmount() > 1) {
+                        stack.setAmount(jokers);
+                    } else {
+                        stack.setType(Material.AIR);
+                    }
+                    Material mat;
+                    if (ForceItemBattle.getInstance().getConfig().getBoolean("settings.isTeamGame")) {
+                        /////////////////////////////////////// TEAMS ///////////////////////////////////////
+                        mat = ForceItemBattle.getGamemanager().getMaterialTeamsFromPlayer(e.getPlayer());
+                    } else {
+                        mat = ForceItemBattle.getGamemanager().getCurrentMaterial(e.getPlayer());
+                    }
+                    e.getPlayer().getInventory().setItem(e.getPlayer().getInventory().first(Material.BARRIER), stack);
+                    e.getPlayer().getInventory().addItem(new ItemStack(mat));
+                    if (!e.getPlayer().getInventory().contains(mat)) {
+                        e.getPlayer().getWorld().dropItemNaturally(e.getPlayer().getLocation(), new ItemStack(mat));
+                    }
+                    ForceItemBattle.getTimer().sendActionBar();
+                    //ForceItemBattle.getGamemanager().setDelay(e.getPlayer(), 2);
+
+                    ArmorStand armorStand = (ArmorStand) e.getPlayer().getPassengers().get(0);
+                    armorStand.getEquipment().setHelmet(new ItemStack(mat));
+
+                    FoundItemEvent foundItemEvent = new FoundItemEvent(e.getPlayer());
+                    foundItemEvent.setFoundItem(new ItemStack(mat));
+                    foundItemEvent.skipped(true);
+
+                    Bukkit.getPluginManager().callEvent(foundItemEvent);
+
+                    ForceItemBattle.getGamemanager().getJokers().put(e.getPlayer().getUniqueId(), jokers);
                 } else {
-                    stack.setType(Material.AIR);
+                    e.getPlayer().sendMessage("§cNo more skips left.");
                 }
-                Material mat;
-                if (ForceItemBattle.getInstance().getConfig().getBoolean("settings.isTeamGame")) {
-                    /////////////////////////////////////// TEAMS ///////////////////////////////////////
-                    mat = ForceItemBattle.getGamemanager().getMaterialTeamsFromPlayer(e.getPlayer());
-                } else {
-                    mat = ForceItemBattle.getGamemanager().getCurrentMaterial(e.getPlayer());
-                }
-                e.getPlayer().getInventory().setItem(e.getPlayer().getInventory().first(Material.BARRIER), stack);
-                e.getPlayer().getInventory().addItem(new ItemStack(mat));
-                if (!e.getPlayer().getInventory().contains(mat)) {
-                    e.getPlayer().getWorld().dropItemNaturally(e.getPlayer().getLocation(), new ItemStack(mat));
-                }
-                ForceItemBattle.getTimer().sendActionBar();
-                //ForceItemBattle.getGamemanager().setDelay(e.getPlayer(), 2);
-
-                ArmorStand armorStand = (ArmorStand) e.getPlayer().getPassengers().get(0);
-                armorStand.getEquipment().setHelmet(new ItemStack(mat));
-
-                FoundItemEvent foundItemEvent = new FoundItemEvent(e.getPlayer());
-                foundItemEvent.setFoundItem(new ItemStack(mat));
-                foundItemEvent.skipped(true);
-
-                Bukkit.getPluginManager().callEvent(foundItemEvent);
-
-                ForceItemBattle.getGamemanager().getJokers().put(e.getPlayer().getUniqueId(), ForceItemBattle.getGamemanager().getJokers().get(e.getPlayer().getUniqueId()) - 1);
-
-            } else if(e.getPlayer().getInventory().getItemInMainHand().getType() == Material.BUNDLE) {
+            } else if(e.getItem().getType() == Material.BUNDLE) {
                 ForceItemBattle.getBackpack().openPlayerBackpack(e.getPlayer());
             }
-
-
-
 
         } else if(e.getAction() == Action.RIGHT_CLICK_BLOCK) {
             e.getPlayer().sendMessage("§cClick it in the air");
         }
 
-
     }
 
     /* Click-Event for my inventory builder */
     @EventHandler
-    public void onInventoyClick(InventoryClickEvent inventoryClickEvent) {
-        if (inventoryClickEvent.getClickedInventory() == null) {
+    public void onInventoyClick(InventoryClickEvent event) {
+        if (event.getClickedInventory() == null) {
             return;
         }
 
-        if (!(inventoryClickEvent.getWhoClicked() instanceof Player player)) {
+        if (!(event.getWhoClicked() instanceof Player player)) {
             return;
         }
 
-        if(inventoryClickEvent.getCurrentItem() == null) return;
+        ItemStack movedItem = event.getCurrentItem();
 
-        if(inventoryClickEvent.getCurrentItem().getType() == Material.BARRIER || inventoryClickEvent.getCurrentItem().getType() == Material.BUNDLE) {
-            inventoryClickEvent.setCancelled(true);
-            return;
+        if (event.getAction() == InventoryAction.HOTBAR_SWAP) {
+            movedItem = event.getCurrentItem() == null || event.getCurrentItem().getType() == Material.AIR ?
+                    event.getWhoClicked().getInventory().getItem(event.getHotbarButton())
+                    : event.getCurrentItem();
         }
 
-        if (inventoryClickEvent.getInventory().getHolder() instanceof InventoryBuilder inventoryBuilder) {
-            inventoryBuilder.handleClick(inventoryClickEvent);
+        if (movedItem != null) {
+            if (movedItem.getType() == Material.BARRIER || movedItem.getType() == Material.BUNDLE) {
+                event.setCancelled(true);
+                return;
+            }
+        }
+
+
+        if (event.getInventory().getHolder() instanceof InventoryBuilder inventoryBuilder) {
+            inventoryBuilder.handleClick(event);
             return;
         }
 
@@ -325,6 +339,13 @@ public class Listeners implements Listener {
     public void onArmorInteract(PlayerInteractAtEntityEvent playerInteractAtEntityEvent) {
         if(playerInteractAtEntityEvent.getRightClicked() instanceof ArmorStand armorStand) {
             if(armorStand.isInvisible()) playerInteractAtEntityEvent.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onDrop(PlayerDropItemEvent playerDropItemEvent) {
+        if(playerDropItemEvent.getItemDrop().getItemStack().getType() == Material.BARRIER || playerDropItemEvent.getItemDrop().getItemStack().getType() == Material.BUNDLE) {
+            playerDropItemEvent.setCancelled(true);
         }
     }
 

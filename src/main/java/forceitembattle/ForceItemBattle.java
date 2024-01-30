@@ -9,6 +9,7 @@ import forceitembattle.util.*;
 import forceitembattle.util.color.ColorManager;
 import org.bukkit.Bukkit;
 import org.bukkit.GameRule;
+import org.bukkit.Location;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -32,6 +33,16 @@ public final class ForceItemBattle extends JavaPlugin {
     private static InvSettings invSettings;
     private static ItemDifficultiesManager itemDifficultiesManager;
     private static InvTeleport invTeleport;
+
+    private static Location spawnLocation;
+
+    public static void setSpawnLocation(Location spawnLocation) {
+        ForceItemBattle.spawnLocation = spawnLocation;
+    }
+
+    public static Location getSpawnLocation() {
+        return spawnLocation;
+    }
 
     private static ColorManager colorManager;
 
