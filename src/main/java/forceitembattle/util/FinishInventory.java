@@ -1,7 +1,6 @@
 package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
-import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.apache.commons.text.WordUtils;
@@ -9,22 +8,18 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 public class FinishInventory extends InventoryBuilder {
 
 
     public FinishInventory(Player targetPlayer, Integer place, boolean firstTime) {
-        super(9*6, "§8» §6Items §8● §7§kXXXXXXXXXX");
+        super(9*6, "§8» §6Items §8● §7XXXXXXXXXX");
 
         HashMap<Integer, ItemStack[]> pages = new HashMap<>();
 
