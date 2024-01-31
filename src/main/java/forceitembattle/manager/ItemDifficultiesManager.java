@@ -15,7 +15,7 @@ public class ItemDifficultiesManager {
     List<Material> medium;
     List<Material> hard;
 
-    List<DescriptionItem> descriptionItems;
+    HashMap<Material, DescriptionItem> descriptionItems;
 
     public Material getEasyMaterial() {
         Random random = new Random();
@@ -38,14 +38,14 @@ public class ItemDifficultiesManager {
         return newList.get(random.nextInt(newList.size()));
     }
 
-    public List<DescriptionItem> getDescriptionItems() {
+    public HashMap<Material, DescriptionItem> getDescriptionItems() {
         return descriptionItems;
     }
 
     public boolean itemHasDescription(Material material) {
         AtomicBoolean b = new AtomicBoolean(false);
-        this.getDescriptionItems().forEach(descriptionItem -> {
-            if(descriptionItem.material() == material) b.set(true);
+        this.getDescriptionItems().forEach((descriptionMaterial, descriptionItem) -> {
+            if(descriptionMaterial == material) b.set(true);
         });
         return b.get();
     }
@@ -53,8 +53,8 @@ public class ItemDifficultiesManager {
     public List<String> getDescriptionItem(Material material) {
         AtomicReference<List<String>> lines = new AtomicReference<>(new ArrayList<>());
         lines.get().add("");
-        this.getDescriptionItems().forEach(descriptionItem -> {
-            if(descriptionItem.material() == material) {
+        this.getDescriptionItems().forEach((descriptionMaterial, descriptionItem) -> {
+            if(descriptionMaterial == material) {
                 descriptionItem.lines().forEach(line -> lines.get().add(ChatColor.translateAlternateColorCodes('&', line)));
             }
         });
@@ -71,7 +71,7 @@ public class ItemDifficultiesManager {
     }
 
     public ItemDifficultiesManager() {
-        this.descriptionItems = new ArrayList<>();
+        this.descriptionItems = new HashMap<>();
         this.easy = Arrays.asList(
                 Material.ACTIVATOR_RAIL,
                 Material.ALLIUM,

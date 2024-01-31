@@ -1,6 +1,7 @@
 package forceitembattle.commands;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.util.DescriptionItem;
 import forceitembattle.util.RecipeInventory;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -29,15 +30,12 @@ public class CommandInfo implements CommandExecutor {
             return false;
         }
 
-        ForceItemBattle.getItemDifficultiesManager().getDescriptionItems().forEach(items -> {
-            if(items.material() == item.getType()) {
-                if(items.lines() != null) {
-                    ForceItemBattle.getItemDifficultiesManager().getDescriptionItem(items.material()).forEach(player::sendMessage);
-                } else {
-                    throw new NullPointerException("The item description is either null or empty");
-                }
-            }
-        });
+        DescriptionItem descriptionItem = ForceItemBattle.getItemDifficultiesManager().getDescriptionItems().get(item.getType());
+        if (descriptionItem.lines() != null) {
+            ForceItemBattle.getItemDifficultiesManager().getDescriptionItem(descriptionItem.material()).forEach(player::sendMessage);
+        } else {
+            throw new NullPointerException("The item description is either null or empty");
+        }
 
         RecipeInventory.showRecipe(player, item);
 
