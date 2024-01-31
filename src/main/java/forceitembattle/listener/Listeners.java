@@ -23,13 +23,8 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
 
 public class Listeners implements Listener {
 
@@ -208,11 +203,15 @@ public class Listeners implements Listener {
 
         ItemStack movedItem = event.getCurrentItem();
 
-        if (event.getAction() == InventoryAction.HOTBAR_SWAP) {
-            movedItem = event.getCurrentItem() == null || event.getCurrentItem().getType() == Material.AIR ?
-                    event.getWhoClicked().getInventory().getItem(event.getHotbarButton())
-                    : event.getCurrentItem();
+        if (event.getAction() == InventoryAction.HOTBAR_SWAP || event.getAction() == InventoryAction.HOTBAR_MOVE_AND_READD) {
+            movedItem = event.getWhoClicked().getInventory().getItem(event.getHotbarButton());
         }
+
+        // System.out.println("action: " + event.getAction());
+        // System.out.println("currentitem: " + event.getCurrentItem());
+        // System.out.println("item in hotbar: " + player.getInventory().getItem(event.getHotbarButton()));
+        // System.out.println("cursor: " + event.getCursor());
+        // System.out.println("in cursor slot: " + player.getInventory().getItem(event.getSlot()));
 
         if (movedItem != null) {
             if(!event.getView().getTitle().equals("§8» §3Settings §8● §7Menu")) {
