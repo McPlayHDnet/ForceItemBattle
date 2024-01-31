@@ -10,6 +10,8 @@ import forceitembattle.util.color.ColorManager;
 import org.bukkit.Bukkit;
 import org.bukkit.GameRule;
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -22,6 +24,8 @@ import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
 
 public final class ForceItemBattle extends JavaPlugin {
 
@@ -159,6 +163,22 @@ public final class ForceItemBattle extends JavaPlugin {
             world.setGameRule(GameRule.KEEP_INVENTORY, getConfig().getBoolean("settings.keepinventory"));
             world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
         });
+
+        if(this.getConfig().isConfigurationSection("descriptions")) {
+            ConfigurationSection configurationSection = this.getConfig().getConfigurationSection("descriptions");
+            Set<String> materialKeys;
+            if (configurationSection != null) {
+                materialKeys = configurationSection.getKeys(false);
+
+                materialKeys.forEach(keys -> {
+                    List<String> descriptions = configurationSection.getStringList(keys);
+                    keys = keys.toUpperCase();
+                    getItemDifficultiesManager().getDescriptionItems().put(Material.valueOf(keys), new DescriptionItem(Material.valueOf(keys), descriptions));
+                });
+            } else {
+                throw new NullPointerException("'descriptions' does not exist in the config.yml");
+            }
+        }
     }
 
     @Override

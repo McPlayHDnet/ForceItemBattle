@@ -23,52 +23,40 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
 
 public class Listeners implements Listener {
 
-    private Map<UUID, ItemStack> remainingJokers = new HashMap<>();
-
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
+        Player player = event.getPlayer();
         if (ForceItemBattle.getTimer().isRunning()) {
             if (!ForceItemBattle.getGamemanager().isPlayerInMaps(event.getPlayer())) {
-                event.getPlayer().getInventory().clear();
-                event.getPlayer().setLevel(0);
-                event.getPlayer().setExp(0);
-                event.getPlayer().setGameMode(GameMode.SPECTATOR);
+                player.getInventory().clear();
+                player.setLevel(0);
+                player.setExp(0);
+                player.setGameMode(GameMode.SPECTATOR);
             } else {
                 ForceItemBattle.getTimer().getBossBar().get(event.getPlayer().getUniqueId()).addPlayer(event.getPlayer());
             }
         } else {
 
-            event.getPlayer().getInventory().clear();
-            event.getPlayer().setLevel(0);
-            event.getPlayer().setExp(0);
-            event.getPlayer().setGameMode(GameMode.ADVENTURE);
-
-            event.getPlayer().setWalkSpeed(0);
-            event.getPlayer().addPotionEffect(new PotionEffect(PotionEffectType.JUMP, PotionEffect.INFINITE_DURATION, 150, false, false));
-
-            if (ForceItemBattle.getInstance().getConfig().getBoolean("settings.isTeamGame"))
-                /* Team TODO */
-                //event.getPlayer().getInventory().setItem(0, ForceItemBattle.getInvSettings().createGuiItem(Material.PAPER, ChatColor.GREEN + "Teams", "right click to choose your team"));
-            if (event.getPlayer().isOp()) {
-                //event.getPlayer().getInventory().setItem(7, ForceItemBattle.getInvSettings().createGuiItem(Material.COMMAND_BLOCK_MINECART, ChatColor.YELLOW + "Settings", "right click to edit"));
-                //event.getPlayer().getInventory().setItem(8, ForceItemBattle.getInvSettings().createGuiItem(Material.LIME_DYE, ChatColor.GREEN + "Start", "right click to start"));
-            }
+            player.getInventory().clear();
+            player.setLevel(0);
+            player.setExp(0);
+            player.setHealth(20);
+            player.setFoodLevel(20);
+            player.setGameMode(GameMode.ADVENTURE);
         }
+        event.setJoinMessage("§a» §e" + player.getName() + " §ajoined");
+
         event.getPlayer().setScoreboard(ForceItemBattle.getGamemanager().getBoard());
     }
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent playerQuitEvent) {
+        playerQuitEvent.setQuitMessage("§c« §e" + playerQuitEvent.getPlayer().getName() + " §cragequit");
         playerQuitEvent.getPlayer().getPassengers().forEach(Entity::remove);
     }
 
@@ -101,6 +89,8 @@ public class Listeners implements Listener {
 
             if(clickedItem == null) return;
 
+            if(inventoryClickEvent.getView().getTitle().startsWith("§8●")) return; //prevents from getting the needed item onClick inside the recipe
+
             if(clickedItem.getType() == currentItem) {
                 FoundItemEvent foundItemEvent = new FoundItemEvent(player);
                 foundItemEvent.setFoundItem(clickedItem);
@@ -108,6 +98,14 @@ public class Listeners implements Listener {
 
                 Bukkit.getPluginManager().callEvent(foundItemEvent);
             }
+        }
+    }
+
+    @EventHandler
+    public void onMove(PlayerMoveEvent playerMoveEvent) {
+        if(!ForceItemBattle.getTimer().isRunning()) {
+            if(playerMoveEvent.getFrom().getX() != playerMoveEvent.getTo().getX() || playerMoveEvent.getFrom().getZ() != playerMoveEvent.getTo().getZ())
+                playerMoveEvent.setTo(playerMoveEvent.getFrom());
         }
     }
 
@@ -142,7 +140,6 @@ public class Listeners implements Listener {
             return;
         }
         */
-
 
         if(e.getItem().getType() == Material.BARRIER) {
             if(e.getAction() == Action.RIGHT_CLICK_AIR) {
@@ -185,12 +182,10 @@ public class Listeners implements Listener {
                 } else {
                     e.getPlayer().sendMessage("§cNo more skips left.");
                 }
-            } else if(e.getItem().getType() == Material.BUNDLE) {
-                ForceItemBattle.getBackpack().openPlayerBackpack(e.getPlayer());
             }
 
-        } else if(e.getAction() == Action.RIGHT_CLICK_BLOCK) {
-            e.getPlayer().sendMessage("§cClick it in the air");
+        } else if(e.getItem().getType() == Material.BUNDLE) {
+            ForceItemBattle.getBackpack().openPlayerBackpack(e.getPlayer());
         }
 
     }
@@ -208,16 +203,22 @@ public class Listeners implements Listener {
 
         ItemStack movedItem = event.getCurrentItem();
 
-        if (event.getAction() == InventoryAction.HOTBAR_SWAP) {
-            movedItem = event.getCurrentItem() == null || event.getCurrentItem().getType() == Material.AIR ?
-                    event.getWhoClicked().getInventory().getItem(event.getHotbarButton())
-                    : event.getCurrentItem();
+        if (event.getAction() == InventoryAction.HOTBAR_SWAP || event.getAction() == InventoryAction.HOTBAR_MOVE_AND_READD) {
+            movedItem = event.getWhoClicked().getInventory().getItem(event.getHotbarButton());
         }
 
+        // System.out.println("action: " + event.getAction());
+        // System.out.println("currentitem: " + event.getCurrentItem());
+        // System.out.println("item in hotbar: " + player.getInventory().getItem(event.getHotbarButton()));
+        // System.out.println("cursor: " + event.getCursor());
+        // System.out.println("in cursor slot: " + player.getInventory().getItem(event.getSlot()));
+
         if (movedItem != null) {
-            if (movedItem.getType() == Material.BARRIER || movedItem.getType() == Material.BUNDLE) {
-                event.setCancelled(true);
-                return;
+            if(!event.getView().getTitle().equals("§8» §3Settings §8● §7Menu")) {
+                if (movedItem.getType() == Material.BARRIER || movedItem.getType() == Material.BUNDLE) {
+                    event.setCancelled(true);
+                    return;
+                }
             }
         }
 

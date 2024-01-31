@@ -48,7 +48,7 @@ public class RecipeInventory {
 
     public static void showRecipe(Player player, ItemStack item) {
         if (Bukkit.getRecipesFor(item).isEmpty()) {
-            player.sendMessage("§cThere is no recipe for this item. Just find it");
+            player.sendMessage("§cThere is no recipe for this item. Just find it lol");
             return;
         }
 
@@ -127,7 +127,11 @@ Slots visualisation for values below:
 
     private static Inventory createFancyRecipeInventory(ItemStack item, Recipe recipe) {
         String itemName = WordUtils.capitalize(item.getType().name().replace("_", " ").toLowerCase());
-        Inventory inventory = Bukkit.createInventory(null, 5 * 9,  itemName);
+        Inventory inventory = Bukkit.createInventory(null, 5 * 9, "§8● §6" + itemName);
+
+        for(int i = 0; i < inventory.getSize(); i++) {
+            if(i != 10 && i != 11 && i != 12 && i != 19 && i != 20 && i != 21 && i != 28 && i != 29 && i != 30) inventory.setItem(i, new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).setDisplayName("§2").getItemStack());
+        }
 
         List<ItemStack> ingredients = new ArrayList<>();
 

@@ -1,11 +1,13 @@
 package forceitembattle.manager;
 
+import forceitembattle.util.DescriptionItem;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.checkerframework.checker.units.qual.A;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -13,6 +15,8 @@ public class ItemDifficultiesManager {
     List<Material> easy;
     List<Material> medium;
     List<Material> hard;
+
+    HashMap<Material, DescriptionItem> descriptionItems;
 
     public Material getEasyMaterial() {
         Random random = new Random();
@@ -35,6 +39,31 @@ public class ItemDifficultiesManager {
         return newList.get(random.nextInt(newList.size()));
     }
 
+    public HashMap<Material, DescriptionItem> getDescriptionItems() {
+        return descriptionItems;
+    }
+
+    public boolean isItemInDescriptionList(Material material) {
+        return this.getDescriptionItems().containsKey(material);
+    }
+
+    public boolean itemHasDescription(Material material) {
+        return this.getDescriptionItems().get(material) != null;
+    }
+
+    public List<String> getDescriptionItemLines(Material material) {
+        List<String> lines = null;
+        if(this.isItemInDescriptionList(material)) {
+            if (this.itemHasDescription(material)) {
+                this.getDescriptionItems().get(material).lines().replaceAll(line -> line.replace("&", "§"));
+                lines = this.getDescriptionItems().get(material).lines();
+            } else {
+                throw new NullPointerException(material.name() + " does not have a description");
+            }
+        }
+        return lines;
+    }
+
     public List<Material> getAllItems() {
         return Stream.of(this.easy, this.medium, this.hard).flatMap(Collection::stream).collect(Collectors.toList());
     }
@@ -44,6 +73,7 @@ public class ItemDifficultiesManager {
     }
 
     public ItemDifficultiesManager() {
+        this.descriptionItems = new HashMap<>();
         this.easy = Arrays.asList(
                 Material.ACTIVATOR_RAIL,
                 Material.ALLIUM,

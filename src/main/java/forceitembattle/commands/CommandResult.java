@@ -19,7 +19,7 @@ public class CommandResult implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender commandSender, Command command, String s, String[] args) {
-        if (ForceItemBattle.getTimer().isRunning()) return false;
+        if (ForceItemBattle.getTimer().getTime() > 0) return false;
         if (!(commandSender instanceof Player player)) return false;
         if(player.isOp()) {
 
