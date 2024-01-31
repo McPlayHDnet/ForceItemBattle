@@ -30,12 +30,16 @@ public class CommandInfo implements CommandExecutor {
             return false;
         }
 
-        DescriptionItem descriptionItem = ForceItemBattle.getItemDifficultiesManager().getDescriptionItems().get(item.getType());
-        if (descriptionItem.lines() != null) {
-            ForceItemBattle.getItemDifficultiesManager().getDescriptionItemLines(descriptionItem.material()).forEach(player::sendMessage);
-        } else {
-            throw new NullPointerException("The item description is either null or empty");
+        DescriptionItem descriptionItem;
+        if(ForceItemBattle.getItemDifficultiesManager().isItemInDescriptionList(item.getType())) {
+            descriptionItem = ForceItemBattle.getItemDifficultiesManager().getDescriptionItems().get(item.getType());
+            if (descriptionItem.lines() != null) {
+                ForceItemBattle.getItemDifficultiesManager().getDescriptionItemLines(descriptionItem.material()).forEach(player::sendMessage);
+            } else {
+                throw new NullPointerException("The item description is either null or empty");
+            }
         }
+
 
         RecipeInventory.showRecipe(player, item);
 
