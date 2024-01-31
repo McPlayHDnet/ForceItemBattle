@@ -48,11 +48,7 @@ public class RecipeInventory {
 
     public static void showRecipe(Player player, ItemStack item) {
         if (Bukkit.getRecipesFor(item).isEmpty()) {
-            ForceItemBattle.getItemDifficultiesManager().getDescriptionItems().forEach(items -> {
-                if(items.material() == item.getType()) {
-                    ForceItemBattle.getItemDifficultiesManager().getDescriptionItem(items.material()).forEach(player::sendMessage);
-                }
-            });
+            player.sendMessage("§cThere is no recipe for this item. Just find it lol");
             return;
         }
 

@@ -29,6 +29,12 @@ public class CommandInfo implements CommandExecutor {
             return false;
         }
 
+        ForceItemBattle.getItemDifficultiesManager().getDescriptionItems().forEach(items -> {
+            if(items.material() == item.getType()) {
+                ForceItemBattle.getItemDifficultiesManager().getDescriptionItem(items.material()).forEach(player::sendMessage);
+            }
+        });
+
         RecipeInventory.showRecipe(player, item);
 
         return false;
