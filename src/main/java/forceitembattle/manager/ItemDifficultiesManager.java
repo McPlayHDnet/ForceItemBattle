@@ -3,6 +3,7 @@ package forceitembattle.manager;
 import forceitembattle.util.DescriptionItem;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.checkerframework.checker.units.qual.A;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -42,24 +43,25 @@ public class ItemDifficultiesManager {
         return descriptionItems;
     }
 
-    public boolean itemHasDescription(Material material) {
-        AtomicBoolean b = new AtomicBoolean(false);
-        this.getDescriptionItems().forEach((descriptionMaterial, descriptionItem) -> {
-            if(descriptionMaterial == material) b.set(true);
-        });
-        return b.get();
+    public boolean isItemInDescriptionList(Material material) {
+        return this.getDescriptionItems().containsKey(material);
     }
 
-    public List<String> getDescriptionItem(Material material) {
-        AtomicReference<List<String>> lines = new AtomicReference<>(new ArrayList<>());
-        lines.get().add("");
-        this.getDescriptionItems().forEach((descriptionMaterial, descriptionItem) -> {
-            if(descriptionMaterial == material) {
-                descriptionItem.lines().forEach(line -> lines.get().add(ChatColor.translateAlternateColorCodes('&', line)));
+    public boolean itemHasDescription(Material material) {
+        return this.getDescriptionItems().get(material) != null;
+    }
+
+    public List<String> getDescriptionItemLines(Material material) {
+        List<String> lines = null;
+        if(this.isItemInDescriptionList(material)) {
+            if (this.itemHasDescription(material)) {
+                this.getDescriptionItems().get(material).lines().replaceAll(line -> line.replace("&", "§"));
+                lines = this.getDescriptionItems().get(material).lines();
+            } else {
+                throw new NullPointerException(material.name() + " does not have a description");
             }
-        });
-        lines.get().add("");
-        return lines.get();
+        }
+        return lines;
     }
 
     public List<Material> getAllItems() {

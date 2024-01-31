@@ -116,7 +116,7 @@ public class ItemsInventory extends InventoryBuilder {
                         pages.put(initialPages, itemStackHashMap);
                     }
 
-                    itemStackHashMap.put(startSlot, new ItemBuilder(materials).setGlowing((ForceItemBattle.getItemDifficultiesManager().itemInList(materials))).setLore(ForceItemBattle.getItemDifficultiesManager().getDescriptionItem(materials)).addItemFlags(ItemFlag.values()).getItemStack());
+                    itemStackHashMap.put(startSlot, new ItemBuilder(materials).setGlowing((ForceItemBattle.getItemDifficultiesManager().itemInList(materials))).setLore(ForceItemBattle.getItemDifficultiesManager().getDescriptionItemLines(materials)).addItemFlags(ItemFlag.values()).getItemStack());
 
                     startSlot++;
 
@@ -134,7 +134,7 @@ public class ItemsInventory extends InventoryBuilder {
                             pages.put(initialPages, itemStackHashMap);
                         }
 
-                        itemStackHashMap.put(startSlot, new ItemBuilder(materials).setGlowing((ForceItemBattle.getItemDifficultiesManager().itemInList(materials))).setLore(ForceItemBattle.getItemDifficultiesManager().getDescriptionItem(materials)).addItemFlags(ItemFlag.values()).getItemStack());
+                        itemStackHashMap.put(startSlot, new ItemBuilder(materials).setGlowing((ForceItemBattle.getItemDifficultiesManager().itemInList(materials))).setLore(ForceItemBattle.getItemDifficultiesManager().getDescriptionItemLines(materials)).addItemFlags(ItemFlag.values()).getItemStack());
 
                         startSlot++;
 
@@ -153,7 +153,7 @@ public class ItemsInventory extends InventoryBuilder {
                             pages.put(initialPages, itemStackHashMap);
                         }
 
-                        itemStackHashMap.put(startSlot, new ItemBuilder(materials).setGlowing(ForceItemBattle.getItemDifficultiesManager().itemInList(materials)).setLore(ForceItemBattle.getItemDifficultiesManager().getDescriptionItem(materials)).addItemFlags(ItemFlag.values()).getItemStack());
+                        itemStackHashMap.put(startSlot, new ItemBuilder(materials).setGlowing(ForceItemBattle.getItemDifficultiesManager().itemInList(materials)).setLore(ForceItemBattle.getItemDifficultiesManager().getDescriptionItemLines(materials)).addItemFlags(ItemFlag.values()).getItemStack());
 
                         startSlot++;
 
