@@ -123,8 +123,11 @@ public class Listeners implements Listener {
         ForceItemBattle.getGamemanager().getCurrentMaterial().put(player.getUniqueId(), ForceItemBattle.getGamemanager().generateMaterial());
         player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
 
-        ArmorStand armorStand = (ArmorStand) player.getPassengers().get(0);
-        armorStand.getEquipment().setHelmet(new ItemStack(ForceItemBattle.getGamemanager().getCurrentMaterial(player)));
+
+        if (ForceItemBattle.usingArmorStand) {
+            ArmorStand armorStand = (ArmorStand) player.getPassengers().get(0);
+            armorStand.getEquipment().setHelmet(new ItemStack(ForceItemBattle.getGamemanager().getCurrentMaterial(player)));
+        }
 
         Bukkit.broadcastMessage("§a" + player.getName() + " §7" + (foundItemEvent.isSkipped() ? "skipped" : "found") + " §6" + WordUtils.capitalize(itemStack.getType().name().toLowerCase().replace("_", " ")));
     }
@@ -169,8 +172,11 @@ public class Listeners implements Listener {
                     ForceItemBattle.getTimer().sendActionBar();
                     //ForceItemBattle.getGamemanager().setDelay(e.getPlayer(), 2);
 
-                    ArmorStand armorStand = (ArmorStand) e.getPlayer().getPassengers().get(0);
-                    armorStand.getEquipment().setHelmet(new ItemStack(mat));
+
+                    if (ForceItemBattle.usingArmorStand) {
+                        ArmorStand armorStand = (ArmorStand) e.getPlayer().getPassengers().get(0);
+                        armorStand.getEquipment().setHelmet(new ItemStack(mat));
+                    }
 
                     FoundItemEvent foundItemEvent = new FoundItemEvent(e.getPlayer());
                     foundItemEvent.setFoundItem(new ItemStack(mat));
@@ -204,7 +210,9 @@ public class Listeners implements Listener {
         ItemStack movedItem = event.getCurrentItem();
 
         if (event.getAction() == InventoryAction.HOTBAR_SWAP || event.getAction() == InventoryAction.HOTBAR_MOVE_AND_READD) {
-            movedItem = event.getWhoClicked().getInventory().getItem(event.getHotbarButton());
+            if (event.getHotbarButton() >= 0) {
+                movedItem = event.getWhoClicked().getInventory().getItem(event.getHotbarButton());
+            }
         }
 
         // System.out.println("action: " + event.getAction());

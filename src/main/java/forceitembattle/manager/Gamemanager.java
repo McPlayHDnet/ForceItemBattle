@@ -117,8 +117,11 @@ public class Gamemanager {
                 currentMaterial.put(player.getUniqueId(), generateMaterial());
                 player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
 
-                ArmorStand armorStand = (ArmorStand) player.getPassengers().get(0);
-                armorStand.getEquipment().setHelmet(new ItemStack(this.getCurrentMaterial(player)));
+
+                if (ForceItemBattle.usingArmorStand) {
+                    ArmorStand armorStand = (ArmorStand) player.getPassengers().get(0);
+                    armorStand.getEquipment().setHelmet(new ItemStack(this.getCurrentMaterial(player)));
+                }
 
                 ForceItemBattle.getInstance().logToFile("[" + ForceItemBattle.getTimer().getTime() + "] | " + player.getName() + " got item: " + material.toString() + " | new points: " + score.get(player.getUniqueId()));
             }
@@ -233,8 +236,11 @@ public class Gamemanager {
             currentMaterial.put(p.getUniqueId(), generateMaterial());
         }
 
-        ArmorStand armorStand = (ArmorStand) p.getPassengers().get(0);
-        armorStand.getEquipment().setHelmet(new ItemStack(this.getCurrentMaterial(p)));
+
+        if (ForceItemBattle.usingArmorStand) {
+            ArmorStand armorStand = (ArmorStand) p.getPassengers().get(0);
+            armorStand.getEquipment().setHelmet(new ItemStack(this.getCurrentMaterial(p)));
+        }
 
         ForceItemBattle.getTimer().sendActionBar();
     }
