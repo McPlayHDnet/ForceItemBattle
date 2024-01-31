@@ -24,7 +24,7 @@ public class FinishInventory extends InventoryBuilder {
 
 
     public FinishInventory(Player targetPlayer, Integer place, boolean firstTime) {
-        super(9*6, "§8» §6Items §8● §7§k" + targetPlayer.getName());
+        super(9*6, "§8» §6Items §8● §7§kXXXXXXXXXX");
 
         HashMap<Integer, ItemStack[]> pages = new HashMap<>();
 

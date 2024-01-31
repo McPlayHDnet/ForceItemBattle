@@ -187,8 +187,6 @@ public class Listeners implements Listener {
                 } else {
                     e.getPlayer().sendMessage("§cNo more skips left.");
                 }
-            } else if(e.getAction() == Action.RIGHT_CLICK_BLOCK) {
-                e.getPlayer().sendMessage("§cClick it in the air");
             }
 
         } else if(e.getItem().getType() == Material.BUNDLE) {

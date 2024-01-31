@@ -2,6 +2,7 @@ package forceitembattle.commands;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.util.RecipeInventory;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;

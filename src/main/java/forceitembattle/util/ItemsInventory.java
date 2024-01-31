@@ -1,23 +1,16 @@
 package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.TextComponent;
-import org.apache.commons.text.WordUtils;
-import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.Sound;
-import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.scheduler.BukkitRunnable;
 
-import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class ItemsInventory extends InventoryBuilder {
 
@@ -26,34 +19,74 @@ public class ItemsInventory extends InventoryBuilder {
         super(9*6, "§8» §6Items §7(" + ForceItemBattle.getItemDifficultiesManager().getAllItems().size() + ") §8● §7Settings");
 
         HashMap<Integer, HashMap<Integer, ItemStack>> pages = new HashMap<>();
-        HashMap<Integer, ItemStack> itemStackHashMap = new HashMap<>();
 
-        int startSlot = 9;
-        int initialPages = 0;
-        int items = 0;
         final int[] currentPage = {0};
-
+        AtomicReference<Material> currentFilter = new AtomicReference<>(Material.LIME_DYE);
 
         /* TOP-BORDER */
         this.setItems(0, 8, new ItemBuilder(Material.ORANGE_STAINED_GLASS_PANE).setDisplayName("§6").addItemFlags(ItemFlag.values()).getItemStack());
+
+
+        this.setItem(2, new ItemBuilder(Material.LIME_DYE).setDisplayName("§aAll items").setGlowing(currentFilter.get() == Material.LIME_DYE).addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
+            if(currentFilter.get() == Material.LIME_DYE) return;
+            currentFilter.set(Material.LIME_DYE);
+            currentPage[0] = 0;
+
+            player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
+            this.setItems(9, this.getInventory().getSize() - 1, new ItemStack(Material.AIR));
+            this.setFilteredItems(currentFilter.get(), currentPage[0], pages);
+
+        });
+
+        this.setItem(3, new ItemBuilder(Material.ORANGE_DYE).setDisplayName("§6Included Items").setGlowing(currentFilter.get() == Material.ORANGE_DYE).addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
+            if(currentFilter.get() == Material.ORANGE_DYE) return;
+            currentFilter.set(Material.ORANGE_DYE);
+            currentPage[0] = 0;
+
+            player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
+            this.setItems(9, this.getInventory().getSize() - 1, new ItemStack(Material.AIR));
+            this.setFilteredItems(currentFilter.get(), currentPage[0], pages);
+
+        });
+
+        this.setItem(5, new ItemBuilder(Material.LIGHT_BLUE_DYE).setDisplayName("§bIncluded Items with description").setGlowing(currentFilter.get() == Material.LIGHT_BLUE_DYE).addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
+            if(currentFilter.get() == Material.LIGHT_BLUE_DYE) return;
+            currentFilter.set(Material.LIGHT_BLUE_DYE);
+            currentPage[0] = 0;
+
+            player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
+            this.setItems(9, this.getInventory().getSize() - 1, new ItemStack(Material.AIR));
+            this.setFilteredItems(currentFilter.get(), currentPage[0], pages);
+
+        });
+
+        this.setItem(6, new ItemBuilder(Material.GRAY_DYE).setDisplayName("§7Excluded Items").setGlowing(currentFilter.get() == Material.GRAY_DYE).addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
+            if(currentFilter.get() == Material.GRAY_DYE) return;
+            currentFilter.set(Material.GRAY_DYE);
+            currentPage[0] = 0;
+
+            player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
+            this.setItems(9, this.getInventory().getSize() - 1, new ItemStack(Material.AIR));
+            this.setFilteredItems(currentFilter.get(), currentPage[0], pages);
+
+        });
+
 
         this.setItem(0, new ItemBuilder(Material.RED_STAINED_GLASS_PANE).setDisplayName("§4« §cPrevious Page").addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
             if(currentPage[0] != 0) {
                 currentPage[0]--;
 
                 player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 1, 1);
-                player.sendMessage("Current page: " + currentPage[0] + " with " + pages.get(currentPage[0]).size() + " items in it");
 
                 pages.get(currentPage[0]).forEach(this::setItem);
 
             } else player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
         });
         this.setItem(8, new ItemBuilder(Material.LIME_STAINED_GLASS_PANE).setDisplayName("§2» §aNext Page").addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
-            if(currentPage[0] < (int)(Arrays.stream(Material.values()).filter(Material::isItem).count() / (this.getInventory().getSize() - 9))) {
+            if(currentPage[0] < (pages.size() - 1)) {
                 currentPage[0]++;
 
                 player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 1, 1);
-                player.sendMessage("Current page: " + currentPage[0] + " with " + pages.get(currentPage[0]).size() + " items in it");
 
                 this.setItems(9, this.getInventory().getSize() - 1, new ItemStack(Material.AIR));
                 pages.get(currentPage[0]).forEach(this::setItem);
@@ -62,31 +95,102 @@ public class ItemsInventory extends InventoryBuilder {
         });
 
 
+        this.setFilteredItems(currentFilter.get(), currentPage[0], pages);
+
+
+        this.addClickHandler(inventoryClickEvent -> inventoryClickEvent.setCancelled(true));
+    }
+
+    private void setFilteredItems(Material currentFilter, int currentPage, HashMap<Integer, HashMap<Integer, ItemStack>> pages) {
+        int startSlot = 9;
+        int initialPages = 0;
+        int items = 0;
+
+        HashMap<Integer, ItemStack> itemStackHashMap = new HashMap<>();
+        pages.clear();
         for (Material materials : Material.values()) {
             if(materials.isItem() && !materials.isAir()) {
-                if (!pages.containsKey(initialPages)) {
-                    itemStackHashMap = new HashMap<>();
-                    pages.put(initialPages, itemStackHashMap);
+                if(currentFilter == Material.LIME_DYE) {
+                    if (!pages.containsKey(initialPages)) {
+                        itemStackHashMap = new HashMap<>();
+                        pages.put(initialPages, itemStackHashMap);
+                    }
+
+                    itemStackHashMap.put(startSlot, new ItemBuilder(materials).setGlowing((ForceItemBattle.getItemDifficultiesManager().itemInList(materials))).setLore(ForceItemBattle.getItemDifficultiesManager().getDescriptionItem(materials)).addItemFlags(ItemFlag.values()).getItemStack());
+
+                    startSlot++;
+
+                    if(startSlot == this.getInventory().getSize()) {
+                        startSlot = 9;
+                        initialPages++;
+                    }
+
+                    items++;
+
+                } else if(currentFilter == Material.ORANGE_DYE) {
+                    if(ForceItemBattle.getItemDifficultiesManager().itemInList(materials)) {
+                        if (!pages.containsKey(initialPages)) {
+                            itemStackHashMap = new HashMap<>();
+                            pages.put(initialPages, itemStackHashMap);
+                        }
+
+                        itemStackHashMap.put(startSlot, new ItemBuilder(materials).setGlowing((ForceItemBattle.getItemDifficultiesManager().itemInList(materials))).setLore(ForceItemBattle.getItemDifficultiesManager().getDescriptionItem(materials)).addItemFlags(ItemFlag.values()).getItemStack());
+
+                        startSlot++;
+
+                        if(startSlot == this.getInventory().getSize()) {
+                            startSlot = 9;
+                            initialPages++;
+                        }
+
+                        items++;
+                    }
+
+                } else if(currentFilter == Material.LIGHT_BLUE_DYE) {
+                    if(ForceItemBattle.getItemDifficultiesManager().itemInList(materials) && ForceItemBattle.getItemDifficultiesManager().itemHasDescription(materials)) {
+                        if (!pages.containsKey(initialPages)) {
+                            itemStackHashMap = new HashMap<>();
+                            pages.put(initialPages, itemStackHashMap);
+                        }
+
+                        itemStackHashMap.put(startSlot, new ItemBuilder(materials).setGlowing(ForceItemBattle.getItemDifficultiesManager().itemInList(materials)).setLore(ForceItemBattle.getItemDifficultiesManager().getDescriptionItem(materials)).addItemFlags(ItemFlag.values()).getItemStack());
+
+                        startSlot++;
+
+                        if(startSlot == this.getInventory().getSize()) {
+                            startSlot = 9;
+                            initialPages++;
+                        }
+
+                        items++;
+                    }
+
+                } else if(currentFilter == Material.GRAY_DYE) {
+                    if(!ForceItemBattle.getItemDifficultiesManager().itemInList(materials)) {
+                        if (!pages.containsKey(initialPages)) {
+                            itemStackHashMap = new HashMap<>();
+                            pages.put(initialPages, itemStackHashMap);
+                        }
+
+                        itemStackHashMap.put(startSlot, new ItemBuilder(materials).addItemFlags(ItemFlag.values()).getItemStack());
+
+                        startSlot++;
+
+                        if(startSlot == this.getInventory().getSize()) {
+                            startSlot = 9;
+                            initialPages++;
+                        }
+
+                        items++;
+                    }
                 }
 
-                itemStackHashMap.put(startSlot, new ItemBuilder(materials).setGlowing((ForceItemBattle.getItemDifficultiesManager().itemInList(materials))).getItemStack());
 
-                startSlot++;
-
-                if(startSlot == this.getInventory().getSize()) {
-                    startSlot = 9;
-                    initialPages++;
-                }
-
-                items++;
             }
 
         }
 
 
-        pages.get(currentPage[0]).forEach(this::setItem);
-
-
-        this.addClickHandler(inventoryClickEvent -> inventoryClickEvent.setCancelled(true));
+        pages.get(currentPage).forEach(this::setItem);
     }
 }

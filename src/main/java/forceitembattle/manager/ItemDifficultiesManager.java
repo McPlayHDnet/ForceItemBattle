@@ -1,11 +1,12 @@
 package forceitembattle.manager;
 
+import forceitembattle.util.DescriptionItem;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -13,6 +14,8 @@ public class ItemDifficultiesManager {
     List<Material> easy;
     List<Material> medium;
     List<Material> hard;
+
+    List<DescriptionItem> descriptionItems;
 
     public Material getEasyMaterial() {
         Random random = new Random();
@@ -35,6 +38,30 @@ public class ItemDifficultiesManager {
         return newList.get(random.nextInt(newList.size()));
     }
 
+    public List<DescriptionItem> getDescriptionItems() {
+        return descriptionItems;
+    }
+
+    public boolean itemHasDescription(Material material) {
+        AtomicBoolean b = new AtomicBoolean(false);
+        this.getDescriptionItems().forEach(descriptionItem -> {
+            if(descriptionItem.material() == material) b.set(true);
+        });
+        return b.get();
+    }
+
+    public List<String> getDescriptionItem(Material material) {
+        AtomicReference<List<String>> lines = new AtomicReference<>(new ArrayList<>());
+        lines.get().add("");
+        this.getDescriptionItems().forEach(descriptionItem -> {
+            if(descriptionItem.material() == material) {
+                descriptionItem.lines().forEach(line -> lines.get().add(ChatColor.translateAlternateColorCodes('&', line)));
+            }
+        });
+        lines.get().add("");
+        return lines.get();
+    }
+
     public List<Material> getAllItems() {
         return Stream.of(this.easy, this.medium, this.hard).flatMap(Collection::stream).collect(Collectors.toList());
     }
@@ -44,6 +71,7 @@ public class ItemDifficultiesManager {
     }
 
     public ItemDifficultiesManager() {
+        this.descriptionItems = new ArrayList<>();
         this.easy = Arrays.asList(
                 Material.ACTIVATOR_RAIL,
                 Material.ALLIUM,
@@ -127,6 +155,7 @@ public class ItemDifficultiesManager {
                 Material.CHARCOAL,
                 Material.CHEST,
                 Material.CHEST_MINECART,
+                Material.CHICKEN,
                 Material.CHISELED_BOOKSHELF,
                 Material.CHISELED_COPPER,
                 Material.CHISELED_DEEPSLATE,
