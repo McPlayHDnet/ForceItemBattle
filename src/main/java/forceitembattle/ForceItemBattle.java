@@ -12,6 +12,7 @@ import org.bukkit.GameRule;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -167,16 +168,18 @@ public final class ForceItemBattle extends JavaPlugin {
 
         if(this.getConfig().isConfigurationSection("descriptions")) {
             ConfigurationSection configurationSection = this.getConfig().getConfigurationSection("descriptions");
-            Set<String> materialKeys = configurationSection.getKeys(false);
+            Set<String> materialKeys;
+            if (configurationSection != null) {
+                materialKeys = configurationSection.getKeys(false);
 
-            materialKeys.forEach(keys -> {
-                List<String> descriptions = configurationSection.getStringList(keys);
-                getItemDifficultiesManager().getDescriptionItems().add(new DescriptionItem(Material.valueOf(keys), descriptions));
-            });
-
+                materialKeys.forEach(keys -> {
+                    List<String> descriptions = configurationSection.getStringList(keys);
+                    getItemDifficultiesManager().getDescriptionItems().add(new DescriptionItem(Material.valueOf(keys), descriptions));
+                });
+            } else {
+                throw new NullPointerException("'descriptions' does not exist in the config.yml");
+            }
         }
-
-
     }
 
     @Override

@@ -31,7 +31,11 @@ public class CommandInfo implements CommandExecutor {
 
         ForceItemBattle.getItemDifficultiesManager().getDescriptionItems().forEach(items -> {
             if(items.material() == item.getType()) {
-                ForceItemBattle.getItemDifficultiesManager().getDescriptionItem(items.material()).forEach(player::sendMessage);
+                if(items.lines() != null) {
+                    ForceItemBattle.getItemDifficultiesManager().getDescriptionItem(items.material()).forEach(player::sendMessage);
+                } else {
+                    throw new NullPointerException("The item description is either null or empty");
+                }
             }
         });
 
