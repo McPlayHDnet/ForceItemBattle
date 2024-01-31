@@ -134,7 +134,7 @@ public class Timer {
             public void run() {
 
                 sendActionBar();
-                if (!isRunning()) {
+                if (!isRunning() || getTime() <= 0) {
                     return;
                 }
                 setTime(getTime() - 1);
@@ -208,9 +208,9 @@ public class Timer {
                 if (getTime()<=0) {
                     Bukkit.broadcastMessage(ChatColor.GOLD + "<< Force Item Battle is over >>");
                     Bukkit.getOnlinePlayers().forEach(player -> player.playSound(player, Sound.BLOCK_END_PORTAL_SPAWN, 1, 1));
-                    setRunning(false);
                     ForceItemBattle.getGamemanager().finishGame();
                     ForceItemBattle.getInstance().logToFile("<< Force Item Battle is over >>");
+                    cancel();
                 }
             }
         }.runTaskTimer(ForceItemBattle.getInstance(), 20, 20);
