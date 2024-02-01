@@ -116,13 +116,15 @@ public class CommandStart implements CommandExecutor {
                 ForceItemBattle.getBackpack().createBackpack(player);
             }
 
-            ArmorStand itemDisplay = (ArmorStand) player.getWorld().spawnEntity(player.getLocation().add(0, 2, 0), EntityType.ARMOR_STAND);
-            itemDisplay.getEquipment().setHelmet(new ItemStack(ForceItemBattle.getGamemanager().getCurrentMaterial(player)));
-            itemDisplay.setInvisible(true);
-            itemDisplay.setInvulnerable(true);
-            //itemDisplay.setGlowing(true);
-            itemDisplay.setGravity(false);
-            player.addPassenger(itemDisplay);
+            if (ForceItemBattle.usingArmorStand) {
+                ArmorStand itemDisplay = (ArmorStand) player.getWorld().spawnEntity(player.getLocation().add(0, 2, 0), EntityType.ARMOR_STAND);
+                itemDisplay.getEquipment().setHelmet(new ItemStack(ForceItemBattle.getGamemanager().getCurrentMaterial(player)));
+                itemDisplay.setInvisible(true);
+                itemDisplay.setInvulnerable(true);
+                //itemDisplay.setGlowing(true);
+                itemDisplay.setGravity(false);
+                player.addPassenger(itemDisplay);
+            }
 
         });
         Bukkit.getWorld("world").setTime(0);

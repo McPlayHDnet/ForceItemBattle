@@ -48,6 +48,8 @@ public final class ForceItemBattle extends JavaPlugin {
         return spawnLocation;
     }
 
+    public static boolean usingArmorStand = false;
+
     private static ColorManager colorManager;
 
     @Override
