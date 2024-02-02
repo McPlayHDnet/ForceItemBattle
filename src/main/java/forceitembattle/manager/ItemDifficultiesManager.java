@@ -41,7 +41,6 @@ public class ItemDifficultiesManager {
         Random random = new Random();
         List<Material> newList = new ArrayList<>(Stream.of(easy, medium, hard)
                 .flatMap(List::stream)
-                .filter(item -> (forceItemBattle.getConfig().getBoolean("settings.nether") ? !this.netherEndItems.contains(item) : null))
                 .toList());
 
         if(!forceItemBattle.getConfig().getBoolean("settings.nether")) {
