@@ -99,7 +99,6 @@ public class CommandStart implements CommandExecutor {
             player.sendMessage("  §8● §7Backpack §8» §a" + (this.forceItemBattle.getConfig().getBoolean("settings.backpack") ? "§2✔" : "§4✘"));
             player.sendMessage("  §8● §7PvP §8» §a" + (this.forceItemBattle.getConfig().getBoolean("settings.pvp") ? "§2✔" : "§4✘"));
             player.sendMessage("  §8● §7Nether §8» §a" + (this.forceItemBattle.getConfig().getBoolean("settings.nether") ? "§2✔" : "§4✘"));
-            player.sendMessage("  §8● §7End §8» §a" + (this.forceItemBattle.getConfig().getBoolean("settings.end") ? "§2✔" : "§4✘"));
             player.sendMessage(" ");
             player.sendMessage(" §8● §7Useful Commands:");
             player.sendMessage("  §8» §6/info");
