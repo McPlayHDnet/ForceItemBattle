@@ -127,7 +127,7 @@ public class CommandStart implements CommandExecutor {
                 this.forceItemBattle.getBackpack().createBackpack(player);
             }
 
-            if(this.forceItemBattle.getConfig().getBoolean("settings.nether") || this.forceItemBattle.getConfig().getBoolean("settings.end")) {
+            if(!this.forceItemBattle.getConfig().getBoolean("settings.nether")) {
                 ArmorStand itemDisplay = (ArmorStand) player.getWorld().spawnEntity(player.getLocation().add(0, 2, 0), EntityType.ARMOR_STAND);
                 if(itemDisplay.getEquipment() != null) {
                     itemDisplay.getEquipment().setHelmet(new ItemStack(forceItemPlayer.currentMaterial()));

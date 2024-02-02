@@ -138,7 +138,7 @@ public class Listeners implements Listener {
 
         player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
 
-        if(this.forceItemBattle.getConfig().getBoolean("settings.nether")) {
+        if(!this.forceItemBattle.getConfig().getBoolean("settings.nether")) {
             ArmorStand armorStand = (ArmorStand) player.getPassengers().get(0);
             if(armorStand.getEquipment() != null) armorStand.getEquipment().setHelmet(new ItemStack(forceItemPlayer.currentMaterial()));
         }
@@ -337,7 +337,7 @@ public class Listeners implements Listener {
         player.getInventory().setItem(4, jokers);
         player.getInventory().setItem(8, new ItemBuilder(Material.BUNDLE).setDisplayName("§8» §eBackpack").getItemStack());
 
-        if(this.forceItemBattle.getConfig().getBoolean("settings.nether")) {
+        if(!this.forceItemBattle.getConfig().getBoolean("settings.nether")) {
             ArmorStand itemDisplay = (ArmorStand) player.getWorld().spawnEntity(player.getLocation().add(0, 2, 0), EntityType.ARMOR_STAND);
             if(itemDisplay.getEquipment() != null) {
                 itemDisplay.getEquipment().setHelmet(new ItemStack(forceItemPlayer.currentMaterial()));
