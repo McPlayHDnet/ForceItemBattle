@@ -1,5 +1,6 @@
 package forceitembattle.manager;
 
+import forceitembattle.ForceItemBattle;
 import forceitembattle.util.DescriptionItem;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -12,11 +13,16 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ItemDifficultiesManager {
-    List<Material> easy;
-    List<Material> medium;
-    List<Material> hard;
 
-    HashMap<Material, DescriptionItem> descriptionItems;
+    private ForceItemBattle forceItemBattle;
+
+    private final List<Material> easy;
+    private final List<Material> medium;
+    private final List<Material> hard;
+
+    private final List<Material> netherEndItems;
+
+    private final HashMap<Material, DescriptionItem> descriptionItems;
 
     public Material getEasyMaterial() {
         Random random = new Random();
@@ -26,17 +32,37 @@ public class ItemDifficultiesManager {
     public Material getMediumMaterial() {
         Random random = new Random();
         List<Material> newList = Stream.of(easy, medium)
-                .flatMap(Collection::stream)
-                .collect(Collectors.toList());
+                .flatMap(List::stream)
+                .toList();
         return newList.get(random.nextInt(newList.size()));
     }
 
     public Material getHardMaterial() {
         Random random = new Random();
-        List<Material> newList = Stream.of(easy, medium, hard)
-                .flatMap(Collection::stream)
-                .collect(Collectors.toList());
+        List<Material> newList = new ArrayList<>(Stream.of(easy, medium, hard)
+                .flatMap(List::stream)
+                .toList());
+
+        if(!forceItemBattle.getConfig().getBoolean("settings.nether")) {
+            newList.removeAll(this.netherEndItems);
+        } else {
+            newList.addAll(this.netherEndItems);
+        }
+
         return newList.get(random.nextInt(newList.size()));
+    }
+
+    public void toggleNetherItems() {
+        List<Material> newList = new ArrayList<>(Stream.of(this.easy, this.medium, this.hard)
+                .flatMap(List::stream)
+                .toList());
+
+        if(!forceItemBattle.getConfig().getBoolean("settings.nether")) {
+            newList.removeAll(this.netherEndItems);
+        } else {
+            newList.addAll(this.netherEndItems);
+        }
+
     }
 
     public HashMap<Material, DescriptionItem> getDescriptionItems() {
@@ -65,15 +91,133 @@ public class ItemDifficultiesManager {
     }
 
     public List<Material> getAllItems() {
-        return Stream.of(this.easy, this.medium, this.hard).flatMap(Collection::stream).collect(Collectors.toList());
+        List<Material> newList = new ArrayList<>(Stream.of(this.easy, this.medium, this.hard)
+                .flatMap(List::stream)
+                .toList());
+
+        if(!forceItemBattle.getConfig().getBoolean("settings.nether")) {
+            newList.removeAll(this.netherEndItems);
+        } else {
+            newList.addAll(this.netherEndItems);
+        }
+        return newList;
     }
 
     public boolean itemInList(Material material) {
         return this.getAllItems().contains(material);
     }
 
-    public ItemDifficultiesManager() {
+    public ItemDifficultiesManager(ForceItemBattle forceItemBattle) {
+        this.forceItemBattle = forceItemBattle;
+
         this.descriptionItems = new HashMap<>();
+        this.netherEndItems = Arrays.asList(
+                Material.BASALT,
+                Material.POLISHED_BASALT,
+                Material.BLACKSTONE,
+                Material.BLACKSTONE_SLAB,
+                Material.BLACKSTONE_STAIRS,
+                Material.BLACKSTONE_WALL,
+                Material.CHISELED_POLISHED_BLACKSTONE,
+                Material.CRACKED_POLISHED_BLACKSTONE_BRICKS,
+                Material.GILDED_BLACKSTONE,
+                Material.POLISHED_BLACKSTONE,
+                Material.POLISHED_BLACKSTONE_BRICK_SLAB,
+                Material.POLISHED_BLACKSTONE_BRICK_STAIRS,
+                Material.POLISHED_BLACKSTONE_BRICK_WALL,
+                Material.POLISHED_BLACKSTONE_BRICKS,
+                Material.POLISHED_BLACKSTONE_SLAB,
+                Material.POLISHED_BLACKSTONE_STAIRS,
+                Material.POLISHED_BLACKSTONE_WALL,
+                Material.CRIMSON_BUTTON,
+                Material.CRIMSON_DOOR,
+                Material.CRIMSON_FENCE,
+                Material.CRIMSON_FENCE_GATE,
+                Material.CRIMSON_FUNGUS,
+                Material.CRIMSON_HYPHAE,
+                Material.CRIMSON_NYLIUM,
+                Material.CRIMSON_PLANKS,
+                Material.CRIMSON_PRESSURE_PLATE,
+                Material.CRIMSON_ROOTS,
+                Material.CRIMSON_SIGN,
+                Material.CRIMSON_SLAB,
+                Material.CRIMSON_STAIRS,
+                Material.CRIMSON_STEM,
+                Material.CRIMSON_TRAPDOOR,
+                Material.STRIPPED_CRIMSON_HYPHAE,
+                Material.STRIPPED_CRIMSON_STEM,
+                Material.WEEPING_VINES,
+                Material.QUARTZ_BLOCK,
+                Material.CHISELED_QUARTZ_BLOCK,
+                Material.NETHER_QUARTZ_ORE,
+                Material.QUARTZ_PILLAR,
+                Material.QUARTZ_SLAB,
+                Material.QUARTZ_STAIRS,
+                Material.SMOOTH_QUARTZ,
+                Material.SMOOTH_QUARTZ_SLAB,
+                Material.SMOOTH_QUARTZ_STAIRS,
+                Material.RED_NETHER_BRICK_SLAB,
+                Material.RED_NETHER_BRICK_STAIRS,
+                Material.RED_NETHER_BRICK_WALL,
+                Material.RED_NETHER_BRICKS,
+                Material.MAGMA_BLOCK,
+                Material.SOUL_SAND,
+                Material.SOUL_SOIL,
+                Material.NETHER_WART,
+                Material.NETHER_WART_BLOCK,
+                Material.WARPED_BUTTON,
+                Material.WARPED_DOOR,
+                Material.WARPED_FENCE,
+                Material.CRIMSON_FENCE_GATE,
+                Material.WARPED_FUNGUS,
+                Material.WARPED_HYPHAE,
+                Material.WARPED_NYLIUM,
+                Material.WARPED_PLANKS,
+                Material.WARPED_PRESSURE_PLATE,
+                Material.WARPED_ROOTS,
+                Material.WARPED_SIGN,
+                Material.WARPED_SLAB,
+                Material.WARPED_STAIRS,
+                Material.WARPED_STEM,
+                Material.WARPED_TRAPDOOR,
+                Material.STRIPPED_WARPED_HYPHAE,
+                Material.STRIPPED_WARPED_STEM,
+                Material.TWISTING_VINES,
+                Material.WARPED_FUNGUS,
+                Material.WARPED_FUNGUS_ON_A_STICK,
+                Material.END_CRYSTAL,
+                Material.ENDER_EYE,
+                Material.NETHER_WART,
+                Material.SHULKER_BOX,
+                Material.SHULKER_SHELL,
+                Material.CYAN_SHULKER_BOX,
+                Material.BROWN_SHULKER_BOX,
+                Material.BLACK_SHULKER_BOX,
+                Material.BLUE_SHULKER_BOX,
+                Material.GRAY_SHULKER_BOX,
+                Material.GREEN_SHULKER_BOX,
+                Material.LIGHT_BLUE_SHULKER_BOX,
+                Material.LIGHT_GRAY_SHULKER_BOX,
+                Material.LIME_SHULKER_BOX,
+                Material.MAGENTA_SHULKER_BOX,
+                Material.ORANGE_SHULKER_BOX,
+                Material.PINK_SHULKER_BOX,
+                Material.PURPLE_SHULKER_BOX,
+                Material.RED_SHULKER_BOX,
+                Material.WHITE_SHULKER_BOX,
+                Material.YELLOW_SHULKER_BOX,
+                Material.CHORUS_FRUIT,
+                Material.ELYTRA,
+                Material.DRAGON_HEAD,
+                Material.SPECTRAL_ARROW,
+                Material.BLAZE_POWDER,
+                Material.BLAZE_ROD,
+                Material.END_STONE,
+                Material.END_STONE_BRICK_SLAB,
+                Material.END_STONE_BRICK_STAIRS,
+                Material.END_STONE_BRICKS,
+                Material.END_STONE_BRICK_WALL
+        );
         this.easy = Arrays.asList(
                 Material.ACTIVATOR_RAIL,
                 Material.ALLIUM,
@@ -159,7 +303,6 @@ public class ItemDifficultiesManager {
                 Material.CHEST_MINECART,
                 Material.CHICKEN,
                 Material.CHISELED_BOOKSHELF,
-                Material.CHISELED_COPPER,
                 Material.CHISELED_DEEPSLATE,
                 Material.CHISELED_SANDSTONE,
                 Material.CHISELED_STONE_BRICKS,

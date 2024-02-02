@@ -2,6 +2,7 @@ package forceitembattle.commands;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.util.DescriptionItem;
+import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.RecipeInventory;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -13,17 +14,30 @@ import org.bukkit.inventory.ItemStack;
 
 public class CommandInfo implements CommandExecutor {
 
+    private ForceItemBattle forceItemBattle;
+
+    public CommandInfo(ForceItemBattle forceItemBattle) {
+        this.forceItemBattle = forceItemBattle;
+        this.forceItemBattle.getCommand("info").setExecutor(this);
+    }
 
     @Override
     public boolean onCommand(CommandSender commandSender, Command command, String s, String[] strings) {
         if (!(commandSender instanceof Player player)) return false;
 
-        ItemStack item;
-        if (ForceItemBattle.getTimer().isRunning()) {
-            item = new ItemStack(ForceItemBattle.getGamemanager().getCurrentMaterial(player));
+        ItemStack item = null;
+        if (this.forceItemBattle.getGamemanager().isMidGame()) {
+            if(this.forceItemBattle.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
+                ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
+                item = new ItemStack(forceItemPlayer.currentMaterial());
+            } else {
+                player.sendMessage("§cYou are not playing.");
+            }
         } else {
             item = player.getInventory().getItemInMainHand();
         }
+
+        if(item == null) return false;
 
         if (item.getType() == Material.AIR) {
             player.sendMessage("§cYou need to hold an item in your hand!");
@@ -31,17 +45,17 @@ public class CommandInfo implements CommandExecutor {
         }
 
         DescriptionItem descriptionItem;
-        if(ForceItemBattle.getItemDifficultiesManager().isItemInDescriptionList(item.getType())) {
-            descriptionItem = ForceItemBattle.getItemDifficultiesManager().getDescriptionItems().get(item.getType());
+        if(this.forceItemBattle.getItemDifficultiesManager().isItemInDescriptionList(item.getType())) {
+            descriptionItem = this.forceItemBattle.getItemDifficultiesManager().getDescriptionItems().get(item.getType());
             if (descriptionItem.lines() != null) {
-                ForceItemBattle.getItemDifficultiesManager().getDescriptionItemLines(descriptionItem.material()).forEach(player::sendMessage);
+                this.forceItemBattle.getItemDifficultiesManager().getDescriptionItemLines(descriptionItem.material()).forEach(player::sendMessage);
             } else {
                 throw new NullPointerException("The item description is either null or empty");
             }
         }
 
 
-        RecipeInventory.showRecipe(player, item);
+        this.forceItemBattle.getRecipeInventory().showRecipe(player, item);
 
         return false;
     }

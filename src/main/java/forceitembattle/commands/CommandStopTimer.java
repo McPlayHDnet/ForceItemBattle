@@ -8,14 +8,22 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public class CommandStopTimer implements CommandExecutor {
+
+    private ForceItemBattle forceItemBattle;
+
+    public CommandStopTimer(ForceItemBattle forceItemBattle) {
+        this.forceItemBattle = forceItemBattle;
+        this.forceItemBattle.getCommand("stoptimer").setExecutor(this);
+    }
+
     @Override
     public boolean onCommand(CommandSender commandSender, Command command, String s, String[] strings) {
         if (!(commandSender instanceof Player)) return false;
-        if (!ForceItemBattle.getTimer().isRunning()) {
+        if (!this.forceItemBattle.getGamemanager().isMidGame()) {
             commandSender.sendMessage(ChatColor.RED + "The game is not running. Start it first with /start");
             return false;
         }
-        ForceItemBattle.getTimer().setTime(1);
+        this.forceItemBattle.getTimer().setTime(1);
         return false;
     }
 }

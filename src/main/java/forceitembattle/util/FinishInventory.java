@@ -1,6 +1,7 @@
 package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
+import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.apache.commons.text.WordUtils;
@@ -8,20 +9,25 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 public class FinishInventory extends InventoryBuilder {
 
 
-    public FinishInventory(Player targetPlayer, Integer place, boolean firstTime) {
+    public FinishInventory(ForceItemBattle forceItemBattle, Player targetPlayer, Integer place, boolean firstTime) {
         super(9*6, "§8» §6Items §8● §7XXXXXXXXXX");
 
         HashMap<Integer, ItemStack[]> pages = new HashMap<>();
+        ForceItemPlayer forceItemTargetPlayer = forceItemBattle.getGamemanager().getForceItemPlayer(targetPlayer.getUniqueId());
 
         /* TOP-BORDER */
         this.setItems(0, 8, new ItemBuilder(Material.ORANGE_STAINED_GLASS_PANE).setDisplayName("§6").addItemFlags(ItemFlag.values()).getItemStack());
@@ -44,7 +50,7 @@ public class FinishInventory extends InventoryBuilder {
 
                     if(startSlot == 53) {
                         //check if is even needed to create a new page
-                        if(ForceItemBattle.getGamemanager().getItemList(targetPlayer).size() > 35) {
+                        if(forceItemTargetPlayer.foundItems().size() > 35) {
                             pagesAmount++;
                             pages.put(pagesAmount, getInventory().getContents());
                             setItems(9, 53, new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).setDisplayName("§8").addItemFlags(ItemFlag.values()).getItemStack());
@@ -55,7 +61,7 @@ public class FinishInventory extends InventoryBuilder {
                     }
 
 
-                    List<ForceItem> items = ForceItemBattle.getGamemanager().getItemList(targetPlayer);
+                    List<ForceItem> items = forceItemTargetPlayer.foundItems();
                     if (items.isEmpty()) {
                         setItem(startSlot, new ItemBuilder(Material.BARRIER).setDisplayName("§cNo Items found").getItemStack());
                     } else {
@@ -68,7 +74,7 @@ public class FinishInventory extends InventoryBuilder {
                     if(startSlot == 16 || startSlot == 25 || startSlot == 34 || startSlot == 43) startSlot += 3;
                     else startSlot++;
 
-                    if(placedItems >= ForceItemBattle.getGamemanager().getItemList(targetPlayer).size() - 1) {
+                    if(placedItems >= forceItemTargetPlayer.foundItems().size() - 1) {
 
                         new BukkitRunnable() {
 
@@ -90,17 +96,17 @@ public class FinishInventory extends InventoryBuilder {
 
                                 getPlayer().spigot().sendMessage(placementText, textComponent);
 
-                                ForceItemBattle.getGamemanager().getScore().remove(targetPlayer.getUniqueId());
-                                ForceItemBattle.getGamemanager().savedInventory.put(targetPlayer.getUniqueId(), pages);
+                                forceItemBattle.getGamemanager().forceItemPlayerMap().remove(targetPlayer.getUniqueId());
+                                forceItemBattle.getGamemanager().savedInventory.put(targetPlayer.getUniqueId(), pages);
                             }
-                        }.runTaskLater(ForceItemBattle.getInstance(), 100L);
+                        }.runTaskLater(forceItemBattle, 100L);
 
 
                         cancel();
                     }
 
                 }
-            }.runTaskTimer(ForceItemBattle.getInstance(), 0L, 10L);
+            }.runTaskTimer(forceItemBattle, 0L, 10L);
         } else {
             //Open Inventory beginning from the first page
             /* TODO

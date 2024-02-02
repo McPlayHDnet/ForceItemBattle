@@ -20,21 +20,28 @@ import java.util.UUID;
 @SuppressWarnings("duplicate")
 public class RecipeInventory {
 
+    private ForceItemBattle forceItemBattle;
+
+    public RecipeInventory(ForceItemBattle forceItemBattle) {
+        this.forceItemBattle = forceItemBattle;
+    }
+
+
     /**
      * Player UUD -> remove on close.
      * If value is true, ignore close inventory
      */
-    private static final HashMap<UUID, Boolean> ignoreCloseHandler = new HashMap<>();
+    private final HashMap<UUID, Boolean> ignoreCloseHandler = new HashMap<>();
 
-    public static boolean ignoreInventoryClosed(Player player) {
+    public boolean ignoreInventoryClosed(Player player) {
         return ignoreCloseHandler.getOrDefault(player.getUniqueId(), false);
     }
 
-    public static boolean isShowingRecipe(Player player) {
+    public boolean isShowingRecipe(Player player) {
         return closeHandlers.containsKey(player.getUniqueId());
     }
 
-    public static void handleRecipeClose(Player player) {
+    public void handleRecipeClose(Player player) {
         Runnable closeHandler = closeHandlers.remove(player.getUniqueId());
         ignoreCloseHandler.remove(player.getUniqueId());
 
@@ -44,9 +51,9 @@ public class RecipeInventory {
     /**
      * Player UUID -> handle inventory being closed by the player
      */
-    private static final HashMap<UUID, Runnable> closeHandlers = new HashMap<>();
+    private final HashMap<UUID, Runnable> closeHandlers = new HashMap<>();
 
-    public static void showRecipe(Player player, ItemStack item) {
+    public void showRecipe(Player player, ItemStack item) {
         if (Bukkit.getRecipesFor(item).isEmpty()) {
             player.sendMessage("§cThere is no recipe for this item. Just find it lol");
             return;
@@ -69,7 +76,7 @@ public class RecipeInventory {
 
         ignoreCloseHandler.put(player.getUniqueId(), false);
 
-        BukkitTask task = Bukkit.getScheduler().runTaskTimer(ForceItemBattle.getInstance(), new Runnable() {
+        BukkitTask task = Bukkit.getScheduler().runTaskTimer(this.forceItemBattle, new Runnable() {
 
             private int inventoryIndex = 0;
 
@@ -95,7 +102,7 @@ public class RecipeInventory {
         });
     }
 
-    private static List<Inventory> createInventories(Player player, ItemStack item) {
+    private List<Inventory> createInventories(Player player, ItemStack item) {
         List<Inventory> inventories = new ArrayList<>();
         for (Recipe recipe : Bukkit.getServer().getRecipesFor(item)) {
             Inventory inventory = createFancyRecipeInventory(item, recipe);
@@ -119,13 +126,13 @@ Slots visualisation for values below:
 36 37 38 39 40 41 42 43 44
 
  */
-    private static final int RESULT_SLOT = 25;
-    private static final int STATION_SLOT = 23;
-    private static final int WORKBENCH_FIRST_ITEM_SLOT = 10;
-    private static final int SMITHING_FIRST_ITEM_SLOT = 19;
-    private static final int OTHER_FIRST_ITEM_SLOT = 20;
+    private final int RESULT_SLOT = 25;
+    private final int STATION_SLOT = 23;
+    private final int WORKBENCH_FIRST_ITEM_SLOT = 10;
+    private final int SMITHING_FIRST_ITEM_SLOT = 19;
+    private final int OTHER_FIRST_ITEM_SLOT = 20;
 
-    private static Inventory createFancyRecipeInventory(ItemStack item, Recipe recipe) {
+    private Inventory createFancyRecipeInventory(ItemStack item, Recipe recipe) {
         String itemName = WordUtils.capitalize(item.getType().name().replace("_", " ").toLowerCase());
         Inventory inventory = Bukkit.createInventory(null, 5 * 9, "§8● §6" + itemName);
 
@@ -231,7 +238,7 @@ Slots visualisation for values below:
         return inventory;
     }
 
-    private static ItemStack getStationItem(Recipe recipe) {
+    private ItemStack getStationItem(Recipe recipe) {
         if (recipe instanceof ShapedRecipe) {
             return new ItemStack(Material.CRAFTING_TABLE);
         } else if (recipe instanceof ShapelessRecipe) {
@@ -262,7 +269,7 @@ Slots visualisation for values below:
         }
     }
 
-    private static Inventory createRecipeInventory(ItemStack item, Recipe recipe) {
+    private Inventory createRecipeInventory(ItemStack item, Recipe recipe) {
         Inventory inventory;
         List<ItemStack> ingredients = new ArrayList<>();
 
@@ -332,7 +339,7 @@ Slots visualisation for values below:
         return inventory;
     }
 
-    private static int convertItemIndexToInventorySlot(int firstItemSlot, int itemIndex) {
+    private int convertItemIndexToInventorySlot(int firstItemSlot, int itemIndex) {
         return firstItemSlot + itemIndex % 3 + 9 * (itemIndex / 3);
     }
 }
