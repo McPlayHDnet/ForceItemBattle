@@ -2,6 +2,8 @@ package forceitembattle.commands;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.util.FinishInventory;
+import forceitembattle.util.ForceItem;
+import forceitembattle.util.ForceItemPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -32,12 +34,12 @@ public class CommandResult implements CommandExecutor {
         if(player.isOp()) {
 
             if(args.length == 0) {
-                if(this.forceItemBattle.getGamemanager().getScore().isEmpty() || place == 0) {
+                if(this.forceItemBattle.getGamemanager().forceItemPlayerMap().isEmpty() || place == 0) {
                     player.sendMessage("No more players left.");
                     return false;
                 }
 
-                Map<UUID, Integer> sortedMapDesc = this.forceItemBattle.getGamemanager().sortByValue(this.forceItemBattle.getGamemanager().getScore(), false);
+                Map<UUID, ForceItemPlayer> sortedMapDesc = this.forceItemBattle.getGamemanager().sortByValue(this.forceItemBattle.getGamemanager().forceItemPlayerMap(), false);
                 UUID uuid = (UUID) sortedMapDesc.keySet().toArray()[sortedMapDesc.size() - 1];
 
                 if(place == -1) place = sortedMapDesc.size();

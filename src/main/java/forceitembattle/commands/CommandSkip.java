@@ -27,8 +27,8 @@ public class CommandSkip implements CommandExecutor {
         if (args.length == 1) {
             if (Bukkit.getPlayer(args[0]) != null) {
                 player.sendMessage("§7You skipped this item");
-                this.forceItemBattle.logToFile("[" + this.forceItemBattle.getTimer().getTime() + "] | " + args[0] + " skipped " + this.forceItemBattle.getGamemanager().getCurrentMaterial(Bukkit.getPlayer(args[0])));
-                this.forceItemBattle.getGamemanager().skipItem(args[0]);
+                //this.forceItemBattle.logToFile("[" + this.forceItemBattle.getTimer().getTime() + "] | " + args[0] + " skipped " + this.forceItemBattle.getGamemanager().getCurrentMaterial(Bukkit.getPlayer(args[0])));
+                this.forceItemBattle.getGamemanager().forceSkipItem(args[0]);
             } else {
                 sender.sendMessage(ChatColor.RED + "This player is not online");
             }

@@ -1,6 +1,7 @@
 package forceitembattle.commands;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.GameState;
 import forceitembattle.util.ItemBuilder;
 import org.bukkit.*;
@@ -27,13 +28,12 @@ public class CommandStart implements CommandExecutor {
         if (args.length == 2) {
             try {
                 this.forceItemBattle.getTimer().setTime(Integer.parseInt(args[0]) * 60);
-                this.forceItemBattle.getGamemanager().initializeMaps();
+                this.forceItemBattle.getGamemanager().initializeMats();
 
                 if (Integer.parseInt(args[1]) > 64) {
                     sender.sendMessage(ChatColor.RED + "The maximum amount of jokers is 64.");
                     return false;
                 }
-
 
                 new BukkitRunnable() {
 
@@ -86,6 +86,9 @@ public class CommandStart implements CommandExecutor {
 
         Bukkit.getOnlinePlayers().forEach(player -> {
 
+            ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
+            forceItemPlayer.setRemainingJokers(joker);
+
             player.sendMessage(" ");
             player.sendMessage("§8» §6§lMystery Item Battle §8«");
             player.sendMessage(" ");
@@ -95,6 +98,8 @@ public class CommandStart implements CommandExecutor {
             player.sendMessage("  §8● §7Keep Inventory §8» §a" + (this.forceItemBattle.getConfig().getBoolean("settings.keepinventory") ? "§2✔" : "§4✘"));
             player.sendMessage("  §8● §7Backpack §8» §a" + (this.forceItemBattle.getConfig().getBoolean("settings.backpack") ? "§2✔" : "§4✘"));
             player.sendMessage("  §8● §7PvP §8» §a" + (this.forceItemBattle.getConfig().getBoolean("settings.pvp") ? "§2✔" : "§4✘"));
+            player.sendMessage("  §8● §7Nether §8» §a" + (this.forceItemBattle.getConfig().getBoolean("settings.nether") ? "§2✔" : "§4✘"));
+            player.sendMessage("  §8● §7End §8» §a" + (this.forceItemBattle.getConfig().getBoolean("settings.end") ? "§2✔" : "§4✘"));
             player.sendMessage(" ");
             player.sendMessage(" §8● §7Useful Commands:");
             player.sendMessage("  §8» §6/info");
@@ -119,18 +124,21 @@ public class CommandStart implements CommandExecutor {
             player.teleport(spawnLocation);
             player.playSound(player, Sound.BLOCK_END_PORTAL_SPAWN, 1, 1);
 
-            this.forceItemBattle.getGamemanager().getJokers().put(player.getUniqueId(), joker);
-
             if(this.forceItemBattle.getConfig().getBoolean("settings.backpack")) {
                 this.forceItemBattle.getBackpack().createBackpack(player);
             }
 
-            ArmorStand itemDisplay = (ArmorStand) player.getWorld().spawnEntity(player.getLocation().add(0, 2, 0), EntityType.ARMOR_STAND);
-            itemDisplay.getEquipment().setHelmet(new ItemStack(this.forceItemBattle.getGamemanager().getCurrentMaterial(player)));
-            itemDisplay.setInvisible(true);
-            itemDisplay.setInvulnerable(true);
-            itemDisplay.setGravity(false);
-            player.addPassenger(itemDisplay);
+            if(this.forceItemBattle.getConfig().getBoolean("settings.nether") || this.forceItemBattle.getConfig().getBoolean("settings.end")) {
+                ArmorStand itemDisplay = (ArmorStand) player.getWorld().spawnEntity(player.getLocation().add(0, 2, 0), EntityType.ARMOR_STAND);
+                if(itemDisplay.getEquipment() != null) {
+                    itemDisplay.getEquipment().setHelmet(new ItemStack(forceItemPlayer.currentMaterial()));
+                    itemDisplay.setInvisible(true);
+                    itemDisplay.setInvulnerable(true);
+                    itemDisplay.setGravity(false);
+                }
+                player.addPassenger(itemDisplay);
+            }
+
 
         });
         Bukkit.getWorld("world").setTime(0);

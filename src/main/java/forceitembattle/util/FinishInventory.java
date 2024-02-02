@@ -27,6 +27,7 @@ public class FinishInventory extends InventoryBuilder {
         super(9*6, "§8» §6Items §8● §7XXXXXXXXXX");
 
         HashMap<Integer, ItemStack[]> pages = new HashMap<>();
+        ForceItemPlayer forceItemTargetPlayer = forceItemBattle.getGamemanager().getForceItemPlayer(targetPlayer.getUniqueId());
 
         /* TOP-BORDER */
         this.setItems(0, 8, new ItemBuilder(Material.ORANGE_STAINED_GLASS_PANE).setDisplayName("§6").addItemFlags(ItemFlag.values()).getItemStack());
@@ -49,7 +50,7 @@ public class FinishInventory extends InventoryBuilder {
 
                     if(startSlot == 53) {
                         //check if is even needed to create a new page
-                        if(forceItemBattle.getGamemanager().getItemList(targetPlayer).size() > 35) {
+                        if(forceItemTargetPlayer.foundItems().size() > 35) {
                             pagesAmount++;
                             pages.put(pagesAmount, getInventory().getContents());
                             setItems(9, 53, new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).setDisplayName("§8").addItemFlags(ItemFlag.values()).getItemStack());
@@ -60,7 +61,7 @@ public class FinishInventory extends InventoryBuilder {
                     }
 
 
-                    List<ForceItem> items = forceItemBattle.getGamemanager().getItemList(targetPlayer);
+                    List<ForceItem> items = forceItemTargetPlayer.foundItems();
                     if (items.isEmpty()) {
                         setItem(startSlot, new ItemBuilder(Material.BARRIER).setDisplayName("§cNo Items found").getItemStack());
                     } else {
@@ -73,7 +74,7 @@ public class FinishInventory extends InventoryBuilder {
                     if(startSlot == 16 || startSlot == 25 || startSlot == 34 || startSlot == 43) startSlot += 3;
                     else startSlot++;
 
-                    if(placedItems >= forceItemBattle.getGamemanager().getItemList(targetPlayer).size() - 1) {
+                    if(placedItems >= forceItemTargetPlayer.foundItems().size() - 1) {
 
                         new BukkitRunnable() {
 
@@ -95,7 +96,7 @@ public class FinishInventory extends InventoryBuilder {
 
                                 getPlayer().spigot().sendMessage(placementText, textComponent);
 
-                                forceItemBattle.getGamemanager().getScore().remove(targetPlayer.getUniqueId());
+                                forceItemBattle.getGamemanager().forceItemPlayerMap().remove(targetPlayer.getUniqueId());
                                 forceItemBattle.getGamemanager().savedInventory.put(targetPlayer.getUniqueId(), pages);
                             }
                         }.runTaskLater(forceItemBattle, 100L);

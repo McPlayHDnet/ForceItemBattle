@@ -45,6 +45,7 @@ public final class ForceItemBattle extends JavaPlugin {
         if (!getConfig().contains("settings.food")) { getConfig().set("settings.food", true); }
         if (!getConfig().contains("settings.backpack")) { getConfig().set("settings.backpack", true); }
         if (!getConfig().contains("settings.pvp")) { getConfig().set("settings.pvp", true); }
+        if (!getConfig().contains("settings.nether")) { getConfig().set("settings.nether", true); }
         if (!getConfig().contains("standard.countdown")) { getConfig().set("standard.countdown", 30); }
         if (!getConfig().contains("standard.jokers")) { getConfig().set("standard.jokers", 3); }
         if (!getConfig().contains("standard.backpackSize")) { getConfig().set("standard.backpackSize", 27); }
@@ -118,7 +119,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.gamemanager = new Gamemanager(this);
         this.timer = new Timer(this);
         this.backpack = new Backpack(this);
-        this.itemDifficultiesManager = new ItemDifficultiesManager();
+        this.itemDifficultiesManager = new ItemDifficultiesManager(this);
         this.recipeInventory = new RecipeInventory(this);
         this.colorManager = new ColorManager();
 

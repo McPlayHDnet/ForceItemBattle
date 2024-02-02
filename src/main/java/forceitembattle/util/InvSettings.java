@@ -33,19 +33,22 @@ public class InvSettings extends InventoryBuilder {
         this.setItems(45, 53, new ItemBuilder(Material.ORANGE_STAINED_GLASS_PANE).setDisplayName("§f").addItemFlags(ItemFlag.values()).getItemStack());
 
         /* Food-Setting */
-        this.setItem(20, new ItemBuilder(Material.COOKED_BEEF).setDisplayName("§8» " + (forceItemBattle.getConfig().getBoolean("settings.food") ? "§aFood §2✔" : "§cFood §4✘")).getItemStack());
+        this.setItem(19, new ItemBuilder(Material.COOKED_BEEF).setDisplayName("§8» " + (forceItemBattle.getConfig().getBoolean("settings.food") ? "§aFood §2✔" : "§cFood §4✘")).getItemStack());
 
         /* KeepInv-Setting */
-        this.setItem(22, new ItemBuilder(Material.TOTEM_OF_UNDYING).setDisplayName("§8» " + (forceItemBattle.getConfig().getBoolean("settings.keepinventory") ? "§aKeep Inventory §2✔" : "§cKeep Inventory §4✘")).getItemStack());
+        this.setItem(21, new ItemBuilder(Material.TOTEM_OF_UNDYING).setDisplayName("§8» " + (forceItemBattle.getConfig().getBoolean("settings.keepinventory") ? "§aKeep Inventory §2✔" : "§cKeep Inventory §4✘")).getItemStack());
 
         /* Backpack-Setting */
-        this.setItem(24, new ItemBuilder(Material.BUNDLE).setDisplayName("§8» " + (forceItemBattle.getConfig().getBoolean("settings.backpack") ? "§aBackpack §2✔" : "§cBackpack §4✘")).getItemStack());
+        this.setItem(23, new ItemBuilder(Material.BUNDLE).setDisplayName("§8» " + (forceItemBattle.getConfig().getBoolean("settings.backpack") ? "§aBackpack §2✔" : "§cBackpack §4✘")).getItemStack());
 
         /* PvP-Setting */
-        this.setItem(30, new ItemBuilder(Material.IRON_SWORD).setDisplayName("§8» " + (forceItemBattle.getConfig().getBoolean("settings.pvp") ? "§aPvP §2✔" : "§cPvP §4✘")).getItemStack());
+        this.setItem(25, new ItemBuilder(Material.IRON_SWORD).setDisplayName("§8» " + (forceItemBattle.getConfig().getBoolean("settings.pvp") ? "§aPvP §2✔" : "§cPvP §4✘")).getItemStack());
 
         /* Teams-Setting */
-        this.setItem(32, new ItemBuilder(Material.RED_BED).setDisplayName("§8» " + (forceItemBattle.getConfig().getBoolean("settings.isTeamGame") ? "§aTeams §2✔" : "§cTeams §4✘")).getItemStack());
+        this.setItem(29, new ItemBuilder(Material.RED_BED).setDisplayName("§8» " + (forceItemBattle.getConfig().getBoolean("settings.isTeamGame") ? "§aTeams §2✔" : "§cTeams §4✘")).getItemStack());
+
+        /* Nether-Setting */
+        this.setItem(33, new ItemBuilder(Material.NETHERRACK).setDisplayName("§8» " + (forceItemBattle.getConfig().getBoolean("settings.nether") ? "§aNether §2✔" : "§cNether §4✘")).getItemStack());
 
 
         this.addClickHandler(inventoryClickEvent -> {
@@ -56,46 +59,59 @@ public class InvSettings extends InventoryBuilder {
 
             if(inventoryClickEvent.isLeftClick()) {
                 /* Food-Setting */
-                if(inventoryClickEvent.getSlot() == 20) {
+                if(inventoryClickEvent.getSlot() == 19) {
                     player.playSound(player, Sound.ENTITY_ITEM_PICKUP, 1, 1);
                     forceItemBattle.getConfig().set("settings.food", !forceItemBattle.getConfig().getBoolean("settings.food"));
                     forceItemBattle.saveConfig();
 
-                    this.setItem(20, new ItemBuilder(Material.COOKED_BEEF).setDisplayName("§8» " + (forceItemBattle.getConfig().getBoolean("settings.food") ? "§aFood §2✔" : "§cFood §4✘")).getItemStack());
+                    this.setItem(19, new ItemBuilder(Material.COOKED_BEEF).setDisplayName("§8» " + (forceItemBattle.getConfig().getBoolean("settings.food") ? "§aFood §2✔" : "§cFood §4✘")).getItemStack());
 
                 /* KeepInv-Setting */
-                } else if(inventoryClickEvent.getSlot() == 22) {
+                } else if(inventoryClickEvent.getSlot() == 21) {
                     player.playSound(player, Sound.ENTITY_ITEM_PICKUP, 1, 1);
                     forceItemBattle.getConfig().set("settings.keepinventory", !forceItemBattle.getConfig().getBoolean("settings.keepinventory"));
                     forceItemBattle.saveConfig();
 
                     Bukkit.getWorlds().forEach(worlds -> worlds.setGameRule(GameRule.KEEP_INVENTORY, forceItemBattle.getConfig().getBoolean("settings.keepinventory")));
 
-                    this.setItem(22, new ItemBuilder(Material.TOTEM_OF_UNDYING).setDisplayName("§8» " + (forceItemBattle.getConfig().getBoolean("settings.keepinventory") ? "§aKeep Inventory §2✔" : "§cKeep Inventory §4✘")).getItemStack());
+                    this.setItem(21, new ItemBuilder(Material.TOTEM_OF_UNDYING).setDisplayName("§8» " + (forceItemBattle.getConfig().getBoolean("settings.keepinventory") ? "§aKeep Inventory §2✔" : "§cKeep Inventory §4✘")).getItemStack());
 
                 /* Backpack-Setting */
-                } else if(inventoryClickEvent.getSlot() == 24) {
+                } else if(inventoryClickEvent.getSlot() == 23) {
                     player.playSound(player, Sound.ENTITY_ITEM_PICKUP, 1, 1);
                     forceItemBattle.getConfig().set("settings.backpack", !forceItemBattle.getConfig().getBoolean("settings.backpack"));
                     forceItemBattle.saveConfig();
 
-                    this.setItem(24, new ItemBuilder(Material.BUNDLE).setDisplayName("§8» " + (forceItemBattle.getConfig().getBoolean("settings.backpack") ? "§aBackpack §2✔" : "§cBackpack §4✘")).getItemStack());
+                    this.setItem(23, new ItemBuilder(Material.BUNDLE).setDisplayName("§8» " + (forceItemBattle.getConfig().getBoolean("settings.backpack") ? "§aBackpack §2✔" : "§cBackpack §4✘")).getItemStack());
 
                 /* PvP-Setting */
-                } else if(inventoryClickEvent.getSlot() == 30) {
+                } else if(inventoryClickEvent.getSlot() == 25) {
                     player.playSound(player, Sound.ENTITY_ITEM_PICKUP, 1, 1);
                     forceItemBattle.getConfig().set("settings.pvp", !forceItemBattle.getConfig().getBoolean("settings.pvp"));
                     forceItemBattle.saveConfig();
 
-                    this.setItem(30, new ItemBuilder(Material.IRON_SWORD).setDisplayName("§8» " + (forceItemBattle.getConfig().getBoolean("settings.pvp") ? "§aPvP §2✔" : "§cPvP §4✘")).getItemStack());
+                    this.setItem(25, new ItemBuilder(Material.IRON_SWORD).setDisplayName("§8» " + (forceItemBattle.getConfig().getBoolean("settings.pvp") ? "§aPvP §2✔" : "§cPvP §4✘")).getItemStack());
 
                 /* Teams-Setting */
-                } else if(inventoryClickEvent.getSlot() == 32) {
-                    player.playSound(player, Sound.ENTITY_ITEM_PICKUP, 1, 1);
+                } else if(inventoryClickEvent.getSlot() == 29) {
+                    player.playSound(player, Sound.ENTITY_BLAZE_HURT, 1, 1);
+                    player.sendMessage("§cWork in progress...");
+                    /* TODO: teams
                     forceItemBattle.getConfig().set("settings.isTeamGame", !forceItemBattle.getConfig().getBoolean("settings.isTeamGame"));
                     forceItemBattle.saveConfig();
 
-                    this.setItem(32, new ItemBuilder(Material.RED_BED).setDisplayName("§8» " + (forceItemBattle.getConfig().getBoolean("settings.isTeamGame") ? "§aTeams §2✔" : "§cTeams §4✘")).getItemStack());
+                    this.setItem(29, new ItemBuilder(Material.RED_BED).setDisplayName("§8» " + (forceItemBattle.getConfig().getBoolean("settings.isTeamGame") ? "§aTeams §2✔" : "§cTeams §4✘")).getItemStack());
+                    */
+
+                /* Nether-Setting */
+                } else if(inventoryClickEvent.getSlot() == 33) {
+                    player.playSound(player, Sound.ENTITY_ITEM_PICKUP, 1, 1);
+                    forceItemBattle.getConfig().set("settings.nether", !forceItemBattle.getConfig().getBoolean("settings.nether"));
+                    forceItemBattle.saveConfig();
+
+                    forceItemBattle.getItemDifficultiesManager().toggleNetherItems();
+
+                    this.setItem(33, new ItemBuilder(Material.NETHERRACK).setDisplayName("§8» " + (forceItemBattle.getConfig().getBoolean("settings.nether") ? "§aNether §2✔" : "§cNether §4✘")).getItemStack());
 
                 }
             }

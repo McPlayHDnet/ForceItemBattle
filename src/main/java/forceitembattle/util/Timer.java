@@ -64,13 +64,15 @@ public class Timer {
                 continue;
             }
 
-            if (this.forceItemBattle.getGamemanager().isPlayerInMaps(player)) {
-                player.setPlayerListName(player.getName() + " §7[§6" + this.forceItemBattle.getGamemanager().getCurrentMaterialName(player) + "§7]");
+            if (this.forceItemBattle.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
+                ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
+
+                player.setPlayerListName(player.getName() + " §7[§6" + this.forceItemBattle.getGamemanager().getCurrentMaterialName(forceItemPlayer) + "§7]");
 
                 player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(ChatColor.GOLD.toString() +
-                        ChatColor.BOLD + formatSeconds(getTime()) + " §8| §aYour score: §f" + this.forceItemBattle.getGamemanager().getScore(player)));
+                        ChatColor.BOLD + formatSeconds(getTime()) + " §8| §aYour score: §f" + forceItemPlayer.currentScore()));
 
-                String material = this.forceItemBattle.getGamemanager().getCurrentMaterialName(player);
+                String material = this.forceItemBattle.getGamemanager().getCurrentMaterialName(forceItemPlayer);
                 String bossBarTitle = "§a§l" + material;
 
                 try {

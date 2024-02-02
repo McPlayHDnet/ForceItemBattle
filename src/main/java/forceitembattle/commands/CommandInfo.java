@@ -2,6 +2,7 @@ package forceitembattle.commands;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.util.DescriptionItem;
+import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.RecipeInventory;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -24,12 +25,19 @@ public class CommandInfo implements CommandExecutor {
     public boolean onCommand(CommandSender commandSender, Command command, String s, String[] strings) {
         if (!(commandSender instanceof Player player)) return false;
 
-        ItemStack item;
+        ItemStack item = null;
         if (this.forceItemBattle.getGamemanager().isMidGame()) {
-            item = new ItemStack(this.forceItemBattle.getGamemanager().getCurrentMaterial(player));
+            if(this.forceItemBattle.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
+                ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
+                item = new ItemStack(forceItemPlayer.currentMaterial());
+            } else {
+                player.sendMessage("§cYou are not playing.");
+            }
         } else {
             item = player.getInventory().getItemInMainHand();
         }
+
+        if(item == null) return false;
 
         if (item.getType() == Material.AIR) {
             player.sendMessage("§cYou need to hold an item in your hand!");
