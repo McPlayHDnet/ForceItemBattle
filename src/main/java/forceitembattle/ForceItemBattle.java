@@ -12,15 +12,12 @@ import org.bukkit.GameRule;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.InvalidConfigurationException;
-import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.lang.module.Configuration;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
@@ -31,31 +28,16 @@ import java.util.Set;
 
 public final class ForceItemBattle extends JavaPlugin {
 
-    private static ForceItemBattle instance;
-    private static Gamemanager gamemanager;
-    private static Timer timer;
-    private static Backpack backpack;
-    private static InvTeamVote invTeamVote;
-    private static InvSettings invSettings;
-    private static ItemDifficultiesManager itemDifficultiesManager;
-    private static InvTeleport invTeleport;
-
-    private static Location spawnLocation;
-
-    public static void setSpawnLocation(Location spawnLocation) {
-        ForceItemBattle.spawnLocation = spawnLocation;
-    }
-
-    public static Location getSpawnLocation() {
-        return spawnLocation;
-    }
-
-    private static ColorManager colorManager;
+    private Gamemanager gamemanager;
+    private Timer timer;
+    private Backpack backpack;
+    private ItemDifficultiesManager itemDifficultiesManager;
+    private RecipeInventory recipeInventory;
+    private ColorManager colorManager;
+    private Location spawnLocation;
 
     @Override
     public void onLoad() {
-        instance = this;
-
         saveConfig();
         if (!getConfig().contains("timer.time")) { getConfig().set("timer.time", 0); }
         if (!getConfig().contains("settings.isTeamGame")) { getConfig().set("settings.isTeamGame", false); }
@@ -133,33 +115,15 @@ public final class ForceItemBattle extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        gamemanager = new Gamemanager();
-        timer = new Timer();
-        backpack = new Backpack();
-        invTeamVote = new InvTeamVote();
-        invSettings = new InvSettings();
-        itemDifficultiesManager = new ItemDifficultiesManager();
-        invTeleport = new InvTeleport();
-        colorManager = new ColorManager();
+        this.gamemanager = new Gamemanager(this);
+        this.timer = new Timer(this);
+        this.backpack = new Backpack(this);
+        this.itemDifficultiesManager = new ItemDifficultiesManager();
+        this.recipeInventory = new RecipeInventory(this);
+        this.colorManager = new ColorManager();
 
-        PluginManager manager = Bukkit.getPluginManager();
-        manager.registerEvents(new Listeners(), this);
-        manager.registerEvents(new RecipeListener(), this);
-        manager.registerEvents(invTeamVote, this);
-        manager.registerEvents(invTeleport, this);
-
-        getCommand("start").setExecutor(new CommandStart());
-        getCommand("settings").setExecutor(new CommandSettings());
-        getCommand("skip").setExecutor(new CommandSkip());
-        getCommand("reset").setExecutor(new CommandReset());
-        getCommand("bp").setExecutor(new CommandBp());
-        getCommand("result").setExecutor(new CommandResult());
-        getCommand("info").setExecutor(new CommandInfo());
-        getCommand("items").setExecutor(new CommandItems());
-        getCommand("info").setExecutor(new CommandInfo());
-        getCommand("stoptimer").setExecutor(new CommandStopTimer());
-        getCommand("infowiki").setExecutor(new CommandInfoWiki());
-        getCommand("spawn").setExecutor(new CommandSpawn());
+        this.initListeners();
+        this.initCommands();
 
         Bukkit.getWorlds().forEach(world -> {
             world.setGameRule(GameRule.KEEP_INVENTORY, getConfig().getBoolean("settings.keepinventory"));
@@ -182,11 +146,29 @@ public final class ForceItemBattle extends JavaPlugin {
         }
     }
 
+    private void initListeners() {
+        new Listeners(this);
+        new RecipeListener(this);
+    }
+
+    private void initCommands() {
+        new CommandStart(this);
+        new CommandSettings(this);
+        new CommandSkip(this);
+        new CommandReset(this);
+        new CommandBp(this);
+        new CommandResult(this);
+        new CommandInfo(this);
+        new CommandItems(this);
+        new CommandStopTimer(this);
+        new CommandInfoWiki(this);
+        new CommandSpawn(this);
+    }
+
     @Override
     public void onDisable() {
-        if (getConfig().getBoolean("isReset")) {
-            getConfig().set("timer.time", 0);
-        } else timer.save();
+        if (getConfig().getBoolean("isReset")) getConfig().set("timer.time", 0);
+        else timer.save();
         saveConfig();
     }
 
@@ -218,40 +200,35 @@ public final class ForceItemBattle extends JavaPlugin {
         return sdf.format(cal.getTime());
     }
 
-
-    public static ForceItemBattle getInstance() {
-        return instance;
+    public void setSpawnLocation(Location spawnLocation) {
+        this.spawnLocation = spawnLocation;
     }
 
-    public static Gamemanager getGamemanager() {
-        return gamemanager;
+    public Location getSpawnLocation() {
+        return spawnLocation;
     }
 
-    public static Timer getTimer() {
-        return timer;
+    public Gamemanager getGamemanager() {
+        return this.gamemanager;
     }
 
-    public static Backpack getBackpack() {
-        return backpack;
+    public Timer getTimer() {
+        return this.timer;
     }
 
-    public static InvTeamVote getInvTeamVote() {
-        return invTeamVote;
+    public Backpack getBackpack() {
+        return this.backpack;
     }
 
-    public static InvSettings getInvSettings() {
-        return invSettings;
+    public ItemDifficultiesManager getItemDifficultiesManager() {
+        return this.itemDifficultiesManager;
     }
 
-    public static ItemDifficultiesManager getItemDifficultiesManager() {
-        return itemDifficultiesManager;
+    public RecipeInventory getRecipeInventory() {
+        return this.recipeInventory;
     }
 
-    public static InvTeleport getInvTeleport() {
-        return invTeleport;
-    }
-
-    public static ColorManager getColorManager() {
-        return colorManager;
+    public ColorManager getColorManager() {
+        return this.colorManager;
     }
 }

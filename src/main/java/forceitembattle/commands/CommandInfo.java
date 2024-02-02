@@ -13,14 +13,20 @@ import org.bukkit.inventory.ItemStack;
 
 public class CommandInfo implements CommandExecutor {
 
+    private ForceItemBattle forceItemBattle;
+
+    public CommandInfo(ForceItemBattle forceItemBattle) {
+        this.forceItemBattle = forceItemBattle;
+        this.forceItemBattle.getCommand("info").setExecutor(this);
+    }
 
     @Override
     public boolean onCommand(CommandSender commandSender, Command command, String s, String[] strings) {
         if (!(commandSender instanceof Player player)) return false;
 
         ItemStack item;
-        if (ForceItemBattle.getTimer().isRunning()) {
-            item = new ItemStack(ForceItemBattle.getGamemanager().getCurrentMaterial(player));
+        if (this.forceItemBattle.getGamemanager().isMidGame()) {
+            item = new ItemStack(this.forceItemBattle.getGamemanager().getCurrentMaterial(player));
         } else {
             item = player.getInventory().getItemInMainHand();
         }
@@ -31,17 +37,17 @@ public class CommandInfo implements CommandExecutor {
         }
 
         DescriptionItem descriptionItem;
-        if(ForceItemBattle.getItemDifficultiesManager().isItemInDescriptionList(item.getType())) {
-            descriptionItem = ForceItemBattle.getItemDifficultiesManager().getDescriptionItems().get(item.getType());
+        if(this.forceItemBattle.getItemDifficultiesManager().isItemInDescriptionList(item.getType())) {
+            descriptionItem = this.forceItemBattle.getItemDifficultiesManager().getDescriptionItems().get(item.getType());
             if (descriptionItem.lines() != null) {
-                ForceItemBattle.getItemDifficultiesManager().getDescriptionItemLines(descriptionItem.material()).forEach(player::sendMessage);
+                this.forceItemBattle.getItemDifficultiesManager().getDescriptionItemLines(descriptionItem.material()).forEach(player::sendMessage);
             } else {
                 throw new NullPointerException("The item description is either null or empty");
             }
         }
 
 
-        RecipeInventory.showRecipe(player, item);
+        this.forceItemBattle.getRecipeInventory().showRecipe(player, item);
 
         return false;
     }

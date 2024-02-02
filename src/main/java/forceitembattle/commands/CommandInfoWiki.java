@@ -13,13 +13,20 @@ import org.bukkit.inventory.ItemStack;
 
 public class CommandInfoWiki implements CommandExecutor {
 
+    private ForceItemBattle forceItemBattle;
+
+    public CommandInfoWiki(ForceItemBattle forceItemBattle) {
+        this.forceItemBattle = forceItemBattle;
+        this.forceItemBattle.getCommand("infowiki").setExecutor(this);
+    }
+
     @Override
     public boolean onCommand(CommandSender commandSender, Command command, String s, String[] args) {
         if (!(commandSender instanceof Player player)) return false;
 
         ItemStack item;
-        if (ForceItemBattle.getTimer().isRunning()) {
-            item = new ItemStack(ForceItemBattle.getGamemanager().getCurrentMaterial(player));
+        if (this.forceItemBattle.getGamemanager().isMidGame()) {
+            item = new ItemStack(this.forceItemBattle.getGamemanager().getCurrentMaterial(player));
         } else {
             item = player.getInventory().getItemInMainHand();
         }

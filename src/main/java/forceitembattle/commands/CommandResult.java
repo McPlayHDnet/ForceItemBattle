@@ -15,26 +15,34 @@ import java.util.UUID;
 
 public class CommandResult implements CommandExecutor {
 
-    public static int place = -1;
+    private ForceItemBattle forceItemBattle;
+    public int place;
+
+    public CommandResult(ForceItemBattle forceItemBattle) {
+        this.forceItemBattle = forceItemBattle;
+        this.forceItemBattle.getCommand("result").setExecutor(this);
+
+        this.place = -1;
+    }
 
     @Override
     public boolean onCommand(CommandSender commandSender, Command command, String s, String[] args) {
-        if (ForceItemBattle.getTimer().getTime() > 0) return false;
+        if (this.forceItemBattle.getTimer().getTime() > 0) return false;
         if (!(commandSender instanceof Player player)) return false;
         if(player.isOp()) {
 
             if(args.length == 0) {
-                if(ForceItemBattle.getGamemanager().getScore().isEmpty() || place == 0) {
+                if(this.forceItemBattle.getGamemanager().getScore().isEmpty() || place == 0) {
                     player.sendMessage("No more players left.");
                     return false;
                 }
 
-                Map<UUID, Integer> sortedMapDesc = ForceItemBattle.getGamemanager().sortByValue(ForceItemBattle.getGamemanager().getScore(), false);
+                Map<UUID, Integer> sortedMapDesc = this.forceItemBattle.getGamemanager().sortByValue(this.forceItemBattle.getGamemanager().getScore(), false);
                 UUID uuid = (UUID) sortedMapDesc.keySet().toArray()[sortedMapDesc.size() - 1];
 
                 if(place == -1) place = sortedMapDesc.size();
 
-                Bukkit.getOnlinePlayers().forEach(players -> new FinishInventory(Objects.requireNonNull(Bukkit.getPlayer(uuid) != null ? Bukkit.getPlayer(uuid) : Bukkit.getOfflinePlayer(uuid).getPlayer()), place, true).open(players));
+                Bukkit.getOnlinePlayers().forEach(players -> new FinishInventory(this.forceItemBattle, Objects.requireNonNull(Bukkit.getPlayer(uuid) != null ? Bukkit.getPlayer(uuid) : Bukkit.getOfflinePlayer(uuid).getPlayer()), place, true).open(players));
                 place--;
             } else if (args.length == 1) {
                 if (Bukkit.getPlayer(args[0]) != null) {

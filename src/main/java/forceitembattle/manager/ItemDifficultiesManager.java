@@ -159,7 +159,6 @@ public class ItemDifficultiesManager {
                 Material.CHEST_MINECART,
                 Material.CHICKEN,
                 Material.CHISELED_BOOKSHELF,
-                Material.CHISELED_COPPER,
                 Material.CHISELED_DEEPSLATE,
                 Material.CHISELED_SANDSTONE,
                 Material.CHISELED_STONE_BRICKS,

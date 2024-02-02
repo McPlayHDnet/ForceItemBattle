@@ -1,6 +1,7 @@
 package forceitembattle.commands;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.util.GameState;
 import forceitembattle.util.ItemBuilder;
 import org.bukkit.*;
 import org.bukkit.command.Command;
@@ -13,12 +14,20 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
 public class CommandStart implements CommandExecutor {
+
+    private ForceItemBattle forceItemBattle;
+
+    public CommandStart(ForceItemBattle forceItemBattle) {
+        this.forceItemBattle = forceItemBattle;
+        this.forceItemBattle.getCommand("start").setExecutor(this);
+    }
+
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 2) {
             try {
-                ForceItemBattle.getTimer().setTime(Integer.parseInt(args[0]) * 60);
-                ForceItemBattle.getGamemanager().initializeMaps();
+                this.forceItemBattle.getTimer().setTime(Integer.parseInt(args[0]) * 60);
+                this.forceItemBattle.getGamemanager().initializeMaps();
 
                 if (Integer.parseInt(args[1]) > 64) {
                     sender.sendMessage(ChatColor.RED + "The maximum amount of jokers is 64.");
@@ -47,7 +56,7 @@ public class CommandStart implements CommandExecutor {
                         String subTitle = "";
 
                         switch(seconds) {
-                            case 9, 8 -> subTitle = "§f» §6" + (ForceItemBattle.getTimer().getTime() / 60) + " minutes §f«";
+                            case 9, 8 -> subTitle = "§f» §6" + (forceItemBattle.getTimer().getTime() / 60) + " minutes §f«";
                             case 7, 6 -> subTitle = "§f» §6" + args[1] + " Joker §f«";
                             case 5, 4 -> subTitle = "§f» §6/info & /infowiki §f«";
                             case 3, 2 -> subTitle = "§f» §6Collect as many items as possible §f«";
@@ -56,7 +65,7 @@ public class CommandStart implements CommandExecutor {
 
                         return subTitle;
                     }
-                }.runTaskTimer(ForceItemBattle.getInstance(), 0L, 20L);
+                }.runTaskTimer(this.forceItemBattle, 0L, 20L);
 
 
             } catch (NumberFormatException e) {
@@ -71,20 +80,21 @@ public class CommandStart implements CommandExecutor {
 
     private void startGame(Integer joker) {
         World world = Bukkit.getWorld("world");
+        assert world != null;
         Location spawnLocation = world.getSpawnLocation();
-        ForceItemBattle.setSpawnLocation(spawnLocation);
+        this.forceItemBattle.setSpawnLocation(spawnLocation);
 
         Bukkit.getOnlinePlayers().forEach(player -> {
 
             player.sendMessage(" ");
             player.sendMessage("§8» §6§lMystery Item Battle §8«");
             player.sendMessage(" ");
-            player.sendMessage("  §8● §7Duration §8» §a" + ForceItemBattle.getTimer().getTime() / 60 + " minutes");
+            player.sendMessage("  §8● §7Duration §8» §a" + this.forceItemBattle.getTimer().getTime() / 60 + " minutes");
             player.sendMessage("  §8● §7Joker §8» §a" + joker);
-            player.sendMessage("  §8● §7Food §8» §a" + (ForceItemBattle.getInstance().getConfig().getBoolean("settings.food") ? "§2✔" : "§4✘"));
-            player.sendMessage("  §8● §7Keep Inventory §8» §a" + (ForceItemBattle.getInstance().getConfig().getBoolean("settings.keepinventory") ? "§2✔" : "§4✘"));
-            player.sendMessage("  §8● §7Backpack §8» §a" + (ForceItemBattle.getInstance().getConfig().getBoolean("settings.backpack") ? "§2✔" : "§4✘"));
-            player.sendMessage("  §8● §7PvP §8» §a" + (ForceItemBattle.getInstance().getConfig().getBoolean("settings.pvp") ? "§2✔" : "§4✘"));
+            player.sendMessage("  §8● §7Food §8» §a" + (this.forceItemBattle.getConfig().getBoolean("settings.food") ? "§2✔" : "§4✘"));
+            player.sendMessage("  §8● §7Keep Inventory §8» §a" + (this.forceItemBattle.getConfig().getBoolean("settings.keepinventory") ? "§2✔" : "§4✘"));
+            player.sendMessage("  §8● §7Backpack §8» §a" + (this.forceItemBattle.getConfig().getBoolean("settings.backpack") ? "§2✔" : "§4✘"));
+            player.sendMessage("  §8● §7PvP §8» §a" + (this.forceItemBattle.getConfig().getBoolean("settings.pvp") ? "§2✔" : "§4✘"));
             player.sendMessage(" ");
             player.sendMessage(" §8● §7Useful Commands:");
             player.sendMessage("  §8» §6/info");
@@ -107,25 +117,24 @@ public class CommandStart implements CommandExecutor {
             player.getActivePotionEffects().forEach(potionEffect -> player.removePotionEffect(potionEffect.getType()));
             player.setGameMode(GameMode.SURVIVAL);
             player.teleport(spawnLocation);
-            player.setScoreboard(ForceItemBattle.getGamemanager().getBoard());
             player.playSound(player, Sound.BLOCK_END_PORTAL_SPAWN, 1, 1);
 
-            ForceItemBattle.getGamemanager().getJokers().put(player.getUniqueId(), joker);
+            this.forceItemBattle.getGamemanager().getJokers().put(player.getUniqueId(), joker);
 
-            if(ForceItemBattle.getInstance().getConfig().getBoolean("settings.backpack")) {
-                ForceItemBattle.getBackpack().createBackpack(player);
+            if(this.forceItemBattle.getConfig().getBoolean("settings.backpack")) {
+                this.forceItemBattle.getBackpack().createBackpack(player);
             }
 
             ArmorStand itemDisplay = (ArmorStand) player.getWorld().spawnEntity(player.getLocation().add(0, 2, 0), EntityType.ARMOR_STAND);
-            itemDisplay.getEquipment().setHelmet(new ItemStack(ForceItemBattle.getGamemanager().getCurrentMaterial(player)));
+            itemDisplay.getEquipment().setHelmet(new ItemStack(this.forceItemBattle.getGamemanager().getCurrentMaterial(player)));
             itemDisplay.setInvisible(true);
             itemDisplay.setInvulnerable(true);
-            //itemDisplay.setGlowing(true);
             itemDisplay.setGravity(false);
             player.addPassenger(itemDisplay);
 
         });
         Bukkit.getWorld("world").setTime(0);
-        ForceItemBattle.getTimer().setRunning(true);
+
+        this.forceItemBattle.getGamemanager().setCurrentGameState(GameState.MID_GAME);
     }
 }
