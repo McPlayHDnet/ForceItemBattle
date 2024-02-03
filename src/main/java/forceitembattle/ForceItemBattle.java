@@ -139,6 +139,7 @@ public final class ForceItemBattle extends JavaPlugin {
 
                 materialKeys.forEach(keys -> {
                     List<String> descriptions = configurationSection.getStringList(keys);
+                    keys = keys.toUpperCase();
                     getItemDifficultiesManager().getDescriptionItems().put(Material.valueOf(keys), new DescriptionItem(Material.valueOf(keys), descriptions));
                 });
             } else {
