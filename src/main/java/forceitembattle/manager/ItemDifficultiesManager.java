@@ -6,6 +6,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Material;
 
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ItemDifficultiesManager {
@@ -16,7 +17,8 @@ public class ItemDifficultiesManager {
     private final List<Material> medium;
     private final List<Material> hard;
 
-    private final List<Material> netherEndItems;
+    private final List<Material> netherItems;
+    private final List<Material> endItems;
 
     private final HashMap<Material, DescriptionItem> descriptionItems;
 
@@ -35,17 +37,13 @@ public class ItemDifficultiesManager {
 
     public Material getHardMaterial() {
         Random random = new Random();
-        List<Material> newList = new ArrayList<>(Stream.of(easy, medium, hard)
+        List<Material> items = new ArrayList<>(Stream.of(easy, medium, hard)
                 .flatMap(List::stream)
                 .toList());
 
-        if (!forceItemBattle.getSettings().isNetherEnabled()) {
-            newList.removeAll(this.netherEndItems);
-        } else {
-            newList.addAll(this.netherEndItems);
-        }
+        filterDisabledItems(items);
 
-        return newList.get(random.nextInt(newList.size()));
+        return items.get(random.nextInt(items.size()));
     }
 
     public void toggleNetherItems() {
@@ -81,17 +79,31 @@ public class ItemDifficultiesManager {
         return lines;
     }
 
-    public List<Material> getAllItems() {
-        List<Material> newList = new ArrayList<>(Stream.of(this.easy, this.medium, this.hard)
-                .flatMap(List::stream)
-                .toList());
+    /**
+     * @return Copy of all items from the settings
+     */
+    public Set<Material> getAllItems() {
+        Set<Material> items = Stream.of(this.easy, this.medium, this.hard)
+                .flatMap(List::stream).collect(Collectors.toSet());
 
-        if(!forceItemBattle.getSettings().isNetherEnabled()) {
-            newList.removeAll(this.netherEndItems);
-        } else {
-            newList.addAll(this.netherEndItems);
+        filterDisabledItems(items);
+
+        return items;
+    }
+
+    /**
+     * Filter out items disabled by the settings
+     */
+    private void filterDisabledItems(Collection<Material> items) {
+        if (!forceItemBattle.getSettings().isNetherEnabled()) {
+            this.netherItems.forEach(items::remove);
+
+            // End items cannot be accessed without nether (unless you somehow find full portal lol)
+            this.endItems.forEach(items::remove);
+
+        } else if (!forceItemBattle.getSettings().isEndEnabled()) {
+            this.endItems.forEach(items::remove);
         }
-        return newList;
     }
 
     public boolean itemInList(Material material) {
@@ -102,7 +114,7 @@ public class ItemDifficultiesManager {
         this.forceItemBattle = forceItemBattle;
 
         this.descriptionItems = new HashMap<>();
-        this.netherEndItems = Arrays.asList(
+        this.netherItems = List.of(
                 Material.ANCIENT_DEBRIS,
                 Material.BASALT,
                 Material.BLACK_SHULKER_BOX,
@@ -234,7 +246,13 @@ public class ItemDifficultiesManager {
                 Material.WITHER_SKELETON_SKULL,
                 Material.YELLOW_SHULKER_BOX
         );
-        this.easy = Arrays.asList(
+
+        this.endItems = List.of(
+
+        );
+
+
+        this.easy = List.of(
                 Material.ACTIVATOR_RAIL,
                 Material.ALLIUM,
                 Material.AMETHYST_BLOCK,
@@ -733,7 +751,8 @@ public class ItemDifficultiesManager {
                 Material.YELLOW_TERRACOTTA,
                 Material.YELLOW_WOOL
         );
-        this.medium = Arrays.asList(
+
+        this.medium = List.of(
                 Material.ACACIA_BOAT,
                 Material.ACACIA_BUTTON,
                 Material.ACACIA_CHEST_BOAT,
@@ -1127,7 +1146,8 @@ public class ItemDifficultiesManager {
                 Material.WET_SPONGE,
                 Material.WITHER_SKELETON_SKULL
         );
-        this.hard = Arrays.asList(
+
+        this.hard = List.of(
                 Material.ANGLER_POTTERY_SHERD,
                 Material.ARCHER_POTTERY_SHERD,
                 Material.BEE_NEST,

@@ -19,6 +19,15 @@ public class GameSettings {
         plugin.saveConfig();
     }
 
+    public boolean isEndEnabled() {
+        return plugin.getConfig().getBoolean("settings.end", true);
+    }
+
+    public void setEndEnabled(boolean enabled) {
+        plugin.getConfig().set("settings.end", enabled);
+        plugin.saveConfig();
+    }
+
     public boolean isPvpEnabled() {
         return plugin.getConfig().getBoolean("settings.pvp");
     }

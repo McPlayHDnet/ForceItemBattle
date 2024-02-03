@@ -53,6 +53,7 @@ public final class ForceItemBattle extends JavaPlugin {
         getConfig().addDefault("settings.backpack", true);
         getConfig().addDefault("settings.pvp", true);
         getConfig().addDefault("settings.nether", true);
+        getConfig().addDefault("settings.end", true);
         getConfig().addDefault("standard.countdown", 30);
         getConfig().addDefault("standard.jokers", 3);
         getConfig().addDefault("standard.backpackSize", 27);
