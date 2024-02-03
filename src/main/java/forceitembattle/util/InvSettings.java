@@ -47,16 +47,14 @@ public class InvSettings extends InventoryBuilder {
                 /* Food-Setting */
                 if(inventoryClickEvent.getSlot() == 19) {
                     player.playSound(player, Sound.ENTITY_ITEM_PICKUP, 1, 1);
-                    forceItemBattle.getConfig().set("settings.food", !forceItemBattle.getSettings().isFoodEnabled());
-                    forceItemBattle.saveConfig();
+                    forceItemBattle.getSettings().setFoodEnabled(!forceItemBattle.getSettings().isFoodEnabled());
 
                     this.setItem(19, new ItemBuilder(Material.COOKED_BEEF).setDisplayName("§8» " + (forceItemBattle.getSettings().isFoodEnabled() ? "§aFood §2✔" : "§cFood §4✘")).getItemStack());
 
                 /* KeepInv-Setting */
                 } else if(inventoryClickEvent.getSlot() == 21) {
                     player.playSound(player, Sound.ENTITY_ITEM_PICKUP, 1, 1);
-                    forceItemBattle.getConfig().set("settings.keepinventory", !forceItemBattle.getSettings().isKeepInventoryEnabled());
-                    forceItemBattle.saveConfig();
+                    forceItemBattle.getSettings().setKeepInventoryEnabled(!forceItemBattle.getSettings().isKeepInventoryEnabled());
 
                     Bukkit.getWorlds().forEach(worlds -> worlds.setGameRule(GameRule.KEEP_INVENTORY, forceItemBattle.getSettings().isKeepInventoryEnabled()));
 
@@ -65,16 +63,14 @@ public class InvSettings extends InventoryBuilder {
                 /* Backpack-Setting */
                 } else if(inventoryClickEvent.getSlot() == 23) {
                     player.playSound(player, Sound.ENTITY_ITEM_PICKUP, 1, 1);
-                    forceItemBattle.getConfig().set("settings.backpack", !forceItemBattle.getSettings().isBackpackEnabled());
-                    forceItemBattle.saveConfig();
+                    forceItemBattle.getSettings().setBackpackEnabled(!forceItemBattle.getSettings().isBackpackEnabled());
 
                     this.setItem(23, new ItemBuilder(Material.BUNDLE).setDisplayName("§8» " + (forceItemBattle.getSettings().isBackpackEnabled() ? "§aBackpack §2✔" : "§cBackpack §4✘")).getItemStack());
 
                 /* PvP-Setting */
                 } else if(inventoryClickEvent.getSlot() == 25) {
                     player.playSound(player, Sound.ENTITY_ITEM_PICKUP, 1, 1);
-                    forceItemBattle.getConfig().set("settings.pvp", !forceItemBattle.getSettings().isPvpEnabled());
-                    forceItemBattle.saveConfig();
+                    forceItemBattle.getSettings().setPvpEnabled(!forceItemBattle.getSettings().isPvpEnabled());
 
                     this.setItem(25, new ItemBuilder(Material.IRON_SWORD).setDisplayName("§8» " + (forceItemBattle.getSettings().isPvpEnabled() ? "§aPvP §2✔" : "§cPvP §4✘")).getItemStack());
 
@@ -92,8 +88,6 @@ public class InvSettings extends InventoryBuilder {
                 /* Nether-Setting */
                 } else if(inventoryClickEvent.getSlot() == 33) {
                     player.playSound(player, Sound.ENTITY_ITEM_PICKUP, 1, 1);
-                    forceItemBattle.getConfig().set("settings.nether", !forceItemBattle.getSettings().isNetherEnabled());
-                    forceItemBattle.saveConfig();
 
                     forceItemBattle.getItemDifficultiesManager().toggleNetherItems();
 

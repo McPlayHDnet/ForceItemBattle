@@ -39,7 +39,7 @@ public class ItemDifficultiesManager {
                 .flatMap(List::stream)
                 .toList());
 
-        if(!forceItemBattle.getSettings().isNetherEnabled()) {
+        if (!forceItemBattle.getSettings().isNetherEnabled()) {
             newList.removeAll(this.netherEndItems);
         } else {
             newList.addAll(this.netherEndItems);
@@ -49,16 +49,7 @@ public class ItemDifficultiesManager {
     }
 
     public void toggleNetherItems() {
-        List<Material> newList = new ArrayList<>(Stream.of(this.easy, this.medium, this.hard)
-                .flatMap(List::stream)
-                .toList());
-
-        if(!forceItemBattle.getSettings().isNetherEnabled()) {
-            newList.removeAll(this.netherEndItems);
-        } else {
-            newList.addAll(this.netherEndItems);
-        }
-
+        forceItemBattle.getSettings().setNetherEnabled(!forceItemBattle.getSettings().isNetherEnabled());
     }
 
     public HashMap<Material, DescriptionItem> getDescriptionItems() {

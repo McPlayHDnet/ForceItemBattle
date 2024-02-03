@@ -45,16 +45,17 @@ public final class ForceItemBattle extends JavaPlugin {
     @Override
     public void onLoad() {
         saveConfig();
-        if (!getConfig().contains("timer.time")) { getConfig().set("timer.time", 0); }
-        if (!getConfig().contains("settings.isTeamGame")) { getConfig().set("settings.isTeamGame", false); }
-        if (!getConfig().contains("settings.keepinventory")) { getConfig().set("settings.keepinventory", false); }
-        if (!getConfig().contains("settings.food")) { getConfig().set("settings.food", true); }
-        if (!getConfig().contains("settings.backpack")) { getConfig().set("settings.backpack", true); }
-        if (!getConfig().contains("settings.pvp")) { getConfig().set("settings.pvp", true); }
-        if (!getConfig().contains("settings.nether")) { getConfig().set("settings.nether", true); }
-        if (!getConfig().contains("standard.countdown")) { getConfig().set("standard.countdown", 30); }
-        if (!getConfig().contains("standard.jokers")) { getConfig().set("standard.jokers", 3); }
-        if (!getConfig().contains("standard.backpackSize")) { getConfig().set("standard.backpackSize", 27); }
+
+        getConfig().addDefault("timer.time", 0);
+        getConfig().addDefault("settings.isTeamGame", false);
+        getConfig().addDefault("settings.keepinventory", false);
+        getConfig().addDefault("settings.food", true);
+        getConfig().addDefault("settings.backpack", true);
+        getConfig().addDefault("settings.pvp", true);
+        getConfig().addDefault("settings.nether", true);
+        getConfig().addDefault("standard.countdown", 30);
+        getConfig().addDefault("standard.jokers", 3);
+        getConfig().addDefault("standard.backpackSize", 27);
 
 
         saveConfig();
