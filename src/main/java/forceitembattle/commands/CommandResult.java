@@ -31,32 +31,31 @@ public class CommandResult implements CommandExecutor {
     public boolean onCommand(CommandSender commandSender, Command command, String s, String[] args) {
         if (this.forceItemBattle.getTimer().getTime() > 0) return false;
         if (!(commandSender instanceof Player player)) return false;
-        if(player.isOp()) {
-
-            if(args.length == 0) {
-                if(this.forceItemBattle.getGamemanager().forceItemPlayerMap().isEmpty() || place == 0) {
+        if(args.length == 0) {
+            if(player.isOp()) {
+                if(this.forceItemBattle.getGamemanager().forceItemPlayerMap().isEmpty() || this.place == 0) {
                     player.sendMessage("No more players left.");
                     return false;
                 }
 
                 Map<UUID, ForceItemPlayer> sortedMapDesc = this.forceItemBattle.getGamemanager().sortByValue(this.forceItemBattle.getGamemanager().forceItemPlayerMap(), false);
-                UUID uuid = (UUID) sortedMapDesc.keySet().toArray()[sortedMapDesc.size() - 1];
+                if(this.place == -1) this.place = sortedMapDesc.size();
+                UUID uuid = (UUID) sortedMapDesc.keySet().toArray()[this.place - 1];
 
-                if(place == -1) place = sortedMapDesc.size();
-
-                Bukkit.getOnlinePlayers().forEach(players -> new FinishInventory(this.forceItemBattle, Objects.requireNonNull(Bukkit.getPlayer(uuid) != null ? Bukkit.getPlayer(uuid) : Bukkit.getOfflinePlayer(uuid).getPlayer()), place, true).open(players));
-                place--;
-            } else if (args.length == 1) {
-                if (Bukkit.getPlayer(args[0]) != null) {
-                    player.sendMessage("Currently 'in Arbeit' cuz lazy shit");
-                    //new FinishInventory(Objects.requireNonNull(Bukkit.getPlayer(args[0])), null, false).open(player);
-                } else {
-                    commandSender.sendMessage(ChatColor.RED + "This player is not online");
-                }
-                return true;
+                Bukkit.getOnlinePlayers().forEach(players -> {
+                    new FinishInventory(this.forceItemBattle, this.forceItemBattle.getGamemanager().getForceItemPlayer(uuid), this.place, true).open(players);
+                });
+                this.place--;
             }
 
+        } else if (args.length == 1) {
+            player.sendMessage("Currently 'in Arbeit' cuz lazy shit");
+            //this.forceItemBattle.getGamemanager().forceItemPlayerMap().forEach((uuid, forceItemPlayer) -> player.sendMessage(uuid + " - " + forceItemPlayer.uuid()));
+            new FinishInventory(this.forceItemBattle, this.forceItemBattle.getGamemanager().getForceItemPlayer(UUID.fromString(args[0])), null, false).open(player);
+            return true;
         }
+
+
         return false;
     }
 }

@@ -43,7 +43,6 @@ public class Listeners implements Listener {
         ForceItemPlayer forceItemPlayer = new ForceItemPlayer(player, new ArrayList<>(), null, 0, 0);
         if (this.forceItemBattle.getGamemanager().isMidGame()) {
             if(!this.forceItemBattle.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
-
                 player.getInventory().clear();
                 player.setLevel(0);
                 player.setExp(0);
@@ -141,15 +140,23 @@ public class Listeners implements Listener {
             forceItemPlayer.updateItemDisplay();
         }
 
-        Bukkit.broadcastMessage("§a" + player.getName() + " §7" + (foundItemEvent.isSkipped() ? "skipped" : "found") + " §6" + WordUtils.capitalize(itemStack.getType().name().toLowerCase().replace("_", " ")));
+        String foundMessage = (foundItemEvent.isSkipped() ? "skipped" : "found") + " §6" + WordUtils.capitalize(itemStack.getType().name().toLowerCase().replace("_", " "));
 
         for(ItemStack inventoryItemStacks : player.getInventory().getContents()) {
             if(inventoryItemStacks == null) return;
             if(inventoryItemStacks.getType() == forceItemPlayer.currentMaterial()) {
-                foundItemEvent.setFoundItem(inventoryItemStacks);
+                FoundItemEvent newFoundItemEvent = new FoundItemEvent(player);
+                newFoundItemEvent.setFoundItem(inventoryItemStacks);
+                newFoundItemEvent.skipped(false);
+                foundMessage = "was lucky to already own §6" + WordUtils.capitalize(itemStack.getType().name().toLowerCase().replace("_", " "));
+
+                Bukkit.broadcastMessage("§a" + player.getName() + " §was lucky to already own §6" + WordUtils.capitalize(itemStack.getType().name().toLowerCase().replace("_", " ")));
+
                 Bukkit.getPluginManager().callEvent(foundItemEvent);
             }
         };
+
+        Bukkit.broadcastMessage("§a" + player.getName() + " §7" + foundMessage);
     }
 
     @EventHandler
