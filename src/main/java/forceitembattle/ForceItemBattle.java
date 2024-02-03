@@ -5,7 +5,11 @@ import forceitembattle.listener.Listeners;
 import forceitembattle.listener.RecipeListener;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.ItemDifficultiesManager;
-import forceitembattle.util.*;
+import forceitembattle.settings.GameSettings;
+import forceitembattle.util.Backpack;
+import forceitembattle.util.DescriptionItem;
+import forceitembattle.util.RecipeInventory;
+import forceitembattle.util.Timer;
 import forceitembattle.util.color.ColorManager;
 import org.bukkit.Bukkit;
 import org.bukkit.GameRule;
@@ -35,6 +39,8 @@ public final class ForceItemBattle extends JavaPlugin {
     private RecipeInventory recipeInventory;
     private ColorManager colorManager;
     private Location spawnLocation;
+
+    private GameSettings settings;
 
     @Override
     public void onLoad() {
@@ -122,12 +128,13 @@ public final class ForceItemBattle extends JavaPlugin {
         this.itemDifficultiesManager = new ItemDifficultiesManager(this);
         this.recipeInventory = new RecipeInventory(this);
         this.colorManager = new ColorManager();
+        this.settings = new GameSettings(this);
 
         this.initListeners();
         this.initCommands();
 
         Bukkit.getWorlds().forEach(world -> {
-            world.setGameRule(GameRule.KEEP_INVENTORY, getConfig().getBoolean("settings.keepinventory"));
+            world.setGameRule(GameRule.KEEP_INVENTORY, getSettings().isKeepInventoryEnabled());
             world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
         });
 
@@ -233,4 +240,9 @@ public final class ForceItemBattle extends JavaPlugin {
     public ColorManager getColorManager() {
         return this.colorManager;
     }
+
+    public GameSettings getSettings() {
+        return this.settings;
+    }
+
 }

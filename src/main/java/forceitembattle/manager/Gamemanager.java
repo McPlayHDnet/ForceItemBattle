@@ -1,22 +1,16 @@
 package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.util.ForceItem;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.GameState;
 import org.apache.commons.text.WordUtils;
-import org.bukkit.*;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.ArmorStand;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
+import org.bukkit.Material;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.scoreboard.Scoreboard;
-import org.bukkit.scoreboard.ScoreboardManager;
-import org.bukkit.scoreboard.Team;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -58,8 +52,13 @@ public class Gamemanager {
         });
     }
 
-    public void forceSkipItem(String player) {
-        Player p = Bukkit.getPlayer(player);
+    public void forceSkipItem(Player player) {
+        if (!forceItemPlayerExist(player.getUniqueId())) {
+            return;
+        }
+
+        ForceItemPlayer gamePlayer = getForceItemPlayer(player.getUniqueId());
+        gamePlayer.setCurrentMaterial(this.generateMaterial());
 
         //ArmorStand armorStand = (ArmorStand) p.getPassengers().get(0);
         //armorStand.getEquipment().setHelmet(new ItemStack(this.getCurrentMaterial(p)));
