@@ -41,7 +41,7 @@ public class Listeners implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
 
-        ForceItemPlayer forceItemPlayer = new ForceItemPlayer(player, new ArrayList<>(), null, 0, 0);
+        ForceItemPlayer forceItemPlayer = new ForceItemPlayer(player, player.getUniqueId(), new ArrayList<>(), null, 0, 0);
         if (this.forceItemBattle.getGamemanager().isMidGame()) {
             if(!this.forceItemBattle.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
 
@@ -216,7 +216,9 @@ public class Listeners implements Listener {
         ItemStack movedItem = event.getCurrentItem();
 
         if (event.getAction() == InventoryAction.HOTBAR_SWAP || event.getAction() == InventoryAction.HOTBAR_MOVE_AND_READD) {
-            movedItem = event.getWhoClicked().getInventory().getItem(event.getHotbarButton());
+            if (event.getHotbarButton() >= 0) {
+                movedItem = event.getWhoClicked().getInventory().getItem(event.getHotbarButton());
+            }
         }
 
         if (movedItem != null) {
