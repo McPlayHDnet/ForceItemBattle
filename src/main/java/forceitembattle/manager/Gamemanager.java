@@ -60,8 +60,9 @@ public class Gamemanager {
         ForceItemPlayer gamePlayer = getForceItemPlayer(player.getUniqueId());
         gamePlayer.setCurrentMaterial(this.generateMaterial());
 
-        //ArmorStand armorStand = (ArmorStand) p.getPassengers().get(0);
-        //armorStand.getEquipment().setHelmet(new ItemStack(this.getCurrentMaterial(p)));
+        if (!this.forceItemBattle.getSettings().isNetherEnabled()) {
+            gamePlayer.updateItemDisplay();
+        }
 
         this.forceItemBattle.getTimer().sendActionBar();
     }

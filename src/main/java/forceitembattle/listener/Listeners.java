@@ -137,9 +137,8 @@ public class Listeners implements Listener {
 
         player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
 
-        if(!this.forceItemBattle.getSettings().isNetherEnabled()) {
-            ArmorStand armorStand = (ArmorStand) player.getPassengers().get(0);
-            if(armorStand.getEquipment() != null) armorStand.getEquipment().setHelmet(new ItemStack(forceItemPlayer.currentMaterial()));
+        if (!this.forceItemBattle.getSettings().isNetherEnabled()) {
+            forceItemPlayer.updateItemDisplay();
         }
 
         Bukkit.broadcastMessage("§a" + player.getName() + " §7" + (foundItemEvent.isSkipped() ? "skipped" : "found") + " §6" + WordUtils.capitalize(itemStack.getType().name().toLowerCase().replace("_", " ")));
@@ -325,7 +324,9 @@ public class Listeners implements Listener {
     @EventHandler
     public void onDeath(PlayerDeathEvent playerDeathEvent) {
         Player player = playerDeathEvent.getEntity();
-        player.getPassengers().forEach(Entity::remove);
+
+        ForceItemPlayer gamePlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        gamePlayer.removeItemDisplay();
     }
 
     @EventHandler
@@ -336,15 +337,8 @@ public class Listeners implements Listener {
         player.getInventory().setItem(4, jokers);
         player.getInventory().setItem(8, new ItemBuilder(Material.BUNDLE).setDisplayName("§8» §eBackpack").getItemStack());
 
-        if(!this.forceItemBattle.getSettings().isNetherEnabled()) {
-            ArmorStand itemDisplay = (ArmorStand) player.getWorld().spawnEntity(player.getLocation().add(0, 2, 0), EntityType.ARMOR_STAND);
-            if(itemDisplay.getEquipment() != null) {
-                itemDisplay.getEquipment().setHelmet(new ItemStack(forceItemPlayer.currentMaterial()));
-                itemDisplay.setInvisible(true);
-                itemDisplay.setInvulnerable(true);
-                itemDisplay.setGravity(false);
-            }
-            player.addPassenger(itemDisplay);
+        if (!this.forceItemBattle.getSettings().isNetherEnabled()) {
+            forceItemPlayer.createItemDisplay();
         }
 
     }
@@ -427,15 +421,15 @@ public class Listeners implements Listener {
     @EventHandler
     public void onPortalEvent(PlayerPortalEvent playerPortalEvent) {
         Player player = playerPortalEvent.getPlayer();
-        if(!this.forceItemBattle.getGamemanager().isMidGame()) return;
-        if(!this.forceItemBattle.getSettings().isNetherEnabled()) {
+        if (!this.forceItemBattle.getGamemanager().isMidGame()) {
+            return;
+        }
+
+        if (!this.forceItemBattle.getSettings().isNetherEnabled()) {
             player.sendMessage("§cTravelling to other dimensions is disabled!");
             player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
             playerPortalEvent.setCanCreatePortal(false);
             playerPortalEvent.setCancelled(true);
         }
-
-
-
     }
 }

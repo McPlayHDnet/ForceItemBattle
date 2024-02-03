@@ -8,9 +8,7 @@ import org.bukkit.*;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -128,14 +126,7 @@ public class CommandStart implements CommandExecutor {
             }
 
             if(!this.forceItemBattle.getSettings().isNetherEnabled()) {
-                ArmorStand itemDisplay = (ArmorStand) player.getWorld().spawnEntity(player.getLocation().add(0, 2, 0), EntityType.ARMOR_STAND);
-                if(itemDisplay.getEquipment() != null) {
-                    itemDisplay.getEquipment().setHelmet(new ItemStack(forceItemPlayer.currentMaterial()));
-                    itemDisplay.setInvisible(true);
-                    itemDisplay.setInvulnerable(true);
-                    itemDisplay.setGravity(false);
-                }
-                player.addPassenger(itemDisplay);
+                forceItemPlayer.createItemDisplay();
             }
 
 
