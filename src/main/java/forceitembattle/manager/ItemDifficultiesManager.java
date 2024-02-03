@@ -4,12 +4,8 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.util.DescriptionItem;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
-import org.checkerframework.checker.units.qual.A;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ItemDifficultiesManager {
@@ -81,8 +77,12 @@ public class ItemDifficultiesManager {
         List<String> lines = null;
         if(this.isItemInDescriptionList(material)) {
             if (this.itemHasDescription(material)) {
-                this.getDescriptionItems().get(material).lines().replaceAll(line -> line.replace("&", "§"));
-                lines = this.getDescriptionItems().get(material).lines();
+                lines = this.getDescriptionItems().get(material)
+                        .lines()
+                        .stream()
+                        .map(line -> ChatColor.translateAlternateColorCodes('&', line))
+                        .toList();
+                // lines = this.getDescriptionItems().get(material).lines();
             } else {
                 throw new NullPointerException(material.name() + " does not have a description");
             }
