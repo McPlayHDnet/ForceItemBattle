@@ -8,6 +8,18 @@ public class GameSettings {
 
     public GameSettings(ForceItemBattle plugin) {
         this.plugin = plugin;
+
+        this.plugin.getConfig().addDefault("timer.time", 0);
+        this.plugin.getConfig().addDefault("settings.isTeamGame", false);
+        this.plugin.getConfig().addDefault("settings.keepinventory", false);
+        this.plugin.getConfig().addDefault("settings.food", true);
+        this.plugin.getConfig().addDefault("settings.backpack", true);
+        this.plugin.getConfig().addDefault("settings.pvp", true);
+        this.plugin.getConfig().addDefault("settings.nether", true);
+        this.plugin.getConfig().addDefault("settings.end", true);
+        this.plugin.getConfig().addDefault("standard.countdown", 30);
+        this.plugin.getConfig().addDefault("standard.jokers", 3);
+        this.plugin.getConfig().addDefault("standard.backpackSize", 27);
     }
 
     public boolean isNetherEnabled() {

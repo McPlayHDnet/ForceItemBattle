@@ -49,8 +49,6 @@ public class CommandResult implements CommandExecutor {
             }
 
         } else if (args.length == 1) {
-            player.sendMessage("Currently 'in Arbeit' cuz lazy shit");
-            //this.forceItemBattle.getGamemanager().forceItemPlayerMap().forEach((uuid, forceItemPlayer) -> player.sendMessage(uuid + " - " + forceItemPlayer.uuid()));
             new FinishInventory(this.forceItemBattle, this.forceItemBattle.getGamemanager().getForceItemPlayer(UUID.fromString(args[0])), null, false).open(player);
             return true;
         }
