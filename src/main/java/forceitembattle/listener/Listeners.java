@@ -93,26 +93,32 @@ public class Listeners implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onFoundItemInInventory(InventoryClickEvent inventoryClickEvent) {
         Player player = (Player) inventoryClickEvent.getWhoClicked();
 
-        if(this.forceItemBattle.getGamemanager().isMidGame()) {
-            ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
-            ItemStack clickedItem = inventoryClickEvent.getCurrentItem();
-            Material currentItem = forceItemPlayer.currentMaterial();
+        if (!this.forceItemBattle.getGamemanager().isMidGame()) {
+            return;
+        }
 
-            if(clickedItem == null) return;
+        ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        ItemStack clickedItem = inventoryClickEvent.getCurrentItem();
+        Material currentItem = forceItemPlayer.currentMaterial();
 
-            if(inventoryClickEvent.getView().getTitle().startsWith("§8●")) return; //prevents from getting the needed item onClick inside the recipe
+        if (clickedItem == null) {
+            return;
+        }
 
-            if(clickedItem.getType() == currentItem) {
-                FoundItemEvent foundItemEvent = new FoundItemEvent(player);
-                foundItemEvent.setFoundItem(clickedItem);
-                foundItemEvent.skipped(false);
+        if (inventoryClickEvent.getView().getTitle().startsWith("§8●")) {
+            return; //prevents from getting the needed item onClick inside the recipe
+        }
 
-                Bukkit.getPluginManager().callEvent(foundItemEvent);
-            }
+        if (clickedItem.getType() == currentItem) {
+            FoundItemEvent foundItemEvent = new FoundItemEvent(player);
+            foundItemEvent.setFoundItem(clickedItem);
+            foundItemEvent.skipped(false);
+
+            Bukkit.getPluginManager().callEvent(foundItemEvent);
         }
     }
 
