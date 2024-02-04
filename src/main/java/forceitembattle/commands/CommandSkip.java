@@ -20,22 +20,26 @@ public class CommandSkip implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player player)) return false;
+
         if (!this.forceItemBattle.getGamemanager().isMidGame()) {
             sender.sendMessage(ChatColor.RED + "The game is not running. Start it first with /start");
             return false;
-        } else
-        if (args.length == 1) {
-            if (Bukkit.getPlayer(args[0]) != null) {
-                player.sendMessage("§7You skipped this item");
-                //this.forceItemBattle.logToFile("[" + this.forceItemBattle.getTimer().getTime() + "] | " + args[0] + " skipped " + this.forceItemBattle.getGamemanager().getCurrentMaterial(Bukkit.getPlayer(args[0])));
-                this.forceItemBattle.getGamemanager().forceSkipItem(args[0]);
-            } else {
-                sender.sendMessage(ChatColor.RED + "This player is not online");
-            }
-            return true;
-        } else {
+        }
+
+        if (args.length != 1) {
             sender.sendMessage(ChatColor.RED + "Usage: /skip <player_name>");
             return false;
         }
+
+        Player target = Bukkit.getPlayer(args[0]);
+
+        if (target != null) {
+            player.sendMessage("§7Skipped this item for " + target.getName());
+            //this.forceItemBattle.logToFile("[" + this.forceItemBattle.getTimer().getTime() + "] | " + args[0] + " skipped " + this.forceItemBattle.getGamemanager().getCurrentMaterial(Bukkit.getPlayer(args[0])));
+            this.forceItemBattle.getGamemanager().forceSkipItem(target);
+        } else {
+            sender.sendMessage(ChatColor.RED + "This player is not online");
+        }
+        return true;
     }
 }

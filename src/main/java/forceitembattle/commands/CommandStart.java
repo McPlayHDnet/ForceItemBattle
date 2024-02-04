@@ -8,9 +8,7 @@ import org.bukkit.*;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -94,11 +92,11 @@ public class CommandStart implements CommandExecutor {
             player.sendMessage(" ");
             player.sendMessage("  §8● §7Duration §8» §a" + this.forceItemBattle.getTimer().getTime() / 60 + " minutes");
             player.sendMessage("  §8● §7Joker §8» §a" + joker);
-            player.sendMessage("  §8● §7Food §8» §a" + (this.forceItemBattle.getConfig().getBoolean("settings.food") ? "§2✔" : "§4✘"));
-            player.sendMessage("  §8● §7Keep Inventory §8» §a" + (this.forceItemBattle.getConfig().getBoolean("settings.keepinventory") ? "§2✔" : "§4✘"));
-            player.sendMessage("  §8● §7Backpack §8» §a" + (this.forceItemBattle.getConfig().getBoolean("settings.backpack") ? "§2✔" : "§4✘"));
-            player.sendMessage("  §8● §7PvP §8» §a" + (this.forceItemBattle.getConfig().getBoolean("settings.pvp") ? "§2✔" : "§4✘"));
-            player.sendMessage("  §8● §7Nether §8» §a" + (this.forceItemBattle.getConfig().getBoolean("settings.nether") ? "§2✔" : "§4✘"));
+            player.sendMessage("  §8● §7Food §8» §a" + (this.forceItemBattle.getSettings().isFoodEnabled() ? "§2✔" : "§4✘"));
+            player.sendMessage("  §8● §7Keep Inventory §8» §a" + (this.forceItemBattle.getSettings().isKeepInventoryEnabled() ? "§2✔" : "§4✘"));
+            player.sendMessage("  §8● §7Backpack §8» §a" + (this.forceItemBattle.getSettings().isBackpackEnabled() ? "§2✔" : "§4✘"));
+            player.sendMessage("  §8● §7PvP §8» §a" + (this.forceItemBattle.getSettings().isPvpEnabled() ? "§2✔" : "§4✘"));
+            player.sendMessage("  §8● §7Nether §8» §a" + (this.forceItemBattle.getSettings().isNetherEnabled() ? "§2✔" : "§4✘"));
             player.sendMessage(" ");
             player.sendMessage(" §8● §7Useful Commands:");
             player.sendMessage("  §8» §6/info");
@@ -123,19 +121,12 @@ public class CommandStart implements CommandExecutor {
             player.teleport(spawnLocation);
             player.playSound(player, Sound.BLOCK_END_PORTAL_SPAWN, 1, 1);
 
-            if(this.forceItemBattle.getConfig().getBoolean("settings.backpack")) {
+            if(this.forceItemBattle.getSettings().isBackpackEnabled()) {
                 this.forceItemBattle.getBackpack().createBackpack(player);
             }
 
-            if(!this.forceItemBattle.getConfig().getBoolean("settings.nether")) {
-                ArmorStand itemDisplay = (ArmorStand) player.getWorld().spawnEntity(player.getLocation().add(0, 2, 0), EntityType.ARMOR_STAND);
-                if(itemDisplay.getEquipment() != null) {
-                    itemDisplay.getEquipment().setHelmet(new ItemStack(forceItemPlayer.currentMaterial()));
-                    itemDisplay.setInvisible(true);
-                    itemDisplay.setInvulnerable(true);
-                    itemDisplay.setGravity(false);
-                }
-                player.addPassenger(itemDisplay);
+            if(!this.forceItemBattle.getSettings().isNetherEnabled()) {
+                forceItemPlayer.createItemDisplay();
             }
 
 

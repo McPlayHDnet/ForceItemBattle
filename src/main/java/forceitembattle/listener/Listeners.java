@@ -2,7 +2,10 @@ package forceitembattle.listener;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.event.FoundItemEvent;
-import forceitembattle.util.*;
+import forceitembattle.util.ForceItem;
+import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.util.InventoryBuilder;
+import forceitembattle.util.ItemBuilder;
 import org.apache.commons.text.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -20,13 +23,9 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.*;
-import org.bukkit.event.world.PortalCreateEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
-import org.checkerframework.checker.units.qual.Force;
 
-import java.util.*;
+import java.util.ArrayList;
 
 public class Listeners implements Listener {
 
@@ -44,7 +43,6 @@ public class Listeners implements Listener {
         ForceItemPlayer forceItemPlayer = new ForceItemPlayer(player, new ArrayList<>(), null, 0, 0);
         if (this.forceItemBattle.getGamemanager().isMidGame()) {
             if(!this.forceItemBattle.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
-
                 player.getInventory().clear();
                 player.setLevel(0);
                 player.setExp(0);
@@ -138,20 +136,27 @@ public class Listeners implements Listener {
 
         player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
 
-        if(!this.forceItemBattle.getConfig().getBoolean("settings.nether")) {
-            ArmorStand armorStand = (ArmorStand) player.getPassengers().get(0);
-            if(armorStand.getEquipment() != null) armorStand.getEquipment().setHelmet(new ItemStack(forceItemPlayer.currentMaterial()));
+        if (!this.forceItemBattle.getSettings().isNetherEnabled()) {
+            forceItemPlayer.updateItemDisplay();
         }
 
-        Bukkit.broadcastMessage("§a" + player.getName() + " §7" + (foundItemEvent.isSkipped() ? "skipped" : "found") + " §6" + WordUtils.capitalize(itemStack.getType().name().toLowerCase().replace("_", " ")));
+        String foundMessage = (foundItemEvent.isSkipped() ? "skipped" : "found") + " §6" + WordUtils.capitalize(itemStack.getType().name().toLowerCase().replace("_", " "));
 
         for(ItemStack inventoryItemStacks : player.getInventory().getContents()) {
             if(inventoryItemStacks == null) return;
             if(inventoryItemStacks.getType() == forceItemPlayer.currentMaterial()) {
-                foundItemEvent.setFoundItem(inventoryItemStacks);
+                FoundItemEvent newFoundItemEvent = new FoundItemEvent(player);
+                newFoundItemEvent.setFoundItem(inventoryItemStacks);
+                newFoundItemEvent.skipped(false);
+                foundMessage = "was lucky to already own §6" + WordUtils.capitalize(itemStack.getType().name().toLowerCase().replace("_", " "));
+
+                Bukkit.broadcastMessage("§a" + player.getName() + " §was lucky to already own §6" + WordUtils.capitalize(itemStack.getType().name().toLowerCase().replace("_", " ")));
+
                 Bukkit.getPluginManager().callEvent(foundItemEvent);
             }
         };
+
+        Bukkit.broadcastMessage("§a" + player.getName() + " §7" + foundMessage);
     }
 
     @EventHandler
@@ -215,10 +220,10 @@ public class Listeners implements Listener {
 
         ItemStack movedItem = event.getCurrentItem();
 
-        if (event.getAction() == InventoryAction.HOTBAR_SWAP) {
-            movedItem = event.getCurrentItem() == null || event.getCurrentItem().getType() == Material.AIR ?
-                    event.getWhoClicked().getInventory().getItem(event.getHotbarButton())
-                    : event.getCurrentItem();
+        if (event.getAction() == InventoryAction.HOTBAR_SWAP || event.getAction() == InventoryAction.HOTBAR_MOVE_AND_READD) {
+            if (event.getHotbarButton() >= 0) {
+                movedItem = event.getWhoClicked().getInventory().getItem(event.getHotbarButton());
+            }
         }
 
         if (movedItem != null) {
@@ -291,7 +296,7 @@ public class Listeners implements Listener {
     }
 
     private boolean isPvpEnabled() {
-        return this.forceItemBattle.getConfig().getBoolean("settings.pvp");
+        return this.forceItemBattle.getSettings().isPvpEnabled();
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -326,7 +331,9 @@ public class Listeners implements Listener {
     @EventHandler
     public void onDeath(PlayerDeathEvent playerDeathEvent) {
         Player player = playerDeathEvent.getEntity();
-        player.getPassengers().forEach(Entity::remove);
+
+        ForceItemPlayer gamePlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        gamePlayer.removeItemDisplay();
     }
 
     @EventHandler
@@ -337,15 +344,8 @@ public class Listeners implements Listener {
         player.getInventory().setItem(4, jokers);
         player.getInventory().setItem(8, new ItemBuilder(Material.BUNDLE).setDisplayName("§8» §eBackpack").getItemStack());
 
-        if(!this.forceItemBattle.getConfig().getBoolean("settings.nether")) {
-            ArmorStand itemDisplay = (ArmorStand) player.getWorld().spawnEntity(player.getLocation().add(0, 2, 0), EntityType.ARMOR_STAND);
-            if(itemDisplay.getEquipment() != null) {
-                itemDisplay.getEquipment().setHelmet(new ItemStack(forceItemPlayer.currentMaterial()));
-                itemDisplay.setInvisible(true);
-                itemDisplay.setInvulnerable(true);
-                itemDisplay.setGravity(false);
-            }
-            player.addPassenger(itemDisplay);
+        if (!this.forceItemBattle.getSettings().isNetherEnabled()) {
+            forceItemPlayer.createItemDisplay();
         }
 
     }
@@ -374,7 +374,7 @@ public class Listeners implements Listener {
     public void onFoodLevelChange(FoodLevelChangeEvent event) {
         if (!(event.getEntity() instanceof Player)) return;
         if(!this.forceItemBattle.getGamemanager().isMidGame()) return;
-        if (this.forceItemBattle.getConfig().getBoolean("settings.food")) return;
+        if (this.forceItemBattle.getSettings().isFoodEnabled()) return;
         event.setCancelled(true);
     }
 
@@ -428,15 +428,15 @@ public class Listeners implements Listener {
     @EventHandler
     public void onPortalEvent(PlayerPortalEvent playerPortalEvent) {
         Player player = playerPortalEvent.getPlayer();
-        if(!this.forceItemBattle.getGamemanager().isMidGame()) return;
-        if(!this.forceItemBattle.getConfig().getBoolean("settings.nether")) {
+        if (!this.forceItemBattle.getGamemanager().isMidGame()) {
+            return;
+        }
+
+        if (!this.forceItemBattle.getSettings().isNetherEnabled()) {
             player.sendMessage("§cTravelling to other dimensions is disabled!");
             player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
             playerPortalEvent.setCanCreatePortal(false);
             playerPortalEvent.setCancelled(true);
         }
-
-
-
     }
 }

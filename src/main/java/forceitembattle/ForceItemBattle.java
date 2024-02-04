@@ -5,7 +5,11 @@ import forceitembattle.listener.Listeners;
 import forceitembattle.listener.RecipeListener;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.ItemDifficultiesManager;
-import forceitembattle.util.*;
+import forceitembattle.settings.GameSettings;
+import forceitembattle.util.Backpack;
+import forceitembattle.util.DescriptionItem;
+import forceitembattle.util.RecipeInventory;
+import forceitembattle.util.Timer;
 import forceitembattle.util.color.ColorManager;
 import org.bukkit.Bukkit;
 import org.bukkit.GameRule;
@@ -36,19 +40,23 @@ public final class ForceItemBattle extends JavaPlugin {
     private ColorManager colorManager;
     private Location spawnLocation;
 
+    private GameSettings settings;
+
     @Override
     public void onLoad() {
         saveConfig();
-        if (!getConfig().contains("timer.time")) { getConfig().set("timer.time", 0); }
-        if (!getConfig().contains("settings.isTeamGame")) { getConfig().set("settings.isTeamGame", false); }
-        if (!getConfig().contains("settings.keepinventory")) { getConfig().set("settings.keepinventory", false); }
-        if (!getConfig().contains("settings.food")) { getConfig().set("settings.food", true); }
-        if (!getConfig().contains("settings.backpack")) { getConfig().set("settings.backpack", true); }
-        if (!getConfig().contains("settings.pvp")) { getConfig().set("settings.pvp", true); }
-        if (!getConfig().contains("settings.nether")) { getConfig().set("settings.nether", true); }
-        if (!getConfig().contains("standard.countdown")) { getConfig().set("standard.countdown", 30); }
-        if (!getConfig().contains("standard.jokers")) { getConfig().set("standard.jokers", 3); }
-        if (!getConfig().contains("standard.backpackSize")) { getConfig().set("standard.backpackSize", 27); }
+
+        getConfig().addDefault("timer.time", 0);
+        getConfig().addDefault("settings.isTeamGame", false);
+        getConfig().addDefault("settings.keepinventory", false);
+        getConfig().addDefault("settings.food", true);
+        getConfig().addDefault("settings.backpack", true);
+        getConfig().addDefault("settings.pvp", true);
+        getConfig().addDefault("settings.nether", true);
+        getConfig().addDefault("settings.end", true);
+        getConfig().addDefault("standard.countdown", 30);
+        getConfig().addDefault("standard.jokers", 3);
+        getConfig().addDefault("standard.backpackSize", 27);
 
 
         saveConfig();
@@ -122,12 +130,13 @@ public final class ForceItemBattle extends JavaPlugin {
         this.itemDifficultiesManager = new ItemDifficultiesManager(this);
         this.recipeInventory = new RecipeInventory(this);
         this.colorManager = new ColorManager();
+        this.settings = new GameSettings(this);
 
         this.initListeners();
         this.initCommands();
 
         Bukkit.getWorlds().forEach(world -> {
-            world.setGameRule(GameRule.KEEP_INVENTORY, getConfig().getBoolean("settings.keepinventory"));
+            world.setGameRule(GameRule.KEEP_INVENTORY, getSettings().isKeepInventoryEnabled());
             world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
         });
 
@@ -139,6 +148,7 @@ public final class ForceItemBattle extends JavaPlugin {
 
                 materialKeys.forEach(keys -> {
                     List<String> descriptions = configurationSection.getStringList(keys);
+                    keys = keys.toUpperCase();
                     getItemDifficultiesManager().getDescriptionItems().put(Material.valueOf(keys), new DescriptionItem(Material.valueOf(keys), descriptions));
                 });
             } else {
@@ -232,4 +242,9 @@ public final class ForceItemBattle extends JavaPlugin {
     public ColorManager getColorManager() {
         return this.colorManager;
     }
+
+    public GameSettings getSettings() {
+        return this.settings;
+    }
+
 }

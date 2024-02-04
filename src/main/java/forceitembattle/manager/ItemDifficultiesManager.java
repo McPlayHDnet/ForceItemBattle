@@ -4,11 +4,8 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.util.DescriptionItem;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
-import org.checkerframework.checker.units.qual.A;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -20,7 +17,8 @@ public class ItemDifficultiesManager {
     private final List<Material> medium;
     private final List<Material> hard;
 
-    private final List<Material> netherEndItems;
+    private final List<Material> netherItems;
+    private final List<Material> endItems;
 
     private final HashMap<Material, DescriptionItem> descriptionItems;
 
@@ -39,30 +37,17 @@ public class ItemDifficultiesManager {
 
     public Material getHardMaterial() {
         Random random = new Random();
-        List<Material> newList = new ArrayList<>(Stream.of(easy, medium, hard)
+        List<Material> items = new ArrayList<>(Stream.of(easy, medium, hard)
                 .flatMap(List::stream)
                 .toList());
 
-        if(!forceItemBattle.getConfig().getBoolean("settings.nether")) {
-            newList.removeAll(this.netherEndItems);
-        } else {
-            newList.addAll(this.netherEndItems);
-        }
+        filterDisabledItems(items);
 
-        return newList.get(random.nextInt(newList.size()));
+        return items.get(random.nextInt(items.size()));
     }
 
     public void toggleNetherItems() {
-        List<Material> newList = new ArrayList<>(Stream.of(this.easy, this.medium, this.hard)
-                .flatMap(List::stream)
-                .toList());
-
-        if(!forceItemBattle.getConfig().getBoolean("settings.nether")) {
-            newList.removeAll(this.netherEndItems);
-        } else {
-            newList.addAll(this.netherEndItems);
-        }
-
+        forceItemBattle.getSettings().setNetherEnabled(!forceItemBattle.getSettings().isNetherEnabled());
     }
 
     public HashMap<Material, DescriptionItem> getDescriptionItems() {
@@ -81,8 +66,12 @@ public class ItemDifficultiesManager {
         List<String> lines = null;
         if(this.isItemInDescriptionList(material)) {
             if (this.itemHasDescription(material)) {
-                this.getDescriptionItems().get(material).lines().replaceAll(line -> line.replace("&", "§"));
-                lines = this.getDescriptionItems().get(material).lines();
+                lines = this.getDescriptionItems().get(material)
+                        .lines()
+                        .stream()
+                        .map(line -> ChatColor.translateAlternateColorCodes('&', line))
+                        .toList();
+                // lines = this.getDescriptionItems().get(material).lines();
             } else {
                 throw new NullPointerException(material.name() + " does not have a description");
             }
@@ -90,17 +79,31 @@ public class ItemDifficultiesManager {
         return lines;
     }
 
-    public List<Material> getAllItems() {
-        List<Material> newList = new ArrayList<>(Stream.of(this.easy, this.medium, this.hard)
-                .flatMap(List::stream)
-                .toList());
+    /**
+     * @return Copy of all items from the settings
+     */
+    public Set<Material> getAllItems() {
+        Set<Material> items = Stream.of(this.easy, this.medium, this.hard)
+                .flatMap(List::stream).collect(Collectors.toSet());
 
-        if(!forceItemBattle.getConfig().getBoolean("settings.nether")) {
-            newList.removeAll(this.netherEndItems);
-        } else {
-            newList.addAll(this.netherEndItems);
+        filterDisabledItems(items);
+
+        return items;
+    }
+
+    /**
+     * Filter out items disabled by the settings
+     */
+    private void filterDisabledItems(Collection<Material> items) {
+        if (!forceItemBattle.getSettings().isNetherEnabled()) {
+            this.netherItems.forEach(items::remove);
+
+            // End items cannot be accessed without nether (unless you somehow find full portal lol)
+            this.endItems.forEach(items::remove);
+
+        } else if (!forceItemBattle.getSettings().isEndEnabled()) {
+            this.endItems.forEach(items::remove);
         }
-        return newList;
     }
 
     public boolean itemInList(Material material) {
@@ -111,23 +114,18 @@ public class ItemDifficultiesManager {
         this.forceItemBattle = forceItemBattle;
 
         this.descriptionItems = new HashMap<>();
-        this.netherEndItems = Arrays.asList(
+        this.netherItems = List.of(
                 Material.ANCIENT_DEBRIS,
                 Material.SKULL_BANNER_PATTERN,
                 Material.BASALT,
-                Material.BLACK_SHULKER_BOX,
                 Material.BLACKSTONE,
                 Material.BLACKSTONE_SLAB,
                 Material.BLACKSTONE_STAIRS,
                 Material.BLACKSTONE_WALL,
                 Material.BLAZE_POWDER,
                 Material.BLAZE_ROD,
-                Material.BLUE_SHULKER_BOX,
-                Material.BROWN_SHULKER_BOX,
                 Material.CHISELED_POLISHED_BLACKSTONE,
                 Material.CHISELED_QUARTZ_BLOCK,
-                Material.CHORUS_FLOWER,
-                Material.CHORUS_FRUIT,
                 Material.CRACKED_POLISHED_BLACKSTONE_BRICKS,
                 Material.CRIMSON_BUTTON,
                 Material.CRIMSON_DOOR,
@@ -145,27 +143,11 @@ public class ItemDifficultiesManager {
                 Material.CRIMSON_STAIRS,
                 Material.CRIMSON_STEM,
                 Material.CRIMSON_TRAPDOOR,
-                Material.CYAN_SHULKER_BOX,
-                Material.DRAGON_HEAD,
-                Material.ELYTRA,
-                Material.END_CRYSTAL,
-                Material.END_ROD,
-                Material.END_STONE,
-                Material.END_STONE_BRICK_SLAB,
-                Material.END_STONE_BRICK_STAIRS,
-                Material.END_STONE_BRICK_WALL,
-                Material.END_STONE_BRICKS,
                 Material.ENDER_EYE,
                 Material.GHAST_TEAR,
                 Material.GILDED_BLACKSTONE,
                 Material.GLOWSTONE,
                 Material.GLOWSTONE_DUST,
-                Material.GRAY_SHULKER_BOX,
-                Material.GREEN_SHULKER_BOX,
-                Material.LIGHT_BLUE_SHULKER_BOX,
-                Material.LIGHT_GRAY_SHULKER_BOX,
-                Material.LIME_SHULKER_BOX,
-                Material.MAGENTA_SHULKER_BOX,
                 Material.MAGMA_CREAM,
                 Material.MUSIC_DISC_PIGSTEP,
                 Material.NETHER_GOLD_ORE,
@@ -213,12 +195,9 @@ public class ItemDifficultiesManager {
                 Material.RED_NETHER_BRICK_STAIRS,
                 Material.RED_NETHER_BRICK_WALL,
                 Material.RED_NETHER_BRICKS,
-                Material.RED_SHULKER_BOX,
                 Material.RESPAWN_ANCHOR,
                 Material.RIB_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Material.SHROOMLIGHT,
-                Material.SHULKER_BOX,
-                Material.SHULKER_SHELL,
                 Material.SMOOTH_QUARTZ,
                 Material.SMOOTH_QUARTZ_SLAB,
                 Material.SMOOTH_QUARTZ_STAIRS,
@@ -248,11 +227,47 @@ public class ItemDifficultiesManager {
                 Material.WARPED_TRAPDOOR,
                 Material.WARPED_WART_BLOCK,
                 Material.WEEPING_VINES,
+                Material.WITHER_SKELETON_SKULL
+        );
+
+        this.endItems = List.of(
+                Material.BLACK_SHULKER_BOX,
+                Material.BLUE_SHULKER_BOX,
+                Material.BROWN_SHULKER_BOX,
+                Material.CHORUS_FLOWER,
+                Material.CHORUS_FRUIT,
+                Material.CYAN_SHULKER_BOX,
+                Material.DRAGON_HEAD,
+                Material.ELYTRA,
+                Material.END_CRYSTAL,
+                Material.END_ROD,
+                Material.END_STONE,
+                Material.END_STONE_BRICK_SLAB,
+                Material.END_STONE_BRICK_STAIRS,
+                Material.END_STONE_BRICK_WALL,
+                Material.END_STONE_BRICKS,
+                Material.GRAY_SHULKER_BOX,
+                Material.GREEN_SHULKER_BOX,
+                Material.LIGHT_BLUE_SHULKER_BOX,
+                Material.LIGHT_GRAY_SHULKER_BOX,
+                Material.LIME_SHULKER_BOX,
+                Material.MAGENTA_SHULKER_BOX,
+                Material.ORANGE_SHULKER_BOX,
+                Material.PINK_SHULKER_BOX,
+                Material.PURPLE_SHULKER_BOX,
+                Material.PURPUR_BLOCK,
+                Material.PURPUR_PILLAR,
+                Material.PURPUR_SLAB,
+                Material.PURPUR_STAIRS,
+                Material.RED_SHULKER_BOX,
+                Material.SHULKER_BOX,
+                Material.SHULKER_SHELL,
                 Material.WHITE_SHULKER_BOX,
-                Material.WITHER_SKELETON_SKULL,
                 Material.YELLOW_SHULKER_BOX
         );
-        this.easy = Arrays.asList(
+
+
+        this.easy = List.of(
                 Material.ACTIVATOR_RAIL,
                 Material.ALLIUM,
                 Material.AMETHYST_BLOCK,
@@ -751,7 +766,8 @@ public class ItemDifficultiesManager {
                 Material.YELLOW_TERRACOTTA,
                 Material.YELLOW_WOOL
         );
-        this.medium = Arrays.asList(
+
+        this.medium = List.of(
                 Material.ACACIA_BOAT,
                 Material.ACACIA_BUTTON,
                 Material.ACACIA_CHEST_BOAT,
@@ -1145,7 +1161,8 @@ public class ItemDifficultiesManager {
                 Material.WET_SPONGE,
                 Material.WITHER_SKELETON_SKULL
         );
-        this.hard = Arrays.asList(
+
+        this.hard = List.of(
                 Material.ANGLER_POTTERY_SHERD,
                 Material.ARCHER_POTTERY_SHERD,
                 Material.BEE_NEST,
