@@ -39,28 +39,20 @@ public class RecipeListener implements Listener {
             return;
         }
 
-        if(event.getSlot() == 10 ||
-                event.getSlot() == 11 ||
-                event.getSlot() == 12 ||
-                event.getSlot() == 19 ||
-                event.getSlot() == 20 ||
-                event.getSlot() == 21 ||
-                event.getSlot() == 28 ||
-                event.getSlot() == 29 ||
-                event.getSlot() == 30 ||
-                event.getSlot() == 25 || event.getSlot() == 23) {
-            if (event.getClick().isShiftClick()) {
-                ItemStack itemStack = event.getCurrentItem();
-                if (itemStack == null) {
-                    return;
-                }
+        if (!RecipeInventory.SLOTS.contains(event.getSlot())) {
+            return;
+        }
 
-                this.forceItemBattle.getRecipeInventory().showRecipe(player, itemStack);
-
-            } else {
-                player.sendMessage("§cSneak click to show recipe for this item!");
+        if (event.getClick().isShiftClick()) {
+            ItemStack itemStack = event.getCurrentItem();
+            if (itemStack == null) {
+                return;
             }
 
+            this.forceItemBattle.getRecipeInventory().showRecipe(player, itemStack);
+
+        } else {
+            player.sendMessage("§cSneak click to show recipe for this item!");
         }
     }
 

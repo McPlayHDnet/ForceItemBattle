@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
-@SuppressWarnings("duplicate")
+@SuppressWarnings("deprecation")
 public class RecipeInventory {
 
     private ForceItemBattle forceItemBattle;
@@ -126,18 +126,30 @@ Slots visualisation for values below:
 36 37 38 39 40 41 42 43 44
 
  */
-    private final int RESULT_SLOT = 25;
-    private final int STATION_SLOT = 23;
-    private final int WORKBENCH_FIRST_ITEM_SLOT = 10;
-    private final int SMITHING_FIRST_ITEM_SLOT = 19;
-    private final int OTHER_FIRST_ITEM_SLOT = 20;
+    private static final int RESULT_SLOT = 25;
+    private static final int STATION_SLOT = 23;
+    private static final int WORKBENCH_FIRST_ITEM_SLOT = 10;
+    private static final int SMITHING_FIRST_ITEM_SLOT = 19;
+    private static final int OTHER_FIRST_ITEM_SLOT = 20;
+
+    /**
+     * Slots that contain recipe items, the station and result items.
+     */
+    public static final List<Integer> SLOTS = List.of(
+            10, 11, 12,
+            19, 20, 21,
+            28, 29, 30,
+            STATION_SLOT, RESULT_SLOT
+    );
 
     private Inventory createFancyRecipeInventory(ItemStack item, Recipe recipe) {
         String itemName = WordUtils.capitalize(item.getType().name().replace("_", " ").toLowerCase());
         Inventory inventory = Bukkit.createInventory(null, 5 * 9, "§8● §6" + itemName);
 
-        for(int i = 0; i < inventory.getSize(); i++) {
-            if(i != 10 && i != 11 && i != 12 && i != 19 && i != 20 && i != 21 && i != 28 && i != 29 && i != 30) inventory.setItem(i, new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).setDisplayName("§2").getItemStack());
+        for (int i = 0; i < inventory.getSize(); i++) {
+            if (!SLOTS.contains(i)) {
+                inventory.setItem(i, new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).setDisplayName("§2").getItemStack());
+            }
         }
 
         List<ItemStack> ingredients = new ArrayList<>();
@@ -273,11 +285,10 @@ Slots visualisation for values below:
         Inventory inventory;
         List<ItemStack> ingredients = new ArrayList<>();
 
-        if (recipe instanceof ShapedRecipe) {
+        if (recipe instanceof ShapedRecipe shaped) {
             inventory = Bukkit.createInventory(null, InventoryType.WORKBENCH);
 
             CraftingInventory craftingInventory = (CraftingInventory) inventory;
-            ShapedRecipe shaped = (ShapedRecipe) recipe;
             for (RecipeChoice recipeChoice : shaped.getChoiceMap().values()) {
                 if (recipeChoice instanceof RecipeChoice.MaterialChoice materialChoice) {
                     materialChoice.getChoices().forEach(material -> {
@@ -290,11 +301,10 @@ Slots visualisation for values below:
             craftingInventory.setMatrix(ingredients.toArray(new ItemStack[0]));
             craftingInventory.setResult(item);
 
-        } else if (recipe instanceof ShapelessRecipe) {
+        } else if (recipe instanceof ShapelessRecipe shapeless) {
             inventory = Bukkit.createInventory(null, InventoryType.WORKBENCH);
 
             CraftingInventory craftingInventory = (CraftingInventory) inventory;
-            ShapelessRecipe shapeless = (ShapelessRecipe) recipe;
             for (RecipeChoice recipeChoice : shapeless.getChoiceList()) {
                 if (recipeChoice instanceof RecipeChoice.MaterialChoice materialChoice) {
                     materialChoice.getChoices().forEach(material -> {
@@ -307,22 +317,20 @@ Slots visualisation for values below:
             craftingInventory.setMatrix(ingredients.toArray(new ItemStack[0]));
             craftingInventory.setResult(item);
 
-        } else if (recipe instanceof FurnaceRecipe) {
+        } else if (recipe instanceof FurnaceRecipe furnace) {
             inventory = Bukkit.createInventory(null, InventoryType.FURNACE);
 
             FurnaceInventory furnaceInventory = (FurnaceInventory) inventory;
-            FurnaceRecipe furnace = (FurnaceRecipe) recipe;
             ItemStack fixed = new ItemStack(furnace.getInput().getType(), 1, (byte) 0);
             ingredients.add(fixed);
 
             furnaceInventory.setSmelting(ingredients.get(0));
             furnaceInventory.setResult(item);
 
-        } else if (recipe instanceof SmithingRecipe) {
+        } else if (recipe instanceof SmithingRecipe smithing) {
             inventory = Bukkit.createInventory(null, InventoryType.SMITHING);
 
             SmithingInventory smithingInventory = (SmithingInventory) inventory;
-            SmithingRecipe smithing = (SmithingRecipe) recipe;
             ingredients.add(smithing.getAddition().getItemStack());
             ingredients.add(smithing.getBase().getItemStack());
 

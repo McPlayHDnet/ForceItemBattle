@@ -1,9 +1,9 @@
 package forceitembattle.commands;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.manager.Gamemanager;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.GameState;
-import forceitembattle.util.ItemBuilder;
 import org.bukkit.*;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -76,7 +76,7 @@ public class CommandStart implements CommandExecutor {
         return false;
     }
 
-    private void startGame(Integer joker) {
+    private void startGame(Integer jokersAmount) {
         World world = Bukkit.getWorld("world");
         assert world != null;
         Location spawnLocation = world.getSpawnLocation();
@@ -85,13 +85,13 @@ public class CommandStart implements CommandExecutor {
         Bukkit.getOnlinePlayers().forEach(player -> {
 
             ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
-            forceItemPlayer.setRemainingJokers(joker);
+            forceItemPlayer.setRemainingJokers(jokersAmount);
 
             player.sendMessage(" ");
             player.sendMessage("§8» §6§lMystery Item Battle §8«");
             player.sendMessage(" ");
             player.sendMessage("  §8● §7Duration §8» §a" + this.forceItemBattle.getTimer().getTime() / 60 + " minutes");
-            player.sendMessage("  §8● §7Joker §8» §a" + joker);
+            player.sendMessage("  §8● §7Joker §8» §a" + jokersAmount);
             player.sendMessage("  §8● §7Food §8» §a" + (this.forceItemBattle.getSettings().isFoodEnabled() ? "§2✔" : "§4✘"));
             player.sendMessage("  §8● §7Keep Inventory §8» §a" + (this.forceItemBattle.getSettings().isKeepInventoryEnabled() ? "§2✔" : "§4✘"));
             player.sendMessage("  §8● §7Backpack §8» §a" + (this.forceItemBattle.getSettings().isBackpackEnabled() ? "§2✔" : "§4✘"));
@@ -106,7 +106,7 @@ public class CommandStart implements CommandExecutor {
             player.setHealth(20);
             player.setSaturation(20);
             player.getInventory().clear();
-            player.getInventory().setItem(4, new ItemBuilder(Material.BARRIER).setAmount(joker).setDisplayName("§8» §5Skip").getItemStack());
+            player.getInventory().setItem(4, Gamemanager.getJokers(jokersAmount));
 
             player.getInventory().addItem(new ItemStack(Material.STONE_AXE));
             player.getInventory().addItem(new ItemStack(Material.STONE_PICKAXE));

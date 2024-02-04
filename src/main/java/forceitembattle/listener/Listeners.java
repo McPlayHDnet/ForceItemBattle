@@ -2,6 +2,7 @@ package forceitembattle.listener;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.event.FoundItemEvent;
+import forceitembattle.manager.Gamemanager;
 import forceitembattle.util.ForceItem;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.InventoryBuilder;
@@ -23,6 +24,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.*;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
@@ -94,26 +96,32 @@ public class Listeners implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onFoundItemInInventory(InventoryClickEvent inventoryClickEvent) {
         Player player = (Player) inventoryClickEvent.getWhoClicked();
 
-        if(this.forceItemBattle.getGamemanager().isMidGame()) {
-            ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
-            ItemStack clickedItem = inventoryClickEvent.getCurrentItem();
-            Material currentItem = forceItemPlayer.currentMaterial();
+        if (!this.forceItemBattle.getGamemanager().isMidGame()) {
+            return;
+        }
 
-            if(clickedItem == null) return;
+        ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        ItemStack clickedItem = inventoryClickEvent.getCurrentItem();
+        Material currentItem = forceItemPlayer.currentMaterial();
 
-            if(inventoryClickEvent.getView().getTitle().startsWith("§8●")) return; //prevents from getting the needed item onClick inside the recipe
+        if (clickedItem == null) {
+            return;
+        }
 
-            if(clickedItem.getType() == currentItem) {
-                FoundItemEvent foundItemEvent = new FoundItemEvent(player);
-                foundItemEvent.setFoundItem(clickedItem);
-                foundItemEvent.skipped(false);
+        if (inventoryClickEvent.getView().getTitle().startsWith("§8●")) {
+            return; //prevents from getting the needed item onClick inside the recipe
+        }
 
-                Bukkit.getPluginManager().callEvent(foundItemEvent);
-            }
+        if (clickedItem.getType() == currentItem) {
+            FoundItemEvent foundItemEvent = new FoundItemEvent(player);
+            foundItemEvent.setFoundItem(clickedItem);
+            foundItemEvent.skipped(false);
+
+            Bukkit.getPluginManager().callEvent(foundItemEvent);
         }
     }
 
@@ -178,43 +186,52 @@ public class Listeners implements Listener {
 
         ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
 
-        if(e.getItem().getType() == Material.BARRIER) {
-            if(e.getAction() == Action.RIGHT_CLICK_AIR) {
-                int jokers = forceItemPlayer.remainingJokers();
-                if (jokers > 0) {
-
-                    jokers--;
-
-                    ItemStack stack = player.getInventory().getItem(e.getPlayer().getInventory().first(Material.BARRIER));
-                    assert stack != null;
-                    if (stack.getAmount() > 1) {
-                        stack.setAmount(jokers);
-                    } else {
-                        stack.setType(Material.AIR);
-                    }
-                    Material mat = forceItemPlayer.currentMaterial();
-
-                    player.getInventory().setItem(player.getInventory().first(Material.BARRIER), stack);
-                    player.getInventory().addItem(new ItemStack(mat));
-                    if (!player.getInventory().contains(mat)) player.getWorld().dropItemNaturally(player.getLocation(), new ItemStack(mat));
-                    this.forceItemBattle.getTimer().sendActionBar();
-
-                    forceItemPlayer.setRemainingJokers(jokers);
-
-                    FoundItemEvent foundItemEvent = new FoundItemEvent(player);
-                    foundItemEvent.setFoundItem(new ItemStack(mat));
-                    foundItemEvent.skipped(true);
-
-                    Bukkit.getPluginManager().callEvent(foundItemEvent);
-                } else {
-                    player.sendMessage("§cNo more skips left.");
-                }
-            }
-
-        } else if(e.getItem().getType() == Material.BUNDLE) {
+        if (e.getItem().getType() == Material.BUNDLE) {
             this.forceItemBattle.getBackpack().openPlayerBackpack(player);
+            return;
         }
 
+        if (!Gamemanager.isJoker(e.getItem())) {
+            return;
+        }
+        if (e.getAction() != Action.RIGHT_CLICK_AIR) {
+            return;
+        }
+
+        int jokers = forceItemPlayer.remainingJokers();
+        if (jokers <= 0) {
+            player.sendMessage("§cNo more skips left.");
+            player.getInventory().remove(Gamemanager.getJokerMaterial());
+            return;
+        }
+
+        jokers--;
+
+        int foundSlot = e.getPlayer()
+                .getInventory()
+                .first(Gamemanager.getJokerMaterial());
+
+        ItemStack stack = player.getInventory().getItem(foundSlot);
+        assert stack != null;
+        if (stack.getAmount() > 1) {
+            stack.setAmount(jokers);
+        } else {
+            stack.setType(Material.AIR);
+        }
+        Material mat = forceItemPlayer.currentMaterial();
+
+        player.getInventory().setItem(foundSlot, stack);
+        player.getInventory().addItem(new ItemStack(mat));
+        if (!player.getInventory().contains(mat)) player.getWorld().dropItemNaturally(player.getLocation(), new ItemStack(mat));
+        this.forceItemBattle.getTimer().sendActionBar();
+
+        forceItemPlayer.setRemainingJokers(jokers);
+
+        FoundItemEvent foundItemEvent = new FoundItemEvent(player);
+        foundItemEvent.setFoundItem(new ItemStack(mat));
+        foundItemEvent.skipped(true);
+
+        Bukkit.getPluginManager().callEvent(foundItemEvent);
     }
 
     /* Click-Event for my inventory builder */
@@ -238,7 +255,7 @@ public class Listeners implements Listener {
 
         if (movedItem != null) {
             if(!event.getView().getTitle().equals("§8» §3Settings §8● §7Menu")) {
-                if (movedItem.getType() == Material.BARRIER || movedItem.getType() == Material.BUNDLE) {
+                if (/*Gamemanager.isJoker(movedItem) || */movedItem.getType() == Material.BUNDLE) {
                     event.setCancelled(true);
                     return;
                 }
@@ -256,9 +273,9 @@ public class Listeners implements Listener {
     @EventHandler
     public void onOffHand(PlayerSwapHandItemsEvent playerSwapHandItemsEvent) {
         if(playerSwapHandItemsEvent.getMainHandItem() == null || playerSwapHandItemsEvent.getOffHandItem() == null) return;
-        if(playerSwapHandItemsEvent.getMainHandItem().getType() == Material.BARRIER ||
+        if( //Gamemanager.isJoker(playerSwapHandItemsEvent.getMainHandItem()) ||
                 playerSwapHandItemsEvent.getMainHandItem().getType() == Material.BUNDLE ||
-                playerSwapHandItemsEvent.getOffHandItem().getType() == Material.BARRIER ||
+                // Gamemanager.isJoker(playerSwapHandItemsEvent.getOffHandItem()) ||
                 playerSwapHandItemsEvent.getOffHandItem().getType() == Material.BUNDLE)
             playerSwapHandItemsEvent.setCancelled(true);
     }
@@ -339,8 +356,11 @@ public class Listeners implements Listener {
     }
 
     @EventHandler
-    public void onDeath(PlayerDeathEvent playerDeathEvent) {
-        Player player = playerDeathEvent.getEntity();
+    public void onDeath(PlayerDeathEvent event) {
+        Player player = event.getEntity();
+        if (!event.getKeepInventory()) {
+            event.getDrops().removeIf(Gamemanager::isJoker);
+        }
 
         ForceItemPlayer gamePlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
         gamePlayer.removeItemDisplay();
@@ -350,14 +370,45 @@ public class Listeners implements Listener {
     public void onRespawn(PlayerRespawnEvent playerRespawnEvent) {
         Player player = playerRespawnEvent.getPlayer();
         ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
-        ItemStack jokers = new ItemBuilder(Material.BARRIER).setAmount(forceItemPlayer.remainingJokers()).setDisplayName("§8» §5Skip").getItemStack();
-        player.getInventory().setItem(4, jokers);
+        ItemStack jokers = Gamemanager.getJokers(forceItemPlayer.remainingJokers());
+        if (forceItemPlayer.remainingJokers() > 0) {
+            // This would work, but players can also move jokers into different
+            // containers like chests, that should not matter though, as they
+            // can't use more than was set.
+            addJokersIfMissing(player, jokers);
+        }
+
         player.getInventory().setItem(8, new ItemBuilder(Material.BUNDLE).setDisplayName("§8» §eBackpack").getItemStack());
 
         if (!this.forceItemBattle.getSettings().isNetherEnabled()) {
             forceItemPlayer.createItemDisplay();
         }
+    }
 
+    private void addJokersIfMissing(Player player, ItemStack jokers) {
+        int slot = player.getInventory().first(Gamemanager.getJokerMaterial());
+
+        if (slot != -1) {
+            // Already has the jokers in their inventory.
+            return;
+        }
+
+        Inventory backpack = forceItemBattle.getBackpack().getPlayerBackpack(player);
+        int backpackSlot = backpack == null? -1 : backpack.first(Gamemanager.getJokerMaterial());
+
+        if (backpackSlot != -1) {
+            // Already has the jokers in their backpack.
+            return;
+        }
+
+        if (player.getInventory().firstEmpty() != -1) {
+            player.getInventory().addItem(jokers);
+        } else if (backpack != null && backpack.firstEmpty() != -1) {
+            backpack.addItem(jokers);
+        } else {
+            player.sendMessage("§cYou have no space in your inventory for jokers! §fMake some space and uhmmmm die))");
+            // TODO : handle this somehow yes?
+        }
     }
 
     @EventHandler
@@ -374,9 +425,11 @@ public class Listeners implements Listener {
     }
 
     @EventHandler
-    public void onDrop(PlayerDropItemEvent playerDropItemEvent) {
-        if(playerDropItemEvent.getItemDrop().getItemStack().getType() == Material.BARRIER || playerDropItemEvent.getItemDrop().getItemStack().getType() == Material.BUNDLE) {
-            playerDropItemEvent.setCancelled(true);
+    public void onDrop(PlayerDropItemEvent event) {
+        if (Gamemanager.isJoker(event.getItemDrop().getItemStack())
+                || event.getItemDrop().getItemStack().getType() == Material.BUNDLE) {
+
+            event.setCancelled(true);
         }
     }
 
@@ -408,8 +461,12 @@ public class Listeners implements Listener {
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
-        if(event.getBlock().getType() == Material.BARRIER) event.setCancelled(true);
-        if (this.forceItemBattle.getGamemanager().isMidGame()) return;
+        if (Gamemanager.isJoker(event.getBlock().getType())) {
+            event.setCancelled(true);
+        }
+        if (this.forceItemBattle.getGamemanager().isMidGame()) {
+            return;
+        }
         event.setCancelled(true);
     }
 
