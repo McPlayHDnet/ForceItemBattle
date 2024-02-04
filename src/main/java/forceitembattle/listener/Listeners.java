@@ -24,8 +24,11 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class Listeners implements Listener {
 
@@ -140,23 +143,30 @@ public class Listeners implements Listener {
             forceItemPlayer.updateItemDisplay();
         }
 
-        String foundMessage = (foundItemEvent.isSkipped() ? "skipped" : "found") + " §6" + WordUtils.capitalize(itemStack.getType().name().toLowerCase().replace("_", " "));
-
+        ItemStack foundInventoryItemStack = null;
         for(ItemStack inventoryItemStacks : player.getInventory().getContents()) {
-            if(inventoryItemStacks == null) return;
-            if(inventoryItemStacks.getType() == forceItemPlayer.currentMaterial()) {
-                FoundItemEvent newFoundItemEvent = new FoundItemEvent(player);
-                newFoundItemEvent.setFoundItem(inventoryItemStacks);
-                newFoundItemEvent.skipped(false);
-                foundMessage = "was lucky to already own §6" + WordUtils.capitalize(itemStack.getType().name().toLowerCase().replace("_", " "));
-
-                Bukkit.broadcastMessage("§a" + player.getName() + " §was lucky to already own §6" + WordUtils.capitalize(itemStack.getType().name().toLowerCase().replace("_", " ")));
-
-                Bukkit.getPluginManager().callEvent(foundItemEvent);
+            if (inventoryItemStacks == null) continue;
+            if (inventoryItemStacks.getType() == forceItemPlayer.currentMaterial()) {
+                foundInventoryItemStack = inventoryItemStacks;
             }
-        };
+        }
 
-        Bukkit.broadcastMessage("§a" + player.getName() + " §7" + foundMessage);
+        if(foundInventoryItemStack != null) {
+
+            forceItemPlayer.setCurrentScore(forceItemPlayer.currentScore() + 1);
+            forceItemPlayer.addFoundItemToList(new ForceItem(foundInventoryItemStack.getType(), forceItemBattle.getTimer().formatSeconds(forceItemBattle.getTimer().getTime()), false));
+            forceItemPlayer.setCurrentMaterial(forceItemBattle.getGamemanager().generateMaterial());
+
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
+
+            if (!this.forceItemBattle.getSettings().isNetherEnabled()) {
+                forceItemPlayer.updateItemDisplay();
+            }
+
+            Bukkit.broadcastMessage("§a" + player.getName() + " §7was lucky to already own §6" + WordUtils.capitalize(foundInventoryItemStack.getType().name().toLowerCase().replace("_", " ")));
+
+        } else
+            Bukkit.broadcastMessage("§a" + player.getName() + " §7" + (foundItemEvent.isSkipped() ? "skipped" : "found") + " §6" + WordUtils.capitalize(itemStack.getType().name().toLowerCase().replace("_", " ")));
     }
 
     @EventHandler

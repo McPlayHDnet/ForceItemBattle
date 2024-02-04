@@ -46,18 +46,7 @@ public final class ForceItemBattle extends JavaPlugin {
     public void onLoad() {
         saveConfig();
 
-        getConfig().addDefault("timer.time", 0);
-        getConfig().addDefault("settings.isTeamGame", false);
-        getConfig().addDefault("settings.keepinventory", false);
-        getConfig().addDefault("settings.food", true);
-        getConfig().addDefault("settings.backpack", true);
-        getConfig().addDefault("settings.pvp", true);
-        getConfig().addDefault("settings.nether", true);
-        getConfig().addDefault("settings.end", true);
-        getConfig().addDefault("standard.countdown", 30);
-        getConfig().addDefault("standard.jokers", 3);
-        getConfig().addDefault("standard.backpackSize", 27);
-
+        this.settings = new GameSettings(this);
 
         saveConfig();
         if (!getConfig().contains("isReset")){
@@ -130,7 +119,6 @@ public final class ForceItemBattle extends JavaPlugin {
         this.itemDifficultiesManager = new ItemDifficultiesManager(this);
         this.recipeInventory = new RecipeInventory(this);
         this.colorManager = new ColorManager();
-        this.settings = new GameSettings(this);
 
         this.initListeners();
         this.initCommands();

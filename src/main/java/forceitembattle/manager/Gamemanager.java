@@ -21,7 +21,7 @@ public class Gamemanager {
 
     private final Map<UUID, ForceItemPlayer> forceItemPlayerMap;
 
-    public Map<UUID, Map<Integer, ItemStack[]>> savedInventory = new HashMap<>();
+    public Map<UUID, Map<Integer, Map<Integer, ItemStack>>> savedInventory = new HashMap<>();
 
     public GameState currentGameState;
 
@@ -133,7 +133,7 @@ public class Gamemanager {
         return currentGameState;
     }
 
-    public Map<UUID, Map<Integer, ItemStack[]>> getSavedInventory() {
+    public Map<UUID, Map<Integer, Map<Integer, ItemStack>>> getSavedInventory() {
         return savedInventory;
     }
 }
