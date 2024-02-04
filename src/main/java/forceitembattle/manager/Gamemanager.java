@@ -3,6 +3,7 @@ package forceitembattle.manager;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.GameState;
+import forceitembattle.util.ItemBuilder;
 import org.apache.commons.text.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -135,5 +136,26 @@ public class Gamemanager {
 
     public Map<UUID, Map<Integer, ItemStack[]>> getSavedInventory() {
         return savedInventory;
+    }
+
+    private static final Material JOKER_MATERIAL = Material.BARRIER;
+
+    public static Material getJokerMaterial() {
+        return JOKER_MATERIAL;
+    }
+
+    public static ItemStack getJokers(int amount) {
+        return new ItemBuilder(JOKER_MATERIAL)
+                .setAmount(amount)
+                .setDisplayName("§8» §5Skip")
+                .getItemStack();
+    }
+
+    public static boolean isJoker(Material material) {
+        return material == Material.BARRIER;
+    }
+
+    public static boolean isJoker(ItemStack itemStack) {
+        return isJoker(itemStack.getType());
     }
 }
