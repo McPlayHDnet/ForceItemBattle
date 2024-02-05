@@ -15,8 +15,8 @@ public class InvSettings extends InventoryBuilder {
         super(9*6, "§8» §3Settings §8● §7Menu");
 
         /* BORDER */
-        this.setItems(0, 8, new ItemBuilder(Material.ORANGE_STAINED_GLASS_PANE).setDisplayName("§f").addItemFlags(ItemFlag.values()).getItemStack());
-        this.setItems(45, 53, new ItemBuilder(Material.ORANGE_STAINED_GLASS_PANE).setDisplayName("§f").addItemFlags(ItemFlag.values()).getItemStack());
+        this.setItems(0, 8, new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE).setDisplayName("§f").addItemFlags(ItemFlag.values()).getItemStack());
+        this.setItems(45, 53, new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE).setDisplayName("§f").addItemFlags(ItemFlag.values()).getItemStack());
 
         /* Food-Setting */
         this.setItem(19, new ItemBuilder(Material.COOKED_BEEF).setDisplayName("§8» " + (forceItemBattle.getSettings().isFoodEnabled() ? "§aFood §2✔" : "§cFood §4✘")).getItemStack());

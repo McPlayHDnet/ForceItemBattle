@@ -25,7 +25,7 @@ public class ItemsInventory extends InventoryBuilder {
         AtomicReference<Material> currentFilter = new AtomicReference<>(Material.LIME_DYE);
 
         /* TOP-BORDER */
-        this.setItems(0, 8, new ItemBuilder(Material.ORANGE_STAINED_GLASS_PANE).setDisplayName("§6").addItemFlags(ItemFlag.values()).getItemStack());
+        this.setItems(0, 8, new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE).setDisplayName("§6").addItemFlags(ItemFlag.values()).getItemStack());
 
 
         this.setItem(2, new ItemBuilder(Material.LIME_DYE).setDisplayName("§aAll items").setGlowing(currentFilter.get() == Material.LIME_DYE).addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
