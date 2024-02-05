@@ -1221,6 +1221,7 @@ public class ItemDifficultiesManager {
                 Material.DUNE_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Material.ELYTRA,
                 Material.EMERALD_ORE,
+                Material.ENCHANTED_BOOK,
                 Material.ENCHANTED_GOLDEN_APPLE,
                 Material.END_ROD,
                 Material.END_STONE,
