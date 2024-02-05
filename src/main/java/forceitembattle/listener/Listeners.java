@@ -159,6 +159,13 @@ public class Listeners implements Listener {
             }
         }
 
+        if(this.forceItemBattle.getSettings().isBackpackEnabled() && foundInventoryItemStack == null) {
+            for (ItemStack backpackItemStacks : this.forceItemBattle.getBackpack().getPlayerBackpack(player).getContents()) {
+                if(backpackItemStacks == null) continue;
+                if(backpackItemStacks.getType() == forceItemPlayer.currentMaterial()) foundInventoryItemStack = backpackItemStacks;
+            }
+        }
+
         if(foundInventoryItemStack != null) {
 
             forceItemPlayer.setCurrentScore(forceItemPlayer.currentScore() + 1);
