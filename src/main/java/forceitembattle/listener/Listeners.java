@@ -26,11 +26,8 @@ import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class Listeners implements Listener {
 
@@ -144,6 +141,7 @@ public class Listeners implements Listener {
         forceItemPlayer.setCurrentScore(forceItemPlayer.currentScore() + 1);
         forceItemPlayer.addFoundItemToList(new ForceItem(itemStack.getType(), this.forceItemBattle.getTimer().formatSeconds(this.forceItemBattle.getTimer().getTime()), foundItemEvent.isSkipped()));
         forceItemPlayer.setCurrentMaterial(this.forceItemBattle.getGamemanager().generateMaterial());
+        Bukkit.broadcastMessage("§a" + player.getName() + " §7" + (foundItemEvent.isSkipped() ? "skipped" : "found") + " §6" + WordUtils.capitalize(itemStack.getType().name().toLowerCase().replace("_", " ")));
 
         player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
 
@@ -152,15 +150,21 @@ public class Listeners implements Listener {
         }
 
         ItemStack foundInventoryItemStack = null;
-        for(ItemStack inventoryItemStacks : player.getInventory().getContents()) {
+        for (ItemStack inventoryItemStacks : player.getInventory().getContents()) {
             if (inventoryItemStacks == null) continue;
             if (inventoryItemStacks.getType() == forceItemPlayer.currentMaterial()) {
                 foundInventoryItemStack = inventoryItemStacks;
             }
         }
 
-        if(foundInventoryItemStack != null) {
+        if (this.forceItemBattle.getSettings().isBackpackEnabled() && foundInventoryItemStack == null) {
+            for (ItemStack backpackItemStacks : this.forceItemBattle.getBackpack().getPlayerBackpack(player).getContents()) {
+                if(backpackItemStacks == null) continue;
+                if(backpackItemStacks.getType() == forceItemPlayer.currentMaterial()) foundInventoryItemStack = backpackItemStacks;
+            }
+        }
 
+        if (foundInventoryItemStack != null) {
             forceItemPlayer.setCurrentScore(forceItemPlayer.currentScore() + 1);
             forceItemPlayer.addFoundItemToList(new ForceItem(foundInventoryItemStack.getType(), forceItemBattle.getTimer().formatSeconds(forceItemBattle.getTimer().getTime()), false));
             forceItemPlayer.setCurrentMaterial(forceItemBattle.getGamemanager().generateMaterial());
@@ -172,9 +176,7 @@ public class Listeners implements Listener {
             }
 
             Bukkit.broadcastMessage("§a" + player.getName() + " §7was lucky to already own §6" + WordUtils.capitalize(foundInventoryItemStack.getType().name().toLowerCase().replace("_", " ")));
-
-        } else
-            Bukkit.broadcastMessage("§a" + player.getName() + " §7" + (foundItemEvent.isSkipped() ? "skipped" : "found") + " §6" + WordUtils.capitalize(itemStack.getType().name().toLowerCase().replace("_", " ")));
+        }
     }
 
     @EventHandler
