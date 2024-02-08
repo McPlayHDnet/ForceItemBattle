@@ -125,7 +125,10 @@ public final class ForceItemBattle extends JavaPlugin {
         this.initCommands();
 
         Bukkit.getWorlds().forEach(world -> {
+            // Apply settings.
             world.setGameRule(GameRule.KEEP_INVENTORY, getSettings().isKeepInventoryEnabled());
+            getSettings().setFasterRandomTick(getSettings().isFasterRandomTick());
+
             world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
         });
 

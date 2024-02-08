@@ -23,6 +23,8 @@ public class InventoryBuilder implements InventoryHolder {
     private final List<Consumer<InventoryClickEvent>> clickHandlers = new ArrayList<>();
     private final List<Consumer<InventoryDragEvent>> dragHandlers = new ArrayList<>();
 
+    private final List<Runnable> updateHandlers = new ArrayList<>();
+
     private final Inventory inventory;
 
     private String title;
@@ -140,9 +142,24 @@ public class InventoryBuilder implements InventoryHolder {
         this.dragHandlers.add(dragHandler);
     }
 
+    /**
+     * Add a runnable that will be called when menu is opened or an item is clicked.
+     */
+    public void addUpdateHandler(Runnable updateHandler) {
+        this.updateHandlers.add(updateHandler);
+    }
+
+    /**
+     * Update method called when inventory is opened or an item is clicked.
+     * Can be called externally to force an update.
+     */
+    public void update() {
+        this.updateHandlers.forEach(Runnable::run);
+    }
 
     public void open(Player player) {
         this.player = player;
+        this.update();
         player.openInventory(this.inventory);
     }
 
@@ -197,6 +214,7 @@ public class InventoryBuilder implements InventoryHolder {
 
         if (clickConsumer != null) {
             clickConsumer.accept(e);
+            update();
         }
     }
 
