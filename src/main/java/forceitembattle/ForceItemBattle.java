@@ -2,6 +2,7 @@ package forceitembattle;
 
 import forceitembattle.commands.*;
 import forceitembattle.listener.Listeners;
+import forceitembattle.listener.PvPListener;
 import forceitembattle.listener.RecipeListener;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.ItemDifficultiesManager;
@@ -148,6 +149,7 @@ public final class ForceItemBattle extends JavaPlugin {
     private void initListeners() {
         new Listeners(this);
         new RecipeListener(this);
+        new PvPListener(this);
     }
 
     private void initCommands() {

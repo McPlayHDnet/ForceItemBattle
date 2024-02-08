@@ -12,13 +12,19 @@ import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.Sound;
-import org.bukkit.entity.*;
+import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.entity.*;
+import org.bukkit.event.entity.EntityPickupItemEvent;
+import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
+import org.bukkit.event.entity.FoodLevelChangeEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
@@ -31,11 +37,11 @@ import java.util.ArrayList;
 
 public class Listeners implements Listener {
 
-    public ForceItemBattle forceItemBattle;
+    public ForceItemBattle plugin;
 
     public Listeners(ForceItemBattle forceItemBattle) {
-        this.forceItemBattle = forceItemBattle;
-        this.forceItemBattle.getServer().getPluginManager().registerEvents(this, this.forceItemBattle);
+        this.plugin = forceItemBattle;
+        this.plugin.getServer().getPluginManager().registerEvents(this, this.plugin);
     }
 
     @EventHandler
@@ -43,19 +49,19 @@ public class Listeners implements Listener {
         Player player = event.getPlayer();
 
         ForceItemPlayer forceItemPlayer = new ForceItemPlayer(player, new ArrayList<>(), null, 0, 0);
-        if (this.forceItemBattle.getGamemanager().isMidGame()) {
-            if(!this.forceItemBattle.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
+        if (this.plugin.getGamemanager().isMidGame()) {
+            if(!this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
                 player.getInventory().clear();
                 player.setLevel(0);
                 player.setExp(0);
                 player.setGameMode(GameMode.SPECTATOR);
             } else {
-                forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
-                this.forceItemBattle.getTimer().getBossBar().get(event.getPlayer().getUniqueId()).addPlayer(event.getPlayer());
+                forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+                this.plugin.getTimer().getBossBar().get(event.getPlayer().getUniqueId()).addPlayer(event.getPlayer());
             }
         } else {
 
-            this.forceItemBattle.getGamemanager().addPlayer(player, forceItemPlayer);
+            this.plugin.getGamemanager().addPlayer(player, forceItemPlayer);
 
             player.getInventory().clear();
             player.setLevel(0);
@@ -77,8 +83,8 @@ public class Listeners implements Listener {
     @EventHandler
     public void onPickupEvent(EntityPickupItemEvent entityPickupItemEvent) {
         if(entityPickupItemEvent.getEntity() instanceof Player player) {
-            if(this.forceItemBattle.getGamemanager().isMidGame()) {
-                ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
+            if(this.plugin.getGamemanager().isMidGame()) {
+                ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
                 ItemStack pickedItem = entityPickupItemEvent.getItem().getItemStack();
                 Material currentMaterial = forceItemPlayer.currentMaterial();
 
@@ -97,11 +103,11 @@ public class Listeners implements Listener {
     public void onFoundItemInInventory(InventoryClickEvent inventoryClickEvent) {
         Player player = (Player) inventoryClickEvent.getWhoClicked();
 
-        if (!this.forceItemBattle.getGamemanager().isMidGame()) {
+        if (!this.plugin.getGamemanager().isMidGame()) {
             return;
         }
 
-        ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
         ItemStack clickedItem = inventoryClickEvent.getCurrentItem();
         Material currentItem = forceItemPlayer.currentMaterial();
 
@@ -124,7 +130,7 @@ public class Listeners implements Listener {
 
     @EventHandler
     public void onMove(PlayerMoveEvent playerMoveEvent) {
-        if(this.forceItemBattle.getGamemanager().isPreGame()) {
+        if(this.plugin.getGamemanager().isPreGame()) {
             if(playerMoveEvent.getFrom().getX() != playerMoveEvent.getTo().getX() || playerMoveEvent.getFrom().getZ() != playerMoveEvent.getTo().getZ())
                 playerMoveEvent.setTo(playerMoveEvent.getFrom());
         }
@@ -136,16 +142,16 @@ public class Listeners implements Listener {
     public void onFoundItem(FoundItemEvent foundItemEvent) {
         Player player = foundItemEvent.getPlayer();
         ItemStack itemStack = foundItemEvent.getFoundItem();
-        ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
 
         forceItemPlayer.setCurrentScore(forceItemPlayer.currentScore() + 1);
-        forceItemPlayer.addFoundItemToList(new ForceItem(itemStack.getType(), this.forceItemBattle.getTimer().formatSeconds(this.forceItemBattle.getTimer().getTime()), foundItemEvent.isSkipped()));
-        forceItemPlayer.setCurrentMaterial(this.forceItemBattle.getGamemanager().generateMaterial());
+        forceItemPlayer.addFoundItemToList(new ForceItem(itemStack.getType(), this.plugin.getTimer().formatSeconds(this.plugin.getTimer().getTime()), foundItemEvent.isSkipped()));
+        forceItemPlayer.setCurrentMaterial(this.plugin.getGamemanager().generateMaterial());
         Bukkit.broadcastMessage("§a" + player.getName() + " §7" + (foundItemEvent.isSkipped() ? "skipped" : "found") + " §6" + WordUtils.capitalize(itemStack.getType().name().toLowerCase().replace("_", " ")));
 
         player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
 
-        if (!this.forceItemBattle.getSettings().isNetherEnabled()) {
+        if (!this.plugin.getSettings().isNetherEnabled()) {
             forceItemPlayer.updateItemDisplay();
         }
 
@@ -157,8 +163,8 @@ public class Listeners implements Listener {
             }
         }
 
-        if (this.forceItemBattle.getSettings().isBackpackEnabled() && foundInventoryItemStack == null) {
-            for (ItemStack backpackItemStacks : this.forceItemBattle.getBackpack().getPlayerBackpack(player).getContents()) {
+        if (this.plugin.getSettings().isBackpackEnabled() && foundInventoryItemStack == null) {
+            for (ItemStack backpackItemStacks : this.plugin.getBackpack().getPlayerBackpack(player).getContents()) {
                 if(backpackItemStacks == null) continue;
                 if(backpackItemStacks.getType() == forceItemPlayer.currentMaterial()) foundInventoryItemStack = backpackItemStacks;
             }
@@ -166,12 +172,12 @@ public class Listeners implements Listener {
 
         if (foundInventoryItemStack != null) {
             forceItemPlayer.setCurrentScore(forceItemPlayer.currentScore() + 1);
-            forceItemPlayer.addFoundItemToList(new ForceItem(foundInventoryItemStack.getType(), forceItemBattle.getTimer().formatSeconds(forceItemBattle.getTimer().getTime()), false));
-            forceItemPlayer.setCurrentMaterial(forceItemBattle.getGamemanager().generateMaterial());
+            forceItemPlayer.addFoundItemToList(new ForceItem(foundInventoryItemStack.getType(), plugin.getTimer().formatSeconds(plugin.getTimer().getTime()), false));
+            forceItemPlayer.setCurrentMaterial(plugin.getGamemanager().generateMaterial());
 
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
 
-            if (!this.forceItemBattle.getSettings().isNetherEnabled()) {
+            if (!this.plugin.getSettings().isNetherEnabled()) {
                 forceItemPlayer.updateItemDisplay();
             }
 
@@ -182,14 +188,14 @@ public class Listeners implements Listener {
     @EventHandler
     public void onClick(PlayerInteractEvent e) { // triggered if a joker is used
         Player player = e.getPlayer();
-        if (!this.forceItemBattle.getGamemanager().isMidGame()) return;
-        if (!this.forceItemBattle.getGamemanager().forceItemPlayerExist(player.getUniqueId())) return;
+        if (!this.plugin.getGamemanager().isMidGame()) return;
+        if (!this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) return;
         if(e.getItem() == null) return;
 
-        ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
 
         if (e.getItem().getType() == Material.BUNDLE) {
-            this.forceItemBattle.getBackpack().openPlayerBackpack(player);
+            this.plugin.getBackpack().openPlayerBackpack(player);
             return;
         }
 
@@ -225,7 +231,7 @@ public class Listeners implements Listener {
         player.getInventory().setItem(foundSlot, stack);
         player.getInventory().addItem(new ItemStack(mat));
         if (!player.getInventory().contains(mat)) player.getWorld().dropItemNaturally(player.getLocation(), new ItemStack(mat));
-        this.forceItemBattle.getTimer().sendActionBar();
+        this.plugin.getTimer().sendActionBar();
 
         forceItemPlayer.setRemainingJokers(jokers);
 
@@ -291,70 +297,10 @@ public class Listeners implements Listener {
         if (inventoryCloseEvent.getInventory().getHolder() instanceof InventoryBuilder inventoryBuilder) {
 
             if (inventoryBuilder.handleClose(inventoryCloseEvent)) {
-                Bukkit.getScheduler().runTask(this.forceItemBattle, () -> inventoryBuilder.open((Player) inventoryCloseEvent.getPlayer()));
+                Bukkit.getScheduler().runTask(this.plugin, () -> inventoryBuilder.open((Player) inventoryCloseEvent.getPlayer()));
                 return;
-
             }
         }
-    }
-
-    @EventHandler
-    public void onEntityDamage(EntityDamageEvent event) {
-        if (!this.forceItemBattle.getGamemanager().isMidGame()) {
-            event.setCancelled(true);
-        }
-
-        if (isPvpEnabled() || !(event.getEntity() instanceof Player)) {
-            return;
-        }
-
-        // Disable Fire damage if pvp disabled and there's another player nearby
-        if (event.getCause() == EntityDamageEvent.DamageCause.FIRE || event.getCause() == EntityDamageEvent.DamageCause.FIRE_TICK || event.getCause() == EntityDamageEvent.DamageCause.LAVA) {
-            for (Entity nearby : event.getEntity().getNearbyEntities(5, 5, 5)) {
-                if (!(nearby instanceof Player)) {
-                    continue;
-                }
-
-                boolean isSameAsDamaged = nearby.getName().equalsIgnoreCase(event.getEntity().getName());
-                if (!isSameAsDamaged) {
-                    event.setCancelled(true);
-                    return;
-                }
-            }
-        }
-    }
-
-    private boolean isPvpEnabled() {
-        return this.forceItemBattle.getSettings().isPvpEnabled();
-    }
-
-    @EventHandler(ignoreCancelled = true)
-    public void onPvpDisabled(EntityDamageByEntityEvent event) {
-        if (isPvpEnabled()) {
-            return;
-        }
-
-        if (!(event.getEntity() instanceof Player)) {
-            return;
-        }
-
-        if (!(getEntityOrigin(event.getDamager()) instanceof Player)) {
-            return;
-        }
-
-        event.setCancelled(true);
-    }
-
-    private Object getEntityOrigin(Entity entity) {
-        if (entity instanceof Projectile) {
-            return ((Projectile) entity).getShooter();
-        }
-
-        if (entity instanceof TNTPrimed) {
-            return ((TNTPrimed) entity).getSource();
-        }
-
-        return entity;
     }
 
     @EventHandler
@@ -364,14 +310,21 @@ public class Listeners implements Listener {
             event.getDrops().removeIf(Gamemanager::isJoker);
         }
 
-        ForceItemPlayer gamePlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        ForceItemPlayer gamePlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
         gamePlayer.removeItemDisplay();
+
+        // Automatically respawn player.
+        Bukkit.getScheduler().runTaskLater(
+                this.plugin,
+                () -> event.getEntity().spigot().respawn(),
+                1
+        );
     }
 
     @EventHandler
     public void onRespawn(PlayerRespawnEvent playerRespawnEvent) {
         Player player = playerRespawnEvent.getPlayer();
-        ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
         ItemStack jokers = Gamemanager.getJokers(forceItemPlayer.remainingJokers());
         if (forceItemPlayer.remainingJokers() > 0) {
             // This would work, but players can also move jokers into different
@@ -382,7 +335,7 @@ public class Listeners implements Listener {
 
         player.getInventory().setItem(8, new ItemBuilder(Material.BUNDLE).setDisplayName("§8» §eBackpack").getItemStack());
 
-        if (!this.forceItemBattle.getSettings().isNetherEnabled()) {
+        if (!this.plugin.getSettings().isNetherEnabled()) {
             forceItemPlayer.createItemDisplay();
         }
     }
@@ -395,7 +348,7 @@ public class Listeners implements Listener {
             return;
         }
 
-        Inventory backpack = forceItemBattle.getBackpack().getPlayerBackpack(player);
+        Inventory backpack = plugin.getBackpack().getPlayerBackpack(player);
         int backpackSlot = backpack == null? -1 : backpack.first(Gamemanager.getJokerMaterial());
 
         if (backpackSlot != -1) {
@@ -422,7 +375,7 @@ public class Listeners implements Listener {
 
     @EventHandler
     public void onPickup(EntityPickupItemEvent entityPickupItemEvent) {
-        if(this.forceItemBattle.getGamemanager().isMidGame()) return;
+        if(this.plugin.getGamemanager().isMidGame()) return;
         entityPickupItemEvent.setCancelled(true);
     }
 
@@ -438,26 +391,26 @@ public class Listeners implements Listener {
     @EventHandler
     public void onFoodLevelChange(FoodLevelChangeEvent event) {
         if (!(event.getEntity() instanceof Player)) return;
-        if(!this.forceItemBattle.getGamemanager().isMidGame()) return;
-        if (this.forceItemBattle.getSettings().isFoodEnabled()) return;
+        if(!this.plugin.getGamemanager().isMidGame()) return;
+        if (this.plugin.getSettings().isFoodEnabled()) return;
         event.setCancelled(true);
     }
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        if (this.forceItemBattle.getGamemanager().isMidGame()) return;
+        if (this.plugin.getGamemanager().isMidGame()) return;
         event.setCancelled(true);
     }
 
     @EventHandler
     public void onInventoryDrag(InventoryDragEvent event) {
-        if (this.forceItemBattle.getGamemanager().isMidGame()) return;
+        if (this.plugin.getGamemanager().isMidGame()) return;
         event.setCancelled(true);
     }
 
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
-        if (this.forceItemBattle.getGamemanager().isMidGame()) return;
+        if (this.plugin.getGamemanager().isMidGame()) return;
         event.setCancelled(true);
     }
 
@@ -466,7 +419,7 @@ public class Listeners implements Listener {
         if (Gamemanager.isJoker(event.getBlock().getType())) {
             event.setCancelled(true);
         }
-        if (this.forceItemBattle.getGamemanager().isMidGame()) {
+        if (this.plugin.getGamemanager().isMidGame()) {
             return;
         }
         event.setCancelled(true);
@@ -474,20 +427,20 @@ public class Listeners implements Listener {
 
     @EventHandler
     public void onPlayerDropItem(PlayerDropItemEvent event) {
-        if (this.forceItemBattle.getGamemanager().isMidGame()) return;
+        if (this.plugin.getGamemanager().isMidGame()) return;
         event.setCancelled(true);
     }
 
     @EventHandler
     public void onEntityPickupItem(EntityPickupItemEvent event) {
         if (!(event.getEntity() instanceof Player)) return;
-        if (this.forceItemBattle.getGamemanager().isMidGame()) return;
+        if (this.plugin.getGamemanager().isMidGame()) return;
         event.setCancelled(true);
     }
 
     @EventHandler
     public void onEntityTargetLivingEntity(EntityTargetLivingEntityEvent event) {
-        if (this.forceItemBattle.getGamemanager().isMidGame()) return;
+        if (this.plugin.getGamemanager().isMidGame()) return;
         if (event.getTarget() == null) return;
         if (event.getTarget().getType() != EntityType.PLAYER) return;
         event.setTarget(null);
@@ -497,11 +450,11 @@ public class Listeners implements Listener {
     @EventHandler
     public void onPortalEvent(PlayerPortalEvent playerPortalEvent) {
         Player player = playerPortalEvent.getPlayer();
-        if (!this.forceItemBattle.getGamemanager().isMidGame()) {
+        if (!this.plugin.getGamemanager().isMidGame()) {
             return;
         }
 
-        if (!this.forceItemBattle.getSettings().isNetherEnabled()) {
+        if (!this.plugin.getSettings().isNetherEnabled()) {
             player.sendMessage("§cTravelling to other dimensions is disabled!");
             player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
             playerPortalEvent.setCanCreatePortal(false);
