@@ -167,6 +167,7 @@ public final class ForceItemBattle extends JavaPlugin {
         new CommandStopTimer(this);
         new CommandInfoWiki(this);
         new CommandSpawn(this);
+        new CommandBed(this);
     }
 
     @Override

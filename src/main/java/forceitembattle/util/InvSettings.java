@@ -83,6 +83,15 @@ public class InvSettings extends InventoryBuilder {
                 getPlayer().playSound(getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
                 plugin.getItemDifficultiesManager().toggleNetherItems();
             });
+
+            /* End-Setting */
+            this.setItem(39, new ItemBuilder(Material.END_STONE)
+                    .setDisplayName("§8» " + (plugin.getSettings().isEndEnabled() ? "§aEnd §2✔" : "§cEnd §4✘"))
+                    .getItemStack(), event -> {
+
+                getPlayer().playSound(getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
+                plugin.getSettings().setEndEnabled(!plugin.getSettings().isEndEnabled());
+            });
         });
     }
 }
