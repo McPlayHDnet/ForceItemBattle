@@ -2,6 +2,7 @@ package forceitembattle;
 
 import forceitembattle.commands.*;
 import forceitembattle.listener.Listeners;
+import forceitembattle.listener.PvPListener;
 import forceitembattle.listener.RecipeListener;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.ItemDifficultiesManager;
@@ -124,7 +125,10 @@ public final class ForceItemBattle extends JavaPlugin {
         this.initCommands();
 
         Bukkit.getWorlds().forEach(world -> {
+            // Apply settings.
             world.setGameRule(GameRule.KEEP_INVENTORY, getSettings().isKeepInventoryEnabled());
+            getSettings().setFasterRandomTick(getSettings().isFasterRandomTick());
+
             world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
         });
 
@@ -148,6 +152,7 @@ public final class ForceItemBattle extends JavaPlugin {
     private void initListeners() {
         new Listeners(this);
         new RecipeListener(this);
+        new PvPListener(this);
     }
 
     private void initCommands() {
@@ -162,12 +167,17 @@ public final class ForceItemBattle extends JavaPlugin {
         new CommandStopTimer(this);
         new CommandInfoWiki(this);
         new CommandSpawn(this);
+        new CommandBed(this);
     }
 
     @Override
     public void onDisable() {
-        if (getConfig().getBoolean("isReset")) getConfig().set("timer.time", 0);
-        else timer.save();
+        reloadConfig();
+        if (getConfig().getBoolean("isReset")) {
+            getConfig().set("timer.time", 0);
+        } else {
+            timer.save();
+        }
         saveConfig();
     }
 

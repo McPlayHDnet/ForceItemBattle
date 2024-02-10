@@ -1,6 +1,8 @@
 package forceitembattle.settings;
 
 import forceitembattle.ForceItemBattle;
+import org.bukkit.Bukkit;
+import org.bukkit.GameRule;
 
 public class GameSettings {
 
@@ -11,12 +13,14 @@ public class GameSettings {
 
         this.plugin.getConfig().addDefault("timer.time", 0);
         this.plugin.getConfig().addDefault("settings.isTeamGame", false);
-        this.plugin.getConfig().addDefault("settings.keepinventory", false);
+        this.plugin.getConfig().addDefault("settings.keepinventory", true);
         this.plugin.getConfig().addDefault("settings.food", true);
         this.plugin.getConfig().addDefault("settings.backpack", true);
-        this.plugin.getConfig().addDefault("settings.pvp", true);
+        this.plugin.getConfig().addDefault("settings.pvp", false);
         this.plugin.getConfig().addDefault("settings.nether", true);
         this.plugin.getConfig().addDefault("settings.end", true);
+        this.plugin.getConfig().addDefault("settings.fasterRandomTick", false);
+
         this.plugin.getConfig().addDefault("standard.countdown", 30);
         this.plugin.getConfig().addDefault("standard.jokers", 3);
         this.plugin.getConfig().addDefault("standard.backpackSize", 27);
@@ -72,7 +76,21 @@ public class GameSettings {
     }
 
     public void setKeepInventoryEnabled(boolean enabled) {
+        Bukkit.getWorlds().forEach(worlds -> worlds.setGameRule(GameRule.KEEP_INVENTORY, enabled));
+
         plugin.getConfig().set("settings.keepinventory", enabled);
+        plugin.saveConfig();
+    }
+
+    public boolean isFasterRandomTick() {
+        return plugin.getConfig().getBoolean("settings.fasterRandomTick");
+    }
+
+    public void  setFasterRandomTick(boolean enabled) {
+        // 3 is the default random tick speed. 40 is much faster version
+        Bukkit.getWorlds().forEach(worlds -> worlds.setGameRule(GameRule.RANDOM_TICK_SPEED, enabled? 40 : 3));
+
+        plugin.getConfig().set("settings.fasterRandomTick", enabled);
         plugin.saveConfig();
     }
 
