@@ -97,11 +97,14 @@ public class CommandStart implements CommandExecutor {
             player.sendMessage("  §8● §7Backpack §8» §a" + (this.forceItemBattle.getSettings().isBackpackEnabled() ? "§2✔" : "§4✘"));
             player.sendMessage("  §8● §7PvP §8» §a" + (this.forceItemBattle.getSettings().isPvpEnabled() ? "§2✔" : "§4✘"));
             player.sendMessage("  §8● §7Nether §8» §a" + (this.forceItemBattle.getSettings().isNetherEnabled() ? "§2✔" : "§4✘"));
+            player.sendMessage("  §8● §7End §8» §a" + (this.forceItemBattle.getSettings().isEndEnabled() ? "§2✔" : "§4✘"));
             player.sendMessage("  §8● §7Faster plants growth & decay §8» §a" + (this.forceItemBattle.getSettings().isFasterRandomTick() ? "§2✔" : "§4✘"));
             player.sendMessage(" ");
             player.sendMessage(" §8● §7Useful Commands:");
             player.sendMessage("  §8» §6/info");
             player.sendMessage("  §8» §6/infowiki");
+            player.sendMessage("  §8» §6/spawn");
+            player.sendMessage("  §8» §6/bed");
             player.sendMessage("");
 
             player.setHealth(20);
