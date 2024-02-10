@@ -172,8 +172,12 @@ public final class ForceItemBattle extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        if (getConfig().getBoolean("isReset")) getConfig().set("timer.time", 0);
-        else timer.save();
+        reloadConfig();
+        if (getConfig().getBoolean("isReset")) {
+            getConfig().set("timer.time", 0);
+        } else {
+            timer.save();
+        }
         saveConfig();
     }
 
