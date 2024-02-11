@@ -337,6 +337,33 @@ public class Listeners implements Listener {
 
     }
 
+    @EventHandler
+    public void onSmith(SmithItemEvent smithItemEvent) {
+        Player player = (Player) smithItemEvent.getWhoClicked();
+
+        if (!this.plugin.getGamemanager().isMidGame()) {
+            return;
+        }
+
+        if(smithItemEvent.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY || smithItemEvent.getAction() == InventoryAction.PICKUP_ALL) {
+            ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+            ItemStack clickedItem = smithItemEvent.getCurrentItem();
+            Material currentItem = forceItemPlayer.currentMaterial();
+
+            if(clickedItem == null) return;
+
+            if (clickedItem.getType() == currentItem) {
+                FoundItemEvent foundItemEvent = new FoundItemEvent(player);
+                foundItemEvent.setFoundItem(clickedItem);
+                foundItemEvent.skipped(false);
+
+                Bukkit.getPluginManager().callEvent(foundItemEvent);
+            }
+        }
+
+
+    }
+
     /* Click-Event for my inventory builder */
     @EventHandler
     public void onInventoyClick(InventoryClickEvent event) {
