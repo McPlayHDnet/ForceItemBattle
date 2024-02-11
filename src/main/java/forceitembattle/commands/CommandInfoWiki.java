@@ -44,9 +44,9 @@ public class CommandInfoWiki implements CommandExecutor {
             return false;
         }
 
-        TextComponent infoWikiBefore = new TextComponent("§7Check out the minecraft wiki for §a" + WordUtils.capitalize(item.getType().name().toLowerCase().replace("_", " ") + " "));
+        TextComponent infoWikiBefore = new TextComponent("§7Check out the minecraft wiki for §a" + WordUtils.capitalizeFully(item.getType().name().toLowerCase().replace("_", " ") + " "));
         TextComponent infoWikiAfter = new TextComponent("§f[§bClick here§f]");
-        infoWikiAfter.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://minecraft.wiki/" + item.getType().name().toLowerCase()));
+        infoWikiAfter.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://minecraft.wiki/" + this.forceItemBattle.getGamemanager().formatMaterialName(item.getType().name().toLowerCase())));
 
         player.spigot().sendMessage(infoWikiBefore, infoWikiAfter);
 

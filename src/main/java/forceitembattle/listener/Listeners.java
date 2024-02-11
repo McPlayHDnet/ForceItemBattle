@@ -25,13 +25,9 @@ import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.inventory.InventoryAction;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.inventory.*;
 import org.bukkit.event.player.*;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.*;
 
 import java.util.ArrayList;
 
@@ -107,6 +103,11 @@ public class Listeners implements Listener {
             return;
         }
 
+        if(inventoryClickEvent.getClickedInventory() instanceof CraftingInventory ||
+                inventoryClickEvent.getClickedInventory() instanceof SmithingInventory ||
+                inventoryClickEvent.getClickedInventory() instanceof FurnaceInventory ||
+                inventoryClickEvent.getClickedInventory() instanceof BrewerInventory) return;
+
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
         ItemStack clickedItem = inventoryClickEvent.getCurrentItem();
         Material currentItem = forceItemPlayer.currentMaterial();
@@ -130,7 +131,7 @@ public class Listeners implements Listener {
 
     @EventHandler
     public void onMove(PlayerMoveEvent playerMoveEvent) {
-        if(this.plugin.getGamemanager().isPreGame()) {
+        if(this.plugin.getGamemanager().isPreGame() || this.plugin.getGamemanager().isPausedGame()) {
             if(playerMoveEvent.getFrom().getX() != playerMoveEvent.getTo().getX() || playerMoveEvent.getFrom().getZ() != playerMoveEvent.getTo().getZ())
                 playerMoveEvent.setTo(playerMoveEvent.getFrom());
         }
@@ -242,6 +243,127 @@ public class Listeners implements Listener {
         Bukkit.getPluginManager().callEvent(foundItemEvent);
     }
 
+    @EventHandler
+    public void onBucketEmpty(PlayerBucketEmptyEvent playerBucketEmptyEvent) {
+        Player player = playerBucketEmptyEvent.getPlayer();
+
+        if (!this.plugin.getGamemanager().isMidGame()) {
+            return;
+        }
+
+        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        ItemStack clickedItem = playerBucketEmptyEvent.getItemStack();
+        Material currentItem = forceItemPlayer.currentMaterial();
+
+        if(clickedItem == null) return;
+
+        if (clickedItem.getType() == currentItem) {
+            FoundItemEvent foundItemEvent = new FoundItemEvent(player);
+            foundItemEvent.setFoundItem(clickedItem);
+            foundItemEvent.skipped(false);
+
+            Bukkit.getPluginManager().callEvent(foundItemEvent);
+        }
+    }
+
+    @EventHandler
+    public void onBucketFill(PlayerBucketFillEvent playerBucketFillEvent) {
+        Player player = playerBucketFillEvent.getPlayer();
+
+        if (!this.plugin.getGamemanager().isMidGame()) {
+            return;
+        }
+
+        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        ItemStack clickedItem = playerBucketFillEvent.getItemStack();
+        Material currentItem = forceItemPlayer.currentMaterial();
+
+        if(clickedItem == null) return;
+
+        if (clickedItem.getType() == currentItem) {
+            FoundItemEvent foundItemEvent = new FoundItemEvent(player);
+            foundItemEvent.setFoundItem(clickedItem);
+            foundItemEvent.skipped(false);
+
+            Bukkit.getPluginManager().callEvent(foundItemEvent);
+        }
+    }
+
+    @EventHandler
+    public void onBucketEntity(PlayerBucketEntityEvent playerBucketEntityEvent) {
+        Player player = playerBucketEntityEvent.getPlayer();
+
+        if (!this.plugin.getGamemanager().isMidGame()) {
+            return;
+        }
+
+        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        ItemStack clickedItem = playerBucketEntityEvent.getOriginalBucket();
+        Material currentItem = forceItemPlayer.currentMaterial();
+
+        if (clickedItem.getType() == currentItem) {
+            FoundItemEvent foundItemEvent = new FoundItemEvent(player);
+            foundItemEvent.setFoundItem(clickedItem);
+            foundItemEvent.skipped(false);
+
+            Bukkit.getPluginManager().callEvent(foundItemEvent);
+        }
+    }
+
+    @EventHandler
+    public void onCrafting(CraftItemEvent craftItemEvent) {
+        Player player = (Player) craftItemEvent.getWhoClicked();
+
+        if (!this.plugin.getGamemanager().isMidGame()) {
+            return;
+        }
+
+        if(craftItemEvent.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY || craftItemEvent.getAction() == InventoryAction.PICKUP_ALL) {
+            ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+            ItemStack clickedItem = craftItemEvent.getCurrentItem();
+            Material currentItem = forceItemPlayer.currentMaterial();
+
+            if(clickedItem == null) return;
+
+            if (clickedItem.getType() == currentItem) {
+                FoundItemEvent foundItemEvent = new FoundItemEvent(player);
+                foundItemEvent.setFoundItem(clickedItem);
+                foundItemEvent.skipped(false);
+
+                Bukkit.getPluginManager().callEvent(foundItemEvent);
+            }
+        }
+
+
+    }
+
+    @EventHandler
+    public void onSmith(SmithItemEvent smithItemEvent) {
+        Player player = (Player) smithItemEvent.getWhoClicked();
+
+        if (!this.plugin.getGamemanager().isMidGame()) {
+            return;
+        }
+
+        if(smithItemEvent.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY || smithItemEvent.getAction() == InventoryAction.PICKUP_ALL) {
+            ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+            ItemStack clickedItem = smithItemEvent.getCurrentItem();
+            Material currentItem = forceItemPlayer.currentMaterial();
+
+            if(clickedItem == null) return;
+
+            if (clickedItem.getType() == currentItem) {
+                FoundItemEvent foundItemEvent = new FoundItemEvent(player);
+                foundItemEvent.setFoundItem(clickedItem);
+                foundItemEvent.skipped(false);
+
+                Bukkit.getPluginManager().callEvent(foundItemEvent);
+            }
+        }
+
+
+    }
+
     /* Click-Event for my inventory builder */
     @EventHandler
     public void onInventoyClick(InventoryClickEvent event) {
@@ -276,6 +398,27 @@ public class Listeners implements Listener {
             return;
         }
 
+    }
+
+    @EventHandler
+    public void onConsume(PlayerItemConsumeEvent playerItemConsumeEvent) {
+        Player player = playerItemConsumeEvent.getPlayer();
+
+        if (!this.plugin.getGamemanager().isMidGame()) {
+            return;
+        }
+
+        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        ItemStack clickedItem = playerItemConsumeEvent.getItem();
+        Material currentItem = forceItemPlayer.currentMaterial();
+
+        if (clickedItem.getType() == currentItem) {
+            FoundItemEvent foundItemEvent = new FoundItemEvent(player);
+            foundItemEvent.setFoundItem(clickedItem);
+            foundItemEvent.skipped(false);
+
+            Bukkit.getPluginManager().callEvent(foundItemEvent);
+        }
     }
 
     @EventHandler

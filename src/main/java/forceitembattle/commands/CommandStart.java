@@ -56,7 +56,8 @@ public class CommandStart implements CommandExecutor {
                         switch(seconds) {
                             case 9, 8 -> subTitle = "§f» §6" + (forceItemBattle.getTimer().getTime() / 60) + " minutes §f«";
                             case 7, 6 -> subTitle = "§f» §6" + args[1] + " Joker §f«";
-                            case 5, 4 -> subTitle = "§f» §6/info & /infowiki §f«";
+                            case 5 -> subTitle = "§f» §6/info & /infowiki §f«";
+                            case 4 -> subTitle = "§f» §6/spawn & /bed §f«";
                             case 3, 2 -> subTitle = "§f» §6Collect as many items as possible §f«";
                             case 1 -> subTitle = "§f» §6Have fun! §f«";
                         }
@@ -97,11 +98,14 @@ public class CommandStart implements CommandExecutor {
             player.sendMessage("  §8● §7Backpack §8» §a" + (this.forceItemBattle.getSettings().isBackpackEnabled() ? "§2✔" : "§4✘"));
             player.sendMessage("  §8● §7PvP §8» §a" + (this.forceItemBattle.getSettings().isPvpEnabled() ? "§2✔" : "§4✘"));
             player.sendMessage("  §8● §7Nether §8» §a" + (this.forceItemBattle.getSettings().isNetherEnabled() ? "§2✔" : "§4✘"));
+            player.sendMessage("  §8● §7End §8» §a" + (this.forceItemBattle.getSettings().isEndEnabled() ? "§2✔" : "§4✘"));
             player.sendMessage("  §8● §7Faster plants growth & decay §8» §a" + (this.forceItemBattle.getSettings().isFasterRandomTick() ? "§2✔" : "§4✘"));
             player.sendMessage(" ");
             player.sendMessage(" §8● §7Useful Commands:");
             player.sendMessage("  §8» §6/info");
             player.sendMessage("  §8» §6/infowiki");
+            player.sendMessage("  §8» §6/spawn");
+            player.sendMessage("  §8» §6/bed");
             player.sendMessage("");
 
             player.setHealth(20);
