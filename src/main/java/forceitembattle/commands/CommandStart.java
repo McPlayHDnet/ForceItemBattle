@@ -56,7 +56,8 @@ public class CommandStart implements CommandExecutor {
                         switch(seconds) {
                             case 9, 8 -> subTitle = "§f» §6" + (forceItemBattle.getTimer().getTime() / 60) + " minutes §f«";
                             case 7, 6 -> subTitle = "§f» §6" + args[1] + " Joker §f«";
-                            case 5, 4 -> subTitle = "§f» §6/info & /infowiki §f«";
+                            case 5 -> subTitle = "§f» §6/info & /infowiki §f«";
+                            case 4 -> subTitle = "§f» §6/spawn & /bed §f«";
                             case 3, 2 -> subTitle = "§f» §6Collect as many items as possible §f«";
                             case 1 -> subTitle = "§f» §6Have fun! §f«";
                         }

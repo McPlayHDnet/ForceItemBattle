@@ -45,6 +45,15 @@ public class Gamemanager {
         return WordUtils.capitalizeFully(forceItemPlayer.currentMaterial().toString().replace("_", " "));
     }
 
+    public String formatMaterialName(String material) {
+        String materialName = WordUtils.capitalizeFully(material.replace("_", " "));
+        String[] wordsToIgnore = {"and", "with", "of", "on", "a", "the"};
+        for(String word : wordsToIgnore) {
+            materialName = materialName.replace(WordUtils.capitalize(word), word.toLowerCase());
+        }
+        return materialName.replace(" ", "_");
+    }
+
     public void initializeMats() {
         Bukkit.getOnlinePlayers().forEach(player -> {
             ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
@@ -116,6 +125,10 @@ public class Gamemanager {
 
     public boolean isPreGame() {
         return this.getCurrentGameState() == GameState.PRE_GAME;
+    }
+
+    public boolean isPausedGame() {
+        return this.getCurrentGameState() == GameState.PAUSED_GAME;
     }
 
     public boolean isMidGame() {
