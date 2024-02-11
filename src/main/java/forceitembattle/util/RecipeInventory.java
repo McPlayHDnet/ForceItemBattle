@@ -144,7 +144,7 @@ Slots visualisation for values below:
 
     private Inventory createFancyRecipeInventory(ItemStack item, Recipe recipe) {
         String itemName = WordUtils.capitalize(item.getType().name().replace("_", " ").toLowerCase());
-        Inventory inventory = Bukkit.createInventory(null, 5 * 9, "§8● §6" + itemName);
+        Inventory inventory = Bukkit.createInventory(null, 5 * 9, "§8● §3" + itemName);
 
         for (int i = 0; i < inventory.getSize(); i++) {
             if (!SLOTS.contains(i)) {
