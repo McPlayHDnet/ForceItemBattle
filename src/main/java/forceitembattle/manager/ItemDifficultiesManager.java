@@ -143,6 +143,8 @@ public class ItemDifficultiesManager {
                 Material.CRIMSON_STAIRS,
                 Material.CRIMSON_STEM,
                 Material.CRIMSON_TRAPDOOR,
+                Material.COMPARATOR,
+                Material.DAYLIGHT_DETECTOR,
                 Material.ENDER_EYE,
                 Material.GHAST_TEAR,
                 Material.GILDED_BLACKSTONE,
