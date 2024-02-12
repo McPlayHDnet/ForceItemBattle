@@ -919,7 +919,6 @@ public class ItemDifficultiesManager {
                 Material.GHAST_TEAR,
                 Material.GILDED_BLACKSTONE,
                 Material.GLISTERING_MELON_SLICE,
-                Material.GLOBE_BANNER_PATTERN,
                 Material.GLOW_BERRIES,
                 Material.GLOWSTONE,
                 Material.GLOWSTONE_DUST,
