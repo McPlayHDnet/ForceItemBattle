@@ -12,6 +12,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.block.ShulkerBox;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -28,6 +29,7 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.*;
 import org.bukkit.event.player.*;
 import org.bukkit.inventory.*;
+import org.bukkit.inventory.meta.BlockStateMeta;
 
 import java.util.ArrayList;
 
@@ -145,36 +147,11 @@ public class Listeners implements Listener {
         ItemStack itemStack = foundItemEvent.getFoundItem();
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
 
-        forceItemPlayer.setCurrentScore(forceItemPlayer.currentScore() + 1);
-        forceItemPlayer.addFoundItemToList(new ForceItem(itemStack.getType(), this.plugin.getTimer().formatSeconds(this.plugin.getTimer().getTime()), foundItemEvent.isSkipped()));
-        forceItemPlayer.setCurrentMaterial(this.plugin.getGamemanager().generateMaterial());
-        Bukkit.broadcastMessage("§a" + player.getName() + " §7" + (foundItemEvent.isSkipped() ? "skipped" : "found") + " §6" + WordUtils.capitalize(itemStack.getType().name().toLowerCase().replace("_", " ")));
-
-        player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
-
-        if (!this.plugin.getSettings().isNetherEnabled()) {
-            forceItemPlayer.updateItemDisplay();
-        }
-
-        ItemStack foundInventoryItemStack = null;
-        for (ItemStack inventoryItemStacks : player.getInventory().getContents()) {
-            if (inventoryItemStacks == null) continue;
-            if (inventoryItemStacks.getType() == forceItemPlayer.currentMaterial()) {
-                foundInventoryItemStack = inventoryItemStacks;
-            }
-        }
-
-        if (this.plugin.getSettings().isBackpackEnabled() && foundInventoryItemStack == null) {
-            for (ItemStack backpackItemStacks : this.plugin.getBackpack().getPlayerBackpack(player).getContents()) {
-                if(backpackItemStacks == null) continue;
-                if(backpackItemStacks.getType() == forceItemPlayer.currentMaterial()) foundInventoryItemStack = backpackItemStacks;
-            }
-        }
-
-        if (foundInventoryItemStack != null) {
+        if(!foundItemEvent.isBackToBack()) {
             forceItemPlayer.setCurrentScore(forceItemPlayer.currentScore() + 1);
-            forceItemPlayer.addFoundItemToList(new ForceItem(foundInventoryItemStack.getType(), plugin.getTimer().formatSeconds(plugin.getTimer().getTime()), false));
-            forceItemPlayer.setCurrentMaterial(plugin.getGamemanager().generateMaterial());
+            forceItemPlayer.addFoundItemToList(new ForceItem(itemStack.getType(), this.plugin.getTimer().formatSeconds(this.plugin.getTimer().getTime()), foundItemEvent.isSkipped()));
+            forceItemPlayer.setCurrentMaterial(this.plugin.getGamemanager().generateMaterial());
+            Bukkit.broadcastMessage("§a" + player.getName() + " §7" + (foundItemEvent.isSkipped() ? "skipped" : "found") + " §6" + WordUtils.capitalize(itemStack.getType().name().toLowerCase().replace("_", " ")));
 
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
 
@@ -182,7 +159,65 @@ public class Listeners implements Listener {
                 forceItemPlayer.updateItemDisplay();
             }
 
+        }
+
+        ItemStack foundInventoryItemStack = null;
+
+        if(forceItemPlayer.previousMaterial() == forceItemPlayer.currentMaterial()) {
+            foundInventoryItemStack = new ItemStack(forceItemPlayer.currentMaterial());
+        }
+
+        if(foundInventoryItemStack == null) {
+            for (ItemStack inventoryItemStacks : player.getInventory().getContents()) {
+                if (inventoryItemStacks == null) continue;
+                if (inventoryItemStacks.getType() == forceItemPlayer.currentMaterial()) {
+                    foundInventoryItemStack = inventoryItemStacks;
+                }
+
+                if(inventoryItemStacks.getItemMeta() instanceof BlockStateMeta blockStateMeta) {
+                    if(blockStateMeta.getBlockState() instanceof ShulkerBox shulkerBox) {
+                        for(ItemStack shulkerItems : shulkerBox.getInventory().getContents()) {
+                            if(shulkerItems == null) continue;
+                            if(shulkerItems.getType() == forceItemPlayer.currentMaterial()) foundInventoryItemStack = shulkerItems;
+                        }
+                    }
+                }
+            }
+
+            if (this.plugin.getSettings().isBackpackEnabled() && foundInventoryItemStack == null) {
+                for (ItemStack backpackItemStacks : this.plugin.getBackpack().getPlayerBackpack(player).getContents()) {
+                    if(backpackItemStacks == null) continue;
+                    if(backpackItemStacks.getType() == forceItemPlayer.currentMaterial()) foundInventoryItemStack = backpackItemStacks;
+
+                    if(backpackItemStacks.getItemMeta() instanceof BlockStateMeta blockStateMeta) {
+                        if(blockStateMeta.getBlockState() instanceof ShulkerBox shulkerBox) {
+                            for(ItemStack shulkerItems : shulkerBox.getInventory().getContents()) {
+                                if(shulkerItems == null) continue;
+                                if(shulkerItems.getType() == forceItemPlayer.currentMaterial()) foundInventoryItemStack = shulkerItems;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (foundInventoryItemStack != null) {
+            forceItemPlayer.setCurrentScore(forceItemPlayer.currentScore() + 1);
+            forceItemPlayer.addFoundItemToList(new ForceItem(foundInventoryItemStack.getType(), this.plugin.getTimer().formatSeconds(this.plugin.getTimer().getTime()), false));
+            forceItemPlayer.setCurrentMaterial(this.plugin.getGamemanager().generateMaterial());
+
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
+
+            if (!this.plugin.getSettings().isNetherEnabled()) {
+                forceItemPlayer.updateItemDisplay();
+            }
+
+            foundItemEvent.setFoundItem(foundInventoryItemStack);
+            foundItemEvent.backToBack(true);
+            foundItemEvent.skipped(false);
+
             Bukkit.broadcastMessage("§a" + player.getName() + " §7was lucky to already own §6" + WordUtils.capitalize(foundInventoryItemStack.getType().name().toLowerCase().replace("_", " ")));
+            Bukkit.getPluginManager().callEvent(foundItemEvent);
         }
     }
 
@@ -196,8 +231,10 @@ public class Listeners implements Listener {
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
 
         if (e.getItem().getType() == Material.BUNDLE) {
-            this.plugin.getBackpack().openPlayerBackpack(player);
-            return;
+            if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+                this.plugin.getBackpack().openPlayerBackpack(player);
+                return;
+            }
         }
 
         if (!Gamemanager.isJoker(e.getItem())) {
@@ -298,7 +335,7 @@ public class Listeners implements Listener {
         }
 
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-        ItemStack clickedItem = playerBucketEntityEvent.getOriginalBucket();
+        ItemStack clickedItem = playerBucketEntityEvent.getEntityBucket();
         Material currentItem = forceItemPlayer.currentMaterial();
 
         if (clickedItem.getType() == currentItem) {

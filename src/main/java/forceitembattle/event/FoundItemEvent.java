@@ -5,13 +5,15 @@ import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.ListResourceBundle;
+
 public class FoundItemEvent extends Event {
 
     private static final HandlerList HANDLER_LIST = new HandlerList();
 
     private Player player;
     private ItemStack foundItem;
-    private boolean skipped;
+    private boolean skipped, backToBack;
 
     public FoundItemEvent(Player player) {this.player = player;}
 
@@ -34,6 +36,12 @@ public class FoundItemEvent extends Event {
     public boolean isSkipped() {
         return skipped;
     }
+
+    public void backToBack(boolean backToBack) {
+        this.backToBack = backToBack;
+    }
+
+    public boolean isBackToBack() { return backToBack; }
 
     @Override
     public HandlerList getHandlers() {
