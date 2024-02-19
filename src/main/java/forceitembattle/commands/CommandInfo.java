@@ -4,7 +4,6 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.util.DescriptionItem;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.RecipeInventory;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -54,8 +53,7 @@ public class CommandInfo implements CommandExecutor {
             }
         }
 
-
-        this.forceItemBattle.getRecipeInventory().showRecipe(player, item);
+        this.forceItemBattle.getRecipeManager().createRecipeViewer(player, item);
 
         return false;
     }

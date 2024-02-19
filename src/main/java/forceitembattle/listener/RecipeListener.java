@@ -2,13 +2,18 @@ package forceitembattle.listener;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.util.RecipeInventory;
+import forceitembattle.util.RecipeViewer;
+import org.bukkit.Bukkit;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.PrepareItemCraftEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.Recipe;
 
 public class RecipeListener implements Listener {
 
@@ -21,39 +26,13 @@ public class RecipeListener implements Listener {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        if (event.getClickedInventory() == null) {
-            return;
-        }
+
 
         if (!(event.getWhoClicked() instanceof Player player)) {
             return;
         }
 
-        if (!this.forceItemBattle.getRecipeInventory().isShowingRecipe(player)) {
-            return;
-        }
 
-        event.setCancelled(true);
-
-        if (!event.getClickedInventory().equals(event.getView().getTopInventory())) {
-            return;
-        }
-
-        if (!RecipeInventory.SLOTS.contains(event.getSlot())) {
-            return;
-        }
-
-        if (event.getClick().isShiftClick()) {
-            ItemStack itemStack = event.getCurrentItem();
-            if (itemStack == null) {
-                return;
-            }
-
-            this.forceItemBattle.getRecipeInventory().showRecipe(player, itemStack);
-
-        } else {
-            player.sendMessage("§cSneak click to show recipe for this item!");
-        }
     }
 
     @EventHandler
@@ -62,16 +41,13 @@ public class RecipeListener implements Listener {
             return;
         }
 
-        if (this.forceItemBattle.getRecipeInventory().isShowingRecipe(player) && !this.forceItemBattle.getRecipeInventory().ignoreInventoryClosed(player)) {
-            inventoryCloseEvent.getInventory().clear();
-            this.forceItemBattle.getRecipeInventory().handleRecipeClose(player);
-        }
+
     }
 
     @EventHandler
     public void onDisconnect(PlayerQuitEvent event) {
-        if (this.forceItemBattle.getRecipeInventory().isShowingRecipe(event.getPlayer())) {
-            this.forceItemBattle.getRecipeInventory().handleRecipeClose(event.getPlayer());
+        if (this.forceItemBattle.getRecipeManager().isShowingRecipe(event.getPlayer())) {
+            this.forceItemBattle.getRecipeManager().handleRecipeClose(event.getPlayer());
         }
     }
 }

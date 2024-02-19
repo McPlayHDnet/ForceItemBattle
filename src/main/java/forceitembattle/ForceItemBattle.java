@@ -6,10 +6,10 @@ import forceitembattle.listener.PvPListener;
 import forceitembattle.listener.RecipeListener;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.ItemDifficultiesManager;
+import forceitembattle.manager.RecipeManager;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Backpack;
 import forceitembattle.util.DescriptionItem;
-import forceitembattle.util.RecipeInventory;
 import forceitembattle.util.Timer;
 import forceitembattle.util.color.ColorManager;
 import org.bukkit.Bukkit;
@@ -37,7 +37,7 @@ public final class ForceItemBattle extends JavaPlugin {
     private Timer timer;
     private Backpack backpack;
     private ItemDifficultiesManager itemDifficultiesManager;
-    private RecipeInventory recipeInventory;
+    private RecipeManager recipeManager;
     private ColorManager colorManager;
     private Location spawnLocation;
 
@@ -118,7 +118,9 @@ public final class ForceItemBattle extends JavaPlugin {
         this.timer = new Timer(this);
         this.backpack = new Backpack(this);
         this.itemDifficultiesManager = new ItemDifficultiesManager(this);
-        this.recipeInventory = new RecipeInventory(this);
+        //testing something, not needed in final code
+        //this.itemDifficultiesManager.createList();
+        this.recipeManager = new RecipeManager(this);
         this.colorManager = new ColorManager();
 
         this.initListeners();
@@ -235,10 +237,6 @@ public final class ForceItemBattle extends JavaPlugin {
         return this.itemDifficultiesManager;
     }
 
-    public RecipeInventory getRecipeInventory() {
-        return this.recipeInventory;
-    }
-
     public ColorManager getColorManager() {
         return this.colorManager;
     }
@@ -247,4 +245,7 @@ public final class ForceItemBattle extends JavaPlugin {
         return this.settings;
     }
 
+    public RecipeManager getRecipeManager() {
+        return recipeManager;
+    }
 }
