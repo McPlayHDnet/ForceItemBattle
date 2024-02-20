@@ -34,7 +34,7 @@ public class RecipeInventory extends InventoryBuilder {
     public RecipeInventory(ForceItemBattle forceItemBattle, RecipeViewer recipeViewer, Player player) {
         super(9 * 5, "§8● §3" +
                 WordUtils.capitalize(recipeViewer.itemStack().getType().name().replace("_", " ").toLowerCase()) +
-                " §8» §7" + (recipeViewer.currentPageContainer() + 1) + "§8/§7" + recipeViewer.pages()
+                " §8» §7" + (recipeViewer.currentRecipeIndex() + 1) + "§8/§7" + recipeViewer.pages()
         );
 
         for (int i = 0; i < this.getInventory().getSize(); i++) {
@@ -53,71 +53,43 @@ public class RecipeInventory extends InventoryBuilder {
 
         this.addUpdateHandler(() -> {
             this.setItem(PREVIOUS_RECIPE_ITEM_SLOT, new ItemBuilder(Material.RED_STAINED_GLASS_PANE).setDisplayName("§4« §cPrevious Recipe").getItemStack(), inventoryClickEvent -> {
-                int currentPage = recipeViewer.currentPageContainer();
-                int currentChoice = recipeViewer.currentChoice();
                 int currentRecipeIndex = recipeViewer.currentRecipeIndex();
 
-                if(currentPage != 0) {
-                    currentPage--;
-                    currentChoice--;
-
-                    if(Bukkit.getRecipesFor(recipeViewer.itemStack()).size() > currentRecipeIndex + 1 || currentChoice == -1) {
-                        currentRecipeIndex--;
-                        currentChoice = 0;
-                    }
+                if(currentRecipeIndex != 0) {
+                    currentRecipeIndex--;
 
                     player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
 
-                    recipeViewer.setCurrentPage(currentPage);
                     recipeViewer.setCurrentRecipeIndex(currentRecipeIndex);
-                    recipeViewer.setCurrentChoice(currentChoice);
                     if(Bukkit.getRecipesFor(recipeViewer.itemStack()).size() > 1) {
                         recipeViewer.setRecipe(Bukkit.getRecipesFor(recipeViewer.itemStack()).get(recipeViewer.currentRecipeIndex()));
                     } else {
                         recipeViewer.setRecipe(Bukkit.getRecipesFor(recipeViewer.itemStack()).get(0));
                     }
-                    recipeViewer.setPages(0);
-                    recipeViewer.createPages();
                     new RecipeInventory(forceItemBattle, recipeViewer, player).open(player);
 
                 } else player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
             });
 
             this.setItem(NEXT_RECIPE_ITEM_SLOT, new ItemBuilder(Material.LIME_STAINED_GLASS_PANE).setDisplayName("§2» §aNext Recipe").getItemStack(), inventoryClickEvent -> {
-                int currentPage = recipeViewer.currentPageContainer();
-                int currentChoice = recipeViewer.currentChoice();
                 int currentRecipeIndex = recipeViewer.currentRecipeIndex();
 
-                if(currentPage != (recipeViewer.pages() - 1)) {
-                    currentPage++;
-                    currentChoice++;
-
-                    if(Bukkit.getRecipesFor(recipeViewer.itemStack()).size() > currentRecipeIndex + 1) {
-                        currentRecipeIndex++;
-                        currentChoice = 0;
-                    }
+                if(currentRecipeIndex != (recipeViewer.pages() - 1)) {
+                    currentRecipeIndex++;
 
                     player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
 
-                    recipeViewer.setCurrentPage(currentPage);
                     recipeViewer.setCurrentRecipeIndex(currentRecipeIndex);
-                    recipeViewer.setCurrentChoice(currentChoice);
                     if(Bukkit.getRecipesFor(recipeViewer.itemStack()).size() > 1) {
                         recipeViewer.setRecipe(Bukkit.getRecipesFor(recipeViewer.itemStack()).get(recipeViewer.currentRecipeIndex()));
                     } else {
                         recipeViewer.setRecipe(Bukkit.getRecipesFor(recipeViewer.itemStack()).get(0));
                     }
-                    recipeViewer.setPages(0);
-                    recipeViewer.createPages();
                     new RecipeInventory(forceItemBattle, recipeViewer, player).open(player);
 
                 } else player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
             });
         });
-
-
-        System.out.println("Choice: " + recipeViewer.currentChoice());
-        System.out.println("Recipe size: " + Bukkit.getRecipesFor(recipeViewer.itemStack()).size());
 
 
         List<ItemStack> ingredients = new ArrayList<>();
@@ -133,11 +105,29 @@ public class RecipeInventory extends InventoryBuilder {
 
                     RecipeChoice choice = shaped.getChoiceMap().get(c);
                     if (choice instanceof RecipeChoice.MaterialChoice materialChoice) {
-                        //i dunno but there are recipes with only one fixed itemstack but also like 40 different outer items
-                        // for example, grinder/campfire needs one furnace in middle and any type of wood outer. It kinda works but because of my if - it does not show the first 3 or smth
-                        ItemStack fixed = new ItemStack(materialChoice.getChoices().get((materialChoice.getChoices().size() < recipeViewer.currentChoice() ? 0 : recipeViewer.currentChoice())));
 
-                        this.setItem(slot, fixed);
+                        List<String> lore = new ArrayList<>();
+                        ItemBuilder itemBuilder = new ItemBuilder(materialChoice.getChoices().get(0));
+
+                        materialChoice.getChoices().subList(1, materialChoice.getChoices().size()).forEach(choices -> {
+                            lore.add(" §8» §3" + WordUtils.capitalize(choices.name().replace("_", " ").toLowerCase()));
+
+                            if(choices.name().contains("_PLANKS")) {
+                                lore.clear();
+                                lore.add(" §8» §3any wooden plank");
+                            }
+
+                            if(recipeViewer.itemStack().getType() == Material.SMOKER || recipeViewer.itemStack().getType() == Material.CAMPFIRE || recipeViewer.itemStack().getType() == Material.SOUL_CAMPFIRE) {
+                                lore.clear();
+                                lore.add(" §8» §3any wooden log/wood (and stripped variants)");
+                            }
+                        });
+
+                        itemBuilder.setLore(lore);
+                        lore.clear();
+
+                        this.setItem(slot, itemBuilder.getItemStack());
+
                     } else if (choice != null) {
                         this.setItem(slot, new ItemStack(choice.getItemStack()));
                     }
@@ -151,7 +141,7 @@ public class RecipeInventory extends InventoryBuilder {
             for (RecipeChoice recipeChoice : shapeless.getChoiceList()) {
                 if (recipeChoice instanceof RecipeChoice.MaterialChoice materialChoice) {
                     System.out.println(materialChoice.getChoices().size() + " shapeless");
-                    ItemStack fixed = new ItemStack(materialChoice.getChoices().get(recipeViewer.currentChoice()));
+                    ItemStack fixed = new ItemStack(materialChoice.getChoices().get(0));
                     ingredients.add(fixed);
                 } else if (recipeChoice != null) {
                     ingredients.add(new ItemStack(recipeChoice.getItemStack()));
@@ -166,7 +156,7 @@ public class RecipeInventory extends InventoryBuilder {
         }
         if (recipeViewer.recipe() instanceof CookingRecipe<?> furnace) {
             if (furnace.getInputChoice() instanceof RecipeChoice.MaterialChoice materialChoice) {
-                ItemStack fixed = new ItemStack(materialChoice.getChoices().get(recipeViewer.currentChoice()));
+                ItemStack fixed = new ItemStack(materialChoice.getChoices().get(0));
 
                 this.setItem(OTHER_FIRST_ITEM_SLOT, fixed);
             }
@@ -248,17 +238,13 @@ public class RecipeInventory extends InventoryBuilder {
                     player.sendMessage("§cThere is no recipe for this item. Just find it lol");
                     return;
                 }
-                recipeViewer.setCurrentPage(0);
                 recipeViewer.setCurrentRecipeIndex(0);
-                recipeViewer.setCurrentChoice(0);
                 recipeViewer.setItemStack(itemStack);
                 if(Bukkit.getRecipesFor(recipeViewer.itemStack()).size() > 1) {
                     recipeViewer.setRecipe(Bukkit.getRecipesFor(recipeViewer.itemStack()).get(recipeViewer.currentRecipeIndex()));
                 } else {
                     recipeViewer.setRecipe(Bukkit.getRecipesFor(recipeViewer.itemStack()).get(0));
                 }
-                recipeViewer.setPages(0);
-                recipeViewer.createPages();
                 new RecipeInventory(forceItemBattle, recipeViewer, player).open(player);
 
             } else {

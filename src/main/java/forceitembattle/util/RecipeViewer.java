@@ -11,68 +11,10 @@ public class RecipeViewer {
     private ItemStack itemStack;
     private Recipe recipe;
     private int currentRecipeIndex;
-    private int currentPage;
-    private int currentChoice;
     private int pages;
 
     public RecipeViewer() {
 
-    }
-
-    public void createPages() {
-        if (this.recipe() instanceof ShapedRecipe shaped) {
-            String[] shape = shaped.getShape();
-
-            for (String row : shape) {
-                for (char c : row.toCharArray()) {
-
-                    RecipeChoice choice = shaped.getChoiceMap().get(c);
-                    if (choice instanceof RecipeChoice.MaterialChoice materialChoice) {
-                        this.setPages(materialChoice.getChoices().size());
-                    }
-                }
-            }
-
-        }
-        if (this.recipe() instanceof ShapelessRecipe shapeless) {
-            for (RecipeChoice recipeChoice : shapeless.getChoiceList()) {
-                if (recipeChoice instanceof RecipeChoice.MaterialChoice materialChoice) {
-                    this.setPages(materialChoice.getChoices().size());
-                }
-            }
-        }
-        if (this.recipe() instanceof CookingRecipe<?> furnace) {
-
-            if (furnace.getInputChoice() instanceof RecipeChoice.MaterialChoice materialChoice) {
-                this.setPages(materialChoice.getChoices().size());
-            }
-
-        }
-        if (this.recipe() instanceof SmithingTrimRecipe smithing) {
-            if (smithing.getTemplate() instanceof RecipeChoice.MaterialChoice materialChoice) {
-                this.setPages(materialChoice.getChoices().size());
-            }
-
-        }
-        if (this.recipe() instanceof SmithingTransformRecipe smithing) {
-            if (smithing.getTemplate() instanceof RecipeChoice.MaterialChoice materialChoice) {
-                this.setPages(materialChoice.getChoices().size());
-            }
-
-        }
-        if (this.recipe() instanceof SmithingRecipe smithing) {
-            if (smithing.getAddition() instanceof RecipeChoice.MaterialChoice materialChoice) {
-                this.setPages(materialChoice.getChoices().size());
-            }
-
-        }
-        if (this.recipe() instanceof StonecuttingRecipe stonecutting) {
-            if (stonecutting.getInputChoice() instanceof RecipeChoice.MaterialChoice materialChoice) {
-                this.setPages(materialChoice.getChoices().size());
-            }
-        }
-
-        this.setPages(this.pages() + (this.recipes() - 1));
     }
 
     private int recipes() {
@@ -109,26 +51,6 @@ public class RecipeViewer {
 
     public void setCurrentRecipeIndex(int recipeIndex) {
         this.currentRecipeIndex = recipeIndex;
-    }
-
-    public int currentPage() {
-        return (this.recipes() > 1 ? currentPage - this.recipes() + 1 : currentPage);
-    }
-
-    public int currentPageContainer() {
-        return currentPage;
-    }
-
-    public void setCurrentPage(int currentPage) {
-        this.currentPage = currentPage;
-    }
-
-    public int currentChoice() {
-        return currentChoice;
-    }
-
-    public void setCurrentChoice(int currentChoice) {
-        this.currentChoice = currentChoice;
     }
 
     public int pages() {

@@ -6,10 +6,8 @@ import forceitembattle.util.RecipeViewer;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.Recipe;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.UUID;
 
 public class RecipeManager {
@@ -37,9 +35,8 @@ public class RecipeManager {
         recipeViewer.setUuid(player.getUniqueId());
         recipeViewer.setItemStack(itemStack);
         recipeViewer.setCurrentRecipeIndex(0);
-        recipeViewer.setCurrentChoice(0);
         recipeViewer.setRecipe(Bukkit.getRecipesFor(itemStack).get(0));
-        recipeViewer.createPages();
+        recipeViewer.setPages(Bukkit.getRecipesFor(itemStack).size());
 
         this.recipeViewerMap.put(player.getUniqueId(), recipeViewer);
 
