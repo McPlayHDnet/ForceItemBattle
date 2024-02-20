@@ -106,27 +106,7 @@ public class RecipeInventory extends InventoryBuilder {
                     RecipeChoice choice = shaped.getChoiceMap().get(c);
                     if (choice instanceof RecipeChoice.MaterialChoice materialChoice) {
 
-                        List<String> lore = new ArrayList<>();
-                        ItemBuilder itemBuilder = new ItemBuilder(materialChoice.getChoices().get(0));
-
-                        materialChoice.getChoices().subList(1, materialChoice.getChoices().size()).forEach(choices -> {
-                            lore.add(" §8» §3" + WordUtils.capitalize(choices.name().replace("_", " ").toLowerCase()));
-
-                            if(choices.name().contains("_PLANKS")) {
-                                lore.clear();
-                                lore.add(" §8» §3any wooden plank");
-                            }
-
-                            if(recipeViewer.itemStack().getType() == Material.SMOKER || recipeViewer.itemStack().getType() == Material.CAMPFIRE || recipeViewer.itemStack().getType() == Material.SOUL_CAMPFIRE) {
-                                lore.clear();
-                                lore.add(" §8» §3any wooden log/wood (and stripped variants)");
-                            }
-                        });
-
-                        itemBuilder.setLore(lore);
-                        lore.clear();
-
-                        this.setItem(slot, itemBuilder.getItemStack());
+                        this.setItem(slot, this.choiceWithLore(materialChoice, recipeViewer));
 
                     } else if (choice != null) {
                         this.setItem(slot, new ItemStack(choice.getItemStack()));
@@ -140,9 +120,7 @@ public class RecipeInventory extends InventoryBuilder {
         if (recipeViewer.recipe() instanceof ShapelessRecipe shapeless) {
             for (RecipeChoice recipeChoice : shapeless.getChoiceList()) {
                 if (recipeChoice instanceof RecipeChoice.MaterialChoice materialChoice) {
-                    System.out.println(materialChoice.getChoices().size() + " shapeless");
-                    ItemStack fixed = new ItemStack(materialChoice.getChoices().get(0));
-                    ingredients.add(fixed);
+                    ingredients.add(this.choiceWithLore(materialChoice, recipeViewer));
                 } else if (recipeChoice != null) {
                     ingredients.add(new ItemStack(recipeChoice.getItemStack()));
                 }
@@ -156,9 +134,7 @@ public class RecipeInventory extends InventoryBuilder {
         }
         if (recipeViewer.recipe() instanceof CookingRecipe<?> furnace) {
             if (furnace.getInputChoice() instanceof RecipeChoice.MaterialChoice materialChoice) {
-                ItemStack fixed = new ItemStack(materialChoice.getChoices().get(0));
-
-                this.setItem(OTHER_FIRST_ITEM_SLOT, fixed);
+                this.setItem(OTHER_FIRST_ITEM_SLOT, this.choiceWithLore(materialChoice, recipeViewer));
             }
 
         }
@@ -258,6 +234,30 @@ public class RecipeInventory extends InventoryBuilder {
                 forceItemBattle.getRecipeManager().handleRecipeClose(player);
             }
         });
+    }
+
+    private ItemStack choiceWithLore(RecipeChoice.MaterialChoice materialChoice, RecipeViewer recipeViewer) {
+        List<String> lore = new ArrayList<>();
+        ItemBuilder itemBuilder = new ItemBuilder(materialChoice.getChoices().get(0));
+
+        materialChoice.getChoices().subList(1, materialChoice.getChoices().size()).forEach(choices -> {
+            lore.add(" §8» §3" + WordUtils.capitalize(choices.name().replace("_", " ").toLowerCase()));
+
+            if(choices.name().contains("_PLANKS")) {
+                lore.clear();
+                lore.add(" §8» §3any wooden plank");
+            }
+
+            if(recipeViewer.itemStack().getType() == Material.SMOKER || recipeViewer.itemStack().getType() == Material.CAMPFIRE || recipeViewer.itemStack().getType() == Material.SOUL_CAMPFIRE || recipeViewer.itemStack().getType() == Material.CHARCOAL) {
+                lore.clear();
+                lore.add(" §8» §3any wooden log/wood (and stripped variants)");
+            }
+        });
+
+        itemBuilder.setLore(lore);
+        lore.clear();
+
+        return itemBuilder.getItemStack();
     }
 
     private ItemStack getStationItem(Recipe recipe) {
