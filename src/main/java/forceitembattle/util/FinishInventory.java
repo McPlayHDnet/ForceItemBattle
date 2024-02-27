@@ -1,6 +1,7 @@
 package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.settings.GameSetting;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.apache.commons.text.WordUtils;
@@ -92,6 +93,15 @@ public class FinishInventory extends InventoryBuilder {
                                     }
 
                                     players.sendTitle(place + ". " + targetPlayer.player().getName(), "§6" + (placedItems + 1) + " Items found", 15, 35, 15);
+
+                                    if(forceItemBattle.getSettings().isSettingEnabled(GameSetting.STATS)) {
+                                        ForceItemPlayerStats forceItemPlayerStats = forceItemBattle.getStatsManager().playerStats(players.getName());
+                                        forceItemBattle.getStatsManager().addToStats(PlayerStat.GAMES_WON, forceItemPlayerStats, 1);
+
+                                        if(forceItemPlayerStats.highestScore() < (placedItems + 1)) {
+                                            forceItemBattle.getStatsManager().addToStats(PlayerStat.HIGHEST_SCORE, forceItemPlayerStats, (placedItems + 1));
+                                        }
+                                    }
                                 });
 
 

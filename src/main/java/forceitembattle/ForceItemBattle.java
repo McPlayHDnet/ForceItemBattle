@@ -6,10 +6,12 @@ import forceitembattle.listener.PvPListener;
 import forceitembattle.listener.RecipeListener;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.ItemDifficultiesManager;
+import forceitembattle.manager.RecipeManager;
+import forceitembattle.manager.StatsManager;
+import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Backpack;
 import forceitembattle.util.DescriptionItem;
-import forceitembattle.util.RecipeInventory;
 import forceitembattle.util.Timer;
 import forceitembattle.util.color.ColorManager;
 import org.bukkit.Bukkit;
@@ -37,8 +39,9 @@ public final class ForceItemBattle extends JavaPlugin {
     private Timer timer;
     private Backpack backpack;
     private ItemDifficultiesManager itemDifficultiesManager;
-    private RecipeInventory recipeInventory;
+    private RecipeManager recipeManager;
     private ColorManager colorManager;
+    private StatsManager statsManager;
     private Location spawnLocation;
 
     private GameSettings settings;
@@ -118,16 +121,19 @@ public final class ForceItemBattle extends JavaPlugin {
         this.timer = new Timer(this);
         this.backpack = new Backpack(this);
         this.itemDifficultiesManager = new ItemDifficultiesManager(this);
-        this.recipeInventory = new RecipeInventory(this);
+        //testing something, not needed in final code
+        //this.itemDifficultiesManager.createList();
+        this.recipeManager = new RecipeManager(this);
         this.colorManager = new ColorManager();
+        this.statsManager = new StatsManager(this);
 
         this.initListeners();
         this.initCommands();
 
         Bukkit.getWorlds().forEach(world -> {
             // Apply settings.
-            world.setGameRule(GameRule.KEEP_INVENTORY, getSettings().isKeepInventoryEnabled());
-            getSettings().setFasterRandomTick(getSettings().isFasterRandomTick());
+            world.setGameRule(GameRule.KEEP_INVENTORY, getSettings().isSettingEnabled(GameSetting.KEEP_INVENTORY));
+            getSettings().setSettingEnabled(GameSetting.FASTER_RANDOM_TICK, getSettings().isSettingEnabled(GameSetting.FASTER_RANDOM_TICK));
 
             world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
         });
@@ -170,6 +176,7 @@ public final class ForceItemBattle extends JavaPlugin {
         new CommandBed(this);
         new CommandPause(this);
         new CommandResume(this);
+        new CommandStats(this);
     }
 
     @Override
@@ -235,16 +242,19 @@ public final class ForceItemBattle extends JavaPlugin {
         return this.itemDifficultiesManager;
     }
 
-    public RecipeInventory getRecipeInventory() {
-        return this.recipeInventory;
-    }
-
     public ColorManager getColorManager() {
         return this.colorManager;
+    }
+
+    public StatsManager getStatsManager() {
+        return statsManager;
     }
 
     public GameSettings getSettings() {
         return this.settings;
     }
 
+    public RecipeManager getRecipeManager() {
+        return recipeManager;
+    }
 }

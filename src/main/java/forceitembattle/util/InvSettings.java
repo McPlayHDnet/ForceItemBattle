@@ -1,13 +1,17 @@
 package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.settings.preset.GamePreset;
+import forceitembattle.settings.GameSetting;
+import forceitembattle.settings.preset.InvPresetMenu;
+import forceitembattle.settings.preset.InvSettingsPresets;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.inventory.ItemFlag;
 
 public class InvSettings extends InventoryBuilder {
     
-    public InvSettings(ForceItemBattle plugin) {
+    public InvSettings(ForceItemBattle plugin, GamePreset gamePreset) {
         super(9*6, "§8» §3Settings §8● §7Menu");
 
         /* BORDER */
@@ -15,83 +19,43 @@ public class InvSettings extends InventoryBuilder {
         this.setItems(45, 53, new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE).setDisplayName("§f").addItemFlags(ItemFlag.values()).getItemStack());
 
         this.addUpdateHandler(() -> {
-            /* Food-Setting */
-            this.setItem(19, new ItemBuilder(Material.COOKED_BEEF)
-                    .setDisplayName("§8» " + (plugin.getSettings().isFoodEnabled() ? "§aFood §2✔" : "§cFood §4✘"))
-                    .getItemStack(), event -> {
 
-                getPlayer().playSound(getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
-                plugin.getSettings().setFoodEnabled(!plugin.getSettings().isFoodEnabled());
-            });
+            for(GameSetting gameSettings : GameSetting.values()) {
+                String settingDisplayName = "§8» ";
+                if(gamePreset != null) {
+                    settingDisplayName += (gamePreset.gameSettings().contains(gameSettings) ? "§a" + gameSettings.displayName() + " §2✔" : "§c" + gameSettings.displayName() + " §4✘");
 
-            /* KeepInv-Setting */
-            this.setItem(21, new ItemBuilder(Material.TOTEM_OF_UNDYING)
-                    .setDisplayName("§8» " + (plugin.getSettings().isKeepInventoryEnabled() ? "§aKeep Inventory §2✔" : "§cKeep Inventory §4✘"))
-                    .getItemStack(), event -> {
+                    this.setItem(53, new ItemBuilder(Material.LIME_STAINED_GLASS_PANE).setDisplayName("§8» §aSave settings").getItemStack(), inventoryClickEvent -> {
+                        this.getPlayer().playSound(this.getPlayer(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
+                        new InvSettingsPresets(plugin, gamePreset, plugin.getSettings()).open(this.getPlayer());
+                    });
 
-                getPlayer().playSound(getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
-                plugin.getSettings().setKeepInventoryEnabled(!plugin.getSettings().isKeepInventoryEnabled());
-            });
+                } else {
+                    settingDisplayName += (plugin.getSettings().isSettingEnabled(gameSettings) ? "§a" + gameSettings.displayName() + " §2✔" : "§c" + gameSettings.displayName() + " §4✘");
 
-            /* Backpack-Setting */
-            this.setItem(23, new ItemBuilder(Material.BUNDLE)
-                    .setDisplayName("§8» " + (plugin.getSettings().isBackpackEnabled() ? "§aBackpack §2✔" : "§cBackpack §4✘"))
-                    .getItemStack(), event -> {
+                    this.setItem(8, new ItemBuilder(Material.STRUCTURE_VOID).setDisplayName("§8» §eManage presets").getItemStack(), inventoryClickEvent -> {
+                        this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
+                        new InvPresetMenu(plugin, plugin.getSettings()).open(this.getPlayer());
+                    });
+                }
+                this.setItem(gameSettings.defaultSlot(), new ItemBuilder(gameSettings.defaultMaterial()).setDisplayName(settingDisplayName).getItemStack(), inventoryClickEvent -> {
 
-                getPlayer().playSound(getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
-                plugin.getSettings().setBackpackEnabled(!plugin.getSettings().isBackpackEnabled());
-            });
+                    if(gameSettings == GameSetting.TEAM) {
+                        this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);
+                        return;
+                    }
 
-            /* PvP-Setting */
-            this.setItem(25, new ItemBuilder(Material.IRON_SWORD)
-                    .setDisplayName("§8» " + (plugin.getSettings().isPvpEnabled() ? "§aPvP §2✔" : "§cPvP §4✘"))
-                    .getItemStack(), event -> {
+                    this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
+                    if(gamePreset != null) {
+                        if(gamePreset.gameSettings().contains(gameSettings)) gamePreset.gameSettings().remove(gameSettings);
+                        else gamePreset.gameSettings().add(gameSettings);
+                    } else {
+                        plugin.getSettings().setSettingEnabled(gameSettings, !plugin.getSettings().isSettingEnabled(gameSettings));
+                    }
 
-                getPlayer().playSound(getPlayer(), Sound.UI_BUTTON_CLICK, 1, 1);
-                plugin.getSettings().setPvpEnabled(!plugin.getSettings().isPvpEnabled());
-            });
+                });
+            }
 
-            /* Teams-Setting */
-            this.setItem(29, new ItemBuilder(Material.RED_BED)
-                    .setDisplayName("§8» " + (plugin.getSettings().isTeamGame() ? "§aTeams §2✔" : "§cTeams §4✘"))
-                    .getItemStack(), event -> {
-
-                getPlayer().playSound(getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);
-                getPlayer().sendMessage("§cWork in progress...");
-                    /* TODO: teams
-                    forceItemBattle.getConfig().set("settings.isTeamGame", !forceItemBattle.getSettings().isTeamGame());
-                    forceItemBattle.saveConfig();
-
-                    this.setItem(29, new ItemBuilder(Material.RED_BED).setDisplayName("§8» " + (forceItemBattle.getSettings().isTeamGame() ? "§aTeams §2✔" : "§cTeams §4✘")).getItemStack());
-                    */
-            });
-
-            /* Faster growth & decay */
-            this.setItem(31, new ItemBuilder(Material.CACTUS)
-                    .setDisplayName("§8» " + (plugin.getSettings().isFasterRandomTick() ? "§aFaster plants growth & decay §2✔" : "§cFaster plants growth & decay §4✘"))
-                    .getItemStack(), event -> {
-
-                getPlayer().playSound(getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
-                plugin.getSettings().setFasterRandomTick(!plugin.getSettings().isFasterRandomTick());
-            });
-
-            /* Nether-Setting */
-            this.setItem(33, new ItemBuilder(Material.NETHERRACK)
-                    .setDisplayName("§8» " + (plugin.getSettings().isNetherEnabled() ? "§aNether §2✔" : "§cNether §4✘"))
-                    .getItemStack(), event -> {
-
-                getPlayer().playSound(getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
-                plugin.getItemDifficultiesManager().toggleNetherItems();
-            });
-
-            /* End-Setting */
-            this.setItem(39, new ItemBuilder(Material.END_STONE)
-                    .setDisplayName("§8» " + (plugin.getSettings().isEndEnabled() ? "§aEnd §2✔" : "§cEnd §4✘"))
-                    .getItemStack(), event -> {
-
-                getPlayer().playSound(getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
-                plugin.getSettings().setEndEnabled(!plugin.getSettings().isEndEnabled());
-            });
         });
     }
 }

@@ -3,6 +3,7 @@ package forceitembattle.util;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.*;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -65,6 +66,8 @@ public class InventoryBuilder implements InventoryHolder {
     }
 
     protected void onDrag(InventoryDragEvent event) {}
+
+    protected void onChat(AsyncPlayerChatEvent event) {}
 
     public void addItem(ItemStack item) {
         addItem(item, null);
