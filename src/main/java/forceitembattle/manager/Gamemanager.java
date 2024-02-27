@@ -1,6 +1,8 @@
 package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.settings.GameSetting;
+import forceitembattle.settings.preset.GamePreset;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.GameState;
 import forceitembattle.util.ItemBuilder;
@@ -25,10 +27,12 @@ public class Gamemanager {
     public Map<UUID, Map<Integer, Map<Integer, ItemStack>>> savedInventory = new HashMap<>();
 
     public GameState currentGameState;
+    private GamePreset currentGamePreset;
 
     public Gamemanager(ForceItemBattle forceItemBattle) {
         this.forceItemBattle = forceItemBattle;
         this.currentGameState = GameState.PRE_GAME;
+        this.currentGamePreset = null;
 
         this.forceItemPlayerMap = new HashMap<>();
     }
@@ -70,7 +74,7 @@ public class Gamemanager {
         ForceItemPlayer gamePlayer = getForceItemPlayer(player.getUniqueId());
         gamePlayer.setCurrentMaterial(this.generateMaterial());
 
-        if (!this.forceItemBattle.getSettings().isNetherEnabled()) {
+        if (!this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.NETHER)) {
             gamePlayer.updateItemDisplay();
         }
 
@@ -145,6 +149,14 @@ public class Gamemanager {
 
     public GameState getCurrentGameState() {
         return currentGameState;
+    }
+
+    public void setCurrentGamePreset(GamePreset currentGamePreset) {
+        this.currentGamePreset = currentGamePreset;
+    }
+
+    public GamePreset currentGamePreset() {
+        return currentGamePreset;
     }
 
     public Map<UUID, Map<Integer, Map<Integer, ItemStack>>> getSavedInventory() {

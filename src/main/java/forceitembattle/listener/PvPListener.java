@@ -1,6 +1,7 @@
 package forceitembattle.listener;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.settings.GameSetting;
 import org.bukkit.block.Block;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
@@ -83,7 +84,7 @@ public class PvPListener implements Listener {
     }
 
     private boolean isPvpEnabled() {
-        return this.plugin.getSettings().isPvpEnabled();
+        return this.plugin.getSettings().isSettingEnabled(GameSetting.PVP);
     }
 
     @EventHandler(ignoreCancelled = true)

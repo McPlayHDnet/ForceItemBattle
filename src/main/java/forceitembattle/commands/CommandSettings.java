@@ -20,7 +20,7 @@ public class CommandSettings implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender commandSender, Command command, String s, String[] strings) {
         if(commandSender instanceof Player player) {
-            new InvSettings(this.forceItemBattle).open(player);
+            new InvSettings(this.forceItemBattle, null).open(player);
         }
         return false;
     }

@@ -3,6 +3,9 @@ package forceitembattle.listener;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.manager.Gamemanager;
+import forceitembattle.settings.GameSetting;
+import forceitembattle.settings.preset.GamePreset;
+import forceitembattle.settings.preset.InvSettingsPresets;
 import forceitembattle.util.ForceItem;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.InventoryBuilder;
@@ -155,7 +158,7 @@ public class Listeners implements Listener {
 
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
 
-            if (!this.plugin.getSettings().isNetherEnabled()) {
+            if (!this.plugin.getSettings().isSettingEnabled(GameSetting.NETHER)) {
                 forceItemPlayer.updateItemDisplay();
             }
 
@@ -184,7 +187,7 @@ public class Listeners implements Listener {
                 }
             }
 
-            if (this.plugin.getSettings().isBackpackEnabled() && foundInventoryItemStack == null) {
+            if (this.plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK) && foundInventoryItemStack == null) {
                 for (ItemStack backpackItemStacks : this.plugin.getBackpack().getPlayerBackpack(player).getContents()) {
                     if(backpackItemStacks == null) continue;
                     if(backpackItemStacks.getType() == forceItemPlayer.currentMaterial()) foundInventoryItemStack = backpackItemStacks;
@@ -208,7 +211,7 @@ public class Listeners implements Listener {
 
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
 
-            if (!this.plugin.getSettings().isNetherEnabled()) {
+            if (!this.plugin.getSettings().isSettingEnabled(GameSetting.NETHER)) {
                 forceItemPlayer.updateItemDisplay();
             }
 
@@ -438,6 +441,22 @@ public class Listeners implements Listener {
     }
 
     @EventHandler
+    public void onChat(AsyncPlayerChatEvent asyncPlayerChatEvent) {
+        if(InvSettingsPresets.namingPhase == null) return;
+
+        if(InvSettingsPresets.namingPhase.containsKey(asyncPlayerChatEvent.getPlayer().getUniqueId())) {
+            asyncPlayerChatEvent.setCancelled(true);
+
+            Bukkit.getScheduler().runTask(this.plugin, () -> {
+                GamePreset gamePreset = InvSettingsPresets.namingPhase.get(asyncPlayerChatEvent.getPlayer().getUniqueId());
+                gamePreset.setPresetName(asyncPlayerChatEvent.getMessage());
+                new InvSettingsPresets(this.plugin, gamePreset, this.plugin.getSettings()).open(asyncPlayerChatEvent.getPlayer());
+                InvSettingsPresets.namingPhase.remove(asyncPlayerChatEvent.getPlayer().getUniqueId());
+            });
+        }
+    }
+
+    @EventHandler
     public void onConsume(PlayerItemConsumeEvent playerItemConsumeEvent) {
         Player player = playerItemConsumeEvent.getPlayer();
 
@@ -515,7 +534,7 @@ public class Listeners implements Listener {
 
         player.getInventory().setItem(8, new ItemBuilder(Material.BUNDLE).setDisplayName("§8» §eBackpack").getItemStack());
 
-        if (!this.plugin.getSettings().isNetherEnabled()) {
+        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.NETHER)) {
             forceItemPlayer.createItemDisplay();
         }
     }
@@ -572,7 +591,7 @@ public class Listeners implements Listener {
     public void onFoodLevelChange(FoodLevelChangeEvent event) {
         if (!(event.getEntity() instanceof Player)) return;
         if(!this.plugin.getGamemanager().isMidGame()) return;
-        if (this.plugin.getSettings().isFoodEnabled()) return;
+        if (this.plugin.getSettings().isSettingEnabled(GameSetting.FOOD)) return;
         event.setCancelled(true);
     }
 
@@ -634,7 +653,7 @@ public class Listeners implements Listener {
             return;
         }
 
-        if (!this.plugin.getSettings().isNetherEnabled()) {
+        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.NETHER)) {
             player.sendMessage("§cTravelling to other dimensions is disabled!");
             player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
             playerPortalEvent.setCanCreatePortal(false);

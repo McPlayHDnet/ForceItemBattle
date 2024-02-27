@@ -7,6 +7,7 @@ import forceitembattle.listener.RecipeListener;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.ItemDifficultiesManager;
 import forceitembattle.manager.RecipeManager;
+import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Backpack;
 import forceitembattle.util.DescriptionItem;
@@ -128,8 +129,8 @@ public final class ForceItemBattle extends JavaPlugin {
 
         Bukkit.getWorlds().forEach(world -> {
             // Apply settings.
-            world.setGameRule(GameRule.KEEP_INVENTORY, getSettings().isKeepInventoryEnabled());
-            getSettings().setFasterRandomTick(getSettings().isFasterRandomTick());
+            world.setGameRule(GameRule.KEEP_INVENTORY, getSettings().isSettingEnabled(GameSetting.KEEP_INVENTORY));
+            getSettings().setSettingEnabled(GameSetting.FASTER_RANDOM_TICK, getSettings().isSettingEnabled(GameSetting.FASTER_RANDOM_TICK));
 
             world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
         });

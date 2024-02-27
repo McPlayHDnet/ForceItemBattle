@@ -1,6 +1,7 @@
 package forceitembattle.commands;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.settings.GameSetting;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -20,7 +21,7 @@ public class CommandBp implements CommandExecutor {
 
         if(commandSender instanceof Player player) {
             if (this.forceItemBattle.getGamemanager().isMidGame()) {
-                if(this.forceItemBattle.getSettings().isBackpackEnabled()) {
+                if(this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.BACKPACK)) {
                     this.forceItemBattle.getBackpack().openPlayerBackpack(player);
                 } else {
                     player.sendMessage("§cBackpacks are disabled in this round!");
