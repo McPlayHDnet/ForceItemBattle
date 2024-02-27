@@ -6,10 +6,7 @@ import forceitembattle.manager.Gamemanager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.preset.GamePreset;
 import forceitembattle.settings.preset.InvSettingsPresets;
-import forceitembattle.util.ForceItem;
-import forceitembattle.util.ForceItemPlayer;
-import forceitembattle.util.InventoryBuilder;
-import forceitembattle.util.ItemBuilder;
+import forceitembattle.util.*;
 import org.apache.commons.text.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -162,6 +159,10 @@ public class Listeners implements Listener {
                 forceItemPlayer.updateItemDisplay();
             }
 
+            if(this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
+                this.plugin.getStatsManager().addToStats(PlayerStat.TOTAL_ITEMS, this.plugin.getStatsManager().playerStats(player.getName()), 1);
+            }
+
         }
 
         ItemStack foundInventoryItemStack = null;
@@ -213,6 +214,10 @@ public class Listeners implements Listener {
 
             if (!this.plugin.getSettings().isSettingEnabled(GameSetting.NETHER)) {
                 forceItemPlayer.updateItemDisplay();
+            }
+
+            if(this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
+                this.plugin.getStatsManager().addToStats(PlayerStat.TOTAL_ITEMS, this.plugin.getStatsManager().playerStats(player.getName()), 1);
             }
 
             foundItemEvent.setFoundItem(foundInventoryItemStack);

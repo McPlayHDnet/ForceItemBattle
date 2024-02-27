@@ -7,6 +7,7 @@ import forceitembattle.listener.RecipeListener;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.ItemDifficultiesManager;
 import forceitembattle.manager.RecipeManager;
+import forceitembattle.manager.StatsManager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Backpack;
@@ -40,6 +41,7 @@ public final class ForceItemBattle extends JavaPlugin {
     private ItemDifficultiesManager itemDifficultiesManager;
     private RecipeManager recipeManager;
     private ColorManager colorManager;
+    private StatsManager statsManager;
     private Location spawnLocation;
 
     private GameSettings settings;
@@ -123,6 +125,7 @@ public final class ForceItemBattle extends JavaPlugin {
         //this.itemDifficultiesManager.createList();
         this.recipeManager = new RecipeManager(this);
         this.colorManager = new ColorManager();
+        this.statsManager = new StatsManager(this);
 
         this.initListeners();
         this.initCommands();
@@ -173,6 +176,7 @@ public final class ForceItemBattle extends JavaPlugin {
         new CommandBed(this);
         new CommandPause(this);
         new CommandResume(this);
+        new CommandStats(this);
     }
 
     @Override
@@ -240,6 +244,10 @@ public final class ForceItemBattle extends JavaPlugin {
 
     public ColorManager getColorManager() {
         return this.colorManager;
+    }
+
+    public StatsManager getStatsManager() {
+        return statsManager;
     }
 
     public GameSettings getSettings() {

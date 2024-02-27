@@ -39,6 +39,7 @@ public class Gamemanager {
 
     public void addPlayer(Player player, ForceItemPlayer forceItemPlayer) {
         this.forceItemPlayerMap.put(player.getUniqueId(), forceItemPlayer);
+        this.forceItemBattle.getStatsManager().createPlayerStats(forceItemPlayer);
     }
 
     public Material generateMaterial() {

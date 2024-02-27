@@ -7,6 +7,7 @@ import forceitembattle.settings.GameSettings;
 import forceitembattle.settings.preset.GamePreset;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.GameState;
+import forceitembattle.util.PlayerStat;
 import org.bukkit.*;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -155,6 +156,10 @@ public class CommandStart implements CommandExecutor {
 
             if(!this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.NETHER)) {
                 forceItemPlayer.createItemDisplay();
+            }
+
+            if(this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.STATS)) {
+                this.forceItemBattle.getStatsManager().addToStats(PlayerStat.GAMES_PLAYED, this.forceItemBattle.getStatsManager().playerStats(player.getName()), 1);
             }
 
 
