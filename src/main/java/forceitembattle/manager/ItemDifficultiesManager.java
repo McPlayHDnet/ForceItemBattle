@@ -102,7 +102,7 @@ public class ItemDifficultiesManager {
             // End items cannot be accessed without nether (unless you somehow find full portal lol)
             this.endItems.forEach(items::remove);
 
-        } else if (!forceItemBattle.getSettings().isSettingEnabled(GameSetting.NETHER)) {
+        } else if (!forceItemBattle.getSettings().isSettingEnabled(GameSetting.END)) {
             this.endItems.forEach(items::remove);
         }
     }
