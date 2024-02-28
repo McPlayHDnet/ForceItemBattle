@@ -2,10 +2,19 @@ package forceitembattle.util;
 
 public enum PlayerStat {
 
-    TOTAL_ITEMS,
-    GAMES_PLAYED,
-    GAMES_WON,
-    HIGHEST_SCORE
+    TOTAL_ITEMS(true),
+    TRAVELLED(true),
+    GAMES_PLAYED(false),
+    GAMES_WON(true),
+    HIGHEST_SCORE(true);
 
+    private boolean isInLeaderboard;
 
+    PlayerStat(boolean isInLeaderboard) {
+        this.isInLeaderboard = isInLeaderboard;
+    }
+
+    public boolean isInLeaderboard() {
+        return isInLeaderboard;
+    }
 }

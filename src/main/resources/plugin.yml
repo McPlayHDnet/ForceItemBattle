@@ -22,5 +22,6 @@ commands:
   pause:
   resume:
   stats:
+  top:
   stoptimer:
     permission: battle.forceitem.command.stoptimer

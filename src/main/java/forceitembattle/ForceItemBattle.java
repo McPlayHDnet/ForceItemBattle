@@ -136,6 +136,7 @@ public final class ForceItemBattle extends JavaPlugin {
             getSettings().setSettingEnabled(GameSetting.FASTER_RANDOM_TICK, getSettings().isSettingEnabled(GameSetting.FASTER_RANDOM_TICK));
 
             world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
+            world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
         });
 
         if(this.getConfig().isConfigurationSection("descriptions")) {
@@ -177,6 +178,7 @@ public final class ForceItemBattle extends JavaPlugin {
         new CommandPause(this);
         new CommandResume(this);
         new CommandStats(this);
+        new CommandLeaderboard(this);
     }
 
     @Override

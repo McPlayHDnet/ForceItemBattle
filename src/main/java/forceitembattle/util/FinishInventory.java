@@ -94,15 +94,20 @@ public class FinishInventory extends InventoryBuilder {
 
                                     players.sendTitle(place + ". " + targetPlayer.player().getName(), "§6" + (placedItems + 1) + " Items found", 15, 35, 15);
 
-                                    if(forceItemBattle.getSettings().isSettingEnabled(GameSetting.STATS)) {
-                                        ForceItemPlayerStats forceItemPlayerStats = forceItemBattle.getStatsManager().playerStats(players.getName());
-                                        forceItemBattle.getStatsManager().addToStats(PlayerStat.GAMES_WON, forceItemPlayerStats, 1);
-
-                                        if(forceItemPlayerStats.highestScore() < (placedItems + 1)) {
-                                            forceItemBattle.getStatsManager().addToStats(PlayerStat.HIGHEST_SCORE, forceItemPlayerStats, (placedItems + 1));
-                                        }
-                                    }
                                 });
+
+                                if(forceItemBattle.getSettings().isSettingEnabled(GameSetting.STATS)) {
+                                    ForceItemPlayerStats forceItemPlayerStats = forceItemBattle.getStatsManager().playerStats(targetPlayer.player().getName());
+                                    forceItemBattle.getStatsManager().addToStats(PlayerStat.TRAVELLED, forceItemPlayerStats, forceItemBattle.getStatsManager().calculateDistance(targetPlayer.player()));
+
+                                    if(forceItemPlayerStats.highestScore() < (placedItems + 1)) {
+                                        forceItemBattle.getStatsManager().addToStats(PlayerStat.HIGHEST_SCORE, forceItemPlayerStats, (placedItems + 1));
+                                    }
+
+                                    if(place == 1) {
+                                        forceItemBattle.getStatsManager().addToStats(PlayerStat.GAMES_WON, forceItemPlayerStats, 1);
+                                    }
+                                }
 
 
                                 getPlayer().spigot().sendMessage(placementText, textComponent);

@@ -3,6 +3,7 @@ package forceitembattle.commands;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.util.GameState;
 import org.bukkit.Bukkit;
+import org.bukkit.GameRule;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -31,6 +32,7 @@ public class CommandPause implements CommandExecutor {
         }
 
         Bukkit.broadcastMessage("§6The timer has been paused!");
+        Bukkit.getWorld("world").setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
         this.forceItemBattle.getGamemanager().setCurrentGameState(GameState.PAUSED_GAME);
         return false;
     }

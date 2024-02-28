@@ -111,6 +111,8 @@ public class CommandStart implements CommandExecutor {
         Location spawnLocation = world.getSpawnLocation();
         this.forceItemBattle.setSpawnLocation(spawnLocation);
 
+        world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
+
         Bukkit.getOnlinePlayers().forEach(player -> {
 
             ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());

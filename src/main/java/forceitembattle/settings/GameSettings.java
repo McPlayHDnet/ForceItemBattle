@@ -8,16 +8,17 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.checkerframework.checker.units.qual.A;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 public class GameSettings {
 
     private final ForceItemBattle plugin;
 
-    private final Map<String, GamePreset> gamePresetMap;
+    private final ConcurrentSkipListMap<String, GamePreset> gamePresetMap;
 
     public GameSettings(ForceItemBattle plugin) {
         this.plugin = plugin;
-        this.gamePresetMap = new HashMap<>();
+        this.gamePresetMap = new ConcurrentSkipListMap<>(String.CASE_INSENSITIVE_ORDER);
 
         this.plugin.getConfig().addDefault("timer.time", 0);
 
