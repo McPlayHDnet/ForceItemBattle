@@ -4,10 +4,12 @@ public class ForceItemPlayerStats {
 
     private String userName;
     private int totalItemsFound, gamesPlayed, gamesWon, highestScore;
+    private double travelled;
 
-    public ForceItemPlayerStats(String userName, int totalItemsFound, int gamesPlayed, int gamesWon, int highestScore) {
+    public ForceItemPlayerStats(String userName, int totalItemsFound, double travelled, int gamesPlayed, int gamesWon, int highestScore) {
         this.userName = userName;
         this.totalItemsFound = totalItemsFound;
+        this.travelled = travelled;
         this.gamesPlayed = gamesPlayed;
         this.gamesWon = gamesWon;
         this.highestScore = highestScore;
@@ -51,6 +53,14 @@ public class ForceItemPlayerStats {
 
     public void setHighestScore(int highestScore) {
         this.highestScore = highestScore;
+    }
+
+    public double travelled() {
+        return travelled;
+    }
+
+    public void setTravelled(double travelled) {
+        this.travelled = travelled;
     }
 }
 

@@ -3,6 +3,7 @@ package forceitembattle.commands;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.util.GameState;
 import org.bukkit.Bukkit;
+import org.bukkit.GameRule;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -27,6 +28,7 @@ public class CommandResume implements CommandExecutor {
         }
 
         Bukkit.broadcastMessage("§6The timer has been resumed!");
+        Bukkit.getWorld("world").setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
         this.forceItemBattle.getGamemanager().setCurrentGameState(GameState.MID_GAME);
         return false;
     }
