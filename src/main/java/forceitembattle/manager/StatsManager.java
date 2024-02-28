@@ -13,6 +13,7 @@ import org.bukkit.entity.Player;
 
 import java.io.*;
 import java.lang.reflect.Type;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -127,6 +128,9 @@ public class StatsManager {
     }
 
     public void statsMessage(Player player, ForceItemPlayerStats forceItemPlayerStats) {
+        double winPercentage = (forceItemPlayerStats.gamesPlayed() != 0) ? ((double) forceItemPlayerStats.gamesWon() / forceItemPlayerStats.gamesPlayed() * 100) : 0;
+        DecimalFormat decimalFormat = new DecimalFormat("0.#");
+
         player.sendMessage(" ");
         player.sendMessage("§8» §6§lStats §8● §a" + forceItemPlayerStats.userName() + " §8«");
         player.sendMessage(" ");
@@ -136,7 +140,7 @@ public class StatsManager {
         player.sendMessage("  §8● §7Highest score §8» §3" + forceItemPlayerStats.highestScore());
         player.sendMessage("  §8● §7Games played §8» §3" + forceItemPlayerStats.gamesPlayed());
         player.sendMessage("  §8● §7Games won §8» §3" + forceItemPlayerStats.gamesWon());
-        player.sendMessage("  §8● §7Win percentage §8» §3" + (forceItemPlayerStats.gamesPlayed() != 0 ? ((forceItemPlayerStats.gamesWon() / forceItemPlayerStats.gamesPlayed()) * 100) : 0) + "%");
+        player.sendMessage("  §8● §7Win percentage §8» §3" + decimalFormat.format(winPercentage) + "%");
         player.sendMessage(" ");
     }
 
