@@ -96,20 +96,6 @@ public class FinishInventory extends InventoryBuilder {
 
                                 });
 
-                                if(forceItemBattle.getSettings().isSettingEnabled(GameSetting.STATS)) {
-                                    ForceItemPlayerStats forceItemPlayerStats = forceItemBattle.getStatsManager().playerStats(targetPlayer.player().getName());
-                                    forceItemBattle.getStatsManager().addToStats(PlayerStat.TRAVELLED, forceItemPlayerStats, forceItemBattle.getStatsManager().calculateDistance(targetPlayer.player()));
-
-                                    if(forceItemPlayerStats.highestScore() < (placedItems + 1)) {
-                                        forceItemBattle.getStatsManager().addToStats(PlayerStat.HIGHEST_SCORE, forceItemPlayerStats, (placedItems + 1));
-                                    }
-
-                                    if(place == 1) {
-                                        forceItemBattle.getStatsManager().addToStats(PlayerStat.GAMES_WON, forceItemPlayerStats, 1);
-                                    }
-                                }
-
-
                                 getPlayer().spigot().sendMessage(placementText, textComponent);
 
                                 forceItemBattle.getGamemanager().savedInventory.put(targetPlayer.player().getUniqueId(), pages);

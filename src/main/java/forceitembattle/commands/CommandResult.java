@@ -1,9 +1,8 @@
 package forceitembattle.commands;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.util.FinishInventory;
-import forceitembattle.util.ForceItem;
-import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.settings.GameSetting;
+import forceitembattle.util.*;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -45,6 +44,21 @@ public class CommandResult implements CommandExecutor {
                 Bukkit.getOnlinePlayers().forEach(players -> {
                     new FinishInventory(this.forceItemBattle, this.forceItemBattle.getGamemanager().getForceItemPlayer(uuid), this.place, true).open(players);
                 });
+
+                if(forceItemBattle.getSettings().isSettingEnabled(GameSetting.STATS)) {
+                    ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(uuid);
+                    ForceItemPlayerStats forceItemPlayerStats = forceItemBattle.getStatsManager().playerStats(forceItemPlayer.player().getName());
+                    forceItemBattle.getStatsManager().addToStats(PlayerStat.TRAVELLED, forceItemPlayerStats, forceItemBattle.getStatsManager().calculateDistance(forceItemPlayer.player()));
+
+                    if(forceItemPlayerStats.highestScore() < forceItemPlayer.currentScore()) {
+                        forceItemBattle.getStatsManager().addToStats(PlayerStat.HIGHEST_SCORE, forceItemPlayerStats, forceItemPlayer.currentScore());
+                    }
+
+                    if(place == 1) {
+                        forceItemBattle.getStatsManager().addToStats(PlayerStat.GAMES_WON, forceItemPlayerStats, 1);
+                    }
+                }
+
                 this.place--;
             }
 

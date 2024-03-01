@@ -3,7 +3,6 @@ package forceitembattle.commands;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.util.DescriptionItem;
 import forceitembattle.util.ForceItemPlayer;
-import forceitembattle.util.RecipeInventory;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -21,8 +20,8 @@ public class CommandInfo implements CommandExecutor {
     }
 
     @Override
-    public boolean onCommand(CommandSender commandSender, Command command, String s, String[] strings) {
-        if (!(commandSender instanceof Player player)) return false;
+    public boolean onCommand(CommandSender sender, Command command, String s, String[] args) {
+        if (!(sender instanceof Player player)) return false;
 
         ItemStack item = null;
         if (this.forceItemBattle.getGamemanager().isMidGame()) {
@@ -44,7 +43,7 @@ public class CommandInfo implements CommandExecutor {
         }
 
         DescriptionItem descriptionItem;
-        if(this.forceItemBattle.getItemDifficultiesManager().isItemInDescriptionList(item.getType())) {
+        if (this.forceItemBattle.getItemDifficultiesManager().isItemInDescriptionList(item.getType())) {
             descriptionItem = this.forceItemBattle.getItemDifficultiesManager().getDescriptionItems().get(item.getType());
             if (descriptionItem.lines() != null) {
                 this.forceItemBattle.getItemDifficultiesManager().getDescriptionItemLines(descriptionItem.material()).forEach(player::sendMessage);
@@ -52,6 +51,8 @@ public class CommandInfo implements CommandExecutor {
                 throw new NullPointerException("The item description is either null or empty");
             }
         }
+
+
 
         this.forceItemBattle.getRecipeManager().createRecipeViewer(player, item);
 

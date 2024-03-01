@@ -4,10 +4,7 @@ import forceitembattle.commands.*;
 import forceitembattle.listener.Listeners;
 import forceitembattle.listener.PvPListener;
 import forceitembattle.listener.RecipeListener;
-import forceitembattle.manager.Gamemanager;
-import forceitembattle.manager.ItemDifficultiesManager;
-import forceitembattle.manager.RecipeManager;
-import forceitembattle.manager.StatsManager;
+import forceitembattle.manager.*;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Backpack;
@@ -35,6 +32,8 @@ import java.util.Set;
 
 public final class ForceItemBattle extends JavaPlugin {
 
+    private static ForceItemBattle instance;
+
     private Gamemanager gamemanager;
     private Timer timer;
     private Backpack backpack;
@@ -42,9 +41,14 @@ public final class ForceItemBattle extends JavaPlugin {
     private RecipeManager recipeManager;
     private ColorManager colorManager;
     private StatsManager statsManager;
+    private PositionManager positionManager;
     private Location spawnLocation;
 
     private GameSettings settings;
+
+    public ForceItemBattle() {
+        instance = this;
+    }
 
     @Override
     public void onLoad() {
@@ -126,6 +130,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.recipeManager = new RecipeManager(this);
         this.colorManager = new ColorManager();
         this.statsManager = new StatsManager(this);
+        this.positionManager = new PositionManager(this);
 
         this.initListeners();
         this.initCommands();
@@ -179,6 +184,8 @@ public final class ForceItemBattle extends JavaPlugin {
         new CommandResume(this);
         new CommandStats(this);
         new CommandLeaderboard(this);
+        new CommandPosition(this);
+        new CommandPing(this);
     }
 
     @Override
@@ -252,11 +259,19 @@ public final class ForceItemBattle extends JavaPlugin {
         return statsManager;
     }
 
+    public PositionManager getPositionManager() {
+        return positionManager;
+    }
+
     public GameSettings getSettings() {
         return this.settings;
     }
 
     public RecipeManager getRecipeManager() {
         return recipeManager;
+    }
+
+    public static ForceItemBattle getInstance() {
+        return instance;
     }
 }

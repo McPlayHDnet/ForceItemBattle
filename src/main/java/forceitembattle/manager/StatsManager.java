@@ -53,8 +53,8 @@ public class StatsManager {
     public void addToStats(PlayerStat playerStat, ForceItemPlayerStats forceItemPlayerStats, int toBeAdded) {
         switch(playerStat) {
             case TOTAL_ITEMS -> forceItemPlayerStats.setTotalItemsFound(forceItemPlayerStats.totalItemsFound() + toBeAdded);
-            case TRAVELLED -> forceItemPlayerStats.setTravelled(forceItemPlayerStats.totalItemsFound() + toBeAdded);
-            case GAMES_WON -> forceItemPlayerStats.setGamesWon(toBeAdded);
+            case TRAVELLED -> forceItemPlayerStats.setTravelled(forceItemPlayerStats.travelled() + toBeAdded);
+            case GAMES_WON -> forceItemPlayerStats.setGamesWon(forceItemPlayerStats.gamesWon() + toBeAdded);
             case GAMES_PLAYED -> forceItemPlayerStats.setGamesPlayed(forceItemPlayerStats.gamesPlayed() + toBeAdded);
             case HIGHEST_SCORE -> forceItemPlayerStats.setHighestScore(toBeAdded);
         }
@@ -82,7 +82,7 @@ public class StatsManager {
             if(category == PlayerStat.TRAVELLED) return o2.travelled() <= o1.travelled() ? -1 : 1;
             return o2.highestScore() <= o1.highestScore() ? -1 : 1;
         });
-        return statsList.stream().limit(3).collect(Collectors.toList());
+        return statsList.stream().limit(5).collect(Collectors.toList());
     }
 
     public boolean playerExists(String userName) {
@@ -91,6 +91,18 @@ public class StatsManager {
 
     public ForceItemPlayerStats playerStats(String userName) {
         return this.playerStats.get(userName);
+    }
+
+    public void resetStats(String userName) {
+        ForceItemPlayerStats forceItemPlayerStats = this.playerStats.get(userName);
+        forceItemPlayerStats.setTravelled(0);
+        forceItemPlayerStats.setHighestScore(0);
+        forceItemPlayerStats.setGamesPlayed(0);
+        forceItemPlayerStats.setGamesWon(0);
+        forceItemPlayerStats.setTotalItemsFound(0);
+
+        this.playerStats.put(userName, forceItemPlayerStats);
+        this.saveStats();
     }
 
     public void loadStats() {
@@ -136,7 +148,7 @@ public class StatsManager {
         player.sendMessage(" ");
         player.sendMessage("  §8● §7Rank §8» §3#" + this.rank(forceItemPlayerStats.userName()));
         player.sendMessage("  §8● §7Total items found §8» §3" + forceItemPlayerStats.totalItemsFound());
-        player.sendMessage("  §8● §7Travelled §8» §3" + ((int)Math.round(forceItemPlayerStats.travelled() / 100)) + " blocks");
+        player.sendMessage("  §8● §7Travelled §8» §3" + (int)Math.round(forceItemPlayerStats.travelled()) + " blocks");
         player.sendMessage("  §8● §7Highest score §8» §3" + forceItemPlayerStats.highestScore());
         player.sendMessage("  §8● §7Games played §8» §3" + forceItemPlayerStats.gamesPlayed());
         player.sendMessage("  §8● §7Games won §8» §3" + forceItemPlayerStats.gamesWon());
@@ -159,7 +171,7 @@ public class StatsManager {
     public int getStatByName(ForceItemPlayerStats forceItemPlayerStats, PlayerStat playerStat) {
         switch(playerStat) {
             case GAMES_WON -> {
-                return forceItemPlayerStats.gamesPlayed();
+                return forceItemPlayerStats.gamesWon();
             }
             case HIGHEST_SCORE -> {
                 return forceItemPlayerStats.highestScore();
@@ -168,7 +180,7 @@ public class StatsManager {
                 return forceItemPlayerStats.totalItemsFound();
             }
             case TRAVELLED -> {
-                return (int) Math.round(forceItemPlayerStats.travelled() / 100);
+                return (int)Math.round(forceItemPlayerStats.travelled());
             }
         }
         return -1;
@@ -184,7 +196,7 @@ public class StatsManager {
             }
         }
 
-        return distance;
+        return (int)Math.round((double) distance / 100);
     }
 
     public void createPlayerStats(ForceItemPlayer forceItemPlayer) {
