@@ -49,7 +49,7 @@ public class CommandStats implements CommandExecutor {
                         return false;
                     }
                     this.forceItemBattle.getStatsManager().resetStats(strings[1]);
-                    player.sendMessage("§aSuccessfully resetted stats of §e" + strings[1]);
+                    player.sendMessage("§aSuccessfully reset stats of §e" + strings[1]);
                 } else {
                     player.sendMessage("§cUsage: /stats reset <username>");
                 }
