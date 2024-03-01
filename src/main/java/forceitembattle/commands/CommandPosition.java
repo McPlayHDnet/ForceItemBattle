@@ -105,6 +105,6 @@ public class CommandPosition implements CommandExecutor {
     }
 
     private String distance(Location first, Location second) {
-        return " §3(" + (int) first.distance(second) + " blocks away)";
+        return " §a(" + (int) first.distance(second) + " blocks away)";
     }
 }
