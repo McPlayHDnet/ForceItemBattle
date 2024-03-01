@@ -61,7 +61,7 @@ public class CommandPosition implements CommandExecutor {
     private void showPosition(Player player, String positionName) {
         Location positionLocation = this.plugin.getPositionManager().getPosition(positionName);
         player.sendMessage(
-                prefix + "§3" + positionName + "§7located at " + locationToString(positionLocation) + distance(player.getLocation(), positionLocation)
+                prefix + "§3" + positionName + " §7located at " + locationToString(positionLocation) + distance(player.getLocation(), positionLocation)
         );
     }
 
@@ -73,7 +73,7 @@ public class CommandPosition implements CommandExecutor {
 
         player.sendMessage(prefix + "§fAll saved locations");
         this.plugin.getPositionManager().getAllPositions().forEach((name, location) -> {
-            player.sendMessage("§8» §3" + name + "§7located at " + locationToString(location) + distance(player.getLocation(), location));
+            player.sendMessage("§8» §3" + name + " §7located at " + locationToString(location) + distance(player.getLocation(), location));
         });
     }
 
