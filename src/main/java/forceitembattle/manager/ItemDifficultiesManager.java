@@ -1,6 +1,7 @@
 package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.settings.GameSetting;
 import forceitembattle.util.DescriptionItem;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -47,7 +48,7 @@ public class ItemDifficultiesManager {
     }
 
     public void toggleNetherItems() {
-        forceItemBattle.getSettings().setNetherEnabled(!forceItemBattle.getSettings().isNetherEnabled());
+        forceItemBattle.getSettings().setSettingEnabled(GameSetting.NETHER, !forceItemBattle.getSettings().isSettingEnabled(GameSetting.NETHER));
     }
 
     public HashMap<Material, DescriptionItem> getDescriptionItems() {
@@ -95,13 +96,13 @@ public class ItemDifficultiesManager {
      * Filter out items disabled by the settings
      */
     private void filterDisabledItems(Collection<Material> items) {
-        if (!forceItemBattle.getSettings().isNetherEnabled()) {
+        if (!forceItemBattle.getSettings().isSettingEnabled(GameSetting.NETHER)) {
             this.netherItems.forEach(items::remove);
 
             // End items cannot be accessed without nether (unless you somehow find full portal lol)
             this.endItems.forEach(items::remove);
 
-        } else if (!forceItemBattle.getSettings().isEndEnabled()) {
+        } else if (!forceItemBattle.getSettings().isSettingEnabled(GameSetting.END)) {
             this.endItems.forEach(items::remove);
         }
     }
