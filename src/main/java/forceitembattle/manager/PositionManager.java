@@ -8,24 +8,36 @@ import java.util.Map;
 
 public class PositionManager {
 
-    private final ForceItemBattle forceItemBattle;
+    private final ForceItemBattle plugin;
     private final Map<String, Location> positionsMap;
 
-    public PositionManager(ForceItemBattle forceItemBattle) {
-        this.forceItemBattle = forceItemBattle;
+    public PositionManager(ForceItemBattle plugin) {
+        this.plugin = plugin;
         this.positionsMap = new HashMap<>();
     }
 
     public boolean positionExist(String positionName) {
-        return this.positionsMap.containsKey(positionName);
+        return this.positionsMap.containsKey(positionName.toLowerCase());
     }
 
     public void createPosition(String positionName, Location location) {
-        this.positionsMap.put(positionName, location);
+        this.positionsMap.put(positionName.toLowerCase(), location);
+    }
+
+    public void removePosition(String positionName) {
+        this.positionsMap.remove(positionName.toLowerCase());
+    }
+
+    public Map<String, Location> getAllPositions() {
+        return this.positionsMap;
+    }
+
+    public void clearPositions() {
+        this.positionsMap.clear();
     }
 
     public Location getPosition(String positionName) {
-        return this.positionsMap.get(positionName);
+        return this.positionsMap.get(positionName.toLowerCase());
     }
 
 }

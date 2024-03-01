@@ -32,6 +32,8 @@ import java.util.Set;
 
 public final class ForceItemBattle extends JavaPlugin {
 
+    private static ForceItemBattle instance;
+
     private Gamemanager gamemanager;
     private Timer timer;
     private Backpack backpack;
@@ -43,6 +45,10 @@ public final class ForceItemBattle extends JavaPlugin {
     private Location spawnLocation;
 
     private GameSettings settings;
+
+    public ForceItemBattle() {
+        instance = this;
+    }
 
     @Override
     public void onLoad() {
@@ -263,5 +269,9 @@ public final class ForceItemBattle extends JavaPlugin {
 
     public RecipeManager getRecipeManager() {
         return recipeManager;
+    }
+
+    public static ForceItemBattle getInstance() {
+        return instance;
     }
 }
