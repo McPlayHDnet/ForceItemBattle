@@ -4,10 +4,16 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.util.RecipeInventory;
 import forceitembattle.util.RecipeViewer;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.Recipe;
+import org.bukkit.inventory.RecipeChoice;
+import org.bukkit.inventory.ShapelessRecipe;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 
 public class RecipeManager {
@@ -26,17 +32,18 @@ public class RecipeManager {
     }
 
     public void createRecipeViewer(Player player, ItemStack itemStack) {
-        if (Bukkit.getRecipesFor(itemStack).isEmpty()) {
+        List<Recipe> recipes = getRecipes(itemStack);
+
+        if (recipes.isEmpty()) {
             player.sendMessage("§cThere is no recipe for this item. Just find it lol");
             return;
         }
 
-        RecipeViewer recipeViewer = new RecipeViewer();
+        RecipeViewer recipeViewer = new RecipeViewer(recipes);
         recipeViewer.setUuid(player.getUniqueId());
         recipeViewer.setItemStack(itemStack);
         recipeViewer.setCurrentRecipeIndex(0);
-        recipeViewer.setRecipe(Bukkit.getRecipesFor(itemStack).get(0));
-        recipeViewer.setPages(Bukkit.getRecipesFor(itemStack).size());
+        recipeViewer.setRecipe(recipes.get(0));
 
         this.recipeViewerMap.put(player.getUniqueId(), recipeViewer);
 
@@ -61,4 +68,40 @@ public class RecipeManager {
         return this.recipeViewerMap.get(player.getUniqueId());
     }
 
+    public List<Recipe> getRecipes(ItemStack item) {
+        switch (item.getType()) {
+            default -> {
+                return new ArrayList<>(Bukkit.getRecipesFor(item));
+            }
+            case FIREWORK_STAR -> {
+                return getFireworkStarRecipes();
+            }
+            case SUSPICIOUS_STEW -> {
+                return getSuspiciousStewRecipes();
+            }
+        }
+
+    }
+
+    private List<Recipe> getFireworkStarRecipes() {
+        List<Recipe> recipes = new ArrayList<>();
+        ShapelessRecipe recipe = new ShapelessRecipe(new ItemStack(Material.FIREWORK_STAR));
+        recipe.addIngredient(Material.GUNPOWDER);
+        recipe.addIngredient(new RecipeChoice.MaterialChoice(Material.RED_DYE, Material.BLUE_DYE));
+
+        recipes.add(recipe);
+        return recipes;
+    }
+
+    private List<Recipe> getSuspiciousStewRecipes() {
+        List<Recipe> recipes = new ArrayList<>();
+        ShapelessRecipe recipe = new ShapelessRecipe(new ItemStack(Material.SUSPICIOUS_STEW));
+        recipe.addIngredient(Material.RED_MUSHROOM);
+        recipe.addIngredient(Material.BROWN_MUSHROOM);
+        recipe.addIngredient(Material.BOWL);
+        recipe.addIngredient(new RecipeChoice.MaterialChoice(Material.POPPY, Material.CORNFLOWER));
+
+        recipes.add(recipe);
+        return recipes;
+    }
 }

@@ -9,7 +9,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.*;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class RecipeInventory extends InventoryBuilder {
 
@@ -31,9 +32,13 @@ public class RecipeInventory extends InventoryBuilder {
             STATION_SLOT, RESULT_SLOT
     );
 
+    private static String materialName(Material type) {
+        return WordUtils.capitalize(type.name().replace("_", " ").toLowerCase());
+    }
+
     public RecipeInventory(ForceItemBattle forceItemBattle, RecipeViewer recipeViewer, Player player) {
         super(9 * 5, "§8● §3" +
-                WordUtils.capitalize(recipeViewer.itemStack().getType().name().replace("_", " ").toLowerCase()) +
+                materialName(recipeViewer.itemStack().getType()) +
                 " §8» §7" + (recipeViewer.currentRecipeIndex() + 1) + "§8/§7" + recipeViewer.pages()
         );
 
@@ -52,45 +57,49 @@ public class RecipeInventory extends InventoryBuilder {
         forceItemBattle.getRecipeManager().closeHandlers.put(recipeViewer.uuid(), () -> forceItemBattle.getRecipeManager().ignoreCloseHandler.remove(player.getUniqueId()));
 
         this.addUpdateHandler(() -> {
-            this.setItem(PREVIOUS_RECIPE_ITEM_SLOT, new ItemBuilder(Material.RED_STAINED_GLASS_PANE).setDisplayName("§4« §cPrevious Recipe").getItemStack(), inventoryClickEvent -> {
+            this.setItem(PREVIOUS_RECIPE_ITEM_SLOT, new ItemBuilder(Material.RED_STAINED_GLASS_PANE).setDisplayName("§4« §cPrevious Recipe").getItemStack(), event -> {
+                if (recipeViewer.pages() == 1) {
+                    return;
+                }
+
                 int currentRecipeIndex = recipeViewer.currentRecipeIndex();
 
-                if(currentRecipeIndex != 0) {
-                    currentRecipeIndex--;
+                if (currentRecipeIndex == 0) {
+                    player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
+                    return;
+                }
 
-                    player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
+                currentRecipeIndex--;
+                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
 
-                    recipeViewer.setCurrentRecipeIndex(currentRecipeIndex);
-                    if(Bukkit.getRecipesFor(recipeViewer.itemStack()).size() > 1) {
-                        recipeViewer.setRecipe(Bukkit.getRecipesFor(recipeViewer.itemStack()).get(recipeViewer.currentRecipeIndex()));
-                    } else {
-                        recipeViewer.setRecipe(Bukkit.getRecipesFor(recipeViewer.itemStack()).get(0));
-                    }
-                    new RecipeInventory(forceItemBattle, recipeViewer, player).open(player);
+                recipeViewer.setCurrentRecipeIndex(currentRecipeIndex);
+                recipeViewer.setRecipe(recipeViewer.recipes().get(recipeViewer.currentRecipeIndex()));
 
-                } else player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
+                new RecipeInventory(forceItemBattle, recipeViewer, player).open(player);
             });
 
             this.setItem(NEXT_RECIPE_ITEM_SLOT, new ItemBuilder(Material.LIME_STAINED_GLASS_PANE).setDisplayName("§2» §aNext Recipe").getItemStack(), inventoryClickEvent -> {
+                if (recipeViewer.pages() == 1) {
+                    return;
+                }
+
                 int currentRecipeIndex = recipeViewer.currentRecipeIndex();
 
-                if(currentRecipeIndex != (recipeViewer.pages() - 1)) {
-                    currentRecipeIndex++;
+                if (currentRecipeIndex == (recipeViewer.pages() - 1)) {
+                    player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
+                    return;
+                }
 
-                    player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
+                currentRecipeIndex++;
 
-                    recipeViewer.setCurrentRecipeIndex(currentRecipeIndex);
-                    if(Bukkit.getRecipesFor(recipeViewer.itemStack()).size() > 1) {
-                        recipeViewer.setRecipe(Bukkit.getRecipesFor(recipeViewer.itemStack()).get(recipeViewer.currentRecipeIndex()));
-                    } else {
-                        recipeViewer.setRecipe(Bukkit.getRecipesFor(recipeViewer.itemStack()).get(0));
-                    }
-                    new RecipeInventory(forceItemBattle, recipeViewer, player).open(player);
+                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
 
-                } else player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
+                recipeViewer.setCurrentRecipeIndex(currentRecipeIndex);
+                recipeViewer.setRecipe(recipeViewer.recipes().get(recipeViewer.currentRecipeIndex()));
+
+                new RecipeInventory(forceItemBattle, recipeViewer, player).open(player);
             });
         });
-
 
         List<ItemStack> ingredients = new ArrayList<>();
 
@@ -240,17 +249,28 @@ public class RecipeInventory extends InventoryBuilder {
         List<String> lore = new ArrayList<>();
         ItemBuilder itemBuilder = new ItemBuilder(materialChoice.getChoices().get(0));
 
-        materialChoice.getChoices().subList(1, materialChoice.getChoices().size()).forEach(choices -> {
-            lore.add(" §8» §3" + WordUtils.capitalize(choices.name().replace("_", " ").toLowerCase()));
+        materialChoice.getChoices().subList(1, materialChoice.getChoices().size()).forEach(material -> {
+            lore.add(" §8» §3" + materialName(material));
 
-            if(choices.name().contains("_PLANKS")) {
+            if (material.name().contains("_PLANKS")) {
                 lore.clear();
                 lore.add(" §8» §3any wooden plank");
             }
 
-            if(recipeViewer.itemStack().getType() == Material.SMOKER || recipeViewer.itemStack().getType() == Material.CAMPFIRE || recipeViewer.itemStack().getType() == Material.SOUL_CAMPFIRE || recipeViewer.itemStack().getType() == Material.CHARCOAL) {
+            if (recipeViewer.itemStack().getType() == Material.SMOKER || recipeViewer.itemStack().getType() == Material.CAMPFIRE || recipeViewer.itemStack().getType() == Material.SOUL_CAMPFIRE || recipeViewer.itemStack().getType() == Material.CHARCOAL) {
                 lore.clear();
                 lore.add(" §8» §3any wooden log/wood (and stripped variants)");
+            }
+
+            // These 2 are hardcoded to only have 1 material choice, which would be dye and flower respectively
+            if (recipeViewer.itemStack().getType() == Material.FIREWORK_STAR) {
+                lore.clear();
+                lore.add(" §8» §3any dye item");
+            }
+
+            if (recipeViewer.itemStack().getType() == Material.SUSPICIOUS_STEW) {
+                lore.clear();
+                lore.add(" §8» §3any field flower");
             }
         });
 

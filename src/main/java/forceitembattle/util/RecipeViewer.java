@@ -1,8 +1,9 @@
 package forceitembattle.util;
 
-import org.bukkit.Bukkit;
-import org.bukkit.inventory.*;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.Recipe;
 
+import java.util.List;
 import java.util.UUID;
 
 public class RecipeViewer {
@@ -11,14 +12,20 @@ public class RecipeViewer {
     private ItemStack itemStack;
     private Recipe recipe;
     private int currentRecipeIndex;
-    private int pages;
+    private final int pages;
 
-    public RecipeViewer() {
+    private final List<Recipe> recipes;
 
+    public RecipeViewer(List<Recipe> recipes) {
+        this.recipes = recipes;
+        this.pages = recipes.size();
     }
 
-    private int recipes() {
-        return Bukkit.getRecipesFor(this.itemStack()).size();
+    /**
+     * All recipes for this item.
+     */
+    public List<Recipe> recipes() {
+        return recipes;
     }
 
     public UUID uuid() {
@@ -37,6 +44,9 @@ public class RecipeViewer {
         this.itemStack = itemStack;
     }
 
+    /**
+     * Currently viewed recipe.
+     */
     public Recipe recipe() {
         return recipe;
     }
@@ -53,11 +63,10 @@ public class RecipeViewer {
         this.currentRecipeIndex = recipeIndex;
     }
 
+    /**
+     * Total amount of recipes for this item.
+     */
     public int pages() {
         return pages;
-    }
-
-    public void setPages(int pages) {
-        this.pages = pages;
     }
 }

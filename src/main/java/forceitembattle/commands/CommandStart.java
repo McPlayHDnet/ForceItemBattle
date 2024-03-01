@@ -61,8 +61,9 @@ public class CommandStart implements CommandExecutor {
     }
 
     private void performCommand(GamePreset gamePreset, Player player, String[] args) {
-        int countdown = (gamePreset != null ? gamePreset.countdown() * 60 : (Integer.parseInt(args[0]) * 60));
-        int jokers = (gamePreset != null ? gamePreset.jokers() : (Integer.parseInt(args[1])));
+        int durationMinutes = (gamePreset != null ? gamePreset.countdown() : Integer.parseInt(args[0]));
+        int countdown = durationMinutes * 60;
+        int jokersAmount = (gamePreset != null ? gamePreset.jokers() : (Integer.parseInt(args[1])));
         this.plugin.getTimer().setTime(countdown);
         this.plugin.getGamemanager().initializeMats();
 
@@ -81,21 +82,28 @@ public class CommandStart implements CommandExecutor {
                 seconds--;
                 if(seconds == 0) {
                     cancel();
-                    startGame(gamePreset);
+
+                    startGame(durationMinutes, jokersAmount);
                     return;
                 }
-                if(seconds < 6) Bukkit.getOnlinePlayers().forEach(players -> players.playSound(players.getLocation(), Sound.BLOCK_NOTE_BLOCK_BANJO, 1, 1));
+                if (seconds < 6) {
+                    Bukkit.getOnlinePlayers().forEach(
+                            players -> players.playSound(players.getLocation(), Sound.BLOCK_NOTE_BLOCK_BANJO, 1, 1)
+                    );
+                }
 
-                String finalSubTitle = getString();
-                Bukkit.getOnlinePlayers().forEach(players -> players.sendTitle("§a" + seconds, finalSubTitle, 0, 20, 10));
+                String subtitle = getSubtitle();
+                Bukkit.getOnlinePlayers().forEach(
+                        players -> players.sendTitle("§a" + seconds, subtitle, 0, 20, 10)
+                );
             }
 
-            private String getString() {
+            private String getSubtitle() {
                 String subTitle = "";
 
                 switch(seconds) {
                     case 9, 8 -> subTitle = "§f» §6" + (plugin.getTimer().getTime() / 60) + " minutes §f«";
-                    case 7, 6 -> subTitle = "§f» §6" + jokers + " Joker §f«";
+                    case 7, 6 -> subTitle = "§f» §6" + jokersAmount + " Joker §f«";
                     case 5 -> subTitle = "§f» §6/info & /infowiki §f«";
                     case 4 -> subTitle = "§f» §6/spawn & /bed §f«";
                     case 3, 2 -> subTitle = "§f» §6Collect as many items as possible §f«";
@@ -107,29 +115,27 @@ public class CommandStart implements CommandExecutor {
         }.runTaskTimer(this.plugin, 0L, 20L);
     }
 
-    private void startGame(GamePreset gamePreset) {
+    private void startGame(int timeMinutes, int jokersAmount) {
         this.plugin.getPositionManager().clearPositions();
 
         World world = Bukkit.getWorld("world");
         assert world != null;
         Location spawnLocation = world.getSpawnLocation();
-        this.plugin.setSpawnLocation(spawnLocation.clone());
-
-        cleanupSpawnLocation(spawnLocation);
+        setupSpawnLocation(spawnLocation);
 
         world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
 
         Bukkit.getOnlinePlayers().forEach(player -> {
 
             ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-            forceItemPlayer.setRemainingJokers(gamePreset.jokers());
+            forceItemPlayer.setRemainingJokers(jokersAmount);
 
 
             player.sendMessage(" ");
             player.sendMessage("§8» §6§lMystery Item Battle §8«");
             player.sendMessage(" ");
-            player.sendMessage("  §8● §7Duration §8» §a" + gamePreset.countdown() + " minutes");
-            player.sendMessage("  §8● §7Joker §8» §a" + gamePreset.jokers());
+            player.sendMessage("  §8● §7Duration §8» §a" + timeMinutes + " minutes");
+            player.sendMessage("  §8● §7Joker §8» §a" + jokersAmount);
             for(GameSetting gameSettings : GameSetting.values()) {
                 player.sendMessage("  §8● §7" + gameSettings.displayName() + " §8» §a" + (this.plugin.getSettings().isSettingEnabled(gameSettings) ? "§2✔" : "§4✘"));
             }
@@ -145,7 +151,7 @@ public class CommandStart implements CommandExecutor {
             player.setHealth(20);
             player.setSaturation(20);
             player.getInventory().clear();
-            player.getInventory().setItem(4, Gamemanager.getJokers(gamePreset.jokers()));
+            player.getInventory().setItem(4, Gamemanager.getJokers(jokersAmount));
 
             player.getInventory().addItem(new ItemStack(Material.STONE_AXE));
             player.getInventory().addItem(new ItemStack(Material.STONE_PICKAXE));
@@ -179,7 +185,9 @@ public class CommandStart implements CommandExecutor {
         this.plugin.getGamemanager().setCurrentGameState(GameState.MID_GAME);
     }
 
-    private void cleanupSpawnLocation(Location location) {
+    private void setupSpawnLocation(Location location) {
+        this.plugin.setSpawnLocation(location.clone());
+
         Block block = location.getBlock();
         block.setType(Material.AIR);
 
