@@ -5,6 +5,7 @@ import forceitembattle.util.RecipeInventory;
 import forceitembattle.util.RecipeViewer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
@@ -85,7 +86,13 @@ public class RecipeManager {
 
     private List<Recipe> getFireworkStarRecipes() {
         List<Recipe> recipes = new ArrayList<>();
-        ShapelessRecipe recipe = new ShapelessRecipe(new ItemStack(Material.FIREWORK_STAR));
+
+        NamespacedKey key = NamespacedKey.fromString("forceitembattle:star", ForceItemBattle.getInstance());
+        if (key == null) {
+            return recipes;
+        }
+
+        ShapelessRecipe recipe = new ShapelessRecipe(key, new ItemStack(Material.FIREWORK_STAR));
         recipe.addIngredient(Material.GUNPOWDER);
         recipe.addIngredient(new RecipeChoice.MaterialChoice(Material.RED_DYE, Material.BLUE_DYE));
 
@@ -95,7 +102,13 @@ public class RecipeManager {
 
     private List<Recipe> getSuspiciousStewRecipes() {
         List<Recipe> recipes = new ArrayList<>();
-        ShapelessRecipe recipe = new ShapelessRecipe(new ItemStack(Material.SUSPICIOUS_STEW));
+
+        NamespacedKey key = NamespacedKey.fromString("forceitembattle:stew", ForceItemBattle.getInstance());
+        if (key == null) {
+            return recipes;
+        }
+
+        ShapelessRecipe recipe = new ShapelessRecipe(key, new ItemStack(Material.SUSPICIOUS_STEW));
         recipe.addIngredient(Material.RED_MUSHROOM);
         recipe.addIngredient(Material.BROWN_MUSHROOM);
         recipe.addIngredient(Material.BOWL);
