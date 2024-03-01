@@ -1,17 +1,11 @@
 package forceitembattle.commands;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.ForceItemPlayerStats;
-import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class CommandStats implements CommandExecutor {
 
@@ -43,7 +37,24 @@ public class CommandStats implements CommandExecutor {
             }
             ForceItemPlayerStats forceItemPlayerStats = this.forceItemBattle.getStatsManager().playerStats(strings[0]);
             this.forceItemBattle.getStatsManager().statsMessage(player, forceItemPlayerStats);
+
+            return false;
         }
+
+        if(player.isOp()) {
+            if(strings.length == 2) {
+                if (strings[0].equalsIgnoreCase("reset")) {
+                    if (!this.forceItemBattle.getStatsManager().playerExists(strings[1])) {
+                        player.sendMessage("§e" + strings[1] + " §cdoes not exist");
+                        return false;
+                    }
+                    this.forceItemBattle.getStatsManager().resetStats(strings[1]);
+                    player.sendMessage("§aSuccessfully resetted stats of §e" + strings[1]);
+                } else {
+                    player.sendMessage("§cUsage: /stats reset <username>");
+                }
+            }
+        } else player.sendMessage("§cNo perms");
         return false;
     }
 }

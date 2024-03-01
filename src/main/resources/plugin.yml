@@ -23,5 +23,8 @@ commands:
   resume:
   stats:
   top:
+  pos:
+    aliases: [position]
+  ping:
   stoptimer:
     permission: battle.forceitem.command.stoptimer
