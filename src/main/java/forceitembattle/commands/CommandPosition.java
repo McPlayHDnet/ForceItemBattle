@@ -4,6 +4,7 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.util.Scheduler;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -61,7 +62,7 @@ public class CommandPosition implements CommandExecutor {
     private void showPosition(Player player, String positionName) {
         Location positionLocation = this.plugin.getPositionManager().getPosition(positionName);
         player.sendMessage(
-                prefix + "§3" + positionName + " §7located at " + locationToString(positionLocation) + distance(player.getLocation(), positionLocation)
+                prefix + "§3" + positionName + " §7located at " + locationToString(positionLocation) + (player.getLocation().getWorld() == positionLocation.getWorld() ? distance(player.getLocation(), positionLocation) : "")
         );
     }
 
@@ -73,7 +74,7 @@ public class CommandPosition implements CommandExecutor {
 
         player.sendMessage(prefix + "§fAll saved locations");
         this.plugin.getPositionManager().getAllPositions().forEach((name, location) -> {
-            player.sendMessage("§8» §3" + name + " §7located at " + locationToString(location) + distance(player.getLocation(), location));
+            player.sendMessage("§8» §3" + name + " §7located at " + locationToString(location) + (player.getLocation().getWorld() == location.getWorld() ? distance(player.getLocation(), location) : ""));
         });
     }
 
@@ -101,10 +102,14 @@ public class CommandPosition implements CommandExecutor {
     // Utility stuff
 
     private String locationToString(Location location) {
-        return "§3" + location.getBlockX() + "§7, §3" + location.getBlockY() + "§7, §3" + location.getBlockZ();
+        if(location.getWorld() == null) return "§cSomehow the world is null...";
+
+        return "§3" + location.getBlockX() + "§7, §3" + location.getBlockY() + "§7, §3" + location.getBlockZ() + " §7in §3" + location.getWorld().getName();
     }
 
-    private String distance(Location first, Location second) {
-        return " §a(" + (int) first.distance(second) + " blocks away)";
+    private String distance(Location playerLocation, Location destination) {
+        if(playerLocation.getWorld() == null || destination.getWorld() == null) return " §c(Somehow the world is null...)";
+
+        return " §a(" + (int) playerLocation.distance(destination) + " blocks away)";
     }
 }
