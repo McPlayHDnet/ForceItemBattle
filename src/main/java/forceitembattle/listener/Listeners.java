@@ -35,7 +35,7 @@ import java.util.ArrayList;
 
 public class Listeners implements Listener {
 
-    public ForceItemBattle plugin;
+    private final ForceItemBattle plugin;
 
     public Listeners(ForceItemBattle forceItemBattle) {
         this.plugin = forceItemBattle;
@@ -438,16 +438,16 @@ public class Listeners implements Listener {
 
     @EventHandler
     public void onChat(AsyncPlayerChatEvent asyncPlayerChatEvent) {
-        if (InvSettingsPresets.namingPhase == null) return;
+        if (InvSettingsPresets.getNamingPhase() == null) return;
 
-        if (InvSettingsPresets.namingPhase.containsKey(asyncPlayerChatEvent.getPlayer().getUniqueId())) {
+        if (InvSettingsPresets.getNamingPhase().containsKey(asyncPlayerChatEvent.getPlayer().getUniqueId())) {
             asyncPlayerChatEvent.setCancelled(true);
 
             Bukkit.getScheduler().runTask(this.plugin, () -> {
-                GamePreset gamePreset = InvSettingsPresets.namingPhase.get(asyncPlayerChatEvent.getPlayer().getUniqueId());
+                GamePreset gamePreset = InvSettingsPresets.getNamingPhase().get(asyncPlayerChatEvent.getPlayer().getUniqueId());
                 gamePreset.setPresetName(asyncPlayerChatEvent.getMessage());
                 new InvSettingsPresets(this.plugin, gamePreset, this.plugin.getSettings()).open(asyncPlayerChatEvent.getPlayer());
-                InvSettingsPresets.namingPhase.remove(asyncPlayerChatEvent.getPlayer().getUniqueId());
+                InvSettingsPresets.getNamingPhase().remove(asyncPlayerChatEvent.getPlayer().getUniqueId());
             });
         }
     }

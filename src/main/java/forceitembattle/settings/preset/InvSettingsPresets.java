@@ -6,6 +6,7 @@ import forceitembattle.settings.GameSettings;
 import forceitembattle.util.InvSettings;
 import forceitembattle.util.InventoryBuilder;
 import forceitembattle.util.ItemBuilder;
+import lombok.Getter;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.inventory.ItemFlag;
@@ -13,11 +14,13 @@ import org.bukkit.inventory.ItemFlag;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class InvSettingsPresets extends InventoryBuilder {
 
-    public static HashMap<UUID, GamePreset> namingPhase = new HashMap<>();
+    @Getter
+    private static final Map<UUID, GamePreset> namingPhase = new HashMap<>();
 
     public InvSettingsPresets(ForceItemBattle forceItemBattle, GamePreset gamePreset, GameSettings gameSettings) {
         super(9 * 5, "§8» §3Settings §8● §7Presets");
