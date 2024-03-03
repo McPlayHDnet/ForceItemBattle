@@ -116,13 +116,15 @@ public class Timer {
                 setTime(getTime() - 1);
 
                 switch (getTime()) {
-                    case 300, 60 ->
-                            Bukkit.broadcastMessage(ChatColor.RED + "<< " + (getTime() / 60) + " minutes left >>");
-                    case 30, 10, 5, 4, 3, 2, 1 ->
-                            Bukkit.broadcastMessage(ChatColor.RED + "<< " + getTime() + " seconds left >>");
+                    case 300, 60 -> {
+                        Bukkit.broadcastMessage(ChatColor.RED + "<< " + (getTime() / 60) + " minutes left >>");
+                        Bukkit.getOnlinePlayers().forEach(player -> player.playSound(player, Sound.BLOCK_NOTE_BLOCK_PLING, 1, 2));
+                    }
+                    case 30, 10, 5, 4, 3, 2, 1 -> {
+                        Bukkit.broadcastMessage(ChatColor.RED + "<< " + getTime() + " seconds left >>");
+                        Bukkit.getOnlinePlayers().forEach(player -> player.playSound(player, Sound.BLOCK_NOTE_BLOCK_PLING, 1, 2));
+                    }
                 }
-
-                Bukkit.getOnlinePlayers().forEach(player -> player.playSound(player, Sound.BLOCK_NOTE_BLOCK_PLING, 1, 2));
 
                 if (getTime() <= 0) {
                     Bukkit.broadcastMessage(ChatColor.GOLD + "<< Force Item Battle is over >>");

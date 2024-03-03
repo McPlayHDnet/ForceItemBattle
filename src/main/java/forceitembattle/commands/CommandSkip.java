@@ -37,7 +37,7 @@ public class CommandSkip implements CommandExecutor {
             player.sendMessage("§7Skipped this item for " + target.getName());
             this.forceItemBattle.getGamemanager().forceSkipItem(target);
         } else {
-            sender.sendMessage(ChatColor.RED + "This getPlayer is not online");
+            sender.sendMessage(ChatColor.RED + "This player is not online");
         }
         return true;
     }

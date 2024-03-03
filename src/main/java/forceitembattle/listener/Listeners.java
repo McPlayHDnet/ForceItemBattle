@@ -149,7 +149,7 @@ public class Listeners implements Listener {
             forceItemPlayer.setCurrentScore(forceItemPlayer.getCurrentScore() + 1);
             forceItemPlayer.addFoundItemToList(new ForceItem(itemStack.getType(), this.plugin.getTimer().formatSeconds(this.plugin.getTimer().getTime()), foundItemEvent.isSkipped()));
             forceItemPlayer.setCurrentMaterial(this.plugin.getGamemanager().generateMaterial());
-            Bukkit.broadcastMessage("§a" + player.getName() + " §7" + (foundItemEvent.isSkipped() ? "setSkipped" : "found") + " §6" + WordUtils.capitalize(itemStack.getType().name().toLowerCase().replace("_", " ")));
+            Bukkit.broadcastMessage("§a" + player.getName() + " §7" + (foundItemEvent.isSkipped() ? "skipped" : "found") + " §6" + WordUtils.capitalize(itemStack.getType().name().toLowerCase().replace("_", " ")));
 
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
 
@@ -553,7 +553,7 @@ public class Listeners implements Listener {
         } else if (backpack != null && backpack.firstEmpty() != -1) {
             backpack.addItem(jokers);
         } else {
-            player.sendMessage("§cYou have no space in your inventory for getJokers! §fMake some space and uhmmmm die))");
+            player.sendMessage("§cYou have no space in your inventory for jokers! §fMake some space and uhmmmm die))");
             // TODO : handle this somehow yes?
         }
     }

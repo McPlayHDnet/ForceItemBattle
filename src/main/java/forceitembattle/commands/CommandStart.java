@@ -50,11 +50,11 @@ public class CommandStart implements CommandExecutor {
                 this.performCommand(null, player, args);
 
             } catch (NumberFormatException e) {
-                sender.sendMessage(ChatColor.RED + "Usage: /start <time in min> <getJokers>");
-                sender.sendMessage(ChatColor.RED + "<time> and <getJokers> have to be numbers");
+                sender.sendMessage(ChatColor.RED + "Usage: /start <time in min> <jokers>");
+                sender.sendMessage(ChatColor.RED + "<time> and <jokers> have to be numbers");
             }
         } else {
-            sender.sendMessage(ChatColor.RED + "Usage: /start <time in min> <getJokers>");
+            sender.sendMessage(ChatColor.RED + "Usage: /start <time in min> <jokers>");
         }
 
         return false;
@@ -68,7 +68,7 @@ public class CommandStart implements CommandExecutor {
         this.plugin.getGamemanager().initializeMats();
 
         if (gamePreset == null && (Integer.parseInt(args[1]) > 64)) {
-            player.sendMessage(ChatColor.RED + "The maximum amount of getJokers is 64.");
+            player.sendMessage(ChatColor.RED + "The maximum amount of jokers is 64.");
             return;
         }
 
@@ -78,7 +78,7 @@ public class CommandStart implements CommandExecutor {
             @Override
             public void run() {
                 seconds--;
-                if (seconds == 0) {
+                if (seconds <= 0) {
                     cancel();
 
                     startGame(durationMinutes, jokersAmount);
@@ -153,7 +153,7 @@ public class CommandStart implements CommandExecutor {
 
             player.getInventory().addItem(new ItemStack(Material.STONE_AXE));
             player.getInventory().addItem(new ItemStack(Material.STONE_PICKAXE));
-            player.getInventory().addItem(new ItemStack(Material.FIREWORK_ROCKET, 16));
+            player.getInventory().addItem(new ItemStack(Material.FIREWORK_ROCKET, 32));
             player.getInventory().addItem(new ItemBuilder(Material.ELYTRA).setUnbreakable(true).getItemStack());
 
             player.setLevel(0);

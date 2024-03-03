@@ -78,7 +78,7 @@ public class InvSettingsPresets extends InventoryBuilder {
 
                 if (gamePreset.getJokers() == 64 || gamePreset.getJokers() == 0) {
                     this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);
-                    this.getPlayer().sendMessage("§cYou reached the end of possible getJokers.");
+                    this.getPlayer().sendMessage("§cYou reached the end of possible jokers.");
                     return;
 
                 }

@@ -122,7 +122,7 @@ public class Gamemanager {
             player.setAllowFlight(true);
             player.setFlySpeed(0.1f);
             if (player.isOp()) {
-                player.sendMessage(ChatColor.RED + "Use /result to see the results from every getPlayer");
+                player.sendMessage(ChatColor.RED + "Use /result to see the results from every player");
             }
         });
     }
