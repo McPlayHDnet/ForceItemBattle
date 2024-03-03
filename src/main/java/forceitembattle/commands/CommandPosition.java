@@ -13,7 +13,7 @@ import java.util.Arrays;
 
 public class CommandPosition implements CommandExecutor {
 
-    private ForceItemBattle plugin;
+    private final ForceItemBattle plugin;
 
     public CommandPosition(ForceItemBattle plugin) {
         this.plugin = plugin;

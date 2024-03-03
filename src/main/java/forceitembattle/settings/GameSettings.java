@@ -5,7 +5,6 @@ import forceitembattle.settings.preset.GamePreset;
 import org.bukkit.Bukkit;
 import org.bukkit.GameRule;
 import org.bukkit.configuration.ConfigurationSection;
-import org.checkerframework.checker.units.qual.A;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -26,9 +25,9 @@ public class GameSettings {
             this.plugin.getConfig().addDefault(gameSettings.configPath(), gameSettings.defaultValue());
         }
 
-        this.plugin.getConfig().addDefault("standard.countdown", 30);
-        this.plugin.getConfig().addDefault("standard.jokers", 3);
-        this.plugin.getConfig().addDefault("standard.backpackSize", 27);
+        this.plugin.getConfig().addDefault("standard.getCountdown", 30);
+        this.plugin.getConfig().addDefault("standard.getJokers", 3);
+        this.plugin.getConfig().addDefault("standard.getBackpackSize", 27);
 
         if(!this.plugin.getConfig().isConfigurationSection("presets")) {
             this.plugin.getConfig().createSection("presets");
@@ -39,14 +38,14 @@ public class GameSettings {
                 ConfigurationSection configurationSection = this.plugin.getConfig().getConfigurationSection("presets").getConfigurationSection(keys);
                 GamePreset gamePreset = new GamePreset();
                 gamePreset.setPresetName(keys);
-                gamePreset.setCountdown(configurationSection.getInt("countdown"));
-                gamePreset.setJokers(configurationSection.getInt("jokers"));
-                gamePreset.setBackpackSize(configurationSection.getInt("backpackSize"));
+                gamePreset.setCountdown(configurationSection.getInt("getCountdown"));
+                gamePreset.setJokers(configurationSection.getInt("getJokers"));
+                gamePreset.setBackpackSize(configurationSection.getInt("getBackpackSize"));
 
                 configurationSection.getConfigurationSection("settings").getKeys(false).forEach(settingKeys -> {
                     for(GameSetting gameSetting : GameSetting.values()) {
                         if(gameSetting.configPath().equals(settingKeys)) {
-                            gamePreset.gameSettings().add(gameSetting);
+                            gamePreset.getGameSettings().add(gameSetting);
                         }
                     }
 
@@ -58,7 +57,7 @@ public class GameSettings {
     }
 
     public boolean isSettingEnabledInPreset(GamePreset gamePreset, GameSetting gameSetting) {
-        return this.plugin.getConfig().getBoolean("presets." + gamePreset.presetName() + "." + gameSetting.configPath());
+        return this.plugin.getConfig().getBoolean("presets." + gamePreset.getPresetName() + "." + gameSetting.configPath());
     }
 
     public boolean isSettingEnabled(GameSetting gameSetting) {
@@ -85,19 +84,19 @@ public class GameSettings {
         ConfigurationSection configurationSection = this.plugin.getConfig().getConfigurationSection("presets");
 
         if(configurationSection != null) {
-            ConfigurationSection presetSection = configurationSection.createSection(gamePreset.presetName());
+            ConfigurationSection presetSection = configurationSection.createSection(gamePreset.getPresetName());
 
-            presetSection.set("countdown", gamePreset.countdown());
-            presetSection.set("jokers", gamePreset.jokers());
-            presetSection.set("backpackSize", gamePreset.backpackSize());
+            presetSection.set("getCountdown", gamePreset.getCountdown());
+            presetSection.set("getJokers", gamePreset.getJokers());
+            presetSection.set("getBackpackSize", gamePreset.getBackpackSize());
 
             for(GameSetting gameSetting : GameSetting.values()) {
-                presetSection.set(gameSetting.configPath(), gamePreset.gameSettings().contains(gameSetting));
+                presetSection.set(gameSetting.configPath(), gamePreset.getGameSettings().contains(gameSetting));
             }
         }
 
         this.plugin.saveConfig();
-        this.gamePresetMap.put(gamePreset.presetName(), gamePreset);
+        this.gamePresetMap.put(gamePreset.getPresetName(), gamePreset);
 
     }
 

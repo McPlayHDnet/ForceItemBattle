@@ -11,7 +11,7 @@ import org.bukkit.entity.Player;
 
 public class CommandResume implements CommandExecutor {
 
-    private ForceItemBattle forceItemBattle;
+    private final ForceItemBattle forceItemBattle;
 
     public CommandResume(ForceItemBattle forceItemBattle) {
         this.forceItemBattle = forceItemBattle;

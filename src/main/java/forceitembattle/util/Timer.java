@@ -1,12 +1,12 @@
 package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
+import lombok.Getter;
+import lombok.Setter;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
-import org.apache.commons.text.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.GameRule;
 import org.bukkit.Sound;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
@@ -20,12 +20,16 @@ import java.util.UUID;
 
 public class Timer {
 
-    private ForceItemBattle forceItemBattle;
+    private final ForceItemBattle forceItemBattle;
+    @Getter
+    @Setter
     private int time;
+    @Getter
     private final Map<UUID, BossBar> bossBar = new HashMap<>();
 
     public Timer(ForceItemBattle forceItemBattle) {
         this.forceItemBattle = forceItemBattle;
+
         if (this.forceItemBattle.getConfig().contains("timer.time")) {
             this.time = this.forceItemBattle.getConfig().getInt("timer.time");
         } else {
@@ -35,24 +39,23 @@ public class Timer {
         run();
     }
 
-    public int getTime() {
-        return time;
-    }
-
-    public void setTime(int time) {
-        this.time = time;
-    }
-
     public String formatSeconds(int inputSeconds) {
         int seconds = inputSeconds % 60;
         int minutes = (inputSeconds / 60) % 60;
         int hours = inputSeconds / 60 / 60;
 
         String time = "";
-        if(hours != 0) time += hours + "h ";
-        if(minutes != 0) time += minutes + "m ";
-        if(seconds != 0) time += seconds + "s";
+        if (hours != 0) {
+            time += hours + "h ";
+        }
+        if (minutes != 0) {
+            time += minutes + "m ";
+        }
+        if (seconds != 0) {
+            time += seconds + "s";
+        }
 
+        //Perhaps replace with just a simple: LocalTime.MIN.plusSeconds(inputSeconds).toString();
         return time;
     }
 
@@ -71,22 +74,22 @@ public class Timer {
                 player.setPlayerListName(player.getName() + " §7[§6" + this.forceItemBattle.getGamemanager().getCurrentMaterialName(forceItemPlayer) + "§7]");
 
                 player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(ChatColor.GOLD.toString() +
-                        ChatColor.BOLD + formatSeconds(getTime()) + " §8| §aYour score: §f" + forceItemPlayer.currentScore()));
+                        ChatColor.BOLD + formatSeconds(getTime()) + " §8| §aYour score: §f" + forceItemPlayer.getCurrentScore()));
 
                 String material = this.forceItemBattle.getGamemanager().getCurrentMaterialName(forceItemPlayer);
                 String bossBarTitle = "§a§l" + material;
 
-                try {
-                    BossBar bar = bossBar.get(player.getUniqueId());
-                    if (!bar.getTitle().equalsIgnoreCase(bossBarTitle)) {
-                        bar.removePlayer(player);
-                        bar.setTitle(bossBarTitle);
-                        bar.addPlayer(player);
-                    }
-                } catch (NullPointerException e) {
-                    BossBar bar = Bukkit.createBossBar(bossBarTitle, BarColor.WHITE, BarStyle.SOLID);
+                BossBar bar = bossBar.get(player.getUniqueId());
+                if (bar == null) {
+                    bar = Bukkit.createBossBar(bossBarTitle, BarColor.WHITE, BarStyle.SOLID);
                     bar.addPlayer(player);
                     bossBar.put(player.getUniqueId(), bar);
+                }
+
+                if (!bar.getTitle().equalsIgnoreCase(bossBarTitle)) {
+                    bar.removePlayer(player);
+                    bar.setTitle(bossBarTitle);
+                    bar.addPlayer(player);
                 }
 
             } else {
@@ -104,74 +107,30 @@ public class Timer {
         new BukkitRunnable() {
             @Override
             public void run() {
-
                 sendActionBar();
+
                 if (!forceItemBattle.getGamemanager().isMidGame()) {
                     return;
                 }
+
                 setTime(getTime() - 1);
 
                 switch (getTime()) {
-                    case 300: {
-                        Bukkit.broadcastMessage(ChatColor.RED + "<< 5 minutes left >>");
-                        Bukkit.getOnlinePlayers().forEach(player -> player.playSound(player, Sound.BLOCK_NOTE_BLOCK_PLING, 1, 2));
-                        break;
-                    }
-                    case 60: {
-                        Bukkit.broadcastMessage(ChatColor.RED + "<< 1 minute left >>");
-                        Bukkit.getOnlinePlayers().forEach(player -> player.playSound(player, Sound.BLOCK_NOTE_BLOCK_PLING, 1, 2));
-                        break;
-                    }
-                    case 30: {
-                        Bukkit.broadcastMessage(ChatColor.RED + "<< 30 seconds left >>");
-                        Bukkit.getOnlinePlayers().forEach(player -> player.playSound(player, Sound.BLOCK_NOTE_BLOCK_PLING, 1, 2));
-                        break;
-                    }
-                    case 10: {
-                        Bukkit.broadcastMessage(ChatColor.RED + "<< 10 seconds left >>");
-                        Bukkit.getOnlinePlayers().forEach(player -> player.playSound(player, Sound.BLOCK_NOTE_BLOCK_PLING, 1, 2));
-                        break;
-                    }
-                    case 5: {
-                        Bukkit.broadcastMessage(ChatColor.RED + "<< 5 seconds left >>");
-                        Bukkit.getOnlinePlayers().forEach(player -> player.playSound(player, Sound.BLOCK_NOTE_BLOCK_PLING, 1, 2));
-                        break;
-                    }
-                    case 4: {
-                        Bukkit.broadcastMessage(ChatColor.RED + "<< 4 seconds left >>");
-                        Bukkit.getOnlinePlayers().forEach(player -> player.playSound(player, Sound.BLOCK_NOTE_BLOCK_PLING, 1, 2));
-                        break;
-                    }
-                    case 3: {
-                        Bukkit.broadcastMessage(ChatColor.RED + "<< 3 seconds left >>");
-                        Bukkit.getOnlinePlayers().forEach(player -> player.playSound(player, Sound.BLOCK_NOTE_BLOCK_PLING, 1, 2));
-                        break;
-                    }
-                    case 2: {
-                        Bukkit.broadcastMessage(ChatColor.RED + "<< 2 seconds left >>");
-                        Bukkit.getOnlinePlayers().forEach(player -> player.playSound(player, Sound.BLOCK_NOTE_BLOCK_PLING, 1, 2));
-                        break;
-                    }
-                    case 1: {
-                        Bukkit.broadcastMessage(ChatColor.RED + "<< 1 second left >>");
-                        Bukkit.getOnlinePlayers().forEach(player -> player.playSound(player, Sound.BLOCK_NOTE_BLOCK_PLING, 1, 2));
-                        break;
-                    }
-                    default:
-                        break;
+                    case 300, 60 ->
+                            Bukkit.broadcastMessage(ChatColor.RED + "<< " + (getTime() / 60) + " minutes left >>");
+                    case 30, 10, 5, 4, 3, 2, 1 ->
+                            Bukkit.broadcastMessage(ChatColor.RED + "<< " + getTime() + " seconds left >>");
                 }
-                if (getTime()<=0) {
+
+                Bukkit.getOnlinePlayers().forEach(player -> player.playSound(player, Sound.BLOCK_NOTE_BLOCK_PLING, 1, 2));
+
+                if (getTime() <= 0) {
                     Bukkit.broadcastMessage(ChatColor.GOLD + "<< Force Item Battle is over >>");
                     Bukkit.getOnlinePlayers().forEach(player -> player.playSound(player, Sound.BLOCK_END_PORTAL_SPAWN, 1, 1));
                     forceItemBattle.getGamemanager().finishGame();
-                    forceItemBattle.logToFile("<< Force Item Battle is over >>");
-                    cancel();
+                    this.cancel();
                 }
             }
         }.runTaskTimer(this.forceItemBattle, 20, 20);
-    }
-
-    public Map<UUID, BossBar> getBossBar() {
-        return bossBar;
     }
 }

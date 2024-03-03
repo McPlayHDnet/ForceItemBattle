@@ -10,7 +10,7 @@ import org.bukkit.entity.Player;
 
 public class CommandLeaderboard implements CommandExecutor {
 
-    private ForceItemBattle forceItemBattle;
+    private final ForceItemBattle forceItemBattle;
 
     public CommandLeaderboard(ForceItemBattle forceItemBattle) {
         this.forceItemBattle = forceItemBattle;
@@ -22,21 +22,21 @@ public class CommandLeaderboard implements CommandExecutor {
     public boolean onCommand(CommandSender commandSender, Command command, String s, String[] strings) {
         if (!(commandSender instanceof Player player)) return false;
 
-        if(strings.length == 0) {
+        if (strings.length == 0) {
             this.forceItemBattle.getStatsManager().topMessage(player, this.forceItemBattle.getStatsManager().top(PlayerStat.HIGHEST_SCORE), PlayerStat.HIGHEST_SCORE);
             return false;
         }
 
-        if(strings.length == 1) {
+        if (strings.length == 1) {
             PlayerStat leaderStat = null;
-            for(PlayerStat playerStat : PlayerStat.values()) {
-                if(playerStat.name().equalsIgnoreCase(strings[0])) {
+            for (PlayerStat playerStat : PlayerStat.values()) {
+                if (playerStat.name().equalsIgnoreCase(strings[0])) {
                     leaderStat = playerStat;
                     break;
                 }
             }
 
-            if(leaderStat == null) {
+            if (leaderStat == null) {
                 player.sendMessage("§e" + strings[0] + " §cdoes not exist in leaderboard");
                 return false;
             }

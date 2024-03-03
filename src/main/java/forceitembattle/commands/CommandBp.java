@@ -9,7 +9,7 @@ import org.bukkit.entity.Player;
 
 public class CommandBp implements CommandExecutor {
 
-    private ForceItemBattle forceItemBattle;
+    private final ForceItemBattle forceItemBattle;
 
     public CommandBp(ForceItemBattle forceItemBattle) {
         this.forceItemBattle = forceItemBattle;
@@ -18,10 +18,9 @@ public class CommandBp implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender commandSender, Command command, String s, String[] strings) {
-
-        if(commandSender instanceof Player player) {
+        if (commandSender instanceof Player player) {
             if (this.forceItemBattle.getGamemanager().isMidGame()) {
-                if(this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.BACKPACK)) {
+                if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.BACKPACK)) {
                     this.forceItemBattle.getBackpack().openPlayerBackpack(player);
                 } else {
                     player.sendMessage("§cBackpacks are disabled in this round!");

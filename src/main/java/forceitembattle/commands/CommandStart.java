@@ -6,6 +6,7 @@ import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.preset.GamePreset;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.GameState;
+import forceitembattle.util.ItemBuilder;
 import forceitembattle.util.PlayerStat;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -20,7 +21,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 public class CommandStart implements CommandExecutor {
 
-    private ForceItemBattle plugin;
+    private final ForceItemBattle plugin;
 
     public CommandStart(ForceItemBattle plugin) {
         this.plugin = plugin;
@@ -35,7 +36,7 @@ public class CommandStart implements CommandExecutor {
         }
 
         if (args.length == 1) {
-            if(this.plugin.getSettings().getGamePreset(args[0]) == null) {
+            if (this.plugin.getSettings().getGamePreset(args[0]) == null) {
                 player.sendMessage("§e" + args[0] + " §cdoes not exist in presets.");
                 return false;
             }
@@ -49,38 +50,34 @@ public class CommandStart implements CommandExecutor {
                 this.performCommand(null, player, args);
 
             } catch (NumberFormatException e) {
-                sender.sendMessage(ChatColor.RED + "Usage: /start <time in min> <jokers>");
-                sender.sendMessage(ChatColor.RED + "<time> and <jokers> have to be numbers");
+                sender.sendMessage(ChatColor.RED + "Usage: /start <time in min> <getJokers>");
+                sender.sendMessage(ChatColor.RED + "<time> and <getJokers> have to be numbers");
             }
         } else {
-            sender.sendMessage(ChatColor.RED + "Usage: /start <time in min> <jokers>");
+            sender.sendMessage(ChatColor.RED + "Usage: /start <time in min> <getJokers>");
         }
-
 
         return false;
     }
 
     private void performCommand(GamePreset gamePreset, Player player, String[] args) {
-        int durationMinutes = (gamePreset != null ? gamePreset.countdown() : Integer.parseInt(args[0]));
+        int durationMinutes = (gamePreset != null ? gamePreset.getCountdown() : Integer.parseInt(args[0]));
         int countdown = durationMinutes * 60;
-        int jokersAmount = (gamePreset != null ? gamePreset.jokers() : (Integer.parseInt(args[1])));
+        int jokersAmount = (gamePreset != null ? gamePreset.getJokers() : (Integer.parseInt(args[1])));
         this.plugin.getTimer().setTime(countdown);
         this.plugin.getGamemanager().initializeMats();
 
-        if(gamePreset == null) {
-            if (Integer.parseInt(args[1]) > 64) {
-                player.sendMessage(ChatColor.RED + "The maximum amount of jokers is 64.");
-                return;
-            }
+        if (gamePreset == null && (Integer.parseInt(args[1]) > 64)) {
+            player.sendMessage(ChatColor.RED + "The maximum amount of getJokers is 64.");
+            return;
         }
 
         new BukkitRunnable() {
-
             int seconds = 11;
             @Override
             public void run() {
                 seconds--;
-                if(seconds == 0) {
+                if (seconds == 0) {
                     cancel();
 
                     startGame(durationMinutes, jokersAmount);
@@ -101,7 +98,7 @@ public class CommandStart implements CommandExecutor {
             private String getSubtitle() {
                 String subTitle = "";
 
-                switch(seconds) {
+                switch (seconds) {
                     case 9, 8 -> subTitle = "§f» §6" + (plugin.getTimer().getTime() / 60) + " minutes §f«";
                     case 7, 6 -> subTitle = "§f» §6" + jokersAmount + " Joker §f«";
                     case 5 -> subTitle = "§f» §6/info & /infowiki §f«";
@@ -136,7 +133,7 @@ public class CommandStart implements CommandExecutor {
             player.sendMessage(" ");
             player.sendMessage("  §8● §7Duration §8» §a" + timeMinutes + " minutes");
             player.sendMessage("  §8● §7Joker §8» §a" + jokersAmount);
-            for(GameSetting gameSettings : GameSetting.values()) {
+            for (GameSetting gameSettings : GameSetting.values()) {
                 player.sendMessage("  §8● §7" + gameSettings.displayName() + " §8» §a" + (this.plugin.getSettings().isSettingEnabled(gameSettings) ? "§2✔" : "§4✘"));
             }
             player.sendMessage(" ");
@@ -155,6 +152,8 @@ public class CommandStart implements CommandExecutor {
 
             player.getInventory().addItem(new ItemStack(Material.STONE_AXE));
             player.getInventory().addItem(new ItemStack(Material.STONE_PICKAXE));
+            player.getInventory().addItem(new ItemStack(Material.FIREWORK_ROCKET, 16));
+            player.getInventory().addItem(new ItemBuilder(Material.ELYTRA).setUnbreakable(true).getItemStack());
 
             player.setLevel(0);
             player.setExp(0);
@@ -166,15 +165,15 @@ public class CommandStart implements CommandExecutor {
             player.teleport(spawnLocation);
             player.playSound(player, Sound.BLOCK_END_PORTAL_SPAWN, 1, 1);
 
-            if(this.plugin.getSettings().isSettingEnabled(GameSetting.NETHER)) {
+            if (this.plugin.getSettings().isSettingEnabled(GameSetting.NETHER)) {
                 this.plugin.getBackpack().createBackpack(player);
             }
 
-            if(!this.plugin.getSettings().isSettingEnabled(GameSetting.NETHER)) {
+            if (!this.plugin.getSettings().isSettingEnabled(GameSetting.NETHER)) {
                 forceItemPlayer.createItemDisplay();
             }
 
-            if(this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
+            if (this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
                 this.plugin.getStatsManager().addToStats(PlayerStat.GAMES_PLAYED, this.plugin.getStatsManager().playerStats(player.getName()), 1);
             }
 

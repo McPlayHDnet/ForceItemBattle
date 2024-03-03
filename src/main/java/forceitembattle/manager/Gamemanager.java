@@ -6,6 +6,8 @@ import forceitembattle.settings.preset.GamePreset;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.GameState;
 import forceitembattle.util.ItemBuilder;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.text.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -20,13 +22,18 @@ import java.util.stream.Collectors;
 
 public class Gamemanager {
 
-    private ForceItemBattle forceItemBattle;
+    private final ForceItemBattle forceItemBattle;
 
+    @Getter
     private final Map<UUID, ForceItemPlayer> forceItemPlayerMap;
 
-    public Map<UUID, Map<Integer, Map<Integer, ItemStack>>> savedInventory = new HashMap<>();
+    @Getter
+    private final Map<UUID, Map<Integer, Map<Integer, ItemStack>>> savedInventory = new HashMap<>();
 
-    public GameState currentGameState;
+    @Getter
+    @Setter
+    private GameState currentGameState;
+    @Setter
     private GamePreset currentGamePreset;
 
     public Gamemanager(ForceItemBattle forceItemBattle) {
@@ -47,7 +54,7 @@ public class Gamemanager {
     }
 
     public String getCurrentMaterialName(ForceItemPlayer forceItemPlayer) {
-        return WordUtils.capitalizeFully(forceItemPlayer.currentMaterial().toString().replace("_", " "));
+        return WordUtils.capitalizeFully(forceItemPlayer.getCurrentMaterial().toString().replace("_", " "));
     }
 
     public String formatMaterialName(String material) {
@@ -98,7 +105,7 @@ public class Gamemanager {
             player.setAllowFlight(true);
             player.setFlySpeed(0.1f);
             if (player.isOp()) {
-                player.sendMessage(ChatColor.RED + "Use /result to see the results from every player");
+                player.sendMessage(ChatColor.RED + "Use /result to see the results from every getPlayer");
             }
         });
     }
@@ -107,11 +114,17 @@ public class Gamemanager {
         List<Map.Entry<UUID, ForceItemPlayer>> list = new LinkedList<>(unsortMap.entrySet());
 
         // Sorting the list based on values
-        list.sort((o1, o2) -> order ? o1.getValue().currentScore().compareTo(o2.getValue().currentScore()) == 0
-                ? o1.getKey().compareTo(o2.getKey())
-                : o1.getValue().currentScore().compareTo(o2.getValue().currentScore()) : o2.getValue().currentScore().compareTo(o1.getValue().currentScore()) == 0
+        list.sort((o1, o2) -> {
+            if (order) {
+                if (o1.getValue().getCurrentScore().compareTo(o2.getValue().getCurrentScore()) == 0)
+                    return o1.getKey().compareTo(o2.getKey());
+                return o1.getValue().getCurrentScore().compareTo(o2.getValue().getCurrentScore());
+            } else {
+                return o2.getValue().getCurrentScore().compareTo(o1.getValue().getCurrentScore()) == 0
                 ? o2.getKey().compareTo(o1.getKey())
-                : o2.getValue().currentScore().compareTo(o1.getValue().currentScore()));
+                : o2.getValue().getCurrentScore().compareTo(o1.getValue().getCurrentScore());
+            }
+        });
         return list.stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> b, LinkedHashMap::new));
 
     }
@@ -122,10 +135,6 @@ public class Gamemanager {
 
     public ForceItemPlayer getForceItemPlayer(UUID uuid) {
         return this.forceItemPlayerMap.get(uuid);
-    }
-
-    public Map<UUID, ForceItemPlayer> forceItemPlayerMap() {
-        return this.forceItemPlayerMap;
     }
 
     public boolean isPreGame() {
@@ -144,24 +153,8 @@ public class Gamemanager {
         return this.getCurrentGameState() == GameState.END_GAME;
     }
 
-    public void setCurrentGameState(GameState gameState) {
-        this.currentGameState = gameState;
-    }
-
-    public GameState getCurrentGameState() {
-        return currentGameState;
-    }
-
-    public void setCurrentGamePreset(GamePreset currentGamePreset) {
-        this.currentGamePreset = currentGamePreset;
-    }
-
     public GamePreset currentGamePreset() {
         return currentGamePreset;
-    }
-
-    public Map<UUID, Map<Integer, Map<Integer, ItemStack>>> getSavedInventory() {
-        return savedInventory;
     }
 
     private static final Material JOKER_MATERIAL = Material.BARRIER;

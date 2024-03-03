@@ -6,7 +6,6 @@ import forceitembattle.settings.GameSettings;
 import forceitembattle.util.InvSettings;
 import forceitembattle.util.InventoryBuilder;
 import forceitembattle.util.ItemBuilder;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.inventory.ItemFlag;
@@ -33,7 +32,7 @@ public class InvSettingsPresets extends InventoryBuilder {
 
             /* Name-Preset */
             this.setItem(19, new ItemBuilder(Material.NAME_TAG)
-                    .setDisplayName("§8● §aPreset Name §8» " + (gamePreset.presetName().isEmpty() ? "§cNot set" : "§3" + gamePreset.presetName()))
+                    .setDisplayName("§8● §aPreset Name §8» " + (gamePreset.getPresetName().isEmpty() ? "§cNot set" : "§3" + gamePreset.getPresetName()))
                     .getItemStack(), event -> {
 
                 getPlayer().playSound(getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
@@ -44,18 +43,18 @@ public class InvSettingsPresets extends InventoryBuilder {
 
             /* Timer-Preset */
             this.setItem(20, new ItemBuilder(Material.CLOCK)
-                    .setDisplayName("§8● §aTime §8» §3" + gamePreset.countdown())
+                    .setDisplayName("§8● §aTime §8» §3" + gamePreset.getCountdown())
                     .getItemStack(), event -> {
 
                 getPlayer().playSound(getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
-                gamePreset.setCountdown(gamePreset.countdown() + (event.isRightClick() ? -5 : 5));
+                gamePreset.setCountdown(gamePreset.getCountdown() + (event.isRightClick() ? -5 : 5));
             });
 
 
             /* Settings-Preset */
             lore.add("");
             for(GameSetting defaultGameSettings : GameSetting.values()) {
-                lore.add("  §8● §7" + defaultGameSettings.displayName() + " §8» " + (gamePreset.gameSettings().contains(defaultGameSettings) ? "§2✔" : "§4✘"));
+                lore.add("  §8● §7" + defaultGameSettings.displayName() + " §8» " + (gamePreset.getGameSettings().contains(defaultGameSettings) ? "§2✔" : "§4✘"));
             }
             lore.add("");
             this.setItem(22, new ItemBuilder(Material.STRUCTURE_VOID)
@@ -71,25 +70,25 @@ public class InvSettingsPresets extends InventoryBuilder {
 
             /* Joker-Preset */
             this.setItem(24, new ItemBuilder(Material.BARRIER)
-                    .setDisplayName("§8● §aJoker §8» §3" + gamePreset.jokers())
+                    .setDisplayName("§8● §aJoker §8» §3" + gamePreset.getJokers())
                     .getItemStack(), event -> {
 
-                if(gamePreset.jokers() == 64 || gamePreset.jokers() == 0) {
+                if(gamePreset.getJokers() == 64 || gamePreset.getJokers() == 0) {
                     this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);
-                    this.getPlayer().sendMessage("§cYou reached the end of possible jokers.");
+                    this.getPlayer().sendMessage("§cYou reached the end of possible getJokers.");
                     return;
 
                 }
 
                 getPlayer().playSound(getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
-                gamePreset.setJokers(gamePreset.jokers() + (event.isRightClick() ? -1 : 1));
+                gamePreset.setJokers(gamePreset.getJokers() + (event.isRightClick() ? -1 : 1));
 
             });
 
 
             /* BackpackSize-Preset */
             this.setItem(25, new ItemBuilder(Material.BUNDLE)
-                    .setDisplayName("§8● §aBackpack Slots §8» §3" + gamePreset.backpackSize())
+                    .setDisplayName("§8● §aBackpack Slots §8» §3" + gamePreset.getBackpackSize())
                     .getItemStack(), event -> {
 
                 getPlayer().playSound(getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);

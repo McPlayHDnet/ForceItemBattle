@@ -1,6 +1,5 @@
 package forceitembattle.manager;
 
-import forceitembattle.ForceItemBattle;
 import org.bukkit.Location;
 
 import java.util.HashMap;
@@ -8,11 +7,9 @@ import java.util.Map;
 
 public class PositionManager {
 
-    private final ForceItemBattle plugin;
     private final Map<String, Location> positionsMap;
 
-    public PositionManager(ForceItemBattle plugin) {
-        this.plugin = plugin;
+    public PositionManager() {
         this.positionsMap = new HashMap<>();
     }
 

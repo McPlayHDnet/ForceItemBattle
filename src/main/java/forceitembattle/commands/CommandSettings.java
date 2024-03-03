@@ -10,7 +10,7 @@ import org.bukkit.entity.Player;
 
 public class CommandSettings implements CommandExecutor {
 
-    private ForceItemBattle forceItemBattle;
+    private final ForceItemBattle forceItemBattle;
 
     public CommandSettings(ForceItemBattle forceItemBattle) {
         this.forceItemBattle = forceItemBattle;

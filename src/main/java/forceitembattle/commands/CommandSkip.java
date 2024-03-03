@@ -10,7 +10,7 @@ import org.bukkit.entity.Player;
 
 public class CommandSkip implements CommandExecutor {
 
-    private ForceItemBattle forceItemBattle;
+    private final ForceItemBattle forceItemBattle;
 
     public CommandSkip(ForceItemBattle forceItemBattle) {
         this.forceItemBattle = forceItemBattle;
@@ -35,10 +35,9 @@ public class CommandSkip implements CommandExecutor {
 
         if (target != null) {
             player.sendMessage("§7Skipped this item for " + target.getName());
-            //this.forceItemBattle.logToFile("[" + this.forceItemBattle.getTimer().getTime() + "] | " + args[0] + " skipped " + this.forceItemBattle.getGamemanager().getCurrentMaterial(Bukkit.getPlayer(args[0])));
             this.forceItemBattle.getGamemanager().forceSkipItem(target);
         } else {
-            sender.sendMessage(ChatColor.RED + "This player is not online");
+            sender.sendMessage(ChatColor.RED + "This getPlayer is not online");
         }
         return true;
     }

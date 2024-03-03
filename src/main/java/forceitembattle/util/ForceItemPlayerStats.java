@@ -1,9 +1,17 @@
 package forceitembattle.util;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class ForceItemPlayerStats {
 
     private String userName;
-    private int totalItemsFound, gamesPlayed, gamesWon, highestScore;
+    private int totalItemsFound;
+    private int gamesPlayed;
+    private int gamesWon;
+    private int highestScore;
     private double travelled;
 
     public ForceItemPlayerStats(String userName, int totalItemsFound, double travelled, int gamesPlayed, int gamesWon, int highestScore) {
@@ -15,53 +23,6 @@ public class ForceItemPlayerStats {
         this.highestScore = highestScore;
     }
 
-    public String userName() {
-        return userName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
-    public int totalItemsFound() {
-        return totalItemsFound;
-    }
-
-    public void setTotalItemsFound(int totalItemsFound) {
-        this.totalItemsFound = totalItemsFound;
-    }
-
-    public int gamesPlayed() {
-        return gamesPlayed;
-    }
-
-    public void setGamesPlayed(int gamesPlayed) {
-        this.gamesPlayed = gamesPlayed;
-    }
-
-    public int gamesWon() {
-        return gamesWon;
-    }
-
-    public void setGamesWon(int gamesWon) {
-        this.gamesWon = gamesWon;
-    }
-
-    public int highestScore() {
-        return highestScore;
-    }
-
-    public void setHighestScore(int highestScore) {
-        this.highestScore = highestScore;
-    }
-
-    public double travelled() {
-        return travelled;
-    }
-
-    public void setTravelled(double travelled) {
-        this.travelled = travelled;
-    }
 }
 
 

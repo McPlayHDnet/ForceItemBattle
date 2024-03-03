@@ -35,15 +35,15 @@ public class InvPresetMenu extends InventoryBuilder {
             List<String> lore = new ArrayList<>();
             gameSettings.gamePresetMap().forEach((presetName, preset) -> {
                 lore.add("");
-                lore.add("  §8● §7Duration §8» §a" + preset.countdown() + " minutes");
-                lore.add("  §8● §7Joker §8» §a" + preset.jokers());
-                lore.add("  §8● §7Backpack size §8» §a" + preset.backpackSize() + " slots");
+                lore.add("  §8● §7Duration §8» §a" + preset.getCountdown() + " minutes");
+                lore.add("  §8● §7Joker §8» §a" + preset.getJokers());
+                lore.add("  §8● §7Backpack size §8» §a" + preset.getBackpackSize() + " slots");
                 lore.add("");
                 for(GameSetting gameSetting : GameSetting.values()) {
                     lore.add("  §8● §7" + gameSetting.displayName() + " §8» " + (gameSettings.isSettingEnabledInPreset(preset, gameSetting) ? "§2✔" : "§4✘"));
                 }
                 lore.add("");
-                this.addItem(new ItemBuilder(Material.PAPER).setDisplayName("§8● §3" + preset.presetName()).setLore(lore).getItemStack());
+                this.addItem(new ItemBuilder(Material.PAPER).setDisplayName("§8● §3" + preset.getPresetName()).setLore(lore).getItemStack());
                 lore.clear();
             });
 

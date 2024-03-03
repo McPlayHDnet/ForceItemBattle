@@ -17,31 +17,11 @@ import org.bukkit.inventory.Recipe;
 
 public class RecipeListener implements Listener {
 
-    private ForceItemBattle forceItemBattle;
+    private final ForceItemBattle forceItemBattle;
 
     public RecipeListener(ForceItemBattle forceItemBattle) {
         this.forceItemBattle = forceItemBattle;
         this.forceItemBattle.getServer().getPluginManager().registerEvents(this, this.forceItemBattle);
-    }
-
-    @EventHandler
-    public void onInventoryClick(InventoryClickEvent event) {
-
-
-        if (!(event.getWhoClicked() instanceof Player player)) {
-            return;
-        }
-
-
-    }
-
-    @EventHandler
-    public void onClose(InventoryCloseEvent inventoryCloseEvent) {
-        if (!(inventoryCloseEvent.getPlayer() instanceof Player player)) {
-            return;
-        }
-
-
     }
 
     @EventHandler

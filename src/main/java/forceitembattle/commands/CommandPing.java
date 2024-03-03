@@ -10,11 +10,8 @@ import org.bukkit.entity.Player;
 
 public class CommandPing implements CommandExecutor {
 
-    private ForceItemBattle forceItemBattle;
-
     public CommandPing(ForceItemBattle forceItemBattle) {
-        this.forceItemBattle = forceItemBattle;
-        this.forceItemBattle.getCommand("ping").setExecutor(this);
+        forceItemBattle.getCommand("ping").setExecutor(this);
     }
 
     @Override

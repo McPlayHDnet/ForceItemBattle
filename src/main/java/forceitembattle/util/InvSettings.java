@@ -23,7 +23,7 @@ public class InvSettings extends InventoryBuilder {
             for(GameSetting gameSettings : GameSetting.values()) {
                 String settingDisplayName = "§8» ";
                 if(gamePreset != null) {
-                    settingDisplayName += (gamePreset.gameSettings().contains(gameSettings) ? "§a" + gameSettings.displayName() + " §2✔" : "§c" + gameSettings.displayName() + " §4✘");
+                    settingDisplayName += (gamePreset.getGameSettings().contains(gameSettings) ? "§a" + gameSettings.displayName() + " §2✔" : "§c" + gameSettings.displayName() + " §4✘");
 
                     this.setItem(53, new ItemBuilder(Material.LIME_STAINED_GLASS_PANE).setDisplayName("§8» §aSave settings").getItemStack(), inventoryClickEvent -> {
                         this.getPlayer().playSound(this.getPlayer(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
@@ -47,8 +47,8 @@ public class InvSettings extends InventoryBuilder {
 
                     this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
                     if(gamePreset != null) {
-                        if(gamePreset.gameSettings().contains(gameSettings)) gamePreset.gameSettings().remove(gameSettings);
-                        else gamePreset.gameSettings().add(gameSettings);
+                        if(gamePreset.getGameSettings().contains(gameSettings)) gamePreset.getGameSettings().remove(gameSettings);
+                        else gamePreset.getGameSettings().add(gameSettings);
                     } else {
                         plugin.getSettings().setSettingEnabled(gameSettings, !plugin.getSettings().isSettingEnabled(gameSettings));
                     }

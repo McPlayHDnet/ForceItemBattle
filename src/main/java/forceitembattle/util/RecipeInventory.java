@@ -38,8 +38,8 @@ public class RecipeInventory extends InventoryBuilder {
 
     public RecipeInventory(ForceItemBattle forceItemBattle, RecipeViewer recipeViewer, Player player) {
         super(9 * 5, "§8● §3" +
-                materialName(recipeViewer.itemStack().getType()) +
-                " §8» §7" + (recipeViewer.currentRecipeIndex() + 1) + "§8/§7" + recipeViewer.pages()
+                materialName(recipeViewer.getItemStack().getType()) +
+                " §8» §7" + (recipeViewer.getCurrentRecipeIndex() + 1) + "§8/§7" + recipeViewer.getPages()
         );
 
         for (int i = 0; i < this.getInventory().getSize(); i++) {
@@ -48,21 +48,21 @@ public class RecipeInventory extends InventoryBuilder {
             }
         }
 
-        if (forceItemBattle.getRecipeManager().closeHandlers.containsKey(recipeViewer.uuid())) {
+        if (forceItemBattle.getRecipeManager().closeHandlers.containsKey(recipeViewer.getUuid())) {
             forceItemBattle.getRecipeManager().handleRecipeClose(player);
         }
 
-        forceItemBattle.getRecipeManager().ignoreCloseHandler.put(recipeViewer.uuid(), false);
+        forceItemBattle.getRecipeManager().ignoreCloseHandler.put(recipeViewer.getUuid(), false);
 
-        forceItemBattle.getRecipeManager().closeHandlers.put(recipeViewer.uuid(), () -> forceItemBattle.getRecipeManager().ignoreCloseHandler.remove(player.getUniqueId()));
+        forceItemBattle.getRecipeManager().closeHandlers.put(recipeViewer.getUuid(), () -> forceItemBattle.getRecipeManager().ignoreCloseHandler.remove(player.getUniqueId()));
 
         this.addUpdateHandler(() -> {
             this.setItem(PREVIOUS_RECIPE_ITEM_SLOT, new ItemBuilder(Material.RED_STAINED_GLASS_PANE).setDisplayName("§4« §cPrevious Recipe").getItemStack(), event -> {
-                if (recipeViewer.pages() == 1) {
+                if (recipeViewer.getPages() == 1) {
                     return;
                 }
 
-                int currentRecipeIndex = recipeViewer.currentRecipeIndex();
+                int currentRecipeIndex = recipeViewer.getCurrentRecipeIndex();
 
                 if (currentRecipeIndex == 0) {
                     player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
@@ -73,19 +73,19 @@ public class RecipeInventory extends InventoryBuilder {
                 player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
 
                 recipeViewer.setCurrentRecipeIndex(currentRecipeIndex);
-                recipeViewer.setRecipe(recipeViewer.recipes().get(recipeViewer.currentRecipeIndex()));
+                recipeViewer.setRecipe(recipeViewer.getRecipes().get(recipeViewer.getCurrentRecipeIndex()));
 
                 new RecipeInventory(forceItemBattle, recipeViewer, player).open(player);
             });
 
             this.setItem(NEXT_RECIPE_ITEM_SLOT, new ItemBuilder(Material.LIME_STAINED_GLASS_PANE).setDisplayName("§2» §aNext Recipe").getItemStack(), inventoryClickEvent -> {
-                if (recipeViewer.pages() == 1) {
+                if (recipeViewer.getPages() == 1) {
                     return;
                 }
 
-                int currentRecipeIndex = recipeViewer.currentRecipeIndex();
+                int currentRecipeIndex = recipeViewer.getCurrentRecipeIndex();
 
-                if (currentRecipeIndex == (recipeViewer.pages() - 1)) {
+                if (currentRecipeIndex == (recipeViewer.getPages() - 1)) {
                     player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
                     return;
                 }
@@ -95,7 +95,7 @@ public class RecipeInventory extends InventoryBuilder {
                 player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
 
                 recipeViewer.setCurrentRecipeIndex(currentRecipeIndex);
-                recipeViewer.setRecipe(recipeViewer.recipes().get(recipeViewer.currentRecipeIndex()));
+                recipeViewer.setRecipe(recipeViewer.getRecipes().get(recipeViewer.getCurrentRecipeIndex()));
 
                 new RecipeInventory(forceItemBattle, recipeViewer, player).open(player);
             });
@@ -103,7 +103,7 @@ public class RecipeInventory extends InventoryBuilder {
 
         List<ItemStack> ingredients = new ArrayList<>();
 
-        if (recipeViewer.recipe() instanceof ShapedRecipe shaped) {
+        if (recipeViewer.getRecipe() instanceof ShapedRecipe shaped) {
             String[] shape = shaped.getShape();
 
             int rowIndex = 0;
@@ -126,7 +126,7 @@ public class RecipeInventory extends InventoryBuilder {
             }
 
         }
-        if (recipeViewer.recipe() instanceof ShapelessRecipe shapeless) {
+        if (recipeViewer.getRecipe() instanceof ShapelessRecipe shapeless) {
             for (RecipeChoice recipeChoice : shapeless.getChoiceList()) {
                 if (recipeChoice instanceof RecipeChoice.MaterialChoice materialChoice) {
                     ingredients.add(this.choiceWithLore(materialChoice, recipeViewer));
@@ -141,13 +141,13 @@ public class RecipeInventory extends InventoryBuilder {
                 index++;
             }
         }
-        if (recipeViewer.recipe() instanceof CookingRecipe<?> furnace) {
+        if (recipeViewer.getRecipe() instanceof CookingRecipe<?> furnace) {
             if (furnace.getInputChoice() instanceof RecipeChoice.MaterialChoice materialChoice) {
                 this.setItem(OTHER_FIRST_ITEM_SLOT, this.choiceWithLore(materialChoice, recipeViewer));
             }
 
         }
-        if (recipeViewer.recipe() instanceof SmithingTrimRecipe smithing) {
+        if (recipeViewer.getRecipe() instanceof SmithingTrimRecipe smithing) {
             ingredients.add(smithing.getBase().getItemStack());
             ingredients.add(smithing.getTemplate().getItemStack());
             ingredients.add(smithing.getAddition().getItemStack());
@@ -158,7 +158,7 @@ public class RecipeInventory extends InventoryBuilder {
                 index++;
             }
 
-        } else if (recipeViewer.recipe() instanceof SmithingTransformRecipe smithing) {
+        } else if (recipeViewer.getRecipe() instanceof SmithingTransformRecipe smithing) {
             ingredients.add(smithing.getBase().getItemStack());
             ingredients.add(smithing.getTemplate().getItemStack());
             ingredients.add(smithing.getAddition().getItemStack());
@@ -169,7 +169,7 @@ public class RecipeInventory extends InventoryBuilder {
                 index++;
             }
 
-        } else if (recipeViewer.recipe() instanceof SmithingRecipe smithing) {
+        } else if (recipeViewer.getRecipe() instanceof SmithingRecipe smithing) {
             // Unknown smithing recipe?
             ingredients.add(smithing.getAddition().getItemStack());
             ingredients.add(smithing.getBase().getItemStack());
@@ -181,22 +181,22 @@ public class RecipeInventory extends InventoryBuilder {
             }
 
         }
-        if (recipeViewer.recipe() instanceof MerchantRecipe merchant) {
+        if (recipeViewer.getRecipe() instanceof MerchantRecipe merchant) {
             ItemStack fixed = new ItemStack(merchant.getResult().getType(), 1, (byte) 0);
             ingredients.add(fixed);
 
             this.setItem(OTHER_FIRST_ITEM_SLOT, fixed);
 
         }
-        if (recipeViewer.recipe() instanceof StonecuttingRecipe stonecutting) {
+        if (recipeViewer.getRecipe() instanceof StonecuttingRecipe stonecutting) {
             ItemStack fixed = new ItemStack(stonecutting.getInput());
             ingredients.add(fixed);
 
             this.setItem(OTHER_FIRST_ITEM_SLOT, fixed);
         }
 
-        this.setItem(RESULT_SLOT, recipeViewer.recipe().getResult());
-        this.setItem(STATION_SLOT, getStationItem(recipeViewer.recipe()));
+        this.setItem(RESULT_SLOT, recipeViewer.getRecipe().getResult());
+        this.setItem(STATION_SLOT, getStationItem(recipeViewer.getRecipe()));
 
 
         this.addClickHandler(inventoryClickEvent -> {
@@ -225,10 +225,10 @@ public class RecipeInventory extends InventoryBuilder {
                 }
                 recipeViewer.setCurrentRecipeIndex(0);
                 recipeViewer.setItemStack(itemStack);
-                if(Bukkit.getRecipesFor(recipeViewer.itemStack()).size() > 1) {
-                    recipeViewer.setRecipe(Bukkit.getRecipesFor(recipeViewer.itemStack()).get(recipeViewer.currentRecipeIndex()));
+                if(Bukkit.getRecipesFor(recipeViewer.getItemStack()).size() > 1) {
+                    recipeViewer.setRecipe(Bukkit.getRecipesFor(recipeViewer.getItemStack()).get(recipeViewer.getCurrentRecipeIndex()));
                 } else {
-                    recipeViewer.setRecipe(Bukkit.getRecipesFor(recipeViewer.itemStack()).get(0));
+                    recipeViewer.setRecipe(Bukkit.getRecipesFor(recipeViewer.getItemStack()).get(0));
                 }
                 new RecipeInventory(forceItemBattle, recipeViewer, player).open(player);
 
@@ -257,18 +257,18 @@ public class RecipeInventory extends InventoryBuilder {
                 lore.add(" §8» §3any wooden plank");
             }
 
-            if (recipeViewer.itemStack().getType() == Material.SMOKER || recipeViewer.itemStack().getType() == Material.CAMPFIRE || recipeViewer.itemStack().getType() == Material.SOUL_CAMPFIRE || recipeViewer.itemStack().getType() == Material.CHARCOAL) {
+            if (recipeViewer.getItemStack().getType() == Material.SMOKER || recipeViewer.getItemStack().getType() == Material.CAMPFIRE || recipeViewer.getItemStack().getType() == Material.SOUL_CAMPFIRE || recipeViewer.getItemStack().getType() == Material.CHARCOAL) {
                 lore.clear();
                 lore.add(" §8» §3any wooden log/wood (and stripped variants)");
             }
 
             // These 2 are hardcoded to only have 1 material choice, which would be dye and flower respectively
-            if (recipeViewer.itemStack().getType() == Material.FIREWORK_STAR) {
+            if (recipeViewer.getItemStack().getType() == Material.FIREWORK_STAR) {
                 lore.clear();
                 lore.add(" §8» §3any dye item");
             }
 
-            if (recipeViewer.itemStack().getType() == Material.SUSPICIOUS_STEW) {
+            if (recipeViewer.getItemStack().getType() == Material.SUSPICIOUS_STEW) {
                 lore.clear();
                 lore.add(" §8» §3any field flower");
             }

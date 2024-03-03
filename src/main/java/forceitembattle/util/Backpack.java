@@ -12,7 +12,7 @@ import java.util.UUID;
 
 public class Backpack {
 
-    private ForceItemBattle forceItemBattle;
+    private final ForceItemBattle forceItemBattle;
     private final Map<UUID, Inventory> playerBackpack;
 
     public Backpack(ForceItemBattle forceItemBattle) {
@@ -25,7 +25,7 @@ public class Backpack {
     }
 
     public void createBackpack(Player player) {
-        this.playerBackpack.put(player.getUniqueId(), Bukkit.createInventory(null, this.forceItemBattle.getConfig().getInt("standard.backpackSize"), "§8» §6Backpack §8● §7Menu"));
+        this.playerBackpack.put(player.getUniqueId(), Bukkit.createInventory(null, this.forceItemBattle.getConfig().getInt("standard.getBackpackSize"), "§8» §6Backpack §8● §7Menu"));
         player.getInventory().setItem(8, new ItemBuilder(Material.BUNDLE).setDisplayName("§8» §eBackpack").getItemStack());
     }
 

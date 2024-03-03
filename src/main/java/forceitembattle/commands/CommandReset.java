@@ -9,7 +9,7 @@ import org.bukkit.command.CommandSender;
 
 public class CommandReset implements CommandExecutor {
 
-    private ForceItemBattle forceItemBattle;
+    private final ForceItemBattle forceItemBattle;
 
     public CommandReset(ForceItemBattle forceItemBattle) {
         this.forceItemBattle = forceItemBattle;

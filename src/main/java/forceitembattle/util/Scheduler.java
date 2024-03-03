@@ -5,6 +5,10 @@ import org.bukkit.Bukkit;
 
 public class Scheduler {
 
+    private Scheduler() {
+        throw new IllegalStateException("Utility class");
+    }
+
     public static void runAsync(Runnable runnable) {
         Bukkit.getScheduler().runTaskAsynchronously(
                 ForceItemBattle.getInstance(),

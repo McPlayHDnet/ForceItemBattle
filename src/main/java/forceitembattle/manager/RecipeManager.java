@@ -15,6 +15,8 @@ import org.bukkit.inventory.ShapelessRecipe;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map;
 import java.util.UUID;
 
 public class RecipeManager {
@@ -22,8 +24,8 @@ public class RecipeManager {
     private final ForceItemBattle forceItemBattle;
 
     private final HashMap<UUID, RecipeViewer> recipeViewerMap;
-    public final HashMap<UUID, Boolean> ignoreCloseHandler;
-    public final HashMap<UUID, Runnable> closeHandlers;
+    public final Map<UUID, Boolean> ignoreCloseHandler;
+    public final Map<UUID, Runnable> closeHandlers;
 
     public RecipeManager(ForceItemBattle forceItemBattle) {
         this.forceItemBattle = forceItemBattle;
@@ -71,14 +73,14 @@ public class RecipeManager {
 
     public List<Recipe> getRecipes(ItemStack item) {
         switch (item.getType()) {
-            default -> {
-                return new ArrayList<>(Bukkit.getRecipesFor(item));
-            }
             case FIREWORK_STAR -> {
                 return getFireworkStarRecipes();
             }
             case SUSPICIOUS_STEW -> {
                 return getSuspiciousStewRecipes();
+            }
+            default -> {
+                return new ArrayList<>(Bukkit.getRecipesFor(item));
             }
         }
 

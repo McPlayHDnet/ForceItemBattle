@@ -1,5 +1,7 @@
 package forceitembattle.util;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.*;
@@ -30,8 +32,10 @@ public class InventoryBuilder implements InventoryHolder {
 
     private String title;
 
+    @Setter
     private Predicate<Player> closeFilter;
 
+    @Getter
     private Player player;
 
     public InventoryBuilder(int size) {
@@ -125,10 +129,6 @@ public class InventoryBuilder implements InventoryHolder {
         }
     }
 
-    public void setCloseFilter(Predicate<Player> closeFilter) {
-        this.closeFilter = closeFilter;
-    }
-
     public void addOpenHandler(Consumer<InventoryOpenEvent> openHandler) {
         this.openHandlers.add(openHandler);
     }
@@ -179,19 +179,9 @@ public class InventoryBuilder implements InventoryHolder {
                 || (i > size - 11 && i < size - 7) || i > size - 3).toArray();
     }
 
-    /* TODO:
-    public int[] animateBorder() {
-
-    }
-    */
-
     @Override
     public @Nonnull Inventory getInventory() {
         return this.inventory;
-    }
-
-    public Player getPlayer() {
-        return this.player;
     }
 
     public void handleOpen(InventoryOpenEvent e) {

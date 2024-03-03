@@ -9,7 +9,7 @@ import org.bukkit.entity.Player;
 
 public class CommandStats implements CommandExecutor {
 
-    private ForceItemBattle forceItemBattle;
+    private final ForceItemBattle forceItemBattle;
 
     public CommandStats(ForceItemBattle forceItemBattle) {
         this.forceItemBattle = forceItemBattle;
@@ -20,8 +20,8 @@ public class CommandStats implements CommandExecutor {
     public boolean onCommand(CommandSender commandSender, Command command, String s, String[] strings) {
         if (!(commandSender instanceof Player player)) return false;
 
-        if(strings.length == 0) {
-            if(!this.forceItemBattle.getStatsManager().playerExists(player.getName())) {
+        if (strings.length == 0) {
+            if (!this.forceItemBattle.getStatsManager().playerExists(player.getName())) {
                 player.sendMessage("You dont have stats... I dont know why, create a issue");
                 return false;
             }
@@ -30,8 +30,8 @@ public class CommandStats implements CommandExecutor {
             return false;
         }
 
-        if(strings.length == 1) {
-            if(!this.forceItemBattle.getStatsManager().playerExists(strings[0])) {
+        if (strings.length == 1) {
+            if (!this.forceItemBattle.getStatsManager().playerExists(strings[0])) {
                 player.sendMessage("§e" + strings[0] + " §cdoes not exist");
                 return false;
             }
@@ -41,8 +41,8 @@ public class CommandStats implements CommandExecutor {
             return false;
         }
 
-        if(player.isOp()) {
-            if(strings.length == 2) {
+        if (player.isOp()) {
+            if (strings.length == 2) {
                 if (strings[0].equalsIgnoreCase("reset")) {
                     if (!this.forceItemBattle.getStatsManager().playerExists(strings[1])) {
                         player.sendMessage("§e" + strings[1] + " §cdoes not exist");

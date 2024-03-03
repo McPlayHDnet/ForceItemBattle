@@ -9,7 +9,7 @@ import org.bukkit.entity.Player;
 
 public class CommandStopTimer implements CommandExecutor {
 
-    private ForceItemBattle forceItemBattle;
+    private final ForceItemBattle forceItemBattle;
 
     public CommandStopTimer(ForceItemBattle forceItemBattle) {
         this.forceItemBattle = forceItemBattle;

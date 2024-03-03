@@ -8,7 +8,7 @@ public enum PlayerStat {
     GAMES_WON(true),
     HIGHEST_SCORE(true);
 
-    private boolean isInLeaderboard;
+    private final boolean isInLeaderboard;
 
     PlayerStat(boolean isInLeaderboard) {
         this.isInLeaderboard = isInLeaderboard;

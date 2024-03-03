@@ -12,7 +12,7 @@ import org.bukkit.inventory.ItemStack;
 
 public class CommandInfo implements CommandExecutor {
 
-    private ForceItemBattle forceItemBattle;
+    private final ForceItemBattle forceItemBattle;
 
     public CommandInfo(ForceItemBattle forceItemBattle) {
         this.forceItemBattle = forceItemBattle;
@@ -25,9 +25,9 @@ public class CommandInfo implements CommandExecutor {
 
         ItemStack item = null;
         if (this.forceItemBattle.getGamemanager().isMidGame()) {
-            if(this.forceItemBattle.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
+            if (this.forceItemBattle.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
                 ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
-                item = new ItemStack(forceItemPlayer.currentMaterial());
+                item = new ItemStack(forceItemPlayer.getCurrentMaterial());
             } else {
                 player.sendMessage("§cYou are not playing.");
             }
@@ -35,7 +35,7 @@ public class CommandInfo implements CommandExecutor {
             item = player.getInventory().getItemInMainHand();
         }
 
-        if(item == null) return false;
+        if (item == null) return false;
 
         if (item.getType() == Material.AIR) {
             player.sendMessage("§cYou need to hold an item in your hand!");
@@ -51,8 +51,6 @@ public class CommandInfo implements CommandExecutor {
                 throw new NullPointerException("The item description is either null or empty");
             }
         }
-
-
 
         this.forceItemBattle.getRecipeManager().createRecipeViewer(player, item);
 

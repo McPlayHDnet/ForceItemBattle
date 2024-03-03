@@ -12,11 +12,8 @@ import java.util.List;
 
 public class CommandBed implements CommandExecutor {
 
-    private ForceItemBattle forceItemBattle;
-
     public CommandBed(ForceItemBattle forceItemBattle) {
-        this.forceItemBattle = forceItemBattle;
-        this.forceItemBattle.getCommand("bed").setExecutor(this);
+        forceItemBattle.getCommand("bed").setExecutor(this);
     }
 
     @Override

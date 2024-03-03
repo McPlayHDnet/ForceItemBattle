@@ -3,6 +3,7 @@ package forceitembattle.manager;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.DescriptionItem;
+import lombok.Getter;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 
@@ -12,7 +13,7 @@ import java.util.stream.Stream;
 
 public class ItemDifficultiesManager {
 
-    private ForceItemBattle forceItemBattle;
+    private final ForceItemBattle forceItemBattle;
 
     private final List<Material> easy;
     private final List<Material> medium;
@@ -21,15 +22,16 @@ public class ItemDifficultiesManager {
     private final List<Material> netherItems;
     private final List<Material> endItems;
 
-    private final HashMap<Material, DescriptionItem> descriptionItems;
+    private static final Random random = new Random();
+
+    @Getter
+    private final Map<Material, DescriptionItem> descriptionItems;
 
     public Material getEasyMaterial() {
-        Random random = new Random();
         return easy.get(random.nextInt(easy.size()));
     }
 
     public Material getMediumMaterial() {
-        Random random = new Random();
         List<Material> newList = Stream.of(easy, medium)
                 .flatMap(List::stream)
                 .toList();
@@ -37,7 +39,6 @@ public class ItemDifficultiesManager {
     }
 
     public Material getHardMaterial() {
-        Random random = new Random();
         List<Material> items = new ArrayList<>(Stream.of(easy, medium, hard)
                 .flatMap(List::stream)
                 .toList());
@@ -49,10 +50,6 @@ public class ItemDifficultiesManager {
 
     public void toggleNetherItems() {
         forceItemBattle.getSettings().setSettingEnabled(GameSetting.NETHER, !forceItemBattle.getSettings().isSettingEnabled(GameSetting.NETHER));
-    }
-
-    public HashMap<Material, DescriptionItem> getDescriptionItems() {
-        return descriptionItems;
     }
 
     public boolean isItemInDescriptionList(Material material) {
@@ -114,7 +111,7 @@ public class ItemDifficultiesManager {
     public ItemDifficultiesManager(ForceItemBattle forceItemBattle) {
         this.forceItemBattle = forceItemBattle;
 
-        this.descriptionItems = new HashMap<>();
+        this.descriptionItems = new EnumMap<>(Material.class);
         this.netherItems = List.of(
                 Material.ANCIENT_DEBRIS,
                 Material.SKULL_BANNER_PATTERN,

@@ -12,7 +12,7 @@ import java.util.List;
 
 public class CommandSpawn implements CommandExecutor {
 
-    private ForceItemBattle forceItemBattle;
+    private final ForceItemBattle forceItemBattle;
 
     public CommandSpawn(ForceItemBattle forceItemBattle) {
         this.forceItemBattle = forceItemBattle;

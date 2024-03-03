@@ -1,47 +1,28 @@
 package forceitembattle.event;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.ListResourceBundle;
-
+@Getter
 public class FoundItemEvent extends Event {
 
     private static final HandlerList HANDLER_LIST = new HandlerList();
 
-    private Player player;
+    private final Player player;
+    @Setter
     private ItemStack foundItem;
-    private boolean skipped, backToBack;
+    @Setter
+    private boolean skipped;
+    @Setter
+    private boolean backToBack;
 
-    public FoundItemEvent(Player player) {this.player = player;}
-
-    public Player getPlayer() {
-        return player;
+    public FoundItemEvent(Player player) {
+        this.player = player;
     }
-
-    public ItemStack getFoundItem() {
-        return foundItem;
-    }
-
-    public void setFoundItem(ItemStack foundItem) {
-        this.foundItem = foundItem;
-    }
-
-    public void skipped(boolean skipped) {
-        this.skipped = skipped;
-    }
-
-    public boolean isSkipped() {
-        return skipped;
-    }
-
-    public void backToBack(boolean backToBack) {
-        this.backToBack = backToBack;
-    }
-
-    public boolean isBackToBack() { return backToBack; }
 
     @Override
     public HandlerList getHandlers() {

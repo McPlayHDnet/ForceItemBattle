@@ -67,7 +67,7 @@ public class PvPListener implements Listener {
             return;
         }
 
-        // Disable Fire damage if pvp disabled and there's another player nearby
+        // Disable Fire damage if pvp disabled and there's another getPlayer nearby
         if (event.getCause() == EntityDamageEvent.DamageCause.FIRE || event.getCause() == EntityDamageEvent.DamageCause.FIRE_TICK || event.getCause() == EntityDamageEvent.DamageCause.LAVA) {
             for (Entity nearby : event.getEntity().getNearbyEntities(6, 6, 6)) {
                 if (!(nearby instanceof Player)) {
