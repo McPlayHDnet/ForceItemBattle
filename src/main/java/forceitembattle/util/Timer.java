@@ -22,10 +22,10 @@ public class Timer {
 
     private final ForceItemBattle forceItemBattle;
     @Getter
+    private final Map<UUID, BossBar> bossBar = new HashMap<>();
+    @Getter
     @Setter
     private int time;
-    @Getter
-    private final Map<UUID, BossBar> bossBar = new HashMap<>();
 
     public Timer(ForceItemBattle forceItemBattle) {
         this.forceItemBattle = forceItemBattle;

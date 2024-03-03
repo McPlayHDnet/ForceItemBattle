@@ -2,7 +2,6 @@ package forceitembattle.commands;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.util.InvSettings;
-import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -19,7 +18,7 @@ public class CommandSettings implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender commandSender, Command command, String s, String[] strings) {
-        if(commandSender instanceof Player player) {
+        if (commandSender instanceof Player player) {
             new InvSettings(this.forceItemBattle, null).open(player);
         }
         return false;

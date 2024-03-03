@@ -11,6 +11,8 @@ import java.util.UUID;
 @Getter
 public class RecipeViewer {
 
+    private final int pages;
+    private final List<Recipe> recipes;
     @Setter
     private UUID uuid;
     @Setter
@@ -19,9 +21,6 @@ public class RecipeViewer {
     private Recipe recipe;
     @Setter
     private int currentRecipeIndex;
-    private final int pages;
-
-    private final List<Recipe> recipes;
 
     public RecipeViewer(List<Recipe> recipes) {
         this.recipes = recipes;

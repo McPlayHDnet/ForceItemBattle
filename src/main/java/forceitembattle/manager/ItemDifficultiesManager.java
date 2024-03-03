@@ -13,100 +13,15 @@ import java.util.stream.Stream;
 
 public class ItemDifficultiesManager {
 
+    private static final Random random = new Random();
     private final ForceItemBattle forceItemBattle;
-
     private final List<Material> easy;
     private final List<Material> medium;
     private final List<Material> hard;
-
     private final List<Material> netherItems;
     private final List<Material> endItems;
-
-    private static final Random random = new Random();
-
     @Getter
     private final Map<Material, DescriptionItem> descriptionItems;
-
-    public Material getEasyMaterial() {
-        return easy.get(random.nextInt(easy.size()));
-    }
-
-    public Material getMediumMaterial() {
-        List<Material> newList = Stream.of(easy, medium)
-                .flatMap(List::stream)
-                .toList();
-        return newList.get(random.nextInt(newList.size()));
-    }
-
-    public Material getHardMaterial() {
-        List<Material> items = new ArrayList<>(Stream.of(easy, medium, hard)
-                .flatMap(List::stream)
-                .toList());
-
-        filterDisabledItems(items);
-
-        return items.get(random.nextInt(items.size()));
-    }
-
-    public void toggleNetherItems() {
-        forceItemBattle.getSettings().setSettingEnabled(GameSetting.NETHER, !forceItemBattle.getSettings().isSettingEnabled(GameSetting.NETHER));
-    }
-
-    public boolean isItemInDescriptionList(Material material) {
-        return this.getDescriptionItems().containsKey(material);
-    }
-
-    public boolean itemHasDescription(Material material) {
-        return this.getDescriptionItems().get(material) != null;
-    }
-
-    public List<String> getDescriptionItemLines(Material material) {
-        List<String> lines = null;
-        if(this.isItemInDescriptionList(material)) {
-            if (this.itemHasDescription(material)) {
-                lines = this.getDescriptionItems().get(material)
-                        .lines()
-                        .stream()
-                        .map(line -> ChatColor.translateAlternateColorCodes('&', line))
-                        .toList();
-                // lines = this.getDescriptionItems().get(material).lines();
-            } else {
-                throw new NullPointerException(material.name() + " does not have a description");
-            }
-        }
-        return lines;
-    }
-
-    /**
-     * @return Copy of all items from the settings
-     */
-    public Set<Material> getAllItems() {
-        Set<Material> items = Stream.of(this.easy, this.medium, this.hard)
-                .flatMap(List::stream).collect(Collectors.toSet());
-
-        filterDisabledItems(items);
-
-        return items;
-    }
-
-    /**
-     * Filter out items disabled by the settings
-     */
-    private void filterDisabledItems(Collection<Material> items) {
-        if (!forceItemBattle.getSettings().isSettingEnabled(GameSetting.NETHER)) {
-            this.netherItems.forEach(items::remove);
-
-            // End items cannot be accessed without nether (unless you somehow find full portal lol)
-            this.endItems.forEach(items::remove);
-
-        } else if (!forceItemBattle.getSettings().isSettingEnabled(GameSetting.END)) {
-            this.endItems.forEach(items::remove);
-        }
-    }
-
-    public boolean itemInList(Material material) {
-        return this.getAllItems().contains(material);
-    }
 
     public ItemDifficultiesManager(ForceItemBattle forceItemBattle) {
         this.forceItemBattle = forceItemBattle;
@@ -1328,5 +1243,86 @@ public class ItemDifficultiesManager {
                 Material.WILD_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Material.YELLOW_CANDLE,
                 Material.YELLOW_SHULKER_BOX);
+    }
+
+    public Material getEasyMaterial() {
+        return easy.get(random.nextInt(easy.size()));
+    }
+
+    public Material getMediumMaterial() {
+        List<Material> newList = Stream.of(easy, medium)
+                .flatMap(List::stream)
+                .toList();
+        return newList.get(random.nextInt(newList.size()));
+    }
+
+    public Material getHardMaterial() {
+        List<Material> items = new ArrayList<>(Stream.of(easy, medium, hard)
+                .flatMap(List::stream)
+                .toList());
+
+        filterDisabledItems(items);
+
+        return items.get(random.nextInt(items.size()));
+    }
+
+    public void toggleNetherItems() {
+        forceItemBattle.getSettings().setSettingEnabled(GameSetting.NETHER, !forceItemBattle.getSettings().isSettingEnabled(GameSetting.NETHER));
+    }
+
+    public boolean isItemInDescriptionList(Material material) {
+        return this.getDescriptionItems().containsKey(material);
+    }
+
+    public boolean itemHasDescription(Material material) {
+        return this.getDescriptionItems().get(material) != null;
+    }
+
+    public List<String> getDescriptionItemLines(Material material) {
+        List<String> lines = null;
+        if (this.isItemInDescriptionList(material)) {
+            if (this.itemHasDescription(material)) {
+                lines = this.getDescriptionItems().get(material)
+                        .lines()
+                        .stream()
+                        .map(line -> ChatColor.translateAlternateColorCodes('&', line))
+                        .toList();
+                // lines = this.getDescriptionItems().get(material).lines();
+            } else {
+                throw new NullPointerException(material.name() + " does not have a description");
+            }
+        }
+        return lines;
+    }
+
+    /**
+     * @return Copy of all items from the settings
+     */
+    public Set<Material> getAllItems() {
+        Set<Material> items = Stream.of(this.easy, this.medium, this.hard)
+                .flatMap(List::stream).collect(Collectors.toSet());
+
+        filterDisabledItems(items);
+
+        return items;
+    }
+
+    /**
+     * Filter out items disabled by the settings
+     */
+    private void filterDisabledItems(Collection<Material> items) {
+        if (!forceItemBattle.getSettings().isSettingEnabled(GameSetting.NETHER)) {
+            this.netherItems.forEach(items::remove);
+
+            // End items cannot be accessed without nether (unless you somehow find full portal lol)
+            this.endItems.forEach(items::remove);
+
+        } else if (!forceItemBattle.getSettings().isSettingEnabled(GameSetting.END)) {
+            this.endItems.forEach(items::remove);
+        }
+    }
+
+    public boolean itemInList(Material material) {
+        return this.getAllItems().contains(material);
     }
 }

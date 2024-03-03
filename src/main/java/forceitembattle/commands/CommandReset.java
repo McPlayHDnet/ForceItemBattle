@@ -20,7 +20,7 @@ public class CommandReset implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         Bukkit.getOnlinePlayers().forEach(player -> player.kickPlayer(ChatColor.DARK_RED + "Server Reset"));
 
-        this.forceItemBattle.getConfig().set("isReset" , true);
+        this.forceItemBattle.getConfig().set("isReset", true);
         this.forceItemBattle.saveConfig();
         Bukkit.spigot().restart();
         return false;

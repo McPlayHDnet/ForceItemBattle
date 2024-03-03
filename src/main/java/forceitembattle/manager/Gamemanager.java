@@ -22,14 +22,12 @@ import java.util.stream.Collectors;
 
 public class Gamemanager {
 
+    private static final Material JOKER_MATERIAL = Material.BARRIER;
     private final ForceItemBattle forceItemBattle;
-
     @Getter
     private final Map<UUID, ForceItemPlayer> forceItemPlayerMap;
-
     @Getter
     private final Map<UUID, Map<Integer, Map<Integer, ItemStack>>> savedInventory = new HashMap<>();
-
     @Getter
     @Setter
     private GameState currentGameState;
@@ -42,6 +40,25 @@ public class Gamemanager {
         this.currentGamePreset = null;
 
         this.forceItemPlayerMap = new HashMap<>();
+    }
+
+    public static Material getJokerMaterial() {
+        return JOKER_MATERIAL;
+    }
+
+    public static ItemStack getJokers(int amount) {
+        return new ItemBuilder(JOKER_MATERIAL)
+                .setAmount(amount)
+                .setDisplayName("§8» §5Skip")
+                .getItemStack();
+    }
+
+    public static boolean isJoker(Material material) {
+        return material == Material.BARRIER;
+    }
+
+    public static boolean isJoker(ItemStack itemStack) {
+        return isJoker(itemStack.getType());
     }
 
     public void addPlayer(Player player, ForceItemPlayer forceItemPlayer) {
@@ -60,7 +77,7 @@ public class Gamemanager {
     public String formatMaterialName(String material) {
         String materialName = WordUtils.capitalizeFully(material.replace("_", " "));
         String[] wordsToIgnore = {"and", "with", "of", "on", "a", "the"};
-        for(String word : wordsToIgnore) {
+        for (String word : wordsToIgnore) {
             materialName = materialName.replace(WordUtils.capitalize(word), word.toLowerCase());
         }
         return materialName.replace(" ", "_");
@@ -121,8 +138,8 @@ public class Gamemanager {
                 return o1.getValue().getCurrentScore().compareTo(o2.getValue().getCurrentScore());
             } else {
                 return o2.getValue().getCurrentScore().compareTo(o1.getValue().getCurrentScore()) == 0
-                ? o2.getKey().compareTo(o1.getKey())
-                : o2.getValue().getCurrentScore().compareTo(o1.getValue().getCurrentScore());
+                        ? o2.getKey().compareTo(o1.getKey())
+                        : o2.getValue().getCurrentScore().compareTo(o1.getValue().getCurrentScore());
             }
         });
         return list.stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> b, LinkedHashMap::new));
@@ -155,26 +172,5 @@ public class Gamemanager {
 
     public GamePreset currentGamePreset() {
         return currentGamePreset;
-    }
-
-    private static final Material JOKER_MATERIAL = Material.BARRIER;
-
-    public static Material getJokerMaterial() {
-        return JOKER_MATERIAL;
-    }
-
-    public static ItemStack getJokers(int amount) {
-        return new ItemBuilder(JOKER_MATERIAL)
-                .setAmount(amount)
-                .setDisplayName("§8» §5Skip")
-                .getItemStack();
-    }
-
-    public static boolean isJoker(Material material) {
-        return material == Material.BARRIER;
-    }
-
-    public static boolean isJoker(ItemStack itemStack) {
-        return isJoker(itemStack.getType());
     }
 }

@@ -20,7 +20,7 @@ public class InvSettingsPresets extends InventoryBuilder {
     public static HashMap<UUID, GamePreset> namingPhase = new HashMap<>();
 
     public InvSettingsPresets(ForceItemBattle forceItemBattle, GamePreset gamePreset, GameSettings gameSettings) {
-        super(9*5, "§8» §3Settings §8● §7Presets");
+        super(9 * 5, "§8» §3Settings §8● §7Presets");
 
         /* BORDER */
         this.setItems(0, 8, new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE).setDisplayName("§f").addItemFlags(ItemFlag.values()).getItemStack());
@@ -53,7 +53,7 @@ public class InvSettingsPresets extends InventoryBuilder {
 
             /* Settings-Preset */
             lore.add("");
-            for(GameSetting defaultGameSettings : GameSetting.values()) {
+            for (GameSetting defaultGameSettings : GameSetting.values()) {
                 lore.add("  §8● §7" + defaultGameSettings.displayName() + " §8» " + (gamePreset.getGameSettings().contains(defaultGameSettings) ? "§2✔" : "§4✘"));
             }
             lore.add("");
@@ -73,7 +73,7 @@ public class InvSettingsPresets extends InventoryBuilder {
                     .setDisplayName("§8● §aJoker §8» §3" + gamePreset.getJokers())
                     .getItemStack(), event -> {
 
-                if(gamePreset.getJokers() == 64 || gamePreset.getJokers() == 0) {
+                if (gamePreset.getJokers() == 64 || gamePreset.getJokers() == 0) {
                     this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);
                     this.getPlayer().sendMessage("§cYou reached the end of possible getJokers.");
                     return;

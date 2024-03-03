@@ -6,7 +6,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.GameRule;
 import org.bukkit.configuration.ConfigurationSection;
 
-import java.util.*;
+import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 public class GameSettings {
@@ -29,11 +29,11 @@ public class GameSettings {
         this.plugin.getConfig().addDefault("standard.getJokers", 3);
         this.plugin.getConfig().addDefault("standard.getBackpackSize", 27);
 
-        if(!this.plugin.getConfig().isConfigurationSection("presets")) {
+        if (!this.plugin.getConfig().isConfigurationSection("presets")) {
             this.plugin.getConfig().createSection("presets");
         }
 
-        if(this.plugin.getConfig().isConfigurationSection("presets")) {
+        if (this.plugin.getConfig().isConfigurationSection("presets")) {
             this.plugin.getConfig().getConfigurationSection("presets").getKeys(false).forEach(keys -> {
                 ConfigurationSection configurationSection = this.plugin.getConfig().getConfigurationSection("presets").getConfigurationSection(keys);
                 GamePreset gamePreset = new GamePreset();
@@ -43,8 +43,8 @@ public class GameSettings {
                 gamePreset.setBackpackSize(configurationSection.getInt("getBackpackSize"));
 
                 configurationSection.getConfigurationSection("settings").getKeys(false).forEach(settingKeys -> {
-                    for(GameSetting gameSetting : GameSetting.values()) {
-                        if(gameSetting.configPath().equals(settingKeys)) {
+                    for (GameSetting gameSetting : GameSetting.values()) {
+                        if (gameSetting.configPath().equals(settingKeys)) {
                             gamePreset.getGameSettings().add(gameSetting);
                         }
                     }
@@ -61,17 +61,17 @@ public class GameSettings {
     }
 
     public boolean isSettingEnabled(GameSetting gameSetting) {
-        if(this.plugin.getGamemanager().currentGamePreset() != null) {
+        if (this.plugin.getGamemanager().currentGamePreset() != null) {
             return this.isSettingEnabledInPreset(this.plugin.getGamemanager().currentGamePreset(), gameSetting);
         }
         return this.plugin.getConfig().getBoolean(gameSetting.configPath());
     }
 
     public void setSettingEnabled(GameSetting gameSetting, boolean enabled) {
-        if(gameSetting == GameSetting.KEEP_INVENTORY)
+        if (gameSetting == GameSetting.KEEP_INVENTORY)
             Bukkit.getWorlds().forEach(worlds -> worlds.setGameRule(GameRule.KEEP_INVENTORY, enabled));
 
-        if(gameSetting == GameSetting.FASTER_RANDOM_TICK)
+        if (gameSetting == GameSetting.FASTER_RANDOM_TICK)
             // 3 is the default random tick speed. 40 is much faster version
             Bukkit.getWorlds().forEach(worlds -> worlds.setGameRule(GameRule.RANDOM_TICK_SPEED, enabled ? 40 : 3));
 
@@ -83,14 +83,14 @@ public class GameSettings {
     public void addGamePreset(GamePreset gamePreset) {
         ConfigurationSection configurationSection = this.plugin.getConfig().getConfigurationSection("presets");
 
-        if(configurationSection != null) {
+        if (configurationSection != null) {
             ConfigurationSection presetSection = configurationSection.createSection(gamePreset.getPresetName());
 
             presetSection.set("getCountdown", gamePreset.getCountdown());
             presetSection.set("getJokers", gamePreset.getJokers());
             presetSection.set("getBackpackSize", gamePreset.getBackpackSize());
 
-            for(GameSetting gameSetting : GameSetting.values()) {
+            for (GameSetting gameSetting : GameSetting.values()) {
                 presetSection.set(gameSetting.configPath(), gamePreset.getGameSettings().contains(gameSetting));
             }
         }

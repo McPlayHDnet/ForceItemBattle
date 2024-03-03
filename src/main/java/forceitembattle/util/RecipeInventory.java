@@ -14,14 +14,10 @@ import java.util.List;
 
 public class RecipeInventory extends InventoryBuilder {
 
-    private static final int RESULT_SLOT = 25;
-    private static final int STATION_SLOT = 23;
-    private static final int WORKBENCH_FIRST_ITEM_SLOT = 10;
-    private static final int SMITHING_FIRST_ITEM_SLOT = 19;
-    private static final int OTHER_FIRST_ITEM_SLOT = 20;
     public static final int NEXT_RECIPE_ITEM_SLOT = 8;
     public static final int PREVIOUS_RECIPE_ITEM_SLOT = 0;
-
+    private static final int RESULT_SLOT = 25;
+    private static final int STATION_SLOT = 23;
     /**
      * Slots that contain recipe items, the station and result items.
      */
@@ -31,10 +27,9 @@ public class RecipeInventory extends InventoryBuilder {
             28, 29, 30,
             STATION_SLOT, RESULT_SLOT
     );
-
-    private static String materialName(Material type) {
-        return WordUtils.capitalize(type.name().replace("_", " ").toLowerCase());
-    }
+    private static final int WORKBENCH_FIRST_ITEM_SLOT = 10;
+    private static final int SMITHING_FIRST_ITEM_SLOT = 19;
+    private static final int OTHER_FIRST_ITEM_SLOT = 20;
 
     public RecipeInventory(ForceItemBattle forceItemBattle, RecipeViewer recipeViewer, Player player) {
         super(9 * 5, "§8● §3" +
@@ -219,13 +214,13 @@ public class RecipeInventory extends InventoryBuilder {
                 if (itemStack == null) {
                     return;
                 }
-                if(Bukkit.getRecipesFor(itemStack).isEmpty()) {
+                if (Bukkit.getRecipesFor(itemStack).isEmpty()) {
                     player.sendMessage("§cThere is no recipe for this item. Just find it lol");
                     return;
                 }
                 recipeViewer.setCurrentRecipeIndex(0);
                 recipeViewer.setItemStack(itemStack);
-                if(Bukkit.getRecipesFor(recipeViewer.getItemStack()).size() > 1) {
+                if (Bukkit.getRecipesFor(recipeViewer.getItemStack()).size() > 1) {
                     recipeViewer.setRecipe(Bukkit.getRecipesFor(recipeViewer.getItemStack()).get(recipeViewer.getCurrentRecipeIndex()));
                 } else {
                     recipeViewer.setRecipe(Bukkit.getRecipesFor(recipeViewer.getItemStack()).get(0));
@@ -243,6 +238,10 @@ public class RecipeInventory extends InventoryBuilder {
                 forceItemBattle.getRecipeManager().handleRecipeClose(player);
             }
         });
+    }
+
+    private static String materialName(Material type) {
+        return WordUtils.capitalize(type.name().replace("_", " ").toLowerCase());
     }
 
     private ItemStack choiceWithLore(RecipeChoice.MaterialChoice materialChoice, RecipeViewer recipeViewer) {

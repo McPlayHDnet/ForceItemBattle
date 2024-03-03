@@ -2,8 +2,6 @@ package forceitembattle.settings;
 
 import org.bukkit.Material;
 
-import javax.annotation.Nullable;
-
 public enum GameSetting {
 
     TEAM("Teams", "isTeamGame", false, Material.RED_BED, 33),
@@ -24,7 +22,7 @@ public enum GameSetting {
 
     GameSetting(String displayName, String configPath, boolean defaultValue, Material defaultMaterial, int defaultSlot) {
         this.displayName = displayName;
-        this.configPath = "settings." +configPath;
+        this.configPath = "settings." + configPath;
         this.defaultValue = defaultValue;
         this.defaultMaterial = defaultMaterial;
         this.defaultSlot = defaultSlot;

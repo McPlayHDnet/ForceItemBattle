@@ -1,7 +1,6 @@
 package forceitembattle.commands;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.util.ForceItemPlayerStats;
 import forceitembattle.util.PlayerStat;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;

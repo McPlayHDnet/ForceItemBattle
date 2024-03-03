@@ -22,7 +22,7 @@ public class CommandResume implements CommandExecutor {
     public boolean onCommand(CommandSender commandSender, Command command, String s, String[] strings) {
         if (!(commandSender instanceof Player player)) return false;
 
-        if(!this.forceItemBattle.getGamemanager().isPausedGame()) {
+        if (!this.forceItemBattle.getGamemanager().isPausedGame()) {
             player.sendMessage("§cThe timer is not paused!");
             return false;
         }

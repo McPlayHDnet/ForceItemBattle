@@ -13,10 +13,10 @@ import java.util.List;
 public class ForceItemPlayer {
 
     @Getter
+    private final List<ForceItem> foundItems;
+    @Getter
     @Setter
     private Player player;
-    @Getter
-    private final List<ForceItem> foundItems;
     @Getter
     @Setter
     private Material currentMaterial;
@@ -26,6 +26,7 @@ public class ForceItemPlayer {
     @Getter
     @Setter
     private Integer currentScore;
+    private ArmorStand itemDisplay;
 
     public ForceItemPlayer(Player player, List<ForceItem> foundItems, Material currentMaterial, int remainingJokers, Integer currentScore) {
         this.player = player;
@@ -42,8 +43,6 @@ public class ForceItemPlayer {
     public Material getPreviousMaterial() {
         return this.foundItems.get(this.foundItems.size() - 1).material();
     }
-
-    private ArmorStand itemDisplay;
 
     public void createItemDisplay() {
         this.itemDisplay = player.getWorld().spawn(player.getLocation().add(0, 2, 0), ArmorStand.class);

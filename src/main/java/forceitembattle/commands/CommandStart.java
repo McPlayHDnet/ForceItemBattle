@@ -74,6 +74,7 @@ public class CommandStart implements CommandExecutor {
 
         new BukkitRunnable() {
             int seconds = 11;
+
             @Override
             public void run() {
                 seconds--;

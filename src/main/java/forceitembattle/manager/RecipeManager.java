@@ -12,20 +12,14 @@ import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.RecipeChoice;
 import org.bukkit.inventory.ShapelessRecipe;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class RecipeManager {
 
-    private final ForceItemBattle forceItemBattle;
-
-    private final HashMap<UUID, RecipeViewer> recipeViewerMap;
     public final Map<UUID, Boolean> ignoreCloseHandler;
     public final Map<UUID, Runnable> closeHandlers;
+    private final ForceItemBattle forceItemBattle;
+    private final HashMap<UUID, RecipeViewer> recipeViewerMap;
 
     public RecipeManager(ForceItemBattle forceItemBattle) {
         this.forceItemBattle = forceItemBattle;

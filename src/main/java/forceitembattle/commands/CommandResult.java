@@ -2,7 +2,10 @@ package forceitembattle.commands;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.util.*;
+import forceitembattle.util.FinishInventory;
+import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.util.ForceItemPlayerStats;
+import forceitembattle.util.PlayerStat;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;

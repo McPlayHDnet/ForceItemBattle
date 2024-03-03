@@ -15,7 +15,7 @@ import java.util.List;
 public class InvPresetMenu extends InventoryBuilder {
 
     public InvPresetMenu(ForceItemBattle forceItemBattle, GameSettings gameSettings) {
-        super(9*5, "§8» §3Settings §8● §7Presets");
+        super(9 * 5, "§8» §3Settings §8● §7Presets");
 
         /* BORDER */
         this.setItems(0, 8, new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE).setDisplayName("§f").addItemFlags(ItemFlag.values()).getItemStack());
@@ -39,7 +39,7 @@ public class InvPresetMenu extends InventoryBuilder {
                 lore.add("  §8● §7Joker §8» §a" + preset.getJokers());
                 lore.add("  §8● §7Backpack size §8» §a" + preset.getBackpackSize() + " slots");
                 lore.add("");
-                for(GameSetting gameSetting : GameSetting.values()) {
+                for (GameSetting gameSetting : GameSetting.values()) {
                     lore.add("  §8● §7" + gameSetting.displayName() + " §8» " + (gameSettings.isSettingEnabledInPreset(preset, gameSetting) ? "§2✔" : "§4✘"));
                 }
                 lore.add("");

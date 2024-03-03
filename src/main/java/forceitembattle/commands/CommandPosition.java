@@ -13,14 +13,13 @@ import java.util.Arrays;
 
 public class CommandPosition implements CommandExecutor {
 
+    private static final String prefix = "§8» §6Position §8┃ ";
     private final ForceItemBattle plugin;
 
     public CommandPosition(ForceItemBattle plugin) {
         this.plugin = plugin;
         this.plugin.getCommand("pos").setExecutor(this);
     }
-
-    private static final String prefix = "§8» §6Position §8┃ ";
 
     @Override
     public boolean onCommand(CommandSender commandSender, Command command, String s, String[] args) {

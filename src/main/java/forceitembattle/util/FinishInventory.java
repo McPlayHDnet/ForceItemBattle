@@ -35,11 +35,10 @@ public class FinishInventory extends InventoryBuilder {
         if (firstTime) {
             new BukkitRunnable() {
 
+                final Map<Integer, ItemStack> slots = new HashMap<>();
                 int startSlot = 10;
                 int placedItems = -1;
                 int pagesAmount = 0;
-
-                final Map<Integer, ItemStack> slots = new HashMap<>();
 
                 @Override
                 public void run() {
