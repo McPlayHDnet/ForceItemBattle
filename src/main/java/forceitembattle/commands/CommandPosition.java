@@ -4,6 +4,7 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.util.Scheduler;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -54,14 +55,14 @@ public class CommandPosition implements CommandExecutor {
         Location playerLocation = player.getLocation();
         this.plugin.getPositionManager().createPosition(positionName, playerLocation);
         Bukkit.broadcastMessage(
-                prefix + "§a" + player.getName() + " §7added location of §3" + positionName + "§7 at " + locationToString(playerLocation)
+                prefix + "§a" + player.getName() + " §7added location of §3" + positionName + "§7 at " + locationToString(playerLocation) + " §7in the " + getWorldName(playerLocation.getWorld())
         );
     }
 
     private void showPosition(Player player, String positionName) {
         Location positionLocation = this.plugin.getPositionManager().getPosition(positionName);
         player.sendMessage(
-                prefix + "§3" + positionName + "§7located at " + locationToString(positionLocation) + distance(player.getLocation(), positionLocation)
+                prefix + "§3" + positionName + " §7located at " + locationToString(positionLocation) + distance(player.getLocation(), positionLocation)
         );
     }
 
@@ -73,7 +74,7 @@ public class CommandPosition implements CommandExecutor {
 
         player.sendMessage(prefix + "§fAll saved locations");
         this.plugin.getPositionManager().getAllPositions().forEach((name, location) -> {
-            player.sendMessage("§8» §3" + name + "§7located at " + locationToString(location) + distance(player.getLocation(), location));
+            player.sendMessage("§8» §3" + name + " §7located at " + locationToString(location) + distance(player.getLocation(), location));
         });
     }
 
@@ -101,10 +102,41 @@ public class CommandPosition implements CommandExecutor {
     // Utility stuff
 
     private String locationToString(Location location) {
+        if (location.getWorld() == null) {
+            return "§cunknown location";
+        }
+
         return "§3" + location.getBlockX() + "§7, §3" + location.getBlockY() + "§7, §3" + location.getBlockZ();
     }
 
-    private String distance(Location first, Location second) {
-        return " §3(" + (int) first.distance(second) + " blocks away)";
+    private String distance(Location playerLocation, Location destination) {
+        if (playerLocation.getWorld() == null || destination.getWorld() == null) {
+            return " §c(unknown)";
+        }
+
+        if (!playerLocation.getWorld().equals(destination.getWorld())) {
+            return " §7in the " + getWorldName(destination.getWorld());
+        }
+
+
+        return " §a(" + (int) playerLocation.distance(destination) + " blocks away)";
+    }
+
+    private String getWorldName(World world) {
+        if (world == null) {
+            return "§8unknown";
+        }
+
+        String worldName = world.getName();
+
+        if (worldName.contains("nether")) {
+            return "§cnether";
+        }
+
+        if (worldName.contains("end")) {
+            return "§eend";
+        }
+
+        return "§aoverworld";
     }
 }

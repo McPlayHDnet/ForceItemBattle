@@ -12,7 +12,7 @@ public enum GameSetting {
     BACKPACK("Backpack", "backpack", true, Material.BUNDLE, 31),
     PVP("PvP", "pvp", false, Material.IRON_SWORD, 28),
     NETHER("Nether", "nether", true, Material.NETHERRACK, 23),
-    END("End", "end", true, Material.END_STONE, 24),
+    EXTREME("Extreme", "extreme", true, Material.END_STONE, 24),
     FASTER_RANDOM_TICK("Faster plants growth & decay", "fasterRandomTick", false, Material.CACTUS, 29),
     STATS("Stats", "stats", true, Material.WRITABLE_BOOK, 34);
 
