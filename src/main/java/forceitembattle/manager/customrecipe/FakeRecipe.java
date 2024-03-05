@@ -95,7 +95,7 @@ public enum FakeRecipe {
                 .build("fib:stripped", new ItemStack(item.getType()));
     }),
 
-    MUD(Material.DIRT, item -> RecipeBuilder.newBuilder(ToolRecipe::new)
+    MUD(Material.MUD, item -> RecipeBuilder.newBuilder(ToolRecipe::new)
             .apply(recipe -> recipe.addIngredient(Material.DIRT))
             .apply(recipe -> recipe.addInteractionLore(
                     "&7Right click dirt with water",
@@ -119,7 +119,7 @@ public enum FakeRecipe {
             .apply(recipe -> recipe.addIngredient(Material.WRITABLE_BOOK))
             .apply(recipe -> recipe.addInteractionLore(
                     "&7Right Book and Quill,",
-                    "&7sign and finish the book."
+                    "&7sign and click Sign and close."
             ))
             .apply(recipe -> recipe.setStationDisplay(new ItemStack(Material.PAPER)))
             .build("fib:written_book", new ItemStack(Material.WRITTEN_BOOK))
