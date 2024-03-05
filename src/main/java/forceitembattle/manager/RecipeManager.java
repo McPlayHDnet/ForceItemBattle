@@ -31,6 +31,7 @@ public class RecipeManager {
 
     public void createRecipeViewer(Player player, ItemStack itemStack) {
         List<Recipe> recipes = getRecipes(itemStack);
+        recipes.removeIf(recipe -> RecipeInventory.getStationItem(recipe) == null);
 
         if (recipes.isEmpty()) {
             player.sendMessage("§cThere is no recipe for this item. Just find it lol");

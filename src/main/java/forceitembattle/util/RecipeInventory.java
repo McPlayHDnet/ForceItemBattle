@@ -8,7 +8,6 @@ import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.*;
-import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -180,14 +179,12 @@ public class RecipeInventory extends InventoryBuilder {
                 this.setItem(SMITHING_FIRST_ITEM_SLOT + index, ingredient);
                 index++;
             }
-
         }
         if (recipeViewer.recipe() instanceof MerchantRecipe merchant) {
             ItemStack fixed = new ItemStack(merchant.getResult().getType(), 1, (byte) 0);
             ingredients.add(fixed);
 
             this.setItem(OTHER_FIRST_ITEM_SLOT, fixed);
-
         }
         if (recipeViewer.recipe() instanceof StonecuttingRecipe stonecutting) {
             ItemStack fixed = new ItemStack(stonecutting.getInput());
@@ -220,13 +217,13 @@ public class RecipeInventory extends InventoryBuilder {
                 if (itemStack == null) {
                     return;
                 }
-                if(Bukkit.getRecipesFor(itemStack).isEmpty()) {
+                if (Bukkit.getRecipesFor(itemStack).isEmpty()) {
                     player.sendMessage("§cThere is no recipe for this item. Just find it lol");
                     return;
                 }
                 recipeViewer.setCurrentRecipeIndex(0);
                 recipeViewer.setItemStack(itemStack);
-                if(Bukkit.getRecipesFor(recipeViewer.itemStack()).size() > 1) {
+                if (Bukkit.getRecipesFor(recipeViewer.itemStack()).size() > 1) {
                     recipeViewer.setRecipe(Bukkit.getRecipesFor(recipeViewer.itemStack()).get(recipeViewer.currentRecipeIndex()));
                 } else {
                     recipeViewer.setRecipe(Bukkit.getRecipesFor(recipeViewer.itemStack()).get(0));
@@ -284,36 +281,38 @@ public class RecipeInventory extends InventoryBuilder {
         return itemBuilder.getItemStack();
     }
 
-    private ItemStack getStationItem(Recipe recipe) {
+    public static ItemStack getStationItem(Recipe recipe) {
         if (recipe instanceof ToolRecipe toolRecipe) {
             return toolRecipe.getStationDisplay();
+
         } else if (recipe instanceof ShapedRecipe) {
             return new ItemStack(Material.CRAFTING_TABLE);
+
         } else if (recipe instanceof ShapelessRecipe) {
             return new ItemStack(Material.CRAFTING_TABLE);
+
         } else if (recipe instanceof FurnaceRecipe) {
             return new ItemStack(Material.FURNACE);
+
         } else if (recipe instanceof SmithingRecipe) {
             return new ItemStack(Material.SMITHING_TABLE);
+
         } else if (recipe instanceof SmokingRecipe) {
             return new ItemStack(Material.SMOKER);
+
         } else if (recipe instanceof BlastingRecipe) {
             return new ItemStack(Material.BLAST_FURNACE);
+
         } else if (recipe instanceof CampfireRecipe) {
             return new ItemStack(Material.CAMPFIRE);
+
         } else if (recipe instanceof StonecuttingRecipe) {
             return new ItemStack(Material.STONECUTTER);
+
         } else if (recipe instanceof MerchantRecipe) {
             return new ItemStack(Material.VILLAGER_SPAWN_EGG);
         } else {
-            ItemStack item = new ItemStack(Material.BARRIER);
-            ItemMeta meta = item.getItemMeta();
-            if (meta != null) {
-                meta.setDisplayName("§cUnknown recipe type: §f" + recipe.getClass().getSimpleName());
-                item.setItemMeta(meta);
-            }
-
-            return item;
+            return null;
         }
     }
 
