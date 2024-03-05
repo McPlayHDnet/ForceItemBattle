@@ -30,7 +30,7 @@ public class RecipeManager {
     }
 
     public void createRecipeViewer(Player player, ItemStack itemStack) {
-        List<Recipe> recipes = getRecipes(itemStack);
+        List<Recipe> recipes = new ArrayList<>(getRecipes(itemStack));
         recipes.removeIf(recipe -> RecipeInventory.getStationItem(recipe) == null);
 
         if (recipes.isEmpty()) {
