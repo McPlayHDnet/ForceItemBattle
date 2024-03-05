@@ -1,7 +1,6 @@
 package forceitembattle.manager.customrecipe;
 
 import forceitembattle.util.ItemBuilder;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
@@ -23,11 +22,7 @@ public class ToolRecipe extends ShapelessRecipe {
     private ItemStack stationDisplay;
 
     public void addInteractionLore(String... lore) {
-        for (String line : lore) {
-            interactionLore.add(
-                    ChatColor.translateAlternateColorCodes('&', line)
-            );
-        }
+        interactionLore.addAll(List.of(lore));
     }
 
     public void setStationDisplay(ItemStack stationDisplay) {

@@ -1,6 +1,6 @@
 package forceitembattle.util;
 
-import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
@@ -8,10 +8,11 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
-import org.bukkit.profile.PlayerProfile;
-import org.bukkit.profile.PlayerTextures;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 
 public class ItemBuilder {
 
@@ -98,36 +99,44 @@ public class ItemBuilder {
         return this;
     }
 
+    public ItemBuilder addLore(String... lore) {
+        addLore(List.of(lore));
+        return this;
+    }
+
     public ItemBuilder addLore(List<String> loreLines) {
-        List<String> loreList = this.itemStack.getItemMeta().getLore();
-        assert loreList != null;
-        loreList.addAll(loreLines);
+        ItemMeta itemMeta = this.itemStack.getItemMeta();
+        List<String> lore = itemMeta.getLore();
+        if (lore == null) {
+            lore = new ArrayList<>();
+        }
+
+        for (String line : loreLines) {
+            lore.add(ChatColor.translateAlternateColorCodes('&', line));
+        }
+        itemMeta.setLore(lore);
+        setItemMeta(itemMeta);
         return this;
     }
 
-    public ItemBuilder addLore(String lore) {
-        List<String> loreList;
-        if(this.itemStack.getItemMeta().hasLore()) {
-            loreList = this.itemStack.getItemMeta().getLore();
-        } else loreList = new ArrayList<>();
-        loreList.add(lore);
-        return this;
-    }
-
-    public ItemBuilder setLore(String lore) {
-        this.itemStack.getItemMeta().setLore(Collections.singletonList(lore));
+    public ItemBuilder setLore(String... lore) {
+        setLore(List.of(lore));
         return this;
     }
 
     public ItemBuilder setLore(List<String> loreLines) {
         ItemMeta itemMeta = getItemStack().getItemMeta();
-        itemMeta.setLore(loreLines);
+        List<String> lore = new ArrayList<>();
+        for (String line : loreLines) {
+            lore.add(ChatColor.translateAlternateColorCodes('&', line));
+        }
+        itemMeta.setLore(lore);
         setItemMeta(itemMeta);
         return this;
     }
     public ItemBuilder setDisplayName(String displayName) {
         ItemMeta itemMeta = getItemStack().getItemMeta();
-        itemMeta.setDisplayName(displayName);
+        itemMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', displayName));
         setItemMeta(itemMeta);
         return this;
     }
