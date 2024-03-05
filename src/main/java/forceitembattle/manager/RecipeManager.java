@@ -1,16 +1,13 @@
 package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.manager.customrecipe.FakeRecipe;
 import forceitembattle.util.RecipeInventory;
 import forceitembattle.util.RecipeViewer;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
-import org.bukkit.inventory.RecipeChoice;
-import org.bukkit.inventory.ShapelessRecipe;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -70,51 +67,17 @@ public class RecipeManager {
     }
 
     public List<Recipe> getRecipes(ItemStack item) {
-        switch (item.getType()) {
-            default -> {
-                return new ArrayList<>(Bukkit.getRecipesFor(item));
-            }
-            case FIREWORK_STAR -> {
-                return getFireworkStarRecipes();
-            }
-            case SUSPICIOUS_STEW -> {
-                return getSuspiciousStewRecipes();
+        FakeRecipe fakeRecipe = FakeRecipe.forItem(item);
+
+        if (fakeRecipe != null) {
+            Recipe recipe = fakeRecipe.getRecipe(item);
+
+            if (recipe != null) {
+                return List.of(recipe);
             }
         }
 
+        return new ArrayList<>(Bukkit.getRecipesFor(item));
     }
 
-    private List<Recipe> getFireworkStarRecipes() {
-        List<Recipe> recipes = new ArrayList<>();
-
-        NamespacedKey key = NamespacedKey.fromString("forceitembattle:star", ForceItemBattle.getInstance());
-        if (key == null) {
-            return recipes;
-        }
-
-        ShapelessRecipe recipe = new ShapelessRecipe(key, new ItemStack(Material.FIREWORK_STAR));
-        recipe.addIngredient(Material.GUNPOWDER);
-        recipe.addIngredient(new RecipeChoice.MaterialChoice(Material.RED_DYE, Material.BLUE_DYE));
-
-        recipes.add(recipe);
-        return recipes;
-    }
-
-    private List<Recipe> getSuspiciousStewRecipes() {
-        List<Recipe> recipes = new ArrayList<>();
-
-        NamespacedKey key = NamespacedKey.fromString("forceitembattle:stew", ForceItemBattle.getInstance());
-        if (key == null) {
-            return recipes;
-        }
-
-        ShapelessRecipe recipe = new ShapelessRecipe(key, new ItemStack(Material.SUSPICIOUS_STEW));
-        recipe.addIngredient(Material.RED_MUSHROOM);
-        recipe.addIngredient(Material.BROWN_MUSHROOM);
-        recipe.addIngredient(Material.BOWL);
-        recipe.addIngredient(new RecipeChoice.MaterialChoice(Material.POPPY, Material.CORNFLOWER));
-
-        recipes.add(recipe);
-        return recipes;
-    }
 }

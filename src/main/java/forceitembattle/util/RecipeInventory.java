@@ -1,10 +1,12 @@
 package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.manager.customrecipe.ToolRecipe;
 import org.apache.commons.text.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.*;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -249,39 +251,48 @@ public class RecipeInventory extends InventoryBuilder {
         List<String> lore = new ArrayList<>();
         ItemBuilder itemBuilder = new ItemBuilder(materialChoice.getChoices().get(0));
 
-        materialChoice.getChoices().subList(1, materialChoice.getChoices().size()).forEach(material -> {
+        for (Material material : materialChoice.getChoices().subList(1, materialChoice.getChoices().size())) {
             lore.add(" §8» §3" + materialName(material));
 
             if (material.name().contains("_PLANKS")) {
                 lore.clear();
                 lore.add(" §8» §3any wooden plank");
+                break;
             }
 
             if (recipeViewer.itemStack().getType() == Material.SMOKER || recipeViewer.itemStack().getType() == Material.CAMPFIRE || recipeViewer.itemStack().getType() == Material.SOUL_CAMPFIRE || recipeViewer.itemStack().getType() == Material.CHARCOAL) {
                 lore.clear();
                 lore.add(" §8» §3any wooden log/wood (and stripped variants)");
+                break;
             }
 
             // These 2 are hardcoded to only have 1 material choice, which would be dye and flower respectively
             if (recipeViewer.itemStack().getType() == Material.FIREWORK_STAR) {
                 lore.clear();
                 lore.add(" §8» §3any dye item");
+                break;
             }
 
             if (recipeViewer.itemStack().getType() == Material.SUSPICIOUS_STEW) {
                 lore.clear();
                 lore.add(" §8» §3any field flower");
+                break;
             }
-        });
+        }
 
         itemBuilder.setLore(lore);
-        lore.clear();
 
         return itemBuilder.getItemStack();
     }
 
     private ItemStack getStationItem(Recipe recipe) {
-        if (recipe instanceof ShapedRecipe) {
+        if (recipe instanceof ToolRecipe) {
+            return new ItemBuilder(Material.STONE_PICKAXE)
+                    .addEnchantment(Enchantment.LUCK, 1)
+                    .addItemFlag(ItemFlag.HIDE_ENCHANTS)
+                    .setDisplayName("&fInteract with tool &7(Right click)")
+                    .getItemStack();
+        } else if (recipe instanceof ShapedRecipe) {
             return new ItemStack(Material.CRAFTING_TABLE);
         } else if (recipe instanceof ShapelessRecipe) {
             return new ItemStack(Material.CRAFTING_TABLE);
