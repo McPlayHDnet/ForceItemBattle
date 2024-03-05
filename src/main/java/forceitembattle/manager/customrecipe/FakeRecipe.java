@@ -32,7 +32,6 @@ public enum FakeRecipe {
 
     HONEY_BOTTLE(Material.HONEY_BOTTLE, item ->
             RecipeBuilder.newBuilder(ToolRecipe::new)
-                    .apply(recipe -> recipe.addIngredient(Material.GLASS_BOTTLE))
                     .apply(recipe -> recipe.addIngredient(Material.BEEHIVE))
                     .apply(recipe -> recipe.addInteractionLore(
                             "&7Right click a beehive with",
@@ -45,12 +44,12 @@ public enum FakeRecipe {
                             "&7at the beehive to check &fhoney_level",
                             "&7(on the right side at the bottom)"
                     ))
+                    .apply(recipe -> recipe.setStationDisplay(new ItemStack(Material.GLASS_BOTTLE)))
                     .build("fib:honey_bottle", new ItemStack(Material.HONEY_BOTTLE))
     ),
 
     HONEY_COMB(Material.HONEYCOMB, item ->
             RecipeBuilder.newBuilder(ToolRecipe::new)
-                    .apply(recipe -> recipe.addIngredient(Material.SHEARS))
                     .apply(recipe -> recipe.addIngredient(Material.BEEHIVE))
                     .apply(recipe -> recipe.addInteractionLore(
                             "&7Right click a beehive with",
@@ -63,6 +62,7 @@ public enum FakeRecipe {
                             "&7at the beehive to check &fhoney_level",
                             "&7(on the right side at the bottom)"
                     ))
+                    .apply(recipe -> recipe.setStationDisplay(new ItemStack(Material.SHEARS)))
                     .build("fib:honeycomb", new ItemStack(Material.HONEYCOMB))
     ),
 
@@ -74,8 +74,11 @@ public enum FakeRecipe {
                 .apply(recipe -> recipe.addIngredient(Material.WATER_BUCKET))
                 .apply(recipe -> recipe.addInteractionLore(
                         "&7Place the powder in water",
-                        "&7to make it solid."
+                        "&7to make it solid.",
+                        "&7Concrete can be broken",
+                        "&7with pickaxe."
                 ))
+                .apply(recipe -> recipe.setStationDisplay(new ItemStack(Material.WOODEN_PICKAXE)))
                 .build("fib:concrete", new ItemStack(item.getType()));
     }),
 
@@ -84,39 +87,84 @@ public enum FakeRecipe {
 
         return RecipeBuilder.newBuilder(ToolRecipe::new)
                 .apply(recipe -> recipe.addIngredient(fullWood))
-                .apply(recipe -> recipe.addIngredient(Material.WATER_BUCKET))
                 .apply(recipe -> recipe.addInteractionLore(
                         "&7Right click block with",
                         "&7axe to make it stripped."
                 ))
+                .apply(recipe -> recipe.setStationDisplay(new ItemStack(Material.WOODEN_AXE)))
                 .build("fib:stripped", new ItemStack(item.getType()));
     }),
 
     MUD(Material.DIRT, item -> RecipeBuilder.newBuilder(ToolRecipe::new)
             .apply(recipe -> recipe.addIngredient(Material.DIRT))
-            .apply(recipe -> recipe.addIngredient(Material.POTION))
             .apply(recipe -> recipe.addInteractionLore(
                     "&7Right click dirt with water",
                     "&7bottle to make it mud."
             ))
+            .apply(recipe -> recipe.setStationDisplay(new ItemStack(Material.POTION)))
             .build("fib:mud", new ItemStack(Material.MUD))
     ),
 
     CARVED_PUMPKIN(Material.CARVED_PUMPKIN, item -> RecipeBuilder.newBuilder(ToolRecipe::new)
             .apply(recipe -> recipe.addIngredient(Material.PUMPKIN))
-            .apply(recipe -> recipe.addIngredient(Material.SHEARS))
             .apply(recipe -> recipe.addInteractionLore(
                     "&7Right click pumpkin with",
                     "&7shears to make it carved."
             ))
+            .apply(recipe -> recipe.setStationDisplay(new ItemStack(Material.SHEARS)))
             .build("fib:carved_pumpkin", new ItemStack(Material.CARVED_PUMPKIN))
     ),
 
-    // TODO : Written book,
-    //  Chipped anvil,
-    //  Damaged anvil (say how long the drop needs to be to turn damaged),
-    //  Apple (show hoe as a tool for leaves) (might be unnecessary),
-    //  Dragon's breath
+    WRITTEN_BOOK(Material.WRITTEN_BOOK, item -> RecipeBuilder.newBuilder(ToolRecipe::new)
+            .apply(recipe -> recipe.addIngredient(Material.WRITABLE_BOOK))
+            .apply(recipe -> recipe.addInteractionLore(
+                    "&7Right Book and Quill,",
+                    "&7sign and finish the book."
+            ))
+            .apply(recipe -> recipe.setStationDisplay(new ItemStack(Material.PAPER)))
+            .build("fib:written_book", new ItemStack(Material.WRITTEN_BOOK))
+    ),
+
+    CHIPPED_ANVIL(Material.CHIPPED_ANVIL, item -> RecipeBuilder.newBuilder(ToolRecipe::new)
+            .apply(recipe -> recipe.addIngredient(Material.ANVIL))
+            .apply(recipe -> recipe.addInteractionLore(
+                    "&7Drop anvil from X blocks",
+                    "&7to make it chipped."
+            ))
+            .apply(recipe -> recipe.setStationDisplay(new ItemStack(Material.RABBIT_FOOT)))
+            .build("fib:chipped_anvil", new ItemStack(Material.CHIPPED_ANVIL))
+    ),
+
+    DAMAGED_ANVIL(Material.DAMAGED_ANVIL, item -> RecipeBuilder.newBuilder(ToolRecipe::new)
+            .apply(recipe -> recipe.addIngredient(Material.ANVIL))
+            .apply(recipe -> recipe.addInteractionLore(
+                    "&7Drop anvil from Y blocks",
+                    "&7to make it damaged."
+            ))
+            .apply(recipe -> recipe.setStationDisplay(new ItemStack(Material.RABBIT_FOOT)))
+            .build("fib:damaged_anvil", new ItemStack(Material.DAMAGED_ANVIL))
+    ),
+
+    APPLE(Material.APPLE, item -> RecipeBuilder.newBuilder(ToolRecipe::new)
+            .apply(recipe -> recipe.addIngredient(new RecipeChoice.MaterialChoice(Material.OAK_LEAVES, Material.DARK_OAK_LEAVES)))
+            .apply(recipe -> recipe.addInteractionLore(
+                    "&7Use hoe or fists",
+                    "&7on leaves to get apple."
+            ))
+            .apply(recipe -> recipe.setStationDisplay(new ItemStack(Material.WOODEN_HOE)))
+            .build("fib:apple", new ItemStack(Material.APPLE))
+    ),
+
+    DRAGON_BREATH(Material.DRAGON_BREATH, item -> RecipeBuilder.newBuilder(ToolRecipe::new)
+            .apply(recipe -> recipe.addIngredient(Material.DRAGON_EGG))
+            .apply(recipe -> recipe.addInteractionLore(
+                    "&7Right click on dragon's breath",
+                    "&7with empty bottle to",
+                    "get dragon's breath."
+            ))
+            .apply(recipe -> recipe.setStationDisplay(new ItemStack(Material.GLASS_BOTTLE)))
+            .build("fib:dragon_breath", new ItemStack(Material.DRAGON_BREATH))
+    )
 
     ;
 

@@ -6,7 +6,6 @@ import org.apache.commons.text.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.*;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -286,12 +285,8 @@ public class RecipeInventory extends InventoryBuilder {
     }
 
     private ItemStack getStationItem(Recipe recipe) {
-        if (recipe instanceof ToolRecipe) {
-            return new ItemBuilder(Material.STONE_PICKAXE)
-                    .addEnchantment(Enchantment.LUCK, 1)
-                    .addItemFlag(ItemFlag.HIDE_ENCHANTS)
-                    .setDisplayName("&fInteract with tool &7(Right click)")
-                    .getItemStack();
+        if (recipe instanceof ToolRecipe toolRecipe) {
+            return toolRecipe.getStationDisplay();
         } else if (recipe instanceof ShapedRecipe) {
             return new ItemStack(Material.CRAFTING_TABLE);
         } else if (recipe instanceof ShapelessRecipe) {
