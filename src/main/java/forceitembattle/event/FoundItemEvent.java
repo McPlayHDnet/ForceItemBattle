@@ -5,8 +5,6 @@ import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.ListResourceBundle;
-
 public class FoundItemEvent extends Event {
 
     private static final HandlerList HANDLER_LIST = new HandlerList();
@@ -29,7 +27,7 @@ public class FoundItemEvent extends Event {
         this.foundItem = foundItem;
     }
 
-    public void skipped(boolean skipped) {
+    public void setSkipped(boolean skipped) {
         this.skipped = skipped;
     }
 
@@ -37,7 +35,7 @@ public class FoundItemEvent extends Event {
         return skipped;
     }
 
-    public void backToBack(boolean backToBack) {
+    public void setBackToBack(boolean backToBack) {
         this.backToBack = backToBack;
     }
 

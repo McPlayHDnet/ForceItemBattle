@@ -47,10 +47,6 @@ public class ItemDifficultiesManager {
         return items.get(random.nextInt(items.size()));
     }
 
-    public void toggleNetherItems() {
-        forceItemBattle.getSettings().setSettingEnabled(GameSetting.NETHER, !forceItemBattle.getSettings().isSettingEnabled(GameSetting.NETHER));
-    }
-
     public HashMap<Material, DescriptionItem> getDescriptionItems() {
         return descriptionItems;
     }

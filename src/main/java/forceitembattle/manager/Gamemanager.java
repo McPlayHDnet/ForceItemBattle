@@ -178,7 +178,7 @@ public class Gamemanager {
     }
 
     public static boolean isJoker(Material material) {
-        return material == Material.BARRIER;
+        return material == JOKER_MATERIAL;
     }
 
     public static boolean isJoker(ItemStack itemStack) {

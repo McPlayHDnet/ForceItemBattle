@@ -89,7 +89,7 @@ public class Listeners implements Listener {
                 if(pickedItem.getType() == currentMaterial) {
                     FoundItemEvent foundItemEvent = new FoundItemEvent(player);
                     foundItemEvent.setFoundItem(pickedItem);
-                    foundItemEvent.skipped(false);
+                    foundItemEvent.setSkipped(false);
 
                     Bukkit.getPluginManager().callEvent(foundItemEvent);
                 }
@@ -125,7 +125,7 @@ public class Listeners implements Listener {
         if (clickedItem.getType() == currentItem) {
             FoundItemEvent foundItemEvent = new FoundItemEvent(player);
             foundItemEvent.setFoundItem(clickedItem);
-            foundItemEvent.skipped(false);
+            foundItemEvent.setSkipped(false);
 
             Bukkit.getPluginManager().callEvent(foundItemEvent);
         }
@@ -142,91 +142,101 @@ public class Listeners implements Listener {
 
     /* Custom Found-Item Event */
     @EventHandler
-    public void onFoundItem(FoundItemEvent foundItemEvent) {
-        Player player = foundItemEvent.getPlayer();
-        ItemStack itemStack = foundItemEvent.getFoundItem();
+    public void onFoundItem(FoundItemEvent event) {
+        Player player = event.getPlayer();
+        ItemStack itemStack = event.getFoundItem();
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
 
-        if(!foundItemEvent.isBackToBack()) {
-            forceItemPlayer.setCurrentScore(forceItemPlayer.currentScore() + 1);
-            forceItemPlayer.addFoundItemToList(new ForceItem(itemStack.getType(), this.plugin.getTimer().formatSeconds(this.plugin.getTimer().getTime()), foundItemEvent.isSkipped()));
-            forceItemPlayer.setCurrentMaterial(this.plugin.getGamemanager().generateMaterial());
-            Bukkit.broadcastMessage("§a" + player.getName() + " §7" + (foundItemEvent.isSkipped() ? "skipped" : "found") + " §6" + WordUtils.capitalize(itemStack.getType().name().toLowerCase().replace("_", " ")));
+        if (!event.isBackToBack()) {
+            Bukkit.broadcastMessage("§a" + player.getName() + " §7" + (event.isSkipped() ? "skipped" : "found") + " §6" + WordUtils.capitalize(itemStack.getType().name().toLowerCase().replace("_", " ")));
+        }
 
-            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
+        forceItemPlayer.setCurrentScore(forceItemPlayer.currentScore() + 1);
+        forceItemPlayer.addFoundItemToList(new ForceItem(itemStack.getType(), this.plugin.getTimer().formatSeconds(this.plugin.getTimer().getTime()), event.isSkipped()));
+        forceItemPlayer.setCurrentMaterial(this.plugin.getGamemanager().generateMaterial());
 
-            if (!this.plugin.getSettings().isSettingEnabled(GameSetting.NETHER)) {
-                forceItemPlayer.updateItemDisplay();
-            }
+        player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
 
-            if(this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
-                this.plugin.getStatsManager().addToStats(PlayerStat.TOTAL_ITEMS, this.plugin.getStatsManager().playerStats(player.getName()), 1);
-            }
+        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.NETHER)) {
+            forceItemPlayer.updateItemDisplay();
+        }
+
+        if (this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
+            this.plugin.getStatsManager().addToStats(PlayerStat.TOTAL_ITEMS, this.plugin.getStatsManager().playerStats(player.getName()), 1);
+        }
+
+        boolean foundNextItem = false;
+
+        if (forceItemPlayer.previousMaterial() == forceItemPlayer.currentMaterial()) {
+            foundNextItem = true;
+
+        } else if (hasItemInInventory(player.getInventory(), forceItemPlayer.currentMaterial())) {
+            foundNextItem = true;
+
+        } else if (this.plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK) &&
+                hasItemInInventory(this.plugin.getBackpack().getPlayerBackpack(player), forceItemPlayer.currentMaterial())) {
+            foundNextItem = true;
 
         }
 
-        ItemStack foundInventoryItemStack = null;
-
-        if(forceItemPlayer.previousMaterial() == forceItemPlayer.currentMaterial()) {
-            foundInventoryItemStack = new ItemStack(forceItemPlayer.currentMaterial());
+        if (!foundNextItem) {
+            return;
         }
 
-        if(foundInventoryItemStack == null) {
-            for (ItemStack inventoryItemStacks : player.getInventory().getContents()) {
-                if (inventoryItemStacks == null) continue;
-                if (inventoryItemStacks.getType() == forceItemPlayer.currentMaterial()) {
-                    foundInventoryItemStack = inventoryItemStacks;
+        // Handle finding item back to back
+
+        ItemStack foundItem = new ItemStack(forceItemPlayer.currentMaterial());
+
+        // forceItemPlayer.setCurrentScore(forceItemPlayer.currentScore() + 1);
+        // forceItemPlayer.addFoundItemToList(new ForceItem(foundItem.getType(), this.plugin.getTimer().formatSeconds(this.plugin.getTimer().getTime()), false));
+        // forceItemPlayer.setCurrentMaterial(this.plugin.getGamemanager().generateMaterial());
+        // player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
+        // if (!this.plugin.getSettings().isSettingEnabled(GameSetting.NETHER)) {
+        //     forceItemPlayer.updateItemDisplay();
+        // }
+        // if (this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
+        //     this.plugin.getStatsManager().addToStats(PlayerStat.TOTAL_ITEMS, this.plugin.getStatsManager().playerStats(player.getName()), 1);
+        // }
+
+        FoundItemEvent foundNextItemEvent = new FoundItemEvent(player);
+        foundNextItemEvent.setFoundItem(foundItem);
+        foundNextItemEvent.setBackToBack(true);
+        foundNextItemEvent.setSkipped(false);
+
+        Bukkit.broadcastMessage("§a" + player.getName() + " §7was lucky to already own §6" + WordUtils.capitalize(foundItem.getType().name().toLowerCase().replace("_", " ")));
+        Bukkit.getPluginManager().callEvent(foundNextItemEvent);
+    }
+
+    private boolean hasItemInInventory(Inventory inventory, Material targetMaterial) {
+        for (ItemStack inventoryItem : inventory.getContents()) {
+            if (inventoryItem == null) {
+                continue;
+            }
+
+            if (inventoryItem.getType() == targetMaterial) {
+                return true;
+            }
+
+            if (!(inventoryItem.getItemMeta() instanceof BlockStateMeta blockStateMeta)) {
+                continue;
+            }
+
+            if (!(blockStateMeta.getBlockState() instanceof ShulkerBox shulkerBox)) {
+                continue;
+            }
+
+            for (ItemStack shulkerItem : shulkerBox.getInventory().getContents()) {
+                if (shulkerItem == null) {
+                    continue;
                 }
 
-                if(inventoryItemStacks.getItemMeta() instanceof BlockStateMeta blockStateMeta) {
-                    if(blockStateMeta.getBlockState() instanceof ShulkerBox shulkerBox) {
-                        for(ItemStack shulkerItems : shulkerBox.getInventory().getContents()) {
-                            if(shulkerItems == null) continue;
-                            if(shulkerItems.getType() == forceItemPlayer.currentMaterial()) foundInventoryItemStack = shulkerItems;
-                        }
-                    }
-                }
-            }
-
-            if (this.plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK) && foundInventoryItemStack == null) {
-                for (ItemStack backpackItemStacks : this.plugin.getBackpack().getPlayerBackpack(player).getContents()) {
-                    if(backpackItemStacks == null) continue;
-                    if(backpackItemStacks.getType() == forceItemPlayer.currentMaterial()) foundInventoryItemStack = backpackItemStacks;
-
-                    if(backpackItemStacks.getItemMeta() instanceof BlockStateMeta blockStateMeta) {
-                        if(blockStateMeta.getBlockState() instanceof ShulkerBox shulkerBox) {
-                            for(ItemStack shulkerItems : shulkerBox.getInventory().getContents()) {
-                                if(shulkerItems == null) continue;
-                                if(shulkerItems.getType() == forceItemPlayer.currentMaterial()) foundInventoryItemStack = shulkerItems;
-                            }
-                        }
-                    }
+                if (shulkerItem.getType() == targetMaterial) {
+                    return true;
                 }
             }
         }
 
-        if (foundInventoryItemStack != null) {
-            forceItemPlayer.setCurrentScore(forceItemPlayer.currentScore() + 1);
-            forceItemPlayer.addFoundItemToList(new ForceItem(foundInventoryItemStack.getType(), this.plugin.getTimer().formatSeconds(this.plugin.getTimer().getTime()), false));
-            forceItemPlayer.setCurrentMaterial(this.plugin.getGamemanager().generateMaterial());
-
-            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
-
-            if (!this.plugin.getSettings().isSettingEnabled(GameSetting.NETHER)) {
-                forceItemPlayer.updateItemDisplay();
-            }
-
-            if(this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
-                this.plugin.getStatsManager().addToStats(PlayerStat.TOTAL_ITEMS, this.plugin.getStatsManager().playerStats(player.getName()), 1);
-            }
-
-            foundItemEvent.setFoundItem(foundInventoryItemStack);
-            foundItemEvent.backToBack(true);
-            foundItemEvent.skipped(false);
-
-            Bukkit.broadcastMessage("§a" + player.getName() + " §7was lucky to already own §6" + WordUtils.capitalize(foundInventoryItemStack.getType().name().toLowerCase().replace("_", " ")));
-            Bukkit.getPluginManager().callEvent(foundItemEvent);
-        }
+        return false;
     }
 
     @EventHandler
@@ -283,7 +293,7 @@ public class Listeners implements Listener {
 
         FoundItemEvent foundItemEvent = new FoundItemEvent(player);
         foundItemEvent.setFoundItem(new ItemStack(mat));
-        foundItemEvent.skipped(true);
+        foundItemEvent.setSkipped(true);
 
         Bukkit.getPluginManager().callEvent(foundItemEvent);
     }
@@ -305,7 +315,7 @@ public class Listeners implements Listener {
         if (clickedItem.getType() == currentItem) {
             FoundItemEvent foundItemEvent = new FoundItemEvent(player);
             foundItemEvent.setFoundItem(clickedItem);
-            foundItemEvent.skipped(false);
+            foundItemEvent.setSkipped(false);
 
             Bukkit.getPluginManager().callEvent(foundItemEvent);
         }
@@ -328,7 +338,7 @@ public class Listeners implements Listener {
         if (clickedItem.getType() == currentItem) {
             FoundItemEvent foundItemEvent = new FoundItemEvent(player);
             foundItemEvent.setFoundItem(clickedItem);
-            foundItemEvent.skipped(false);
+            foundItemEvent.setSkipped(false);
 
             Bukkit.getPluginManager().callEvent(foundItemEvent);
         }
@@ -349,7 +359,7 @@ public class Listeners implements Listener {
         if (clickedItem.getType() == currentItem) {
             FoundItemEvent foundItemEvent = new FoundItemEvent(player);
             foundItemEvent.setFoundItem(clickedItem);
-            foundItemEvent.skipped(false);
+            foundItemEvent.setSkipped(false);
 
             Bukkit.getPluginManager().callEvent(foundItemEvent);
         }
@@ -373,7 +383,7 @@ public class Listeners implements Listener {
             if (clickedItem.getType() == currentItem) {
                 FoundItemEvent foundItemEvent = new FoundItemEvent(player);
                 foundItemEvent.setFoundItem(clickedItem);
-                foundItemEvent.skipped(false);
+                foundItemEvent.setSkipped(false);
 
                 Bukkit.getPluginManager().callEvent(foundItemEvent);
             }
@@ -400,7 +410,7 @@ public class Listeners implements Listener {
             if (clickedItem.getType() == currentItem) {
                 FoundItemEvent foundItemEvent = new FoundItemEvent(player);
                 foundItemEvent.setFoundItem(clickedItem);
-                foundItemEvent.skipped(false);
+                foundItemEvent.setSkipped(false);
 
                 Bukkit.getPluginManager().callEvent(foundItemEvent);
             }
@@ -476,7 +486,7 @@ public class Listeners implements Listener {
         if (clickedItem.getType() == currentItem) {
             FoundItemEvent foundItemEvent = new FoundItemEvent(player);
             foundItemEvent.setFoundItem(clickedItem);
-            foundItemEvent.skipped(false);
+            foundItemEvent.setSkipped(false);
 
             Bukkit.getPluginManager().callEvent(foundItemEvent);
         }
