@@ -1,6 +1,7 @@
 package forceitembattle;
 
 import forceitembattle.commands.*;
+import forceitembattle.commands.admin.*;
 import forceitembattle.listener.Listeners;
 import forceitembattle.listener.PvPListener;
 import forceitembattle.listener.RecipeListener;
@@ -168,24 +169,24 @@ public final class ForceItemBattle extends JavaPlugin {
     }
 
     private void initCommands() {
-        new CommandStart(this);
-        new CommandSettings(this);
-        new CommandSkip(this);
-        new CommandReset(this);
-        new CommandBp(this);
-        new CommandResult(this);
-        new CommandInfo(this);
-        new CommandItems(this);
-        new CommandStopTimer(this);
-        new CommandInfoWiki(this);
-        new CommandSpawn(this);
-        new CommandBed(this);
-        new CommandPause(this);
-        new CommandResume(this);
-        new CommandStats(this);
-        new CommandLeaderboard(this);
-        new CommandPosition(this);
-        new CommandPing(this);
+        new CommandStart();
+        new CommandSettings();
+        new CommandSkip();
+        new CommandReset();
+        new CommandBp();
+        new CommandResult();
+        new CommandInfo();
+        new CommandItems();
+        new CommandStopTimer();
+        new CommandInfoWiki();
+        new CommandSpawn();
+        new CommandBed();
+        new CommandPause();
+        new CommandResume();
+        new CommandStats();
+        new CommandLeaderboard();
+        new CommandPosition();
+        new CommandPing();
     }
 
     @Override

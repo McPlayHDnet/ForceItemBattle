@@ -1,6 +1,6 @@
 package forceitembattle.commands;
 
-import forceitembattle.ForceItemBattle;
+import forceitembattle.commands.tabcomplete.TabCompletion;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.preset.GamePreset;
@@ -10,38 +10,30 @@ import forceitembattle.util.PlayerStat;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
-public class CommandStart implements CommandExecutor {
+import java.util.ArrayList;
+import java.util.List;
 
-    private ForceItemBattle plugin;
+public class CommandStart extends CustomCommand implements TabCompletion {
 
-    public CommandStart(ForceItemBattle plugin) {
-        this.plugin = plugin;
-        this.plugin.getCommand("start").setTabCompleter(new TabCompletion(plugin));
-        this.plugin.getCommand("start").setExecutor(this);
+    public CommandStart() {
+        super("start");
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!(sender instanceof Player player)) {
-            return false;
-        }
-
+    public void onPlayerCommand(Player player, String label, String[] args) {
         if (args.length == 1) {
-            if(this.plugin.getSettings().getGamePreset(args[0]) == null) {
+            if(this.forceItemBattle.getSettings().getGamePreset(args[0]) == null) {
                 player.sendMessage("§e" + args[0] + " §cdoes not exist in presets.");
-                return false;
+                return;
             }
 
-            GamePreset gamePreset = this.plugin.getSettings().getGamePreset(args[0]);
-            this.plugin.getGamemanager().setCurrentGamePreset(gamePreset);
+            GamePreset gamePreset = this.forceItemBattle.getSettings().getGamePreset(args[0]);
+            this.forceItemBattle.getGamemanager().setCurrentGamePreset(gamePreset);
             this.performCommand(gamePreset, player, args);
 
         } else if (args.length == 2) {
@@ -49,25 +41,23 @@ public class CommandStart implements CommandExecutor {
                 this.performCommand(null, player, args);
 
             } catch (NumberFormatException e) {
-                sender.sendMessage(ChatColor.RED + "Usage: /start <time in min> <jokers>");
-                sender.sendMessage(ChatColor.RED + "<time> and <jokers> have to be numbers");
+                player.sendMessage(ChatColor.RED + "Usage: /start <time in min> <jokers>");
+                player.sendMessage(ChatColor.RED + "<time> and <jokers> have to be numbers");
             }
         } else {
-            sender.sendMessage(ChatColor.RED + "Usage: /start <time in min> <jokers>");
+            player.sendMessage(ChatColor.RED + "Usage: /start <time in min> <jokers>");
         }
 
-
-        return false;
     }
 
     private void performCommand(GamePreset gamePreset, Player player, String[] args) {
         int durationMinutes = (gamePreset != null ? gamePreset.countdown() : Integer.parseInt(args[0]));
         int countdown = durationMinutes * 60;
         int jokersAmount = (gamePreset != null ? gamePreset.jokers() : (Integer.parseInt(args[1])));
-        this.plugin.getTimer().setTime(countdown);
-        this.plugin.getGamemanager().initializeMats();
+        this.forceItemBattle.getTimer().setTime(countdown);
+        this.forceItemBattle.getGamemanager().initializeMats();
 
-        if(gamePreset == null) {
+        if (gamePreset == null) {
             if (Integer.parseInt(args[1]) > 64) {
                 player.sendMessage(ChatColor.RED + "The maximum amount of jokers is 64.");
                 return;
@@ -80,7 +70,7 @@ public class CommandStart implements CommandExecutor {
             @Override
             public void run() {
                 seconds--;
-                if(seconds == 0) {
+                if (seconds == 0) {
                     cancel();
 
                     startGame(durationMinutes, jokersAmount);
@@ -101,8 +91,8 @@ public class CommandStart implements CommandExecutor {
             private String getSubtitle() {
                 String subTitle = "";
 
-                switch(seconds) {
-                    case 9, 8 -> subTitle = "§f» §6" + (plugin.getTimer().getTime() / 60) + " minutes §f«";
+                switch (seconds) {
+                    case 9, 8 -> subTitle = "§f» §6" + (forceItemBattle.getTimer().getTime() / 60) + " minutes §f«";
                     case 7, 6 -> subTitle = "§f» §6" + jokersAmount + " Joker §f«";
                     case 5 -> subTitle = "§f» §6/info & /infowiki §f«";
                     case 4 -> subTitle = "§f» §6/spawn & /bed §f«";
@@ -112,11 +102,11 @@ public class CommandStart implements CommandExecutor {
 
                 return subTitle;
             }
-        }.runTaskTimer(this.plugin, 0L, 20L);
+        }.runTaskTimer(this.forceItemBattle, 0L, 20L);
     }
 
     private void startGame(int timeMinutes, int jokersAmount) {
-        this.plugin.getPositionManager().clearPositions();
+        this.forceItemBattle.getPositionManager().clearPositions();
 
         World world = Bukkit.getWorld("world");
         assert world != null;
@@ -127,7 +117,7 @@ public class CommandStart implements CommandExecutor {
 
         Bukkit.getOnlinePlayers().forEach(player -> {
 
-            ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+            ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
             forceItemPlayer.setRemainingJokers(jokersAmount);
 
 
@@ -136,8 +126,8 @@ public class CommandStart implements CommandExecutor {
             player.sendMessage(" ");
             player.sendMessage("  §8● §7Duration §8» §a" + timeMinutes + " minutes");
             player.sendMessage("  §8● §7Joker §8» §a" + jokersAmount);
-            for(GameSetting gameSettings : GameSetting.values()) {
-                player.sendMessage("  §8● §7" + gameSettings.displayName() + " §8» §a" + (this.plugin.getSettings().isSettingEnabled(gameSettings) ? "§2✔" : "§4✘"));
+            for (GameSetting gameSettings : GameSetting.values()) {
+                player.sendMessage("  §8● §7" + gameSettings.displayName() + " §8» §a" + (this.forceItemBattle.getSettings().isSettingEnabled(gameSettings) ? "§2✔" : "§4✘"));
             }
             player.sendMessage(" ");
             player.sendMessage(" §8● §7Useful Commands:");
@@ -166,32 +156,37 @@ public class CommandStart implements CommandExecutor {
             player.teleport(spawnLocation);
             player.playSound(player, Sound.BLOCK_END_PORTAL_SPAWN, 1, 1);
 
-            if(this.plugin.getSettings().isSettingEnabled(GameSetting.NETHER)) {
-                this.plugin.getBackpack().createBackpack(player);
+            if(this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.NETHER)) {
+                this.forceItemBattle.getBackpack().createBackpack(player);
             }
 
-            if(!this.plugin.getSettings().isSettingEnabled(GameSetting.NETHER)) {
+            if(!this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.NETHER)) {
                 forceItemPlayer.createItemDisplay();
             }
 
-            if(this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
-                this.plugin.getStatsManager().addToStats(PlayerStat.GAMES_PLAYED, this.plugin.getStatsManager().playerStats(player.getName()), 1);
+            if(this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.STATS)) {
+                this.forceItemBattle.getStatsManager().addToStats(PlayerStat.GAMES_PLAYED, this.forceItemBattle.getStatsManager().playerStats(player.getName()), 1);
             }
 
 
         });
         Bukkit.getWorld("world").setTime(0);
 
-        this.plugin.getGamemanager().setCurrentGameState(GameState.MID_GAME);
+        this.forceItemBattle.getGamemanager().setCurrentGameState(GameState.MID_GAME);
     }
 
     private void setupSpawnLocation(Location location) {
-        this.plugin.setSpawnLocation(location.clone());
+        this.forceItemBattle.setSpawnLocation(location.clone());
 
         Block block = location.getBlock();
         block.setType(Material.AIR);
 
         block.getRelative(BlockFace.UP)
                 .setType(Material.AIR);
+    }
+
+    @Override
+    public List<String> onTabComplete(Player player, String label, String[] args) {
+        return new ArrayList<>(this.forceItemBattle.getSettings().gamePresetMap().keySet());
     }
 }

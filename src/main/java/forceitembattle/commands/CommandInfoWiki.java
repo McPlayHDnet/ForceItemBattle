@@ -1,33 +1,24 @@
 package forceitembattle.commands;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.util.ForceItemPlayer;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.apache.commons.text.WordUtils;
 import org.bukkit.Material;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-public class CommandInfoWiki implements CommandExecutor {
+public class CommandInfoWiki extends CustomCommand {
 
-    private ForceItemBattle forceItemBattle;
-
-    public CommandInfoWiki(ForceItemBattle forceItemBattle) {
-        this.forceItemBattle = forceItemBattle;
-        this.forceItemBattle.getCommand("infowiki").setExecutor(this);
+    public CommandInfoWiki() {
+        super("infowiki");
     }
 
     @Override
-    public boolean onCommand(CommandSender commandSender, Command command, String s, String[] args) {
-        if (!(commandSender instanceof Player player)) return false;
-
+    public void onPlayerCommand(Player player, String label, String[] args) {
         ItemStack item = null;
         if (this.forceItemBattle.getGamemanager().isMidGame()) {
-            if(this.forceItemBattle.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
+            if (this.forceItemBattle.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
                 ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
                 item = new ItemStack(forceItemPlayer.currentMaterial());
             } else {
@@ -37,11 +28,13 @@ public class CommandInfoWiki implements CommandExecutor {
             item = player.getInventory().getItemInMainHand();
         }
 
-        if(item == null) return false;
+        if (item == null) {
+            return;
+        }
 
         if (item.getType() == Material.AIR) {
             player.sendMessage("§cYou need to hold an item in your hand!");
-            return false;
+            return;
         }
 
         TextComponent infoWikiBefore = new TextComponent("§7Check out the minecraft wiki for §a" + WordUtils.capitalizeFully(item.getType().name().toLowerCase().replace("_", " ") + " "));
@@ -50,6 +43,5 @@ public class CommandInfoWiki implements CommandExecutor {
 
         player.spigot().sendMessage(infoWikiBefore, infoWikiAfter);
 
-        return false;
     }
 }

@@ -1,28 +1,19 @@
 package forceitembattle.commands;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.util.DescriptionItem;
 import forceitembattle.util.ForceItemPlayer;
 import org.bukkit.Material;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-public class CommandInfo implements CommandExecutor {
+public class CommandInfo extends CustomCommand {
 
-    private ForceItemBattle forceItemBattle;
-
-    public CommandInfo(ForceItemBattle forceItemBattle) {
-        this.forceItemBattle = forceItemBattle;
-        this.forceItemBattle.getCommand("info").setExecutor(this);
+    public CommandInfo() {
+        super("info");
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String s, String[] args) {
-        if (!(sender instanceof Player player)) return false;
-
+    public void onPlayerCommand(Player player, String label, String[] args) {
         ItemStack item = null;
         if (this.forceItemBattle.getGamemanager().isMidGame()) {
             if(this.forceItemBattle.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
@@ -35,11 +26,13 @@ public class CommandInfo implements CommandExecutor {
             item = player.getInventory().getItemInMainHand();
         }
 
-        if(item == null) return false;
+        if (item == null) {
+            return;
+        }
 
         if (item.getType() == Material.AIR) {
             player.sendMessage("§cYou need to hold an item in your hand!");
-            return false;
+            return;
         }
 
         DescriptionItem descriptionItem;
@@ -52,11 +45,7 @@ public class CommandInfo implements CommandExecutor {
             }
         }
 
-
-
         this.forceItemBattle.getRecipeManager().createRecipeViewer(player, item);
-
-        return false;
     }
 
 }

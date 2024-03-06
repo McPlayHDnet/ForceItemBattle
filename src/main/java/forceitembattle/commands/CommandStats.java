@@ -1,60 +1,52 @@
 package forceitembattle.commands;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.util.ForceItemPlayerStats;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-public class CommandStats implements CommandExecutor {
+public class CommandStats extends CustomCommand {
 
-    private ForceItemBattle forceItemBattle;
-
-    public CommandStats(ForceItemBattle forceItemBattle) {
-        this.forceItemBattle = forceItemBattle;
-        this.forceItemBattle.getCommand("stats").setExecutor(this);
+    public CommandStats() {
+        super("stats");
     }
 
     @Override
-    public boolean onCommand(CommandSender commandSender, Command command, String s, String[] strings) {
-        if (!(commandSender instanceof Player player)) return false;
-
-        if(strings.length == 0) {
-            if(!this.forceItemBattle.getStatsManager().playerExists(player.getName())) {
-                player.sendMessage("You dont have stats... I dont know why, create a issue");
-                return false;
+    public void onPlayerCommand(Player player, String label, String[] args) {
+        if (args.length == 0) {
+            if (!this.forceItemBattle.getStatsManager().playerExists(player.getName())) {
+                player.sendMessage("§cYou dont have stats... I dont know why, create an issue");
+                return;
             }
+
             ForceItemPlayerStats forceItemPlayerStats = this.forceItemBattle.getStatsManager().playerStats(player.getName());
             this.forceItemBattle.getStatsManager().statsMessage(player, forceItemPlayerStats);
-            return false;
+            return;
         }
 
-        if(strings.length == 1) {
-            if(!this.forceItemBattle.getStatsManager().playerExists(strings[0])) {
-                player.sendMessage("§e" + strings[0] + " §cdoes not exist");
-                return false;
+        if (args.length == 1) {
+            if (!this.forceItemBattle.getStatsManager().playerExists(args[0])) {
+                player.sendMessage("§e" + args[0] + " §cdoes not exist");
+                return;
             }
-            ForceItemPlayerStats forceItemPlayerStats = this.forceItemBattle.getStatsManager().playerStats(strings[0]);
+            ForceItemPlayerStats forceItemPlayerStats = this.forceItemBattle.getStatsManager().playerStats(args[0]);
             this.forceItemBattle.getStatsManager().statsMessage(player, forceItemPlayerStats);
 
-            return false;
+            return;
         }
 
-        if(player.isOp()) {
-            if(strings.length == 2) {
-                if (strings[0].equalsIgnoreCase("reset")) {
-                    if (!this.forceItemBattle.getStatsManager().playerExists(strings[1])) {
-                        player.sendMessage("§e" + strings[1] + " §cdoes not exist");
-                        return false;
-                    }
-                    this.forceItemBattle.getStatsManager().resetStats(strings[1]);
-                    player.sendMessage("§aSuccessfully reset stats of §e" + strings[1]);
-                } else {
-                    player.sendMessage("§cUsage: /stats reset <username>");
-                }
-            }
-        } else player.sendMessage("§cNo perms");
-        return false;
+        if (!player.isOp()) {
+            player.sendMessage("§cNo perms");
+            return;
+        }
+        if (args.length != 2 || !args[0].equalsIgnoreCase("reset")) {
+            player.sendMessage("§cUsage: /stats reset <username>");
+            return;
+        }
+
+        if (!this.forceItemBattle.getStatsManager().playerExists(args[1])) {
+            player.sendMessage("§e" + args[1] + " §cdoes not exist");
+            return;
+        }
+        this.forceItemBattle.getStatsManager().resetStats(args[1]);
+        player.sendMessage("§aSuccessfully reset stats of §e" + args[1]);
     }
 }
