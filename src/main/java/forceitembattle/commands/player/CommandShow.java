@@ -37,10 +37,14 @@ public class CommandShow extends CustomCommand {
         Location standLocation = player.getEyeLocation();
         Vector direction = standLocation.getDirection().setY(0).normalize();
 
-        // This should move stand away from player paralel to the eye direction.
+        standLocation.setDirection(
+                standLocation.getDirection().multiply(-1) // Invert direction before spawning
+        );
+
+        // This should move stand away from player parallel to the eye direction.
         standLocation.add(direction);
         // Make armorstand's head appear on the eye level.
-        standLocation.subtract(0, 1.8, 0);
+        standLocation.subtract(0, 1.75, 0);
 
         ArmorStand armorStand = player.getWorld().spawn(standLocation, ArmorStand.class);
         armorStand.setGravity(false);
