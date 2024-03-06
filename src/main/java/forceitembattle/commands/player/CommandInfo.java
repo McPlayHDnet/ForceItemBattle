@@ -72,7 +72,7 @@ public class CommandInfo extends CustomCommand implements CustomTabCompleter {
         String key = args[0].toLowerCase();
         int index = Collections.binarySearch(MATERIALS, key);
         if (index < 0) {
-            return Collections.emptyList();
+            index = -index - 1;
         }
 
         List<String> result = new ArrayList<>();
