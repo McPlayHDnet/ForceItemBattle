@@ -1,7 +1,7 @@
 package forceitembattle.commands.player;
 
 import forceitembattle.commands.CustomCommand;
-import forceitembattle.commands.TabCompletion;
+import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.preset.GamePreset;
@@ -19,7 +19,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CommandStart extends CustomCommand implements TabCompletion {
+public class CommandStart extends CustomCommand implements CustomTabCompleter {
 
     public CommandStart() {
         super("start");

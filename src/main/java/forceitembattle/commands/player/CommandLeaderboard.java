@@ -1,7 +1,7 @@
 package forceitembattle.commands.player;
 
 import forceitembattle.commands.CustomCommand;
-import forceitembattle.commands.TabCompletion;
+import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.util.PlayerStat;
 import org.bukkit.entity.Player;
 
@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CommandLeaderboard extends CustomCommand implements TabCompletion {
+public class CommandLeaderboard extends CustomCommand implements CustomTabCompleter {
 
     public CommandLeaderboard() {
         super("top");

@@ -8,7 +8,7 @@ import org.bukkit.entity.Player;
 import java.util.Collections;
 import java.util.List;
 
-public interface TabCompletion extends TabCompleter {
+public interface CustomTabCompleter extends TabCompleter {
 
     @Override
     default List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {

@@ -17,20 +17,16 @@ public class CommandInfoWiki extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        ItemStack item = null;
+        ItemStack item = player.getInventory().getItemInMainHand();;
+
         if (this.forceItemBattle.getGamemanager().isMidGame()) {
             if (this.forceItemBattle.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
                 ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
                 item = new ItemStack(forceItemPlayer.currentMaterial());
             } else {
                 player.sendMessage("§cYou are not playing.");
+                return;
             }
-        } else {
-            item = player.getInventory().getItemInMainHand();
-        }
-
-        if (item == null) {
-            return;
         }
 
         if (item.getType() == Material.AIR) {
