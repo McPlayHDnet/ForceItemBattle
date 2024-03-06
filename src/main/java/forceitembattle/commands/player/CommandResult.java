@@ -25,7 +25,7 @@ public class CommandResult extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (this.forceItemBattle.getTimer().getTime() > 0) {
+        if (this.plugin.getTimer().getTime() > 0) {
             return;
         }
 
@@ -39,8 +39,8 @@ public class CommandResult extends CustomCommand {
             }
 
             new FinishInventory(
-                    this.forceItemBattle,
-                    this.forceItemBattle.getGamemanager().getForceItemPlayer(uuid),
+                    this.plugin,
+                    this.plugin.getGamemanager().getForceItemPlayer(uuid),
                     null,
                     false
             ).open(player);
@@ -53,33 +53,33 @@ public class CommandResult extends CustomCommand {
     }
 
     private void showNextPlayer(Player player) {
-        if (this.forceItemBattle.getGamemanager().forceItemPlayerMap().isEmpty() || this.place == 0) {
+        if (this.plugin.getGamemanager().forceItemPlayerMap().isEmpty() || this.place == 0) {
             player.sendMessage("No more players left.");
             return;
         }
 
-        Map<UUID, ForceItemPlayer> sortedMapDesc = this.forceItemBattle.getGamemanager().sortByValue(this.forceItemBattle.getGamemanager().forceItemPlayerMap(), false);
+        Map<UUID, ForceItemPlayer> sortedMapDesc = this.plugin.getGamemanager().sortByValue(this.plugin.getGamemanager().forceItemPlayerMap(), false);
         if (this.place == -1) {
             this.place = sortedMapDesc.size();
         }
         UUID uuid = (UUID) sortedMapDesc.keySet().toArray()[this.place - 1];
 
         Bukkit.getOnlinePlayers().forEach(players -> {
-            new FinishInventory(this.forceItemBattle, this.forceItemBattle.getGamemanager().getForceItemPlayer(uuid), this.place, true).open(players);
+            new FinishInventory(this.plugin, this.plugin.getGamemanager().getForceItemPlayer(uuid), this.place, true).open(players);
         });
 
         // TODO : This is not good, we should run this after timer ends automatically.
-        if (forceItemBattle.getSettings().isSettingEnabled(GameSetting.STATS)) {
-            ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(uuid);
-            ForceItemPlayerStats forceItemPlayerStats = forceItemBattle.getStatsManager().playerStats(forceItemPlayer.player().getName());
-            forceItemBattle.getStatsManager().addToStats(PlayerStat.TRAVELLED, forceItemPlayerStats, forceItemBattle.getStatsManager().calculateDistance(forceItemPlayer.player()));
+        if (plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
+            ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(uuid);
+            ForceItemPlayerStats forceItemPlayerStats = plugin.getStatsManager().playerStats(forceItemPlayer.player().getName());
+            plugin.getStatsManager().addToStats(PlayerStat.TRAVELLED, forceItemPlayerStats, plugin.getStatsManager().calculateDistance(forceItemPlayer.player()));
 
             if (forceItemPlayerStats.highestScore() < forceItemPlayer.currentScore()) {
-                forceItemBattle.getStatsManager().addToStats(PlayerStat.HIGHEST_SCORE, forceItemPlayerStats, forceItemPlayer.currentScore());
+                plugin.getStatsManager().addToStats(PlayerStat.HIGHEST_SCORE, forceItemPlayerStats, forceItemPlayer.currentScore());
             }
 
             if (place == 1) {
-                forceItemBattle.getStatsManager().addToStats(PlayerStat.GAMES_WON, forceItemPlayerStats, 1);
+                plugin.getStatsManager().addToStats(PlayerStat.GAMES_WON, forceItemPlayerStats, 1);
             }
         }
 

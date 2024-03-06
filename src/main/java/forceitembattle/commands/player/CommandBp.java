@@ -12,13 +12,13 @@ public class CommandBp extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (!this.forceItemBattle.getGamemanager().isMidGame()) {
+        if (!this.plugin.getGamemanager().isMidGame()) {
             player.sendMessage("§cThe game has not started yet!");
             return;
         }
 
-        if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.BACKPACK)) {
-            this.forceItemBattle.getBackpack().openPlayerBackpack(player);
+        if (this.plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK)) {
+            this.plugin.getBackpack().openPlayerBackpack(player);
         } else {
             player.sendMessage("§cBackpacks are disabled in this round!");
         }

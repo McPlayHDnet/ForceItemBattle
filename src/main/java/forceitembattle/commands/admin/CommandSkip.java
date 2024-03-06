@@ -13,7 +13,7 @@ public class CommandSkip extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (!this.forceItemBattle.getGamemanager().isMidGame()) {
+        if (!this.plugin.getGamemanager().isMidGame()) {
             player.sendMessage(ChatColor.RED + "The game is not running. Start it first with /start");
             return;
         }
@@ -28,7 +28,7 @@ public class CommandSkip extends CustomCommand {
         if (target != null) {
             player.sendMessage("§7Skipped this item for " + target.getName());
             //this.forceItemBattle.logToFile("[" + this.forceItemBattle.getTimer().getTime() + "] | " + args[0] + " skipped " + this.forceItemBattle.getGamemanager().getCurrentMaterial(Bukkit.getPlayer(args[0])));
-            this.forceItemBattle.getGamemanager().forceSkipItem(target);
+            this.plugin.getGamemanager().forceSkipItem(target);
         } else {
             player.sendMessage(ChatColor.RED + "This player is not online");
         }

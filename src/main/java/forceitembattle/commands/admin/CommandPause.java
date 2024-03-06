@@ -14,13 +14,13 @@ public class CommandPause extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (!this.forceItemBattle.getGamemanager().isMidGame()) {
+        if (!this.plugin.getGamemanager().isMidGame()) {
             player.sendMessage("§cThe timer is already paused.");
             return;
         }
 
         Bukkit.broadcastMessage("§6The timer has been paused!");
         Bukkit.getWorld("world").setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
-        this.forceItemBattle.getGamemanager().setCurrentGameState(GameState.PAUSED_GAME);
+        this.plugin.getGamemanager().setCurrentGameState(GameState.PAUSED_GAME);
     }
 }

@@ -31,9 +31,9 @@ public class CommandInfo extends CustomCommand implements CustomTabCompleter {
             }
             item = new ItemStack(material);
 
-        } else if (this.forceItemBattle.getGamemanager().isMidGame()) {
-            if (this.forceItemBattle.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
-                ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        } else if (this.plugin.getGamemanager().isMidGame()) {
+            if (this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
+                ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
                 item = new ItemStack(forceItemPlayer.currentMaterial());
             } else {
                 player.sendMessage("§cYou are not playing.");
@@ -46,16 +46,16 @@ public class CommandInfo extends CustomCommand implements CustomTabCompleter {
         }
 
         DescriptionItem descriptionItem;
-        if (this.forceItemBattle.getItemDifficultiesManager().isItemInDescriptionList(item.getType())) {
-            descriptionItem = this.forceItemBattle.getItemDifficultiesManager().getDescriptionItems().get(item.getType());
+        if (this.plugin.getItemDifficultiesManager().isItemInDescriptionList(item.getType())) {
+            descriptionItem = this.plugin.getItemDifficultiesManager().getDescriptionItems().get(item.getType());
             if (descriptionItem.lines() != null) {
-                this.forceItemBattle.getItemDifficultiesManager().getDescriptionItemLines(descriptionItem.material()).forEach(player::sendMessage);
+                this.plugin.getItemDifficultiesManager().getDescriptionItemLines(descriptionItem.material()).forEach(player::sendMessage);
             } else {
                 throw new NullPointerException("The item description is either null or empty");
             }
         }
 
-        this.forceItemBattle.getRecipeManager().createRecipeViewer(player, item);
+        this.plugin.getRecipeManager().createRecipeViewer(player, item);
     }
 
     private static final List<String> MATERIALS = Arrays.stream(Material.values())

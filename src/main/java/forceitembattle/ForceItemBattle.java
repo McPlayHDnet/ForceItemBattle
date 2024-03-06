@@ -187,6 +187,7 @@ public final class ForceItemBattle extends JavaPlugin {
         new CommandLeaderboard();
         new CommandPosition();
         new CommandPing();
+        new CommandShow();
     }
 
     @Override

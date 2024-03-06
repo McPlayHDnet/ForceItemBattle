@@ -18,7 +18,7 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
         if (args.length == 0) {
-            this.forceItemBattle.getStatsManager().topMessage(player, this.forceItemBattle.getStatsManager().top(PlayerStat.HIGHEST_SCORE), PlayerStat.HIGHEST_SCORE);
+            this.plugin.getStatsManager().topMessage(player, this.plugin.getStatsManager().top(PlayerStat.HIGHEST_SCORE), PlayerStat.HIGHEST_SCORE);
             return;
         }
 
@@ -35,7 +35,7 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
                 player.sendMessage("§e" + args[0] + " §cdoes not exist in leaderboard");
                 return;
             }
-            this.forceItemBattle.getStatsManager().topMessage(player, this.forceItemBattle.getStatsManager().top(leaderStat), leaderStat);
+            this.plugin.getStatsManager().topMessage(player, this.plugin.getStatsManager().top(leaderStat), leaderStat);
         }
 
     }

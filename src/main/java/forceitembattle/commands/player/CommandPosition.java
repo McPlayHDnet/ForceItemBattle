@@ -19,7 +19,7 @@ public class CommandPosition extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (!this.forceItemBattle.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
+        if (!this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
             return;
         }
 
@@ -33,7 +33,7 @@ public class CommandPosition extends CustomCommand {
         }
 
         String positionName = String.join(" ", args);
-        if (this.forceItemBattle.getPositionManager().positionExist(positionName)) {
+        if (this.plugin.getPositionManager().positionExist(positionName)) {
             Scheduler.runAsync(() -> showPosition(player, positionName));
             return;
         }
@@ -43,27 +43,27 @@ public class CommandPosition extends CustomCommand {
 
     private void addNewPosition(Player player, String positionName) {
         Location playerLocation = player.getLocation();
-        this.forceItemBattle.getPositionManager().createPosition(positionName, playerLocation);
+        this.plugin.getPositionManager().createPosition(positionName, playerLocation);
         Bukkit.broadcastMessage(
                 prefix + "§a" + player.getName() + " §7added location of §3" + positionName + "§7 at " + locationToString(playerLocation) + " §7in the " + getWorldName(playerLocation.getWorld())
         );
     }
 
     private void showPosition(Player player, String positionName) {
-        Location positionLocation = this.forceItemBattle.getPositionManager().getPosition(positionName);
+        Location positionLocation = this.plugin.getPositionManager().getPosition(positionName);
         player.sendMessage(
                 prefix + "§3" + positionName + " §7located at " + locationToString(positionLocation) + distance(player.getLocation(), positionLocation)
         );
     }
 
     private void sendAllPositions(Player player) {
-        if (this.forceItemBattle.getPositionManager().getAllPositions().isEmpty()) {
+        if (this.plugin.getPositionManager().getAllPositions().isEmpty()) {
             player.sendMessage(prefix + "§7Nobody added any locations yet.");
             return;
         }
 
         player.sendMessage(prefix + "§fAll saved locations");
-        this.forceItemBattle.getPositionManager().getAllPositions().forEach((name, location) -> {
+        this.plugin.getPositionManager().getAllPositions().forEach((name, location) -> {
             player.sendMessage("§8» §3" + name + " §7located at " + locationToString(location) + distance(player.getLocation(), location));
         });
     }
@@ -75,17 +75,17 @@ public class CommandPosition extends CustomCommand {
         }
 
         if (locationName.equalsIgnoreCase("all")) {
-            this.forceItemBattle.getPositionManager().clearPositions();
+            this.plugin.getPositionManager().clearPositions();
             player.sendMessage(prefix + "§7All locations have been removed.");
             return;
         }
 
-        if (!this.forceItemBattle.getPositionManager().positionExist(locationName)) {
+        if (!this.plugin.getPositionManager().positionExist(locationName)) {
             player.sendMessage(prefix + "§cPosition §f" + locationName + " §cdoes not exist.");
             return;
         }
 
-        this.forceItemBattle.getPositionManager().removePosition(locationName);
+        this.plugin.getPositionManager().removePosition(locationName);
         player.sendMessage(prefix + "§7Position §3" + locationName + " §7has been removed.");
     }
 

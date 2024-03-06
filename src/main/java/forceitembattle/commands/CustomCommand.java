@@ -9,14 +9,13 @@ import org.bukkit.entity.Player;
  */
 public abstract class CustomCommand implements CommandExecutor {
 
-    // TODO rename to plugin or sth
-    protected final ForceItemBattle forceItemBattle = ForceItemBattle.getInstance();
+    protected final ForceItemBattle plugin = ForceItemBattle.getInstance();
     private final String name;
 
     public CustomCommand(String name) {
         this.name = name;
 
-        PluginCommand command = this.forceItemBattle.getCommand(name);
+        PluginCommand command = this.plugin.getCommand(name);
         if (command == null) {
             throw new IllegalArgumentException("Command " + name + " does not exist in plugin.yml");
         }

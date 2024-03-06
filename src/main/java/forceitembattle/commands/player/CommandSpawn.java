@@ -15,7 +15,7 @@ public class CommandSpawn extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (this.forceItemBattle.getSpawnLocation() == null) {
+        if (this.plugin.getSpawnLocation() == null) {
             player.sendMessage("§cThe spawn location has not been set yet.");
             return;
         }
@@ -23,7 +23,7 @@ public class CommandSpawn extends CustomCommand {
         List<Entity> passengers = new ArrayList<>(player.getPassengers());
         passengers.forEach(player::removePassenger);
 
-        player.teleport(this.forceItemBattle.getSpawnLocation());
+        player.teleport(this.plugin.getSpawnLocation());
 
         passengers.forEach(player::addPassenger);
     }

@@ -12,6 +12,6 @@ public class CommandSettings extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        new InvSettings(this.forceItemBattle, null).open(player);
+        new InvSettings(this.plugin, null).open(player);
     }
 }
