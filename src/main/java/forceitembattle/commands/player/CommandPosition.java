@@ -1,5 +1,6 @@
-package forceitembattle.commands;
+package forceitembattle.commands.player;
 
+import forceitembattle.commands.CustomCommand;
 import forceitembattle.util.Scheduler;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;

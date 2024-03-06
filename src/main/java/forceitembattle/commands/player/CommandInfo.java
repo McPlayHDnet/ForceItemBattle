@@ -1,5 +1,6 @@
-package forceitembattle.commands;
+package forceitembattle.commands.player;
 
+import forceitembattle.commands.CustomCommand;
 import forceitembattle.util.DescriptionItem;
 import forceitembattle.util.ForceItemPlayer;
 import org.bukkit.Material;

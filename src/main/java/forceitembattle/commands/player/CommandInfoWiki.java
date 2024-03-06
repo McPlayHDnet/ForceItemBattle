@@ -1,5 +1,6 @@
-package forceitembattle.commands;
+package forceitembattle.commands.player;
 
+import forceitembattle.commands.CustomCommand;
 import forceitembattle.util.ForceItemPlayer;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;

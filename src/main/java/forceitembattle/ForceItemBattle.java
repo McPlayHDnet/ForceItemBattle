@@ -1,7 +1,7 @@
 package forceitembattle;
 
-import forceitembattle.commands.*;
 import forceitembattle.commands.admin.*;
+import forceitembattle.commands.player.*;
 import forceitembattle.listener.Listeners;
 import forceitembattle.listener.PvPListener;
 import forceitembattle.listener.RecipeListener;

@@ -1,6 +1,7 @@
-package forceitembattle.commands;
+package forceitembattle.commands.player;
 
-import forceitembattle.commands.tabcomplete.TabCompletion;
+import forceitembattle.commands.CustomCommand;
+import forceitembattle.commands.TabCompletion;
 import forceitembattle.util.PlayerStat;
 import org.bukkit.entity.Player;
 
