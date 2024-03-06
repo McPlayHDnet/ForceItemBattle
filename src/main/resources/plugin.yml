@@ -15,7 +15,9 @@ commands:
     aliases: [backpack]
   result:
   items:
+    permission: battle.forceitem.command.items
   info:
+  show:
   infowiki:
   spawn:
   bed:
