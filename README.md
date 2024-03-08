@@ -70,9 +70,3 @@ Item Description
 ![Item Description](https://github.com/btlmt-de/FIB/assets/77849496/1b719e82-475a-4962-91e3-f9d719373be9)
 
 
-## Acknowledgements
-
- - [Awesome Readme Templates](https://awesomeopensource.com/project/elangosundar/awesome-README-templates)
- - [Awesome README](https://github.com/matiassingers/awesome-readme)
- - [How to write a Good readme](https://bulldogjob.com/news/449-how-to-write-a-good-readme-for-your-github-project)
-
