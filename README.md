@@ -8,8 +8,9 @@ When the game starts, every player gets a random item assigned. The goal is to c
 
 
 
-## Commands
+## Commands & Settings
 
+### Player Commands
 | Command | Description     |
 | :-------- | :------- |
 | `/spawn` | `teleport player to spawn` |
@@ -18,18 +19,36 @@ When the game starts, every player gets a random item assigned. The goal is to c
 | `/info <item>` | `pull up the recipe or description of any item` |
 | `/infowiki` | `get the minecraft.wiki link for the current item` |
 | `/pos <name>` | `save position to your current location` |
-| `/start <time> <jokers>` | `start the game` |
-| `/start <preset>` | `start the game using a defined preset` |
-| `/reset` | `reset the game and generate a new world` |
 | `/pause` | `freeze players & timer` |
 | `/resume` | `unfreeze players & timer` |
-| `/settings` | `pull up the settings menu` |
 | `/stats <player>` | `get stats of any player` |
 | `/top <category>` | `get leaderboard of defined category` |
 
-     
 If you want to have item descriptions (useful in case items don't have a crafting recipe), you can use [this config](https://github.com/btlmt-de/FIB).
-        
+
+### OP Commands
+| Command | Description     |
+| :-------- | :------- |
+| `/start <time> <jokers>` | `start the game` |
+| `/start <preset>` | `start the game using a defined preset` |
+| `/reset` | `reset the game and generate a new world` |
+| `/settings` | `pull up the settings menu` |
+
+### Settings
+| Command | Description     |
+| :-------- | :------- |
+| `PvP` | `enable / disable pvp` |
+| `Food` | `enable / disable food (false -> no food needed)` |
+| `Faster Plants Growth & Decay` | `plants (leaves, farmland) grow / decay faster when active` |
+| `Teams` | `enable / disable team mode` |
+| `KeepInventory` | `don't lose inventory on death when active` |
+| `Backpack` | `enable / disable additional storage (size adjustable in presets)` |
+| `Stats` | `enable / disable if stats should count for round` |
+| `Nether` | `enable / disable nether items (if disabled, end items  are also excluded)` |
+| `Extreme` | `enable / disable all obtainable minecraft items (end items + hard to get / rare items)` |
+
+
+We recommend to enable the Extreme settting only in rounds longer than 45 minutes.        
 
     
 ## Screenshots
@@ -51,6 +70,9 @@ Item Description
 ![Item Description](https://github.com/btlmt-de/FIB/assets/77849496/1b719e82-475a-4962-91e3-f9d719373be9)
 
 
+## Acknowledgements
 
-
+ - [Awesome Readme Templates](https://awesomeopensource.com/project/elangosundar/awesome-README-templates)
+ - [Awesome README](https://github.com/matiassingers/awesome-readme)
+ - [How to write a Good readme](https://bulldogjob.com/news/449-how-to-write-a-good-readme-for-your-github-project)
 
