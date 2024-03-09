@@ -5,7 +5,7 @@ ForceItemBattle is a gamemode where players compete to collect specific items as
 
 When the game starts, every player gets a random item assigned. The goal is to collect as many items as possible in a specified  time. The player who has found the most items at the end of the time limit wins the battle.
 
-
+Recommended Minecraft Version: 1.20.4
 
 
 ## Commands & Settings
@@ -19,6 +19,7 @@ When the game starts, every player gets a random item assigned. The goal is to c
 | `/info <item>` | `pull up the recipe or description of any item` |
 | `/infowiki` | `get the minecraft.wiki link for the current item` |
 | `/pos <name>` | `save position to your current location` |
+| `/pos` | `pull up all saved positions` |
 | `/pause` | `freeze players & timer` |
 | `/resume` | `unfreeze players & timer` |
 | `/stats <player>` | `get stats of any player` |
@@ -69,4 +70,7 @@ Item Description
 
 ![Item Description](https://github.com/btlmt-de/FIB/assets/77849496/1b719e82-475a-4962-91e3-f9d719373be9)
 
+Saved Positions
+
+![Pos](https://github.com/McPlayHDnet/ForceItemBattle/assets/77849496/3dbc3bf8-0f8d-4157-997a-dbd330712922)
 
