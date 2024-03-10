@@ -33,6 +33,7 @@ If you want to have item descriptions (useful in case items don't have a craftin
 | `/start <time> <jokers>` | `start the game` |
 | `/start <preset>` | `start the game using a defined preset` |
 | `/reset` | `reset the game and generate a new world` |
+| `/stats reset <player>` | `reset all stats of a player` |
 | `/settings` | `pull up the settings menu` |
 
 ### Settings
@@ -41,7 +42,7 @@ If you want to have item descriptions (useful in case items don't have a craftin
 | `PvP` | `enable / disable pvp` |
 | `Food` | `enable / disable food (false -> no food needed)` |
 | `Faster Plants Growth & Decay` | `plants (leaves, farmland) grow / decay faster when active` |
-| `Teams` | `enable / disable team mode` |
+| `Teams` | `enable / disable team mode (currently not functional, rework in progress)` |
 | `KeepInventory` | `don't lose inventory on death when active` |
 | `Backpack` | `enable / disable additional storage (size adjustable in presets)` |
 | `Stats` | `enable / disable if stats should count for round` |
