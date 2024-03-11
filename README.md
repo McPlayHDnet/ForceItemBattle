@@ -24,6 +24,7 @@ Recommended Minecraft Version: 1.20.4
 | `/resume` | `unfreeze players & timer` |
 | `/stats <player>` | `get stats of any player` |
 | `/top <category>` | `get leaderboard of defined category` |
+| `/show <item>` | `displays the item in front of player` |
 
 If you want to have item descriptions (useful in case items don't have a crafting recipe), you can use [this config](https://github.com/btlmt-de/FIB).
 
