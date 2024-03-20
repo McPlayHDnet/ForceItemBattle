@@ -13,6 +13,7 @@ public class CommandPosition extends CustomCommand {
 
     public CommandPosition() {
         super("pos");
+        setDescription("Add or show saved positions for structures");
     }
 
     private static final String prefix = "§8» §6Position §8┃ ";

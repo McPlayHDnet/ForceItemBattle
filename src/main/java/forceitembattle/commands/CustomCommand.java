@@ -1,19 +1,27 @@
 package forceitembattle.commands;
 
 import forceitembattle.ForceItemBattle;
+import lombok.Getter;
+import lombok.Setter;
 import org.bukkit.command.*;
 import org.bukkit.entity.Player;
 
 /**
  * Command that is specified in plugin.yml
  */
+@Getter
 public abstract class CustomCommand implements CommandExecutor {
 
     protected final ForceItemBattle plugin = ForceItemBattle.getInstance();
     private final String name;
+    @Setter
+    private String usage;
+    @Setter
+    private String description;
 
     public CustomCommand(String name) {
         this.name = name;
+
 
         PluginCommand command = this.plugin.getCommand(name);
         if (command == null) {
@@ -24,6 +32,8 @@ public abstract class CustomCommand implements CommandExecutor {
         if (this instanceof TabCompleter tabCompleter) {
             command.setTabCompleter(tabCompleter);
         }
+
+        plugin.getCommandsManager().registerCommand(this);
     }
 
     @Override

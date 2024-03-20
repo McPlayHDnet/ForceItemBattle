@@ -17,6 +17,8 @@ public class CommandInfo extends CustomCommand implements CustomTabCompleter {
 
     public CommandInfo() {
         super("info");
+        setUsage("[item]");
+        setDescription("Get information about an item");
     }
 
     @Override
@@ -36,7 +38,7 @@ public class CommandInfo extends CustomCommand implements CustomTabCompleter {
                 ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
                 item = new ItemStack(forceItemPlayer.currentMaterial());
             } else {
-                player.sendMessage("§cYou are not playing.");
+                player.sendMessage("§cYou are not playing, type /info [item] to get information about an item");
             }
         }
 

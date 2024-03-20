@@ -7,6 +7,7 @@ public class CommandPing extends CustomCommand {
 
     public CommandPing() {
         super("ping");
+        setDescription("Check your ping");
     }
 
     @Override

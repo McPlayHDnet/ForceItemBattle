@@ -13,6 +13,7 @@ public class CommandInfoWiki extends CustomCommand {
 
     public CommandInfoWiki() {
         super("infowiki");
+        setDescription("Get wiki info link for your current item");
     }
 
     @Override

@@ -11,6 +11,7 @@ public class CommandBed extends CustomCommand {
 
     public CommandBed() {
         super("bed");
+        setDescription("Teleport to your bed location");
     }
 
     @Override

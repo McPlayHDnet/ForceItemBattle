@@ -8,6 +8,8 @@ public class CommandItems extends CustomCommand {
 
     public CommandItems() {
         super("items");
+
+        setDescription("Show all available items");
     }
 
     @Override

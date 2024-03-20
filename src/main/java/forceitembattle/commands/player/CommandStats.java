@@ -8,6 +8,9 @@ public class CommandStats extends CustomCommand {
 
     public CommandStats() {
         super("stats");
+
+        setUsage("[player]");
+        setDescription("Show stats");
     }
 
     @Override

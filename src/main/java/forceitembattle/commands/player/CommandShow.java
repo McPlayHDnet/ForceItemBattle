@@ -13,6 +13,7 @@ public class CommandShow extends CustomCommand {
 
     public CommandShow() {
         super("show");
+        setDescription("Show the item you need to find");
     }
 
     @Override

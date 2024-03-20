@@ -19,6 +19,7 @@ public class CommandResult extends CustomCommand {
 
     public CommandResult() {
         super("result");
+        setDescription("Show the next player's result");
 
         this.place = -1;
     }

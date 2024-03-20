@@ -1,4 +1,4 @@
-package forceitembattle.commands.admin;
+package forceitembattle.commands.player;
 
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.util.GameState;
@@ -10,6 +10,7 @@ public class CommandResume extends CustomCommand {
 
     public CommandResume() {
         super("resume");
+        setDescription("Resume the game");
     }
 
     @Override

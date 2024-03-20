@@ -1,5 +1,6 @@
 package forceitembattle;
 
+import forceitembattle.commands.CommandsManager;
 import forceitembattle.commands.admin.*;
 import forceitembattle.commands.player.*;
 import forceitembattle.listener.Listeners;
@@ -54,6 +55,9 @@ public final class ForceItemBattle extends JavaPlugin {
     private StatsManager statsManager;
     @Getter
     private PositionManager positionManager;
+    @Getter
+    @Setter
+    private CommandsManager commandsManager;
     @Getter
     @Setter
     private Location spawnLocation;
@@ -202,6 +206,7 @@ public final class ForceItemBattle extends JavaPlugin {
         new CommandPosition();
         new CommandPing();
         new CommandShow();
+        new CommandHelp();
     }
 
     @Override
