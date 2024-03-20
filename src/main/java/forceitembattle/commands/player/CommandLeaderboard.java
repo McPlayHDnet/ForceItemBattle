@@ -12,7 +12,8 @@ import java.util.stream.Collectors;
 public class CommandLeaderboard extends CustomCommand implements CustomTabCompleter {
 
     public CommandLeaderboard() {
-        super("top [stat]");
+        super("top");
+        setUsage("[stat]");
         setDescription("Show the stat leaderboards");
     }
 

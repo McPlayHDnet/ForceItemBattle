@@ -31,7 +31,7 @@ public class CommandHelp extends CustomCommand {
 
             String description = "";
             if (command.getDescription() != null) {
-                description = " &7- &f"+ command.getDescription();
+                description = " &8- &7"+ command.getDescription();
             }
 
             msg(player, "&8- &f/" + usage + description);
