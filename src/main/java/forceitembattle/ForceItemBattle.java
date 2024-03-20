@@ -150,6 +150,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.colorManager = new ColorManager();
         this.statsManager = new StatsManager(this);
         this.positionManager = new PositionManager(this);
+        this.commandsManager = new CommandsManager(this);
 
         this.initListeners();
         this.initCommands();

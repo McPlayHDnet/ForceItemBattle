@@ -3,7 +3,9 @@ package forceitembattle.commands;
 import forceitembattle.ForceItemBattle;
 import lombok.Getter;
 import lombok.Setter;
-import org.bukkit.command.*;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 /**
@@ -21,17 +23,6 @@ public abstract class CustomCommand implements CommandExecutor {
 
     public CustomCommand(String name) {
         this.name = name;
-
-
-        PluginCommand command = this.plugin.getCommand(name);
-        if (command == null) {
-            throw new IllegalArgumentException("Command " + name + " does not exist in plugin.yml");
-        }
-
-        command.setExecutor(this);
-        if (this instanceof TabCompleter tabCompleter) {
-            command.setTabCompleter(tabCompleter);
-        }
 
         plugin.getCommandsManager().registerCommand(this);
     }
