@@ -1,11 +1,19 @@
 package forceitembattle.manager;
 
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.DescriptionItem;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -74,6 +82,36 @@ public class ItemDifficultiesManager {
             }
         }
         return lines;
+    }
+
+    private Map<Material, String> readItemUnicodes() {
+        Map<Material, String> itemsUnicode = new HashMap<>();
+
+        try (FileReader fileReader = new FileReader(new File(this.forceItemBattle.getDataFolder(), "unicodeItems.json"))) {
+            Gson gson = new Gson();
+            Type mapType = new TypeToken<Map<String, String>[]>(){}.getType();
+            Map<String, String>[] items = gson.fromJson(fileReader, mapType);
+
+            for(Map<String, String> entry : items) {
+                String materialName = entry.get("material");
+                String unicode = entry.get("unicode");
+
+                if (materialName != null && unicode != null) {
+                    Material material = Material.getMaterial(materialName);
+                    if (material != null) {
+                        itemsUnicode.put(material, unicode);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return itemsUnicode;
+    }
+
+    public String getUnicodeFromMaterial(Material material) {
+        return this.readItemUnicodes().getOrDefault(material, "NULL");
     }
 
     /**

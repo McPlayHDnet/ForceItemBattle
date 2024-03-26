@@ -144,8 +144,6 @@ public final class ForceItemBattle extends JavaPlugin {
         this.timer = new Timer(this);
         this.backpack = new Backpack(this);
         this.itemDifficultiesManager = new ItemDifficultiesManager(this);
-        //testing something, not needed in final code
-        //this.itemDifficultiesManager.createList();
         this.recipeManager = new RecipeManager(this);
         this.colorManager = new ColorManager();
         this.statsManager = new StatsManager(this);
