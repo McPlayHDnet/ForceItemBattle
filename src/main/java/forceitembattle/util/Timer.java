@@ -4,16 +4,14 @@ import forceitembattle.ForceItemBattle;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.apache.commons.text.WordUtils;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.GameRule;
-import org.bukkit.Sound;
+import org.bukkit.*;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.awt.Color;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -68,13 +66,14 @@ public class Timer {
             if (this.forceItemBattle.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
                 ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
 
-                player.setPlayerListName(player.getName() + " §7[§6" + this.forceItemBattle.getGamemanager().getCurrentMaterialName(forceItemPlayer) + "§7]");
+                player.setPlayerListName(player.getName() + " §7[§6" + this.forceItemBattle.getGamemanager().getCurrentMaterialName(forceItemPlayer) + " §r" + net.md_5.bungee.api.ChatColor.of(new Color(78, 92, 36)) + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(true, forceItemPlayer.currentMaterial()) + "§7]");
 
                 player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(ChatColor.GOLD.toString() +
                         ChatColor.BOLD + formatSeconds(getTime()) + " §8| §aYour score: §f" + forceItemPlayer.currentScore()));
 
                 String material = this.forceItemBattle.getGamemanager().getCurrentMaterialName(forceItemPlayer);
-                String bossBarTitle = "§a§l" + material;
+
+                String bossBarTitle = "§a§l" + material + " §r" + net.md_5.bungee.api.ChatColor.of(new Color(78, 92, 36)) + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(false, forceItemPlayer.currentMaterial());
 
                 try {
                     BossBar bar = bossBar.get(player.getUniqueId());

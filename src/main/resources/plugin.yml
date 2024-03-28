@@ -23,6 +23,7 @@ commands:
   bed:
   pause:
   resume:
+  help:
   stats:
   top:
   pos:

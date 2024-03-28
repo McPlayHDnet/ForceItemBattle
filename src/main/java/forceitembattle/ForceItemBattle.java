@@ -1,5 +1,6 @@
 package forceitembattle;
 
+import forceitembattle.commands.CommandsManager;
 import forceitembattle.commands.admin.*;
 import forceitembattle.commands.player.*;
 import forceitembattle.listener.Listeners;
@@ -12,6 +13,8 @@ import forceitembattle.util.Backpack;
 import forceitembattle.util.DescriptionItem;
 import forceitembattle.util.Timer;
 import forceitembattle.util.color.ColorManager;
+import lombok.Getter;
+import lombok.Setter;
 import org.bukkit.Bukkit;
 import org.bukkit.GameRule;
 import org.bukkit.Location;
@@ -33,18 +36,33 @@ import java.util.Set;
 
 public final class ForceItemBattle extends JavaPlugin {
 
+    @Getter
     private static ForceItemBattle instance;
 
+    @Getter
     private Gamemanager gamemanager;
+    @Getter
     private Timer timer;
+    @Getter
     private Backpack backpack;
+    @Getter
     private ItemDifficultiesManager itemDifficultiesManager;
+    @Getter
     private RecipeManager recipeManager;
+    @Getter
     private ColorManager colorManager;
+    @Getter
     private StatsManager statsManager;
+    @Getter
     private PositionManager positionManager;
+    @Getter
+    @Setter
+    private CommandsManager commandsManager;
+    @Getter
+    @Setter
     private Location spawnLocation;
 
+    @Getter
     private GameSettings settings;
 
     public ForceItemBattle() {
@@ -126,12 +144,11 @@ public final class ForceItemBattle extends JavaPlugin {
         this.timer = new Timer(this);
         this.backpack = new Backpack(this);
         this.itemDifficultiesManager = new ItemDifficultiesManager(this);
-        //testing something, not needed in final code
-        //this.itemDifficultiesManager.createList();
         this.recipeManager = new RecipeManager(this);
         this.colorManager = new ColorManager();
         this.statsManager = new StatsManager(this);
         this.positionManager = new PositionManager(this);
+        this.commandsManager = new CommandsManager(this);
 
         this.initListeners();
         this.initCommands();
@@ -188,6 +205,7 @@ public final class ForceItemBattle extends JavaPlugin {
         new CommandPosition();
         new CommandPing();
         new CommandShow();
+        new CommandHelp();
     }
 
     @Override
@@ -229,51 +247,4 @@ public final class ForceItemBattle extends JavaPlugin {
         return sdf.format(cal.getTime());
     }
 
-    public void setSpawnLocation(Location spawnLocation) {
-        this.spawnLocation = spawnLocation;
-    }
-
-    public Location getSpawnLocation() {
-        return spawnLocation;
-    }
-
-    public Gamemanager getGamemanager() {
-        return this.gamemanager;
-    }
-
-    public Timer getTimer() {
-        return this.timer;
-    }
-
-    public Backpack getBackpack() {
-        return this.backpack;
-    }
-
-    public ItemDifficultiesManager getItemDifficultiesManager() {
-        return this.itemDifficultiesManager;
-    }
-
-    public ColorManager getColorManager() {
-        return this.colorManager;
-    }
-
-    public StatsManager getStatsManager() {
-        return statsManager;
-    }
-
-    public PositionManager getPositionManager() {
-        return positionManager;
-    }
-
-    public GameSettings getSettings() {
-        return this.settings;
-    }
-
-    public RecipeManager getRecipeManager() {
-        return recipeManager;
-    }
-
-    public static ForceItemBattle getInstance() {
-        return instance;
-    }
 }

@@ -164,7 +164,17 @@ public enum FakeRecipe {
             ))
             .apply(recipe -> recipe.setStationDisplay(new ItemStack(Material.GLASS_BOTTLE)))
             .build("fib:dragon_breath", new ItemStack(Material.DRAGON_BREATH))
-    )
+    ),
+
+    BONE_MEAL(Material.BONE_MEAL, item -> RecipeBuilder.newBuilder(ToolRecipe::new)
+            .apply(recipe -> recipe.addIngredient(new RecipeChoice.MaterialChoice(Material.WHEAT_SEEDS, Material.ACACIA_LEAVES)))
+            .apply(recipe -> recipe.addInteractionLore(
+                    "&7Right click with plants on",
+                    "&7composter until it's full."
+            ))
+            .apply(recipe -> recipe.setStationDisplay(new ItemStack(Material.COMPOSTER)))
+            .build("fib:bone_meal", new ItemStack(Material.BONE_MEAL))
+    ),
 
     ;
 

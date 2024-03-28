@@ -8,10 +8,7 @@ import forceitembattle.settings.preset.GamePreset;
 import forceitembattle.settings.preset.InvSettingsPresets;
 import forceitembattle.util.*;
 import org.apache.commons.text.WordUtils;
-import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
-import org.bukkit.Material;
-import org.bukkit.Sound;
+import org.bukkit.*;
 import org.bukkit.block.ShulkerBox;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
@@ -31,6 +28,8 @@ import org.bukkit.event.player.*;
 import org.bukkit.inventory.*;
 import org.bukkit.inventory.meta.BlockStateMeta;
 
+import java.awt.*;
+import java.awt.Color;
 import java.util.ArrayList;
 
 public class Listeners implements Listener {
@@ -147,8 +146,12 @@ public class Listeners implements Listener {
         ItemStack itemStack = event.getFoundItem();
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
 
+        String unicode = this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType());
+        //this specific colorcode is inside the resource pack - credits: https://github.com/PuckiSilver/NoShadow
+        String removedDropShadowUnicode = net.md_5.bungee.api.ChatColor.of(new Color(78, 92, 36)) + unicode;
+
         if (!event.isBackToBack()) {
-            Bukkit.broadcastMessage("§a" + player.getName() + " §7" + (event.isSkipped() ? "skipped" : "found") + " §6" + WordUtils.capitalize(itemStack.getType().name().toLowerCase().replace("_", " ")));
+            Bukkit.broadcastMessage("§a" + player.getName() + " §7" + (event.isSkipped() ? "skipped" : "found") + " " + ChatColor.RESET + unicode + " §6" + WordUtils.capitalize(itemStack.getType().name().toLowerCase().replace("_", " ")));
         }
 
         forceItemPlayer.setCurrentScore(forceItemPlayer.currentScore() + 1);
@@ -203,7 +206,7 @@ public class Listeners implements Listener {
         foundNextItemEvent.setBackToBack(true);
         foundNextItemEvent.setSkipped(false);
 
-        Bukkit.broadcastMessage("§a" + player.getName() + " §7was lucky to already own §6" + WordUtils.capitalize(foundItem.getType().name().toLowerCase().replace("_", " ")));
+        Bukkit.broadcastMessage("§a" + player.getName() + " §7was lucky to already own " + ChatColor.RESET + unicode + " §6" + WordUtils.capitalize(foundItem.getType().name().toLowerCase().replace("_", " ")));
         Bukkit.getPluginManager().callEvent(foundNextItemEvent);
     }
 

@@ -9,6 +9,8 @@ public class CommandSkip extends CustomCommand {
 
     public CommandSkip() {
         super("skip");
+
+        setDescription("Skip current item for player");
     }
 
     @Override

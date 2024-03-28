@@ -9,6 +9,8 @@ public class CommandReset extends CustomCommand {
 
     public CommandReset() {
         super("reset");
+
+        setDescription("Restart server with new seed");
     }
 
     @Override

@@ -8,6 +8,8 @@ public class CommandStopTimer extends CustomCommand {
 
     public CommandStopTimer() {
         super("stoptimer");
+
+        setDescription("Stop the timer and end the game");
     }
 
     @Override

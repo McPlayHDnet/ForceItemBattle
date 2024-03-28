@@ -13,6 +13,8 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
 
     public CommandLeaderboard() {
         super("top");
+        setUsage("[stat]");
+        setDescription("Show the stat leaderboards");
     }
 
     @Override

@@ -8,6 +8,8 @@ public class CommandSettings extends CustomCommand {
 
     public CommandSettings() {
         super("settings");
+
+        setDescription("Manage settings");
     }
 
     @Override

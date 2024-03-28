@@ -274,6 +274,15 @@ public class RecipeInventory extends InventoryBuilder {
                 lore.add(" §8» §3any field flower");
                 break;
             }
+
+            if (recipeViewer.itemStack().getType() == Material.BONE_MEAL) {
+                lore.clear();
+                lore.add(" §8» §3any flower");
+                lore.add(" §8» §3any seeds");
+                lore.add(" §8» §3any plants");
+                lore.add(" §8» §3any leaves");
+                break;
+            }
         }
 
         itemBuilder.setLore(lore);

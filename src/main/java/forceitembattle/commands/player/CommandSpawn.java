@@ -11,6 +11,7 @@ public class CommandSpawn extends CustomCommand {
 
     public CommandSpawn() {
         super("spawn");
+        setDescription("Teleport to the spawn location");
     }
 
     @Override

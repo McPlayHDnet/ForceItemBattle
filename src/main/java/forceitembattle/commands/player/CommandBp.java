@@ -8,6 +8,7 @@ public class CommandBp extends CustomCommand {
 
     public CommandBp() {
         super("bp");
+        setDescription("Open your backpack");
     }
 
     @Override

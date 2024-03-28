@@ -1,4 +1,4 @@
-package forceitembattle.commands.player;
+package forceitembattle.commands.admin;
 
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
@@ -23,6 +23,8 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
 
     public CommandStart() {
         super("start");
+        setUsage("<time in min> <jokers> or <preset>");
+        setDescription("Start the game");
     }
 
     @Override
