@@ -84,7 +84,12 @@ public class ItemDifficultiesManager {
         return lines;
     }
 
-    private Map<Material, String> readItemUnicodes() {
+    /**
+     * Method to read the unicodes from the file,
+     * solution can be better
+     */
+
+    private Map<Material, String> readItemUnicodes(boolean isChatOrTab) {
         Map<Material, String> itemsUnicode = new HashMap<>();
 
         try (FileReader fileReader = new FileReader(new File(this.forceItemBattle.getDataFolder(), "unicodeItems.json"))) {
@@ -97,10 +102,19 @@ public class ItemDifficultiesManager {
                 String unicode = entry.get("unicode");
 
                 if (materialName != null && unicode != null) {
-                    Material material = Material.getMaterial(materialName);
-                    if (material != null) {
-                        itemsUnicode.put(material, unicode);
+                    if(isChatOrTab && materialName.contains("_tabChat")) {
+                        Material material = Material.getMaterial(materialName.replace("_tabChat", ""));
+                        if(material != null) {
+                            itemsUnicode.put(material, unicode);
+                        }
+
+                    } else if(!isChatOrTab && !materialName.contains("_tabChat")) {
+                        Material material = Material.getMaterial(materialName);
+                        if(material != null) {
+                            itemsUnicode.put(material, unicode);
+                        }
                     }
+
                 }
             }
         } catch (IOException e) {
@@ -110,8 +124,8 @@ public class ItemDifficultiesManager {
         return itemsUnicode;
     }
 
-    public String getUnicodeFromMaterial(Material material) {
-        return this.readItemUnicodes().getOrDefault(material, "NULL");
+    public String getUnicodeFromMaterial(boolean isChatOrTab, Material material) {
+        return this.readItemUnicodes(isChatOrTab).getOrDefault(material, "NULL");
     }
 
     /**

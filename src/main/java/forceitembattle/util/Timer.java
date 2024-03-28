@@ -66,16 +66,14 @@ public class Timer {
             if (this.forceItemBattle.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
                 ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
 
-                String unicode = this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(forceItemPlayer.currentMaterial());
-
-                player.setPlayerListName(player.getName() + " §7[§6" + this.forceItemBattle.getGamemanager().getCurrentMaterialName(forceItemPlayer) + " §r" + net.md_5.bungee.api.ChatColor.of(new Color(78, 92, 36)) + unicode + "§7]");
+                player.setPlayerListName(player.getName() + " §7[§6" + this.forceItemBattle.getGamemanager().getCurrentMaterialName(forceItemPlayer) + " §r" + net.md_5.bungee.api.ChatColor.of(new Color(78, 92, 36)) + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(true, forceItemPlayer.currentMaterial()) + "§7]");
 
                 player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(ChatColor.GOLD.toString() +
                         ChatColor.BOLD + formatSeconds(getTime()) + " §8| §aYour score: §f" + forceItemPlayer.currentScore()));
 
                 String material = this.forceItemBattle.getGamemanager().getCurrentMaterialName(forceItemPlayer);
 
-                String bossBarTitle = "§a§l" + material + " §r" + net.md_5.bungee.api.ChatColor.of(new Color(78, 92, 36)) + unicode;
+                String bossBarTitle = "§a§l" + material + " §r" + net.md_5.bungee.api.ChatColor.of(new Color(78, 92, 36)) + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(false, forceItemPlayer.currentMaterial());
 
                 try {
                     BossBar bar = bossBar.get(player.getUniqueId());

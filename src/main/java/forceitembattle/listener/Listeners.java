@@ -146,7 +146,7 @@ public class Listeners implements Listener {
         ItemStack itemStack = event.getFoundItem();
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
 
-        String unicode = this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(itemStack.getType());
+        String unicode = this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType());
         //this specific colorcode is inside the resource pack - credits: https://github.com/PuckiSilver/NoShadow
         String removedDropShadowUnicode = net.md_5.bungee.api.ChatColor.of(new Color(78, 92, 36)) + unicode;
 
