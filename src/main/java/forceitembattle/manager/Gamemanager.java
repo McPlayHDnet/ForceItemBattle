@@ -3,9 +3,7 @@ package forceitembattle.manager;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.preset.GamePreset;
-import forceitembattle.util.ForceItemPlayer;
-import forceitembattle.util.GameState;
-import forceitembattle.util.ItemBuilder;
+import forceitembattle.util.*;
 import org.apache.commons.text.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -100,6 +98,23 @@ public class Gamemanager {
             if (player.isOp()) {
                 player.sendMessage(ChatColor.RED + "Use /result to see the results from every player");
             }
+
+            if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.STATS)) {
+                Map<UUID, ForceItemPlayer> sortedMapDesc = this.sortByValue(this.forceItemPlayerMap(), false);
+                Map<ForceItemPlayer, Integer> placesMap = this.calculatePlaces(sortedMapDesc);
+
+                ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
+                ForceItemPlayerStats forceItemPlayerStats = this.forceItemBattle.getStatsManager().playerStats(forceItemPlayer.player().getName());
+                this.forceItemBattle.getStatsManager().addToStats(PlayerStat.TRAVELLED, forceItemPlayerStats, this.forceItemBattle.getStatsManager().calculateDistance(forceItemPlayer.player()));
+
+                if (forceItemPlayerStats.highestScore() < forceItemPlayer.currentScore()) {
+                    this.forceItemBattle.getStatsManager().addToStats(PlayerStat.HIGHEST_SCORE, forceItemPlayerStats, forceItemPlayer.currentScore());
+                }
+
+                if (placesMap.get(forceItemPlayer) == 1) {
+                    this.forceItemBattle.getStatsManager().addToStats(PlayerStat.GAMES_WON, forceItemPlayerStats, 1);
+                }
+            }
         });
     }
 
@@ -114,6 +129,28 @@ public class Gamemanager {
                 : o2.getValue().currentScore().compareTo(o1.getValue().currentScore()));
         return list.stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> b, LinkedHashMap::new));
 
+    }
+
+    public Map<ForceItemPlayer, Integer> calculatePlaces(Map<UUID, ForceItemPlayer> playerMap) {
+        List<ForceItemPlayer> sortedPlayers = playerMap.values().stream()
+                .sorted(Comparator.comparingInt(ForceItemPlayer::currentScore).reversed())
+                .toList();
+
+        Map<ForceItemPlayer, Integer> placesMap = new LinkedHashMap<>();
+
+        int place = 1;
+        for(int i = 0; i < sortedPlayers.size(); i++) {
+            ForceItemPlayer currentPlayer = sortedPlayers.get(i);
+
+            if(i > 0 && currentPlayer.currentScore() == sortedPlayers.get(i - 1).currentScore()) {
+                placesMap.put(currentPlayer, placesMap.get(sortedPlayers.get(i - 1)));
+            } else {
+
+                placesMap.put(currentPlayer, place);
+                place++;
+            }
+        }
+        return placesMap;
     }
 
     public boolean forceItemPlayerExist(UUID uuid) {

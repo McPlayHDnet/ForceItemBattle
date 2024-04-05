@@ -10,8 +10,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class CommandResult extends CustomCommand {
 
@@ -63,27 +63,16 @@ public class CommandResult extends CustomCommand {
         if (this.place == -1) {
             this.place = sortedMapDesc.size();
         }
-        UUID uuid = (UUID) sortedMapDesc.keySet().toArray()[this.place - 1];
 
-        Bukkit.getOnlinePlayers().forEach(players -> {
-            new FinishInventory(this.plugin, this.plugin.getGamemanager().getForceItemPlayer(uuid), this.place, true).open(players);
-        });
+        Map<ForceItemPlayer, Integer> placesMap = this.plugin.getGamemanager().calculatePlaces(sortedMapDesc);
 
-        // TODO : This is not good, we should run this after timer ends automatically.
-        if (plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
-            ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(uuid);
-            ForceItemPlayerStats forceItemPlayerStats = plugin.getStatsManager().playerStats(forceItemPlayer.player().getName());
-            plugin.getStatsManager().addToStats(PlayerStat.TRAVELLED, forceItemPlayerStats, plugin.getStatsManager().calculateDistance(forceItemPlayer.player()));
+        ForceItemPlayer currentPlayer = sortedMapDesc.values().toArray(new ForceItemPlayer[0])[this.place - 1];
+        int currentPlace = placesMap.get(currentPlayer);
 
-            if (forceItemPlayerStats.highestScore() < forceItemPlayer.currentScore()) {
-                plugin.getStatsManager().addToStats(PlayerStat.HIGHEST_SCORE, forceItemPlayerStats, forceItemPlayer.currentScore());
-            }
-
-            if (place == 1) {
-                plugin.getStatsManager().addToStats(PlayerStat.GAMES_WON, forceItemPlayerStats, 1);
-            }
-        }
+        Bukkit.getOnlinePlayers().forEach(players -> new FinishInventory(this.plugin, currentPlayer, currentPlace, true).open(players));
 
         this.place--;
     }
+
+
 }
