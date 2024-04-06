@@ -136,7 +136,6 @@ public final class ForceItemBattle extends JavaPlugin {
                 new File(end , "region").mkdirs();
 
                 this.copyDatapack("FIB_Worldgen");
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "datapack enable \"" + "file/FIB_Worldgen.zip" + "\"");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -211,6 +210,8 @@ public final class ForceItemBattle extends JavaPlugin {
                     });
 
             System.out.println("Directory copied successfully.");
+
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "datapack enable \"" + "file/FIB_Worldgen.zip" + "\"");
         } catch (IOException e) {
             e.printStackTrace();
         }
