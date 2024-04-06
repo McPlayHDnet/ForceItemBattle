@@ -16,10 +16,7 @@ import forceitembattle.util.WanderingTraderTimer;
 import forceitembattle.util.color.ColorManager;
 import lombok.Getter;
 import lombok.Setter;
-import org.bukkit.Bukkit;
-import org.bukkit.GameRule;
-import org.bukkit.Location;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -210,8 +207,6 @@ public final class ForceItemBattle extends JavaPlugin {
                     });
 
             System.out.println("Directory copied successfully.");
-
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "datapack enable \"" + "file/FIB_Worldgen.zip" + "\"");
         } catch (IOException e) {
             e.printStackTrace();
         }
