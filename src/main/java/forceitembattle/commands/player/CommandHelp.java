@@ -11,13 +11,13 @@ public class CommandHelp extends CustomCommand {
     }
 
     private void msg(Player player, String message) {
-        player.sendMessage(ChatColor.translateAlternateColorCodes('&', message));
+        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(message));
     }
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        msg(player, "&7");
-        msg(player, "&6&lForceItemBattle &7- &fHelp");
+        msg(player, "<gray>");
+        msg(player, "<gold><b>ForceItemBattle</b> <gray>- <white>Help");
 
         for (CustomCommand command : plugin.getCommandsManager().getCommands()) {
             if (command instanceof CommandHelp) {
@@ -31,11 +31,11 @@ public class CommandHelp extends CustomCommand {
 
             String description = "";
             if (command.getDescription() != null) {
-                description = " &8- &7"+ command.getDescription();
+                description = " <dark_gray>- <gray>"+ command.getDescription();
             }
 
-            msg(player, "&8- &f/" + usage + description);
+            msg(player, "<dark_gray>- <white>/" + usage + description);
         }
-        msg(player, "&7");
+        msg(player, "<gray>");
     }
 }

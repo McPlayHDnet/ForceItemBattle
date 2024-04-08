@@ -1,5 +1,7 @@
 package forceitembattle.util;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.bukkit.Material;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
@@ -11,10 +13,14 @@ import java.util.UUID;
 
 public class ForceItemPlayer {
 
+    @Setter
     private Player player;
     private List<ForceItem> foundItems;
+    @Setter
     private Material currentMaterial;
+    @Setter
     private int remainingJokers;
+    @Setter
     private Integer currentScore;
 
     public ForceItemPlayer(Player player, List<ForceItem> foundItems, Material currentMaterial, int remainingJokers, Integer currentScore) {
@@ -29,10 +35,6 @@ public class ForceItemPlayer {
         return player;
     }
 
-    public void setPlayer(Player player) {
-        this.player = player;
-    }
-
     public List<ForceItem> foundItems() {
         return foundItems;
     }
@@ -45,10 +47,6 @@ public class ForceItemPlayer {
         return currentMaterial;
     }
 
-    public void setCurrentMaterial(Material currentMaterial) {
-        this.currentMaterial = currentMaterial;
-    }
-
     public Material previousMaterial() {
         return this.foundItems.get(this.foundItems.size() - 1).material();
     }
@@ -57,16 +55,8 @@ public class ForceItemPlayer {
         return remainingJokers;
     }
 
-    public void setRemainingJokers(int remainingJokers) {
-        this.remainingJokers = remainingJokers;
-    }
-
     public Integer currentScore() {
         return currentScore;
-    }
-
-    public void setCurrentScore(Integer currentScore) {
-        this.currentScore = currentScore;
     }
 
     private ArmorStand itemDisplay;

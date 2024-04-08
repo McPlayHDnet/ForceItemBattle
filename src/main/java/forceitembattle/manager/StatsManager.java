@@ -7,7 +7,7 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.ForceItemPlayerStats;
 import forceitembattle.util.PlayerStat;
-import org.apache.commons.text.WordUtils;
+import org.apache.commons.lang.WordUtils;
 import org.bukkit.Statistic;
 import org.bukkit.entity.Player;
 
@@ -144,28 +144,36 @@ public class StatsManager {
         DecimalFormat decimalFormat = new DecimalFormat("0.#");
 
         player.sendMessage(" ");
-        player.sendMessage("§8» §6§lStats §8● §a" + forceItemPlayerStats.userName() + " §8«");
+        player.sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold><b>Stats</b> <dark_gray>● <green>" + forceItemPlayerStats.userName() + " <dark_gray>«"));
         player.sendMessage(" ");
-        player.sendMessage("  §8● §7Rank §8» §3#" + this.rank(forceItemPlayerStats.userName()));
-        player.sendMessage("  §8● §7Total items found §8» §3" + forceItemPlayerStats.totalItemsFound());
-        player.sendMessage("  §8● §7Travelled §8» §3" + (int)Math.round(forceItemPlayerStats.travelled()) + " blocks");
-        player.sendMessage("  §8● §7Highest score §8» §3" + forceItemPlayerStats.highestScore());
-        player.sendMessage("  §8● §7Games played §8» §3" + forceItemPlayerStats.gamesPlayed());
-        player.sendMessage("  §8● §7Games won §8» §3" + forceItemPlayerStats.gamesWon());
-        player.sendMessage("  §8● §7Win percentage §8» §3" + decimalFormat.format(winPercentage) + "%");
+        player.sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● <gray>Rank <dark_gray>» <dark_aqua>#" + this.rank(forceItemPlayerStats.userName())));
+        player.sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● <gray>Total items found <dark_gray>» <dark_aqua>" + forceItemPlayerStats.totalItemsFound()));
+        player.sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● <gray>Travelled <dark_gray>» <dark_aqua>" + (int)Math.round(forceItemPlayerStats.travelled()) + " blocks"));
+        player.sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● <gray>Highest score <dark_gray>» <dark_aqua>" + forceItemPlayerStats.highestScore()));
+        player.sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● <gray>Games played <dark_gray>» <dark_aqua>" + forceItemPlayerStats.gamesPlayed()));
+        player.sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● <gray>Games won <dark_gray>» <dark_aqua>" + forceItemPlayerStats.gamesWon()));
+        player.sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● <gray>Win percentage <dark_gray>» <dark_aqua>" + decimalFormat.format(winPercentage) + "%"));
         player.sendMessage(" ");
     }
 
     public void topMessage(Player player, List<ForceItemPlayerStats> topList, PlayerStat playerStat) {
         player.sendMessage(" ");
-        player.sendMessage("§8» §6§lLeaderboard §8● §a" + WordUtils.capitalize(playerStat.name().toLowerCase().replace("_", " ")) + " §8«");
+        player.sendMessage("<dark_gray>» <gold><b>Leaderboard</b> <dark_gray>● <green>" + WordUtils.capitalize(playerStat.name().toLowerCase().replace("_", " ")) + " <dark_gray>«");
         player.sendMessage(" ");
         AtomicInteger atomicInteger = new AtomicInteger(1);
         topList.forEach(tops -> {
-            player.sendMessage("  §8● §6" + atomicInteger.get() + ". §a" + tops.userName() + " §8» §3" + this.getStatByName(tops, playerStat) + (playerStat == PlayerStat.TRAVELLED ? " blocks" : ""));
+            player.sendMessage("  <dark_gray>● " + this.placeColor(atomicInteger.get()) + atomicInteger.get() + "<white>. <green>" + tops.userName() + " <dark_gray>» <dark_aqua>" + this.getStatByName(tops, playerStat) + (playerStat == PlayerStat.TRAVELLED ? " blocks" : ""));
             atomicInteger.getAndIncrement();
         });
         player.sendMessage(" ");
+    }
+
+    private String placeColor(int place) {
+        String placeColor = "<white>";
+        if(place == 3) placeColor = "<red>";
+        else if(place == 2) placeColor = "<gray>";
+        else if(place == 1) placeColor = "<gold>";
+        return placeColor;
     }
 
     public int getStatByName(ForceItemPlayerStats forceItemPlayerStats, PlayerStat playerStat) {

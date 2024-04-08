@@ -1,10 +1,10 @@
 package forceitembattle.commands.player;
 
 import forceitembattle.commands.CustomCommand;
+import forceitembattle.util.ParticleUtils;
 import forceitembattle.util.Scheduler;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.World;
+import lombok.NonNull;
+import org.bukkit.*;
 import org.bukkit.entity.Player;
 
 import java.util.Arrays;
@@ -16,7 +16,7 @@ public class CommandPosition extends CustomCommand {
         setDescription("Add or show saved positions for structures");
     }
 
-    private static final String prefix = "§8» §6Position §8┃ ";
+    private static final String prefix = "<dark_gray>» <gold>Position <dark_gray>┃ ";
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
@@ -45,89 +45,105 @@ public class CommandPosition extends CustomCommand {
     private void addNewPosition(Player player, String positionName) {
         Location playerLocation = player.getLocation();
         this.plugin.getPositionManager().createPosition(positionName, playerLocation);
-        Bukkit.broadcastMessage(
-                prefix + "§a" + player.getName() + " §7added location of §3" + positionName + "§7 at " + locationToString(playerLocation) + " §7in the " + getWorldName(playerLocation.getWorld())
-        );
+        Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize(
+                prefix + "<green>" + player.getName() + " <gray>added location of <dark_aqua>" + positionName + " <gray>at " + locationToString(playerLocation) + " <gray>in the " + getWorldName(playerLocation.getWorld())
+        ));
     }
 
     private void showPosition(Player player, String positionName) {
         Location positionLocation = this.plugin.getPositionManager().getPosition(positionName);
-        player.sendMessage(
-                prefix + "§3" + positionName + " §7located at " + locationToString(positionLocation) + distance(player.getLocation(), positionLocation)
-        );
+        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+                prefix + "<dark_aqua>" + positionName + " <gray>located at " + locationToString(positionLocation) + distance(player.getLocation(), positionLocation)
+        ));
+        this.playParticleLine(player, positionLocation);
     }
 
     private void sendAllPositions(Player player) {
         if (this.plugin.getPositionManager().getAllPositions().isEmpty()) {
-            player.sendMessage(prefix + "§7Nobody added any locations yet.");
+            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(prefix + "<gray>Nobody added any locations yet."));
             return;
         }
 
-        player.sendMessage(prefix + "§fAll saved locations");
+        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(prefix + "<white>All saved locations"));
         this.plugin.getPositionManager().getAllPositions().forEach((name, location) -> {
-            player.sendMessage("§8» §3" + name + " §7located at " + locationToString(location) + distance(player.getLocation(), location));
+            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <dark_aqua>" + name + " <gray>located at " + locationToString(location) + distance(player.getLocation(), location)));
         });
     }
 
     private void removePosition(Player player, String locationName) {
         if (!player.hasPermission("forceitembattle.position.remove")) {
-            player.sendMessage(prefix + "§cYou do not have permission to use this.");
+            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(prefix + "<red>You do not have permission to use this."));
             return;
         }
 
         if (locationName.equalsIgnoreCase("all")) {
             this.plugin.getPositionManager().clearPositions();
-            player.sendMessage(prefix + "§7All locations have been removed.");
+            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(prefix + "<gray>All locations have been removed."));
             return;
         }
 
         if (!this.plugin.getPositionManager().positionExist(locationName)) {
-            player.sendMessage(prefix + "§cPosition §f" + locationName + " §cdoes not exist.");
+            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(prefix + "<red>Position <white>" + locationName + " <red>does not exist."));
             return;
         }
 
         this.plugin.getPositionManager().removePosition(locationName);
-        player.sendMessage(prefix + "§7Position §3" + locationName + " §7has been removed.");
+        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(prefix + "<gray>Position <dark_aqua>" + locationName + " <gray>has been removed."));
     }
 
     // Utility stuff
 
     private String locationToString(Location location) {
         if (location.getWorld() == null) {
-            return "§cunknown location";
+            return "<red>unknown location";
         }
 
-        return "§3" + location.getBlockX() + "§7, §3" + location.getBlockY() + "§7, §3" + location.getBlockZ();
+        return "<dark_aqua>" + location.getBlockX() + "<gray>, <dark_aqua>" + location.getBlockY() + "<gray>, <dark_aqua>" + location.getBlockZ();
     }
 
     private String distance(Location playerLocation, Location destination) {
         if (playerLocation.getWorld() == null || destination.getWorld() == null) {
-            return " §c(unknown)";
+            return " <red>(unknown)";
         }
 
         if (!playerLocation.getWorld().equals(destination.getWorld())) {
-            return " §7in the " + getWorldName(destination.getWorld());
+            return " <gray>in the " + getWorldName(destination.getWorld());
         }
 
 
-        return " §a(" + (int) playerLocation.distance(destination) + " blocks away)";
+        return " <green>(" + (int) playerLocation.distance(destination) + " blocks away)";
     }
 
     private String getWorldName(World world) {
         if (world == null) {
-            return "§8unknown";
+            return "<dark_gray>unknown";
         }
 
         String worldName = world.getName();
 
         if (worldName.contains("nether")) {
-            return "§cnether";
+            return "<red>nether";
         }
 
         if (worldName.contains("end")) {
-            return "§eend";
+            return "<yellow>end";
         }
 
-        return "§aoverworld";
+        return "<green>overworld";
     }
+
+    private void playParticleLine(@NonNull Player player, @NonNull Location position) {
+        if (player.getWorld() != position.getWorld()) return;
+
+        // Defining target location to
+        Location target = position.clone().add(0, 0.3, 0);
+
+        final int[] current = {0};
+        Bukkit.getScheduler().runTaskTimer(plugin, task -> {
+            current[0]++;
+            if (current[0] >= 10) task.cancel();
+            ParticleUtils.drawLine(player, player.getLocation(), target, Particle.REDSTONE, new Particle.DustOptions(Color.LIME, 1), 1, 0.5, 50);
+        }, 0, 10);
+    }
+
 }

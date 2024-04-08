@@ -13,7 +13,6 @@ import forceitembattle.util.Backpack;
 import forceitembattle.util.DescriptionItem;
 import forceitembattle.util.Timer;
 import forceitembattle.util.WanderingTraderTimer;
-import forceitembattle.util.color.ColorManager;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.*;
@@ -49,8 +48,6 @@ public final class ForceItemBattle extends JavaPlugin {
     private ItemDifficultiesManager itemDifficultiesManager;
     @Getter
     private RecipeManager recipeManager;
-    @Getter
-    private ColorManager colorManager;
     @Getter
     private StatsManager statsManager;
     @Getter
@@ -150,7 +147,6 @@ public final class ForceItemBattle extends JavaPlugin {
         this.backpack = new Backpack(this);
         this.itemDifficultiesManager = new ItemDifficultiesManager(this);
         this.recipeManager = new RecipeManager(this);
-        this.colorManager = new ColorManager();
         this.statsManager = new StatsManager(this);
         this.positionManager = new PositionManager(this);
         this.commandsManager = new CommandsManager(this);
@@ -178,6 +174,7 @@ public final class ForceItemBattle extends JavaPlugin {
                     List<String> descriptions = configurationSection.getStringList(keys);
                     keys = keys.toUpperCase();
                     getItemDifficultiesManager().getDescriptionItems().put(Material.valueOf(keys), new DescriptionItem(Material.valueOf(keys), descriptions));
+                    System.out.println(descriptions);
                 });
             } else {
                 throw new NullPointerException("'descriptions' does not exist in the config.yml");
@@ -237,7 +234,6 @@ public final class ForceItemBattle extends JavaPlugin {
         new CommandLeaderboard();
         new CommandPosition();
         new CommandPing();
-        new CommandShow();
         new CommandHelp();
     }
 

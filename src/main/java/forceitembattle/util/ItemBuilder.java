@@ -1,5 +1,10 @@
 package forceitembattle.util;
 
+import forceitembattle.ForceItemBattle;
+import lombok.Getter;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
@@ -16,6 +21,7 @@ import java.util.List;
 
 public class ItemBuilder {
 
+    @Getter
     private transient ItemStack itemStack;
     private int slot;
 
@@ -43,23 +49,6 @@ public class ItemBuilder {
         return addItemFlags(itemFlags.toArray(new ItemFlag[0]));
     }
 
-    public ItemBuilder removeItemFlag(ItemFlag itemFlag) {
-        ItemMeta itemMeta = this.itemStack.getItemMeta();
-        itemMeta.removeItemFlags(itemFlag);
-        this.itemStack.setItemMeta(itemMeta);
-        return this;
-    }
-
-    public ItemBuilder setSkullMeta(SkullMeta skullMeta) {
-        this.itemStack.setItemMeta((ItemMeta)skullMeta);
-        return this;
-    }
-
-    public ItemBuilder setMaxDurability(short durability) {
-        this.itemStack.setDurability(durability);
-        return this;
-    }
-
     public ItemBuilder addItemFlags(ItemFlag[] itemFlags) {
         ItemMeta itemMeta = this.itemStack.getItemMeta();
         itemMeta.addItemFlags(itemFlags);
@@ -69,11 +58,6 @@ public class ItemBuilder {
 
     public ItemBuilder addEnchantment(Enchantment enchantment, int level) {
         this.itemStack.addUnsafeEnchantment(enchantment, level);
-        return this;
-    }
-
-    public ItemBuilder addEnchantments(HashMap<Enchantment, Integer> enchantmentLevelsMap, boolean ignoreLevelRestriction) {
-        enchantmentLevelsMap.forEach((enchantment, level) -> this.itemStack.getItemMeta().addEnchant(enchantment, level.intValue(), ignoreLevelRestriction));
         return this;
     }
 
@@ -94,49 +78,28 @@ public class ItemBuilder {
         return this;
     }
 
-    public ItemBuilder setUnbreakable(boolean unbreakable) {
-        this.itemStack.getItemMeta().setUnbreakable(unbreakable);
-        return this;
-    }
-
-    public ItemBuilder addLore(String... lore) {
-        addLore(List.of(lore));
-        return this;
-    }
-
-    public ItemBuilder addLore(List<String> loreLines) {
-        ItemMeta itemMeta = this.itemStack.getItemMeta();
-        List<String> lore = itemMeta.getLore();
-        if (lore == null) {
-            lore = new ArrayList<>();
-        }
-
-        for (String line : loreLines) {
-            lore.add(ChatColor.translateAlternateColorCodes('&', line));
-        }
-        itemMeta.setLore(lore);
-        setItemMeta(itemMeta);
-        return this;
-    }
-
-    public ItemBuilder setLore(String... lore) {
-        setLore(List.of(lore));
-        return this;
-    }
-
     public ItemBuilder setLore(List<String> loreLines) {
         ItemMeta itemMeta = getItemStack().getItemMeta();
-        List<String> lore = new ArrayList<>();
+        List<Component> lore = new ArrayList<>();
         for (String line : loreLines) {
-            lore.add(ChatColor.translateAlternateColorCodes('&', line));
+            lore.add(ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize(line).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE));
         }
+        itemMeta.lore(lore);
+        setItemMeta(itemMeta);
+        return this;
+    }
+
+    public ItemBuilder setLoreLegacy(List<String> loreLines) {
+        ItemMeta itemMeta = getItemStack().getItemMeta();
+        List<String> lore = new ArrayList<>(loreLines);
         itemMeta.setLore(lore);
         setItemMeta(itemMeta);
         return this;
     }
+
     public ItemBuilder setDisplayName(String displayName) {
         ItemMeta itemMeta = getItemStack().getItemMeta();
-        itemMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', displayName));
+        itemMeta.displayName(ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize(displayName).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE));
         setItemMeta(itemMeta);
         return this;
     }
@@ -155,9 +118,4 @@ public class ItemBuilder {
         this.itemStack.setAmount(amount);
         return this;
     }
-
-    public ItemStack getItemStack() {
-        return this.itemStack;
-    }
-
 }

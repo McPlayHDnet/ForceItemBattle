@@ -2,16 +2,20 @@ package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.title.Title;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
-import org.apache.commons.text.WordUtils;
+import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,13 +26,13 @@ public class FinishInventory extends InventoryBuilder {
     private final Map<Integer, Map<Integer, ItemStack>> pages = new HashMap<>();
 
     public FinishInventory(ForceItemBattle forceItemBattle, ForceItemPlayer targetPlayer, Integer place, boolean firstTime) {
-        super(9*6, "§8» §6Items §8● §7XXXXXXXXXX");
+        super(9*6, forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold>Items <dark_gray>● <gray>XXXXXXXXXX"));
 
         /* TOP-BORDER */
-        this.setItems(0, 8, new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE).setDisplayName("§6").addItemFlags(ItemFlag.values()).getItemStack());
+        this.setItems(0, 8, new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE).setDisplayName("<aqua>").addItemFlags(ItemFlag.values()).getItemStack());
 
         /* FILL */
-        this.setItems(9, 53, new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).setDisplayName("§8").addItemFlags(ItemFlag.values()).getItemStack());
+        this.setItems(9, 53, new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).setDisplayName("<gray>").addItemFlags(ItemFlag.values()).getItemStack());
 
         /* Found-Items */
 
@@ -51,7 +55,7 @@ public class FinishInventory extends InventoryBuilder {
                         //check if is even needed to create a new page
                         if(targetPlayer.foundItems().size() > 35) {
                             pagesAmount++;
-                            setItems(9, 53, new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).setDisplayName("§8").addItemFlags(ItemFlag.values()).getItemStack());
+                            setItems(9, 53, new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).setDisplayName("<gray>").addItemFlags(ItemFlag.values()).getItemStack());
                             startSlot = 10;
                         }
                     }
@@ -59,11 +63,11 @@ public class FinishInventory extends InventoryBuilder {
 
                     List<ForceItem> items = targetPlayer.foundItems();
                     if (items.isEmpty()) {
-                        setItem(startSlot, new ItemBuilder(Material.BARRIER).setDisplayName("§cNo Items found").getItemStack());
+                        setItem(startSlot, new ItemBuilder(Material.BARRIER).setDisplayName("<red>No Items found").getItemStack());
                         placedItems = -1;
                     } else {
                         ForceItem forceItem = items.get(placedItems);
-                        ItemStack itemStack = new ItemBuilder(forceItem.material()).setDisplayName(WordUtils.capitalize(forceItem.material().name().replace("_", " ").toLowerCase()) + (forceItem.usedSkip() ? " §c§lSKIPPED" : "") + " §8» §6" + forceItem.timeNeeded()).setGlowing(forceItem.usedSkip()).getItemStack();
+                        ItemStack itemStack = new ItemBuilder(forceItem.material()).setDisplayName(WordUtils.capitalize(forceItem.material().name().replace("_", " ").toLowerCase()) + (forceItem.usedSkip() ? " <red><b>SKIPPED</b>" : "") + " <dark_gray>» <gold>" + forceItem.timeNeeded()).setGlowing(forceItem.usedSkip()).getItemStack();
                         setItem(startSlot, itemStack);
                         slots.put(startSlot, itemStack);
                         pages.put(pagesAmount, slots);
@@ -83,20 +87,27 @@ public class FinishInventory extends InventoryBuilder {
                             @Override
                             public void run() {
 
-                                TextComponent placementText = new TextComponent(place + ". " + targetPlayer.player().getName() + " §8┃ §6" + (placedItems + 1) + " Items found §8» ");
-                                TextComponent textComponent = new TextComponent("§8[§bInventory§8]");
-                                textComponent.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/result " + targetPlayer.player().getUniqueId()));
+                                String placeColor = "<white>";
+                                if(place == 3) placeColor = "<red>";
+                                else if(place == 2) placeColor = "<gray>";
+                                else if(place == 1) placeColor = "<gold>";
 
-                                Bukkit.getOnlinePlayers().forEach(players -> {
+                                for(Player players : Bukkit.getOnlinePlayers()) {
                                     if(players.getOpenInventory().getTopInventory() == getInventory()) {
                                         players.closeInventory();
                                     }
 
-                                    players.sendTitle(place + ". " + targetPlayer.player().getName(), "§6" + (placedItems + 1) + " Items found", 15, 35, 15);
+                                    Component mainTitle = forceItemBattle.getGamemanager().getMiniMessage().deserialize(placeColor + place + "<white>. " + targetPlayer.player().getName());
+                                    Component subTitle = forceItemBattle.getGamemanager().getMiniMessage().deserialize("<gold>" + (placedItems + 1) + " Items found");
 
-                                });
+                                    Title.Times times = Title.Times.times(Duration.ofMillis(750), Duration.ofMillis(1750), Duration.ofMillis(750));
+                                    Title title = Title.title(mainTitle, subTitle, times);
 
-                                getPlayer().spigot().sendMessage(placementText, textComponent);
+                                    players.showTitle(title);
+
+                                }
+
+                                getPlayer().sendMessage(forceItemBattle.getGamemanager().getMiniMessage().deserialize(placeColor + place + "<white>. " + targetPlayer.player().getName() + " <dark_gray>┃ <gold>" + (placedItems + 1) + " Items found <dark_gray>» <click:run_command:/result " + targetPlayer.player().getUniqueId() + "><dark_gray>[<aqua>Inventory<dark_gray>]"));
 
                                 forceItemBattle.getGamemanager().savedInventory.put(targetPlayer.player().getUniqueId(), pages);
                             }

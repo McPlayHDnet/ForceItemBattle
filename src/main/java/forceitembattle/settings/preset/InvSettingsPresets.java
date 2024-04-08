@@ -21,7 +21,7 @@ public class InvSettingsPresets extends InventoryBuilder {
     public static HashMap<UUID, GamePreset> namingPhase = new HashMap<>();
 
     public InvSettingsPresets(ForceItemBattle forceItemBattle, GamePreset gamePreset, GameSettings gameSettings) {
-        super(9*5, "§8» §3Settings §8● §7Presets");
+        super(9*5, forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <dark_aqua>Settings <dark_gray>● <gray>Presets"));
 
         /* BORDER */
         this.setItems(0, 8, new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE).setDisplayName("§f").addItemFlags(ItemFlag.values()).getItemStack());

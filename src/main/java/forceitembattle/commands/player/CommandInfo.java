@@ -28,7 +28,7 @@ public class CommandInfo extends CustomCommand implements CustomTabCompleter {
         if (args.length == 1) {
             Material material = Material.matchMaterial(args[0]);
             if (material == null) {
-                player.sendMessage("§cInvalid item name");
+                player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>Invalid item name"));
                 return;
             }
             item = new ItemStack(material);
@@ -38,12 +38,12 @@ public class CommandInfo extends CustomCommand implements CustomTabCompleter {
                 ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
                 item = new ItemStack(forceItemPlayer.currentMaterial());
             } else {
-                player.sendMessage("§cYou are not playing, type /info [item] to get information about an item");
+                player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>You are not playing, type /info [item] to get information about an item"));
             }
         }
 
         if (item.getType() == Material.AIR) {
-            player.sendMessage("§cYou need to hold an item in your hand!");
+            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>You need to hold an item in your hand!"));
             return;
         }
 

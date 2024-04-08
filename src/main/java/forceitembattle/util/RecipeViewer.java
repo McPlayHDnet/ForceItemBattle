@@ -1,5 +1,6 @@
 package forceitembattle.util;
 
+import lombok.Setter;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
 
@@ -8,9 +9,13 @@ import java.util.UUID;
 
 public class RecipeViewer {
 
+    @Setter
     private UUID uuid;
+    @Setter
     private ItemStack itemStack;
+    @Setter
     private Recipe recipe;
+    @Setter
     private int currentRecipeIndex;
     private final int pages;
 
@@ -32,16 +37,8 @@ public class RecipeViewer {
         return uuid;
     }
 
-    public void setUuid(UUID uuid) {
-        this.uuid = uuid;
-    }
-
     public ItemStack itemStack() {
         return itemStack;
-    }
-
-    public void setItemStack(ItemStack itemStack) {
-        this.itemStack = itemStack;
     }
 
     /**
@@ -51,16 +48,8 @@ public class RecipeViewer {
         return recipe;
     }
 
-    public void setRecipe(Recipe recipe) {
-        this.recipe = recipe;
-    }
-
     public int currentRecipeIndex() {
         return currentRecipeIndex;
-    }
-
-    public void setCurrentRecipeIndex(int recipeIndex) {
-        this.currentRecipeIndex = recipeIndex;
     }
 
     /**

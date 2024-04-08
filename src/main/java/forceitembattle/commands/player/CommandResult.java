@@ -35,7 +35,7 @@ public class CommandResult extends CustomCommand {
             try {
                 uuid = UUID.fromString(args[0]);
             } catch (IllegalArgumentException e) {
-                player.sendMessage(ChatColor.RED + "Invalid UUID.");
+                player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>Invalid UUID."));
                 return;
             }
 

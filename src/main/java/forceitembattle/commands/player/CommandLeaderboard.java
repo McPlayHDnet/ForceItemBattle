@@ -34,7 +34,7 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
             }
 
             if (leaderStat == null) {
-                player.sendMessage("§e" + args[0] + " §cdoes not exist in leaderboard");
+                player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<yellow>" + args[0] + " <red>does not exist in leaderboard"));
                 return;
             }
             this.plugin.getStatsManager().topMessage(player, this.plugin.getStatsManager().top(leaderStat), leaderStat);

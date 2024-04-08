@@ -2,7 +2,7 @@ package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.customrecipe.ToolRecipe;
-import org.apache.commons.text.WordUtils;
+import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -37,14 +37,14 @@ public class RecipeInventory extends InventoryBuilder {
     }
 
     public RecipeInventory(ForceItemBattle forceItemBattle, RecipeViewer recipeViewer, Player player) {
-        super(9 * 5, "§8● §3" +
+        super(9 * 5, forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_gray>● <dark_aqua>" +
                 materialName(recipeViewer.itemStack().getType()) +
-                " §8» §7" + (recipeViewer.currentRecipeIndex() + 1) + "§8/§7" + recipeViewer.pages()
-        );
+                " <dark_gray>» <gray>" + (recipeViewer.currentRecipeIndex() + 1) + "<dark_gray>/<gray>" + recipeViewer.pages()
+        ));
 
         for (int i = 0; i < this.getInventory().getSize(); i++) {
             if (!SLOTS.contains(i)) {
-                this.setItem(i, new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).setDisplayName("§2").getItemStack());
+                this.setItem(i, new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).setDisplayName("<dark_green>").getItemStack());
             }
         }
 
@@ -57,7 +57,7 @@ public class RecipeInventory extends InventoryBuilder {
         forceItemBattle.getRecipeManager().closeHandlers.put(recipeViewer.uuid(), () -> forceItemBattle.getRecipeManager().ignoreCloseHandler.remove(player.getUniqueId()));
 
         this.addUpdateHandler(() -> {
-            this.setItem(PREVIOUS_RECIPE_ITEM_SLOT, new ItemBuilder(Material.RED_STAINED_GLASS_PANE).setDisplayName("§4« §cPrevious Recipe").getItemStack(), event -> {
+            this.setItem(PREVIOUS_RECIPE_ITEM_SLOT, new ItemBuilder(Material.RED_STAINED_GLASS_PANE).setDisplayName("<dark_red>« <red>Previous Recipe").getItemStack(), event -> {
                 if (recipeViewer.pages() == 1) {
                     return;
                 }
@@ -78,7 +78,7 @@ public class RecipeInventory extends InventoryBuilder {
                 new RecipeInventory(forceItemBattle, recipeViewer, player).open(player);
             });
 
-            this.setItem(NEXT_RECIPE_ITEM_SLOT, new ItemBuilder(Material.LIME_STAINED_GLASS_PANE).setDisplayName("§2» §aNext Recipe").getItemStack(), inventoryClickEvent -> {
+            this.setItem(NEXT_RECIPE_ITEM_SLOT, new ItemBuilder(Material.LIME_STAINED_GLASS_PANE).setDisplayName("<dark_green>» <green>Next Recipe").getItemStack(), inventoryClickEvent -> {
                 if (recipeViewer.pages() == 1) {
                     return;
                 }
@@ -218,7 +218,7 @@ public class RecipeInventory extends InventoryBuilder {
                     return;
                 }
                 if (Bukkit.getRecipesFor(itemStack).isEmpty()) {
-                    player.sendMessage("§cThere is no recipe for this item. Just find it lol");
+                    player.sendMessage(forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>There is no recipe for this item. Just find it lol"));
                     return;
                 }
                 recipeViewer.setCurrentRecipeIndex(0);
@@ -231,7 +231,7 @@ public class RecipeInventory extends InventoryBuilder {
                 new RecipeInventory(forceItemBattle, recipeViewer, player).open(player);
 
             } else {
-                player.sendMessage("§cSneak click to show recipe for this item!");
+                player.sendMessage(forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>Sneak click to show recipe for this item!"));
             }
         });
 
@@ -248,39 +248,39 @@ public class RecipeInventory extends InventoryBuilder {
         ItemBuilder itemBuilder = new ItemBuilder(materialChoice.getChoices().get(0));
 
         for (Material material : materialChoice.getChoices().subList(1, materialChoice.getChoices().size())) {
-            lore.add(" §8» §3" + materialName(material));
+            lore.add(" <dark_gray>» <dark_aqua>" + materialName(material));
 
             if (material.name().contains("_PLANKS")) {
                 lore.clear();
-                lore.add(" §8» §3any wooden plank");
+                lore.add(" <dark_gray>» <dark_aqua>any wooden plank");
                 break;
             }
 
             if (recipeViewer.itemStack().getType() == Material.SMOKER || recipeViewer.itemStack().getType() == Material.CAMPFIRE || recipeViewer.itemStack().getType() == Material.SOUL_CAMPFIRE || recipeViewer.itemStack().getType() == Material.CHARCOAL) {
                 lore.clear();
-                lore.add(" §8» §3any wooden log/wood (and stripped variants)");
+                lore.add(" <dark_gray>» <dark_aqua>any wooden log/wood (and stripped variants)");
                 break;
             }
 
             // These 2 are hardcoded to only have 1 material choice, which would be dye and flower respectively
             if (recipeViewer.itemStack().getType() == Material.FIREWORK_STAR) {
                 lore.clear();
-                lore.add(" §8» §3any dye item");
+                lore.add(" <dark_gray>» <dark_aqua>any dye item");
                 break;
             }
 
             if (recipeViewer.itemStack().getType() == Material.SUSPICIOUS_STEW) {
                 lore.clear();
-                lore.add(" §8» §3any field flower");
+                lore.add(" <dark_gray>» <dark_aqua>any field flower");
                 break;
             }
 
             if (recipeViewer.itemStack().getType() == Material.BONE_MEAL) {
                 lore.clear();
-                lore.add(" §8» §3any flower");
-                lore.add(" §8» §3any seeds");
-                lore.add(" §8» §3any plants");
-                lore.add(" §8» §3any leaves");
+                lore.add(" <dark_gray>» <dark_aqua>any flower");
+                lore.add(" <dark_gray>» <dark_aqua>any seeds");
+                lore.add(" <dark_gray>» <dark_aqua>any plants");
+                lore.add(" <dark_gray>» <dark_aqua>any leaves");
                 break;
             }
         }

@@ -17,7 +17,7 @@ public class ItemsInventory extends InventoryBuilder {
 
 
     public ItemsInventory(ForceItemBattle forceItemBattle, Player player) {
-        super(9*6, "§8» §6Items §7(" + forceItemBattle.getItemDifficultiesManager().getAllItems().size() + ") §8● §7Settings");
+        super(9*6, forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold>Items <gray>(" + forceItemBattle.getItemDifficultiesManager().getAllItems().size() + ") <dark_gray>● <gray>Settings"));
 
         HashMap<Integer, HashMap<Integer, ItemStack>> pages = new HashMap<>();
 
@@ -25,10 +25,10 @@ public class ItemsInventory extends InventoryBuilder {
         AtomicReference<Material> currentFilter = new AtomicReference<>(Material.LIME_DYE);
 
         /* TOP-BORDER */
-        this.setItems(0, 8, new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE).setDisplayName("§6").addItemFlags(ItemFlag.values()).getItemStack());
+        this.setItems(0, 8, new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE).setDisplayName("<gold>").addItemFlags(ItemFlag.values()).getItemStack());
 
 
-        this.setItem(2, new ItemBuilder(Material.LIME_DYE).setDisplayName("§aAll items").setGlowing(currentFilter.get() == Material.LIME_DYE).addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
+        this.setItem(2, new ItemBuilder(Material.LIME_DYE).setDisplayName("<green>All items").setGlowing(currentFilter.get() == Material.LIME_DYE).addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
             if(currentFilter.get() == Material.LIME_DYE) return;
             currentFilter.set(Material.LIME_DYE);
             currentPage[0] = 0;
@@ -39,7 +39,7 @@ public class ItemsInventory extends InventoryBuilder {
 
         });
 
-        this.setItem(3, new ItemBuilder(Material.ORANGE_DYE).setDisplayName("§6Included Items").setGlowing(currentFilter.get() == Material.ORANGE_DYE).addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
+        this.setItem(3, new ItemBuilder(Material.ORANGE_DYE).setDisplayName("<gold>Included Items").setGlowing(currentFilter.get() == Material.ORANGE_DYE).addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
             if(currentFilter.get() == Material.ORANGE_DYE) return;
             currentFilter.set(Material.ORANGE_DYE);
             currentPage[0] = 0;
@@ -50,7 +50,7 @@ public class ItemsInventory extends InventoryBuilder {
 
         });
 
-        this.setItem(4, new ItemBuilder(Material.RED_DYE).setDisplayName("§cAll non-craftable").setGlowing(currentFilter.get() == Material.RED_DYE).addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
+        this.setItem(4, new ItemBuilder(Material.RED_DYE).setDisplayName("<red>All non-craftable").setGlowing(currentFilter.get() == Material.RED_DYE).addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
             if(currentFilter.get() == Material.RED_DYE) return;
             currentFilter.set(Material.RED_DYE);
             currentPage[0] = 0;
@@ -61,7 +61,7 @@ public class ItemsInventory extends InventoryBuilder {
 
         });
 
-        this.setItem(5, new ItemBuilder(Material.LIGHT_BLUE_DYE).setDisplayName("§bIncluded Items with description").setGlowing(currentFilter.get() == Material.LIGHT_BLUE_DYE).addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
+        this.setItem(5, new ItemBuilder(Material.LIGHT_BLUE_DYE).setDisplayName("<aqua>Included Items with description").setGlowing(currentFilter.get() == Material.LIGHT_BLUE_DYE).addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
             if(currentFilter.get() == Material.LIGHT_BLUE_DYE) return;
             currentFilter.set(Material.LIGHT_BLUE_DYE);
             currentPage[0] = 0;
@@ -72,7 +72,7 @@ public class ItemsInventory extends InventoryBuilder {
 
         });
 
-        this.setItem(6, new ItemBuilder(Material.GRAY_DYE).setDisplayName("§7Excluded Items").setGlowing(currentFilter.get() == Material.GRAY_DYE).addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
+        this.setItem(6, new ItemBuilder(Material.GRAY_DYE).setDisplayName("<gray>Excluded Items").setGlowing(currentFilter.get() == Material.GRAY_DYE).addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
             if(currentFilter.get() == Material.GRAY_DYE) return;
             currentFilter.set(Material.GRAY_DYE);
             currentPage[0] = 0;
@@ -84,7 +84,7 @@ public class ItemsInventory extends InventoryBuilder {
         });
 
 
-        this.setItem(0, new ItemBuilder(Material.RED_STAINED_GLASS_PANE).setDisplayName("§4« §cPrevious Page").addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
+        this.setItem(0, new ItemBuilder(Material.RED_STAINED_GLASS_PANE).setDisplayName("<dark_red>« <red>Previous Page").addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
             if(currentPage[0] != 0) {
                 currentPage[0]--;
 
@@ -94,7 +94,7 @@ public class ItemsInventory extends InventoryBuilder {
 
             } else player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
         });
-        this.setItem(8, new ItemBuilder(Material.LIME_STAINED_GLASS_PANE).setDisplayName("§2» §aNext Page").addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
+        this.setItem(8, new ItemBuilder(Material.LIME_STAINED_GLASS_PANE).setDisplayName("<dark_green>» <green>Next Page").addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
             if(currentPage[0] < (pages.size() - 1)) {
                 currentPage[0]++;
 
@@ -128,7 +128,7 @@ public class ItemsInventory extends InventoryBuilder {
                         pages.put(initialPages, itemStackHashMap);
                     }
 
-                    itemStackHashMap.put(startSlot, new ItemBuilder(materials).setGlowing((forceItemBattle.getItemDifficultiesManager().itemInList(materials))).setLore(forceItemBattle.getItemDifficultiesManager().getDescriptionItemLines(materials)).addItemFlags(ItemFlag.values()).getItemStack());
+                    itemStackHashMap.put(startSlot, new ItemBuilder(materials).setGlowing((forceItemBattle.getItemDifficultiesManager().itemInList(materials))).setLoreLegacy(ForceItemBattle.getInstance().getItemDifficultiesManager().getDescriptionItemLines(materials)).addItemFlags(ItemFlag.values()).getItemStack());
 
                     startSlot++;
 
@@ -146,7 +146,7 @@ public class ItemsInventory extends InventoryBuilder {
                             pages.put(initialPages, itemStackHashMap);
                         }
 
-                        itemStackHashMap.put(startSlot, new ItemBuilder(materials).setGlowing((forceItemBattle.getItemDifficultiesManager().itemInList(materials))).setLore(forceItemBattle.getItemDifficultiesManager().getDescriptionItemLines(materials)).addItemFlags(ItemFlag.values()).getItemStack());
+                        itemStackHashMap.put(startSlot, new ItemBuilder(materials).setGlowing((forceItemBattle.getItemDifficultiesManager().itemInList(materials))).setLoreLegacy(ForceItemBattle.getInstance().getItemDifficultiesManager().getDescriptionItemLines(materials)).addItemFlags(ItemFlag.values()).getItemStack());
 
                         startSlot++;
 
@@ -165,7 +165,7 @@ public class ItemsInventory extends InventoryBuilder {
                             pages.put(initialPages, itemStackHashMap);
                         }
 
-                        itemStackHashMap.put(startSlot, new ItemBuilder(materials).setGlowing(forceItemBattle.getItemDifficultiesManager().itemInList(materials)).setLore(forceItemBattle.getItemDifficultiesManager().getDescriptionItemLines(materials)).addItemFlags(ItemFlag.values()).getItemStack());
+                        itemStackHashMap.put(startSlot, new ItemBuilder(materials).setGlowing(forceItemBattle.getItemDifficultiesManager().itemInList(materials)).setLoreLegacy(ForceItemBattle.getInstance().getItemDifficultiesManager().getDescriptionItemLines(materials)).addItemFlags(ItemFlag.values()).getItemStack());
 
                         startSlot++;
 
@@ -184,7 +184,7 @@ public class ItemsInventory extends InventoryBuilder {
                             pages.put(initialPages, itemStackHashMap);
                         }
 
-                        itemStackHashMap.put(startSlot, new ItemBuilder(materials).setGlowing(forceItemBattle.getItemDifficultiesManager().itemInList(materials)).setLore(forceItemBattle.getItemDifficultiesManager().getDescriptionItemLines(materials)).addItemFlags(ItemFlag.values()).getItemStack());
+                        itemStackHashMap.put(startSlot, new ItemBuilder(materials).setGlowing(forceItemBattle.getItemDifficultiesManager().itemInList(materials)).setLoreLegacy(ForceItemBattle.getInstance().getItemDifficultiesManager().getDescriptionItemLines(materials)).addItemFlags(ItemFlag.values()).getItemStack());
 
                         startSlot++;
 
