@@ -39,7 +39,7 @@ public class InvSettingsPresets extends InventoryBuilder {
                 getPlayer().playSound(getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
                 namingPhase.put(getPlayer().getUniqueId(), gamePreset);
                 getPlayer().closeInventory();
-                getPlayer().sendMessage("<dark_aqua>Send your desired preset-name in chat");
+                getPlayer().sendMessage(forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_aqua>Send your desired preset-name in chat"));
             });
 
             /* Timer-Preset */
@@ -76,7 +76,7 @@ public class InvSettingsPresets extends InventoryBuilder {
 
                 if(gamePreset.jokers() == 64 || gamePreset.jokers() == 0) {
                     this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);
-                    this.getPlayer().sendMessage("<red>You reached the end of possible jokers.");
+                    this.getPlayer().sendMessage(forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>You reached the end of possible jokers."));
                     return;
 
                 }
@@ -93,7 +93,7 @@ public class InvSettingsPresets extends InventoryBuilder {
                     .getItemStack(), event -> {
 
                 getPlayer().playSound(getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);
-                getPlayer().sendMessage("<red>Not changeable yet... (idk why tho)");
+                getPlayer().sendMessage(forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>Not changeable yet... (idk why tho)"));
 
             });
 

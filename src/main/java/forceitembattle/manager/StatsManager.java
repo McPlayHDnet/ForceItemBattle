@@ -158,11 +158,11 @@ public class StatsManager {
 
     public void topMessage(Player player, List<ForceItemPlayerStats> topList, PlayerStat playerStat) {
         player.sendMessage(" ");
-        player.sendMessage("<dark_gray>» <gold><b>Leaderboard</b> <dark_gray>● <green>" + WordUtils.capitalize(playerStat.name().toLowerCase().replace("_", " ")) + " <dark_gray>«");
+        player.sendMessage(forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold><b>Leaderboard</b> <dark_gray>● <green>" + WordUtils.capitalize(playerStat.name().toLowerCase().replace("_", " ")) + " <dark_gray>«"));
         player.sendMessage(" ");
         AtomicInteger atomicInteger = new AtomicInteger(1);
         topList.forEach(tops -> {
-            player.sendMessage("  <dark_gray>● " + this.placeColor(atomicInteger.get()) + atomicInteger.get() + "<white>. <green>" + tops.userName() + " <dark_gray>» <dark_aqua>" + this.getStatByName(tops, playerStat) + (playerStat == PlayerStat.TRAVELLED ? " blocks" : ""));
+            player.sendMessage(forceItemBattle.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● " + this.placeColor(atomicInteger.get()) + atomicInteger.get() + "<white>. <green>" + tops.userName() + " <dark_gray>» <dark_aqua>" + this.getStatByName(tops, playerStat) + (playerStat == PlayerStat.TRAVELLED ? " blocks" : "")));
             atomicInteger.getAndIncrement();
         });
         player.sendMessage(" ");
