@@ -174,7 +174,6 @@ public final class ForceItemBattle extends JavaPlugin {
                     List<String> descriptions = configurationSection.getStringList(keys);
                     keys = keys.toUpperCase();
                     getItemDifficultiesManager().getDescriptionItems().put(Material.valueOf(keys), new DescriptionItem(Material.valueOf(keys), descriptions));
-                    System.out.println(descriptions);
                 });
             } else {
                 throw new NullPointerException("'descriptions' does not exist in the config.yml");
