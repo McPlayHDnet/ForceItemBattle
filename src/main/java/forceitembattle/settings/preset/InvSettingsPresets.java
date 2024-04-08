@@ -24,8 +24,8 @@ public class InvSettingsPresets extends InventoryBuilder {
         super(9*5, forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <dark_aqua>Settings <dark_gray>● <gray>Presets"));
 
         /* BORDER */
-        this.setItems(0, 8, new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE).setDisplayName("§f").addItemFlags(ItemFlag.values()).getItemStack());
-        this.setItems(36, 44, new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE).setDisplayName("§f").addItemFlags(ItemFlag.values()).getItemStack());
+        this.setItems(0, 8, new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE).setDisplayName("<aqua>").addItemFlags(ItemFlag.values()).getItemStack());
+        this.setItems(36, 44, new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE).setDisplayName("<aqua>").addItemFlags(ItemFlag.values()).getItemStack());
 
         this.addUpdateHandler(() -> {
 
@@ -33,18 +33,18 @@ public class InvSettingsPresets extends InventoryBuilder {
 
             /* Name-Preset */
             this.setItem(19, new ItemBuilder(Material.NAME_TAG)
-                    .setDisplayName("§8● §aPreset Name §8» " + (gamePreset.presetName().isEmpty() ? "§cNot set" : "§3" + gamePreset.presetName()))
+                    .setDisplayName("<dark_gray>● <green>Preset Name <dark_gray>» " + (gamePreset.presetName().isEmpty() ? "<red>Not set" : "<dark_aqua>" + gamePreset.presetName()))
                     .getItemStack(), event -> {
 
                 getPlayer().playSound(getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
                 namingPhase.put(getPlayer().getUniqueId(), gamePreset);
                 getPlayer().closeInventory();
-                getPlayer().sendMessage("§3Send your desired preset-name in chat");
+                getPlayer().sendMessage("<dark_aqua>Send your desired preset-name in chat");
             });
 
             /* Timer-Preset */
             this.setItem(20, new ItemBuilder(Material.CLOCK)
-                    .setDisplayName("§8● §aTime §8» §3" + gamePreset.countdown())
+                    .setDisplayName("<dark_gray>● <green>Time <dark_gray>» <dark_aqua>" + gamePreset.countdown())
                     .getItemStack(), event -> {
 
                 getPlayer().playSound(getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
@@ -55,11 +55,11 @@ public class InvSettingsPresets extends InventoryBuilder {
             /* Settings-Preset */
             lore.add("");
             for(GameSetting defaultGameSettings : GameSetting.values()) {
-                lore.add("  §8● §7" + defaultGameSettings.displayName() + " §8» " + (gamePreset.gameSettings().contains(defaultGameSettings) ? "§2✔" : "§4✘"));
+                lore.add("  <dark_gray>● <gray>" + defaultGameSettings.displayName() + " <dark_gray>» " + (gamePreset.gameSettings().contains(defaultGameSettings) ? "<dark_green>✔" : "<dark_red>✘"));
             }
             lore.add("");
             this.setItem(22, new ItemBuilder(Material.STRUCTURE_VOID)
-                    .setDisplayName("§8● §aSettings")
+                    .setDisplayName("<dark_gray>● <green>Settings")
                     .setLore(lore)
                     .getItemStack(), event -> {
 
@@ -71,12 +71,12 @@ public class InvSettingsPresets extends InventoryBuilder {
 
             /* Joker-Preset */
             this.setItem(24, new ItemBuilder(Material.BARRIER)
-                    .setDisplayName("§8● §aJoker §8» §3" + gamePreset.jokers())
+                    .setDisplayName("<dark_gray>● <green>Joker <dark_gray>» <dark_aqua>" + gamePreset.jokers())
                     .getItemStack(), event -> {
 
                 if(gamePreset.jokers() == 64 || gamePreset.jokers() == 0) {
                     this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);
-                    this.getPlayer().sendMessage("§cYou reached the end of possible jokers.");
+                    this.getPlayer().sendMessage("<red>You reached the end of possible jokers.");
                     return;
 
                 }
@@ -89,18 +89,18 @@ public class InvSettingsPresets extends InventoryBuilder {
 
             /* BackpackSize-Preset */
             this.setItem(25, new ItemBuilder(Material.BUNDLE)
-                    .setDisplayName("§8● §aBackpack Slots §8» §3" + gamePreset.backpackSize())
+                    .setDisplayName("<dark_gray>● <green>Backpack Slots <dark_gray>» <dark_aqua>" + gamePreset.backpackSize())
                     .getItemStack(), event -> {
 
                 getPlayer().playSound(getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);
-                getPlayer().sendMessage("§cNot changeable yet... (idk why tho)");
+                getPlayer().sendMessage("<red>Not changeable yet... (idk why tho)");
 
             });
 
 
             /* Save-Preset */
             this.setItem(44, new ItemBuilder(Material.LIME_STAINED_GLASS_PANE)
-                    .setDisplayName("§8● §aSave & create preset")
+                    .setDisplayName("<dark_gray>● <green>Save & create preset")
                     .getItemStack(), event -> {
 
                 getPlayer().playSound(getPlayer(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
