@@ -57,7 +57,6 @@ bukkitPluginYaml {
     authors.add("threeseconds")
     authors.add("stupxd")
     authors.add("FireBladeHunter")
-    authors.add("apppaa")
     apiVersion = "1.20"
     commands.register("start")
     commands.register("settings")
