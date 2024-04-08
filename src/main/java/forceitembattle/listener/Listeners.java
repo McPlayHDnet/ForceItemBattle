@@ -623,7 +623,7 @@ public class Listeners implements Listener {
     @EventHandler
     public void onFoodLevelChange(FoodLevelChangeEvent event) {
         if (!(event.getEntity() instanceof Player)) return;
-        if(!this.plugin.getGamemanager().isMidGame()) return;
+        if(!this.plugin.getGamemanager().isMidGame() || !this.plugin.getGamemanager().isPausedGame()) return;
         if (this.plugin.getSettings().isSettingEnabled(GameSetting.FOOD)) return;
         event.setCancelled(true);
     }
