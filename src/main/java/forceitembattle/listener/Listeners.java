@@ -165,7 +165,7 @@ public class Listeners implements Listener {
 
         if (!event.isBackToBack()) {
             Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize(
-                    "<green>" + player.getName() + " <gray>" + (event.isSkipped() ? "skipped" : "found") + " <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType()) + " <gold>" + WordUtils.capitalize(itemStack.getType().name().toLowerCase().replace("_", " "))));
+                    "<green>" + player.getName() + " <gray>" + (event.isSkipped() ? "skipped" : "found") + " <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType()) + " <gold>" + "<lang:" + itemStack.translationKey() + ">"));
         }
 
         forceItemPlayer.setCurrentScore(forceItemPlayer.currentScore() + 1);
@@ -221,7 +221,7 @@ public class Listeners implements Listener {
         foundNextItemEvent.setSkipped(false);
 
         Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize(
-                "<green>" + player.getName() + " <gray>was lucky to already own <reset>"+ this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, foundItem.getType()) + " <gold>" + WordUtils.capitalize(foundItem.getType().name().toLowerCase().replace("_", " "))));
+                "<green>" + player.getName() + " <gray>was lucky to already own <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, foundItem.getType()) + " <gold>" + "<lang:" + foundItem.translationKey() + ">"));
         Bukkit.getPluginManager().callEvent(foundNextItemEvent);
     }
 
