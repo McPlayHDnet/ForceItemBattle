@@ -82,7 +82,7 @@ public class StatsManager {
             if(category == PlayerStat.TRAVELLED) return o2.travelled() <= o1.travelled() ? -1 : 1;
             return o2.highestScore() <= o1.highestScore() ? -1 : 1;
         });
-        return statsList.stream().limit(5).collect(Collectors.toList());
+        return statsList.stream().limit(10).collect(Collectors.toList());
     }
 
     public boolean playerExists(String userName) {
