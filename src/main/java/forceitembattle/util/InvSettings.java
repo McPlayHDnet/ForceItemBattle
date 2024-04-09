@@ -24,7 +24,7 @@ public class InvSettings extends InventoryBuilder {
             for(GameSetting gameSettings : GameSetting.values()) {
                 String settingDisplayName = "<dark_gray>» ";
                 if(gamePreset != null) {
-                    settingDisplayName += (gamePreset.gameSettings().contains(gameSettings) ? "<green>" + gameSettings.displayName() + " <dark_green>✔" : "<red>" + gameSettings.displayName() + " <dark_red>✘");
+                    settingDisplayName += (gamePreset.getGameSettings().contains(gameSettings) ? "<green>" + gameSettings.displayName() + " <dark_green>✔" : "<red>" + gameSettings.displayName() + " <dark_red>✘");
 
                     this.setItem(53, new ItemBuilder(Material.LIME_STAINED_GLASS_PANE).setDisplayName("<dark_gray>» <green>Save settings").getItemStack(), inventoryClickEvent -> {
                         this.getPlayer().playSound(this.getPlayer(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
@@ -51,8 +51,8 @@ public class InvSettings extends InventoryBuilder {
 
                     this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
                     if(gamePreset != null) {
-                        if(gamePreset.gameSettings().contains(gameSettings)) gamePreset.gameSettings().remove(gameSettings);
-                        else gamePreset.gameSettings().add(gameSettings);
+                        if(gamePreset.getGameSettings().contains(gameSettings)) gamePreset.getGameSettings().remove(gameSettings);
+                        else gamePreset.getGameSettings().add(gameSettings);
                     } else {
                         plugin.getSettings().setSettingEnabled(gameSettings, !plugin.getSettings().isSettingEnabled(gameSettings));
                         if(plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {

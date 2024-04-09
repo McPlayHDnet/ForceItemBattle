@@ -35,15 +35,15 @@ public class InvPresetMenu extends InventoryBuilder {
             List<String> lore = new ArrayList<>();
             gameSettings.gamePresetMap().forEach((presetName, preset) -> {
                 lore.add("");
-                lore.add("  <dark_gray>● <gray>Duration <dark_gray>» <green>" + preset.countdown() + " minutes");
-                lore.add("  <dark_gray>● <gray>Joker <dark_gray>» <green>" + preset.jokers());
-                lore.add("  <dark_gray>● <gray>Backpack size <dark_gray>» <green>" + preset.backpackSize() + " slots");
+                lore.add("  <dark_gray>● <gray>Duration <dark_gray>» <green>" + preset.getCountdown() + " minutes");
+                lore.add("  <dark_gray>● <gray>Joker <dark_gray>» <green>" + preset.getJokers());
+                lore.add("  <dark_gray>● <gray>Backpack size <dark_gray>» <green>" + preset.getBackpackSize() + " slots");
                 lore.add("");
                 for(GameSetting gameSetting : GameSetting.values()) {
                     lore.add("  <dark_gray>● <gray>" + gameSetting.displayName() + " <dark_gray>» " + (gameSettings.isSettingEnabledInPreset(preset, gameSetting) ? "<dark_green>✔" : "<dark_red>✘"));
                 }
                 lore.add("");
-                this.addItem(new ItemBuilder(Material.PAPER).setDisplayName("<dark_gray>● <dark_aqua>" + preset.presetName()).setLore(lore).getItemStack());
+                this.addItem(new ItemBuilder(Material.PAPER).setDisplayName("<dark_gray>● <dark_aqua>" + preset.getPresetName()).setLore(lore).getItemStack());
                 lore.clear();
             });
 
