@@ -1,5 +1,6 @@
 package forceitembattle.util;
 
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.*;
@@ -38,7 +39,7 @@ public class InventoryBuilder implements InventoryHolder {
         this(owner -> Bukkit.createInventory(owner, size));
     }
 
-    public InventoryBuilder(int size, String title) {
+    public InventoryBuilder(int size, Component title) {
         this(owner -> Bukkit.createInventory(owner, size, title));
     }
 
@@ -46,7 +47,7 @@ public class InventoryBuilder implements InventoryHolder {
         this(owner -> Bukkit.createInventory(owner, type));
     }
 
-    public InventoryBuilder(InventoryType type, String title) {
+    public InventoryBuilder(InventoryType type, Component title) {
         this(owner -> Bukkit.createInventory(owner, type, title));
     }
 

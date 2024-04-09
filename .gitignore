@@ -1,2 +1,6 @@
 target/
+build/
+run/
 .idea
+.gradle
+/*.jar

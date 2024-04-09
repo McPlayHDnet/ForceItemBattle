@@ -12,7 +12,7 @@ public class CommandPing extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        player.sendMessage("§aYour ping: §e" + player.getPing() + "ms");
+        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<green>Your ping: <yellow>" + player.getPing() + "ms"));
 
     }
 }

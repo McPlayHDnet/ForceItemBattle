@@ -1,12 +1,16 @@
 package forceitembattle.settings.preset;
 
 import forceitembattle.settings.GameSetting;
+import lombok.Getter;
+import lombok.Setter;
 import org.checkerframework.checker.units.qual.A;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+@Setter
+@Getter
 public class GamePreset {
 
     private String presetName;
@@ -26,43 +30,4 @@ public class GamePreset {
         }
     }
 
-    public String presetName() {
-        return presetName;
-    }
-
-    public void setPresetName(String presetName) {
-        this.presetName = presetName;
-    }
-
-    public int countdown() {
-        return countdown;
-    }
-
-    public void setCountdown(int countdown) {
-        this.countdown = countdown;
-    }
-
-    public int jokers() {
-        return jokers;
-    }
-
-    public void setJokers(int jokers) {
-        this.jokers = jokers;
-    }
-
-    public int backpackSize() {
-        return backpackSize;
-    }
-
-    public void setBackpackSize(int backpackSize) {
-        this.backpackSize = backpackSize;
-    }
-
-    public List<GameSetting> gameSettings() {
-        return gameSettings;
-    }
-
-    public void setGameSettings(List<GameSetting> gameSettings) {
-        this.gameSettings = gameSettings;
-    }
 }

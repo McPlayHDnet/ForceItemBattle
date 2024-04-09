@@ -4,7 +4,13 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.preset.GamePreset;
 import forceitembattle.util.*;
-import org.apache.commons.text.WordUtils;
+import lombok.Getter;
+import lombok.Setter;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
+import net.kyori.adventure.text.minimessage.tag.standard.StandardTags;
+import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
@@ -18,14 +24,21 @@ import java.util.stream.Collectors;
 
 public class Gamemanager {
 
-    private ForceItemBattle forceItemBattle;
+    private final ForceItemBattle forceItemBattle;
 
     private final Map<UUID, ForceItemPlayer> forceItemPlayerMap;
 
     public Map<UUID, Map<Integer, Map<Integer, ItemStack>>> savedInventory = new HashMap<>();
+    public Map<Teams, Map<Integer, Map<Integer, ItemStack>>> savedInventoryTeam = new HashMap<>();
 
+    @Setter
+    @Getter
     public GameState currentGameState;
+    @Setter
     private GamePreset currentGamePreset;
+
+    @Getter
+    private MiniMessage miniMessage;
 
     public Gamemanager(ForceItemBattle forceItemBattle) {
         this.forceItemBattle = forceItemBattle;
@@ -33,6 +46,19 @@ public class Gamemanager {
         this.currentGamePreset = null;
 
         this.forceItemPlayerMap = new HashMap<>();
+
+        this.miniMessage = MiniMessage.builder()
+                .tags(TagResolver.builder()
+                        .resolver(StandardTags.color())
+                        .resolver(StandardTags.gradient())
+                        .resolver(StandardTags.reset())
+                        .resolver(StandardTags.decorations())
+                        .resolver(StandardTags.clickEvent())
+                        .resolver(StandardTags.hoverEvent())
+                        .resolver(StandardTags.translatable())
+                        .build()
+                )
+                .build();
     }
 
     public void addPlayer(Player player, ForceItemPlayer forceItemPlayer) {
@@ -45,7 +71,10 @@ public class Gamemanager {
     }
 
     public String getCurrentMaterialName(ForceItemPlayer forceItemPlayer) {
-        return WordUtils.capitalizeFully(forceItemPlayer.currentMaterial().toString().replace("_", " "));
+        if(this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+            return "<lang:" + forceItemPlayer.currentTeam().getCurrentMaterial().translationKey() + ">";
+        }
+        return "<lang:" + forceItemPlayer.currentMaterial().translationKey() + ">";
     }
 
     public String formatMaterialName(String material) {
@@ -58,11 +87,19 @@ public class Gamemanager {
     }
 
     public void initializeMats() {
-        Bukkit.getOnlinePlayers().forEach(player -> {
-            ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
-            forceItemPlayer.setCurrentScore(0);
-            forceItemPlayer.setCurrentMaterial(this.generateMaterial());
-        });
+        if(this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+            this.forceItemPlayerMap.forEach((uuid, forceItemPlayer) -> {
+                forceItemPlayer.currentTeam().setCurrentScore(0);
+                forceItemPlayer.currentTeam().setCurrentMaterial(this.generateMaterial());
+            });
+        } else {
+            Bukkit.getOnlinePlayers().forEach(player -> {
+                ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
+                forceItemPlayer.setCurrentScore(0);
+                forceItemPlayer.setCurrentMaterial(this.generateMaterial());
+            });
+        }
+
     }
 
     public void forceSkipItem(Player player) {
@@ -153,6 +190,54 @@ public class Gamemanager {
         return placesMap;
     }
 
+    public Map<Teams, Integer> calculatePlaces(List<Teams> teamsList) {
+        List<Teams> sortedTeams = teamsList.stream()
+                .sorted(Comparator.comparingInt(Teams::getCurrentScore).reversed())
+                .toList();
+
+        Map<Teams, Integer> placesMap = new LinkedHashMap<>();
+
+        int place = 1;
+        for(int i = 0; i < sortedTeams.size(); i++) {
+            Teams currentTeam = sortedTeams.get(i);
+
+            if(i > 0 && currentTeam.getCurrentScore() == sortedTeams.get(i - 1).getCurrentScore()) {
+                placesMap.put(currentTeam, placesMap.get(sortedTeams.get(i - 1)));
+            } else {
+
+                placesMap.put(currentTeam, place);
+                place++;
+            }
+        }
+        return placesMap;
+    }
+
+    public String colorCodeToName(String colorCode) {
+        String name = "";
+
+        switch(colorCode) {
+            case "&0" -> name = "<black>";
+            case "&1" -> name = "<dark_blue>";
+            case "&2" -> name = "<dark_green>";
+            case "&3" -> name = "<dark_aqua>";
+            case "&4" -> name = "<dark_red>";
+            case "&5" -> name = "<dark_purple>";
+            case "&6" -> name = "<gold>";
+            case "&7" -> name = "<gray>";
+            case "&8" -> name = "<dark_gray>";
+            case "&9" -> name = "<blue>";
+            case "&a" -> name = "<green>";
+            case "&b" -> name = "<aqua>";
+            case "&c" -> name = "<red>";
+            case "&d" -> name = "<pink>";
+            case "&e" -> name = "<yellow>";
+            case "&f" -> name = "<white>";
+            default -> name = colorCode;
+        }
+
+        return name;
+    }
+
     public boolean forceItemPlayerExist(UUID uuid) {
         return this.forceItemPlayerMap.get(uuid) != null;
     }
@@ -181,24 +266,8 @@ public class Gamemanager {
         return this.getCurrentGameState() == GameState.END_GAME;
     }
 
-    public void setCurrentGameState(GameState gameState) {
-        this.currentGameState = gameState;
-    }
-
-    public GameState getCurrentGameState() {
-        return currentGameState;
-    }
-
-    public void setCurrentGamePreset(GamePreset currentGamePreset) {
-        this.currentGamePreset = currentGamePreset;
-    }
-
     public GamePreset currentGamePreset() {
         return currentGamePreset;
-    }
-
-    public Map<UUID, Map<Integer, Map<Integer, ItemStack>>> getSavedInventory() {
-        return savedInventory;
     }
 
     private static final Material JOKER_MATERIAL = Material.BARRIER;
@@ -210,7 +279,7 @@ public class Gamemanager {
     public static ItemStack getJokers(int amount) {
         return new ItemBuilder(JOKER_MATERIAL)
                 .setAmount(amount)
-                .setDisplayName("§8» §5Skip")
+                .setDisplayName("<dark_gray>» <dark_purple>Skip")
                 .getItemStack();
     }
 

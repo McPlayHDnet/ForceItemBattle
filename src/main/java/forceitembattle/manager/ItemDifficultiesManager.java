@@ -6,6 +6,9 @@ import com.google.gson.GsonBuilder;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.DescriptionItem;
+import io.papermc.paper.configuration.serializer.ComponentSerializer;
+import lombok.Getter;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 
@@ -20,7 +23,7 @@ import java.util.stream.Stream;
 
 public class ItemDifficultiesManager {
 
-    private ForceItemBattle forceItemBattle;
+    private final ForceItemBattle forceItemBattle;
 
     private final List<Material> easy;
     private final List<Material> medium;
@@ -29,7 +32,8 @@ public class ItemDifficultiesManager {
     private final List<Material> netherItems;
     private final List<Material> extremeItems;
 
-    private final HashMap<Material, DescriptionItem> descriptionItems;
+    @Getter
+    private HashMap<Material, DescriptionItem> descriptionItems;
 
     public Material getEasyMaterial() {
         Random random = new Random();
@@ -53,10 +57,6 @@ public class ItemDifficultiesManager {
         filterDisabledItems(items);
 
         return items.get(random.nextInt(items.size()));
-    }
-
-    public HashMap<Material, DescriptionItem> getDescriptionItems() {
-        return descriptionItems;
     }
 
     public boolean isItemInDescriptionList(Material material) {

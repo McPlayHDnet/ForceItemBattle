@@ -7,7 +7,7 @@ import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.preset.GamePreset;
 import forceitembattle.settings.preset.InvSettingsPresets;
 import forceitembattle.util.*;
-import org.apache.commons.text.WordUtils;
+import org.apache.commons.lang.WordUtils;
 import org.bukkit.*;
 import org.bukkit.block.ShulkerBox;
 import org.bukkit.entity.ArmorStand;
@@ -27,6 +27,7 @@ import org.bukkit.event.inventory.*;
 import org.bukkit.event.player.*;
 import org.bukkit.inventory.*;
 import org.bukkit.inventory.meta.BlockStateMeta;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.awt.*;
 import java.awt.Color;
@@ -54,7 +55,7 @@ public class Listeners implements Listener {
                 player.setGameMode(GameMode.SPECTATOR);
             } else {
                 forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-                this.plugin.getTimer().getBossBar().get(event.getPlayer().getUniqueId()).addPlayer(event.getPlayer());
+                player.showBossBar(this.plugin.getTimer().getBossBar().get(event.getPlayer().getUniqueId()));
             }
         } else {
 
@@ -66,13 +67,14 @@ public class Listeners implements Listener {
             player.setHealth(20);
             player.setFoodLevel(20);
             player.setGameMode(GameMode.ADVENTURE);
+
         }
-        event.setJoinMessage("§a» §e" + player.getName() + " §ajoined");
+        event.joinMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<green>» <yellow>" + player.getName() + " <green>joined"));
     }
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent playerQuitEvent) {
-        playerQuitEvent.setQuitMessage("§c« §e" + playerQuitEvent.getPlayer().getName() + " §cragequit");
+        playerQuitEvent.quitMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>« <yellow>" + playerQuitEvent.getPlayer().getName() + " <red>ragequit"));
         playerQuitEvent.getPlayer().getPassengers().forEach(Entity::remove);
     }
 
@@ -83,7 +85,7 @@ public class Listeners implements Listener {
             if(this.plugin.getGamemanager().isMidGame()) {
                 ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
                 ItemStack pickedItem = entityPickupItemEvent.getItem().getItemStack();
-                Material currentMaterial = forceItemPlayer.currentMaterial();
+                Material currentMaterial = (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial());
 
                 if(pickedItem.getType() == currentMaterial) {
                     FoundItemEvent foundItemEvent = new FoundItemEvent(player);
@@ -111,7 +113,7 @@ public class Listeners implements Listener {
 
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
         ItemStack clickedItem = inventoryClickEvent.getCurrentItem();
-        Material currentItem = forceItemPlayer.currentMaterial();
+        Material currentItem = (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial());
 
         if (clickedItem == null) {
             return;
@@ -133,8 +135,18 @@ public class Listeners implements Listener {
     @EventHandler
     public void onMove(PlayerMoveEvent playerMoveEvent) {
         if(this.plugin.getGamemanager().isPreGame() || this.plugin.getGamemanager().isPausedGame()) {
-            if(playerMoveEvent.getFrom().getX() != playerMoveEvent.getTo().getX() || playerMoveEvent.getFrom().getZ() != playerMoveEvent.getTo().getZ())
-                playerMoveEvent.setTo(playerMoveEvent.getFrom());
+            Location from = playerMoveEvent.getFrom();
+            Location to = playerMoveEvent.getTo();
+
+            if (from.getBlockX() != to.getBlockX() || from.getBlockZ() != to.getBlockZ()) {
+
+                double newX = from.getBlockX() + 0.5;
+                double newZ = from.getBlockZ() + 0.5;
+                double newYaw = playerMoveEvent.getPlayer().getLocation().getYaw();
+
+                Location newLocation = new Location(from.getWorld(), newX, from.getY(), newZ, (float) newYaw, from.getPitch());
+                playerMoveEvent.setTo(newLocation);
+            }
         }
     }
 
@@ -152,44 +164,75 @@ public class Listeners implements Listener {
          */
 
         if (!event.isBackToBack()) {
-            Bukkit.broadcastMessage("§a" + player.getName() + " §7" + (event.isSkipped() ? "skipped" : "found") + " " + ChatColor.RESET + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType()) + " §6" + WordUtils.capitalize(itemStack.getType().name().toLowerCase().replace("_", " ")));
+            Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize(
+                    "<green>" + player.getName() + " <gray>" + (event.isSkipped() ? "skipped" : "found") + " <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType()) + " <gold>" + "<lang:" + itemStack.translationKey() + ">"));
         }
 
-        forceItemPlayer.setCurrentScore(forceItemPlayer.currentScore() + 1);
-        forceItemPlayer.addFoundItemToList(new ForceItem(itemStack.getType(), this.plugin.getTimer().formatSeconds(this.plugin.getTimer().getTime()), event.isSkipped()));
-        forceItemPlayer.setCurrentMaterial(this.plugin.getGamemanager().generateMaterial());
+        if(this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+            forceItemPlayer.currentTeam().setCurrentScore(forceItemPlayer.currentTeam().getCurrentScore() + 1);
+            forceItemPlayer.currentTeam().addFoundItemToList(new ForceItem(itemStack.getType(), this.plugin.getTimer().formatSeconds(this.plugin.getTimer().getTime()), event.isSkipped()));
+            forceItemPlayer.currentTeam().setCurrentMaterial(this.plugin.getGamemanager().generateMaterial());
 
-        player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
+            forceItemPlayer.currentTeam().getPlayers().forEach(players -> players.player().playSound(players.player().getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1));
 
-        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.NETHER)) {
-            forceItemPlayer.updateItemDisplay();
-        }
+            boolean foundNextItem = false;
 
-        if (this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
-            this.plugin.getStatsManager().addToStats(PlayerStat.TOTAL_ITEMS, this.plugin.getStatsManager().playerStats(player.getName()), 1);
-        }
+            if (forceItemPlayer.currentTeam().getPreviousMaterial() == forceItemPlayer.currentTeam().getCurrentMaterial()) {
+                foundNextItem = true;
 
-        boolean foundNextItem = false;
+            } else if (this.plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK) &&
+                    hasItemInInventory(this.plugin.getBackpack().getTeamBackpack(forceItemPlayer.currentTeam()), forceItemPlayer.currentTeam().getCurrentMaterial())) {
+                foundNextItem = true;
 
-        if (forceItemPlayer.previousMaterial() == forceItemPlayer.currentMaterial()) {
-            foundNextItem = true;
+            } else {
+                for(ForceItemPlayer teamPlayers : forceItemPlayer.currentTeam().getPlayers()) {
+                    if(this.hasItemInInventory(teamPlayers.player().getInventory(), forceItemPlayer.currentTeam().getCurrentMaterial())) {
+                        foundNextItem = true;
+                    }
+                }
+            }
 
-        } else if (hasItemInInventory(player.getInventory(), forceItemPlayer.currentMaterial())) {
-            foundNextItem = true;
+            if (!foundNextItem) {
+                return;
+            }
 
-        } else if (this.plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK) &&
-                hasItemInInventory(this.plugin.getBackpack().getPlayerBackpack(player), forceItemPlayer.currentMaterial())) {
-            foundNextItem = true;
+        } else {
+            forceItemPlayer.setCurrentScore(forceItemPlayer.currentScore() + 1);
+            forceItemPlayer.addFoundItemToList(new ForceItem(itemStack.getType(), this.plugin.getTimer().formatSeconds(this.plugin.getTimer().getTime()), event.isSkipped()));
+            forceItemPlayer.setCurrentMaterial(this.plugin.getGamemanager().generateMaterial());
 
-        }
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
 
-        if (!foundNextItem) {
-            return;
+            if (!this.plugin.getSettings().isSettingEnabled(GameSetting.NETHER)) {
+                forceItemPlayer.updateItemDisplay();
+            }
+
+            if (this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
+                this.plugin.getStatsManager().addToStats(PlayerStat.TOTAL_ITEMS, this.plugin.getStatsManager().playerStats(player.getName()), 1);
+            }
+
+            boolean foundNextItem = false;
+
+            if (forceItemPlayer.previousMaterial() == forceItemPlayer.currentMaterial()) {
+                foundNextItem = true;
+
+            } else if (hasItemInInventory(player.getInventory(), forceItemPlayer.currentMaterial())) {
+                foundNextItem = true;
+
+            } else if (this.plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK) &&
+                    hasItemInInventory(this.plugin.getBackpack().getPlayerBackpack(player), forceItemPlayer.currentMaterial())) {
+                foundNextItem = true;
+
+            }
+
+            if (!foundNextItem) {
+                return;
+            }
         }
 
         // Handle finding item back to back
 
-        ItemStack foundItem = new ItemStack(forceItemPlayer.currentMaterial());
+        ItemStack foundItem = new ItemStack((this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial()));
 
         // forceItemPlayer.setCurrentScore(forceItemPlayer.currentScore() + 1);
         // forceItemPlayer.addFoundItemToList(new ForceItem(foundItem.getType(), this.plugin.getTimer().formatSeconds(this.plugin.getTimer().getTime()), false));
@@ -207,7 +250,8 @@ public class Listeners implements Listener {
         foundNextItemEvent.setBackToBack(true);
         foundNextItemEvent.setSkipped(false);
 
-        Bukkit.broadcastMessage("§a" + player.getName() + " §7was lucky to already own " + ChatColor.RESET + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, foundItem.getType()) + " §6" + WordUtils.capitalize(foundItem.getType().name().toLowerCase().replace("_", " ")));
+        Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize(
+                "<green>" + player.getName() + " <gray>was lucky to already own <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, foundItem.getType()) + " <gold>" + "<lang:" + foundItem.translationKey() + ">"));
         Bukkit.getPluginManager().callEvent(foundNextItemEvent);
     }
 
@@ -254,7 +298,11 @@ public class Listeners implements Listener {
 
         if (e.getItem().getType() == Material.BUNDLE) {
             if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
-                this.plugin.getBackpack().openPlayerBackpack(player);
+                if(this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+                    this.plugin.getBackpack().openTeamBackpack(forceItemPlayer.currentTeam(), player);
+                } else {
+                    this.plugin.getBackpack().openPlayerBackpack(player);
+                }
                 return;
             }
         }
@@ -266,10 +314,17 @@ public class Listeners implements Listener {
             return;
         }
 
-        int jokers = forceItemPlayer.remainingJokers();
+        int jokers = (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getRemainingJokers() : forceItemPlayer.remainingJokers());
         if (jokers <= 0) {
-            player.sendMessage("§cNo more skips left.");
-            player.getInventory().remove(Gamemanager.getJokerMaterial());
+            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>No more skips left."));
+            if(this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+                forceItemPlayer.currentTeam().getPlayers().forEach(teamPlayers -> {
+                    teamPlayers.player().getInventory().remove(Gamemanager.getJokerMaterial());
+                });
+            } else {
+                player.getInventory().remove(Gamemanager.getJokerMaterial());
+            }
+
             return;
         }
 
@@ -286,14 +341,24 @@ public class Listeners implements Listener {
         } else {
             stack.setType(Material.AIR);
         }
-        Material mat = forceItemPlayer.currentMaterial();
+        Material mat = (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial());
 
-        player.getInventory().setItem(foundSlot, stack);
+        if(this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+            forceItemPlayer.currentTeam().getPlayers().forEach(teamPlayers -> {
+                teamPlayers.player().getInventory().setItem(foundSlot, stack);
+            });
+        } else {
+            player.getInventory().setItem(foundSlot, stack);
+        }
         player.getInventory().addItem(new ItemStack(mat));
         if (!player.getInventory().contains(mat)) player.getWorld().dropItemNaturally(player.getLocation(), new ItemStack(mat));
         this.plugin.getTimer().sendActionBar();
 
-        forceItemPlayer.setRemainingJokers(jokers);
+        if(this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+            forceItemPlayer.currentTeam().setRemainingJokers(jokers);
+        } else {
+            forceItemPlayer.setRemainingJokers(jokers);
+        }
 
         FoundItemEvent foundItemEvent = new FoundItemEvent(player);
         foundItemEvent.setFoundItem(new ItemStack(mat));
@@ -551,7 +616,7 @@ public class Listeners implements Listener {
             addJokersIfMissing(player, jokers);
         }
 
-        player.getInventory().setItem(8, new ItemBuilder(Material.BUNDLE).setDisplayName("§8» §eBackpack").getItemStack());
+        player.getInventory().setItem(8, new ItemBuilder(Material.BUNDLE).setDisplayName("<dark_gray>» <yellow>Backpack").getItemStack());
 
         if (!this.plugin.getSettings().isSettingEnabled(GameSetting.NETHER)) {
             forceItemPlayer.createItemDisplay();
@@ -579,7 +644,7 @@ public class Listeners implements Listener {
         } else if (backpack != null && backpack.firstEmpty() != -1) {
             backpack.addItem(jokers);
         } else {
-            player.sendMessage("§cYou have no space in your inventory for jokers! §fMake some space and uhmmmm die))");
+            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>You have no space in your inventory for jokers! <white>Make some space and uhmmmm die))"));
             // TODO : handle this somehow yes?
         }
     }
@@ -609,7 +674,7 @@ public class Listeners implements Listener {
     @EventHandler
     public void onFoodLevelChange(FoodLevelChangeEvent event) {
         if (!(event.getEntity() instanceof Player)) return;
-        if(!this.plugin.getGamemanager().isMidGame()) return;
+        if(!this.plugin.getGamemanager().isMidGame() || !this.plugin.getGamemanager().isPausedGame()) return;
         if (this.plugin.getSettings().isSettingEnabled(GameSetting.FOOD)) return;
         event.setCancelled(true);
     }
@@ -673,7 +738,7 @@ public class Listeners implements Listener {
         }
 
         if (!this.plugin.getSettings().isSettingEnabled(GameSetting.NETHER)) {
-            player.sendMessage("§cTravelling to other dimensions is disabled!");
+            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>Travelling to other dimensions is disabled!"));
             player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
             playerPortalEvent.setCanCreatePortal(false);
             playerPortalEvent.setCancelled(true);

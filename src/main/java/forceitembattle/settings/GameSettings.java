@@ -46,7 +46,7 @@ public class GameSettings {
                 configurationSection.getConfigurationSection("settings").getKeys(false).forEach(settingKeys -> {
                     for(GameSetting gameSetting : GameSetting.values()) {
                         if(gameSetting.configPath().equals(settingKeys)) {
-                            gamePreset.gameSettings().add(gameSetting);
+                            gamePreset.getGameSettings().add(gameSetting);
                         }
                     }
 
@@ -58,7 +58,7 @@ public class GameSettings {
     }
 
     public boolean isSettingEnabledInPreset(GamePreset gamePreset, GameSetting gameSetting) {
-        return this.plugin.getConfig().getBoolean("presets." + gamePreset.presetName() + "." + gameSetting.configPath());
+        return this.plugin.getConfig().getBoolean("presets." + gamePreset.getPresetName() + "." + gameSetting.configPath());
     }
 
     public boolean isSettingEnabled(GameSetting gameSetting) {
@@ -85,19 +85,19 @@ public class GameSettings {
         ConfigurationSection configurationSection = this.plugin.getConfig().getConfigurationSection("presets");
 
         if(configurationSection != null) {
-            ConfigurationSection presetSection = configurationSection.createSection(gamePreset.presetName());
+            ConfigurationSection presetSection = configurationSection.createSection(gamePreset.getPresetName());
 
-            presetSection.set("countdown", gamePreset.countdown());
-            presetSection.set("jokers", gamePreset.jokers());
-            presetSection.set("backpackSize", gamePreset.backpackSize());
+            presetSection.set("countdown", gamePreset.getCountdown());
+            presetSection.set("jokers", gamePreset.getJokers());
+            presetSection.set("backpackSize", gamePreset.getBackpackSize());
 
             for(GameSetting gameSetting : GameSetting.values()) {
-                presetSection.set(gameSetting.configPath(), gamePreset.gameSettings().contains(gameSetting));
+                presetSection.set(gameSetting.configPath(), gamePreset.getGameSettings().contains(gameSetting));
             }
         }
 
         this.plugin.saveConfig();
-        this.gamePresetMap.put(gamePreset.presetName(), gamePreset);
+        this.gamePresetMap.put(gamePreset.getPresetName(), gamePreset);
 
     }
 

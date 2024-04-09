@@ -34,7 +34,7 @@ public class RecipeManager {
         recipes.removeIf(recipe -> RecipeInventory.getStationItem(recipe) == null);
 
         if (recipes.isEmpty()) {
-            player.sendMessage("§cThere is no recipe for this item. Just find it lol");
+            player.sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>There is no recipe for this item. Just find it lol"));
             return;
         }
 

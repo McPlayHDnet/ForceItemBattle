@@ -17,7 +17,7 @@ public class CommandBed extends CustomCommand {
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
         if (player.getRespawnLocation() == null) {
-            player.sendMessage("§cYou don't have a bed respawn point.");
+            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>You don't have a bed respawn point."));
             return;
         }
 

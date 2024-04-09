@@ -15,7 +15,7 @@ public class CommandReset extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        Bukkit.getOnlinePlayers().forEach(onlinePlayer -> onlinePlayer.kickPlayer(ChatColor.DARK_RED + "Server Reset"));
+        Bukkit.getOnlinePlayers().forEach(onlinePlayer -> onlinePlayer.kick(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_red>Server Reset")));
 
         this.plugin.getConfig().set("isReset" , true);
         this.plugin.saveConfig();

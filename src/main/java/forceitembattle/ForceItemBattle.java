@@ -13,7 +13,6 @@ import forceitembattle.util.Backpack;
 import forceitembattle.util.DescriptionItem;
 import forceitembattle.util.Timer;
 import forceitembattle.util.WanderingTraderTimer;
-import forceitembattle.util.color.ColorManager;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.*;
@@ -50,8 +49,6 @@ public final class ForceItemBattle extends JavaPlugin {
     @Getter
     private RecipeManager recipeManager;
     @Getter
-    private ColorManager colorManager;
-    @Getter
     private StatsManager statsManager;
     @Getter
     private PositionManager positionManager;
@@ -60,6 +57,9 @@ public final class ForceItemBattle extends JavaPlugin {
     @Getter
     @Setter
     private CommandsManager commandsManager;
+    @Getter
+    @Setter
+    private TeamsManager teamManager;
     @Getter
     @Setter
     private Location spawnLocation;
@@ -150,9 +150,9 @@ public final class ForceItemBattle extends JavaPlugin {
         this.backpack = new Backpack(this);
         this.itemDifficultiesManager = new ItemDifficultiesManager(this);
         this.recipeManager = new RecipeManager(this);
-        this.colorManager = new ColorManager();
         this.statsManager = new StatsManager(this);
         this.positionManager = new PositionManager(this);
+        this.teamManager = new TeamsManager(this);
         this.commandsManager = new CommandsManager(this);
         this.wanderingTraderTimer = new WanderingTraderTimer();
 
@@ -237,8 +237,8 @@ public final class ForceItemBattle extends JavaPlugin {
         new CommandLeaderboard();
         new CommandPosition();
         new CommandPing();
-        new CommandShow();
         new CommandHelp();
+        new CommandTeams();
     }
 
     @Override

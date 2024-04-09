@@ -75,14 +75,14 @@ public class WanderingTraderTimer {
 
         this.wanderingTraderMap.put(forceItemPlayer, wanderingTrader);
 
-        forceItemPlayer.player().sendMessage("§8» §6Position §8┃ §7Your §aWandering Trader §7just spawned at §3" + (int) traderLocation.getX() + "§7, §3" + (int) traderLocation.getY() + "§7, §3" + (int) traderLocation.getZ() + this.distance(forceItemPlayer.player().getLocation(), traderLocation));
+        forceItemPlayer.player().sendMessage(ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold>Position <dark_gray>┃ <gray>Your <green>Wandering Trader <gray>just spawned at <dark_aqua>" + (int) traderLocation.getX() + "<gray>, <dark_aqua>" + (int) traderLocation.getY() + "<gray>, <dark_aqua>" + (int) traderLocation.getZ() + this.distance(forceItemPlayer.player().getLocation(), traderLocation)));
 
         BukkitRunnable despawnTask = new BukkitRunnable() {
             @Override
             public void run() {
                 wanderingTrader.remove();
                 wanderingTraderMap.remove(forceItemPlayer);
-                forceItemPlayer.player().sendMessage("§8» §6Position §8┃ §7Your §aWandering Trader §7just despawned! :(");
+                forceItemPlayer.player().sendMessage(ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold>Position <dark_gray>┃ <gray>Your <green>Wandering Trader <gray>just despawned! :("));
                 startTimeMap.put(forceItemPlayer, 10 * 60);
 
             }
@@ -92,33 +92,33 @@ public class WanderingTraderTimer {
 
     private String distance(Location playerLocation, Location destination) {
         if (playerLocation.getWorld() == null || destination.getWorld() == null) {
-            return " §c(unknown)";
+            return " <red>(unknown)";
         }
 
         if (!playerLocation.getWorld().equals(destination.getWorld())) {
-            return " §7in the " + getWorldName(destination.getWorld());
+            return " <gray>in the " + getWorldName(destination.getWorld());
         }
 
 
-        return " §a(" + (int) playerLocation.distance(destination) + " blocks away)";
+        return " <green>(" + (int) playerLocation.distance(destination) + " blocks away)";
     }
 
     private String getWorldName(World world) {
         if (world == null) {
-            return "§8unknown";
+            return "<dark_gray>unknown";
         }
 
         String worldName = world.getName();
 
         if (worldName.contains("nether")) {
-            return "§cnether";
+            return "<red>nether";
         }
 
         if (worldName.contains("end")) {
-            return "§eend";
+            return "<yellow>end";
         }
 
-        return "§aoverworld";
+        return "<green>overworld";
     }
 
     private Location getRandomLocationWithinChunks(Player player, int chunkRadius) {

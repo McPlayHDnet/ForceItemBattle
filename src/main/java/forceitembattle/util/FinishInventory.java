@@ -2,37 +2,43 @@ package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.title.Title;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
-import org.apache.commons.text.WordUtils;
+import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import javax.annotation.Nullable;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class FinishInventory extends InventoryBuilder {
 
     private final Map<Integer, Map<Integer, ItemStack>> pages = new HashMap<>();
 
-    public FinishInventory(ForceItemBattle forceItemBattle, ForceItemPlayer targetPlayer, Integer place, boolean firstTime) {
-        super(9*6, "§8» §6Items §8● §7XXXXXXXXXX");
+    public FinishInventory(ForceItemBattle forceItemBattle, @Nullable ForceItemPlayer targetPlayer, @Nullable Teams targetTeam, Integer place, boolean firstTime) {
+        super(9*6, forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold>Items <dark_gray>● <gray>" + (firstTime ? "????????" : (targetTeam == null ? targetPlayer.player().getName() : "Team #" + targetTeam.getTeamId()))));
 
         /* TOP-BORDER */
-        this.setItems(0, 8, new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE).setDisplayName("§6").addItemFlags(ItemFlag.values()).getItemStack());
+        this.setItems(0, 8, new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE).setDisplayName("<aqua>").addItemFlags(ItemFlag.values()).getItemStack());
 
         /* FILL */
-        this.setItems(9, 53, new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).setDisplayName("§8").addItemFlags(ItemFlag.values()).getItemStack());
+        this.setItems(9, 53, new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).setDisplayName("<gray>").addItemFlags(ItemFlag.values()).getItemStack());
 
         /* Found-Items */
-
-        AtomicInteger currentPage = new AtomicInteger();
+        AtomicInteger currentPage = new AtomicInteger(0);
 
         if(firstTime) {
             new BukkitRunnable() {
@@ -40,33 +46,32 @@ public class FinishInventory extends InventoryBuilder {
                 int startSlot = 10;
                 int placedItems = -1;
                 int pagesAmount = 0;
-
                 final Map<Integer, ItemStack> slots = new HashMap<>();
-
                 @Override
                 public void run() {
                     placedItems++;
 
                     if(startSlot == 53) {
                         //check if is even needed to create a new page
-                        if(targetPlayer.foundItems().size() > 35) {
+                        if((targetTeam != null && targetTeam.getFoundItems().size() > 35) || targetPlayer.foundItems().size() > 35) {
+                            pages.put(pagesAmount, new HashMap<>(slots));
                             pagesAmount++;
-                            setItems(9, 53, new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).setDisplayName("§8").addItemFlags(ItemFlag.values()).getItemStack());
                             startSlot = 10;
+                            slots.clear();
+
+                            setItems(9, 53, new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).setDisplayName("<gray>").addItemFlags(ItemFlag.values()).getItemStack());
                         }
                     }
 
-
-                    List<ForceItem> items = targetPlayer.foundItems();
+                    List<ForceItem> items = (targetTeam != null ? targetTeam.getFoundItems() : targetPlayer.foundItems());
                     if (items.isEmpty()) {
-                        setItem(startSlot, new ItemBuilder(Material.BARRIER).setDisplayName("§cNo Items found").getItemStack());
+                        setItem(startSlot, new ItemBuilder(Material.BARRIER).setDisplayName("<red>No Items found").getItemStack());
                         placedItems = -1;
                     } else {
                         ForceItem forceItem = items.get(placedItems);
-                        ItemStack itemStack = new ItemBuilder(forceItem.material()).setDisplayName(WordUtils.capitalize(forceItem.material().name().replace("_", " ").toLowerCase()) + (forceItem.usedSkip() ? " §c§lSKIPPED" : "") + " §8» §6" + forceItem.timeNeeded()).setGlowing(forceItem.usedSkip()).getItemStack();
+                        ItemStack itemStack = new ItemBuilder(forceItem.material()).setDisplayName(WordUtils.capitalize(forceItem.material().name().replace("_", " ").toLowerCase()) + (forceItem.usedSkip() ? " <red><b>SKIPPED</b>" : "") + " <dark_gray>» <gold>" + forceItem.timeNeeded()).setGlowing(forceItem.usedSkip()).getItemStack();
                         setItem(startSlot, itemStack);
                         slots.put(startSlot, itemStack);
-                        pages.put(pagesAmount, slots);
                     }
 
                     Bukkit.getOnlinePlayers().forEach(players -> players.playSound(players.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1, 1));
@@ -74,35 +79,35 @@ public class FinishInventory extends InventoryBuilder {
                     if(startSlot == 16 || startSlot == 25 || startSlot == 34 || startSlot == 43) startSlot += 3;
                     else startSlot++;
 
-                    if(placedItems >= targetPlayer.foundItems().size() - 1) {
+                    if(placedItems >= (targetTeam != null ? (targetTeam.getFoundItems().size() - 1) : (targetPlayer.foundItems().size() - 1))) {
 
-                        if(pages.isEmpty()) pages.put(0, slots);
+                        pages.put(pagesAmount, new HashMap<>(slots));
 
                         new BukkitRunnable() {
 
                             @Override
                             public void run() {
+                                String placeColor = forceItemBattle.getStatsManager().placeColor(place);
 
-                                TextComponent placementText = new TextComponent(place + ". " + targetPlayer.player().getName() + " §8┃ §6" + (placedItems + 1) + " Items found §8» ");
-                                TextComponent textComponent = new TextComponent("§8[§bInventory§8]");
-                                textComponent.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/result " + targetPlayer.player().getUniqueId()));
-
-                                Bukkit.getOnlinePlayers().forEach(players -> {
+                                for(Player players : Bukkit.getOnlinePlayers()) {
                                     if(players.getOpenInventory().getTopInventory() == getInventory()) {
                                         players.closeInventory();
                                     }
 
-                                    players.sendTitle(place + ". " + targetPlayer.player().getName(), "§6" + (placedItems + 1) + " Items found", 15, 35, 15);
+                                    Component mainTitle = forceItemBattle.getGamemanager().getMiniMessage().deserialize(placeColor + place + "<white>. " + (targetTeam == null ? targetPlayer.player().getName() : targetTeam.getPlayers().stream().map(name -> name.player().getName()).collect(Collectors.joining(", "))));
+                                    Component subTitle = forceItemBattle.getGamemanager().getMiniMessage().deserialize("<gold>" + (placedItems + 1) + " Items found");
 
-                                });
+                                    Title.Times times = Title.Times.times(Duration.ofMillis(750), Duration.ofMillis(1750), Duration.ofMillis(750));
+                                    Title title = Title.title(mainTitle, subTitle, times);
 
-                                getPlayer().spigot().sendMessage(placementText, textComponent);
-
-                                forceItemBattle.getGamemanager().savedInventory.put(targetPlayer.player().getUniqueId(), pages);
+                                    players.showTitle(title);
+                                }
+                                getPlayer().sendMessage(forceItemBattle.getGamemanager().getMiniMessage().deserialize(placeColor + place + "<white>. " + (targetTeam == null ? targetPlayer.player().getName() : targetTeam.getPlayers().stream().map(name -> name.player().getName()).collect(Collectors.joining(", "))) + " <dark_gray>┃ <gold>" + (placedItems + 1) + " Items found <dark_gray>» <click:run_command:/result " + (targetTeam == null ? targetPlayer.player().getUniqueId() : "#" + targetTeam.getTeamId()) + "><dark_gray>[<aqua>Inventory<dark_gray>]"));
                             }
                         }.runTaskLater(forceItemBattle, 100L);
 
-
+                        if(targetTeam == null) forceItemBattle.getGamemanager().savedInventory.put(targetPlayer.player().getUniqueId(), pages);
+                        else forceItemBattle.getGamemanager().savedInventoryTeam.put(targetTeam, pages);
                         cancel();
                     }
 
@@ -110,43 +115,62 @@ public class FinishInventory extends InventoryBuilder {
             }.runTaskTimer(forceItemBattle, 0L, 10L);
         } else {
             //Open Inventory beginning from the first page
-
-            Map<Integer, ItemStack> itemStacks = forceItemBattle.getGamemanager().savedInventory.get(targetPlayer.player().getUniqueId()).get(currentPage.get());
-
-            if(forceItemBattle.getGamemanager().savedInventory.get(targetPlayer.player().getUniqueId()).isEmpty()) {
-                this.setItem(10, new ItemBuilder(Material.BARRIER).setDisplayName("§cNo Items found").getItemStack());
-            } else {
-                this.placeItems(itemStacks);
-            }
-
-            if(forceItemBattle.getGamemanager().savedInventory.get(targetPlayer.player().getUniqueId()).size() > 1) {
-
-                setItem(35, new ItemBuilder(Material.LIME_STAINED_GLASS_PANE).setDisplayName("§aNext Page").addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
-                    currentPage.getAndIncrement();
-
-                    this.placeItems(itemStacks);
-
-                    if(currentPage.get() != forceItemBattle.getGamemanager().savedInventory.get(targetPlayer.player().getUniqueId()).size()) {
-                        setItem(35, new ItemBuilder(Material.LIME_STAINED_GLASS_PANE).setDisplayName("§aNext Page").addItemFlags(ItemFlag.values()).getItemStack());
+            this.addUpdateHandler(() -> {
+                if(targetTeam == null) {
+                    if(forceItemBattle.getGamemanager().savedInventory.get(targetPlayer.player().getUniqueId()).isEmpty()) {
+                        this.setItem(10, new ItemBuilder(Material.BARRIER).setDisplayName("<red>No Items found").getItemStack());
+                    } else {
+                        this.setItems(9, 53, new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).setDisplayName("<gray>").addItemFlags(ItemFlag.values()).getItemStack());
+                        this.placeItems(forceItemBattle.getGamemanager().savedInventory.get(targetPlayer.player().getUniqueId()).get(currentPage.get()));
                     }
-                    if(currentPage.get() != 0) {
-                        setItem(27, new ItemBuilder(Material.RED_STAINED_GLASS_PANE).setDisplayName("§cPrevious Page").addItemFlags(ItemFlag.values()).getItemStack());
-                    }
-                });
 
-                setItem(27, new ItemBuilder(Material.RED_STAINED_GLASS_PANE).setDisplayName("§cPrevious Page").addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
-                    currentPage.getAndDecrement();
+                    if(forceItemBattle.getGamemanager().savedInventory.get(targetPlayer.player().getUniqueId()).size() > 1) {
+                        if(currentPage.get() != forceItemBattle.getGamemanager().savedInventory.get(targetPlayer.player().getUniqueId()).size() - 1) {
+                            setItem(35, new ItemBuilder(Material.LIME_STAINED_GLASS_PANE).setDisplayName("<dark_green>» <green>Next Page").addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
+                                currentPage.getAndIncrement();
 
-                    this.placeItems(itemStacks);
+                                getPlayer().playSound(getPlayer().getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 1, 1);
+                            });
+                        }
+                        if(currentPage.get() != 0) {
+                            setItem(27, new ItemBuilder(Material.RED_STAINED_GLASS_PANE).setDisplayName("<dark_red>« <red>Previous Page").addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
+                                currentPage.getAndDecrement();
 
-                    if(currentPage.get() != forceItemBattle.getGamemanager().savedInventory.get(targetPlayer.player().getUniqueId()).size()) {
-                        setItem(35, new ItemBuilder(Material.LIME_STAINED_GLASS_PANE).setDisplayName("§aNext Page").addItemFlags(ItemFlag.values()).getItemStack());
+                                getPlayer().playSound(getPlayer().getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 1, 1);
+                            });
+                        }
                     }
-                    if(currentPage.get() != 0) {
-                        setItem(27, new ItemBuilder(Material.RED_STAINED_GLASS_PANE).setDisplayName("§cPrevious Page").addItemFlags(ItemFlag.values()).getItemStack());
+
+                } else {
+
+                    if(forceItemBattle.getGamemanager().savedInventoryTeam.get(targetTeam).isEmpty()) {
+                        this.setItem(10, new ItemBuilder(Material.BARRIER).setDisplayName("<red>No Items found").getItemStack());
+                    } else {
+                        this.setItems(9, 53, new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).setDisplayName("<gray>").addItemFlags(ItemFlag.values()).getItemStack());
+                        this.placeItems(forceItemBattle.getGamemanager().savedInventoryTeam.get(targetTeam).get(currentPage.get()));
                     }
-                });
-            }
+
+                    if(forceItemBattle.getGamemanager().savedInventoryTeam.get(targetTeam).size() > 1) {
+                        if(currentPage.get() != forceItemBattle.getGamemanager().savedInventoryTeam.get(targetTeam).size() - 1) {
+                            setItem(35, new ItemBuilder(Material.LIME_STAINED_GLASS_PANE).setDisplayName("<dark_green>» <green>Next Page").addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
+                                currentPage.getAndIncrement();
+
+                                getPlayer().playSound(getPlayer().getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 1, 1);
+                            });
+                        }
+                        if(currentPage.get() != 0) {
+                            setItem(27, new ItemBuilder(Material.RED_STAINED_GLASS_PANE).setDisplayName("<dark_red>« <red>Previous Page").addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
+                                currentPage.getAndDecrement();
+
+                                getPlayer().playSound(getPlayer().getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 1, 1);
+                            });
+                        }
+                    }
+                }
+
+
+            });
+
         }
 
         this.addClickHandler(inventoryClickEvent -> inventoryClickEvent.setCancelled(true));

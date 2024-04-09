@@ -15,16 +15,16 @@ import java.util.List;
 public class InvPresetMenu extends InventoryBuilder {
 
     public InvPresetMenu(ForceItemBattle forceItemBattle, GameSettings gameSettings) {
-        super(9*5, "§8» §3Settings §8● §7Presets");
+        super(9*5, forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <dark_aqua>Settings <dark_gray>● <gray>Presets"));
 
         /* BORDER */
-        this.setItems(0, 8, new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE).setDisplayName("§f").addItemFlags(ItemFlag.values()).getItemStack());
-        this.setItems(36, 44, new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE).setDisplayName("§f").addItemFlags(ItemFlag.values()).getItemStack());
+        this.setItems(0, 8, new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE).setDisplayName("<aqua>").addItemFlags(ItemFlag.values()).getItemStack());
+        this.setItems(36, 44, new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE).setDisplayName("<aqua>").addItemFlags(ItemFlag.values()).getItemStack());
 
         this.addUpdateHandler(() -> {
 
             this.setItem(4, new ItemBuilder(Material.STRUCTURE_VOID)
-                    .setDisplayName("§8● §aCreate a new preset")
+                    .setDisplayName("<dark_gray>● <green>Create a new preset")
                     .getItemStack(), event -> {
 
                 getPlayer().playSound(getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
@@ -35,15 +35,15 @@ public class InvPresetMenu extends InventoryBuilder {
             List<String> lore = new ArrayList<>();
             gameSettings.gamePresetMap().forEach((presetName, preset) -> {
                 lore.add("");
-                lore.add("  §8● §7Duration §8» §a" + preset.countdown() + " minutes");
-                lore.add("  §8● §7Joker §8» §a" + preset.jokers());
-                lore.add("  §8● §7Backpack size §8» §a" + preset.backpackSize() + " slots");
+                lore.add("  <dark_gray>● <gray>Duration <dark_gray>» <green>" + preset.getCountdown() + " minutes");
+                lore.add("  <dark_gray>● <gray>Joker <dark_gray>» <green>" + preset.getJokers());
+                lore.add("  <dark_gray>● <gray>Backpack size <dark_gray>» <green>" + preset.getBackpackSize() + " slots");
                 lore.add("");
                 for(GameSetting gameSetting : GameSetting.values()) {
-                    lore.add("  §8● §7" + gameSetting.displayName() + " §8» " + (gameSettings.isSettingEnabledInPreset(preset, gameSetting) ? "§2✔" : "§4✘"));
+                    lore.add("  <dark_gray>● <gray>" + gameSetting.displayName() + " <dark_gray>» " + (gameSettings.isSettingEnabledInPreset(preset, gameSetting) ? "<dark_green>✔" : "<dark_red>✘"));
                 }
                 lore.add("");
-                this.addItem(new ItemBuilder(Material.PAPER).setDisplayName("§8● §3" + preset.presetName()).setLore(lore).getItemStack());
+                this.addItem(new ItemBuilder(Material.PAPER).setDisplayName("<dark_gray>● <dark_aqua>" + preset.getPresetName()).setLore(lore).getItemStack());
                 lore.clear();
             });
 

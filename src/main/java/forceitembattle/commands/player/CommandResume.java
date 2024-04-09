@@ -16,11 +16,11 @@ public class CommandResume extends CustomCommand {
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
         if (!this.plugin.getGamemanager().isPausedGame()) {
-            player.sendMessage("§cThe timer is not paused!");
+            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>The timer is not paused!"));
             return;
         }
 
-        Bukkit.broadcastMessage("§6The timer has been resumed!");
+        Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize("<gold>The timer has been resumed!"));
         Bukkit.getWorld("world").setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
         this.plugin.getGamemanager().setCurrentGameState(GameState.MID_GAME);
     }

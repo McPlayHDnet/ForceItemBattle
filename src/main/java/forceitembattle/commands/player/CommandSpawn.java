@@ -17,7 +17,7 @@ public class CommandSpawn extends CustomCommand {
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
         if (this.plugin.getSpawnLocation() == null) {
-            player.sendMessage("§cThe spawn location has not been set yet.");
+            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>The spawn location has not been set yet."));
             return;
         }
 
