@@ -146,12 +146,13 @@ public class Listeners implements Listener {
         ItemStack itemStack = event.getFoundItem();
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
 
-        String unicode = this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType());
-        //this specific colorcode is inside the resource pack - credits: https://github.com/PuckiSilver/NoShadow
-        String removedDropShadowUnicode = net.md_5.bungee.api.ChatColor.of(new Color(78, 92, 36)) + unicode;
+        /**
+         * this specific colorcode is inside the resource pack - credits: https://github.com/PuckiSilver/NoShadow
+         * new Color(78, 92, 36) + unicode;
+         */
 
         if (!event.isBackToBack()) {
-            Bukkit.broadcastMessage("§a" + player.getName() + " §7" + (event.isSkipped() ? "skipped" : "found") + " " + ChatColor.RESET + unicode + " §6" + WordUtils.capitalize(itemStack.getType().name().toLowerCase().replace("_", " ")));
+            Bukkit.broadcastMessage("§a" + player.getName() + " §7" + (event.isSkipped() ? "skipped" : "found") + " " + ChatColor.RESET + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType()) + " §6" + WordUtils.capitalize(itemStack.getType().name().toLowerCase().replace("_", " ")));
         }
 
         forceItemPlayer.setCurrentScore(forceItemPlayer.currentScore() + 1);
@@ -206,7 +207,7 @@ public class Listeners implements Listener {
         foundNextItemEvent.setBackToBack(true);
         foundNextItemEvent.setSkipped(false);
 
-        Bukkit.broadcastMessage("§a" + player.getName() + " §7was lucky to already own " + ChatColor.RESET + unicode + " §6" + WordUtils.capitalize(foundItem.getType().name().toLowerCase().replace("_", " ")));
+        Bukkit.broadcastMessage("§a" + player.getName() + " §7was lucky to already own " + ChatColor.RESET + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, foundItem.getType()) + " §6" + WordUtils.capitalize(foundItem.getType().name().toLowerCase().replace("_", " ")));
         Bukkit.getPluginManager().callEvent(foundNextItemEvent);
     }
 

@@ -12,13 +12,11 @@ import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Backpack;
 import forceitembattle.util.DescriptionItem;
 import forceitembattle.util.Timer;
+import forceitembattle.util.WanderingTraderTimer;
 import forceitembattle.util.color.ColorManager;
 import lombok.Getter;
 import lombok.Setter;
-import org.bukkit.Bukkit;
-import org.bukkit.GameRule;
-import org.bukkit.Location;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -28,6 +26,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Comparator;
@@ -56,6 +56,8 @@ public final class ForceItemBattle extends JavaPlugin {
     @Getter
     private PositionManager positionManager;
     @Getter
+    private WanderingTraderTimer wanderingTraderTimer;
+    @Getter
     @Setter
     private CommandsManager commandsManager;
     @Getter
@@ -81,6 +83,7 @@ public final class ForceItemBattle extends JavaPlugin {
             saveConfig();
             return;
         }
+
         if (getConfig().getBoolean("isReset")){
 
             try {
@@ -128,6 +131,8 @@ public final class ForceItemBattle extends JavaPlugin {
                 new File(end , "playerdata").mkdirs();
                 new File(end , "poi").mkdirs();
                 new File(end , "region").mkdirs();
+
+                this.copyDatapack("FIB_Worldgen");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -149,6 +154,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.statsManager = new StatsManager(this);
         this.positionManager = new PositionManager(this);
         this.commandsManager = new CommandsManager(this);
+        this.wanderingTraderTimer = new WanderingTraderTimer();
 
         this.initListeners();
         this.initCommands();
@@ -176,6 +182,33 @@ public final class ForceItemBattle extends JavaPlugin {
             } else {
                 throw new NullPointerException("'descriptions' does not exist in the config.yml");
             }
+        }
+    }
+
+    private void copyDatapack(String datapackName) {
+        File world = new File(Bukkit.getWorldContainer() , "world");
+        File nether = new File(Bukkit.getWorldContainer() , "world_nether");
+        File end = new File(Bukkit.getWorldContainer() , "world_the_end");
+
+        try {
+            // Create Path objects for source and destination directories
+            Path sourceDirectory = Paths.get(this.getDataFolder() + "/" + datapackName + ".zip");
+            Path destinationDirectory = Paths.get(world + "/datapacks/" + datapackName + ".zip");
+
+            // Copy the directory and its contents recursively
+            Files.walk(sourceDirectory)
+                    .forEach(source -> {
+                        try {
+                            Path destination = destinationDirectory.resolve(sourceDirectory.relativize(source));
+                            Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    });
+
+            System.out.println("Directory copied successfully.");
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
