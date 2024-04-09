@@ -56,9 +56,9 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
     }
 
     private void performCommand(GamePreset gamePreset, Player player, String[] args) {
-        int durationMinutes = (gamePreset != null ? gamePreset.countdown() : Integer.parseInt(args[0]));
+        int durationMinutes = (gamePreset != null ? gamePreset.getCountdown() : Integer.parseInt(args[0]));
         int countdown = durationMinutes * 60;
-        int jokersAmount = (gamePreset != null ? gamePreset.jokers() : (Integer.parseInt(args[1])));
+        int jokersAmount = (gamePreset != null ? gamePreset.getJokers() : (Integer.parseInt(args[1])));
 
         if(this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
             if(plugin.getGamemanager().forceItemPlayerMap().size() < 4) {
