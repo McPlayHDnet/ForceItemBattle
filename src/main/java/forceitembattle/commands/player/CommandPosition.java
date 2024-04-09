@@ -6,6 +6,7 @@ import forceitembattle.util.Scheduler;
 import lombok.NonNull;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.Arrays;
 
@@ -138,12 +139,16 @@ public class CommandPosition extends CustomCommand {
         // Defining target location to
         Location target = position.clone().add(0, 0.3, 0);
 
-        final int[] current = {0};
-        Bukkit.getScheduler().runTaskTimer(plugin, task -> {
-            current[0]++;
-            if (current[0] >= 10) task.cancel();
-            ParticleUtils.drawLine(player, player.getLocation(), target, Particle.REDSTONE, new Particle.DustOptions(Color.LIME, 1), 1, 0.5, 50);
-        }, 0, 10);
+        new BukkitRunnable() {
+            int current = 0;
+            @Override
+            public void run() {
+                if(++current == 10) {
+                    this.cancel();
+                }
+                ParticleUtils.drawLine(player, player.getLocation(), target, Particle.REDSTONE, new Particle.DustOptions(Color.LIME, 1), 1, 0.5, 50);
+            }
+        }.runTaskTimer(this.plugin, 0L, 10L);
     }
 
 }
