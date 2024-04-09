@@ -87,11 +87,7 @@ public class FinishInventory extends InventoryBuilder {
 
                             @Override
                             public void run() {
-
-                                String placeColor = "<white>";
-                                if(place == 3) placeColor = "<red>";
-                                else if(place == 2) placeColor = "<gray>";
-                                else if(place == 1) placeColor = "<gold>";
+                                String placeColor = forceItemBattle.getStatsManager().placeColor(place);
 
                                 for(Player players : Bukkit.getOnlinePlayers()) {
                                     if(players.getOpenInventory().getTopInventory() == getInventory()) {

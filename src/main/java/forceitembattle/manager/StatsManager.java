@@ -168,11 +168,14 @@ public class StatsManager {
         player.sendMessage(" ");
     }
 
-    private String placeColor(int place) {
-        String placeColor = "<white>";
-        if(place == 3) placeColor = "<red>";
-        else if(place == 2) placeColor = "<gray>";
-        else if(place == 1) placeColor = "<gold>";
+    public String placeColor(int place) {
+        String placeColor;
+        switch(place) {
+            case 3 -> placeColor = "<red>";
+            case 2 -> placeColor = "<gray>";
+            case 1 -> placeColor = "<gold>";
+            default -> placeColor = "<white>";
+        }
         return placeColor;
     }
 
