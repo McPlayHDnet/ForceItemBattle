@@ -77,4 +77,5 @@ bukkitPluginYaml {
     commands.register("pos")
     commands.register("ping")
     commands.register("stoptimer")
+    commands.register("teams")
 }

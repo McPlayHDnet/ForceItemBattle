@@ -1,6 +1,7 @@
 package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.settings.GameSetting;
 import lombok.Getter;
 import lombok.Setter;
 import net.kyori.adventure.bossbar.BossBar;
@@ -59,14 +60,19 @@ public class Timer {
             if (this.forceItemBattle.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
                 ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
 
-                player.playerListName(
-                        forceItemBattle.getGamemanager().getMiniMessage().deserialize(player.getName() + " <gray>[<gold>" + this.forceItemBattle.getGamemanager().getCurrentMaterialName(forceItemPlayer) + " <reset><color:#4e5c24>" + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(true, forceItemPlayer.currentMaterial()) + "<gray>]"));
+                player.playerListName(forceItemBattle.getGamemanager().getMiniMessage().deserialize(
+                        (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM) ? "<yellow>[#" + forceItemPlayer.currentTeam().getTeamId() + "] " : "") + "<white>" +
+                        player.getName() + " <gray>[<gold>" + this.forceItemBattle.getGamemanager().getCurrentMaterialName(forceItemPlayer) + " <reset><color:#4e5c24>" + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(true, forceItemPlayer.currentMaterial()) + "<gray>]"));
 
-                player.sendActionBar(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<gradient:#fcef64:#fcc44b:#f44c7d><b>" + this.formatSeconds(this.getTime()) + "</b> <dark_gray>| <green>Your score: <white>" + forceItemPlayer.currentScore()));
+                player.sendActionBar(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(
+                        "<gradient:#fcef64:#fcc44b:#f44c7d><b>" + this.formatSeconds(this.getTime()) + "</b> <dark_gray>| " +
+                                (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM) ? "<green>Team score: <white>" + forceItemPlayer.currentTeam().getCurrentScore() : "<green>Your score: <white>" + forceItemPlayer.currentScore())));
 
                 String material = this.forceItemBattle.getGamemanager().getCurrentMaterialName(forceItemPlayer);
 
-                String bossBarTitle = "<gradient:#6eee87:#5fc52e><b>" + material + " <reset><color:#4e5c24>" + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(false, forceItemPlayer.currentMaterial());
+                String bossBarTitle = "<gradient:#6eee87:#5fc52e><b>" + material + " <reset><color:#4e5c24>" + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(false,
+                        (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial())
+                );
 
                 try {
                     BossBar bar = this.bossBar.get(player.getUniqueId());

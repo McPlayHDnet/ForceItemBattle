@@ -59,6 +59,9 @@ public final class ForceItemBattle extends JavaPlugin {
     private CommandsManager commandsManager;
     @Getter
     @Setter
+    private TeamsManager teamManager;
+    @Getter
+    @Setter
     private Location spawnLocation;
 
     @Getter
@@ -149,6 +152,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.recipeManager = new RecipeManager(this);
         this.statsManager = new StatsManager(this);
         this.positionManager = new PositionManager(this);
+        this.teamManager = new TeamsManager(this);
         this.commandsManager = new CommandsManager(this);
         this.wanderingTraderTimer = new WanderingTraderTimer();
 
@@ -234,6 +238,7 @@ public final class ForceItemBattle extends JavaPlugin {
         new CommandPosition();
         new CommandPing();
         new CommandHelp();
+        new CommandTeams();
     }
 
     @Override

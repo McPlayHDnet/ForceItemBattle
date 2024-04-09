@@ -22,6 +22,8 @@ public class ForceItemPlayer {
     private int remainingJokers;
     @Setter
     private Integer currentScore;
+    @Setter
+    private Teams currentTeam;
 
     public ForceItemPlayer(Player player, List<ForceItem> foundItems, Material currentMaterial, int remainingJokers, Integer currentScore) {
         this.player = player;
@@ -57,6 +59,10 @@ public class ForceItemPlayer {
 
     public Integer currentScore() {
         return currentScore;
+    }
+
+    public Teams currentTeam() {
+        return currentTeam;
     }
 
     private ArmorStand itemDisplay;

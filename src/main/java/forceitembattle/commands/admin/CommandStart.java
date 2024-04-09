@@ -59,6 +59,18 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
         int durationMinutes = (gamePreset != null ? gamePreset.countdown() : Integer.parseInt(args[0]));
         int countdown = durationMinutes * 60;
         int jokersAmount = (gamePreset != null ? gamePreset.jokers() : (Integer.parseInt(args[1])));
+
+        if(this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+            if(plugin.getGamemanager().forceItemPlayerMap().size() < 4) {
+                Bukkit.broadcast(plugin.getGamemanager().getMiniMessage().deserialize("<red>There are not enough players online to enable teams"));
+                this.plugin.getSettings().setSettingEnabled(GameSetting.TEAM, false);
+                this.plugin.getTeamManager().clearAllTeams();
+            } else {
+                this.plugin.getTeamManager().autoTeams();
+            }
+
+        }
+
         this.plugin.getTimer().setTime(countdown);
         this.plugin.getGamemanager().initializeMats();
 
@@ -127,6 +139,11 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
             ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
             forceItemPlayer.setRemainingJokers(jokersAmount);
 
+            if(this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+                this.plugin.getTeamManager().getTeamsList().forEach(teams -> {
+                    teams.setRemainingJokers(jokersAmount);
+                });
+            }
 
             player.sendMessage(" ");
             player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold><b>Mystery Item Battle</b> <dark_gray>«"));
@@ -163,8 +180,13 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
             player.teleport(spawnLocation);
             player.playSound(player, Sound.BLOCK_END_PORTAL_SPAWN, 1, 1);
 
-            if(this.plugin.getSettings().isSettingEnabled(GameSetting.NETHER)) {
-                this.plugin.getBackpack().createBackpack(player);
+            if(this.plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK)) {
+                if(this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+                    this.plugin.getBackpack().createTeamBackpack(forceItemPlayer.currentTeam(), player);
+                } else {
+                    this.plugin.getBackpack().createBackpack(player);
+                }
+
             }
 
             if(!this.plugin.getSettings().isSettingEnabled(GameSetting.NETHER)) {

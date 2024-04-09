@@ -29,6 +29,7 @@ public class Gamemanager {
     private final Map<UUID, ForceItemPlayer> forceItemPlayerMap;
 
     public Map<UUID, Map<Integer, Map<Integer, ItemStack>>> savedInventory = new HashMap<>();
+    public Map<Teams, Map<Integer, Map<Integer, ItemStack>>> savedInventoryTeam = new HashMap<>();
 
     @Setter
     @Getter
@@ -70,6 +71,9 @@ public class Gamemanager {
     }
 
     public String getCurrentMaterialName(ForceItemPlayer forceItemPlayer) {
+        if(this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+            return "<lang:" + forceItemPlayer.currentTeam().getCurrentMaterial().translationKey() + ">";
+        }
         return "<lang:" + forceItemPlayer.currentMaterial().translationKey() + ">";
     }
 
@@ -83,11 +87,19 @@ public class Gamemanager {
     }
 
     public void initializeMats() {
-        Bukkit.getOnlinePlayers().forEach(player -> {
-            ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
-            forceItemPlayer.setCurrentScore(0);
-            forceItemPlayer.setCurrentMaterial(this.generateMaterial());
-        });
+        if(this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+            this.forceItemPlayerMap.forEach((uuid, forceItemPlayer) -> {
+                forceItemPlayer.currentTeam().setCurrentScore(0);
+                forceItemPlayer.currentTeam().setCurrentMaterial(this.generateMaterial());
+            });
+        } else {
+            Bukkit.getOnlinePlayers().forEach(player -> {
+                ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
+                forceItemPlayer.setCurrentScore(0);
+                forceItemPlayer.setCurrentMaterial(this.generateMaterial());
+            });
+        }
+
     }
 
     public void forceSkipItem(Player player) {
@@ -172,6 +184,28 @@ public class Gamemanager {
             } else {
 
                 placesMap.put(currentPlayer, place);
+                place++;
+            }
+        }
+        return placesMap;
+    }
+
+    public Map<Teams, Integer> calculatePlaces(List<Teams> teamsList) {
+        List<Teams> sortedTeams = teamsList.stream()
+                .sorted(Comparator.comparingInt(Teams::getCurrentScore).reversed())
+                .toList();
+
+        Map<Teams, Integer> placesMap = new LinkedHashMap<>();
+
+        int place = 1;
+        for(int i = 0; i < sortedTeams.size(); i++) {
+            Teams currentTeam = sortedTeams.get(i);
+
+            if(i > 0 && currentTeam.getCurrentScore() == sortedTeams.get(i - 1).getCurrentScore()) {
+                placesMap.put(currentTeam, placesMap.get(sortedTeams.get(i - 1)));
+            } else {
+
+                placesMap.put(currentTeam, place);
                 place++;
             }
         }

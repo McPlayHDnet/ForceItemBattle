@@ -5,6 +5,7 @@ import forceitembattle.settings.preset.GamePreset;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.preset.InvPresetMenu;
 import forceitembattle.settings.preset.InvSettingsPresets;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.inventory.ItemFlag;
@@ -41,8 +42,11 @@ public class InvSettings extends InventoryBuilder {
                 this.setItem(gameSettings.defaultSlot(), new ItemBuilder(gameSettings.defaultMaterial()).setDisplayName(settingDisplayName).getItemStack(), inventoryClickEvent -> {
 
                     if(gameSettings == GameSetting.TEAM) {
-                        this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);
-                        return;
+                        if(plugin.getGamemanager().forceItemPlayerMap().size() < 4) {
+                            this.getPlayer().sendMessage(plugin.getGamemanager().getMiniMessage().deserialize("<red>There are not enough players online"));
+                            this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);
+                            return;
+                        }
                     }
 
                     this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
@@ -51,6 +55,11 @@ public class InvSettings extends InventoryBuilder {
                         else gamePreset.gameSettings().add(gameSettings);
                     } else {
                         plugin.getSettings().setSettingEnabled(gameSettings, !plugin.getSettings().isSettingEnabled(gameSettings));
+                        if(plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+                            Bukkit.broadcast(plugin.getGamemanager().getMiniMessage().deserialize("<red>Teams are now enabled. <dark_gray>» <white>/teams"));
+                        } else {
+                            Bukkit.broadcast(plugin.getGamemanager().getMiniMessage().deserialize("<red>Teams are now disabled."));
+                        }
                     }
 
                 });
