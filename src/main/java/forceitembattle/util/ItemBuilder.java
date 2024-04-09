@@ -19,11 +19,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
+@Getter
 public class ItemBuilder {
 
-    @Getter
-    private transient ItemStack itemStack;
-    private int slot;
+    private final ItemStack itemStack;
 
     public ItemBuilder(ItemStack itemStack) {
         this.itemStack = itemStack;
