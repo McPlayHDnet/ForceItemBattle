@@ -55,10 +55,12 @@ public class InvSettings extends InventoryBuilder {
                         else gamePreset.getGameSettings().add(gameSettings);
                     } else {
                         plugin.getSettings().setSettingEnabled(gameSettings, !plugin.getSettings().isSettingEnabled(gameSettings));
-                        if(plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-                            Bukkit.broadcast(plugin.getGamemanager().getMiniMessage().deserialize("<red>Teams are now enabled. <dark_gray>» <white>/teams"));
-                        } else {
-                            Bukkit.broadcast(plugin.getGamemanager().getMiniMessage().deserialize("<red>Teams are now disabled."));
+                        if(gameSettings == GameSetting.TEAM) {
+                            if(plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+                                Bukkit.broadcast(plugin.getGamemanager().getMiniMessage().deserialize("<red>Teams are now enabled. <dark_gray>» <white>/teams"));
+                            } else {
+                                Bukkit.broadcast(plugin.getGamemanager().getMiniMessage().deserialize("<red>Teams are now disabled."));
+                            }
                         }
                     }
 

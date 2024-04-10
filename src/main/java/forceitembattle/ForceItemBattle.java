@@ -13,11 +13,13 @@ import forceitembattle.util.Backpack;
 import forceitembattle.util.DescriptionItem;
 import forceitembattle.util.Timer;
 import forceitembattle.util.WanderingTraderTimer;
+import io.papermc.paper.adventure.PaperAdventure;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -159,14 +161,17 @@ public final class ForceItemBattle extends JavaPlugin {
         this.initListeners();
         this.initCommands();
 
-        Bukkit.getWorlds().forEach(world -> {
+        //this 0 delay scheduler is needed in paper, because at that time this code gets initialized and the worlds after that, so we'll wait
+        Bukkit.getScheduler().scheduleSyncDelayedTask(this, () -> Bukkit.getWorlds().forEach(world -> {
             // Apply settings.
             world.setGameRule(GameRule.KEEP_INVENTORY, getSettings().isSettingEnabled(GameSetting.KEEP_INVENTORY));
             getSettings().setSettingEnabled(GameSetting.FASTER_RANDOM_TICK, getSettings().isSettingEnabled(GameSetting.FASTER_RANDOM_TICK));
 
             world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
             world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
-        });
+            world.setGameRule(GameRule.SPECTATORS_GENERATE_CHUNKS, false);
+            world.setGameRule(GameRule.DO_TRADER_SPAWNING, false);
+        }), 0L);
 
         if(this.getConfig().isConfigurationSection("descriptions")) {
             ConfigurationSection configurationSection = this.getConfig().getConfigurationSection("descriptions");

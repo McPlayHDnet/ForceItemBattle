@@ -14,11 +14,14 @@ public class CommandStopTimer extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (!this.plugin.getGamemanager().isMidGame()) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>The game is not running. Start it first with /start"));
-            return;
+        if(player.isOp()) {
+            if (!this.plugin.getGamemanager().isMidGame()) {
+                player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>The game is not running. Start it first with /start"));
+                return;
+            }
+
+            this.plugin.getTimer().setTime(1);
         }
 
-        this.plugin.getTimer().setTime(1);
     }
 }

@@ -317,14 +317,7 @@ public class Listeners implements Listener {
         int jokers = (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getRemainingJokers() : forceItemPlayer.remainingJokers());
         if (jokers <= 0) {
             player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>No more skips left."));
-            if(this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-                forceItemPlayer.currentTeam().getPlayers().forEach(teamPlayers -> {
-                    teamPlayers.player().getInventory().remove(Gamemanager.getJokerMaterial());
-                });
-            } else {
-                player.getInventory().remove(Gamemanager.getJokerMaterial());
-            }
-
+            player.getInventory().remove(Gamemanager.getJokerMaterial());
             return;
         }
 
@@ -343,13 +336,8 @@ public class Listeners implements Listener {
         }
         Material mat = (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial());
 
-        if(this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-            forceItemPlayer.currentTeam().getPlayers().forEach(teamPlayers -> {
-                teamPlayers.player().getInventory().setItem(foundSlot, stack);
-            });
-        } else {
-            player.getInventory().setItem(foundSlot, stack);
-        }
+        player.getInventory().setItem(foundSlot, stack);
+
         player.getInventory().addItem(new ItemStack(mat));
         if (!player.getInventory().contains(mat)) player.getWorld().dropItemNaturally(player.getLocation(), new ItemStack(mat));
         this.plugin.getTimer().sendActionBar();
@@ -377,7 +365,7 @@ public class Listeners implements Listener {
 
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
         ItemStack clickedItem = playerBucketEmptyEvent.getItemStack();
-        Material currentItem = forceItemPlayer.currentMaterial();
+        Material currentItem = (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial());
 
         if(clickedItem == null) return;
 
@@ -400,7 +388,7 @@ public class Listeners implements Listener {
 
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
         ItemStack clickedItem = playerBucketFillEvent.getItemStack();
-        Material currentItem = forceItemPlayer.currentMaterial();
+        Material currentItem = (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial());
 
         if(clickedItem == null) return;
 
@@ -423,7 +411,7 @@ public class Listeners implements Listener {
 
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
         ItemStack clickedItem = playerBucketEntityEvent.getEntityBucket();
-        Material currentItem = forceItemPlayer.currentMaterial();
+        Material currentItem = (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial());
 
         if (clickedItem.getType() == currentItem) {
             FoundItemEvent foundItemEvent = new FoundItemEvent(player);
@@ -445,7 +433,7 @@ public class Listeners implements Listener {
         if(craftItemEvent.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY || craftItemEvent.getAction() == InventoryAction.PICKUP_ALL) {
             ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
             ItemStack clickedItem = craftItemEvent.getCurrentItem();
-            Material currentItem = forceItemPlayer.currentMaterial();
+            Material currentItem = (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial());
 
             if(clickedItem == null) return;
 
@@ -472,7 +460,7 @@ public class Listeners implements Listener {
         if(smithItemEvent.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY || smithItemEvent.getAction() == InventoryAction.PICKUP_ALL) {
             ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
             ItemStack clickedItem = smithItemEvent.getCurrentItem();
-            Material currentItem = forceItemPlayer.currentMaterial();
+            Material currentItem = (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial());
 
             if(clickedItem == null) return;
 
@@ -550,7 +538,7 @@ public class Listeners implements Listener {
 
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
         ItemStack clickedItem = playerItemConsumeEvent.getItem();
-        Material currentItem = forceItemPlayer.currentMaterial();
+        Material currentItem = (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial());
 
         if (clickedItem.getType() == currentItem) {
             FoundItemEvent foundItemEvent = new FoundItemEvent(player);
@@ -591,6 +579,7 @@ public class Listeners implements Listener {
         Player player = event.getEntity();
         if (!event.getKeepInventory()) {
             event.getDrops().removeIf(Gamemanager::isJoker);
+            event.getDrops().removeIf(Gamemanager::isBackpack);
         }
 
         ForceItemPlayer gamePlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
@@ -608,8 +597,8 @@ public class Listeners implements Listener {
     public void onRespawn(PlayerRespawnEvent playerRespawnEvent) {
         Player player = playerRespawnEvent.getPlayer();
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-        ItemStack jokers = Gamemanager.getJokers(forceItemPlayer.remainingJokers());
-        if (forceItemPlayer.remainingJokers() > 0) {
+        ItemStack jokers = Gamemanager.getJokers((this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getRemainingJokers() : forceItemPlayer.remainingJokers()));
+        if ((this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getRemainingJokers() : forceItemPlayer.remainingJokers()) > 0) {
             // This would work, but players can also move jokers into different
             // containers like chests, that should not matter though, as they
             // can't use more than was set.
@@ -631,7 +620,8 @@ public class Listeners implements Listener {
             return;
         }
 
-        Inventory backpack = plugin.getBackpack().getPlayerBackpack(player);
+        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        Inventory backpack = (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? plugin.getBackpack().getTeamBackpack(forceItemPlayer.currentTeam()) : plugin.getBackpack().getPlayerBackpack(player));
         int backpackSlot = backpack == null? -1 : backpack.first(Gamemanager.getJokerMaterial());
 
         if (backpackSlot != -1) {
@@ -674,8 +664,8 @@ public class Listeners implements Listener {
     @EventHandler
     public void onFoodLevelChange(FoodLevelChangeEvent event) {
         if (!(event.getEntity() instanceof Player)) return;
-        if(!this.plugin.getGamemanager().isMidGame() || !this.plugin.getGamemanager().isPausedGame()) return;
         if (this.plugin.getSettings().isSettingEnabled(GameSetting.FOOD)) return;
+        if(!this.plugin.getGamemanager().isMidGame()) return;
         event.setCancelled(true);
     }
 
