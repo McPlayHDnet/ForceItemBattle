@@ -69,7 +69,6 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
             } else {
                 this.plugin.getTeamManager().autoTeams();
             }
-
         }
 
         this.plugin.getTimer().setTime(countdown);

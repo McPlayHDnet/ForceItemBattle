@@ -70,11 +70,8 @@ public class Gamemanager {
         return this.forceItemBattle.getItemDifficultiesManager().getHardMaterial();
     }
 
-    public String getCurrentMaterialName(ForceItemPlayer forceItemPlayer) {
-        if(this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-            return "<lang:" + forceItemPlayer.currentTeam().getCurrentMaterial().translationKey() + ">";
-        }
-        return "<lang:" + forceItemPlayer.currentMaterial().translationKey() + ">";
+    public String getMaterialName(Material material) {
+        return WordUtils.capitalizeFully(material.name().replace("_", " "));
     }
 
     public String formatMaterialName(String material) {

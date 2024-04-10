@@ -165,7 +165,7 @@ public class Listeners implements Listener {
 
         if (!event.isBackToBack()) {
             Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize(
-                    "<green>" + player.getName() + " <gray>" + (event.isSkipped() ? "skipped" : "found") + " <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType()) + " <gold>" + "<lang:" + itemStack.translationKey() + ">"));
+                    "<green>" + player.getName() + " <gray>" + (event.isSkipped() ? "skipped" : "found") + " <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType()) + " <gold>" + this.plugin.getGamemanager().getMaterialName(itemStack.getType())));
         }
 
         if(this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
@@ -251,7 +251,7 @@ public class Listeners implements Listener {
         foundNextItemEvent.setSkipped(false);
 
         Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize(
-                "<green>" + player.getName() + " <gray>was lucky to already own <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, foundItem.getType()) + " <gold>" + "<lang:" + foundItem.translationKey() + ">"));
+                "<green>" + player.getName() + " <gray>was lucky to already own <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, foundItem.getType()) + " <gold>" + this.plugin.getGamemanager().getMaterialName(foundItem.getType())));
         Bukkit.getPluginManager().callEvent(foundNextItemEvent);
     }
 
@@ -330,7 +330,7 @@ public class Listeners implements Listener {
         ItemStack stack = player.getInventory().getItem(foundSlot);
         assert stack != null;
         if (stack.getAmount() > 1) {
-            stack.setAmount(jokers);
+            stack.setAmount((this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? stack.getAmount() - 1 : jokers));
         } else {
             stack.setType(Material.AIR);
         }
