@@ -23,7 +23,7 @@ public class CommandInfoWiki extends CustomCommand {
         if (this.plugin.getGamemanager().isMidGame()) {
             if (this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
                 ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-                item = new ItemStack(forceItemPlayer.currentMaterial());
+                item = new ItemStack(forceItemPlayer.currentTeam() == null ? forceItemPlayer.currentMaterial() : forceItemPlayer.currentTeam().getCurrentMaterial());
             } else {
                 player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>You are not playing."));
                 return;

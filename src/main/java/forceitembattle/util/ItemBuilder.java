@@ -90,8 +90,7 @@ public class ItemBuilder {
 
     public ItemBuilder setLoreLegacy(List<String> loreLines) {
         ItemMeta itemMeta = getItemStack().getItemMeta();
-        List<String> lore = new ArrayList<>(loreLines);
-        itemMeta.setLore(lore);
+        itemMeta.setLore(loreLines);
         setItemMeta(itemMeta);
         return this;
     }

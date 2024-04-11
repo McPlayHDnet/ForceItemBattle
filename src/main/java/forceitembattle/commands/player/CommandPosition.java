@@ -1,6 +1,7 @@
 package forceitembattle.commands.player;
 
 import forceitembattle.commands.CustomCommand;
+import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.util.ParticleUtils;
 import forceitembattle.util.Scheduler;
 import lombok.NonNull;
@@ -8,9 +9,11 @@ import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
-public class CommandPosition extends CustomCommand {
+public class CommandPosition extends CustomCommand implements CustomTabCompleter {
 
     public CommandPosition() {
         super("pos");
@@ -41,6 +44,11 @@ public class CommandPosition extends CustomCommand {
         }
 
         addNewPosition(player, positionName);
+    }
+
+    @Override
+    public List<String> onTabComplete(Player player, String label, String[] args) {
+        return new ArrayList<>(this.plugin.getPositionManager().getAllPositions().keySet());
     }
 
     private void addNewPosition(Player player, String positionName) {

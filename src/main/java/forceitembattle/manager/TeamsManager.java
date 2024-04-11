@@ -10,6 +10,7 @@ import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class TeamsManager {
@@ -24,7 +25,7 @@ public class TeamsManager {
 
     public TeamsManager(ForceItemBattle forceItemBattle) {
         this.forceItemBattle = forceItemBattle;
-        this.pendingInvite = new HashMap<>();
+        this.pendingInvite = new ConcurrentHashMap<>();
         this.teamsList = new ArrayList<>();
         this.maxTeamSize = 2;
     }

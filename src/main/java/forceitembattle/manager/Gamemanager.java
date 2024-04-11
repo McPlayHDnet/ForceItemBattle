@@ -70,11 +70,8 @@ public class Gamemanager {
         return this.forceItemBattle.getItemDifficultiesManager().getHardMaterial();
     }
 
-    public String getCurrentMaterialName(ForceItemPlayer forceItemPlayer) {
-        if(this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-            return "<lang:" + forceItemPlayer.currentTeam().getCurrentMaterial().translationKey() + ">";
-        }
-        return "<lang:" + forceItemPlayer.currentMaterial().translationKey() + ">";
+    public String getMaterialName(Material material) {
+        return WordUtils.capitalizeFully(material.name().replace("_", " "));
     }
 
     public String formatMaterialName(String material) {
@@ -108,7 +105,11 @@ public class Gamemanager {
         }
 
         ForceItemPlayer gamePlayer = getForceItemPlayer(player.getUniqueId());
-        gamePlayer.setCurrentMaterial(this.generateMaterial());
+        if(this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+            gamePlayer.currentTeam().setCurrentMaterial(this.generateMaterial());
+        } else {
+            gamePlayer.setCurrentMaterial(this.generateMaterial());
+        }
 
         if (!this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.NETHER)) {
             gamePlayer.updateItemDisplay();
@@ -289,5 +290,13 @@ public class Gamemanager {
 
     public static boolean isJoker(ItemStack itemStack) {
         return isJoker(itemStack.getType());
+    }
+
+    public static boolean isBackpack(Material material) {
+        return material == Material.BUNDLE;
+    }
+
+    public static boolean isBackpack(ItemStack itemStack) {
+        return isBackpack(itemStack.getType());
     }
 }

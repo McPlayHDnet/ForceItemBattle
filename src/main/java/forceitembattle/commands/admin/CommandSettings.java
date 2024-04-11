@@ -14,6 +14,8 @@ public class CommandSettings extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        new InvSettings(this.plugin, null).open(player);
+        if(player.isOp()) {
+            new InvSettings(this.plugin, null).open(player);
+        }
     }
 }
