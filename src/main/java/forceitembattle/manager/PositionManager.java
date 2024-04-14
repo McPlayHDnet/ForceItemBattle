@@ -1,7 +1,13 @@
 package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.util.ParticleUtils;
+import lombok.NonNull;
+import org.bukkit.Color;
 import org.bukkit.Location;
+import org.bukkit.Particle;
+import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -38,6 +44,24 @@ public class PositionManager {
 
     public Location getPosition(String positionName) {
         return this.positionsMap.get(positionName.toLowerCase());
+    }
+
+    public void playParticleLine(@NonNull Player player, @NonNull Location position) {
+        if (player.getWorld() != position.getWorld()) return;
+
+        // Defining target location to
+        Location target = position.clone().add(0, 0.3, 0);
+
+        new BukkitRunnable() {
+            int current = 0;
+            @Override
+            public void run() {
+                if(++current == 10) {
+                    this.cancel();
+                }
+                ParticleUtils.drawLine(player, player.getLocation(), target, Particle.REDSTONE, new Particle.DustOptions(Color.LIME, 1), 1, 0.5, 50);
+            }
+        }.runTaskTimer(this.plugin, 0L, 10L);
     }
 
 }

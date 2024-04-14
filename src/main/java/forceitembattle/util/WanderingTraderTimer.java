@@ -76,6 +76,7 @@ public class WanderingTraderTimer {
         this.wanderingTraderMap.put(forceItemPlayer, wanderingTrader);
 
         forceItemPlayer.player().sendMessage(ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold>Position <dark_gray>┃ <gray>Your <green>Wandering Trader <gray>just spawned at <dark_aqua>" + (int) traderLocation.getX() + "<gray>, <dark_aqua>" + (int) traderLocation.getY() + "<gray>, <dark_aqua>" + (int) traderLocation.getZ() + this.distance(forceItemPlayer.player().getLocation(), traderLocation)));
+        ForceItemBattle.getInstance().getPositionManager().playParticleLine(forceItemPlayer.player(), traderLocation);
 
         BukkitRunnable despawnTask = new BukkitRunnable() {
             @Override
