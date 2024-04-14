@@ -37,10 +37,12 @@ public class InvPresetMenu extends InventoryBuilder {
                 lore.add("");
                 lore.add("  <dark_gray>● <gray>Duration <dark_gray>» <green>" + preset.getCountdown() + " minutes");
                 lore.add("  <dark_gray>● <gray>Joker <dark_gray>» <green>" + preset.getJokers());
-                lore.add("  <dark_gray>● <gray>Backpack size <dark_gray>» <green>" + preset.getBackpackSize() + " slots");
+                lore.add("  <dark_gray>● <gray>Backpack size <dark_gray>» <green>" + preset.getBackpackRows() * 9 + " slots");
                 lore.add("");
                 for(GameSetting gameSetting : GameSetting.values()) {
-                    lore.add("  <dark_gray>● <gray>" + gameSetting.displayName() + " <dark_gray>» " + (gameSettings.isSettingEnabledInPreset(preset, gameSetting) ? "<dark_green>✔" : "<dark_red>✘"));
+                    if(!(gameSetting.defaultValue() instanceof Integer)) {
+                        lore.add("  <dark_gray>● <gray>" + gameSetting.displayName() + " <dark_gray>» " + (gameSettings.isSettingEnabledInPreset(preset, gameSetting) ? "<dark_green>✔" : "<dark_red>✘"));
+                    }
                 }
                 lore.add("");
                 this.addItem(new ItemBuilder(Material.PAPER).setDisplayName("<dark_gray>● <dark_aqua>" + preset.getPresetName()).setLore(lore).getItemStack());

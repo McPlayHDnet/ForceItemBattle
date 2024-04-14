@@ -43,7 +43,7 @@ public class InvSettingsPresets extends InventoryBuilder {
             });
 
             /* Timer-Preset */
-            this.setItem(20, new ItemBuilder(Material.CLOCK)
+            this.setItem(21, new ItemBuilder(Material.CLOCK)
                     .setDisplayName("<dark_gray>● <green>Time <dark_gray>» <dark_aqua>" + gamePreset.getCountdown())
                     .getItemStack(), event -> {
 
@@ -58,7 +58,7 @@ public class InvSettingsPresets extends InventoryBuilder {
                 lore.add("  <dark_gray>● <gray>" + defaultGameSettings.displayName() + " <dark_gray>» " + (gamePreset.getGameSettings().contains(defaultGameSettings) ? "<dark_green>✔" : "<dark_red>✘"));
             }
             lore.add("");
-            this.setItem(22, new ItemBuilder(Material.STRUCTURE_VOID)
+            this.setItem(23, new ItemBuilder(Material.STRUCTURE_VOID)
                     .setDisplayName("<dark_gray>● <green>Settings")
                     .setLore(lore)
                     .getItemStack(), event -> {
@@ -70,7 +70,7 @@ public class InvSettingsPresets extends InventoryBuilder {
 
 
             /* Joker-Preset */
-            this.setItem(24, new ItemBuilder(Material.BARRIER)
+            this.setItem(25, new ItemBuilder(Material.BARRIER)
                     .setDisplayName("<dark_gray>● <green>Joker <dark_gray>» <dark_aqua>" + gamePreset.getJokers())
                     .getItemStack(), event -> {
 
@@ -85,18 +85,6 @@ public class InvSettingsPresets extends InventoryBuilder {
                 gamePreset.setJokers(gamePreset.getJokers() + (event.isRightClick() ? -1 : 1));
 
             });
-
-
-            /* BackpackSize-Preset */
-            this.setItem(25, new ItemBuilder(Material.BUNDLE)
-                    .setDisplayName("<dark_gray>● <green>Backpack Slots <dark_gray>» <dark_aqua>" + gamePreset.getBackpackSize())
-                    .getItemStack(), event -> {
-
-                getPlayer().playSound(getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);
-                getPlayer().sendMessage(forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>Not changeable yet... (idk why tho)"));
-
-            });
-
 
             /* Save-Preset */
             this.setItem(44, new ItemBuilder(Material.LIME_STAINED_GLASS_PANE)

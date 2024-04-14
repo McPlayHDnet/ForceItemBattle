@@ -34,7 +34,7 @@ public class Backpack {
         this.playerBackpack.put(player.getUniqueId(),
                 Bukkit.createInventory(
                         null,
-                        this.forceItemBattle.getConfig().getInt("standard.backpackSize"),
+                        this.forceItemBattle.getConfig().getInt("settings.backpackRows") * 9,
                         this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold>Backpack <dark_gray>● <gray>Menu")));
         player.getInventory().setItem(8, new ItemBuilder(Material.BUNDLE).setDisplayName("<dark_gray>» <yellow>Backpack").getItemStack());
     }
@@ -43,7 +43,7 @@ public class Backpack {
         this.teamBackpack.put(team,
                 Bukkit.createInventory(
                         null,
-                        this.forceItemBattle.getConfig().getInt("standard.backpackSize"),
+                        this.forceItemBattle.getConfig().getInt("settings.backpackRows") * 9,
                         this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold>Backpack <dark_gray>● <gray>Menu")));
         player.getInventory().setItem(8, new ItemBuilder(Material.BUNDLE).setDisplayName("<dark_gray>» <yellow>Backpack").getItemStack());
     }
