@@ -134,14 +134,21 @@ public class InvSettings extends InventoryBuilder {
 
             });
 
-            ItemBuilder itemBuilder;
+            ItemBuilder itemBuilder = null;
             String enabledPrefix = "<dark_gray>➟";
             if(gamePreset != null) {
                 if(gamePreset.getGameSettings().contains(gameSetting)) {
                     itemBuilder = new ItemBuilder(Material.LIME_DYE).setDisplayName(enabledPrefix + " <green>Enabled <dark_green>✔");
                 } else if(gameSetting.defaultValue() instanceof Integer) {
-                    int amount = gamePreset.getBackpackRows();
-                    itemBuilder = new ItemBuilder(Material.STONE_BUTTON).setAmount(amount).setDisplayName(enabledPrefix + " <yellow>" + amount + " <gray>" + (amount == 1 ? "row" : "rows"));
+                    int amount = 0;
+                    if(gameSetting == GameSetting.BACKPACKSIZE) {
+                        amount = gamePreset.getBackpackRows();
+                        itemBuilder = new ItemBuilder(Material.STONE_BUTTON).setAmount(amount).setDisplayName(enabledPrefix + " <yellow>" + amount + " <gray>" + (amount == 1 ? "row" : "rows"));
+                    } else if(gameSetting == GameSetting.TRADING_COOLDOWN) {
+                        amount = gamePreset.getTradingCooldown();
+                        itemBuilder = new ItemBuilder(Material.STONE_BUTTON).setAmount(amount).setDisplayName(enabledPrefix + " <yellow>" + amount + " <gray>" + (amount == 1 ? "minute" : "minutes"));
+                    }
+
                 } else {
                     itemBuilder = new ItemBuilder(Material.RED_DYE).setDisplayName(enabledPrefix + " <red>Disabled <dark_red>✘");
                 }
@@ -156,6 +163,7 @@ public class InvSettings extends InventoryBuilder {
                 }
             }
 
+            assert itemBuilder != null;
             this.setItem(slotIndex + 9, itemBuilder.getItemStack(), inventoryClickEvent -> {
                 if(inventoryClickEvent.getCurrentItem() == null) return;
 
@@ -176,26 +184,47 @@ public class InvSettings extends InventoryBuilder {
                     }
 
                 } else if(inventoryClickEvent.getCurrentItem().getType() == Material.STONE_BUTTON) {
-                    if(!plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK)) {
+                    if(!plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK) || !plugin.getSettings().isSettingEnabled(GameSetting.TRADING)) {
                         this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);
                         return;
                     }
-                    int backpackSize = inventoryClickEvent.getCurrentItem().getAmount();
+                    if(gameSetting == GameSetting.BACKPACKSIZE) {
+                        int backpackSize = inventoryClickEvent.getCurrentItem().getAmount();
 
-                    if(inventoryClickEvent.isLeftClick() && backpackSize < 6) {
-                        backpackSize += 1;
-                    } else if(inventoryClickEvent.isRightClick() && backpackSize > 1) {
-                        backpackSize -= 1;
-                    } else {
-                        this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);
-                        return;
+                        if(inventoryClickEvent.isLeftClick() && backpackSize < 6) {
+                            backpackSize += 1;
+                        } else if(inventoryClickEvent.isRightClick() && backpackSize > 1) {
+                            backpackSize -= 1;
+                        } else {
+                            this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);
+                            return;
+                        }
+                        this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
+                        if(gamePreset != null) {
+                            gamePreset.setBackpackRows(backpackSize);
+                        } else {
+                            plugin.getSettings().setSettingValue(gameSetting, backpackSize);
+                        }
+
+                    } else if(gameSetting == GameSetting.TRADING_COOLDOWN) {
+                        int tradingCooldown = inventoryClickEvent.getCurrentItem().getAmount();
+
+                        if(inventoryClickEvent.isLeftClick() && tradingCooldown < 5) {
+                            tradingCooldown += 1;
+                        } else if(inventoryClickEvent.isRightClick() && tradingCooldown > 1) {
+                            tradingCooldown -= 1;
+                        } else {
+                            this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);
+                            return;
+                        }
+                        this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
+                        if(gamePreset != null) {
+                            gamePreset.setTradingCooldown(tradingCooldown);
+                        } else {
+                            plugin.getSettings().setSettingValue(gameSetting, tradingCooldown);
+                        }
                     }
-                    this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
-                    if(gamePreset != null) {
-                        gamePreset.setBackpackRows(backpackSize);
-                    } else {
-                        plugin.getSettings().setSettingValue(gameSetting, backpackSize);
-                    }
+
 
                 }
 

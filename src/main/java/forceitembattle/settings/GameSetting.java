@@ -17,8 +17,9 @@ public enum GameSetting {
     EXTREME("Extreme", List.of("", "<gray>Toggle whether the <dark_aqua>extreme version <gray>should be played.", ""), "extreme", true, Material.END_STONE),
     FASTER_RANDOM_TICK("Faster plants growth & decay", null, "fasterRandomTick", false, Material.CACTUS),
     POSITIONS("Positions - /pos", List.of("", "<gray>Toggle whether <dark_aqua>positions <gray>can be set.", ""), "positions", true, Material.LIME_WOOL),
-    TRADING("Player trading", List.of("", "<gray>Toggle whether players can <dark_aqua>trade items <gray>between each other.", ""),"trading", false, Material.EMERALD),
-    STATS("Stats", List.of("", "<gray>Toggle whether this round is played with <dark_aqua>stats<gray>.", ""),"stats", true, Material.WRITABLE_BOOK);
+    TRADING("Player trading", List.of("", "<gray>Toggle whether players can <dark_aqua>trade items <gray>between each other.", ""), "trading", false, Material.EMERALD),
+    TRADING_COOLDOWN("Player trading cooldown", List.of("", "<gray>Changes cooldown of <dark_aqua>trading<gray>.", ""), "tradingCooldown", 3, Material.EMERALD),
+    STATS("Stats", List.of("", "<gray>Toggle whether this round is played with <dark_aqua>stats<gray>.", ""), "stats", true, Material.WRITABLE_BOOK);
 
     private final String displayName;
     private final List<String> descriptionLore;

@@ -14,7 +14,7 @@ import java.util.UUID;
 public class GamePreset {
 
     private String presetName;
-    private int countdown, jokers, backpackRows;
+    private int countdown, jokers, backpackRows, tradingCooldown;
     private List<GameSetting> gameSettings;
 
     public GamePreset() {

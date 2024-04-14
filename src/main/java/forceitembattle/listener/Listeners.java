@@ -256,7 +256,7 @@ public class Listeners implements Listener {
         Bukkit.getPluginManager().callEvent(foundNextItemEvent);
     }
 
-    private boolean hasItemInInventory(Inventory inventory, Material targetMaterial) {
+    public static boolean hasItemInInventory(Inventory inventory, Material targetMaterial) {
         for (ItemStack inventoryItem : inventory.getContents()) {
             if (inventoryItem == null) {
                 continue;
