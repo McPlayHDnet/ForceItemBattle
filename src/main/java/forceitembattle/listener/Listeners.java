@@ -15,6 +15,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -665,7 +666,6 @@ public class Listeners implements Listener {
     public void onFoodLevelChange(FoodLevelChangeEvent event) {
         if (!(event.getEntity() instanceof Player)) return;
         if (this.plugin.getSettings().isSettingEnabled(GameSetting.FOOD)) return;
-        if(!this.plugin.getGamemanager().isMidGame()) return;
         event.setCancelled(true);
     }
 

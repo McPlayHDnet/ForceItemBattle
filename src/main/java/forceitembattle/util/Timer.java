@@ -51,7 +51,7 @@ public class Timer {
         for (Player player : Bukkit.getOnlinePlayers()) {
 
             if (!this.forceItemBattle.getGamemanager().isMidGame()) {
-                player.sendActionBar(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<gray>Timer <red><b>paused</red></b>"));
+                player.sendActionBar(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<gray>Timer <red><b>paused</red>"));
                 continue;
             }
 
