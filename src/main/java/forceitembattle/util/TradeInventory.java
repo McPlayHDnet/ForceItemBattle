@@ -31,59 +31,46 @@ public class TradeInventory extends InventoryBuilder {
         this.setItem(1, new ItemBuilder(Material.PLAYER_HEAD).setSkullTexture(player.player().getPlayerProfile().getTextures()).setDisplayName("<green>You").getItemStack());
         this.setItem(7, new ItemBuilder(Material.PLAYER_HEAD).setSkullTexture(oppositePlayer.player().getPlayerProfile().getTextures()).setDisplayName("<red>" + oppositePlayer.player().getName()).getItemStack());
 
-        this.addUpdateHandler(() -> {
-            int itemIndex = 0;
-            if(tradingItems.containsKey(player)) {
-                for(int playerSlots : this.PLAYER_SLOTS) {
-                    this.setItem(playerSlots, new ItemBuilder(tradingItems.get(player).get(itemIndex)).getItemStack());
-                    itemIndex++;
+        this.setItems(this.PLAYER_SLOTS, new ItemBuilder(Material.AIR).getItemStack());
+        this.setItems(this.OPPOSITE_SLOTS, new ItemBuilder(Material.AIR).getItemStack());
+
+        this.setItem(21, new ItemBuilder(this.isItemInsideSlots(this.PLAYER_SLOTS, this.getInventory()) ? Material.ORANGE_DYE : Material.RED_DYE).setDisplayName("<dark_gray>● <gray>Status <dark_gray>» <red>Not ready").getItemStack());
+        this.setItem(23, new ItemBuilder(this.isItemInsideSlots(this.OPPOSITE_SLOTS, this.getInventory()) ? Material.ORANGE_DYE : Material.RED_DYE).setDisplayName("<dark_gray>● <gray>Status <dark_gray>» <red>Not ready").getItemStack());
+
+        this.addClickHandler(inventoryClickEvent -> {
+            inventoryClickEvent.setCancelled(true);
+            if(inventoryClickEvent.getCurrentItem() == null) return;
+
+            if(inventoryClickEvent.getClickedInventory() == inventoryClickEvent.getView().getBottomInventory()) {
+                for(int slot : this.PLAYER_SLOTS) {
+                    if(this.getInventory().getItem(slot) == null) {
+                        this.setItem(slot, inventoryClickEvent.getCurrentItem());
+
+                        List<ItemStack> itemStacks = new ArrayList<>();
+                        if(tradingItems.get(player) != null) itemStacks = tradingItems.get(player);
+
+                        itemStacks.add(inventoryClickEvent.getCurrentItem());
+                        tradingItems.put(player, itemStacks);
+
+                        break;
+                    }
+
                 }
 
-            } else if(tradingItems.containsKey(oppositePlayer)) {
-                for(int oppositeSlots : this.OPPOSITE_SLOTS) {
-                    this.setItem(oppositeSlots, new ItemBuilder(tradingItems.get(oppositePlayer).get(itemIndex)).getItemStack());
-                    itemIndex++;
+                for(int slot : this.OPPOSITE_SLOTS) {
+                    if(oppositePlayer.player().getOpenInventory().getItem(slot) == null) {
+                        oppositePlayer.player().getOpenInventory().setItem(slot, inventoryClickEvent.getCurrentItem());
+
+                        List<ItemStack> itemStacks = new ArrayList<>();
+                        if(tradingItems.get(oppositePlayer) != null) itemStacks = tradingItems.get(oppositePlayer);
+
+                        itemStacks.add(inventoryClickEvent.getCurrentItem());
+                        tradingItems.put(oppositePlayer, itemStacks);
+
+                        break;
+                    }
                 }
-            } else {
-                this.setItems(this.PLAYER_SLOTS, new ItemBuilder(Material.AIR).getItemStack());
-                this.setItems(this.OPPOSITE_SLOTS, new ItemBuilder(Material.AIR).getItemStack());
             }
-
-            this.setItem(21, new ItemBuilder(this.isItemInsideSlots(this.PLAYER_SLOTS, this.getInventory()) ? Material.ORANGE_DYE : Material.RED_DYE).setDisplayName("<dark_gray>● <gray>Status <dark_gray>» <red>Not ready").getItemStack());
-            this.setItem(23, new ItemBuilder(this.isItemInsideSlots(this.OPPOSITE_SLOTS, this.getInventory()) ? Material.ORANGE_DYE : Material.RED_DYE).setDisplayName("<dark_gray>● <gray>Status <dark_gray>» <red>Not ready").getItemStack());
-
-            this.addClickHandler(inventoryClickEvent -> {
-                inventoryClickEvent.setCancelled(true);
-                if(inventoryClickEvent.getCurrentItem() == null) return;
-
-                if(inventoryClickEvent.getClickedInventory() == inventoryClickEvent.getView().getBottomInventory()) {
-                    for(int slot : this.PLAYER_SLOTS) {
-                        if(this.getInventory().getItem(slot) == null) {
-                            this.setItem(slot, inventoryClickEvent.getCurrentItem());
-
-                            List<ItemStack> itemStacks = new ArrayList<>();
-                            if(tradingItems.get(player) != null) itemStacks = tradingItems.get(player);
-
-                            itemStacks.add(inventoryClickEvent.getCurrentItem());
-                            tradingItems.put(player, itemStacks);
-                            return;
-                        }
-                    }
-
-                    for(int slot : this.OPPOSITE_SLOTS) {
-                        if(this.getInventory().getItem(slot) == null) {
-                            this.setItem(slot, inventoryClickEvent.getCurrentItem());
-
-                            List<ItemStack> itemStacks = new ArrayList<>();
-                            if(tradingItems.get(oppositePlayer) != null) itemStacks = tradingItems.get(oppositePlayer);
-
-                            itemStacks.add(inventoryClickEvent.getCurrentItem());
-                            tradingItems.put(oppositePlayer, itemStacks);
-                            return;
-                        }
-                    }
-                }
-            });
         });
     }
 

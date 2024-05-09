@@ -3,13 +3,17 @@ package forceitembattle.util;
 import forceitembattle.ForceItemBattle;
 import lombok.Getter;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.WanderingTrader;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.MerchantRecipe;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -72,6 +76,13 @@ public class WanderingTraderTimer {
         Location traderLocation = this.getRandomLocationWithinChunks(forceItemPlayer.player(), 5);
         WanderingTrader wanderingTrader = (WanderingTrader) forceItemPlayer.player().getWorld().spawnEntity(traderLocation, EntityType.WANDERING_TRADER);
         wanderingTrader.setGlowing(true);
+        List<MerchantRecipe> merchantRecipes = wanderingTrader.getRecipes();
+        merchantRecipes.forEach(merchantRecipe -> {
+            List<ItemStack> ingredients = merchantRecipe.getIngredients();
+            ingredients.forEach(ingredient -> ingredient.setAmount(1));
+            merchantRecipe.setIngredients(ingredients);
+        });
+        wanderingTrader.setRecipes(merchantRecipes);
 
         this.wanderingTraderMap.put(forceItemPlayer, wanderingTrader);
 
@@ -132,8 +143,14 @@ public class WanderingTraderTimer {
         double newX = playerLocation.getX() + offsetX;
         double newZ = playerLocation.getZ() + offsetZ;
 
-        double newY = world.getHighestBlockYAt((int)newX, (int)newZ) + 1;
+        double newY = world.getHighestBlockYAt((int)newX, (int)newZ);
 
-        return new Location(world, newX, newY, newZ);
+        Location location = new Location(world, newX, newY, newZ);
+        if(location.getBlock().getType() != Material.LAVA) {
+            location.setY(newY + 1);
+            return location;
+        } else {
+            return this.getRandomLocationWithinChunks(player, chunkRadius);
+        }
     }
 }

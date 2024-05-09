@@ -48,7 +48,7 @@ public class Listeners implements Listener {
         Player player = event.getPlayer();
 
         ForceItemPlayer forceItemPlayer = new ForceItemPlayer(player, new ArrayList<>(), null, 0, 0);
-        if (this.plugin.getGamemanager().isMidGame()) {
+        if (this.plugin.getGamemanager().isMidGame() || this.plugin.getGamemanager().isPausedGame()) {
             if(!this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
                 player.getInventory().clear();
                 player.setLevel(0);

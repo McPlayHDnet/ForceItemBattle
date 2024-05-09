@@ -22,9 +22,6 @@ public class CommandPause extends CustomCommand {
             player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>The timer is already paused."));
             return;
         }
-        Title.Times times = Title.Times.times(Duration.ofMillis(500), Duration.ofMillis(1000), Duration.ofMillis(500));
-        Title pauseTitle = Title.title(Component.empty(), plugin.getGamemanager().getMiniMessage().deserialize("<red>The game has been pasued!"), times);
-        Bukkit.getOnlinePlayers().forEach(players -> players.showTitle(pauseTitle));
         Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize("<gold>The game has been paused!"));
         Bukkit.getWorld("world").setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
         this.plugin.getGamemanager().setCurrentGameState(GameState.PAUSED_GAME);

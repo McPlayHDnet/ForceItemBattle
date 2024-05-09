@@ -2,6 +2,7 @@ package forceitembattle.commands.player;
 
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
+import forceitembattle.settings.GameSetting;
 import forceitembattle.util.ParticleUtils;
 import forceitembattle.util.Scheduler;
 import lombok.NonNull;
@@ -24,6 +25,11 @@ public class CommandPosition extends CustomCommand implements CustomTabCompleter
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
+        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.POSITIONS)) {
+            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>Positions are disabled in this round!"));
+            return;
+        }
+
         if (!this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
             return;
         }

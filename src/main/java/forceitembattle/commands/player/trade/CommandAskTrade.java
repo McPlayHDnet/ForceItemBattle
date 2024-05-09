@@ -42,10 +42,9 @@ public class CommandAskTrade extends CustomCommand {
 
                 players.showTitle(pauseTitle);
 
-                new TradeInventory(this.plugin, forceItemPlayer, this.plugin.getGamemanager().getForceItemPlayer(players.getUniqueId())).open(player);
-                new TradeInventory(this.plugin, this.plugin.getGamemanager().getForceItemPlayer(players.getUniqueId()), forceItemPlayer).open(players);
+                //TODO: trading inventory
+                //TODO: right know its fine just to notify a player when he has an item that someone else needs
             }
-
         });
     }
 }
