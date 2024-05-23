@@ -28,7 +28,6 @@ public class GameSettings {
 
         this.plugin.getConfig().addDefault("standard.countdown", 30);
         this.plugin.getConfig().addDefault("standard.jokers", 3);
-        this.plugin.getConfig().addDefault("standard.backpackSize", 27);
 
         if(!this.plugin.getConfig().isConfigurationSection("presets")) {
             this.plugin.getConfig().createSection("presets");
@@ -41,7 +40,7 @@ public class GameSettings {
                 gamePreset.setPresetName(keys);
                 gamePreset.setCountdown(configurationSection.getInt("countdown"));
                 gamePreset.setJokers(configurationSection.getInt("jokers"));
-                gamePreset.setBackpackSize(configurationSection.getInt("backpackSize"));
+                gamePreset.setBackpackRows(configurationSection.getInt("backpackRows"));
 
                 configurationSection.getConfigurationSection("settings").getKeys(false).forEach(settingKeys -> {
                     for(GameSetting gameSetting : GameSetting.values()) {
@@ -81,6 +80,23 @@ public class GameSettings {
         this.plugin.saveConfig();
     }
 
+    public void setSettingValue(GameSetting gameSetting, Integer value) {
+        if(gameSetting.defaultValue() instanceof Integer) {
+            this.plugin.getConfig().set(gameSetting.configPath(), value);
+        }
+    }
+
+    public int getSettingValue(GameSetting gameSetting) {
+        if(this.plugin.getGamemanager().currentGamePreset() != null) {
+            return this.getSettingValueInPreset(this.plugin.getGamemanager().currentGamePreset(), gameSetting);
+        }
+        return this.plugin.getConfig().getInt(gameSetting.configPath());
+    }
+
+    public int getSettingValueInPreset(GamePreset gamePreset, GameSetting gameSetting) {
+        return this.plugin.getConfig().getInt("presets." + gamePreset.getPresetName() + "." + gameSetting.configPath());
+    }
+
     public void addGamePreset(GamePreset gamePreset) {
         ConfigurationSection configurationSection = this.plugin.getConfig().getConfigurationSection("presets");
 
@@ -89,7 +105,7 @@ public class GameSettings {
 
             presetSection.set("countdown", gamePreset.getCountdown());
             presetSection.set("jokers", gamePreset.getJokers());
-            presetSection.set("backpackSize", gamePreset.getBackpackSize());
+            presetSection.set("backpackRows", gamePreset.getBackpackRows());
 
             for(GameSetting gameSetting : GameSetting.values()) {
                 presetSection.set(gameSetting.configPath(), gamePreset.getGameSettings().contains(gameSetting));

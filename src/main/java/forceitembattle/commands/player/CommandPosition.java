@@ -2,6 +2,7 @@ package forceitembattle.commands.player;
 
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
+import forceitembattle.settings.GameSetting;
 import forceitembattle.util.ParticleUtils;
 import forceitembattle.util.Scheduler;
 import lombok.NonNull;
@@ -24,6 +25,11 @@ public class CommandPosition extends CustomCommand implements CustomTabCompleter
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
+        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.POSITIONS)) {
+            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>Positions are disabled in this round!"));
+            return;
+        }
+
         if (!this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
             return;
         }
@@ -64,7 +70,7 @@ public class CommandPosition extends CustomCommand implements CustomTabCompleter
         player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
                 prefix + "<dark_aqua>" + positionName + " <gray>located at " + locationToString(positionLocation) + distance(player.getLocation(), positionLocation)
         ));
-        this.playParticleLine(player, positionLocation);
+        this.plugin.getPositionManager().playParticleLine(player, positionLocation);
     }
 
     private void sendAllPositions(Player player) {
@@ -139,24 +145,6 @@ public class CommandPosition extends CustomCommand implements CustomTabCompleter
         }
 
         return "<green>overworld";
-    }
-
-    private void playParticleLine(@NonNull Player player, @NonNull Location position) {
-        if (player.getWorld() != position.getWorld()) return;
-
-        // Defining target location to
-        Location target = position.clone().add(0, 0.3, 0);
-
-        new BukkitRunnable() {
-            int current = 0;
-            @Override
-            public void run() {
-                if(++current == 10) {
-                    this.cancel();
-                }
-                ParticleUtils.drawLine(player, player.getLocation(), target, Particle.REDSTONE, new Particle.DustOptions(Color.LIME, 1), 1, 0.5, 50);
-            }
-        }.runTaskTimer(this.plugin, 0L, 10L);
     }
 
 }

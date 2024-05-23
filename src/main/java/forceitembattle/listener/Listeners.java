@@ -15,6 +15,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -47,7 +48,7 @@ public class Listeners implements Listener {
         Player player = event.getPlayer();
 
         ForceItemPlayer forceItemPlayer = new ForceItemPlayer(player, new ArrayList<>(), null, 0, 0);
-        if (this.plugin.getGamemanager().isMidGame()) {
+        if (this.plugin.getGamemanager().isMidGame() || this.plugin.getGamemanager().isPausedGame()) {
             if(!this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
                 player.getInventory().clear();
                 player.setLevel(0);
@@ -255,7 +256,7 @@ public class Listeners implements Listener {
         Bukkit.getPluginManager().callEvent(foundNextItemEvent);
     }
 
-    private boolean hasItemInInventory(Inventory inventory, Material targetMaterial) {
+    public static boolean hasItemInInventory(Inventory inventory, Material targetMaterial) {
         for (ItemStack inventoryItem : inventory.getContents()) {
             if (inventoryItem == null) {
                 continue;
@@ -665,7 +666,6 @@ public class Listeners implements Listener {
     public void onFoodLevelChange(FoodLevelChangeEvent event) {
         if (!(event.getEntity() instanceof Player)) return;
         if (this.plugin.getSettings().isSettingEnabled(GameSetting.FOOD)) return;
-        if(!this.plugin.getGamemanager().isMidGame()) return;
         event.setCancelled(true);
     }
 

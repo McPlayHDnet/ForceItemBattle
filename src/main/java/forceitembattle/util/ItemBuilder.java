@@ -1,10 +1,13 @@
 package forceitembattle.util;
 
+import com.destroystokyo.paper.profile.PlayerProfile;
+import com.destroystokyo.paper.profile.ProfileProperty;
 import forceitembattle.ForceItemBattle;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
@@ -13,11 +16,9 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.profile.PlayerTextures;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 @Getter
 public class ItemBuilder {
@@ -78,6 +79,7 @@ public class ItemBuilder {
     }
 
     public ItemBuilder setLore(List<String> loreLines) {
+        if(loreLines == null) return this;
         ItemMeta itemMeta = getItemStack().getItemMeta();
         List<Component> lore = new ArrayList<>();
         for (String line : loreLines) {
@@ -102,8 +104,33 @@ public class ItemBuilder {
         return this;
     }
 
+    public ItemBuilder setSkullTexture(PlayerTextures playerTextures) {
+        SkullMeta skullMeta = (SkullMeta)this.itemStack.getItemMeta();
+        PlayerProfile playerProfile = Bukkit.createProfile(UUID.randomUUID());
+        playerProfile.setTextures(playerTextures);
+        skullMeta.setPlayerProfile(playerProfile);
+        setSkullMeta(skullMeta);
+        return this;
+    }
+
+    public ItemBuilder setSkullTexture(String skinValue) {
+        if(skinValue != null) {
+            SkullMeta skullMeta = (SkullMeta)this.itemStack.getItemMeta();
+            PlayerProfile playerProfile = Bukkit.createProfile(UUID.randomUUID());
+            playerProfile.setProperty(new ProfileProperty("textures", skinValue));
+            skullMeta.setPlayerProfile(playerProfile);
+            setSkullMeta(skullMeta);
+        }
+        return this;
+    }
+
     public ItemBuilder setItemMeta(ItemMeta itemMeta) {
         this.itemStack.setItemMeta(itemMeta);
+        return this;
+    }
+
+    public ItemBuilder setSkullMeta(SkullMeta skullMeta) {
+        this.itemStack.setItemMeta((ItemMeta)skullMeta);
         return this;
     }
 

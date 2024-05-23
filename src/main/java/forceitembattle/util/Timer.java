@@ -6,10 +6,12 @@ import lombok.Getter;
 import lombok.Setter;
 import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.title.Title;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -51,9 +53,13 @@ public class Timer {
         for (Player player : Bukkit.getOnlinePlayers()) {
 
             if (!this.forceItemBattle.getGamemanager().isMidGame()) {
-                player.sendActionBar(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>Timer paused</red>"));
-                if(player.getLocation().getWorld() == null) continue;
-                player.getLocation().getWorld().playEffect(player.getLocation(), Effect.ENDER_SIGNAL, 1);
+                if(this.forceItemBattle.getGamemanager().isPausedGame()) {
+                    Title.Times times = Title.Times.times(Duration.ofMillis(0), Duration.ofMillis(1000), Duration.ofMillis(500));
+                    Title timeLeftTitle = Title.title(Component.empty(), forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>Game is paused!"), times);
+                    player.showTitle(timeLeftTitle);
+
+                }
+                player.sendActionBar(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<gray>Timer <red><b>paused</red>"));
                 continue;
             }
 
@@ -106,36 +112,59 @@ public class Timer {
 
                 switch (getTime()) {
                     case 300: {
-                        Bukkit.broadcast(forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red><< 5 minutes left >>"));
-                        Bukkit.getOnlinePlayers().forEach(player -> player.playSound(player, Sound.BLOCK_NOTE_BLOCK_PLING, 1, 2));
+                        Title.Times times = Title.Times.times(Duration.ofMillis(1000), Duration.ofMillis(1000), Duration.ofMillis(1000));
+                        Title timeLeftTitle = Title.title(Component.empty(), forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>5 minutes left"), times);
+                        Bukkit.getOnlinePlayers().forEach(
+                                players -> {
+                                    players.showTitle(timeLeftTitle);
+                                    players.playSound(players.getLocation(), Sound.BLOCK_NOTE_BLOCK_BIT, 1, 1);
+                                }
+                        );
                         break;
                     }
                     case 60: {
-                        Bukkit.broadcast(forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red><< 1 minute left >>"));
-                        Bukkit.getOnlinePlayers().forEach(player -> player.playSound(player, Sound.BLOCK_NOTE_BLOCK_PLING, 1, 2));
+                        Title.Times times = Title.Times.times(Duration.ofMillis(1000), Duration.ofMillis(1000), Duration.ofMillis(1000));
+                        Title timeLeftTitle = Title.title(Component.empty(), forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>1 minute left"), times);
+                        Bukkit.getOnlinePlayers().forEach(
+                                players -> {
+                                    players.showTitle(timeLeftTitle);
+                                    players.playSound(players.getLocation(), Sound.BLOCK_NOTE_BLOCK_BIT, 1, 1);
+                                }
+                        );
                         break;
                     }
                     case 30, 10: {
-                        Bukkit.broadcast(forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red><< 30 seconds left >>"));
-                        Bukkit.getOnlinePlayers().forEach(player -> player.playSound(player, Sound.BLOCK_NOTE_BLOCK_PLING, 1, 2));
+                        Title.Times times = Title.Times.times(Duration.ofMillis(1000), Duration.ofMillis(1000), Duration.ofMillis(1000));
+                        Title timeLeftTitle = Title.title(Component.empty(), forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>" + getTime() + " seconds left"), times);
+                        Bukkit.getOnlinePlayers().forEach(
+                                players -> {
+                                    players.showTitle(timeLeftTitle);
+                                    players.playSound(players.getLocation(), Sound.BLOCK_NOTE_BLOCK_BIT, 1, 1);
+                                }
+                        );
                         break;
                     }
-                    case 5, 4, 3, 2: {
-                        Bukkit.broadcast(forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red><< " + getTime() + " seconds left >>"));
-                        Bukkit.getOnlinePlayers().forEach(player -> player.playSound(player, Sound.BLOCK_NOTE_BLOCK_PLING, 1, 2));
-                        break;
-                    }
-                    case 1: {
-                        Bukkit.broadcast(forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red><< 1 second left >>"));
-                        Bukkit.getOnlinePlayers().forEach(player -> player.playSound(player, Sound.BLOCK_NOTE_BLOCK_PLING, 1, 2));
+                    case 5, 4, 3, 2, 1: {
+                        Title.Times times = Title.Times.times(Duration.ofMillis(1000), Duration.ofMillis(1000), Duration.ofMillis(1000));
+                        Title timeLeftTitle = Title.title(forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>" + getTime()), Component.empty(), times);
+                        Bukkit.getOnlinePlayers().forEach(
+                                players -> {
+                                    players.showTitle(timeLeftTitle);
+                                    players.playSound(players.getLocation(), Sound.BLOCK_NOTE_BLOCK_BIT, 1, 1);
+                                }
+                        );
                         break;
                     }
                     default:
                         break;
                 }
                 if (getTime()<=0) {
-                    Bukkit.broadcast(forceItemBattle.getGamemanager().getMiniMessage().deserialize("<gold><< Force Item Battle is over >>"));
-                    Bukkit.getOnlinePlayers().forEach(player -> player.playSound(player, Sound.BLOCK_END_PORTAL_SPAWN, 1, 1));
+                    Title.Times times = Title.Times.times(Duration.ofMillis(1000), Duration.ofMillis(1000), Duration.ofMillis(1000));
+                    Title gameDoneTitle = Title.title(Component.empty(), forceItemBattle.getGamemanager().getMiniMessage().deserialize("<white>» <gold>Force Item Battle is over! <white>«"), times);
+                    Bukkit.getOnlinePlayers().forEach(player -> {
+                        player.playSound(player, Sound.BLOCK_END_PORTAL_SPAWN, 1, 1);
+                        player.showTitle(gameDoneTitle);
+                    });
                     forceItemBattle.getGamemanager().finishGame();
                     forceItemBattle.logToFile("<< Force Item Battle is over >>");
                     cancel();

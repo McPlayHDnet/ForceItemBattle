@@ -3,6 +3,8 @@ package forceitembattle;
 import forceitembattle.commands.CommandsManager;
 import forceitembattle.commands.admin.*;
 import forceitembattle.commands.player.*;
+import forceitembattle.commands.player.trade.CommandAskTrade;
+import forceitembattle.commands.player.trade.CommandTrade;
 import forceitembattle.listener.Listeners;
 import forceitembattle.listener.PvPListener;
 import forceitembattle.listener.RecipeListener;
@@ -62,6 +64,9 @@ public final class ForceItemBattle extends JavaPlugin {
     @Getter
     @Setter
     private TeamsManager teamManager;
+    @Getter
+    @Setter
+    private TradingManager tradingManager;
     @Getter
     @Setter
     private Location spawnLocation;
@@ -155,6 +160,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.statsManager = new StatsManager(this);
         this.positionManager = new PositionManager(this);
         this.teamManager = new TeamsManager(this);
+        this.tradingManager = new TradingManager(this);
         this.commandsManager = new CommandsManager(this);
         this.wanderingTraderTimer = new WanderingTraderTimer();
 
@@ -244,6 +250,8 @@ public final class ForceItemBattle extends JavaPlugin {
         new CommandPing();
         new CommandHelp();
         new CommandTeams();
+        new CommandAskTrade();
+        new CommandTrade();
     }
 
     @Override

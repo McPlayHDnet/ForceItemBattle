@@ -78,4 +78,6 @@ bukkitPluginYaml {
     commands.register("ping")
     commands.register("stoptimer")
     commands.register("teams")
+    commands.register("asktrade")
+    commands.register("trade")
 }
