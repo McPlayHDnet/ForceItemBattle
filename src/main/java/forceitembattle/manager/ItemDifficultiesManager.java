@@ -144,7 +144,7 @@ public class ItemDifficultiesManager {
      * Filter out items disabled by the settings
      */
     private void filterDisabledItems(Collection<Material> items) {
-        if (!forceItemBattle.getSettings().isSettingEnabled(GameSetting.NETHER)) {
+        if (!forceItemBattle.getSettings().isSettingEnabled(GameSetting.HARD)) {
             this.netherItems.forEach(items::remove);
 
             // End items cannot be accessed without nether (unless you somehow find full portal lol)

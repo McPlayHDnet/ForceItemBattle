@@ -215,7 +215,7 @@ public class Listeners implements Listener {
 
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
 
-            if (!this.plugin.getSettings().isSettingEnabled(GameSetting.NETHER)) {
+            if (!this.plugin.getSettings().isSettingEnabled(GameSetting.HARD)) {
                 forceItemPlayer.updateItemDisplay();
             }
 
@@ -631,7 +631,7 @@ public class Listeners implements Listener {
 
         player.getInventory().setItem(8, new ItemBuilder(Material.BUNDLE).setDisplayName("<dark_gray>» <yellow>Backpack").getItemStack());
 
-        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.NETHER)) {
+        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.HARD)) {
             forceItemPlayer.createItemDisplay();
         }
     }
@@ -750,7 +750,7 @@ public class Listeners implements Listener {
             return;
         }
 
-        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.NETHER)) {
+        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.HARD)) {
             player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>Travelling to other dimensions is disabled!"));
             player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
             playerPortalEvent.setCanCreatePortal(false);
