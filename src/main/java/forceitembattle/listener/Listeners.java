@@ -336,6 +336,14 @@ public class Listeners implements Listener {
             }
         }
 
+        if (e.getItem().getType() == Material.KNOWLEDGE_BOOK) {
+            if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+                e.setCancelled(true);
+                this.plugin.getAntimatterLocator().locateAntimatter(forceItemPlayer);
+                return;
+            }
+        }
+
         if (!Gamemanager.isJoker(e.getItem())) {
             return;
         }

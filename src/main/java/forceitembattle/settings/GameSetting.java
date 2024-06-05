@@ -19,6 +19,7 @@ public enum GameSetting {
     POSITIONS("Positions - /pos", List.of("", "<gray>Toggle whether <dark_aqua>positions <gray>can be set.", ""), "positions", true, Material.LIME_WOOL),
     TRADING("Player trading", List.of("", "<gray>Toggle whether players can <dark_aqua>trade items <gray>between each other.", ""), "trading", false, Material.EMERALD),
     TRADING_COOLDOWN("Player trading cooldown", List.of("", "<gray>Changes cooldown of <dark_aqua>trading<gray>.", ""), "tradingCooldown", 3, Material.EMERALD),
+    ELYTRA("Elytra gliding", List.of("", "<gray>Prevents gliding with an elytra<gray>.", ""), "elytraGliding", true, Material.ELYTRA),
     STATS("Stats", List.of("", "<gray>Toggle whether this round is played with <dark_aqua>stats<gray>.", ""), "stats", true, Material.WRITABLE_BOOK);
 
     private final String displayName;
