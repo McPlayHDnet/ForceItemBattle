@@ -1,5 +1,6 @@
 package forceitembattle.listener;
 
+import com.destroystokyo.paper.event.player.PlayerAdvancementCriterionGrantEvent;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.manager.Gamemanager;
@@ -8,8 +9,12 @@ import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.preset.GamePreset;
 import forceitembattle.settings.preset.InvSettingsPresets;
 import forceitembattle.util.*;
+import io.papermc.paper.advancement.AdvancementDisplay;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.*;
+import org.bukkit.advancement.Advancement;
 import org.bukkit.block.ShulkerBox;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
@@ -36,6 +41,7 @@ import java.awt.Color;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -174,7 +180,6 @@ public class Listeners implements Listener {
                     "<green>" + player.getName() + " <gray>" + (event.isSkipped() ? "skipped" : "found") + " <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType()) + " <gold>" + this.plugin.getGamemanager().getMaterialName(itemStack.getType())));
             forceItemPlayer.setBackToBackStreak(0);
         }
-        new ScoreboardManager(player);
         int backToBacks = forceItemPlayer.backToBackStreak();
 
         if(this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
@@ -600,13 +605,18 @@ public class Listeners implements Listener {
 
     @EventHandler
     public void onDeath(PlayerDeathEvent event) {
+
         Player player = event.getEntity();
+        ForceItemPlayer gamePlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        String plainDeathMessage = PlainTextComponentSerializer.plainText().serialize(Objects.requireNonNull(event.deathMessage()));
+        String plainPlayerName = PlainTextComponentSerializer.plainText().serialize(player.name());
+
+        event.deathMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>[<red>\uD83D\uDC80<dark_gray>] " + plainDeathMessage.replace(plainPlayerName, "<gold>" + player.getName() + "<gray>")));
         if (!event.getKeepInventory()) {
             event.getDrops().removeIf(Gamemanager::isJoker);
             event.getDrops().removeIf(Gamemanager::isBackpack);
         }
 
-        ForceItemPlayer gamePlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
         gamePlayer.removeItemDisplay();
 
         // Automatically respawn player.
@@ -756,5 +766,22 @@ public class Listeners implements Listener {
             playerPortalEvent.setCanCreatePortal(false);
             playerPortalEvent.setCancelled(true);
         }
+    }
+
+    @EventHandler
+    public void onAdvancementGrant(PlayerAdvancementDoneEvent playerAdvancementDoneEvent) {
+        Advancement advancement = playerAdvancementDoneEvent.getAdvancement();
+        if(advancement.key().namespace().equals("fib")) {
+            String plainAdvancement = PlainTextComponentSerializer.plainText().serialize(advancement.displayName());
+            String plainAdvancementDescription = PlainTextComponentSerializer.plainText().serialize(Objects.requireNonNull(advancement.getDisplay()).description());
+            playerAdvancementDoneEvent.message(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>[<yellow>⭐<dark_gray>] <gold>" + playerAdvancementDoneEvent.getPlayer().getName() + " <gray>has completed the challenge <hover:show_text:'<dark_purple>" + plainAdvancement + "<newline><dark_purple>" + plainAdvancementDescription + "'><dark_purple>" + plainAdvancement + "</hover>"));
+            Bukkit.getOnlinePlayers().forEach(players -> {
+                if(players == playerAdvancementDoneEvent.getPlayer()) return;
+                players.playSound(players.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1, 1);
+            });
+        } else {
+            playerAdvancementDoneEvent.message(null);
+        }
+
     }
 }

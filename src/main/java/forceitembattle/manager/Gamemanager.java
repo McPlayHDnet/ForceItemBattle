@@ -52,6 +52,7 @@ public class Gamemanager {
                         .resolver(StandardTags.color())
                         .resolver(StandardTags.gradient())
                         .resolver(StandardTags.reset())
+                        .resolver(StandardTags.newline())
                         .resolver(StandardTags.decorations())
                         .resolver(StandardTags.clickEvent())
                         .resolver(StandardTags.hoverEvent())
