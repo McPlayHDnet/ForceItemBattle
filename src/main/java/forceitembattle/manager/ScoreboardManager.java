@@ -15,7 +15,7 @@ import org.bukkit.scoreboard.Team;
 public class ScoreboardManager {
 
     public ScoreboardManager(Player player) {
-        this.updatePlayerPrefix(player);
+        //this.updatePlayerPrefix(player);
     }
 
     public void updatePlayerPrefix(Player player) {
