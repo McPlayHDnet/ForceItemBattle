@@ -578,6 +578,7 @@ public class ItemDifficultiesManager {
                 Material.JACK_O_LANTERN,
                 Material.JUKEBOX,
                 Material.KELP,
+                Material.KNOWLEDGE_BOOK,
                 Material.LADDER,
                 Material.LANTERN,
                 Material.LAPIS_BLOCK,
