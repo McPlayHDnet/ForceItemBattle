@@ -26,10 +26,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.entity.EntityPickupItemEvent;
-import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
-import org.bukkit.event.entity.FoodLevelChangeEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.entity.*;
 import org.bukkit.event.inventory.*;
 import org.bukkit.event.player.*;
 import org.bukkit.inventory.*;
@@ -737,6 +734,15 @@ public class Listeners implements Listener {
             return;
         }
         event.setCancelled(true);
+    }
+
+    @EventHandler
+    public void onGliding(EntityToggleGlideEvent entityToggleGlideEvent) {
+        if(entityToggleGlideEvent.isGliding()) {
+            if(!this.plugin.getSettings().isSettingEnabled(GameSetting.ELYTRA)) {
+                entityToggleGlideEvent.setCancelled(true);
+            }
+        }
     }
 
     @EventHandler

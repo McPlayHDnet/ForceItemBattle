@@ -68,6 +68,8 @@ public final class ForceItemBattle extends JavaPlugin {
     @Setter
     private TradingManager tradingManager;
     @Getter
+    private AntimatterLocator antimatterLocator;
+    @Getter
     @Setter
     private Location spawnLocation;
 
@@ -163,6 +165,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.tradingManager = new TradingManager(this);
         this.commandsManager = new CommandsManager(this);
         this.wanderingTraderTimer = new WanderingTraderTimer();
+        this.antimatterLocator = new AntimatterLocator();
 
         this.initListeners();
         this.initCommands();
@@ -265,6 +268,7 @@ public final class ForceItemBattle extends JavaPlugin {
         new CommandTeams();
         new CommandAskTrade();
         new CommandTrade();
+        new CommandEndStructure();
     }
 
     @Override

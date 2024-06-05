@@ -70,7 +70,7 @@ public class CommandPosition extends CustomCommand implements CustomTabCompleter
         player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
                 prefix + "<dark_aqua>" + positionName + " <gray>located at " + locationToString(positionLocation) + distance(player.getLocation(), positionLocation)
         ));
-        this.plugin.getPositionManager().playParticleLine(player, positionLocation);
+        this.plugin.getPositionManager().playParticleLine(player, positionLocation, Color.LIME);
     }
 
     private void sendAllPositions(Player player) {
