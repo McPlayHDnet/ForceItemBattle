@@ -46,7 +46,7 @@ public class PositionManager {
         return this.positionsMap.get(positionName.toLowerCase());
     }
 
-    public void playParticleLine(@NonNull Player player, @NonNull Location position) {
+    public void playParticleLine(@NonNull Player player, @NonNull Location position, Color color) {
         if (player.getWorld() != position.getWorld()) return;
 
         // Defining target location to
@@ -59,7 +59,7 @@ public class PositionManager {
                 if(++current == 10) {
                     this.cancel();
                 }
-                ParticleUtils.drawLine(player, player.getLocation(), target, Particle.REDSTONE, new Particle.DustOptions(Color.LIME, 1), 1, 0.5, 50);
+                ParticleUtils.drawLine(player, player.getLocation(), target, Particle.REDSTONE, new Particle.DustOptions(color, 1), 1, 0.5, 50);
             }
         }.runTaskTimer(this.plugin, 0L, 10L);
     }

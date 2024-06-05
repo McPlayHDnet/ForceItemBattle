@@ -24,6 +24,8 @@ public class ForceItemPlayer {
     private Integer currentScore;
     @Setter
     private Teams currentTeam;
+    @Setter
+    private int backToBackStreak;
 
     public ForceItemPlayer(Player player, List<ForceItem> foundItems, Material currentMaterial, int remainingJokers, Integer currentScore) {
         this.player = player;
@@ -63,6 +65,10 @@ public class ForceItemPlayer {
 
     public Teams currentTeam() {
         return currentTeam;
+    }
+
+    public int backToBackStreak() {
+        return backToBackStreak;
     }
 
     private ArmorStand itemDisplay;

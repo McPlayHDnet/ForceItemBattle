@@ -18,6 +18,8 @@ public class FoundItemEvent extends Event {
     private ItemStack foundItem;
     @Setter
     private boolean skipped, backToBack;
+    @Setter
+    private int backToBackCount;
 
     public FoundItemEvent(Player player) {this.player = player;}
 

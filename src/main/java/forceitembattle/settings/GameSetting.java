@@ -13,12 +13,13 @@ public enum GameSetting {
     BACKPACK("Backpack", List.of("", "<gray>Toggle whether you can use <dark_aqua>backpacks<gray>.", ""), "backpack", true, Material.BUNDLE),
     BACKPACKSIZE("Backpack rows", List.of("", "<gray>Changes size of <dark_aqua>backpack<gray>.", ""), "backpackRows", 3, Material.BUNDLE),
     PVP("PvP", List.of("", "<gray>Toggle whether <dark_aqua>PvP <gray>should be enabled or not.", ""), "pvp", false, Material.IRON_SWORD),
-    NETHER("Nether", List.of("", "<gray>Toggle whether <dark_aqua>nether <gray>should be accessible.", ""), "nether", true, Material.NETHERRACK),
+    HARD("Hard", List.of("", "<gray>Toggle whether <dark_aqua>nether <gray>should be accessible.", ""), "hard", true, Material.NETHERRACK),
     EXTREME("Extreme", List.of("", "<gray>Toggle whether the <dark_aqua>extreme version <gray>should be played.", ""), "extreme", true, Material.END_STONE),
     FASTER_RANDOM_TICK("Faster plants growth & decay", null, "fasterRandomTick", false, Material.CACTUS),
     POSITIONS("Positions - /pos", List.of("", "<gray>Toggle whether <dark_aqua>positions <gray>can be set.", ""), "positions", true, Material.LIME_WOOL),
     TRADING("Player trading", List.of("", "<gray>Toggle whether players can <dark_aqua>trade items <gray>between each other.", ""), "trading", false, Material.EMERALD),
     TRADING_COOLDOWN("Player trading cooldown", List.of("", "<gray>Changes cooldown of <dark_aqua>trading<gray>.", ""), "tradingCooldown", 3, Material.EMERALD),
+    ELYTRA("Elytra gliding", List.of("", "<gray>Prevents gliding with an elytra<gray>.", ""), "elytraGliding", true, Material.ELYTRA),
     STATS("Stats", List.of("", "<gray>Toggle whether this round is played with <dark_aqua>stats<gray>.", ""), "stats", true, Material.WRITABLE_BOOK);
 
     private final String displayName;

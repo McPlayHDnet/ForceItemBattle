@@ -52,6 +52,7 @@ public class Gamemanager {
                         .resolver(StandardTags.color())
                         .resolver(StandardTags.gradient())
                         .resolver(StandardTags.reset())
+                        .resolver(StandardTags.newline())
                         .resolver(StandardTags.decorations())
                         .resolver(StandardTags.clickEvent())
                         .resolver(StandardTags.hoverEvent())
@@ -111,7 +112,7 @@ public class Gamemanager {
             gamePlayer.setCurrentMaterial(this.generateMaterial());
         }
 
-        if (!this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.NETHER)) {
+        if (!this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.HARD)) {
             gamePlayer.updateItemDisplay();
         }
 

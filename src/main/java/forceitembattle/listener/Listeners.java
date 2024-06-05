@@ -3,12 +3,17 @@ package forceitembattle.listener;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.manager.Gamemanager;
+import forceitembattle.manager.ScoreboardManager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.preset.GamePreset;
 import forceitembattle.settings.preset.InvSettingsPresets;
 import forceitembattle.util.*;
+import io.papermc.paper.advancement.AdvancementDisplay;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.*;
+import org.bukkit.advancement.Advancement;
 import org.bukkit.block.ShulkerBox;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
@@ -20,10 +25,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.entity.EntityPickupItemEvent;
-import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
-import org.bukkit.event.entity.FoodLevelChangeEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.entity.*;
 import org.bukkit.event.inventory.*;
 import org.bukkit.event.player.*;
 import org.bukkit.inventory.*;
@@ -32,7 +34,12 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.awt.*;
 import java.awt.Color;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class Listeners implements Listener {
 
@@ -167,7 +174,10 @@ public class Listeners implements Listener {
         if (!event.isBackToBack()) {
             Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize(
                     "<green>" + player.getName() + " <gray>" + (event.isSkipped() ? "skipped" : "found") + " <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType()) + " <gold>" + this.plugin.getGamemanager().getMaterialName(itemStack.getType())));
+            forceItemPlayer.setBackToBackStreak(0);
         }
+        new ScoreboardManager(player);
+        int backToBacks = forceItemPlayer.backToBackStreak();
 
         if(this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
             forceItemPlayer.currentTeam().setCurrentScore(forceItemPlayer.currentTeam().getCurrentScore() + 1);
@@ -180,15 +190,18 @@ public class Listeners implements Listener {
 
             if (forceItemPlayer.currentTeam().getPreviousMaterial() == forceItemPlayer.currentTeam().getCurrentMaterial()) {
                 foundNextItem = true;
+                forceItemPlayer.setBackToBackStreak(backToBacks + 1);
 
             } else if (this.plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK) &&
                     hasItemInInventory(this.plugin.getBackpack().getTeamBackpack(forceItemPlayer.currentTeam()), forceItemPlayer.currentTeam().getCurrentMaterial())) {
                 foundNextItem = true;
+                forceItemPlayer.setBackToBackStreak(backToBacks + 1);
 
             } else {
                 for(ForceItemPlayer teamPlayers : forceItemPlayer.currentTeam().getPlayers()) {
                     if(this.hasItemInInventory(teamPlayers.player().getInventory(), forceItemPlayer.currentTeam().getCurrentMaterial())) {
                         foundNextItem = true;
+                        forceItemPlayer.setBackToBackStreak(backToBacks + 1);
                     }
                 }
             }
@@ -204,7 +217,7 @@ public class Listeners implements Listener {
 
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
 
-            if (!this.plugin.getSettings().isSettingEnabled(GameSetting.NETHER)) {
+            if (!this.plugin.getSettings().isSettingEnabled(GameSetting.HARD)) {
                 forceItemPlayer.updateItemDisplay();
             }
 
@@ -216,14 +229,16 @@ public class Listeners implements Listener {
 
             if (forceItemPlayer.previousMaterial() == forceItemPlayer.currentMaterial()) {
                 foundNextItem = true;
+                forceItemPlayer.setBackToBackStreak(backToBacks + 1);
 
             } else if (hasItemInInventory(player.getInventory(), forceItemPlayer.currentMaterial())) {
                 foundNextItem = true;
+                forceItemPlayer.setBackToBackStreak(backToBacks + 1);
 
             } else if (this.plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK) &&
                     hasItemInInventory(this.plugin.getBackpack().getPlayerBackpack(player), forceItemPlayer.currentMaterial())) {
                 foundNextItem = true;
-
+                forceItemPlayer.setBackToBackStreak(backToBacks + 1);
             }
 
             if (!foundNextItem) {
@@ -251,8 +266,18 @@ public class Listeners implements Listener {
         foundNextItemEvent.setBackToBack(true);
         foundNextItemEvent.setSkipped(false);
 
+        int totalItemsInPool = this.plugin.getItemDifficultiesManager().getAllItems().size();
+        int itemsInInventory = Arrays.stream(player.getInventory().getContents())
+                .filter(item -> item != null && !item.getType().isAir() && item.getType() != Material.BARRIER && item.getType() != Material.BUNDLE)
+                .map(ItemStack::getType)
+                .toList().size();
+        int itemsInBackpack = Arrays.stream(this.plugin.getBackpack().getPlayerBackpack(player).getContents()).filter(item -> item != null && !item.getType().isAir() && item.getType() != Material.BARRIER && item.getType() != Material.BUNDLE).map(ItemStack::getType).toList().size();
+        double probabilityDouble = Math.pow(((double) (itemsInInventory + itemsInBackpack) / totalItemsInPool), forceItemPlayer.backToBackStreak());
+        DecimalFormat decimalFormat = new DecimalFormat("#.##");
+
         Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize(
-                "<green>" + player.getName() + " <gray>was lucky to already own <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, foundItem.getType()) + " <gold>" + this.plugin.getGamemanager().getMaterialName(foundItem.getType())));
+                "<green>" + player.getName() + " <gray>was lucky to already own <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, foundItem.getType()) +
+                        " <gold>" + this.plugin.getGamemanager().getMaterialName(foundItem.getType()) + " <dark_gray>» <aqua>" + decimalFormat.format(probabilityDouble * 100) + "%"));
         Bukkit.getPluginManager().callEvent(foundNextItemEvent);
     }
 
@@ -304,6 +329,14 @@ public class Listeners implements Listener {
                 } else {
                     this.plugin.getBackpack().openPlayerBackpack(player);
                 }
+                return;
+            }
+        }
+
+        if (e.getItem().getType() == Material.KNOWLEDGE_BOOK) {
+            if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+                e.setCancelled(true);
+                this.plugin.getAntimatterLocator().locateAntimatter(forceItemPlayer);
                 return;
             }
         }
@@ -577,13 +610,18 @@ public class Listeners implements Listener {
 
     @EventHandler
     public void onDeath(PlayerDeathEvent event) {
+
         Player player = event.getEntity();
+        ForceItemPlayer gamePlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        String plainDeathMessage = PlainTextComponentSerializer.plainText().serialize(Objects.requireNonNull(event.deathMessage()));
+        String plainPlayerName = PlainTextComponentSerializer.plainText().serialize(player.name());
+
+        event.deathMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>[<red>\uD83D\uDC80<dark_gray>] " + plainDeathMessage.replace(plainPlayerName, "<gold>" + player.getName() + "<gray>")));
         if (!event.getKeepInventory()) {
             event.getDrops().removeIf(Gamemanager::isJoker);
             event.getDrops().removeIf(Gamemanager::isBackpack);
         }
 
-        ForceItemPlayer gamePlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
         gamePlayer.removeItemDisplay();
 
         // Automatically respawn player.
@@ -608,7 +646,7 @@ public class Listeners implements Listener {
 
         player.getInventory().setItem(8, new ItemBuilder(Material.BUNDLE).setDisplayName("<dark_gray>» <yellow>Backpack").getItemStack());
 
-        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.NETHER)) {
+        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.HARD)) {
             forceItemPlayer.createItemDisplay();
         }
     }
@@ -699,6 +737,15 @@ public class Listeners implements Listener {
     }
 
     @EventHandler
+    public void onGliding(EntityToggleGlideEvent entityToggleGlideEvent) {
+        if(entityToggleGlideEvent.isGliding()) {
+            if(!this.plugin.getSettings().isSettingEnabled(GameSetting.ELYTRA)) {
+                entityToggleGlideEvent.setCancelled(true);
+            }
+        }
+    }
+
+    @EventHandler
     public void onPlayerDropItem(PlayerDropItemEvent event) {
         if (this.plugin.getGamemanager().isMidGame()) return;
         event.setCancelled(true);
@@ -727,11 +774,34 @@ public class Listeners implements Listener {
             return;
         }
 
-        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.NETHER)) {
+        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.HARD)) {
             player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>Travelling to other dimensions is disabled!"));
             player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
             playerPortalEvent.setCanCreatePortal(false);
             playerPortalEvent.setCancelled(true);
         }
+    }
+
+    @EventHandler
+    public void onAdvancementGrant(PlayerAdvancementDoneEvent playerAdvancementDoneEvent) {
+        Advancement advancement = playerAdvancementDoneEvent.getAdvancement();
+        if(advancement.key().namespace().equals("fib")) {
+            String plainAdvancement = PlainTextComponentSerializer.plainText().serialize(advancement.displayName());
+            String plainAdvancementDescription = PlainTextComponentSerializer.plainText().serialize(Objects.requireNonNull(advancement.getDisplay()).description());
+
+            String advancementType = advancement.getDisplay().frame() == AdvancementDisplay.Frame.CHALLENGE ? "has completed the challenge" : "has made the advancement";
+            String advancementTypeColor = advancement.getDisplay().frame() == AdvancementDisplay.Frame.CHALLENGE ? "<dark_purple>" : "<green>";
+
+            playerAdvancementDoneEvent.message(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>[<yellow>⭐<dark_gray>] <gold>" + playerAdvancementDoneEvent.getPlayer().getName() + " <gray>" + advancementType + " <hover:show_text:'" + advancementTypeColor + plainAdvancement + "<newline>" + advancementTypeColor + plainAdvancementDescription + "'>" + advancementTypeColor + plainAdvancement + "</hover>"));
+            if(advancement.getDisplay().frame() == AdvancementDisplay.Frame.CHALLENGE) {
+                Bukkit.getOnlinePlayers().forEach(players -> {
+                    if(players == playerAdvancementDoneEvent.getPlayer()) return;
+                    players.playSound(players.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1, 1);
+                });
+            }
+        } else {
+            playerAdvancementDoneEvent.message(null);
+        }
+
     }
 }
