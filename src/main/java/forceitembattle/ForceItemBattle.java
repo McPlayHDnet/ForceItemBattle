@@ -11,18 +11,18 @@ import forceitembattle.listener.RecipeListener;
 import forceitembattle.manager.*;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
-import forceitembattle.util.Backpack;
-import forceitembattle.util.DescriptionItem;
-import forceitembattle.util.Timer;
-import forceitembattle.util.WanderingTraderTimer;
+import forceitembattle.util.*;
 import io.papermc.paper.adventure.PaperAdventure;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import javax.naming.Name;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -173,7 +173,7 @@ public final class ForceItemBattle extends JavaPlugin {
             world.setGameRule(GameRule.KEEP_INVENTORY, getSettings().isSettingEnabled(GameSetting.KEEP_INVENTORY));
             getSettings().setSettingEnabled(GameSetting.FASTER_RANDOM_TICK, getSettings().isSettingEnabled(GameSetting.FASTER_RANDOM_TICK));
 
-            world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
+            //world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
             world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
             world.setGameRule(GameRule.SPECTATORS_GENERATE_CHUNKS, false);
             world.setGameRule(GameRule.DO_TRADER_SPAWNING, false);
@@ -227,6 +227,19 @@ public final class ForceItemBattle extends JavaPlugin {
         new Listeners(this);
         new RecipeListener(this);
         new PvPListener(this);
+
+        NamespacedKey namespacedKey = new NamespacedKey(this, "antimatter_locator");
+        ShapedRecipe shapedRecipe = new ShapedRecipe(namespacedKey, new ItemBuilder(Material.KNOWLEDGE_BOOK).setDisplayName("<dark_gray>» <dark_purple>Antimatter Locator").getItemStack());
+        shapedRecipe.shape(
+                " N ",
+                "GQG",
+                " N "
+        );
+        shapedRecipe.setIngredient('N', Material.NETHER_BRICK);
+        shapedRecipe.setIngredient('G', Material.GLOWSTONE_DUST);
+        shapedRecipe.setIngredient('Q', Material.QUARTZ);
+
+        Bukkit.addRecipe(shapedRecipe);
     }
 
     private void initCommands() {

@@ -1,11 +1,9 @@
 package forceitembattle.manager.customrecipe;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.util.ItemBuilder;
 import org.bukkit.Material;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.Recipe;
-import org.bukkit.inventory.RecipeChoice;
-import org.bukkit.inventory.ShapelessRecipe;
+import org.bukkit.inventory.*;
 
 import javax.annotation.Nullable;
 import java.util.function.Function;
@@ -13,6 +11,15 @@ import java.util.function.Predicate;
 import java.util.logging.Level;
 
 public enum FakeRecipe {
+
+    END_STRUCTURE(Material.KNOWLEDGE_BOOK, item ->
+            RecipeBuilder.newBuilder(ShapedRecipe::new)
+                    .apply(shapedRecipe -> shapedRecipe.shape(" N ", "GQG", " N "))
+                    .apply(shapedRecipe -> shapedRecipe.setIngredient('N', Material.NETHER_BRICK))
+                    .apply(shapedRecipe -> shapedRecipe.setIngredient('G', Material.GLOWSTONE_DUST))
+                    .apply(shapedRecipe -> shapedRecipe.setIngredient('Q', Material.QUARTZ))
+                    .build("fib:antimatter_locator", new ItemBuilder(Material.KNOWLEDGE_BOOK).setDisplayName("<dark_gray>» <dark_purple>Antimatter Locator").getItemStack())
+    ),
 
     SUSPICIOUS_STEW(Material.SUSPICIOUS_STEW, item ->
             RecipeBuilder.newBuilder(ShapelessRecipe::new)
