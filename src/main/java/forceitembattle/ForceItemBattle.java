@@ -231,7 +231,7 @@ public final class ForceItemBattle extends JavaPlugin {
         new RecipeListener(this);
         new PvPListener(this);
 
-        NamespacedKey namespacedKey = new NamespacedKey(this, "antimatter_locator");
+        NamespacedKey namespacedKey = new NamespacedKey("fib", "antimatter_locator");
         ShapedRecipe shapedRecipe = new ShapedRecipe(namespacedKey, new ItemBuilder(Material.KNOWLEDGE_BOOK).setDisplayName("<dark_gray>» <dark_purple>Antimatter Locator").getItemStack());
         shapedRecipe.shape(
                 " N ",

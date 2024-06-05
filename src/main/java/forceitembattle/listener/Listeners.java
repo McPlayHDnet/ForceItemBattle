@@ -622,7 +622,6 @@ public class Listeners implements Listener {
             event.getDrops().removeIf(Gamemanager::isBackpack);
         }
 
-        ForceItemPlayer gamePlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
         gamePlayer.removeItemDisplay();
 
         // Automatically respawn player.
@@ -789,11 +788,17 @@ public class Listeners implements Listener {
         if(advancement.key().namespace().equals("fib")) {
             String plainAdvancement = PlainTextComponentSerializer.plainText().serialize(advancement.displayName());
             String plainAdvancementDescription = PlainTextComponentSerializer.plainText().serialize(Objects.requireNonNull(advancement.getDisplay()).description());
-            playerAdvancementDoneEvent.message(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>[<yellow>⭐<dark_gray>] <gold>" + playerAdvancementDoneEvent.getPlayer().getName() + " <gray>has completed the challenge <hover:show_text:'<dark_purple>" + plainAdvancement + "<newline><dark_purple>" + plainAdvancementDescription + "'><dark_purple>" + plainAdvancement + "</hover>"));
-            Bukkit.getOnlinePlayers().forEach(players -> {
-                if(players == playerAdvancementDoneEvent.getPlayer()) return;
-                players.playSound(players.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1, 1);
-            });
+
+            String advancementType = advancement.getDisplay().frame() == AdvancementDisplay.Frame.CHALLENGE ? "has completed the challenge" : "has made the advancement";
+            String advancementTypeColor = advancement.getDisplay().frame() == AdvancementDisplay.Frame.CHALLENGE ? "<dark_purple>" : "<green>";
+
+            playerAdvancementDoneEvent.message(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>[<yellow>⭐<dark_gray>] <gold>" + playerAdvancementDoneEvent.getPlayer().getName() + " <gray>" + advancementType + " <hover:show_text:'" + advancementTypeColor + plainAdvancement + "<newline>" + advancementTypeColor + plainAdvancementDescription + "'>" + advancementTypeColor + plainAdvancement + "</hover>"));
+            if(advancement.getDisplay().frame() == AdvancementDisplay.Frame.CHALLENGE) {
+                Bukkit.getOnlinePlayers().forEach(players -> {
+                    if(players == playerAdvancementDoneEvent.getPlayer()) return;
+                    players.playSound(players.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1, 1);
+                });
+            }
         } else {
             playerAdvancementDoneEvent.message(null);
         }
