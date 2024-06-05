@@ -2,101 +2,84 @@ package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
 import lombok.Getter;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
+import lombok.Setter;
+import net.kyori.adventure.text.Component;
+import org.bukkit.*;
+import org.bukkit.craftbukkit.v1_20_R3.inventory.CraftMerchantCustom;
+import org.bukkit.craftbukkit.v1_20_R3.inventory.CraftMerchantRecipe;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.WanderingTrader;
+import org.bukkit.generator.structure.Structure;
+import org.bukkit.generator.structure.StructureType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.MerchantRecipe;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
+@Setter
+@Getter
 public class WanderingTraderTimer {
 
-    private final Map<ForceItemPlayer, Integer> startTimeMap;
-    private final Map<ForceItemPlayer, BukkitRunnable> taskMap;
-    private final Map<ForceItemPlayer, WanderingTrader> wanderingTraderMap;
-    @Getter
-    private int randomAfterStartSpawnTime;
+    private int randomAfterStartSpawnTime, timer;
 
     public WanderingTraderTimer() {
-        this.startTimeMap = new HashMap<>();
-        this.taskMap = new HashMap<>();
-        this.wanderingTraderMap = new HashMap<>();
         this.randomAfterStartSpawnTime = (new Random().nextInt(4) + 7) * 60; //random number between 7 and 10 -> [7, 10]
+        this.timer += this.randomAfterStartSpawnTime + 1;
     }
 
-    public void startTimer(ForceItemPlayer forceItemPlayer) {
-        if(!this.startTimeMap.containsKey(forceItemPlayer)) {
-            this.startTimeMap.put(forceItemPlayer, randomAfterStartSpawnTime + 1);
-
-            BukkitRunnable bukkitRunnable = new BukkitRunnable() {
-                @Override
-                public void run() {
-                    if (!ForceItemBattle.getInstance().getGamemanager().isMidGame()) {
-                        return;
-                    }
-                    int elapsedSeconds = startTimeMap.get(forceItemPlayer);
-
-                    if(elapsedSeconds == 0) {
-                        spawnWanderingTrader(forceItemPlayer);
-                        startTimeMap.put(forceItemPlayer, 5 * 60);
-                    }
-
-                    elapsedSeconds--;
-                    startTimeMap.put(forceItemPlayer, elapsedSeconds);
+    public void startTimer() {
+        BukkitRunnable bukkitRunnable = new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (!ForceItemBattle.getInstance().getGamemanager().isMidGame()) {
+                    return;
                 }
-            };
+                int elapsedSeconds = timer;
 
-            bukkitRunnable.runTaskTimer(ForceItemBattle.getInstance(), 0L, 20L);
-            this.taskMap.put(forceItemPlayer, bukkitRunnable);
-        }
+                if(elapsedSeconds == 0) {
+                    spawnWanderingTrader();
+                }
+
+                elapsedSeconds--;
+                timer = elapsedSeconds;
+            }
+        };
+
+        bukkitRunnable.runTaskTimer(ForceItemBattle.getInstance(), 0L, 20L);
     }
 
-    public void resetTimer(ForceItemPlayer forceItemPlayer) {
-        this.startTimeMap.remove(forceItemPlayer);
-    }
-
-    public void stopTimer(ForceItemPlayer forceItemPlayer) {
-        this.startTimeMap.remove(forceItemPlayer);
-        BukkitRunnable task = this.taskMap.get(forceItemPlayer);
-        if (task != null) {
-            task.cancel();
-            this.taskMap.remove(forceItemPlayer);
-        }
-    }
-
-    private void spawnWanderingTrader(ForceItemPlayer forceItemPlayer) {
-        Location traderLocation = this.getRandomLocationWithinChunks(forceItemPlayer.player(), 5);
-        WanderingTrader wanderingTrader = (WanderingTrader) forceItemPlayer.player().getWorld().spawnEntity(traderLocation, EntityType.WANDERING_TRADER);
+    public void spawnWanderingTrader() {
+        World world = Bukkit.getWorld("world");
+        Location traderLocation = this.getRandomLocationWithinSpawnChunks(world.getSpawnLocation(), 5);
+        WanderingTrader wanderingTrader = (WanderingTrader) world.spawnEntity(traderLocation.add(0.0, 1.0, 0.0), EntityType.WANDERING_TRADER);
         wanderingTrader.setGlowing(true);
+        wanderingTrader.setInvulnerable(true);
+        wanderingTrader.setAI(false);
+        wanderingTrader.setGravity(true);
         List<MerchantRecipe> merchantRecipes = wanderingTrader.getRecipes();
-        merchantRecipes.forEach(merchantRecipe -> {
-            List<ItemStack> ingredients = merchantRecipe.getIngredients();
+
+        merchantRecipes.forEach(merchantReciper -> {
+            List<ItemStack> ingredients = merchantReciper.getIngredients();
             ingredients.forEach(ingredient -> ingredient.setAmount(1));
-            merchantRecipe.setIngredients(ingredients);
+            merchantReciper.setIngredients(ingredients);
+            merchantReciper.setMaxUses(Integer.MAX_VALUE);
         });
         wanderingTrader.setRecipes(merchantRecipes);
 
-        this.wanderingTraderMap.put(forceItemPlayer, wanderingTrader);
+        ForceItemBattle.getInstance().getGamemanager().forceItemPlayerMap().values().forEach(players -> {
+            players.player().sendMessage(ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold>Position <dark_gray>┃ <gray>The <green>Wandering Trader <gray>just spawned at <dark_aqua>" + (int) traderLocation.getX() + "<gray>, <dark_aqua>" + (int) traderLocation.getY() + "<gray>, <dark_aqua>" + (int) traderLocation.getZ() + this.distance(players.player().getLocation(), traderLocation)));
 
-        forceItemPlayer.player().sendMessage(ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold>Position <dark_gray>┃ <gray>Your <green>Wandering Trader <gray>just spawned at <dark_aqua>" + (int) traderLocation.getX() + "<gray>, <dark_aqua>" + (int) traderLocation.getY() + "<gray>, <dark_aqua>" + (int) traderLocation.getZ() + this.distance(forceItemPlayer.player().getLocation(), traderLocation)));
-        ForceItemBattle.getInstance().getPositionManager().playParticleLine(forceItemPlayer.player(), traderLocation);
+            ForceItemBattle.getInstance().getPositionManager().playParticleLine(players.player(), traderLocation, Color.LIME);
+        });
 
         BukkitRunnable despawnTask = new BukkitRunnable() {
             @Override
             public void run() {
                 wanderingTrader.remove();
-                wanderingTraderMap.remove(forceItemPlayer);
-                forceItemPlayer.player().sendMessage(ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold>Position <dark_gray>┃ <gray>Your <green>Wandering Trader <gray>just despawned! :("));
-                startTimeMap.put(forceItemPlayer, 10 * 60);
-
+                Bukkit.broadcast(ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold>Position <dark_gray>┃ <gray>The <green>Wandering Trader <gray>just despawned! :("));
+                setTimer(5 * 60);
             }
         };
         despawnTask.runTaskLater(ForceItemBattle.getInstance(), 6000L); // 20 ticks per second, 5 minutes = 5 * 60 * 20 ticks
@@ -133,24 +116,18 @@ public class WanderingTraderTimer {
         return "<green>overworld";
     }
 
-    private Location getRandomLocationWithinChunks(Player player, int chunkRadius) {
-        World world = player.getWorld();
-        Location playerLocation = player.getLocation();
+    private Location getRandomLocationWithinSpawnChunks(Location location, int chunkRadius) {
+        World world = location.getWorld();
 
         double offsetX = (Math.random() - 0.5) * chunkRadius * 16 * 2;
         double offsetZ = (Math.random() - 0.5) * chunkRadius * 16 * 2;
 
-        double newX = playerLocation.getX() + offsetX;
-        double newZ = playerLocation.getZ() + offsetZ;
+        double newX = location.getX() + offsetX;
+        double newZ = location.getZ() + offsetZ;
 
         double newY = world.getHighestBlockYAt((int)newX, (int)newZ);
 
-        Location location = new Location(world, newX, newY, newZ);
-        if(location.getBlock().getType() != Material.LAVA) {
-            location.setY(newY + 1);
-            return location;
-        } else {
-            return this.getRandomLocationWithinChunks(player, chunkRadius);
-        }
+        return new Location(world, newX, newY, newZ);
+
     }
 }
