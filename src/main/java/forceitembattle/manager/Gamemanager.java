@@ -112,7 +112,7 @@ public class Gamemanager {
             gamePlayer.setCurrentMaterial(this.generateMaterial());
         }
 
-        if (!this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.NETHER)) {
+        if (!this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.HARD)) {
             gamePlayer.updateItemDisplay();
         }
 

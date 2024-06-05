@@ -1,6 +1,5 @@
 package forceitembattle.listener;
 
-import com.destroystokyo.paper.event.player.PlayerAdvancementCriterionGrantEvent;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.manager.Gamemanager;
@@ -177,6 +176,7 @@ public class Listeners implements Listener {
                     "<green>" + player.getName() + " <gray>" + (event.isSkipped() ? "skipped" : "found") + " <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType()) + " <gold>" + this.plugin.getGamemanager().getMaterialName(itemStack.getType())));
             forceItemPlayer.setBackToBackStreak(0);
         }
+        new ScoreboardManager(player);
         int backToBacks = forceItemPlayer.backToBackStreak();
 
         if(this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
@@ -217,7 +217,7 @@ public class Listeners implements Listener {
 
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
 
-            if (!this.plugin.getSettings().isSettingEnabled(GameSetting.NETHER)) {
+            if (!this.plugin.getSettings().isSettingEnabled(GameSetting.HARD)) {
                 forceItemPlayer.updateItemDisplay();
             }
 
@@ -622,6 +622,7 @@ public class Listeners implements Listener {
             event.getDrops().removeIf(Gamemanager::isBackpack);
         }
 
+        ForceItemPlayer gamePlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
         gamePlayer.removeItemDisplay();
 
         // Automatically respawn player.
@@ -646,7 +647,7 @@ public class Listeners implements Listener {
 
         player.getInventory().setItem(8, new ItemBuilder(Material.BUNDLE).setDisplayName("<dark_gray>» <yellow>Backpack").getItemStack());
 
-        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.NETHER)) {
+        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.HARD)) {
             forceItemPlayer.createItemDisplay();
         }
     }
@@ -774,7 +775,7 @@ public class Listeners implements Listener {
             return;
         }
 
-        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.NETHER)) {
+        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.HARD)) {
             player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>Travelling to other dimensions is disabled!"));
             player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
             playerPortalEvent.setCanCreatePortal(false);

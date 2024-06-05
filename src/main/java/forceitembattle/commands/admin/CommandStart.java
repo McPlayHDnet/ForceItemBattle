@@ -236,7 +236,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
 
             }
 
-            if(!this.plugin.getSettings().isSettingEnabled(GameSetting.NETHER)) {
+            if(!this.plugin.getSettings().isSettingEnabled(GameSetting.HARD)) {
                 forceItemPlayer.createItemDisplay();
             }
 
