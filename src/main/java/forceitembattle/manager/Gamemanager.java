@@ -6,7 +6,6 @@ import forceitembattle.settings.preset.GamePreset;
 import forceitembattle.util.*;
 import lombok.Getter;
 import lombok.Setter;
-import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.kyori.adventure.text.minimessage.tag.standard.StandardTags;
@@ -68,7 +67,7 @@ public class Gamemanager {
     }
 
     public Material generateMaterial() {
-        return this.forceItemBattle.getItemDifficultiesManager().getHardMaterial();
+        return this.forceItemBattle.getItemDifficultiesManager().generateRandomMaterial();
     }
 
     public String getMaterialName(Material material) {

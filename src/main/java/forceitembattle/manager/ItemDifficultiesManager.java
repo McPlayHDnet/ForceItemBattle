@@ -2,65 +2,59 @@ package forceitembattle.manager;
 
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.DescriptionItem;
-import io.papermc.paper.configuration.serializer.ComponentSerializer;
 import lombok.Getter;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import lombok.Setter;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class ItemDifficultiesManager {
 
-    private final ForceItemBattle forceItemBattle;
-
-    private final List<Material> easy;
-    private final List<Material> medium;
-    private final List<Material> hard;
+    private final ForceItemBattle plugin;
 
     private final List<Material> netherItems;
-    private final List<Material> extremeItems;
+    private final List<Material> veryLateItems;
 
     @Getter
     private HashMap<Material, DescriptionItem> descriptionItems;
 
-    public Material getEasyMaterial() {
-        Random random = new Random();
-        return easy.get(random.nextInt(easy.size()));
+    private void setupStates() {
+        // if this is a toggle setting, just change unlockedAtMinutes to 0 for all
+        State.EARLY.setUnlockedAtMinutes(0);
+        State.MID.setUnlockedAtMinutes(5);
+        State.LATE.setUnlockedAtMinutes(10);
     }
 
-    public Material getMediumMaterial() {
-        Random random = new Random();
-        List<Material> newList = Stream.of(easy, medium)
-                .flatMap(List::stream)
-                .toList();
-        return newList.get(random.nextInt(newList.size()));
+    public List<Material> getAvailableItems() {
+        int gameTimeMinutes = this.plugin.getTimer().getTime() / 60;
+        List<Material> items = new ArrayList<>();
+
+        for (State state : State.VALUES) {
+            if (gameTimeMinutes < state.getUnlockedAtMinutes()) {
+                continue;
+            }
+
+            items.addAll(state.getItems());
+        }
+
+        return items;
     }
 
-    public Material getHardMaterial() {
+    public Material generateRandomMaterial() {
         Random random = new Random();
-        List<Material> items = new ArrayList<>(Stream.of(easy, medium, hard)
-                .flatMap(List::stream)
-                .toList());
+        List<Material> items = getAvailableItems();
 
         filterDisabledItems(items);
 
         return items.get(random.nextInt(items.size()));
-    }
-
-    public boolean isItemInDescriptionList(Material material) {
-        return this.getDescriptionItems().containsKey(material);
     }
 
     public boolean itemHasDescription(Material material) {
@@ -68,18 +62,16 @@ public class ItemDifficultiesManager {
     }
 
     public List<String> getDescriptionItemLines(Material material) {
-        List<String> lines = null;
-        if(this.isItemInDescriptionList(material)) {
-            if (this.itemHasDescription(material)) {
-                lines = this.getDescriptionItems().get(material)
-                        .lines()
-                        .stream()
-                        .map(line -> ChatColor.translateAlternateColorCodes('&', line))
-                        .toList();
-                // lines = this.getDescriptionItems().get(material).lines();
-            } else {
-                throw new NullPointerException(material.name() + " does not have a description");
-            }
+        List<String> lines;
+        if (this.itemHasDescription(material)) {
+            lines = this.getDescriptionItems().get(material)
+                    .lines()
+                    .stream()
+                    .map(line -> ChatColor.translateAlternateColorCodes('&', line))
+                    .toList();
+            // lines = this.getDescriptionItems().get(material).lines();
+        } else {
+            throw new NullPointerException(material.name() + " does not have a description");
         }
         return lines;
     }
@@ -92,7 +84,7 @@ public class ItemDifficultiesManager {
     private Map<Material, String> readItemUnicodes(boolean isChatOrTab) {
         Map<Material, String> itemsUnicode = new HashMap<>();
 
-        try (FileReader fileReader = new FileReader(new File(this.forceItemBattle.getDataFolder(), "unicodeItems.json"))) {
+        try (FileReader fileReader = new FileReader(new File(this.plugin.getDataFolder(), "unicodeItems.json"))) {
             Gson gson = new Gson();
             Type mapType = new TypeToken<Map<String, String>[]>(){}.getType();
             Map<String, String>[] items = gson.fromJson(fileReader, mapType);
@@ -129,38 +121,26 @@ public class ItemDifficultiesManager {
     }
 
     /**
-     * @return Copy of all items from the settings
-     */
-    public Set<Material> getAllItems() {
-        Set<Material> items = Stream.of(this.easy, this.medium, this.hard)
-                .flatMap(List::stream).collect(Collectors.toSet());
-
-        filterDisabledItems(items);
-
-        return items;
-    }
-
-    /**
      * Filter out items disabled by the settings
      */
     private void filterDisabledItems(Collection<Material> items) {
-        if (!forceItemBattle.getSettings().isSettingEnabled(GameSetting.HARD)) {
+        if (!plugin.getSettings().isSettingEnabled(GameSetting.HARD)) {
             this.netherItems.forEach(items::remove);
 
-            // End items cannot be accessed without nether (unless you somehow find full portal lol)
-            this.extremeItems.forEach(items::remove);
+            this.veryLateItems.forEach(items::remove);
 
-        } else if (!forceItemBattle.getSettings().isSettingEnabled(GameSetting.EXTREME)) {
-            this.extremeItems.forEach(items::remove);
+        } else if (!plugin.getSettings().isSettingEnabled(GameSetting.EXTREME)) {
+            this.veryLateItems.forEach(items::remove);
         }
     }
 
     public boolean itemInList(Material material) {
-        return this.getAllItems().contains(material);
+        return this.getAvailableItems().contains(material);
     }
 
+
     public ItemDifficultiesManager(ForceItemBattle forceItemBattle) {
-        this.forceItemBattle = forceItemBattle;
+        this.plugin = forceItemBattle;
 
         this.descriptionItems = new HashMap<>();
         this.netherItems = List.of(
@@ -277,7 +257,7 @@ public class ItemDifficultiesManager {
         );
 
         // list contains hard items that are very unrealistic to obtain in 45 min
-        this.extremeItems = List.of(
+        this.veryLateItems = List.of(
                 Material.BURN_POTTERY_SHERD,
                 Material.CALIBRATED_SCULK_SENSOR,
                 Material.COPPER_ORE,
@@ -331,7 +311,8 @@ public class ItemDifficultiesManager {
         );
 
 
-        this.easy = List.of(
+        // Ideally these should be in the enum constructors, but here is fine, I guess.
+        State.EARLY.setItems(List.of(
                 Material.ACACIA_BOAT,
                 Material.ACACIA_BUTTON,
                 Material.ACACIA_CHEST_BOAT,
@@ -935,9 +916,9 @@ public class ItemDifficultiesManager {
                 Material.YELLOW_STAINED_GLASS_PANE,
                 Material.YELLOW_TERRACOTTA,
                 Material.YELLOW_WOOL
-        );
+        ));
 
-        this.medium = List.of(
+        State.MID.setItems(List.of(
                 Material.ANVIL,
                 Material.AXOLOTL_BUCKET,
                 Material.AZALEA,
@@ -1202,9 +1183,9 @@ public class ItemDifficultiesManager {
                 Material.WARPED_WART_BLOCK,
                 Material.WEEPING_VINES,
                 Material.WET_SPONGE
-        );
+        ));
 
-        this.hard = List.of(
+        State.LATE.setItems(List.of(
                 Material.AMETHYST_CLUSTER,
                 Material.ANCIENT_DEBRIS,
                 Material.ANGLER_POTTERY_SHERD,
@@ -1421,6 +1402,29 @@ public class ItemDifficultiesManager {
                 Material.WILD_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Material.YELLOW_CANDLE,
                 Material.YELLOW_SHULKER_BOX
-        );
+        ));
+
+        setupStates();
+    }
+
+    @Getter
+    private enum State {
+
+        EARLY,
+
+        MID,
+
+        LATE,
+
+        ;
+
+        static final State[] VALUES = values();
+
+        @Setter
+        private List<Material> items = new ArrayList<>();
+
+        @Setter
+        private int unlockedAtMinutes;
+
     }
 }
