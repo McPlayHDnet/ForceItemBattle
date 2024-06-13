@@ -60,6 +60,12 @@ public class ItemDifficultiesManager {
                 .collect(Collectors.toSet());
     }
 
+    public Set<Material> getAllItems() {
+        return Stream.of(State.EARLY.getItems(), State.MID.getItems(), State.LATE.getItems())
+                .flatMap(List::stream)
+                .collect(Collectors.toSet());
+    }
+
     public Material generateRandomMaterial() {
         Random random = new Random();
         List<Material> items = getAvailableItems();
@@ -154,6 +160,10 @@ public class ItemDifficultiesManager {
 
     public boolean itemInList(Material material) {
         return this.getAvailableItems().contains(material);
+    }
+
+    public boolean itemInAllLists(Material material) {
+        return this.getAllItems().contains(material);
     }
 
 
