@@ -34,16 +34,17 @@ public class ItemDifficultiesManager {
     private void setupStates() {
         // if this is a toggle setting, just change unlockedAtMinutes to 0 for all
         State.EARLY.setUnlockedAtMinutes(0);
-        State.MID.setUnlockedAtMinutes(5);
+        State.MID.setUnlockedAtMinutes(15);
         State.LATE.setUnlockedAtMinutes(10);
     }
 
     public List<Material> getAvailableItems() {
         int gameTimeMinutes = this.plugin.getTimer().getTime() / 60;
+        int gameStartMinutes = this.plugin.getGamemanager().getGameStartCountdown() / 60;
         List<Material> items = new ArrayList<>();
 
         for (State state : State.VALUES) {
-            if (gameTimeMinutes < state.getUnlockedAtMinutes()) {
+            if ((gameStartMinutes - gameTimeMinutes) < state.getUnlockedAtMinutes()) {
                 continue;
             }
 
