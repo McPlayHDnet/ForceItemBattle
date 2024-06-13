@@ -292,14 +292,33 @@ public class Listeners implements Listener {
                 .filter(item -> item != null && !item.getType().isAir() && item.getType() != Material.BARRIER && item.getType() != Material.BUNDLE)
                 .map(ItemStack::getType)
                 .toList().size();
-        int itemsInBackpack = Arrays.stream(this.plugin.getBackpack().getPlayerBackpack(player).getContents()).filter(item -> item != null && !item.getType().isAir() && item.getType() != Material.BARRIER && item.getType() != Material.BUNDLE).map(ItemStack::getType).toList().size();
-        double probabilityDouble = Math.pow(((double) (itemsInInventory + itemsInBackpack) / totalItemsInPool), forceItemPlayer.backToBackStreak());
+        Inventory backpack = this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? this.plugin.getBackpack().getTeamBackpack(forceItemPlayer.currentTeam()) : this.plugin.getBackpack().getPlayerBackpack(player);
+        int itemsInBackpack = Arrays.stream(backpack.getContents()).filter(item -> item != null && !item.getType().isAir() && item.getType() != Material.BARRIER && item.getType() != Material.BUNDLE).map(ItemStack::getType).toList().size();
+        int itemsInShulkerPlayer = Arrays.stream(player.getInventory().getContents())
+                .filter(item -> item != null && !item.getType().isAir() && item.getType().name().contains("SHULKER_BOX"))
+                .mapToInt(this::countItemsInShulkerBox)
+                .sum();
+        int itemsInShulkerBackpack = Arrays.stream(backpack.getContents())
+                .filter(item -> item != null && !item.getType().isAir() && item.getType().name().contains("SHULKER_BOX"))
+                .mapToInt(this::countItemsInShulkerBox)
+                .sum();
+        double probabilityDouble = Math.pow(((double) (itemsInInventory + itemsInBackpack + itemsInShulkerPlayer + itemsInShulkerBackpack) / totalItemsInPool), forceItemPlayer.backToBackStreak());
         DecimalFormat decimalFormat = new DecimalFormat("#.##");
 
         Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize(
                 "<green>" + player.getName() + " <gray>was lucky to already own <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, foundItem.getType()) +
                         " <gold>" + this.plugin.getGamemanager().getMaterialName(foundItem.getType()) + " <dark_gray>» <aqua>" + decimalFormat.format(probabilityDouble * 100) + "%"));
         Bukkit.getPluginManager().callEvent(foundNextItemEvent);
+    }
+
+    private int countItemsInShulkerBox(ItemStack shulkerBox) {
+        BlockStateMeta blockStateMeta = (BlockStateMeta) shulkerBox.getItemMeta();
+        if(blockStateMeta != null && blockStateMeta.getBlockState() instanceof ShulkerBox box) {
+            return (int) Arrays.stream(box.getInventory().getContents())
+                    .filter(item -> item != null && !item.getType().isAir() && item.getType() != Material.BARRIER && item.getType() != Material.BUNDLE)
+                    .count();
+        }
+        return 0;
     }
 
     public static boolean hasItemInInventory(Inventory inventory, Material targetMaterial) {
