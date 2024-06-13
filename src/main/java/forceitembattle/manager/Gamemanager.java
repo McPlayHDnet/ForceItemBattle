@@ -39,6 +39,14 @@ public class Gamemanager {
     @Getter
     private MiniMessage miniMessage;
 
+    @Getter
+    @Setter
+    private long gameStartTime;
+
+    @Getter
+    @Setter
+    private int gameStartCountdown;
+
     public Gamemanager(ForceItemBattle forceItemBattle) {
         this.forceItemBattle = forceItemBattle;
         this.currentGameState = GameState.PRE_GAME;
@@ -122,6 +130,8 @@ public class Gamemanager {
         this.setCurrentGameState(GameState.END_GAME);
 
         Bukkit.getOnlinePlayers().forEach(player -> {
+            ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
+
             player.setHealth(20);
             player.setSaturation(20);
             player.getInventory().clear();
@@ -141,7 +151,6 @@ public class Gamemanager {
                 Map<UUID, ForceItemPlayer> sortedMapDesc = this.sortByValue(this.forceItemPlayerMap(), false);
                 Map<ForceItemPlayer, Integer> placesMap = this.calculatePlaces(sortedMapDesc);
 
-                ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
                 ForceItemPlayerStats forceItemPlayerStats = this.forceItemBattle.getStatsManager().playerStats(forceItemPlayer.player().getName());
                 this.forceItemBattle.getStatsManager().addToStats(PlayerStat.TRAVELLED, forceItemPlayerStats, this.forceItemBattle.getStatsManager().calculateDistance(forceItemPlayer.player()));
 
@@ -153,6 +162,13 @@ public class Gamemanager {
                     this.forceItemBattle.getStatsManager().addToStats(PlayerStat.GAMES_WON, forceItemPlayerStats, 1);
                 }
             }
+
+            forceItemBattle.getAchievementManager().achievementsList().forEach(achievement -> {
+
+                if(achievement.checkRequirements(forceItemPlayer.player(), null)) {
+                    Bukkit.getScheduler().scheduleSyncDelayedTask(forceItemBattle, () -> achievement.grantTo(forceItemPlayer), 0L);
+                }
+            });
         });
     }
 

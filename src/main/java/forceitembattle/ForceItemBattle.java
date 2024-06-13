@@ -70,6 +70,8 @@ public final class ForceItemBattle extends JavaPlugin {
     @Getter
     private AntimatterLocator antimatterLocator;
     @Getter
+    private AchievementManager achievementManager;
+    @Getter
     @Setter
     private Location spawnLocation;
 
@@ -164,6 +166,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.teamManager = new TeamsManager(this);
         this.tradingManager = new TradingManager(this);
         this.commandsManager = new CommandsManager(this);
+        this.achievementManager = new AchievementManager(this);
         this.wanderingTraderTimer = new WanderingTraderTimer();
         this.antimatterLocator = new AntimatterLocator();
 

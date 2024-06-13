@@ -75,6 +75,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
         }
 
         this.plugin.getTimer().setTime(countdown);
+        this.plugin.getGamemanager().setGameStartCountdown(countdown);
         this.plugin.getGamemanager().initializeMats();
 
         if (gamePreset == null) {
@@ -246,6 +247,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
 
         });
         this.plugin.getWanderingTraderTimer().startTimer();
+        this.plugin.getGamemanager().setGameStartTime(System.currentTimeMillis());
         Bukkit.getWorld("world").setTime(0);
 
         this.plugin.getGamemanager().setCurrentGameState(GameState.MID_GAME);
