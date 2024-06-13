@@ -115,6 +115,9 @@ public class StatsManager {
 
             if(!statsList.isEmpty()) {
                 for(ForceItemPlayerStats stats : statsList) {
+                    if(stats.achievementsDone() == null) {
+                        stats.setAchievementsDone(new ArrayList<>());
+                    }
                     this.playerStats.put(stats.userName(), stats);
                 }
             }
@@ -213,7 +216,7 @@ public class StatsManager {
     public void createPlayerStats(ForceItemPlayer forceItemPlayer) {
         if(this.playerExists(forceItemPlayer.player().getName())) return;
 
-        ForceItemPlayerStats forceItemPlayerStats = new ForceItemPlayerStats(forceItemPlayer.player().getName(), 0, 0.0, 0, 0, 0);
+        ForceItemPlayerStats forceItemPlayerStats = new ForceItemPlayerStats(forceItemPlayer.player().getName(), 0, 0.0, 0, 0, 0, new ArrayList<>());
 
         this.playerStats.put(forceItemPlayer.player().getName(), forceItemPlayerStats);
         this.saveStats();

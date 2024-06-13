@@ -2,7 +2,6 @@ package forceitembattle.commands.player;
 
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
-import forceitembattle.settings.GameSetting;
 import forceitembattle.util.DescriptionItem;
 import forceitembattle.util.ForceItemPlayer;
 import org.bukkit.Material;
@@ -49,7 +48,7 @@ public class CommandInfo extends CustomCommand implements CustomTabCompleter {
         }
 
         DescriptionItem descriptionItem;
-        if (this.plugin.getItemDifficultiesManager().isItemInDescriptionList(item.getType())) {
+        if (this.plugin.getItemDifficultiesManager().itemHasDescription(item.getType())) {
             descriptionItem = this.plugin.getItemDifficultiesManager().getDescriptionItems().get(item.getType());
             if (descriptionItem.lines() != null) {
                 this.plugin.getItemDifficultiesManager().getDescriptionItemLines(descriptionItem.material()).forEach(player::sendMessage);

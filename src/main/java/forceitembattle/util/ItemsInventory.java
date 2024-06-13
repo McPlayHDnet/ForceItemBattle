@@ -2,14 +2,12 @@ package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -128,7 +126,7 @@ public class ItemsInventory extends InventoryBuilder {
                         pages.put(initialPages, itemStackHashMap);
                     }
 
-                    itemStackHashMap.put(startSlot, new ItemBuilder(materials).setGlowing((forceItemBattle.getItemDifficultiesManager().itemInList(materials))).setLoreLegacy(forceItemBattle.getItemDifficultiesManager().getDescriptionItemLines(materials)).addItemFlags(ItemFlag.values()).getItemStack());
+                    itemStackHashMap.put(startSlot, new ItemBuilder(materials).setGlowing((forceItemBattle.getItemDifficultiesManager().itemInAllLists(materials))).setLoreLegacy(forceItemBattle.getItemDifficultiesManager().getDescriptionItemLines(materials)).addItemFlags(ItemFlag.values()).getItemStack());
 
                     startSlot++;
 
@@ -146,7 +144,7 @@ public class ItemsInventory extends InventoryBuilder {
                             pages.put(initialPages, itemStackHashMap);
                         }
 
-                        itemStackHashMap.put(startSlot, new ItemBuilder(materials).setGlowing((forceItemBattle.getItemDifficultiesManager().itemInList(materials))).setLoreLegacy(forceItemBattle.getItemDifficultiesManager().getDescriptionItemLines(materials)).addItemFlags(ItemFlag.values()).getItemStack());
+                        itemStackHashMap.put(startSlot, new ItemBuilder(materials).setGlowing((forceItemBattle.getItemDifficultiesManager().itemInAllLists(materials))).setLoreLegacy(forceItemBattle.getItemDifficultiesManager().getDescriptionItemLines(materials)).addItemFlags(ItemFlag.values()).getItemStack());
 
                         startSlot++;
 
@@ -165,7 +163,7 @@ public class ItemsInventory extends InventoryBuilder {
                             pages.put(initialPages, itemStackHashMap);
                         }
 
-                        itemStackHashMap.put(startSlot, new ItemBuilder(materials).setGlowing(forceItemBattle.getItemDifficultiesManager().itemInList(materials)).setLoreLegacy(forceItemBattle.getItemDifficultiesManager().getDescriptionItemLines(materials)).addItemFlags(ItemFlag.values()).getItemStack());
+                        itemStackHashMap.put(startSlot, new ItemBuilder(materials).setGlowing(forceItemBattle.getItemDifficultiesManager().itemInAllLists(materials)).setLoreLegacy(forceItemBattle.getItemDifficultiesManager().getDescriptionItemLines(materials)).addItemFlags(ItemFlag.values()).getItemStack());
 
                         startSlot++;
 
@@ -178,13 +176,13 @@ public class ItemsInventory extends InventoryBuilder {
                     }
 
                 } else if(currentFilter == Material.LIGHT_BLUE_DYE) {
-                    if(forceItemBattle.getItemDifficultiesManager().itemInList(materials) && forceItemBattle.getItemDifficultiesManager().itemHasDescription(materials)) {
+                    if(forceItemBattle.getItemDifficultiesManager().itemInAllLists(materials) && forceItemBattle.getItemDifficultiesManager().itemHasDescription(materials)) {
                         if (!pages.containsKey(initialPages)) {
                             itemStackHashMap = new HashMap<>();
                             pages.put(initialPages, itemStackHashMap);
                         }
 
-                        itemStackHashMap.put(startSlot, new ItemBuilder(materials).setGlowing(forceItemBattle.getItemDifficultiesManager().itemInList(materials)).setLoreLegacy(forceItemBattle.getItemDifficultiesManager().getDescriptionItemLines(materials)).addItemFlags(ItemFlag.values()).getItemStack());
+                        itemStackHashMap.put(startSlot, new ItemBuilder(materials).setGlowing(forceItemBattle.getItemDifficultiesManager().itemInAllLists(materials)).setLoreLegacy(forceItemBattle.getItemDifficultiesManager().getDescriptionItemLines(materials)).addItemFlags(ItemFlag.values()).getItemStack());
 
                         startSlot++;
 
@@ -197,7 +195,7 @@ public class ItemsInventory extends InventoryBuilder {
                     }
 
                 } else if(currentFilter == Material.GRAY_DYE) {
-                    if(!forceItemBattle.getItemDifficultiesManager().itemInList(materials)) {
+                    if(!forceItemBattle.getItemDifficultiesManager().itemInAllLists(materials)) {
                         if (!pages.containsKey(initialPages)) {
                             itemStackHashMap = new HashMap<>();
                             pages.put(initialPages, itemStackHashMap);

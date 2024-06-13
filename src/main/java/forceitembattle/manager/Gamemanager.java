@@ -6,7 +6,6 @@ import forceitembattle.settings.preset.GamePreset;
 import forceitembattle.util.*;
 import lombok.Getter;
 import lombok.Setter;
-import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.kyori.adventure.text.minimessage.tag.standard.StandardTags;
@@ -40,6 +39,17 @@ public class Gamemanager {
     @Getter
     private MiniMessage miniMessage;
 
+    @Getter
+    @Setter
+    private long gameStartTime;
+
+    /**
+     * Total game duration (seconds).
+     */
+    @Getter
+    @Setter
+    private int gameDuration;
+
     public Gamemanager(ForceItemBattle forceItemBattle) {
         this.forceItemBattle = forceItemBattle;
         this.currentGameState = GameState.PRE_GAME;
@@ -68,7 +78,7 @@ public class Gamemanager {
     }
 
     public Material generateMaterial() {
-        return this.forceItemBattle.getItemDifficultiesManager().getHardMaterial();
+        return this.forceItemBattle.getItemDifficultiesManager().generateRandomMaterial();
     }
 
     public String getMaterialName(Material material) {
@@ -119,21 +129,32 @@ public class Gamemanager {
         this.forceItemBattle.getTimer().sendActionBar();
     }
 
+    public void giveSpectatorItems(Player player) {
+        player.getInventory().setItem(1, new ItemBuilder(Material.LIME_DYE).setDisplayName("<dark_gray>» <green>Achievements").getItemStack());
+        player.getInventory().setItem(3, new ItemBuilder(Material.COMPASS).setDisplayName("<dark_gray>» <yellow>Teleporter").getItemStack());
+        player.getInventory().setItem(5, new ItemBuilder(Material.GRASS_BLOCK).setDisplayName("<dark_gray>» <dark_green>Overworld").getItemStack());
+        player.getInventory().setItem(6, new ItemBuilder(Material.NETHERRACK).setDisplayName("<dark_gray>» <red>Nether").getItemStack());
+        player.getInventory().setItem(7, new ItemBuilder(Material.ENDER_EYE).setDisplayName("<dark_gray>» <dark_purple>End").getItemStack());
+    }
+
     public void finishGame() {
         this.setCurrentGameState(GameState.END_GAME);
 
         Bukkit.getOnlinePlayers().forEach(player -> {
+            ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
+
             player.setHealth(20);
             player.setSaturation(20);
             player.getInventory().clear();
             player.setLevel(0);
             player.setExp(0);
             player.teleport(Bukkit.getWorld("world").getSpawnLocation());
-            player.setGameMode(GameMode.ADVENTURE);
+            player.setGameMode(GameMode.CREATIVE);
             player.getPassengers().forEach(Entity::remove);
             player.setPlayerListName(player.getName());
-            player.setAllowFlight(true);
-            player.setFlySpeed(0.1f);
+
+            this.giveSpectatorItems(player);
+
             if (player.isOp()) {
                 player.sendMessage(ChatColor.RED + "Use /result to see the results from every player");
             }
@@ -142,7 +163,6 @@ public class Gamemanager {
                 Map<UUID, ForceItemPlayer> sortedMapDesc = this.sortByValue(this.forceItemPlayerMap(), false);
                 Map<ForceItemPlayer, Integer> placesMap = this.calculatePlaces(sortedMapDesc);
 
-                ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
                 ForceItemPlayerStats forceItemPlayerStats = this.forceItemBattle.getStatsManager().playerStats(forceItemPlayer.player().getName());
                 this.forceItemBattle.getStatsManager().addToStats(PlayerStat.TRAVELLED, forceItemPlayerStats, this.forceItemBattle.getStatsManager().calculateDistance(forceItemPlayer.player()));
 
@@ -154,6 +174,13 @@ public class Gamemanager {
                     this.forceItemBattle.getStatsManager().addToStats(PlayerStat.GAMES_WON, forceItemPlayerStats, 1);
                 }
             }
+
+            forceItemBattle.getAchievementManager().achievementsList().forEach(achievement -> {
+
+                if(achievement.checkRequirements(forceItemPlayer.player(), null)) {
+                    Bukkit.getScheduler().scheduleSyncDelayedTask(forceItemBattle, () -> achievement.grantTo(forceItemPlayer), 0L);
+                }
+            });
         });
     }
 
@@ -281,7 +308,7 @@ public class Gamemanager {
     public static ItemStack getJokers(int amount) {
         return new ItemBuilder(JOKER_MATERIAL)
                 .setAmount(amount)
-                .setDisplayName("<dark_gray>» <dark_purple>Skip")
+                .setDisplayName("<dark_gray>» <dark_purple>Joker")
                 .getItemStack();
     }
 

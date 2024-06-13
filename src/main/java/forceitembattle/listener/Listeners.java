@@ -3,15 +3,15 @@ package forceitembattle.listener;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.manager.Gamemanager;
-import forceitembattle.manager.ScoreboardManager;
 import forceitembattle.settings.GameSetting;
+import forceitembattle.settings.achievements.AchievementInventory;
 import forceitembattle.settings.preset.GamePreset;
 import forceitembattle.settings.preset.InvSettingsPresets;
 import forceitembattle.util.*;
 import io.papermc.paper.advancement.AdvancementDisplay;
-import net.kyori.adventure.text.Component;
+import io.papermc.paper.event.player.AsyncChatEvent;
+import io.papermc.paper.event.player.PlayerTradeEvent;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
-import org.apache.commons.lang.WordUtils;
 import org.bukkit.*;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.block.ShulkerBox;
@@ -20,7 +20,6 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -30,16 +29,11 @@ import org.bukkit.event.inventory.*;
 import org.bukkit.event.player.*;
 import org.bukkit.inventory.*;
 import org.bukkit.inventory.meta.BlockStateMeta;
-import org.bukkit.scheduler.BukkitRunnable;
 
-import java.awt.*;
-import java.awt.Color;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class Listeners implements Listener {
 
@@ -61,6 +55,14 @@ public class Listeners implements Listener {
                 player.setLevel(0);
                 player.setExp(0);
                 player.setGameMode(GameMode.SPECTATOR);
+
+                /** todo
+                this.plugin.getGamemanager().giveSpectatorItems(player);
+
+                this.plugin.getGamemanager().forceItemPlayerMap().values().forEach(gamePlayers -> {
+                    gamePlayers.player().hidePlayer(this.plugin, player);
+                });
+                **/
             } else {
                 forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
                 player.showBossBar(this.plugin.getTimer().getBossBar().get(event.getPlayer().getUniqueId()));
@@ -75,6 +77,8 @@ public class Listeners implements Listener {
             player.setHealth(20);
             player.setFoodLevel(20);
             player.setGameMode(GameMode.ADVENTURE);
+
+            player.getInventory().setItem(4, new ItemBuilder(Material.LIME_DYE).setDisplayName("<dark_gray>» <green>Achievements").getItemStack());
 
         }
         event.joinMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<green>» <yellow>" + player.getName() + " <green>joined"));
@@ -142,6 +146,7 @@ public class Listeners implements Listener {
 
     @EventHandler
     public void onMove(PlayerMoveEvent playerMoveEvent) {
+        Player player = playerMoveEvent.getPlayer();
         if(this.plugin.getGamemanager().isPreGame() || this.plugin.getGamemanager().isPausedGame()) {
             Location from = playerMoveEvent.getFrom();
             Location to = playerMoveEvent.getTo();
@@ -155,6 +160,17 @@ public class Listeners implements Listener {
                 Location newLocation = new Location(from.getWorld(), newX, from.getY(), newZ, (float) newYaw, from.getPitch());
                 playerMoveEvent.setTo(newLocation);
             }
+            return;
+        }
+
+        if(this.plugin.getGamemanager().isMidGame()) {
+            ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+            this.plugin.getAchievementManager().achievementsList().forEach(achievement -> {
+
+                if(achievement.checkRequirements(player, playerMoveEvent)) {
+                    Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, () -> achievement.grantTo(forceItemPlayer), 0L);
+                }
+            });
         }
     }
 
@@ -176,12 +192,11 @@ public class Listeners implements Listener {
                     "<green>" + player.getName() + " <gray>" + (event.isSkipped() ? "skipped" : "found") + " <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType()) + " <gold>" + this.plugin.getGamemanager().getMaterialName(itemStack.getType())));
             forceItemPlayer.setBackToBackStreak(0);
         }
-        new ScoreboardManager(player);
         int backToBacks = forceItemPlayer.backToBackStreak();
 
         if(this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
             forceItemPlayer.currentTeam().setCurrentScore(forceItemPlayer.currentTeam().getCurrentScore() + 1);
-            forceItemPlayer.currentTeam().addFoundItemToList(new ForceItem(itemStack.getType(), this.plugin.getTimer().formatSeconds(this.plugin.getTimer().getTime()), event.isSkipped()));
+            forceItemPlayer.currentTeam().addFoundItemToList(new ForceItem(itemStack.getType(), this.plugin.getTimer().formatSeconds(this.plugin.getTimer().getTimeLeft()), System.currentTimeMillis(), event.isBackToBack(), event.isSkipped()));
             forceItemPlayer.currentTeam().setCurrentMaterial(this.plugin.getGamemanager().generateMaterial());
 
             forceItemPlayer.currentTeam().getPlayers().forEach(players -> players.player().playSound(players.player().getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1));
@@ -212,7 +227,7 @@ public class Listeners implements Listener {
 
         } else {
             forceItemPlayer.setCurrentScore(forceItemPlayer.currentScore() + 1);
-            forceItemPlayer.addFoundItemToList(new ForceItem(itemStack.getType(), this.plugin.getTimer().formatSeconds(this.plugin.getTimer().getTime()), event.isSkipped()));
+            forceItemPlayer.addFoundItemToList(new ForceItem(itemStack.getType(), this.plugin.getTimer().formatSeconds(this.plugin.getTimer().getTimeLeft()), System.currentTimeMillis(), event.isBackToBack(), event.isSkipped()));
             forceItemPlayer.setCurrentMaterial(this.plugin.getGamemanager().generateMaterial());
 
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
@@ -241,6 +256,13 @@ public class Listeners implements Listener {
                 forceItemPlayer.setBackToBackStreak(backToBacks + 1);
             }
 
+            this.plugin.getAchievementManager().achievementsList().forEach(achievement -> {
+
+                if(achievement.checkRequirements(player, event)) {
+                    Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, () -> achievement.grantTo(forceItemPlayer), 0L);
+                }
+            });
+
             if (!foundNextItem) {
                 return;
             }
@@ -266,19 +288,38 @@ public class Listeners implements Listener {
         foundNextItemEvent.setBackToBack(true);
         foundNextItemEvent.setSkipped(false);
 
-        int totalItemsInPool = this.plugin.getItemDifficultiesManager().getAllItems().size();
+        int totalItemsInPool = this.plugin.getItemDifficultiesManager().getAvailableItems().size();
         int itemsInInventory = Arrays.stream(player.getInventory().getContents())
                 .filter(item -> item != null && !item.getType().isAir() && item.getType() != Material.BARRIER && item.getType() != Material.BUNDLE)
                 .map(ItemStack::getType)
                 .toList().size();
-        int itemsInBackpack = Arrays.stream(this.plugin.getBackpack().getPlayerBackpack(player).getContents()).filter(item -> item != null && !item.getType().isAir() && item.getType() != Material.BARRIER && item.getType() != Material.BUNDLE).map(ItemStack::getType).toList().size();
-        double probabilityDouble = Math.pow(((double) (itemsInInventory + itemsInBackpack) / totalItemsInPool), forceItemPlayer.backToBackStreak());
+        Inventory backpack = this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? this.plugin.getBackpack().getTeamBackpack(forceItemPlayer.currentTeam()) : this.plugin.getBackpack().getPlayerBackpack(player);
+        int itemsInBackpack = Arrays.stream(backpack.getContents()).filter(item -> item != null && !item.getType().isAir() && item.getType() != Material.BARRIER && item.getType() != Material.BUNDLE).map(ItemStack::getType).toList().size();
+        int itemsInShulkerPlayer = Arrays.stream(player.getInventory().getContents())
+                .filter(item -> item != null && !item.getType().isAir() && item.getType().name().contains("SHULKER_BOX"))
+                .mapToInt(this::countItemsInShulkerBox)
+                .sum();
+        int itemsInShulkerBackpack = Arrays.stream(backpack.getContents())
+                .filter(item -> item != null && !item.getType().isAir() && item.getType().name().contains("SHULKER_BOX"))
+                .mapToInt(this::countItemsInShulkerBox)
+                .sum();
+        double probabilityDouble = Math.pow(((double) (itemsInInventory + itemsInBackpack + itemsInShulkerPlayer + itemsInShulkerBackpack) / totalItemsInPool), forceItemPlayer.backToBackStreak());
         DecimalFormat decimalFormat = new DecimalFormat("#.##");
 
         Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize(
                 "<green>" + player.getName() + " <gray>was lucky to already own <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, foundItem.getType()) +
                         " <gold>" + this.plugin.getGamemanager().getMaterialName(foundItem.getType()) + " <dark_gray>» <aqua>" + decimalFormat.format(probabilityDouble * 100) + "%"));
         Bukkit.getPluginManager().callEvent(foundNextItemEvent);
+    }
+
+    private int countItemsInShulkerBox(ItemStack shulkerBox) {
+        BlockStateMeta blockStateMeta = (BlockStateMeta) shulkerBox.getItemMeta();
+        if(blockStateMeta != null && blockStateMeta.getBlockState() instanceof ShulkerBox box) {
+            return (int) Arrays.stream(box.getInventory().getContents())
+                    .filter(item -> item != null && !item.getType().isAir() && item.getType() != Material.BARRIER && item.getType() != Material.BUNDLE)
+                    .count();
+        }
+        return 0;
     }
 
     public static boolean hasItemInInventory(Inventory inventory, Material targetMaterial) {
@@ -311,6 +352,101 @@ public class Listeners implements Listener {
         }
 
         return false;
+    }
+
+    @EventHandler
+    public void onOpenAchievements(PlayerInteractEvent e) {
+        Player player = e.getPlayer();
+        if(!this.plugin.getGamemanager().isPreGame()) return;
+        if (!this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) return;
+        if(e.getItem() == null) return;
+
+        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+
+        if (e.getItem().getType() == Material.LIME_DYE) {
+            if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+                player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
+                new AchievementInventory(this.plugin, forceItemPlayer).open(player);
+                return;
+            }
+        }
+    }
+
+    @EventHandler
+    public void onAfterGame(PlayerInteractEvent e) {
+        Player player = e.getPlayer();
+        if(!this.plugin.getGamemanager().isEndGame()) return;
+        if(e.getItem() == null) return;
+
+        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+
+        if (e.getItem().getType() == Material.LIME_DYE) {
+            if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+                player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
+                new AchievementInventory(this.plugin, forceItemPlayer).open(player);
+                return;
+            }
+            return;
+        }
+
+        if (e.getItem().getType() == Material.COMPASS) {
+            if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+                new TeleporterInventory(this.plugin).open(player);
+                player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
+                return;
+            }
+            return;
+        }
+
+        if (e.getItem().getType() == Material.GRASS_BLOCK) {
+            if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+                e.setCancelled(true);
+                if(player.getWorld().getName().equals("world")) {
+                    player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
+                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>[<dark_red>✖<dark_gray>] <gray>You are already in the <green>overworld"));
+                    return;
+                }
+                player.teleport(this.plugin.getSpawnLocation());
+                player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
+                return;
+            }
+            return;
+        }
+
+        if (e.getItem().getType() == Material.NETHERRACK) {
+            if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+                e.setCancelled(true);
+                if(player.getWorld().getName().equals("world_nether")) {
+                    player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
+                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>[<dark_red>✖<dark_gray>] <gray>You are already in the <red>nether"));
+                    return;
+                }
+                player.teleport(new Location(Bukkit.getWorld("world_nether"), 0, 70, 0));
+                player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
+                return;
+            }
+            return;
+        }
+
+        if (e.getItem().getType() == Material.ENDER_EYE) {
+            if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+                e.setCancelled(true);
+                if(player.getWorld().getName().equals("world_the_end")) {
+                    player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
+                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<gray>You are already in the <dark_purple>end"));
+                    return;
+                }
+                World end = Bukkit.getWorld("world_the_end");
+                Location location = new Location(end, 0, 0, 0);
+                assert end != null;
+                location.setY(end.getHighestBlockYAt(location) + 1);
+
+                player.teleport(location);
+                player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
+                return;
+            }
+            return;
+        }
     }
 
     @EventHandler
@@ -563,6 +699,13 @@ public class Listeners implements Listener {
     }
 
     @EventHandler
+    public void onChat_(AsyncChatEvent asyncChatEvent) {
+        Player player = asyncChatEvent.getPlayer();
+        asyncChatEvent.setCancelled(true);
+        Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize("<gold>" + player.getName() + " <dark_gray>» <gray>" + PlainTextComponentSerializer.plainText().serialize(asyncChatEvent.originalMessage())));
+    }
+
+    @EventHandler
     public void onConsume(PlayerItemConsumeEvent playerItemConsumeEvent) {
         Player player = playerItemConsumeEvent.getPlayer();
 
@@ -581,6 +724,13 @@ public class Listeners implements Listener {
 
             Bukkit.getPluginManager().callEvent(foundItemEvent);
         }
+
+        this.plugin.getAchievementManager().achievementsList().forEach(achievement -> {
+
+            if(achievement.checkRequirements(player, playerItemConsumeEvent)) {
+                Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, () -> achievement.grantTo(forceItemPlayer), 0L);
+            }
+        });
     }
 
     @EventHandler
@@ -623,6 +773,12 @@ public class Listeners implements Listener {
         }
 
         gamePlayer.removeItemDisplay();
+
+        this.plugin.getAchievementManager().achievementsList().forEach(achievement -> {
+            if(achievement.checkRequirements(player, event)) {
+                Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, () -> achievement.grantTo(gamePlayer), 0L);
+            }
+        });
 
         // Automatically respawn player.
         Bukkit.getScheduler().runTaskLater(
@@ -803,5 +959,56 @@ public class Listeners implements Listener {
             playerAdvancementDoneEvent.message(null);
         }
 
+    }
+
+    @EventHandler
+    public void onChangedWorld(PlayerChangedWorldEvent playerChangedWorldEvent) {
+        Player player = playerChangedWorldEvent.getPlayer();
+        if(this.plugin.getGamemanager().isMidGame()) {
+            ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+            if(player.getWorld().getName().equals("world_the_end")) {
+                Location spawnLocation = player.getLocation();
+                spawnLocation.setY(player.getWorld().getHighestBlockYAt(spawnLocation) + 1);
+                player.teleport(spawnLocation);
+            }
+            this.plugin.getAchievementManager().achievementsList().forEach(achievement -> {
+                if(achievement.checkRequirements(player, playerChangedWorldEvent)) {
+                    Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, () -> achievement.grantTo(forceItemPlayer), 0L);
+                }
+            });
+        }
+    }
+
+    @EventHandler
+    public void onTrade(PlayerTradeEvent playerTradeEvent) {
+        Player player = playerTradeEvent.getPlayer();
+        if(this.plugin.getGamemanager().isMidGame()) {
+            ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+            this.plugin.getAchievementManager().achievementsList().forEach(achievement -> {
+                if(achievement.checkRequirements(player, playerTradeEvent)) {
+                    Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, () -> achievement.grantTo(forceItemPlayer), 0L);
+                }
+            });
+        }
+    }
+
+    @EventHandler
+    public void onOpenLootChest(PlayerInteractEvent playerInteractEvent) {
+        Player player = playerInteractEvent.getPlayer();
+
+        if(playerInteractEvent.getItem() == null) return;
+        if(playerInteractEvent.getClickedBlock() == null) return;
+        if(playerInteractEvent.getAction().isRightClick()) {
+            if(playerInteractEvent.getClickedBlock().getType() == Material.CHEST) {
+                if(this.plugin.getGamemanager().isMidGame()) {
+                    ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+                    this.plugin.getAchievementManager().achievementsList().forEach(achievement -> {
+                        if(achievement.checkRequirements(player, playerInteractEvent)) {
+                            Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, () -> achievement.grantTo(forceItemPlayer), 0L);
+                        }
+                    });
+                }
+            }
+        }
     }
 }

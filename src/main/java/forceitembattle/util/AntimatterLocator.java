@@ -1,10 +1,12 @@
 package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
+import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.StructureSearchResult;
 
 import java.util.ArrayList;
@@ -38,11 +40,26 @@ public class AntimatterLocator {
         Location structureLocation = structureSearchResult.getLocation();
         if(!this.isAlreadyRevealed(structureLocation)) {
             this.destroyLocator(forceItemPlayer.player());
-            forceItemPlayer.player().playSound(forceItemPlayer.player(), Sound.BLOCK_FIRE_EXTINGUISH, 1, 1);
+            forceItemPlayer.player().playSound(forceItemPlayer.player(), Sound.BLOCK_CONDUIT_AMBIENT_SHORT, 2, 1);
+            new BukkitRunnable() {
+                final BossBar bar = BossBar.bossBar(ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize(""), 1, BossBar.Color.WHITE, BossBar.Overlay.NOTCHED_6);
+                @Override
+                public void run() {
+                    String bossBarTitle = "<gradient:#B314A8:#E775C3><b>Antimatter <reset><dark_gray>» " + locationToString(structureLocation) + distance(forceItemPlayer.player().getLocation(), structureLocation);
+                    bar.name(ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize(bossBarTitle));
+                    forceItemPlayer.player().showBossBar(bar);
+                    ForceItemBattle.getInstance().getPositionManager().playParticleLine(forceItemPlayer.player(), structureSearchResult.getLocation(), Color.PURPLE);
+
+                    if(forceItemPlayer.player().getLocation().distance(structureLocation) <= 50) {
+                        forceItemPlayer.player().hideBossBar(bar);
+                        cancel();
+                    }
+                }
+            }.runTaskTimerAsynchronously(ForceItemBattle.getInstance(), 0L, 300L);
         }
 
         forceItemPlayer.player().sendMessage(ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize(prefix + "<dark_aqua>Antimatter <gray>located at " + locationToString(structureLocation) + distance(forceItemPlayer.player().getLocation(), structureLocation)));
-        ForceItemBattle.getInstance().getPositionManager().playParticleLine(forceItemPlayer.player(), structureSearchResult.getLocation(), Color.PURPLE);
+
         this.locatedStructures.add(structureLocation);
     }
 

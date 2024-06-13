@@ -2,19 +2,16 @@ package forceitembattle.manager;
 
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.DescriptionItem;
-import io.papermc.paper.configuration.serializer.ComponentSerializer;
 import lombok.Getter;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import lombok.Setter;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.*;
@@ -23,36 +20,56 @@ import java.util.stream.Stream;
 
 public class ItemDifficultiesManager {
 
-    private final ForceItemBattle forceItemBattle;
+    private final ForceItemBattle plugin;
 
-    private final List<Material> easy;
-    private final List<Material> medium;
-    private final List<Material> hard;
-
+    @Getter
     private final List<Material> netherItems;
-    private final List<Material> extremeItems;
+    @Getter
+    private final List<Material> endItems;
+    private final List<Material> veryLateItems;
 
     @Getter
     private HashMap<Material, DescriptionItem> descriptionItems;
 
-    public Material getEasyMaterial() {
-        Random random = new Random();
-        return easy.get(random.nextInt(easy.size()));
+    private void setupStates() {
+        // if this is a toggle setting, just change unlockedAtMinutes to 0 for all
+        State.EARLY.setUnlockedAtMinutes(0);
+        State.MID.setUnlockedAtMinutes(5);
+        State.LATE.setUnlockedAtMinutes(10);
     }
 
-    public Material getMediumMaterial() {
-        Random random = new Random();
-        List<Material> newList = Stream.of(easy, medium)
-                .flatMap(List::stream)
-                .toList();
-        return newList.get(random.nextInt(newList.size()));
+    public List<Material> getAvailableItems() {
+        int timeLeft = this.plugin.getTimer().getTimeLeft() / 60;
+        int totalDuration = this.plugin.getGamemanager().getGameDuration() / 60;
+        List<Material> items = new ArrayList<>();
+
+        for (State state : State.VALUES) {
+            if ((totalDuration - timeLeft) < state.getUnlockedAtMinutes()) {
+                continue;
+            }
+
+            items.addAll(state.getItems());
+        }
+
+        return items;
     }
 
-    public Material getHardMaterial() {
-        Random random = new Random();
-        List<Material> items = new ArrayList<>(Stream.of(easy, medium, hard)
+    public Set<Material> getOverworldItems() {
+        return Stream.of(State.EARLY.getItems(), State.MID.getItems(), State.LATE.getItems())
                 .flatMap(List::stream)
-                .toList());
+                .filter(item -> !this.netherItems.contains(item) && !this.endItems.contains(item))
+                .collect(Collectors.toSet());
+    }
+
+    public Set<Material> getAllItems() {
+        return Stream.of(State.EARLY.getItems(), State.MID.getItems(), State.LATE.getItems())
+                .flatMap(List::stream)
+                .collect(Collectors.toSet());
+    }
+
+    public Material generateRandomMaterial() {
+        Random random = new Random();
+        List<Material> items = getAvailableItems();
 
         filterDisabledItems(items);
 
@@ -69,8 +86,8 @@ public class ItemDifficultiesManager {
 
     public List<String> getDescriptionItemLines(Material material) {
         List<String> lines = null;
-        if(this.isItemInDescriptionList(material)) {
-            if (this.itemHasDescription(material)) {
+        if (this.isItemInDescriptionList(material)) {
+            if(this.itemHasDescription(material)) {
                 lines = this.getDescriptionItems().get(material)
                         .lines()
                         .stream()
@@ -92,7 +109,7 @@ public class ItemDifficultiesManager {
     private Map<Material, String> readItemUnicodes(boolean isChatOrTab) {
         Map<Material, String> itemsUnicode = new HashMap<>();
 
-        try (FileReader fileReader = new FileReader(new File(this.forceItemBattle.getDataFolder(), "unicodeItems.json"))) {
+        try (FileReader fileReader = new FileReader(new File(this.plugin.getDataFolder(), "unicodeItems.json"))) {
             Gson gson = new Gson();
             Type mapType = new TypeToken<Map<String, String>[]>(){}.getType();
             Map<String, String>[] items = gson.fromJson(fileReader, mapType);
@@ -129,38 +146,30 @@ public class ItemDifficultiesManager {
     }
 
     /**
-     * @return Copy of all items from the settings
-     */
-    public Set<Material> getAllItems() {
-        Set<Material> items = Stream.of(this.easy, this.medium, this.hard)
-                .flatMap(List::stream).collect(Collectors.toSet());
-
-        filterDisabledItems(items);
-
-        return items;
-    }
-
-    /**
      * Filter out items disabled by the settings
      */
     private void filterDisabledItems(Collection<Material> items) {
-        if (!forceItemBattle.getSettings().isSettingEnabled(GameSetting.HARD)) {
+        if (!plugin.getSettings().isSettingEnabled(GameSetting.HARD)) {
             this.netherItems.forEach(items::remove);
 
-            // End items cannot be accessed without nether (unless you somehow find full portal lol)
-            this.extremeItems.forEach(items::remove);
+            this.veryLateItems.forEach(items::remove);
 
-        } else if (!forceItemBattle.getSettings().isSettingEnabled(GameSetting.EXTREME)) {
-            this.extremeItems.forEach(items::remove);
+        } else if (!plugin.getSettings().isSettingEnabled(GameSetting.EXTREME)) {
+            this.veryLateItems.forEach(items::remove);
         }
     }
 
     public boolean itemInList(Material material) {
+        return this.getAvailableItems().contains(material);
+    }
+
+    public boolean itemInAllLists(Material material) {
         return this.getAllItems().contains(material);
     }
 
+
     public ItemDifficultiesManager(ForceItemBattle forceItemBattle) {
-        this.forceItemBattle = forceItemBattle;
+        this.plugin = forceItemBattle;
 
         this.descriptionItems = new HashMap<>();
         this.netherItems = List.of(
@@ -199,6 +208,7 @@ public class ItemDifficultiesManager {
                 Material.GILDED_BLACKSTONE,
                 Material.GLOWSTONE,
                 Material.GLOWSTONE_DUST,
+                Material.KNOWLEDGE_BOOK,
                 Material.MAGMA_CREAM,
                 Material.MUSIC_DISC_PIGSTEP,
                 Material.NETHER_GOLD_ORE,
@@ -238,6 +248,7 @@ public class ItemDifficultiesManager {
                 Material.RED_NETHER_BRICK_STAIRS,
                 Material.RED_NETHER_BRICK_WALL,
                 Material.RED_NETHER_BRICKS,
+                Material.REDSTONE_LAMP,
                 Material.RESPAWN_ANCHOR,
                 Material.RIB_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Material.SHROOMLIGHT,
@@ -246,6 +257,7 @@ public class ItemDifficultiesManager {
                 Material.SMOOTH_QUARTZ_SLAB,
                 Material.SMOOTH_QUARTZ_STAIRS,
                 Material.SNOUT_ARMOR_TRIM_SMITHING_TEMPLATE,
+                Material.SOUL_SAND,
                 Material.SOUL_SOIL,
                 Material.SPECTRAL_ARROW,
                 Material.STRIPPED_CRIMSON_HYPHAE,
@@ -274,8 +286,43 @@ public class ItemDifficultiesManager {
                 Material.WITHER_SKELETON_SKULL
         );
 
+        this.endItems = List.of(
+                Material.END_STONE,
+                Material.END_STONE_BRICK_SLAB,
+                Material.END_STONE_BRICK_STAIRS,
+                Material.END_STONE_BRICK_WALL,
+                Material.END_STONE_BRICKS,
+                Material.PURPUR_BLOCK,
+                Material.PURPUR_PILLAR,
+                Material.PURPUR_SLAB,
+                Material.PURPUR_STAIRS,
+                Material.CHORUS_FRUIT,
+                Material.CHORUS_FLOWER,
+                Material.DRAGON_HEAD,
+                Material.END_ROD,
+                Material.ELYTRA,
+                Material.SHULKER_SHELL,
+                Material.SHULKER_BOX,
+                Material.WHITE_SHULKER_BOX,
+                Material.ORANGE_SHULKER_BOX,
+                Material.MAGENTA_SHULKER_BOX,
+                Material.LIGHT_BLUE_SHULKER_BOX,
+                Material.YELLOW_SHULKER_BOX,
+                Material.LIME_SHULKER_BOX,
+                Material.PINK_SHULKER_BOX,
+                Material.GRAY_SHULKER_BOX,
+                Material.LIGHT_GRAY_SHULKER_BOX,
+                Material.CYAN_SHULKER_BOX,
+                Material.PURPLE_SHULKER_BOX,
+                Material.BLUE_SHULKER_BOX,
+                Material.BROWN_SHULKER_BOX,
+                Material.GREEN_SHULKER_BOX,
+                Material.RED_SHULKER_BOX,
+                Material.BLACK_SHULKER_BOX
+        );
+
         // list contains hard items that are very unrealistic to obtain in 45 min
-        this.extremeItems = List.of(
+        this.veryLateItems = List.of(
                 Material.BURN_POTTERY_SHERD,
                 Material.CALIBRATED_SCULK_SENSOR,
                 Material.COPPER_ORE,
@@ -329,7 +376,25 @@ public class ItemDifficultiesManager {
         );
 
 
-        this.easy = List.of(
+        // Ideally these should be in the enum constructors, but here is fine, I guess.
+        State.EARLY.setItems(List.of(
+                Material.ACACIA_BOAT,
+                Material.ACACIA_BUTTON,
+                Material.ACACIA_CHEST_BOAT,
+                Material.ACACIA_DOOR,
+                Material.ACACIA_FENCE,
+                Material.ACACIA_FENCE_GATE,
+                Material.ACACIA_HANGING_SIGN,
+                Material.ACACIA_LEAVES,
+                Material.ACACIA_LOG,
+                Material.ACACIA_PLANKS,
+                Material.ACACIA_PRESSURE_PLATE,
+                Material.ACACIA_SAPLING,
+                Material.ACACIA_SIGN,
+                Material.ACACIA_SLAB,
+                Material.ACACIA_STAIRS,
+                Material.ACACIA_TRAPDOOR,
+                Material.ACACIA_WOOD,
                 Material.ACTIVATOR_RAIL,
                 Material.ALLIUM,
                 Material.AMETHYST_BLOCK,
@@ -343,6 +408,24 @@ public class ItemDifficultiesManager {
                 Material.ARROW,
                 Material.AZURE_BLUET,
                 Material.BAKED_POTATO,
+                Material.BAMBOO,
+                Material.BAMBOO_BLOCK,
+                Material.BAMBOO_BUTTON,
+                Material.BAMBOO_CHEST_RAFT,
+                Material.BAMBOO_DOOR,
+                Material.BAMBOO_FENCE,
+                Material.BAMBOO_FENCE_GATE,
+                Material.BAMBOO_HANGING_SIGN,
+                Material.BAMBOO_MOSAIC,
+                Material.BAMBOO_MOSAIC_SLAB,
+                Material.BAMBOO_MOSAIC_STAIRS,
+                Material.BAMBOO_PLANKS,
+                Material.BAMBOO_PRESSURE_PLATE,
+                Material.BAMBOO_RAFT,
+                Material.BAMBOO_SIGN,
+                Material.BAMBOO_SLAB,
+                Material.BAMBOO_STAIRS,
+                Material.BAMBOO_TRAPDOOR,
                 Material.BARREL,
                 Material.BEEF,
                 Material.BELL,
@@ -391,7 +474,6 @@ public class ItemDifficultiesManager {
                 Material.BONE_MEAL,
                 Material.BOOK,
                 Material.BOOKSHELF,
-                Material.BOW,
                 Material.BOWL,
                 Material.BREAD,
                 Material.BRICK,
@@ -399,6 +481,18 @@ public class ItemDifficultiesManager {
                 Material.BRICK_STAIRS,
                 Material.BRICK_WALL,
                 Material.BRICKS,
+                Material.BROWN_BANNER,
+                Material.BROWN_BED,
+                Material.BROWN_CARPET,
+                Material.BROWN_CONCRETE,
+                Material.BROWN_CONCRETE_POWDER,
+                Material.BROWN_DYE,
+                Material.BROWN_GLAZED_TERRACOTTA,
+                Material.BROWN_MUSHROOM,
+                Material.BROWN_STAINED_GLASS,
+                Material.BROWN_STAINED_GLASS_PANE,
+                Material.BROWN_TERRACOTTA,
+                Material.BROWN_WOOL,
                 Material.BRUSH,
                 Material.BUCKET,
                 Material.CALCITE,
@@ -431,6 +525,7 @@ public class ItemDifficultiesManager {
                 Material.COBBLESTONE_SLAB,
                 Material.COBBLESTONE_STAIRS,
                 Material.COBBLESTONE_WALL,
+                Material.COCOA_BEANS,
                 Material.COD,
                 Material.COD_BUCKET,
                 Material.COMPASS,
@@ -441,6 +536,7 @@ public class ItemDifficultiesManager {
                 Material.COOKED_MUTTON,
                 Material.COOKED_PORKCHOP,
                 Material.COOKED_SALMON,
+                Material.COOKIE,
                 Material.COPPER_BLOCK,
                 Material.COPPER_INGOT,
                 Material.CORNFLOWER,
@@ -448,7 +544,6 @@ public class ItemDifficultiesManager {
                 Material.CRACKED_DEEPSLATE_TILES,
                 Material.CRACKED_STONE_BRICKS,
                 Material.CRAFTING_TABLE,
-                Material.CROSSBOW,
                 Material.CUT_COPPER,
                 Material.CUT_COPPER_SLAB,
                 Material.CUT_COPPER_STAIRS,
@@ -498,27 +593,27 @@ public class ItemDifficultiesManager {
                 Material.DIORITE_STAIRS,
                 Material.DIORITE_WALL,
                 Material.DIRT,
-                Material.DISPENSER,
                 Material.DRIED_KELP,
                 Material.DRIED_KELP_BLOCK,
                 Material.DROPPER,
-                Material.EGG,
                 Material.EMERALD,
                 Material.EMERALD_BLOCK,
                 Material.FEATHER,
+                Material.FERN,
                 Material.FILLED_MAP,
                 Material.FIREWORK_ROCKET,
                 Material.FIREWORK_STAR,
-                Material.FISHING_ROD,
                 Material.FLETCHING_TABLE,
                 Material.FLINT,
                 Material.FLINT_AND_STEEL,
+                Material.FLOWER_BANNER_PATTERN,
                 Material.FLOWER_POT,
                 Material.FURNACE,
                 Material.FURNACE_MINECART,
                 Material.GLASS,
                 Material.GLASS_BOTTLE,
                 Material.GLASS_PANE,
+                Material.GLISTERING_MELON_SLICE,
                 Material.GLOW_INK_SAC,
                 Material.GLOW_ITEM_FRAME,
                 Material.GLOW_LICHEN,
@@ -576,9 +671,25 @@ public class ItemDifficultiesManager {
                 Material.IRON_TRAPDOOR,
                 Material.ITEM_FRAME,
                 Material.JACK_O_LANTERN,
+                Material.JUNGLE_BOAT,
+                Material.JUNGLE_BUTTON,
+                Material.JUNGLE_CHEST_BOAT,
+                Material.JUNGLE_DOOR,
+                Material.JUNGLE_FENCE,
+                Material.JUNGLE_FENCE_GATE,
+                Material.JUNGLE_HANGING_SIGN,
+                Material.JUNGLE_LEAVES,
+                Material.JUNGLE_LOG,
+                Material.JUNGLE_PLANKS,
+                Material.JUNGLE_PRESSURE_PLATE,
+                Material.JUNGLE_SAPLING,
+                Material.JUNGLE_SIGN,
+                Material.JUNGLE_SLAB,
+                Material.JUNGLE_STAIRS,
+                Material.JUNGLE_TRAPDOOR,
+                Material.JUNGLE_WOOD,
                 Material.JUKEBOX,
                 Material.KELP,
-                Material.KNOWLEDGE_BOOK,
                 Material.LADDER,
                 Material.LANTERN,
                 Material.LAPIS_BLOCK,
@@ -616,8 +727,8 @@ public class ItemDifficultiesManager {
                 Material.LIGHT_GRAY_WOOL,
                 Material.LIGHT_WEIGHTED_PRESSURE_PLATE,
                 Material.LIGHTNING_ROD,
+                Material.LILAC,
                 Material.LILY_OF_THE_VALLEY,
-                Material.LOOM,
                 Material.MAGENTA_BANNER,
                 Material.MAGENTA_BED,
                 Material.MAGENTA_CARPET,
@@ -631,8 +742,24 @@ public class ItemDifficultiesManager {
                 Material.MAGENTA_WOOL,
                 Material.MAGMA_BLOCK,
                 Material.MAP,
+                Material.MELON,
+                Material.MELON_SEEDS,
+                Material.MELON_SLICE,
                 Material.MILK_BUCKET,
                 Material.MINECART,
+                Material.MOSSY_COBBLESTONE,
+                Material.MOSSY_COBBLESTONE_SLAB,
+                Material.MOSSY_COBBLESTONE_STAIRS,
+                Material.MOSSY_COBBLESTONE_WALL,
+                Material.MOSSY_STONE_BRICK_SLAB,
+                Material.MOSSY_STONE_BRICK_STAIRS,
+                Material.MOSSY_STONE_BRICK_WALL,
+                Material.MOSSY_STONE_BRICKS,
+                Material.MUD,
+                Material.MUD_BRICK_SLAB,
+                Material.MUD_BRICK_STAIRS,
+                Material.MUD_BRICK_WALL,
+                Material.MUD_BRICKS,
                 Material.MUTTON,
                 Material.NETHERRACK,
                 Material.NOTE_BLOCK,
@@ -653,6 +780,7 @@ public class ItemDifficultiesManager {
                 Material.OAK_STAIRS,
                 Material.OAK_TRAPDOOR,
                 Material.OAK_WOOD,
+                Material.OBSIDIAN,
                 Material.ORANGE_BANNER,
                 Material.ORANGE_BED,
                 Material.ORANGE_CARPET,
@@ -666,6 +794,7 @@ public class ItemDifficultiesManager {
                 Material.ORANGE_TULIP,
                 Material.ORANGE_WOOL,
                 Material.OXEYE_DAISY,
+                Material.PACKED_MUD,
                 Material.PAINTING,
                 Material.PAPER,
                 Material.PEONY,
@@ -727,6 +856,7 @@ public class ItemDifficultiesManager {
                 Material.RED_CONCRETE_POWDER,
                 Material.RED_DYE,
                 Material.RED_GLAZED_TERRACOTTA,
+                Material.RED_MUSHROOM,
                 Material.RED_STAINED_GLASS,
                 Material.RED_STAINED_GLASS_PANE,
                 Material.RED_TERRACOTTA,
@@ -751,6 +881,7 @@ public class ItemDifficultiesManager {
                 Material.SHORT_GRASS,
                 Material.SMITHING_TABLE,
                 Material.SMOKER,
+                Material.SMOOTH_BASALT,
                 Material.SMOOTH_SANDSTONE,
                 Material.SMOOTH_SANDSTONE_SLAB,
                 Material.SMOOTH_SANDSTONE_STAIRS,
@@ -759,8 +890,23 @@ public class ItemDifficultiesManager {
                 Material.SNOW,
                 Material.SNOW_BLOCK,
                 Material.SNOWBALL,
-                Material.SPIDER_EYE,
-                Material.SPIRE_ARMOR_TRIM_SMITHING_TEMPLATE,
+                Material.SPRUCE_BOAT,
+                Material.SPRUCE_BUTTON,
+                Material.SPRUCE_CHEST_BOAT,
+                Material.SPRUCE_DOOR,
+                Material.SPRUCE_FENCE,
+                Material.SPRUCE_FENCE_GATE,
+                Material.SPRUCE_HANGING_SIGN,
+                Material.SPRUCE_LEAVES,
+                Material.SPRUCE_LOG,
+                Material.SPRUCE_PLANKS,
+                Material.SPRUCE_PRESSURE_PLATE,
+                Material.SPRUCE_SAPLING,
+                Material.SPRUCE_SIGN,
+                Material.SPRUCE_SLAB,
+                Material.SPRUCE_STAIRS,
+                Material.SPRUCE_TRAPDOOR,
+                Material.SPRUCE_WOOD,
                 Material.SPYGLASS,
                 Material.STICK,
                 Material.STONE,
@@ -778,24 +924,32 @@ public class ItemDifficultiesManager {
                 Material.STONE_STAIRS,
                 Material.STONE_SWORD,
                 Material.STONECUTTER,
-                Material.STRING,
+                Material.STRIPPED_ACACIA_LOG,
+                Material.STRIPPED_ACACIA_WOOD,
+                Material.STRIPPED_BAMBOO_BLOCK,
                 Material.STRIPPED_BIRCH_LOG,
                 Material.STRIPPED_BIRCH_WOOD,
+                Material.STRIPPED_DARK_OAK_LOG,
+                Material.STRIPPED_DARK_OAK_WOOD,
+                Material.STRIPPED_JUNGLE_LOG,
+                Material.STRIPPED_JUNGLE_WOOD,
                 Material.STRIPPED_OAK_LOG,
                 Material.STRIPPED_OAK_WOOD,
+                Material.STRIPPED_SPRUCE_LOG,
+                Material.STRIPPED_SPRUCE_WOOD,
                 Material.SUGAR,
                 Material.SUGAR_CANE,
                 Material.SUNFLOWER,
                 Material.SUSPICIOUS_STEW,
+                Material.SWEET_BERRIES,
                 Material.TARGET,
                 Material.TERRACOTTA,
                 Material.TINTED_GLASS,
-                Material.TNT,
-                Material.TNT_MINECART,
                 Material.TORCH,
                 Material.TRAPPED_CHEST,
                 Material.TRIPWIRE_HOOK,
                 Material.TUFF,
+                Material.VINE,
                 Material.WATER_BUCKET,
                 Material.WHEAT,
                 Material.WHEAT_SEEDS,
@@ -829,50 +983,13 @@ public class ItemDifficultiesManager {
                 Material.YELLOW_STAINED_GLASS_PANE,
                 Material.YELLOW_TERRACOTTA,
                 Material.YELLOW_WOOL
-        );
+        ));
 
-        this.medium = List.of(
-                Material.ACACIA_BOAT,
-                Material.ACACIA_BUTTON,
-                Material.ACACIA_CHEST_BOAT,
-                Material.ACACIA_DOOR,
-                Material.ACACIA_FENCE,
-                Material.ACACIA_FENCE_GATE,
-                Material.ACACIA_HANGING_SIGN,
-                Material.ACACIA_LEAVES,
-                Material.ACACIA_LOG,
-                Material.ACACIA_PLANKS,
-                Material.ACACIA_PRESSURE_PLATE,
-                Material.ACACIA_SAPLING,
-                Material.ACACIA_SIGN,
-                Material.ACACIA_SLAB,
-                Material.ACACIA_STAIRS,
-                Material.ACACIA_TRAPDOOR,
-                Material.ACACIA_WOOD,
-                Material.AMETHYST_CLUSTER,
-                Material.ANCIENT_DEBRIS,
+        State.MID.setItems(List.of(
                 Material.ANVIL,
                 Material.AXOLOTL_BUCKET,
                 Material.AZALEA,
                 Material.AZALEA_LEAVES,
-                Material.BAMBOO,
-                Material.BAMBOO_BLOCK,
-                Material.BAMBOO_BUTTON,
-                Material.BAMBOO_CHEST_RAFT,
-                Material.BAMBOO_DOOR,
-                Material.BAMBOO_FENCE,
-                Material.BAMBOO_FENCE_GATE,
-                Material.BAMBOO_HANGING_SIGN,
-                Material.BAMBOO_MOSAIC,
-                Material.BAMBOO_MOSAIC_SLAB,
-                Material.BAMBOO_MOSAIC_STAIRS,
-                Material.BAMBOO_PLANKS,
-                Material.BAMBOO_PRESSURE_PLATE,
-                Material.BAMBOO_RAFT,
-                Material.BAMBOO_SIGN,
-                Material.BAMBOO_SLAB,
-                Material.BAMBOO_STAIRS,
-                Material.BAMBOO_TRAPDOOR,
                 Material.BASALT,
                 Material.BEETROOT,
                 Material.BEETROOT_SEEDS,
@@ -885,19 +1002,8 @@ public class ItemDifficultiesManager {
                 Material.BLAZE_POWDER,
                 Material.BLAZE_ROD,
                 Material.BLUE_ORCHID,
+                Material.BOW,
                 Material.BREWING_STAND,
-                Material.BROWN_BANNER,
-                Material.BROWN_BED,
-                Material.BROWN_CARPET,
-                Material.BROWN_CONCRETE,
-                Material.BROWN_CONCRETE_POWDER,
-                Material.BROWN_DYE,
-                Material.BROWN_GLAZED_TERRACOTTA,
-                Material.BROWN_MUSHROOM,
-                Material.BROWN_STAINED_GLASS,
-                Material.BROWN_STAINED_GLASS_PANE,
-                Material.BROWN_TERRACOTTA,
-                Material.BROWN_WOOL,
                 Material.CACTUS,
                 Material.CAKE,
                 Material.CHERRY_BOAT,
@@ -922,10 +1028,8 @@ public class ItemDifficultiesManager {
                 Material.CHISELED_POLISHED_BLACKSTONE,
                 Material.CHISELED_QUARTZ_BLOCK,
                 Material.COBWEB,
-                Material.COCOA_BEANS,
                 Material.COMPARATOR,
                 Material.COOKED_RABBIT,
-                Material.COOKIE,
                 Material.CRACKED_NETHER_BRICKS,
                 Material.CRACKED_POLISHED_BLACKSTONE_BRICKS,
                 Material.CRIMSON_BUTTON,
@@ -945,6 +1049,7 @@ public class ItemDifficultiesManager {
                 Material.CRIMSON_STEM,
                 Material.CRIMSON_TRAPDOOR,
                 Material.CRYING_OBSIDIAN,
+                Material.CROSSBOW,
                 Material.CYAN_BANNER,
                 Material.CYAN_BED,
                 Material.CYAN_CARPET,
@@ -968,21 +1073,18 @@ public class ItemDifficultiesManager {
                 Material.DEAD_HORN_CORAL_BLOCK,
                 Material.DEAD_TUBE_CORAL_BLOCK,
                 Material.DIAMOND_HORSE_ARMOR,
+                Material.DISPENSER,
                 Material.DRIPSTONE_BLOCK,
+                Material.EGG,
                 Material.ENCHANTING_TABLE,
-                Material.END_CRYSTAL,
-                Material.ENDER_CHEST,
                 Material.ENDER_EYE,
                 Material.ENDER_PEARL,
                 Material.FERMENTED_SPIDER_EYE,
-                Material.FERN,
                 Material.FIRE_CHARGE,
-                Material.FLOWER_BANNER_PATTERN,
+                Material.FISHING_ROD,
                 Material.FLOWERING_AZALEA,
                 Material.FLOWERING_AZALEA_LEAVES,
                 Material.GHAST_TEAR,
-                Material.GILDED_BLACKSTONE,
-                Material.GLISTERING_MELON_SLICE,
                 Material.GLOW_BERRIES,
                 Material.GLOWSTONE,
                 Material.GLOWSTONE_DUST,
@@ -1001,25 +1103,8 @@ public class ItemDifficultiesManager {
                 Material.HANGING_ROOTS,
                 Material.HEART_OF_THE_SEA,
                 Material.IRON_HORSE_ARMOR,
-                Material.JUNGLE_BOAT,
-                Material.JUNGLE_BUTTON,
-                Material.JUNGLE_CHEST_BOAT,
-                Material.JUNGLE_DOOR,
-                Material.JUNGLE_FENCE,
-                Material.JUNGLE_FENCE_GATE,
-                Material.JUNGLE_HANGING_SIGN,
-                Material.JUNGLE_LEAVES,
-                Material.JUNGLE_LOG,
-                Material.JUNGLE_PLANKS,
-                Material.JUNGLE_PRESSURE_PLATE,
-                Material.JUNGLE_SAPLING,
-                Material.JUNGLE_SIGN,
-                Material.JUNGLE_SLAB,
-                Material.JUNGLE_STAIRS,
-                Material.JUNGLE_TRAPDOOR,
-                Material.JUNGLE_WOOD,
+                Material.KNOWLEDGE_BOOK,
                 Material.LEAD,
-                Material.LILAC,
                 Material.LILY_PAD,
                 Material.LIME_BANNER,
                 Material.LIME_BED,
@@ -1032,7 +1117,7 @@ public class ItemDifficultiesManager {
                 Material.LIME_STAINED_GLASS_PANE,
                 Material.LIME_TERRACOTTA,
                 Material.LIME_WOOL,
-                Material.LODESTONE,
+                Material.LOOM,
                 Material.MAGMA_CREAM,
                 Material.MANGROVE_BOAT,
                 Material.MANGROVE_BUTTON,
@@ -1052,24 +1137,8 @@ public class ItemDifficultiesManager {
                 Material.MANGROVE_STAIRS,
                 Material.MANGROVE_TRAPDOOR,
                 Material.MANGROVE_WOOD,
-                Material.MELON,
-                Material.MELON_SEEDS,
-                Material.MELON_SLICE,
                 Material.MOSS_BLOCK,
                 Material.MOSS_CARPET,
-                Material.MOSSY_COBBLESTONE,
-                Material.MOSSY_COBBLESTONE_SLAB,
-                Material.MOSSY_COBBLESTONE_STAIRS,
-                Material.MOSSY_COBBLESTONE_WALL,
-                Material.MOSSY_STONE_BRICK_SLAB,
-                Material.MOSSY_STONE_BRICK_STAIRS,
-                Material.MOSSY_STONE_BRICK_WALL,
-                Material.MOSSY_STONE_BRICKS,
-                Material.MUD,
-                Material.MUD_BRICK_SLAB,
-                Material.MUD_BRICK_STAIRS,
-                Material.MUD_BRICK_WALL,
-                Material.MUD_BRICKS,
                 Material.MUDDY_MANGROVE_ROOTS,
                 Material.MUSHROOM_STEW,
                 Material.MUSIC_DISC_PIGSTEP,
@@ -1084,19 +1153,7 @@ public class ItemDifficultiesManager {
                 Material.NETHER_SPROUTS,
                 Material.NETHER_WART,
                 Material.NETHER_WART_BLOCK,
-                Material.NETHERITE_AXE,
-                Material.NETHERITE_BOOTS,
-                Material.NETHERITE_CHESTPLATE,
-                Material.NETHERITE_HELMET,
-                Material.NETHERITE_HOE,
-                Material.NETHERITE_INGOT,
-                Material.NETHERITE_LEGGINGS,
-                Material.NETHERITE_PICKAXE,
-                Material.NETHERITE_SCRAP,
-                Material.NETHERITE_SHOVEL,
-                Material.NETHERITE_SWORD,
                 Material.OBSERVER,
-                Material.OBSIDIAN,
                 Material.PINK_PETALS,
                 Material.POINTED_DRIPSTONE,
                 Material.POISONOUS_POTATO,
@@ -1133,13 +1190,11 @@ public class ItemDifficultiesManager {
                 Material.RABBIT_FOOT,
                 Material.RABBIT_HIDE,
                 Material.RABBIT_STEW,
-                Material.RED_MUSHROOM,
                 Material.RED_NETHER_BRICK_SLAB,
                 Material.RED_NETHER_BRICK_STAIRS,
                 Material.RED_NETHER_BRICK_WALL,
                 Material.RED_NETHER_BRICKS,
                 Material.REDSTONE_LAMP,
-                Material.RESPAWN_ANCHOR,
                 Material.ROOTED_DIRT,
                 Material.SADDLE,
                 Material.SCAFFOLDING,
@@ -1147,9 +1202,7 @@ public class ItemDifficultiesManager {
                 Material.SEA_PICKLE,
                 Material.SHROOMLIGHT,
                 Material.SLIME_BALL,
-                Material.SLIME_BLOCK,
                 Material.SMALL_DRIPLEAF,
-                Material.SMOOTH_BASALT,
                 Material.SMOOTH_QUARTZ,
                 Material.SMOOTH_QUARTZ_SLAB,
                 Material.SMOOTH_QUARTZ_STAIRS,
@@ -1159,49 +1212,24 @@ public class ItemDifficultiesManager {
                 Material.SOUL_SOIL,
                 Material.SOUL_TORCH,
                 Material.SPECTRAL_ARROW,
+                Material.SPIDER_EYE,
                 Material.SPONGE,
                 Material.SPORE_BLOSSOM,
-                Material.SPRUCE_BOAT,
-                Material.SPRUCE_BUTTON,
-                Material.SPRUCE_CHEST_BOAT,
-                Material.SPRUCE_DOOR,
-                Material.SPRUCE_FENCE,
-                Material.SPRUCE_FENCE_GATE,
-                Material.SPRUCE_HANGING_SIGN,
-                Material.SPRUCE_LEAVES,
-                Material.SPRUCE_LOG,
-                Material.SPRUCE_PLANKS,
-                Material.SPRUCE_PRESSURE_PLATE,
-                Material.SPRUCE_SAPLING,
-                Material.SPRUCE_SIGN,
-                Material.SPRUCE_SLAB,
-                Material.SPRUCE_STAIRS,
-                Material.SPRUCE_TRAPDOOR,
-                Material.SPRUCE_WOOD,
                 Material.STICKY_PISTON,
-                Material.STRIPPED_ACACIA_LOG,
-                Material.STRIPPED_ACACIA_WOOD,
-                Material.STRIPPED_BAMBOO_BLOCK,
+                Material.STRING,
                 Material.STRIPPED_CHERRY_LOG,
                 Material.STRIPPED_CHERRY_WOOD,
                 Material.STRIPPED_CRIMSON_HYPHAE,
                 Material.STRIPPED_CRIMSON_STEM,
-                Material.STRIPPED_DARK_OAK_LOG,
-                Material.STRIPPED_DARK_OAK_WOOD,
-                Material.STRIPPED_JUNGLE_LOG,
-                Material.STRIPPED_JUNGLE_WOOD,
                 Material.STRIPPED_MANGROVE_LOG,
                 Material.STRIPPED_MANGROVE_WOOD,
-                Material.STRIPPED_SPRUCE_LOG,
-                Material.STRIPPED_SPRUCE_WOOD,
                 Material.STRIPPED_WARPED_HYPHAE,
                 Material.STRIPPED_WARPED_STEM,
-                Material.SWEET_BERRIES,
-                Material.TADPOLE_BUCKET,
+                Material.TNT,
+                Material.TNT_MINECART,
                 Material.TROPICAL_FISH,
                 Material.TROPICAL_FISH_BUCKET,
                 Material.TWISTING_VINES,
-                Material.VINE,
                 Material.WARPED_BUTTON,
                 Material.WARPED_DOOR,
                 Material.WARPED_FENCE,
@@ -1221,11 +1249,12 @@ public class ItemDifficultiesManager {
                 Material.WARPED_TRAPDOOR,
                 Material.WARPED_WART_BLOCK,
                 Material.WEEPING_VINES,
-                Material.WET_SPONGE,
-                Material.WITHER_SKELETON_SKULL
-        );
+                Material.WET_SPONGE
+        ));
 
-        this.hard = List.of(
+        State.LATE.setItems(List.of(
+                Material.AMETHYST_CLUSTER,
+                Material.ANCIENT_DEBRIS,
                 Material.ANGLER_POTTERY_SHERD,
                 Material.ARCHER_POTTERY_SHERD,
                 Material.BEE_NEST,
@@ -1291,6 +1320,8 @@ public class ItemDifficultiesManager {
                 Material.EMERALD_ORE,
                 Material.ENCHANTED_BOOK,
                 Material.ENCHANTED_GOLDEN_APPLE,
+                Material.ENDER_CHEST,
+                Material.END_CRYSTAL,
                 Material.END_ROD,
                 Material.END_STONE,
                 Material.END_STONE_BRICK_SLAB,
@@ -1303,6 +1334,7 @@ public class ItemDifficultiesManager {
                 Material.FIRE_CORAL_BLOCK,
                 Material.FIRE_CORAL_FAN,
                 Material.FRIEND_POTTERY_SHERD,
+                Material.GILDED_BLACKSTONE,
                 Material.GLOBE_BANNER_PATTERN,
                 Material.GOAT_HORN,
                 Material.GOLD_ORE,
@@ -1333,6 +1365,7 @@ public class ItemDifficultiesManager {
                 Material.LIGHT_GRAY_SHULKER_BOX,
                 Material.LIME_CANDLE,
                 Material.LIME_SHULKER_BOX,
+                Material.LODESTONE,
                 Material.MAGENTA_CANDLE,
                 Material.MAGENTA_SHULKER_BOX,
                 Material.MEDIUM_AMETHYST_BUD,
@@ -1347,12 +1380,22 @@ public class ItemDifficultiesManager {
                 Material.MYCELIUM,
                 Material.NETHER_GOLD_ORE,
                 Material.NETHER_QUARTZ_ORE,
+                Material.NETHERITE_AXE,
                 Material.NETHERITE_BLOCK,
+                Material.NETHERITE_BOOTS,
+                Material.NETHERITE_CHESTPLATE,
+                Material.NETHERITE_HELMET,
+                Material.NETHERITE_HOE,
+                Material.NETHERITE_INGOT,
+                Material.NETHERITE_LEGGINGS,
+                Material.NETHERITE_PICKAXE,
+                Material.NETHERITE_SCRAP,
+                Material.NETHERITE_SHOVEL,
+                Material.NETHERITE_SWORD,
                 Material.NETHERITE_UPGRADE_SMITHING_TEMPLATE,
                 Material.ORANGE_CANDLE,
                 Material.ORANGE_SHULKER_BOX,
                 Material.PACKED_ICE,
-                Material.PACKED_MUD,
                 Material.PHANTOM_MEMBRANE,
                 Material.PIGLIN_BANNER_PATTERN,
                 Material.PINK_CANDLE,
@@ -1377,6 +1420,7 @@ public class ItemDifficultiesManager {
                 Material.RED_SANDSTONE_WALL,
                 Material.RED_SHULKER_BOX,
                 Material.REDSTONE_ORE,
+                Material.RESPAWN_ANCHOR,
                 Material.RIB_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Material.SCULK,
                 Material.SCULK_CATALYST,
@@ -1392,6 +1436,7 @@ public class ItemDifficultiesManager {
                 Material.SILENCE_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Material.SKULL_BANNER_PATTERN,
                 Material.SKULL_POTTERY_SHERD,
+                Material.SLIME_BLOCK,
                 Material.SMALL_AMETHYST_BUD,
                 Material.SMOOTH_RED_SANDSTONE,
                 Material.SMOOTH_RED_SANDSTONE_SLAB,
@@ -1399,8 +1444,10 @@ public class ItemDifficultiesManager {
                 Material.SNIFFER_EGG,
                 Material.SNORT_POTTERY_SHERD,
                 Material.SNOUT_ARMOR_TRIM_SMITHING_TEMPLATE,
+                Material.SPIRE_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Material.SPLASH_POTION,
                 Material.TALL_GRASS,
+                Material.TADPOLE_BUCKET,
                 Material.TIDE_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Material.TOTEM_OF_UNDYING,
                 Material.TRIDENT,
@@ -1416,9 +1463,33 @@ public class ItemDifficultiesManager {
                 Material.WAYFINDER_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Material.WHITE_CANDLE,
                 Material.WHITE_SHULKER_BOX,
+                Material.WITHER_SKELETON_SKULL,
                 Material.WILD_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Material.YELLOW_CANDLE,
                 Material.YELLOW_SHULKER_BOX
-        );
+        ));
+
+        setupStates();
+    }
+
+    @Getter
+    private enum State {
+
+        EARLY,
+
+        MID,
+
+        LATE,
+
+        ;
+
+        static final State[] VALUES = values();
+
+        @Setter
+        private List<Material> items = new ArrayList<>();
+
+        @Setter
+        private int unlockedAtMinutes;
+
     }
 }
