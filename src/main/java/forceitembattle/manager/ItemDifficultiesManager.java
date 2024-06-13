@@ -15,12 +15,17 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ItemDifficultiesManager {
 
     private final ForceItemBattle plugin;
 
+    @Getter
     private final List<Material> netherItems;
+    @Getter
+    private final List<Material> endItems;
     private final List<Material> veryLateItems;
 
     @Getter
@@ -48,6 +53,13 @@ public class ItemDifficultiesManager {
         return items;
     }
 
+    public Set<Material> getOverworldItems() {
+        return Stream.of(State.EARLY.getItems(), State.MID.getItems(), State.LATE.getItems())
+                .flatMap(List::stream)
+                .filter(item -> !this.netherItems.contains(item) && !this.endItems.contains(item))
+                .collect(Collectors.toSet());
+    }
+
     public Material generateRandomMaterial() {
         Random random = new Random();
         List<Material> items = getAvailableItems();
@@ -57,21 +69,27 @@ public class ItemDifficultiesManager {
         return items.get(random.nextInt(items.size()));
     }
 
+    public boolean isItemInDescriptionList(Material material) {
+        return this.getDescriptionItems().containsKey(material);
+    }
+
     public boolean itemHasDescription(Material material) {
         return this.getDescriptionItems().get(material) != null;
     }
 
     public List<String> getDescriptionItemLines(Material material) {
-        List<String> lines;
-        if (this.itemHasDescription(material)) {
-            lines = this.getDescriptionItems().get(material)
-                    .lines()
-                    .stream()
-                    .map(line -> ChatColor.translateAlternateColorCodes('&', line))
-                    .toList();
-            // lines = this.getDescriptionItems().get(material).lines();
-        } else {
-            throw new NullPointerException(material.name() + " does not have a description");
+        List<String> lines = null;
+        if (this.isItemInDescriptionList(material)) {
+            if(this.itemHasDescription(material)) {
+                lines = this.getDescriptionItems().get(material)
+                        .lines()
+                        .stream()
+                        .map(line -> ChatColor.translateAlternateColorCodes('&', line))
+                        .toList();
+                // lines = this.getDescriptionItems().get(material).lines();
+            } else {
+                throw new NullPointerException(material.name() + " does not have a description");
+            }
         }
         return lines;
     }
@@ -228,6 +246,7 @@ public class ItemDifficultiesManager {
                 Material.SMOOTH_QUARTZ_SLAB,
                 Material.SMOOTH_QUARTZ_STAIRS,
                 Material.SNOUT_ARMOR_TRIM_SMITHING_TEMPLATE,
+                Material.SOUL_SAND,
                 Material.SOUL_SOIL,
                 Material.SPECTRAL_ARROW,
                 Material.STRIPPED_CRIMSON_HYPHAE,
@@ -254,6 +273,41 @@ public class ItemDifficultiesManager {
                 Material.WARPED_WART_BLOCK,
                 Material.WEEPING_VINES,
                 Material.WITHER_SKELETON_SKULL
+        );
+
+        this.endItems = List.of(
+                Material.END_STONE,
+                Material.END_STONE_BRICK_SLAB,
+                Material.END_STONE_BRICK_STAIRS,
+                Material.END_STONE_BRICK_WALL,
+                Material.END_STONE_BRICKS,
+                Material.PURPUR_BLOCK,
+                Material.PURPUR_PILLAR,
+                Material.PURPUR_SLAB,
+                Material.PURPUR_STAIRS,
+                Material.CHORUS_FRUIT,
+                Material.CHORUS_FLOWER,
+                Material.DRAGON_HEAD,
+                Material.END_ROD,
+                Material.ELYTRA,
+                Material.SHULKER_SHELL,
+                Material.SHULKER_BOX,
+                Material.WHITE_SHULKER_BOX,
+                Material.ORANGE_SHULKER_BOX,
+                Material.MAGENTA_SHULKER_BOX,
+                Material.LIGHT_BLUE_SHULKER_BOX,
+                Material.YELLOW_SHULKER_BOX,
+                Material.LIME_SHULKER_BOX,
+                Material.PINK_SHULKER_BOX,
+                Material.GRAY_SHULKER_BOX,
+                Material.LIGHT_GRAY_SHULKER_BOX,
+                Material.CYAN_SHULKER_BOX,
+                Material.PURPLE_SHULKER_BOX,
+                Material.BLUE_SHULKER_BOX,
+                Material.BROWN_SHULKER_BOX,
+                Material.GREEN_SHULKER_BOX,
+                Material.RED_SHULKER_BOX,
+                Material.BLACK_SHULKER_BOX
         );
 
         // list contains hard items that are very unrealistic to obtain in 45 min
