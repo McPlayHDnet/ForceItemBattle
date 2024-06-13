@@ -6,6 +6,7 @@ import forceitembattle.settings.preset.GamePreset;
 import forceitembattle.util.*;
 import lombok.Getter;
 import lombok.Setter;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.kyori.adventure.text.minimessage.tag.standard.StandardTags;
@@ -296,7 +297,7 @@ public class Gamemanager {
     public static ItemStack getJokers(int amount) {
         return new ItemBuilder(JOKER_MATERIAL)
                 .setAmount(amount)
-                .setDisplayName("<dark_gray>» <dark_purple>Skip")
+                .setDisplayName("<dark_gray>» <dark_purple>Joker")
                 .getItemStack();
     }
 
