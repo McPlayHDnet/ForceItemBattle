@@ -4,11 +4,7 @@ import forceitembattle.commands.CustomCommand;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.ForceItemPlayer;
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class CommandTeams extends CustomCommand {
 
@@ -24,7 +20,7 @@ public class CommandTeams extends CustomCommand {
             return;
         }
 
-        if(this.plugin.getTimer().getTime() != 0 || this.plugin.getGamemanager().isMidGame()) {
+        if(this.plugin.getTimer().getTimeLeft() != 0 || this.plugin.getGamemanager().isMidGame()) {
             player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>The game already started"));
             return;
         }

@@ -7,7 +7,9 @@ import lombok.Setter;
 import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -19,18 +21,21 @@ import java.util.UUID;
 public class Timer {
 
     private final ForceItemBattle forceItemBattle;
+    /**
+     * Time left until the game end (seconds).
+     */
     @Setter
     @Getter
-    private int time;
+    private int timeLeft;
     @Getter
     private final Map<UUID, BossBar> bossBar = new HashMap<>();
 
     public Timer(ForceItemBattle forceItemBattle) {
         this.forceItemBattle = forceItemBattle;
         if (this.forceItemBattle.getConfig().contains("timer.time")) {
-            this.time = this.forceItemBattle.getConfig().getInt("timer.time");
+            this.timeLeft = this.forceItemBattle.getConfig().getInt("timer.time");
         } else {
-            this.time = 0;
+            this.timeLeft = 0;
         }
 
         run();
@@ -73,7 +78,7 @@ public class Timer {
                         player.getName() + " <gray>[<gold>" + this.forceItemBattle.getGamemanager().getMaterialName(material) + " <reset><color:#4e5c24>" + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(true, material) + "<gray>]"));
 
                 player.sendActionBar(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(
-                        "<gradient:#fcef64:#fcc44b:#f44c7d><b>" + this.formatSeconds(this.getTime()) + "</b> <dark_gray>| " +
+                        "<gradient:#fcef64:#fcc44b:#f44c7d><b>" + this.formatSeconds(this.getTimeLeft()) + "</b> <dark_gray>| " +
                                 (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM) ? "<green>Team score: <white>" + forceItemPlayer.currentTeam().getCurrentScore() : "<green>Your score: <white>" + forceItemPlayer.currentScore())));
 
                 String bossBarTitle = "<gradient:#6eee87:#5fc52e><b>" + this.forceItemBattle.getGamemanager().getMaterialName(material) + " <reset><color:#4e5c24>" + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(false, material);
@@ -89,14 +94,14 @@ public class Timer {
                 }
 
             } else {
-                player.sendActionBar(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<gradient:#fcef64:#fcc44b:#f44c7d><b>" + this.formatSeconds(this.getTime()) + "</b> <dark_gray>| <gold>SPEC"));
+                player.sendActionBar(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<gradient:#fcef64:#fcc44b:#f44c7d><b>" + this.formatSeconds(this.getTimeLeft()) + "</b> <dark_gray>| <gold>SPEC"));
 
             }
         }
     }
 
     public void save() {
-        this.forceItemBattle.getConfig().set("timer.time", time);
+        this.forceItemBattle.getConfig().set("timer.time", timeLeft);
     }
 
     private void run() {
@@ -108,9 +113,9 @@ public class Timer {
                 if (!forceItemBattle.getGamemanager().isMidGame()) {
                     return;
                 }
-                setTime(getTime() - 1);
+                setTimeLeft(getTimeLeft() - 1);
 
-                switch (getTime()) {
+                switch (getTimeLeft()) {
                     case 300: {
                         Title.Times times = Title.Times.times(Duration.ofMillis(1000), Duration.ofMillis(1000), Duration.ofMillis(1000));
                         Title timeLeftTitle = Title.title(Component.empty(), forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>5 minutes left"), times);
@@ -135,7 +140,7 @@ public class Timer {
                     }
                     case 30, 10: {
                         Title.Times times = Title.Times.times(Duration.ofMillis(1000), Duration.ofMillis(1000), Duration.ofMillis(1000));
-                        Title timeLeftTitle = Title.title(Component.empty(), forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>" + getTime() + " seconds left"), times);
+                        Title timeLeftTitle = Title.title(Component.empty(), forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>" + getTimeLeft() + " seconds left"), times);
                         Bukkit.getOnlinePlayers().forEach(
                                 players -> {
                                     players.showTitle(timeLeftTitle);
@@ -146,7 +151,7 @@ public class Timer {
                     }
                     case 5, 4, 3, 2, 1: {
                         Title.Times times = Title.Times.times(Duration.ofMillis(1000), Duration.ofMillis(1000), Duration.ofMillis(1000));
-                        Title timeLeftTitle = Title.title(forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>" + getTime()), Component.empty(), times);
+                        Title timeLeftTitle = Title.title(forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>" + getTimeLeft()), Component.empty(), times);
                         Bukkit.getOnlinePlayers().forEach(
                                 players -> {
                                     players.showTitle(timeLeftTitle);
@@ -158,7 +163,7 @@ public class Timer {
                     default:
                         break;
                 }
-                if (getTime()<=0) {
+                if (getTimeLeft()<=0) {
                     Title.Times times = Title.Times.times(Duration.ofMillis(1000), Duration.ofMillis(1000), Duration.ofMillis(1000));
                     Title gameDoneTitle = Title.title(Component.empty(), forceItemBattle.getGamemanager().getMiniMessage().deserialize("<white>» <gold>Force Item Battle is over! <white>«"), times);
                     Bukkit.getOnlinePlayers().forEach(player -> {
