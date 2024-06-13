@@ -54,6 +54,14 @@ public class Listeners implements Listener {
                 player.setLevel(0);
                 player.setExp(0);
                 player.setGameMode(GameMode.SPECTATOR);
+
+                /** todo
+                this.plugin.getGamemanager().giveSpectatorItems(player);
+
+                this.plugin.getGamemanager().forceItemPlayerMap().values().forEach(gamePlayers -> {
+                    gamePlayers.player().hidePlayer(this.plugin, player);
+                });
+                **/
             } else {
                 forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
                 player.showBossBar(this.plugin.getTimer().getBossBar().get(event.getPlayer().getUniqueId()));
@@ -340,6 +348,83 @@ public class Listeners implements Listener {
                 new AchievementInventory(this.plugin, forceItemPlayer).open(player);
                 return;
             }
+        }
+    }
+
+    @EventHandler
+    public void onAfterGame(PlayerInteractEvent e) {
+        Player player = e.getPlayer();
+        if(!this.plugin.getGamemanager().isEndGame()) return;
+        if(e.getItem() == null) return;
+
+        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+
+        if (e.getItem().getType() == Material.LIME_DYE) {
+            if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+                player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
+                new AchievementInventory(this.plugin, forceItemPlayer).open(player);
+                return;
+            }
+            return;
+        }
+
+        if (e.getItem().getType() == Material.COMPASS) {
+            if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+                new TeleporterInventory(this.plugin).open(player);
+                player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
+                return;
+            }
+            return;
+        }
+
+        if (e.getItem().getType() == Material.GRASS_BLOCK) {
+            if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+                e.setCancelled(true);
+                if(player.getWorld().getName().equals("world")) {
+                    player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
+                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>[<dark_red>✖<dark_gray>] <gray>You are already in the <green>overworld"));
+                    return;
+                }
+                player.teleport(this.plugin.getSpawnLocation());
+                player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
+                return;
+            }
+            return;
+        }
+
+        if (e.getItem().getType() == Material.NETHERRACK) {
+            if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+                e.setCancelled(true);
+                if(player.getWorld().getName().equals("world_nether")) {
+                    player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
+                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>[<dark_red>✖<dark_gray>] <gray>You are already in the <red>nether"));
+                    return;
+                }
+                player.teleport(new Location(Bukkit.getWorld("world_nether"), 0, 70, 0));
+                player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
+                return;
+            }
+            return;
+        }
+
+        if (e.getItem().getType() == Material.ENDER_EYE) {
+            if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+                e.setCancelled(true);
+                if(player.getWorld().getName().equals("world_the_end")) {
+                    player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
+                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<gray>You are already in the <dark_purple>end"));
+                    return;
+                }
+                World end = Bukkit.getWorld("world_the_end");
+                Location location = new Location(end, 0, 0, 0);
+                assert end != null;
+                location.setY(end.getHighestBlockYAt(location) + 1);
+
+                player.teleport(location);
+                player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
+                return;
+            }
+            return;
         }
     }
 

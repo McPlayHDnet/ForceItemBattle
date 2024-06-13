@@ -127,6 +127,14 @@ public class Gamemanager {
         this.forceItemBattle.getTimer().sendActionBar();
     }
 
+    public void giveSpectatorItems(Player player) {
+        player.getInventory().setItem(1, new ItemBuilder(Material.LIME_DYE).setDisplayName("<dark_gray>» <green>Achievements").getItemStack());
+        player.getInventory().setItem(3, new ItemBuilder(Material.COMPASS).setDisplayName("<dark_gray>» <yellow>Teleporter").getItemStack());
+        player.getInventory().setItem(5, new ItemBuilder(Material.GRASS_BLOCK).setDisplayName("<dark_gray>» <dark_green>Overworld").getItemStack());
+        player.getInventory().setItem(6, new ItemBuilder(Material.NETHERRACK).setDisplayName("<dark_gray>» <red>Nether").getItemStack());
+        player.getInventory().setItem(7, new ItemBuilder(Material.ENDER_EYE).setDisplayName("<dark_gray>» <dark_purple>End").getItemStack());
+    }
+
     public void finishGame() {
         this.setCurrentGameState(GameState.END_GAME);
 
@@ -139,11 +147,12 @@ public class Gamemanager {
             player.setLevel(0);
             player.setExp(0);
             player.teleport(Bukkit.getWorld("world").getSpawnLocation());
-            player.setGameMode(GameMode.ADVENTURE);
+            player.setGameMode(GameMode.CREATIVE);
             player.getPassengers().forEach(Entity::remove);
             player.setPlayerListName(player.getName());
-            player.setAllowFlight(true);
-            player.setFlySpeed(0.1f);
+
+            this.giveSpectatorItems(player);
+
             if (player.isOp()) {
                 player.sendMessage(ChatColor.RED + "Use /result to see the results from every player");
             }
