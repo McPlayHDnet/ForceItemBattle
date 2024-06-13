@@ -69,7 +69,7 @@ public class FinishInventory extends InventoryBuilder {
                         placedItems = -1;
                     } else {
                         ForceItem forceItem = items.get(placedItems);
-                        ItemStack itemStack = new ItemBuilder(forceItem.material()).setDisplayName(WordUtils.capitalize(forceItem.material().name().replace("_", " ").toLowerCase()) + (forceItem.usedSkip() ? " <red><b>SKIPPED</b>" : "") + " <dark_gray>» <gold>" + forceItem.timeNeeded()).setGlowing(forceItem.usedSkip()).getItemStack();
+                        ItemStack itemStack = new ItemBuilder(forceItem.material()).setDisplayName(WordUtils.capitalize(forceItem.material().name().replace("_", " ").toLowerCase()) + (forceItem.usedSkip() ? " <red><b>SKIPPED</b>" : "") + (forceItem.isBackToBack() ? " <aqua><b>B2B</b>" : "") + " <dark_gray>» <gold>" + forceItem.timeNeeded()).setGlowing(forceItem.usedSkip()).getItemStack();
                         setItem(startSlot, itemStack);
                         slots.put(startSlot, itemStack);
                     }
