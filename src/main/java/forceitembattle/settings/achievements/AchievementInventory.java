@@ -87,7 +87,6 @@ public class AchievementInventory extends InventoryBuilder {
 
         for(int i = startIndex; i <= endIndex; i++) {
             int slotIndex = i - startIndex + 9;
-            System.out.println(slotIndex);
             Achievement achievements = ForceItemBattle.getInstance().getAchievementManager().achievementsList().get(i);
             String settingDisplayName = "<dark_gray>» <dark_aqua>" + achievements.getTitle();
             Material completedAchievement = playerStats.achievementsDone().contains(achievements.getTitle()) ? Material.LIME_DYE : Material.GRAY_DYE;

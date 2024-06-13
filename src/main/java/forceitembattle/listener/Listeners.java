@@ -364,6 +364,7 @@ public class Listeners implements Listener {
 
         if (e.getItem().getType() == Material.LIME_DYE) {
             if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+                player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
                 new AchievementInventory(this.plugin, forceItemPlayer).open(player);
                 return;
             }
