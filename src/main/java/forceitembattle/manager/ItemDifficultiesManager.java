@@ -34,7 +34,7 @@ public class ItemDifficultiesManager {
     private void setupStates() {
         // if this is a toggle setting, just change unlockedAtMinutes to 0 for all
         State.EARLY.setUnlockedAtMinutes(0);
-        State.MID.setUnlockedAtMinutes(15);
+        State.MID.setUnlockedAtMinutes(5);
         State.LATE.setUnlockedAtMinutes(10);
     }
 
