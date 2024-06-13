@@ -166,11 +166,11 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
 
             if(this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
                 for(ForceItemPlayer teamPlayers : forceItemPlayer.currentTeam().getPlayers()) {
-                    if(teamPlayers != forceItemPlayer) continue;
+                    if(teamPlayers == forceItemPlayer) continue;
 
                     Component subTitle = this.plugin.getGamemanager().getMiniMessage().deserialize("<yellow>Team #" + teamPlayers.currentTeam().getTeamId() + " <gray>| <green>" + teamPlayers.player().getName());
 
-                    Title.Times times = Title.Times.times(Duration.ofMillis(450), Duration.ofMillis(1450), Duration.ofMillis(450));
+                    Title.Times times = Title.Times.times(Duration.ofMillis(600), Duration.ofMillis(2000), Duration.ofMillis(600));
                     Title title = Title.title(Component.empty(), subTitle, times);
 
                     teamPlayers.player().showTitle(title);
