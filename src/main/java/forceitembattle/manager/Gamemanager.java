@@ -170,6 +170,12 @@ public class Gamemanager {
 
                 if (placesMap.get(forceItemPlayer) == 1) {
                     this.forceItemBattle.getStatsManager().addToStats(PlayerStat.GAMES_WON, forceItemPlayerStats, 1);
+
+                    this.forceItemBattle.getStatsManager().addToStats(PlayerStat.WIN_STREAK, forceItemPlayerStats, forceItemPlayerStats.winStreak() + 1);
+                } else {
+                    if(forceItemPlayerStats.winStreak() != 0) {
+                        this.forceItemBattle.getStatsManager().addToStats(PlayerStat.WIN_STREAK, forceItemPlayerStats, 0);
+                    }
                 }
             }
 
