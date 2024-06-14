@@ -91,8 +91,8 @@ public class AchievementManager {
                         )
                 ).build();
 
-        Achievement relentlessCollector = Achievement.builder()
-                .title("Relentless Collector")
+        Achievement ultimateCollector = Achievement.builder()
+                .title("Ultimate Collector")
                 .description(List.of("", "<gray>Find 60 items in 1 round", ""))
                 .requirements(
                         List.of(
@@ -112,35 +112,14 @@ public class AchievementManager {
                         )
                 ).build();
 
-        Achievement ultimateCollector = Achievement.builder()
-                .title("Ultimate Collector")
-                .description(List.of("", "<gray>Find 70 items in 1 round", ""))
-                .requirements(
-                        List.of(
-                                new AchievementTriggers.ObtainedItemRequirement(
-                                        null,
-                                        70,
-                                        null,
-                                        Long.MAX_VALUE,
-                                        0,
-                                        0,
-                                        0,
-                                        0,
-                                        false,
-                                        false,
-                                        false
-                                )
-                        )
-                ).build();
-
         Achievement oneDimensionWonder = Achievement.builder()
                 .title("One Dimension Wonder")
-                .description(List.of("", "<gray>Get 10 overworld items in a row", ""))
+                .description(List.of("", "<gray>Get 15 overworld items in a row", ""))
                 .requirements(
                         List.of(
                                 new AchievementTriggers.ObtainedItemRequirement(
                                         null,
-                                        10,
+                                        15,
                                         ForceItemBattle.getInstance().getItemDifficultiesManager().getOverworldItems().stream().toList(),
                                         Long.MAX_VALUE,
                                         0,
@@ -395,7 +374,7 @@ public class AchievementManager {
                 .description(List.of("", "<gray>Do not die in 1 round", ""))
                 .requirements(
                         List.of(
-                                new AchievementTriggers.PlayerActionRequirement(0, false, false, false, false, true)
+                                new AchievementTriggers.PlayerActionRequirement(0, 0, 0, false, false, false, false, true, false, false)
                         )
                 ).build();
 
@@ -422,27 +401,6 @@ public class AchievementManager {
 
         Achievement luckyRow = Achievement.builder()
                 .title("Lucky Row")
-                .description(List.of("", "<gray>Don't skip for 10 items in a row", ""))
-                .requirements(
-                        List.of(
-                                new AchievementTriggers.ObtainedItemRequirement(
-                                        null,
-                                        0,
-                                        null,
-                                        Long.MAX_VALUE,
-                                        0,
-                                        0,
-                                        0,
-                                        10,
-                                        true,
-                                        false,
-                                        true
-                                )
-                        )
-                ).build();
-
-        Achievement youGetWhatYouGet = Achievement.builder()
-                .title("You Get What You Get")
                 .description(List.of("", "<gray>Don't skip for 15 items in a row", ""))
                 .requirements(
                         List.of(
@@ -462,12 +420,33 @@ public class AchievementManager {
                         )
                 ).build();
 
+        Achievement youGetWhatYouGet = Achievement.builder()
+                .title("You Get What You Get")
+                .description(List.of("", "<gray>Don't skip for 20 items in a row", ""))
+                .requirements(
+                        List.of(
+                                new AchievementTriggers.ObtainedItemRequirement(
+                                        null,
+                                        0,
+                                        null,
+                                        Long.MAX_VALUE,
+                                        0,
+                                        0,
+                                        0,
+                                        20,
+                                        true,
+                                        false,
+                                        true
+                                )
+                        )
+                ).build();
+
         Achievement connoisseur = Achievement.builder()
                 .title("Connoisseur")
                 .description(List.of("", "<gray>Eat Cavendish", ""))
                 .requirements(
                         List.of(
-                                new AchievementTriggers.PlayerActionRequirement(0, false, false, false, true, false)
+                                new AchievementTriggers.PlayerActionRequirement(0, 0, 0, false, false, false, true, false, false, false)
                         )
                 ).build();
 
@@ -476,7 +455,7 @@ public class AchievementManager {
                 .description(List.of("", "<gray>Use the wandering trader for 10 trades in 1 round", ""))
                 .requirements(
                         List.of(
-                                new AchievementTriggers.PlayerActionRequirement(10, false, false, false, false, false)
+                                new AchievementTriggers.PlayerActionRequirement(10, 0, 0, false, false, false, false, false, false, false)
                         )
                 ).build();
 
@@ -485,7 +464,7 @@ public class AchievementManager {
                 .description(List.of("", "<gray>Find a Legendary", ""))
                 .requirements(
                         List.of(
-                                new AchievementTriggers.PlayerActionRequirement(0, true, false, false, false, false)
+                                new AchievementTriggers.PlayerActionRequirement(0, 0, 0, true, false, false, false, false, false, false)
                         )
                 ).build();
 
@@ -494,7 +473,7 @@ public class AchievementManager {
                 .description(List.of("", "<gray>Find Cavendish", ""))
                 .requirements(
                         List.of(
-                                new AchievementTriggers.PlayerActionRequirement(0, false, true, false, false, false)
+                                new AchievementTriggers.PlayerActionRequirement(0, 0, 0, false, true, false, false, false, false, false)
                         )
                 ).build();
 
@@ -503,7 +482,25 @@ public class AchievementManager {
                 .description(List.of("", "<gray>Find a needed item from loot chest in 1 round", ""))
                 .requirements(
                         List.of(
-                                new AchievementTriggers.PlayerActionRequirement(0, false, false, true, false, false)
+                                new AchievementTriggers.PlayerActionRequirement(0, 0, 0, false, false, true, false, false, false, false)
+                        )
+                ).build();
+
+        Achievement homeless = Achievement.builder()
+                .title("Homeless")
+                .description(List.of("", "<gray>Travel for over 10'000 blocks in one round", ""))
+                .requirements(
+                        List.of(
+                                new AchievementTriggers.PlayerActionRequirement(0, 10000, 0, false, false, false, false, false, true, false)
+                        )
+                ).build();
+
+        Achievement winnerWinner = Achievement.builder()
+                .title("Winner Winner Chicken Dinner!")
+                .description(List.of("", "<gray>Win 3 games in a row", ""))
+                .requirements(
+                        List.of(
+                                new AchievementTriggers.PlayerActionRequirement(0, 0, 3, false, false, false, false, false, false, true)
                         )
                 ).build();
 
@@ -520,7 +517,6 @@ public class AchievementManager {
                 itemCollector,
                 itemGatherer,
                 itemHoarder,
-                relentlessCollector,
                 ultimateCollector,
                 oneDimensionWonder,
                 infiniteFire,
@@ -544,6 +540,8 @@ public class AchievementManager {
                 wheelOfFortune,
                 willItBreak,
                 believer,
+                homeless,
+                winnerWinner,
                 completionist
         ));
     }
