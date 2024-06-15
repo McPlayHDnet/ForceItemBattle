@@ -39,12 +39,12 @@ public class ItemDifficultiesManager {
     }
 
     public List<Material> getAvailableItems() {
-        int timeLeft = this.plugin.getTimer().getTimeLeft() / 60;
-        int totalDuration = this.plugin.getGamemanager().getGameDuration() / 60;
+        int timeLeft = this.plugin.getTimer().getTimeLeft();
+        int totalDuration = this.plugin.getGamemanager().getGameDuration();
         List<Material> items = new ArrayList<>();
 
         for (State state : State.VALUES) {
-            if ((totalDuration - timeLeft) < state.getUnlockedAtMinutes()) {
+            if ((totalDuration - timeLeft) / 60 < state.getUnlockedAtMinutes()) {
                 continue;
             }
 
