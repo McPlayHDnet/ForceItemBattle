@@ -12,6 +12,7 @@ import org.bukkit.Statistic;
 import org.bukkit.entity.Player;
 
 import java.io.*;
+import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.text.DecimalFormat;
 import java.util.*;
@@ -57,6 +58,8 @@ public class StatsManager {
             case GAMES_WON -> forceItemPlayerStats.setGamesWon(forceItemPlayerStats.gamesWon() + toBeAdded);
             case GAMES_PLAYED -> forceItemPlayerStats.setGamesPlayed(forceItemPlayerStats.gamesPlayed() + toBeAdded);
             case HIGHEST_SCORE -> forceItemPlayerStats.setHighestScore(toBeAdded);
+            case WIN_STREAK -> forceItemPlayerStats.setWinStreak(toBeAdded);
+            case BACK_TO_BACK_STREAK -> forceItemPlayerStats.setBack2backStreak(toBeAdded);
         }
         this.saveStats();
     }
@@ -80,6 +83,8 @@ public class StatsManager {
             if(category == PlayerStat.TOTAL_ITEMS) return o2.totalItemsFound() <= o1.totalItemsFound() ? -1 : 1;
             if(category == PlayerStat.GAMES_WON) return o2.gamesWon() <= o1.gamesWon() ? -1 : 1;
             if(category == PlayerStat.TRAVELLED) return o2.travelled() <= o1.travelled() ? -1 : 1;
+            if(category == PlayerStat.BACK_TO_BACK_STREAK) return o2.back2backStreak() <= o1.back2backStreak() ? -1 : 1;
+            if(category == PlayerStat.WIN_STREAK) return o2.winStreak() <= o1.winStreak() ? -1 : 1;
             return o2.highestScore() <= o1.highestScore() ? -1 : 1;
         });
         return statsList.stream().limit(10).collect(Collectors.toList());
@@ -100,6 +105,9 @@ public class StatsManager {
         forceItemPlayerStats.setGamesPlayed(0);
         forceItemPlayerStats.setGamesWon(0);
         forceItemPlayerStats.setTotalItemsFound(0);
+        forceItemPlayerStats.setBack2backStreak(0);
+        forceItemPlayerStats.setWinStreak(0);
+        forceItemPlayerStats.setAchievementsDone(new ArrayList<>());
 
         this.playerStats.put(userName, forceItemPlayerStats);
         this.saveStats();
@@ -115,15 +123,34 @@ public class StatsManager {
 
             if(!statsList.isEmpty()) {
                 for(ForceItemPlayerStats stats : statsList) {
-                    if(stats.achievementsDone() == null) {
-                        stats.setAchievementsDone(new ArrayList<>());
-                    }
+                    this.ensureAllKeysPresent(stats);
                     this.playerStats.put(stats.userName(), stats);
                 }
             }
 
             fileReader.close();
         } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void ensureAllKeysPresent(ForceItemPlayerStats playerStats) {
+        try {
+            for (Field field : ForceItemPlayerStats.class.getDeclaredFields()) {
+                field.setAccessible(true);
+                if (field.get(playerStats) == null) {
+                    if (field.getType().equals(int.class)) {
+                        field.set(playerStats, 0);
+                    } else if (field.getType().equals(double.class)) {
+                        field.set(playerStats, 0.0);
+                    } else if (field.getType().equals(String.class)) {
+                        field.set(playerStats, "");
+                    } else if (field.getType().equals(List.class)) {
+                        field.set(playerStats, new ArrayList<>());
+                    }
+                }
+            }
+        } catch (IllegalAccessException e) {
             e.printStackTrace();
         }
     }
@@ -153,8 +180,10 @@ public class StatsManager {
         player.sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● <gray>Total items found <dark_gray>» <dark_aqua>" + forceItemPlayerStats.totalItemsFound()));
         player.sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● <gray>Travelled <dark_gray>» <dark_aqua>" + (int)Math.round(forceItemPlayerStats.travelled()) + " blocks"));
         player.sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● <gray>Highest score <dark_gray>» <dark_aqua>" + forceItemPlayerStats.highestScore()));
+        player.sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● <gray>Back-to-Back streak <dark_gray>» <dark_aqua>" + forceItemPlayerStats.back2backStreak()));
         player.sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● <gray>Games played <dark_gray>» <dark_aqua>" + forceItemPlayerStats.gamesPlayed()));
         player.sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● <gray>Games won <dark_gray>» <dark_aqua>" + forceItemPlayerStats.gamesWon()));
+        player.sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● <gray>Win streak <dark_gray>» <dark_aqua>" + forceItemPlayerStats.winStreak()));
         player.sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● <gray>Win percentage <dark_gray>» <dark_aqua>" + decimalFormat.format(winPercentage) + "%"));
         player.sendMessage(" ");
     }
@@ -193,6 +222,12 @@ public class StatsManager {
             case TOTAL_ITEMS -> {
                 return forceItemPlayerStats.totalItemsFound();
             }
+            case WIN_STREAK -> {
+                return forceItemPlayerStats.winStreak();
+            }
+            case BACK_TO_BACK_STREAK -> {
+                return forceItemPlayerStats.back2backStreak();
+            }
             case TRAVELLED -> {
                 return (int)Math.round(forceItemPlayerStats.travelled());
             }
@@ -216,7 +251,7 @@ public class StatsManager {
     public void createPlayerStats(ForceItemPlayer forceItemPlayer) {
         if(this.playerExists(forceItemPlayer.player().getName())) return;
 
-        ForceItemPlayerStats forceItemPlayerStats = new ForceItemPlayerStats(forceItemPlayer.player().getName(), 0, 0.0, 0, 0, 0, new ArrayList<>());
+        ForceItemPlayerStats forceItemPlayerStats = new ForceItemPlayerStats(forceItemPlayer.player().getName(), 0, 0.0, 0, 0, 0, 0, 0, new ArrayList<>());
 
         this.playerStats.put(forceItemPlayer.player().getName(), forceItemPlayerStats);
         this.saveStats();

@@ -181,6 +181,7 @@ public class Listeners implements Listener {
         Player player = event.getPlayer();
         ItemStack itemStack = event.getFoundItem();
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        ForceItemPlayerStats playerStats = this.plugin.getStatsManager().playerStats(player.getName());
 
         /**
          * this specific colorcode is inside the resource pack - credits: https://github.com/PuckiSilver/NoShadow
@@ -190,6 +191,11 @@ public class Listeners implements Listener {
         if (!event.isBackToBack()) {
             Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize(
                     "<green>" + player.getName() + " <gray>" + (event.isSkipped() ? "skipped" : "found") + " <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType()) + " <gold>" + this.plugin.getGamemanager().getMaterialName(itemStack.getType())));
+            if(forceItemPlayer.backToBackStreak() != 0) {
+                if(playerStats.back2backStreak() < forceItemPlayer.backToBackStreak()) {
+                    this.plugin.getStatsManager().addToStats(PlayerStat.BACK_TO_BACK_STREAK, playerStats, forceItemPlayer.backToBackStreak());
+                }
+            }
             forceItemPlayer.setBackToBackStreak(0);
         }
         int backToBacks = forceItemPlayer.backToBackStreak();
@@ -214,12 +220,20 @@ public class Listeners implements Listener {
 
             } else {
                 for(ForceItemPlayer teamPlayers : forceItemPlayer.currentTeam().getPlayers()) {
-                    if(this.hasItemInInventory(teamPlayers.player().getInventory(), forceItemPlayer.currentTeam().getCurrentMaterial())) {
+                    if(hasItemInInventory(teamPlayers.player().getInventory(), forceItemPlayer.currentTeam().getCurrentMaterial())) {
                         foundNextItem = true;
                         forceItemPlayer.setBackToBackStreak(backToBacks + 1);
                     }
                 }
             }
+
+            this.plugin.getAchievementManager().achievementsList().forEach(achievement -> {
+                if(achievement.checkRequirements(player, event)) {
+                    for(ForceItemPlayer teamPlayers : forceItemPlayer.currentTeam().getPlayers()) {
+                        Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, () -> achievement.grantTo(teamPlayers), 0L);
+                    }
+                }
+            });
 
             if (!foundNextItem) {
                 return;
@@ -257,7 +271,6 @@ public class Listeners implements Listener {
             }
 
             this.plugin.getAchievementManager().achievementsList().forEach(achievement -> {
-
                 if(achievement.checkRequirements(player, event)) {
                     Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, () -> achievement.grantTo(forceItemPlayer), 0L);
                 }
@@ -271,17 +284,6 @@ public class Listeners implements Listener {
         // Handle finding item back to back
 
         ItemStack foundItem = new ItemStack((this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial()));
-
-        // forceItemPlayer.setCurrentScore(forceItemPlayer.currentScore() + 1);
-        // forceItemPlayer.addFoundItemToList(new ForceItem(foundItem.getType(), this.plugin.getTimer().formatSeconds(this.plugin.getTimer().getTime()), false));
-        // forceItemPlayer.setCurrentMaterial(this.plugin.getGamemanager().generateMaterial());
-        // player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
-        // if (!this.plugin.getSettings().isSettingEnabled(GameSetting.NETHER)) {
-        //     forceItemPlayer.updateItemDisplay();
-        // }
-        // if (this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
-        //     this.plugin.getStatsManager().addToStats(PlayerStat.TOTAL_ITEMS, this.plugin.getStatsManager().playerStats(player.getName()), 1);
-        // }
 
         FoundItemEvent foundNextItemEvent = new FoundItemEvent(player);
         foundNextItemEvent.setFoundItem(foundItem);

@@ -3,6 +3,7 @@ package forceitembattle.settings.achievements;
 import com.destroystokyo.paper.loottable.LootableInventory;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.event.FoundItemEvent;
+import forceitembattle.settings.GameSetting;
 import forceitembattle.util.BiomeGroup;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.ForceItemPlayerStats;
@@ -135,6 +136,10 @@ public class AchievementTriggers {
                     }
                 }
 
+                if((this.requiredTimeFrame > 0 && this.requiredTimeFrame != Long.MAX_VALUE) && foundItemEvent.isSkipped()) {
+                    this.reset(player);
+                    return false;
+                }
 
                 if(this.isConsecutive) {
                     if(currentTime - this.lastFoundTimes.getOrDefault(player, 0L) > this.requiredTimeFrame) {
@@ -165,7 +170,7 @@ public class AchievementTriggers {
                 if(this.back2backAmount > 0) {
                     if(this.back2backSame) {
                         Material prevMaterial = foundItemEvent.getFoundItem().getType();
-                        if(prevMaterial == forceItemPlayer.currentMaterial()) {
+                        if(prevMaterial == (ForceItemBattle.getInstance().getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial())) {
                             this.isCompleted.put(player, true);
                             return true;
                         } else {
@@ -276,23 +281,31 @@ public class AchievementTriggers {
     public static class PlayerActionRequirement implements AchievementRequirement {
 
         private final int requireTrades;
+        private final int requiredDistance;
+        private final int requiredWins;
         private final boolean lootLegendary;
         private final boolean lootCavendish;
         private final boolean lootNeededItem;
         private final boolean eatSomething;
         private final boolean dontDie;
+        private final boolean travel;
+        private final boolean win;
 
         private final Map<Player, Integer> tradesCount;
         private final Map<Player, Boolean> hasDied;
         private final Map<Player, Boolean> isCompleted;
 
-        public PlayerActionRequirement(int requireTrades, boolean lootLegendary, boolean lootCavendish, boolean lootNeededItem, boolean eatSomething, boolean dontDie) {
+        public PlayerActionRequirement(int requireTrades, int requiredDistance, int requiredWins, boolean lootLegendary, boolean lootCavendish, boolean lootNeededItem, boolean eatSomething, boolean dontDie, boolean travel, boolean win) {
             this.requireTrades = requireTrades;
+            this.requiredDistance = requiredDistance;
+            this.requiredWins = requiredWins;
             this.lootLegendary = lootLegendary;
             this.lootCavendish = lootCavendish;
             this.lootNeededItem = lootNeededItem;
             this.eatSomething = eatSomething;
             this.dontDie = dontDie;
+            this.travel = travel;
+            this.win = win;
 
             this.tradesCount = new HashMap<>();
             this.hasDied = new HashMap<>();
@@ -368,6 +381,21 @@ public class AchievementTriggers {
                             }
                         }
                     }
+                }
+            }
+
+            if(this.travel) {
+                if(ForceItemBattle.getInstance().getGamemanager().isEndGame() && ForceItemBattle.getInstance().getStatsManager().calculateDistance(player) >= this.requiredDistance) {
+                    this.isCompleted.put(player, true);
+                    return true;
+                }
+            }
+
+            if(this.win) {
+                ForceItemPlayerStats playerStats = ForceItemBattle.getInstance().getStatsManager().playerStats(player.getName());
+                if(ForceItemBattle.getInstance().getGamemanager().isEndGame() && playerStats.winStreak() == this.requiredWins) {
+                    this.isCompleted.put(player, true);
+                    return true;
                 }
             }
 
