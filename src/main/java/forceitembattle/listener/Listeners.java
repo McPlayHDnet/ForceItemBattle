@@ -951,12 +951,6 @@ public class Listeners implements Listener {
             String advancementTypeColor = advancement.getDisplay().frame() == AdvancementDisplay.Frame.CHALLENGE ? "<dark_purple>" : "<green>";
 
             playerAdvancementDoneEvent.message(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>[<yellow>⭐<dark_gray>] <gold>" + playerAdvancementDoneEvent.getPlayer().getName() + " <gray>" + advancementType + " <hover:show_text:'" + advancementTypeColor + plainAdvancement + "<newline>" + advancementTypeColor + plainAdvancementDescription + "'>" + advancementTypeColor + plainAdvancement + "</hover>"));
-            if(advancement.getDisplay().frame() == AdvancementDisplay.Frame.CHALLENGE) {
-                Bukkit.getOnlinePlayers().forEach(players -> {
-                    if(players == playerAdvancementDoneEvent.getPlayer()) return;
-                    players.playSound(players.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1, 1);
-                });
-            }
         } else {
             playerAdvancementDoneEvent.message(null);
         }
