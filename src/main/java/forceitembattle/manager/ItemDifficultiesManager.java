@@ -406,7 +406,6 @@ public class ItemDifficultiesManager {
                 Material.ACACIA_TRAPDOOR,
                 Material.ACACIA_WOOD,
                 Material.ACTIVATOR_RAIL,
-                Material.ALLIUM,
                 Material.AMETHYST_BLOCK,
                 Material.AMETHYST_SHARD,
                 Material.ANDESITE,
@@ -614,7 +613,6 @@ public class ItemDifficultiesManager {
                 Material.DRIED_KELP_BLOCK,
                 Material.DROPPER,
                 Material.EMERALD,
-                Material.EMERALD_BLOCK,
                 Material.FEATHER,
                 Material.FERN,
                 Material.FILLED_MAP,
@@ -808,7 +806,6 @@ public class ItemDifficultiesManager {
                 Material.ORANGE_STAINED_GLASS,
                 Material.ORANGE_STAINED_GLASS_PANE,
                 Material.ORANGE_TERRACOTTA,
-                Material.ORANGE_TULIP,
                 Material.ORANGE_WOOL,
                 Material.OXEYE_DAISY,
                 Material.PACKED_MUD,
@@ -825,7 +822,6 @@ public class ItemDifficultiesManager {
                 Material.PINK_STAINED_GLASS,
                 Material.PINK_STAINED_GLASS_PANE,
                 Material.PINK_TERRACOTTA,
-                Material.PINK_TULIP,
                 Material.PINK_WOOL,
                 Material.PISTON,
                 Material.POLISHED_ANDESITE,
@@ -881,7 +877,6 @@ public class ItemDifficultiesManager {
                 Material.RED_STAINED_GLASS,
                 Material.RED_STAINED_GLASS_PANE,
                 Material.RED_TERRACOTTA,
-                Material.RED_TULIP,
                 Material.RED_WOOL,
                 Material.REDSTONE,
                 Material.REDSTONE_BLOCK,
@@ -991,7 +986,6 @@ public class ItemDifficultiesManager {
                 Material.WHITE_STAINED_GLASS,
                 Material.WHITE_STAINED_GLASS_PANE,
                 Material.WHITE_TERRACOTTA,
-                Material.WHITE_TULIP,
                 Material.WHITE_WOOL,
                 Material.WOLF_ARMOR,
                 Material.WOODEN_AXE,
@@ -1015,6 +1009,7 @@ public class ItemDifficultiesManager {
         ));
 
         State.MID.setItems(List.of(
+                Material.ALLIUM,
                 Material.ANVIL,
                 Material.AXOLOTL_BUCKET,
                 Material.AZALEA,
@@ -1108,6 +1103,7 @@ public class ItemDifficultiesManager {
                 Material.ENCHANTING_TABLE,
                 Material.ENDER_EYE,
                 Material.ENDER_PEARL,
+                Material.EMERALD_BLOCK,
                 Material.FERMENTED_SPIDER_EYE,
                 Material.FIRE_CHARGE,
                 Material.FISHING_ROD,
@@ -1183,7 +1179,9 @@ public class ItemDifficultiesManager {
                 Material.NETHER_WART,
                 Material.NETHER_WART_BLOCK,
                 Material.OBSERVER,
+                Material.ORANGE_TULIP,
                 Material.PINK_PETALS,
+                Material.PINK_TULIP,
                 Material.POINTED_DRIPSTONE,
                 Material.POISONOUS_POTATO,
                 Material.POLISHED_BASALT,
@@ -1223,6 +1221,7 @@ public class ItemDifficultiesManager {
                 Material.RED_NETHER_BRICK_STAIRS,
                 Material.RED_NETHER_BRICK_WALL,
                 Material.RED_NETHER_BRICKS,
+                Material.RED_TULIP,
                 Material.REDSTONE_LAMP,
                 Material.ROOTED_DIRT,
                 Material.SADDLE,
@@ -1278,7 +1277,8 @@ public class ItemDifficultiesManager {
                 Material.WARPED_TRAPDOOR,
                 Material.WARPED_WART_BLOCK,
                 Material.WEEPING_VINES,
-                Material.WET_SPONGE
+                Material.WET_SPONGE,
+                Material.WHITE_TULIP
         ));
 
         State.LATE.setItems(List.of(
