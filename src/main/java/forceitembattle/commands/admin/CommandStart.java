@@ -22,7 +22,6 @@ import org.bukkit.scheduler.BukkitRunnable;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class CommandStart extends CustomCommand implements CustomTabCompleter {
 
@@ -61,7 +60,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
 
     private void performCommand(GamePreset gamePreset, Player player, String[] args) {
         int durationMinutes = (gamePreset != null ? gamePreset.getCountdown() : Integer.parseInt(args[0]));
-        int countdown = durationMinutes * 60;
+        int durationSeconds = durationMinutes * 60;
         int jokersAmount = (gamePreset != null ? gamePreset.getJokers() : (Integer.parseInt(args[1])));
 
         if(this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
@@ -74,8 +73,8 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
             }
         }
 
-        this.plugin.getTimer().setTime(countdown);
-        this.plugin.getGamemanager().setGameStartCountdown(countdown);
+        this.plugin.getTimer().setTimeLeft(durationSeconds);
+        this.plugin.getGamemanager().setGameDuration(durationSeconds);
         this.plugin.getGamemanager().initializeMats();
 
         if (gamePreset == null) {
@@ -115,7 +114,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
                 String subTitle = "";
 
                 switch (seconds) {
-                    case 9, 8 -> subTitle = "<white>» <gold>" + (plugin.getTimer().getTime() / 60) + " minutes <white>«";
+                    case 9, 8 -> subTitle = "<white>» <gold>" + (plugin.getTimer().getTimeLeft() / 60) + " minutes <white>«";
                     case 7, 6 -> subTitle = "<white>» <gold>" + jokersAmount + " Joker <white>«";
                     case 5 -> subTitle = "<white>» <gold>/info & /infowiki <white>«";
                     case 4 -> subTitle = "<white>» <gold>/spawn & /bed <white>«";

@@ -1,7 +1,6 @@
 package forceitembattle.commands.admin;
 
 import forceitembattle.commands.CustomCommand;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
 public class CommandStopTimer extends CustomCommand {
@@ -20,7 +19,7 @@ public class CommandStopTimer extends CustomCommand {
                 return;
             }
 
-            this.plugin.getTimer().setTime(1);
+            this.plugin.getTimer().setTimeLeft(1);
         }
 
     }

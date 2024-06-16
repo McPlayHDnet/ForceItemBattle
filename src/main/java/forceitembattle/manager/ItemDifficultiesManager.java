@@ -31,6 +31,15 @@ public class ItemDifficultiesManager {
     @Getter
     private HashMap<Material, DescriptionItem> descriptionItems;
 
+    /**
+     * Chat and tablist use smaller icons.
+     */
+    private Map<Material, String> smallIconUnicodes;
+    /**
+     * Bossbar is using bigger icons.
+     */
+    private Map<Material, String> bigIconUnicodes;
+
     private void setupStates() {
         // if this is a toggle setting, just change unlockedAtMinutes to 0 for all
         State.EARLY.setUnlockedAtMinutes(0);
@@ -39,12 +48,12 @@ public class ItemDifficultiesManager {
     }
 
     public List<Material> getAvailableItems() {
-        int gameTimeMinutes = this.plugin.getTimer().getTime() / 60;
-        int gameStartMinutes = this.plugin.getGamemanager().getGameStartCountdown() / 60;
+        int timeLeft = this.plugin.getTimer().getTimeLeft();
+        int totalDuration = this.plugin.getGamemanager().getGameDuration();
         List<Material> items = new ArrayList<>();
 
         for (State state : State.VALUES) {
-            if ((gameStartMinutes - gameTimeMinutes) < state.getUnlockedAtMinutes()) {
+            if ((totalDuration - timeLeft) / 60 < state.getUnlockedAtMinutes()) {
                 continue;
             }
 
@@ -101,37 +110,60 @@ public class ItemDifficultiesManager {
         return lines;
     }
 
+    public String getUnicodeFromMaterial(boolean smallIcon, Material material) {
+        return this.getItemUnicodes(smallIcon).getOrDefault(material, "NULL");
+    }
+
+    public Map<Material, String> getItemUnicodes(boolean smallIcon) {
+        if (smallIcon) {
+            if (smallIconUnicodes == null) {
+                smallIconUnicodes = readItemUnicodes(true);
+            }
+
+            return smallIconUnicodes;
+        }
+
+        if (bigIconUnicodes == null) {
+            bigIconUnicodes = readItemUnicodes(false);
+        }
+
+        return bigIconUnicodes;
+    }
+
     /**
-     * Method to read the unicodes from the file,
-     * solution can be better
+     * Method to read the unicodes from the file.
      */
-
-    private Map<Material, String> readItemUnicodes(boolean isChatOrTab) {
+    private Map<Material, String> readItemUnicodes(boolean smallIcon) {
         Map<Material, String> itemsUnicode = new HashMap<>();
+        File file = new File(this.plugin.getDataFolder(), "unicodeItems.json");
 
-        try (FileReader fileReader = new FileReader(new File(this.plugin.getDataFolder(), "unicodeItems.json"))) {
+        if (!file.exists()) {
+            this.plugin.getLogger().warning("`unicodeItems.json` does not exist, not using custom icons");
+            return new HashMap<>();
+        }
+
+        try (FileReader fileReader = new FileReader(file)) {
             Gson gson = new Gson();
             Type mapType = new TypeToken<Map<String, String>[]>(){}.getType();
             Map<String, String>[] items = gson.fromJson(fileReader, mapType);
 
-            for(Map<String, String> entry : items) {
+            for (Map<String, String> entry : items) {
                 String materialName = entry.get("material");
                 String unicode = entry.get("unicode");
 
                 if (materialName != null && unicode != null) {
-                    if(isChatOrTab && materialName.contains("_tabChat")) {
+                    if (smallIcon && materialName.contains("_tabChat")) {
                         Material material = Material.getMaterial(materialName.replace("_tabChat", ""));
-                        if(material != null) {
+                        if (material != null) {
                             itemsUnicode.put(material, unicode);
                         }
 
-                    } else if(!isChatOrTab && !materialName.contains("_tabChat")) {
+                    } else if (!smallIcon && !materialName.contains("_tabChat")) {
                         Material material = Material.getMaterial(materialName);
-                        if(material != null) {
+                        if (material != null) {
                             itemsUnicode.put(material, unicode);
                         }
                     }
-
                 }
             }
         } catch (IOException e) {
@@ -139,10 +171,6 @@ public class ItemDifficultiesManager {
         }
 
         return itemsUnicode;
-    }
-
-    public String getUnicodeFromMaterial(boolean isChatOrTab, Material material) {
-        return this.readItemUnicodes(isChatOrTab).getOrDefault(material, "NULL");
     }
 
     /**

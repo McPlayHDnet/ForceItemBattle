@@ -2,13 +2,14 @@ package forceitembattle.commands.player;
 
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.util.*;
+import forceitembattle.util.FinishInventory;
+import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.util.Teams;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.UUID;
 
 public class CommandResult extends CustomCommand {
 
@@ -23,7 +24,7 @@ public class CommandResult extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (this.plugin.getTimer().getTime() > 0) {
+        if (this.plugin.getTimer().getTimeLeft() > 0) {
             return;
         }
 
