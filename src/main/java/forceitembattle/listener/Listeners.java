@@ -359,7 +359,7 @@ public class Listeners implements Listener {
     public void onChat_(AsyncChatEvent asyncChatEvent) {
         Player player = asyncChatEvent.getPlayer();
         asyncChatEvent.setCancelled(true);
-        Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize("<gold>" + player.getName() + " <dark_gray>» <gray>" + PlainTextComponentSerializer.plainText().serialize(asyncChatEvent.originalMessage())));
+        Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize("<gold>" + player.getName() + " <dark_gray>» <white>" + PlainTextComponentSerializer.plainText().serialize(asyncChatEvent.originalMessage())));
     }
 
     @EventHandler
