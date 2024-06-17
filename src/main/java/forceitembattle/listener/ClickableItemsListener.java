@@ -154,7 +154,7 @@ public class ClickableItemsListener implements Listener {
         } else {
             stack.setType(Material.AIR);
         }
-        Material mat = (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial());
+        Material mat = forceItemPlayer.getCurrentMaterial();
 
         player.getInventory().setItem(foundSlot, stack);
 

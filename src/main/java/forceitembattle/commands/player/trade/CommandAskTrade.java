@@ -4,7 +4,6 @@ import forceitembattle.commands.CustomCommand;
 import forceitembattle.listener.Listeners;
 import forceitembattle.manager.TradingManager;
 import forceitembattle.util.ForceItemPlayer;
-import forceitembattle.util.TradeInventory;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
@@ -27,7 +26,7 @@ public class CommandAskTrade extends CustomCommand {
             return;
         }
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-        Material currentMaterial = forceItemPlayer.currentTeam() == null ? forceItemPlayer.currentMaterial() : forceItemPlayer.currentTeam().getCurrentMaterial();
+        Material currentMaterial = forceItemPlayer.getCurrentMaterial();
         String materialName =  this.plugin.getGamemanager().getMaterialName(currentMaterial);
 
         player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(TradingManager.PREFIX + "<gray>You asked for <dark_aqua>" + materialName));

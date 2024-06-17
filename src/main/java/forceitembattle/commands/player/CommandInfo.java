@@ -36,7 +36,7 @@ public class CommandInfo extends CustomCommand implements CustomTabCompleter {
         } else if (this.plugin.getGamemanager().isMidGame()) {
             if (this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
                 ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-                item = new ItemStack(forceItemPlayer.currentTeam() == null ? forceItemPlayer.currentMaterial() : forceItemPlayer.currentTeam().getCurrentMaterial());
+                item = new ItemStack(forceItemPlayer.getCurrentMaterial());
             } else {
                 player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>You are not playing, type /info [item] to get information about an item"));
             }

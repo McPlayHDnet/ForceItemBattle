@@ -2,8 +2,6 @@ package forceitembattle.commands.player;
 
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.util.ForceItemPlayer;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.TextComponent;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -23,7 +21,7 @@ public class CommandInfoWiki extends CustomCommand {
         if (this.plugin.getGamemanager().isMidGame()) {
             if (this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
                 ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-                item = new ItemStack(forceItemPlayer.currentTeam() == null ? forceItemPlayer.currentMaterial() : forceItemPlayer.currentTeam().getCurrentMaterial());
+                item = new ItemStack(forceItemPlayer.getCurrentMaterial());
             } else {
                 player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>You are not playing."));
                 return;

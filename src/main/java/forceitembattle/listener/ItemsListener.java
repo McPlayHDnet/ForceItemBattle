@@ -2,7 +2,6 @@ package forceitembattle.listener;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.event.FoundItemEvent;
-import forceitembattle.settings.GameSetting;
 import forceitembattle.util.ForceItemPlayer;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
@@ -42,7 +41,7 @@ public class ItemsListener implements Listener {
 
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
         ItemStack clickedItem = inventoryClickEvent.getCurrentItem();
-        Material currentItem = (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial());
+        Material currentItem = forceItemPlayer.getCurrentMaterial();
 
         if (clickedItem == null) {
             return;
@@ -68,7 +67,7 @@ public class ItemsListener implements Listener {
             if(this.plugin.getGamemanager().isMidGame()) {
                 ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
                 ItemStack pickedItem = entityPickupItemEvent.getItem().getItemStack();
-                Material currentMaterial = (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial());
+                Material currentMaterial = forceItemPlayer.getCurrentMaterial();
 
                 if (pickedItem.getType() == currentMaterial) {
                     FoundItemEvent foundItemEvent = new FoundItemEvent(player);
@@ -139,7 +138,7 @@ public class ItemsListener implements Listener {
         if (isValidShiftClick || inventoryClickEvent.getAction() == InventoryAction.PICKUP_ALL) {
             ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
             ItemStack clickedItem = inventoryClickEvent.getCurrentItem();
-            Material currentItem = (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial());
+            Material currentItem = forceItemPlayer.getCurrentMaterial();
 
             if (clickedItem == null) {
                 return;

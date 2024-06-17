@@ -147,7 +147,7 @@ public class Listeners implements Listener {
         }
         int backToBacks = forceItemPlayer.backToBackStreak();
 
-        if(this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+        if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
             forceItemPlayer.currentTeam().setCurrentScore(forceItemPlayer.currentTeam().getCurrentScore() + 1);
             forceItemPlayer.currentTeam().addFoundItemToList(new ForceItem(itemStack.getType(), this.plugin.getTimer().formatSeconds(this.plugin.getTimer().getTimeLeft()), System.currentTimeMillis(), event.isBackToBack(), event.isSkipped()));
             forceItemPlayer.currentTeam().setCurrentMaterial(this.plugin.getGamemanager().generateMaterial());
@@ -230,7 +230,7 @@ public class Listeners implements Listener {
 
         // Handle finding item back to back
 
-        ItemStack foundItem = new ItemStack((this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial()));
+        ItemStack foundItem = new ItemStack(forceItemPlayer.getCurrentMaterial());
 
         FoundItemEvent foundNextItemEvent = new FoundItemEvent(player);
         foundNextItemEvent.setFoundItem(foundItem);
@@ -372,7 +372,7 @@ public class Listeners implements Listener {
 
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
         ItemStack clickedItem = playerItemConsumeEvent.getItem();
-        Material currentItem = (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial());
+        Material currentItem = forceItemPlayer.getCurrentMaterial();
 
         if (clickedItem.getType() == currentItem) {
             FoundItemEvent foundItemEvent = new FoundItemEvent(player);
