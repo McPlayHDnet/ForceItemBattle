@@ -24,13 +24,17 @@ public class ClickableItemsListener implements Listener {
     @EventHandler
     public void onAfterGame(PlayerInteractEvent e) {
         Player player = e.getPlayer();
-        if(!this.plugin.getGamemanager().isEndGame()) return;
-        if(e.getItem() == null) return;
+        if (!this.plugin.getGamemanager().isEndGame()) {
+            return;
+        }
+        if (e.getItem() == null) {
+            return;
+        }
 
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
 
         if (e.getItem().getType() == Material.LIME_DYE) {
-            if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+            if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
                 player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
                 new AchievementInventory(this.plugin, forceItemPlayer).open(player);
                 return;
@@ -39,7 +43,7 @@ public class ClickableItemsListener implements Listener {
         }
 
         if (e.getItem().getType() == Material.COMPASS) {
-            if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+            if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
                 new TeleporterInventory(this.plugin).open(player);
                 player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
                 return;
@@ -48,9 +52,9 @@ public class ClickableItemsListener implements Listener {
         }
 
         if (e.getItem().getType() == Material.GRASS_BLOCK) {
-            if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+            if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
                 e.setCancelled(true);
-                if(player.getWorld().getName().equals("world")) {
+                if (player.getWorld().getName().equals("world")) {
                     player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
                     player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>[<dark_red>✖<dark_gray>] <gray>You are already in the <green>overworld"));
                     return;
@@ -63,9 +67,9 @@ public class ClickableItemsListener implements Listener {
         }
 
         if (e.getItem().getType() == Material.NETHERRACK) {
-            if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+            if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
                 e.setCancelled(true);
-                if(player.getWorld().getName().equals("world_nether")) {
+                if (player.getWorld().getName().equals("world_nether")) {
                     player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
                     player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>[<dark_red>✖<dark_gray>] <gray>You are already in the <red>nether"));
                     return;
@@ -78,9 +82,9 @@ public class ClickableItemsListener implements Listener {
         }
 
         if (e.getItem().getType() == Material.ENDER_EYE) {
-            if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+            if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
                 e.setCancelled(true);
-                if(player.getWorld().getName().equals("world_the_end")) {
+                if (player.getWorld().getName().equals("world_the_end")) {
                     player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
                     player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<gray>You are already in the <dark_purple>end"));
                     return;
@@ -102,15 +106,21 @@ public class ClickableItemsListener implements Listener {
     @EventHandler
     public void onClick(PlayerInteractEvent e) { // triggered if a joker is used
         Player player = e.getPlayer();
-        if (!this.plugin.getGamemanager().isMidGame()) return;
-        if (!this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) return;
-        if(e.getItem() == null) return;
+        if (!this.plugin.getGamemanager().isMidGame()) {
+            return;
+        }
+        if (!this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
+            return;
+        }
+        if (e.getItem() == null) {
+            return;
+        }
 
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
 
         if (e.getItem().getType() == Material.BUNDLE) {
-            if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
-                if(this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+            if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+                if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
                     this.plugin.getBackpack().openTeamBackpack(forceItemPlayer.currentTeam(), player);
                 } else {
                     this.plugin.getBackpack().openPlayerBackpack(player);
@@ -120,7 +130,7 @@ public class ClickableItemsListener implements Listener {
         }
 
         if (e.getItem().getType() == Material.KNOWLEDGE_BOOK) {
-            if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+            if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
                 e.setCancelled(true);
                 this.plugin.getAntimatterLocator().locateAntimatter(forceItemPlayer);
                 return;
@@ -159,10 +169,12 @@ public class ClickableItemsListener implements Listener {
         player.getInventory().setItem(foundSlot, stack);
 
         player.getInventory().addItem(new ItemStack(mat));
-        if (!player.getInventory().contains(mat)) player.getWorld().dropItemNaturally(player.getLocation(), new ItemStack(mat));
+        if (!player.getInventory().contains(mat)) {
+            player.getWorld().dropItemNaturally(player.getLocation(), new ItemStack(mat));
+        }
         this.plugin.getTimer().sendActionBar();
 
-        if(this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+        if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
             forceItemPlayer.currentTeam().setRemainingJokers(jokers);
         } else {
             forceItemPlayer.setRemainingJokers(jokers);
@@ -178,9 +190,15 @@ public class ClickableItemsListener implements Listener {
     @EventHandler
     public void onOpenAchievements(PlayerInteractEvent e) {
         Player player = e.getPlayer();
-        if(!this.plugin.getGamemanager().isPreGame()) return;
-        if (!this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) return;
-        if(e.getItem() == null) return;
+        if (!this.plugin.getGamemanager().isPreGame()) {
+            return;
+        }
+        if (!this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
+            return;
+        }
+        if (e.getItem() == null) {
+            return;
+        }
 
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
 
