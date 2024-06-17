@@ -4,13 +4,13 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.settings.achievements.AchievementInventory;
 import forceitembattle.settings.preset.GamePreset;
 import forceitembattle.settings.preset.InvSettingsPresets;
 import forceitembattle.util.*;
 import io.papermc.paper.advancement.AdvancementDisplay;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import io.papermc.paper.event.player.PlayerTradeEvent;
+import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.*;
 import org.bukkit.advancement.Advancement;
@@ -21,13 +21,19 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.entity.*;
-import org.bukkit.event.inventory.*;
+import org.bukkit.event.entity.EntityPickupItemEvent;
+import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
+import org.bukkit.event.entity.FoodLevelChangeEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.inventory.InventoryAction;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.*;
-import org.bukkit.inventory.*;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 
 import java.text.DecimalFormat;
@@ -35,14 +41,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
 
+@RequiredArgsConstructor
 public class Listeners implements Listener {
 
-    public ForceItemBattle plugin;
-
-    public Listeners(ForceItemBattle forceItemBattle) {
-        this.plugin = forceItemBattle;
-        this.plugin.getServer().getPluginManager().registerEvents(this, this.plugin);
-    }
+    public final ForceItemBattle plugin;
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
@@ -90,64 +92,10 @@ public class Listeners implements Listener {
         playerQuitEvent.getPlayer().getPassengers().forEach(Entity::remove);
     }
 
-    /* Found-/Skip Item */
-    @EventHandler
-    public void onPickupEvent(EntityPickupItemEvent entityPickupItemEvent) {
-        if(entityPickupItemEvent.getEntity() instanceof Player player) {
-            if(this.plugin.getGamemanager().isMidGame()) {
-                ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-                ItemStack pickedItem = entityPickupItemEvent.getItem().getItemStack();
-                Material currentMaterial = (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial());
-
-                if(pickedItem.getType() == currentMaterial) {
-                    FoundItemEvent foundItemEvent = new FoundItemEvent(player);
-                    foundItemEvent.setFoundItem(pickedItem);
-                    foundItemEvent.setSkipped(false);
-
-                    Bukkit.getPluginManager().callEvent(foundItemEvent);
-                }
-            }
-        }
-    }
-
-    @EventHandler(ignoreCancelled = true)
-    public void onFoundItemInInventory(InventoryClickEvent inventoryClickEvent) {
-        Player player = (Player) inventoryClickEvent.getWhoClicked();
-
-        if (!this.plugin.getGamemanager().isMidGame()) {
-            return;
-        }
-
-        if(inventoryClickEvent.getClickedInventory() instanceof CraftingInventory ||
-                inventoryClickEvent.getClickedInventory() instanceof SmithingInventory ||
-                inventoryClickEvent.getClickedInventory() instanceof FurnaceInventory ||
-                inventoryClickEvent.getClickedInventory() instanceof BrewerInventory) return;
-
-        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-        ItemStack clickedItem = inventoryClickEvent.getCurrentItem();
-        Material currentItem = (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial());
-
-        if (clickedItem == null) {
-            return;
-        }
-
-        if (inventoryClickEvent.getView().getTitle().startsWith("§8●")) {
-            return; //prevents from getting the needed item onClick inside the recipe
-        }
-
-        if (clickedItem.getType() == currentItem) {
-            FoundItemEvent foundItemEvent = new FoundItemEvent(player);
-            foundItemEvent.setFoundItem(clickedItem);
-            foundItemEvent.setSkipped(false);
-
-            Bukkit.getPluginManager().callEvent(foundItemEvent);
-        }
-    }
-
     @EventHandler
     public void onMove(PlayerMoveEvent playerMoveEvent) {
         Player player = playerMoveEvent.getPlayer();
-        if(this.plugin.getGamemanager().isPreGame() || this.plugin.getGamemanager().isPausedGame()) {
+        if (this.plugin.getGamemanager().isPreGame() || this.plugin.getGamemanager().isPausedGame()) {
             Location from = playerMoveEvent.getFrom();
             Location to = playerMoveEvent.getTo();
 
@@ -163,17 +111,16 @@ public class Listeners implements Listener {
             return;
         }
 
-        if(this.plugin.getGamemanager().isMidGame()) {
+        if (this.plugin.getGamemanager().isMidGame()) {
             ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
             this.plugin.getAchievementManager().achievementsList().forEach(achievement -> {
 
-                if(achievement.checkRequirements(player, playerMoveEvent)) {
+                if (achievement.checkRequirements(player, playerMoveEvent)) {
                     Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, () -> achievement.grantTo(forceItemPlayer), 0L);
                 }
             });
         }
     }
-
 
     /* Custom Found-Item Event */
     @EventHandler
@@ -219,7 +166,7 @@ public class Listeners implements Listener {
                 forceItemPlayer.setBackToBackStreak(backToBacks + 1);
 
             } else {
-                for(ForceItemPlayer teamPlayers : forceItemPlayer.currentTeam().getPlayers()) {
+                for (ForceItemPlayer teamPlayers : forceItemPlayer.currentTeam().getPlayers()) {
                     if(hasItemInInventory(teamPlayers.player().getInventory(), forceItemPlayer.currentTeam().getCurrentMaterial())) {
                         foundNextItem = true;
                         forceItemPlayer.setBackToBackStreak(backToBacks + 1);
@@ -354,298 +301,6 @@ public class Listeners implements Listener {
         }
 
         return false;
-    }
-
-    @EventHandler
-    public void onOpenAchievements(PlayerInteractEvent e) {
-        Player player = e.getPlayer();
-        if(!this.plugin.getGamemanager().isPreGame()) return;
-        if (!this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) return;
-        if(e.getItem() == null) return;
-
-        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-
-        if (e.getItem().getType() == Material.LIME_DYE) {
-            if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
-                player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
-                new AchievementInventory(this.plugin, forceItemPlayer).open(player);
-                return;
-            }
-        }
-    }
-
-    @EventHandler
-    public void onAfterGame(PlayerInteractEvent e) {
-        Player player = e.getPlayer();
-        if(!this.plugin.getGamemanager().isEndGame()) return;
-        if(e.getItem() == null) return;
-
-        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-
-        if (e.getItem().getType() == Material.LIME_DYE) {
-            if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
-                player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
-                new AchievementInventory(this.plugin, forceItemPlayer).open(player);
-                return;
-            }
-            return;
-        }
-
-        if (e.getItem().getType() == Material.COMPASS) {
-            if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
-                new TeleporterInventory(this.plugin).open(player);
-                player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
-                return;
-            }
-            return;
-        }
-
-        if (e.getItem().getType() == Material.GRASS_BLOCK) {
-            if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
-                e.setCancelled(true);
-                if(player.getWorld().getName().equals("world")) {
-                    player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
-                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>[<dark_red>✖<dark_gray>] <gray>You are already in the <green>overworld"));
-                    return;
-                }
-                player.teleport(this.plugin.getSpawnLocation());
-                player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
-                return;
-            }
-            return;
-        }
-
-        if (e.getItem().getType() == Material.NETHERRACK) {
-            if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
-                e.setCancelled(true);
-                if(player.getWorld().getName().equals("world_nether")) {
-                    player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
-                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>[<dark_red>✖<dark_gray>] <gray>You are already in the <red>nether"));
-                    return;
-                }
-                player.teleport(new Location(Bukkit.getWorld("world_nether"), 0, 70, 0));
-                player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
-                return;
-            }
-            return;
-        }
-
-        if (e.getItem().getType() == Material.ENDER_EYE) {
-            if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
-                e.setCancelled(true);
-                if(player.getWorld().getName().equals("world_the_end")) {
-                    player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
-                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<gray>You are already in the <dark_purple>end"));
-                    return;
-                }
-                World end = Bukkit.getWorld("world_the_end");
-                Location location = new Location(end, 0, 0, 0);
-                assert end != null;
-                location.setY(end.getHighestBlockYAt(location) + 1);
-
-                player.teleport(location);
-                player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
-                return;
-            }
-            return;
-        }
-    }
-
-    @EventHandler
-    public void onClick(PlayerInteractEvent e) { // triggered if a joker is used
-        Player player = e.getPlayer();
-        if (!this.plugin.getGamemanager().isMidGame()) return;
-        if (!this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) return;
-        if(e.getItem() == null) return;
-
-        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-
-        if (e.getItem().getType() == Material.BUNDLE) {
-            if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
-                if(this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-                    this.plugin.getBackpack().openTeamBackpack(forceItemPlayer.currentTeam(), player);
-                } else {
-                    this.plugin.getBackpack().openPlayerBackpack(player);
-                }
-                return;
-            }
-        }
-
-        if (e.getItem().getType() == Material.KNOWLEDGE_BOOK) {
-            if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
-                e.setCancelled(true);
-                this.plugin.getAntimatterLocator().locateAntimatter(forceItemPlayer);
-                return;
-            }
-        }
-
-        if (!Gamemanager.isJoker(e.getItem())) {
-            return;
-        }
-        if (e.getAction() != Action.RIGHT_CLICK_AIR) {
-            return;
-        }
-
-        int jokers = (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getRemainingJokers() : forceItemPlayer.remainingJokers());
-        if (jokers <= 0) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>No more skips left."));
-            player.getInventory().remove(Gamemanager.getJokerMaterial());
-            return;
-        }
-
-        jokers--;
-
-        int foundSlot = e.getPlayer()
-                .getInventory()
-                .first(Gamemanager.getJokerMaterial());
-
-        ItemStack stack = player.getInventory().getItem(foundSlot);
-        assert stack != null;
-        if (stack.getAmount() > 1) {
-            stack.setAmount((this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? stack.getAmount() - 1 : jokers));
-        } else {
-            stack.setType(Material.AIR);
-        }
-        Material mat = (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial());
-
-        player.getInventory().setItem(foundSlot, stack);
-
-        player.getInventory().addItem(new ItemStack(mat));
-        if (!player.getInventory().contains(mat)) player.getWorld().dropItemNaturally(player.getLocation(), new ItemStack(mat));
-        this.plugin.getTimer().sendActionBar();
-
-        if(this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-            forceItemPlayer.currentTeam().setRemainingJokers(jokers);
-        } else {
-            forceItemPlayer.setRemainingJokers(jokers);
-        }
-
-        FoundItemEvent foundItemEvent = new FoundItemEvent(player);
-        foundItemEvent.setFoundItem(new ItemStack(mat));
-        foundItemEvent.setSkipped(true);
-
-        Bukkit.getPluginManager().callEvent(foundItemEvent);
-    }
-
-    @EventHandler
-    public void onBucketEmpty(PlayerBucketEmptyEvent playerBucketEmptyEvent) {
-        Player player = playerBucketEmptyEvent.getPlayer();
-
-        if (!this.plugin.getGamemanager().isMidGame()) {
-            return;
-        }
-
-        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-        ItemStack clickedItem = playerBucketEmptyEvent.getItemStack();
-        Material currentItem = (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial());
-
-        if(clickedItem == null) return;
-
-        if (clickedItem.getType() == currentItem) {
-            FoundItemEvent foundItemEvent = new FoundItemEvent(player);
-            foundItemEvent.setFoundItem(clickedItem);
-            foundItemEvent.setSkipped(false);
-
-            Bukkit.getPluginManager().callEvent(foundItemEvent);
-        }
-    }
-
-    @EventHandler
-    public void onBucketFill(PlayerBucketFillEvent playerBucketFillEvent) {
-        Player player = playerBucketFillEvent.getPlayer();
-
-        if (!this.plugin.getGamemanager().isMidGame()) {
-            return;
-        }
-
-        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-        ItemStack clickedItem = playerBucketFillEvent.getItemStack();
-        Material currentItem = (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial());
-
-        if(clickedItem == null) return;
-
-        if (clickedItem.getType() == currentItem) {
-            FoundItemEvent foundItemEvent = new FoundItemEvent(player);
-            foundItemEvent.setFoundItem(clickedItem);
-            foundItemEvent.setSkipped(false);
-
-            Bukkit.getPluginManager().callEvent(foundItemEvent);
-        }
-    }
-
-    @EventHandler
-    public void onBucketEntity(PlayerBucketEntityEvent playerBucketEntityEvent) {
-        Player player = playerBucketEntityEvent.getPlayer();
-
-        if (!this.plugin.getGamemanager().isMidGame()) {
-            return;
-        }
-
-        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-        ItemStack clickedItem = playerBucketEntityEvent.getEntityBucket();
-        Material currentItem = (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial());
-
-        if (clickedItem.getType() == currentItem) {
-            FoundItemEvent foundItemEvent = new FoundItemEvent(player);
-            foundItemEvent.setFoundItem(clickedItem);
-            foundItemEvent.setSkipped(false);
-
-            Bukkit.getPluginManager().callEvent(foundItemEvent);
-        }
-    }
-
-    @EventHandler
-    public void onCrafting(CraftItemEvent craftItemEvent) {
-        Player player = (Player) craftItemEvent.getWhoClicked();
-
-        if (!this.plugin.getGamemanager().isMidGame()) {
-            return;
-        }
-
-        if(craftItemEvent.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY || craftItemEvent.getAction() == InventoryAction.PICKUP_ALL) {
-            ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-            ItemStack clickedItem = craftItemEvent.getCurrentItem();
-            Material currentItem = (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial());
-
-            if(clickedItem == null) return;
-
-            if (clickedItem.getType() == currentItem) {
-                FoundItemEvent foundItemEvent = new FoundItemEvent(player);
-                foundItemEvent.setFoundItem(clickedItem);
-                foundItemEvent.setSkipped(false);
-
-                Bukkit.getPluginManager().callEvent(foundItemEvent);
-            }
-        }
-
-
-    }
-
-    @EventHandler
-    public void onSmith(SmithItemEvent smithItemEvent) {
-        Player player = (Player) smithItemEvent.getWhoClicked();
-
-        if (!this.plugin.getGamemanager().isMidGame()) {
-            return;
-        }
-
-        if(smithItemEvent.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY || smithItemEvent.getAction() == InventoryAction.PICKUP_ALL) {
-            ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-            ItemStack clickedItem = smithItemEvent.getCurrentItem();
-            Material currentItem = (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial());
-
-            if(clickedItem == null) return;
-
-            if (clickedItem.getType() == currentItem) {
-                FoundItemEvent foundItemEvent = new FoundItemEvent(player);
-                foundItemEvent.setFoundItem(clickedItem);
-                foundItemEvent.setSkipped(false);
-
-                Bukkit.getPluginManager().callEvent(foundItemEvent);
-            }
-        }
-
-
     }
 
     /* Click-Event for my inventory builder */
@@ -837,15 +492,17 @@ public class Listeners implements Listener {
     }
 
     @EventHandler
-    public void onArmorInteract(PlayerInteractAtEntityEvent playerInteractAtEntityEvent) {
-        if(playerInteractAtEntityEvent.getRightClicked() instanceof ArmorStand armorStand) {
-            if(armorStand.isInvisible()) playerInteractAtEntityEvent.setCancelled(true);
+    public void onArmorInteract(PlayerInteractAtEntityEvent event) {
+        if (event.getRightClicked() instanceof ArmorStand armorStand && armorStand.isInvisible()) {
+            event.setCancelled(true);
         }
     }
 
     @EventHandler
     public void onPickup(EntityPickupItemEvent entityPickupItemEvent) {
-        if(this.plugin.getGamemanager().isMidGame()) return;
+        if (this.plugin.getGamemanager().isMidGame()) {
+            return;
+        }
         entityPickupItemEvent.setCancelled(true);
     }
 
@@ -860,26 +517,36 @@ public class Listeners implements Listener {
 
     @EventHandler
     public void onFoodLevelChange(FoodLevelChangeEvent event) {
-        if (!(event.getEntity() instanceof Player)) return;
-        if (this.plugin.getSettings().isSettingEnabled(GameSetting.FOOD)) return;
+        if (!(event.getEntity() instanceof Player)) {
+            return;
+        }
+        if (this.plugin.getSettings().isSettingEnabled(GameSetting.FOOD)) {
+            return;
+        }
         event.setCancelled(true);
     }
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        if (this.plugin.getGamemanager().isMidGame()) return;
+        if (this.plugin.getGamemanager().isMidGame()) {
+            return;
+        }
         event.setCancelled(true);
     }
 
     @EventHandler
     public void onInventoryDrag(InventoryDragEvent event) {
-        if (this.plugin.getGamemanager().isMidGame()) return;
+        if (this.plugin.getGamemanager().isMidGame()) {
+            return;
+        }
         event.setCancelled(true);
     }
 
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
-        if (this.plugin.getGamemanager().isMidGame()) return;
+        if (this.plugin.getGamemanager().isMidGame()) {
+            return;
+        }
         event.setCancelled(true);
     }
 
@@ -895,32 +562,35 @@ public class Listeners implements Listener {
     }
 
     @EventHandler
-    public void onGliding(EntityToggleGlideEvent entityToggleGlideEvent) {
-        if(entityToggleGlideEvent.isGliding()) {
-            if(!this.plugin.getSettings().isSettingEnabled(GameSetting.ELYTRA)) {
-                entityToggleGlideEvent.setCancelled(true);
-            }
-        }
-    }
-
-    @EventHandler
     public void onPlayerDropItem(PlayerDropItemEvent event) {
-        if (this.plugin.getGamemanager().isMidGame()) return;
+        if (this.plugin.getGamemanager().isMidGame()) {
+            return;
+        }
         event.setCancelled(true);
     }
 
     @EventHandler
     public void onEntityPickupItem(EntityPickupItemEvent event) {
-        if (!(event.getEntity() instanceof Player)) return;
-        if (this.plugin.getGamemanager().isMidGame()) return;
+        if (!(event.getEntity() instanceof Player)) {
+            return;
+        }
+        if (this.plugin.getGamemanager().isMidGame()) {
+            return;
+        }
         event.setCancelled(true);
     }
 
     @EventHandler
     public void onEntityTargetLivingEntity(EntityTargetLivingEntityEvent event) {
-        if (this.plugin.getGamemanager().isMidGame()) return;
-        if (event.getTarget() == null) return;
-        if (event.getTarget().getType() != EntityType.PLAYER) return;
+        if (this.plugin.getGamemanager().isMidGame()) {
+            return;
+        }
+        if (event.getTarget() == null) {
+            return;
+        }
+        if (event.getTarget().getType() != EntityType.PLAYER) {
+            return;
+        }
         event.setTarget(null);
         event.setCancelled(true);
     }
@@ -941,8 +611,8 @@ public class Listeners implements Listener {
     }
 
     @EventHandler
-    public void onAdvancementGrant(PlayerAdvancementDoneEvent playerAdvancementDoneEvent) {
-        Advancement advancement = playerAdvancementDoneEvent.getAdvancement();
+    public void onAdvancementGrant(PlayerAdvancementDoneEvent event) {
+        Advancement advancement = event.getAdvancement();
         if(advancement.key().namespace().equals("fib")) {
             String plainAdvancement = PlainTextComponentSerializer.plainText().serialize(advancement.displayName());
             String plainAdvancementDescription = PlainTextComponentSerializer.plainText().serialize(Objects.requireNonNull(advancement.getDisplay()).description());
@@ -950,16 +620,16 @@ public class Listeners implements Listener {
             String advancementType = advancement.getDisplay().frame() == AdvancementDisplay.Frame.CHALLENGE ? "has completed the challenge" : "has made the advancement";
             String advancementTypeColor = advancement.getDisplay().frame() == AdvancementDisplay.Frame.CHALLENGE ? "<dark_purple>" : "<green>";
 
-            playerAdvancementDoneEvent.message(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>[<yellow>⭐<dark_gray>] <gold>" + playerAdvancementDoneEvent.getPlayer().getName() + " <gray>" + advancementType + " <hover:show_text:'" + advancementTypeColor + plainAdvancement + "<newline>" + advancementTypeColor + plainAdvancementDescription + "'>" + advancementTypeColor + plainAdvancement + "</hover>"));
+            event.message(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>[<yellow>⭐<dark_gray>] <gold>" + event.getPlayer().getName() + " <gray>" + advancementType + " <hover:show_text:'" + advancementTypeColor + plainAdvancement + "<newline>" + advancementTypeColor + plainAdvancementDescription + "'>" + advancementTypeColor + plainAdvancement + "</hover>"));
         } else {
-            playerAdvancementDoneEvent.message(null);
+            event.message(null);
         }
 
     }
 
     @EventHandler
-    public void onChangedWorld(PlayerChangedWorldEvent playerChangedWorldEvent) {
-        Player player = playerChangedWorldEvent.getPlayer();
+    public void onChangedWorld(PlayerChangedWorldEvent event) {
+        Player player = event.getPlayer();
         if(this.plugin.getGamemanager().isMidGame()) {
             ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
             if(player.getWorld().getName().equals("world_the_end")) {
@@ -968,7 +638,7 @@ public class Listeners implements Listener {
                 player.teleport(spawnLocation);
             }
             this.plugin.getAchievementManager().achievementsList().forEach(achievement -> {
-                if(achievement.checkRequirements(player, playerChangedWorldEvent)) {
+                if(achievement.checkRequirements(player, event)) {
                     Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, () -> achievement.grantTo(forceItemPlayer), 0L);
                 }
             });
@@ -978,7 +648,7 @@ public class Listeners implements Listener {
     @EventHandler
     public void onTrade(PlayerTradeEvent playerTradeEvent) {
         Player player = playerTradeEvent.getPlayer();
-        if(this.plugin.getGamemanager().isMidGame()) {
+        if (this.plugin.getGamemanager().isMidGame()) {
             ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
             this.plugin.getAchievementManager().achievementsList().forEach(achievement -> {
                 if(achievement.checkRequirements(player, playerTradeEvent)) {
@@ -989,22 +659,28 @@ public class Listeners implements Listener {
     }
 
     @EventHandler
-    public void onOpenLootChest(PlayerInteractEvent playerInteractEvent) {
-        Player player = playerInteractEvent.getPlayer();
+    public void onOpenLootChest(PlayerInteractEvent event) {
+        Player player = event.getPlayer();
 
-        if(playerInteractEvent.getItem() == null) return;
-        if(playerInteractEvent.getClickedBlock() == null) return;
-        if(playerInteractEvent.getAction().isRightClick()) {
-            if(playerInteractEvent.getClickedBlock().getType() == Material.CHEST) {
-                if(this.plugin.getGamemanager().isMidGame()) {
-                    ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-                    this.plugin.getAchievementManager().achievementsList().forEach(achievement -> {
-                        if(achievement.checkRequirements(player, playerInteractEvent)) {
-                            Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, () -> achievement.grantTo(forceItemPlayer), 0L);
-                        }
-                    });
-                }
-            }
+        if (event.getItem() == null) {
+            return;
         }
+        if (event.getClickedBlock() == null) return;
+        if (!event.getAction().isRightClick()) {
+            return;
+        }
+        if (event.getClickedBlock().getType() != Material.CHEST) {
+            return;
+        }
+        if (!this.plugin.getGamemanager().isMidGame()) {
+            return;
+        }
+
+        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        this.plugin.getAchievementManager().achievementsList().forEach(achievement -> {
+            if (achievement.checkRequirements(player, event)) {
+                Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, () -> achievement.grantTo(forceItemPlayer), 0L);
+            }
+        });
     }
 }

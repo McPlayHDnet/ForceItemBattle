@@ -1,6 +1,7 @@
 package forceitembattle.util;
 
-import lombok.Getter;
+import forceitembattle.ForceItemBattle;
+import forceitembattle.settings.GameSetting;
 import lombok.Setter;
 import org.bukkit.Material;
 import org.bukkit.entity.ArmorStand;
@@ -9,7 +10,6 @@ import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
-import java.util.UUID;
 
 public class ForceItemPlayer {
 
@@ -49,6 +49,14 @@ public class ForceItemPlayer {
 
     public Material currentMaterial() {
         return currentMaterial;
+    }
+
+    public Material getCurrentMaterial() {
+        if (ForceItemBattle.getInstance().getSettings().isSettingEnabled(GameSetting.TEAM)) {
+            return currentTeam().getCurrentMaterial();
+        }
+
+        return currentMaterial();
     }
 
     public Material previousMaterial() {

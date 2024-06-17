@@ -2,6 +2,7 @@ package forceitembattle.listener;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
+import lombok.RequiredArgsConstructor;
 import org.bukkit.block.Block;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
@@ -11,14 +12,10 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntitySpawnEvent;
 
+@RequiredArgsConstructor
 public class PvPListener implements Listener {
 
     private final ForceItemBattle plugin;
-
-    public PvPListener(ForceItemBattle plugin) {
-        this.plugin = plugin;
-        this.plugin.getServer().getPluginManager().registerEvents(this, this.plugin);
-    }
 
     @EventHandler
     public void onTntIgnited(EntitySpawnEvent e) {
