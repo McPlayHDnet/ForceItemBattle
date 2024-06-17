@@ -44,7 +44,7 @@ public class ItemDifficultiesManager {
         // if this is a toggle setting, just change unlockedAtMinutes to 0 for all
         State.EARLY.setUnlockedAtMinutes(0);
         State.MID.setUnlockedAtMinutes(5);
-        State.LATE.setUnlockedAtMinutes(10);
+        State.LATE.setUnlockedAtMinutes(13);
     }
 
     public List<Material> getAvailableItems() {
@@ -392,6 +392,7 @@ public class ItemDifficultiesManager {
                 Material.NETHERITE_PICKAXE,
                 Material.NETHERITE_SHOVEL,
                 Material.NETHERITE_SWORD,
+                Material.PHANTOM_MEMBRANE,
                 Material.RAISER_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Material.REDSTONE_ORE,
                 Material.SHAPER_ARMOR_TRIM_SMITHING_TEMPLATE,
@@ -425,7 +426,6 @@ public class ItemDifficultiesManager {
                 Material.ACACIA_STAIRS,
                 Material.ACACIA_TRAPDOOR,
                 Material.ACACIA_WOOD,
-                Material.ACTIVATOR_RAIL,
                 Material.ALLIUM,
                 Material.AMETHYST_BLOCK,
                 Material.AMETHYST_SHARD,
@@ -609,12 +609,8 @@ public class ItemDifficultiesManager {
                 Material.DETECTOR_RAIL,
                 Material.DIAMOND,
                 Material.DIAMOND_AXE,
-                Material.DIAMOND_BLOCK,
                 Material.DIAMOND_BOOTS,
-                Material.DIAMOND_CHESTPLATE,
-                Material.DIAMOND_HELMET,
                 Material.DIAMOND_HOE,
-                Material.DIAMOND_LEGGINGS,
                 Material.DIAMOND_PICKAXE,
                 Material.DIAMOND_SHOVEL,
                 Material.DIAMOND_SWORD,
@@ -627,7 +623,6 @@ public class ItemDifficultiesManager {
                 Material.DRIED_KELP_BLOCK,
                 Material.DROPPER,
                 Material.EMERALD,
-                Material.EMERALD_BLOCK,
                 Material.FEATHER,
                 Material.FERN,
                 Material.FILLED_MAP,
@@ -1016,6 +1011,7 @@ public class ItemDifficultiesManager {
         ));
 
         State.MID.setItems(List.of(
+                Material.ACTIVATOR_RAIL,
                 Material.ANVIL,
                 Material.AXOLOTL_BUCKET,
                 Material.AZALEA,
@@ -1102,13 +1098,18 @@ public class ItemDifficultiesManager {
                 Material.DEAD_FIRE_CORAL_BLOCK,
                 Material.DEAD_HORN_CORAL_BLOCK,
                 Material.DEAD_TUBE_CORAL_BLOCK,
+                Material.DIAMOND_BLOCK,
+                Material.DIAMOND_CHESTPLATE,
+                Material.DIAMOND_HELMET,
                 Material.DIAMOND_HORSE_ARMOR,
+                Material.DIAMOND_LEGGINGS,
                 Material.DISPENSER,
                 Material.DRIPSTONE_BLOCK,
                 Material.EGG,
                 Material.ENCHANTING_TABLE,
                 Material.ENDER_EYE,
                 Material.ENDER_PEARL,
+                Material.EMERALD_BLOCK,
                 Material.FERMENTED_SPIDER_EYE,
                 Material.FIRE_CHARGE,
                 Material.FISHING_ROD,
@@ -1426,7 +1427,6 @@ public class ItemDifficultiesManager {
                 Material.ORANGE_CANDLE,
                 Material.ORANGE_SHULKER_BOX,
                 Material.PACKED_ICE,
-                Material.PHANTOM_MEMBRANE,
                 Material.PIGLIN_BANNER_PATTERN,
                 Material.PINK_CANDLE,
                 Material.PINK_SHULKER_BOX,
