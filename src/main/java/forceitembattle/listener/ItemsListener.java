@@ -38,7 +38,6 @@ public class ItemsListener implements Listener {
 
         if (inventoryClickEvent.getClickedInventory() instanceof CraftingInventory ||
                 inventoryClickEvent.getClickedInventory() instanceof SmithingInventory ||
-                // inventoryClickEvent.getClickedInventory() instanceof FurnaceInventory ||
                 inventoryClickEvent.getClickedInventory() instanceof BrewerInventory) return;
 
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
@@ -135,7 +134,9 @@ public class ItemsListener implements Listener {
             return;
         }
 
-        if (inventoryClickEvent.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY || inventoryClickEvent.getAction() == InventoryAction.PICKUP_ALL) {
+        boolean isValidShiftClick = inventoryClickEvent.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY && player.getInventory().firstEmpty() >= 0;
+
+        if (isValidShiftClick || inventoryClickEvent.getAction() == InventoryAction.PICKUP_ALL) {
             ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
             ItemStack clickedItem = inventoryClickEvent.getCurrentItem();
             Material currentItem = (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial());
