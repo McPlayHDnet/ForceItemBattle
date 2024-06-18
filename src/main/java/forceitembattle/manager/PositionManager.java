@@ -59,7 +59,7 @@ public class PositionManager {
                 if(++current == 10) {
                     this.cancel();
                 }
-                ParticleUtils.drawLine(player, player.getLocation().add(0, 1.2, 0), target, Particle.REDSTONE, new Particle.DustOptions(color, 1), 1, 0.5, 50);
+                ParticleUtils.drawLine(player, player.getLocation().add(0, 1.2, 0), target, Particle.DUST, new Particle.DustOptions(color, 1), 1, 0.5, 50);
             }
         }.runTaskTimer(this.plugin, 0L, 10L);
     }

@@ -66,7 +66,7 @@ public class ItemBuilder {
         if (this.itemStack.getType() == Material.BOW) {
             enchantment = Enchantment.LURE;
         } else {
-            enchantment = Enchantment.ARROW_INFINITE;
+            enchantment = Enchantment.INFINITY;
         }
         addEnchantment(enchantment, 0);
         addItemFlag(ItemFlag.HIDE_ENCHANTS);
