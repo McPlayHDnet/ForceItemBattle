@@ -1033,7 +1033,6 @@ public class ItemDifficultiesManager {
         ));
 
         State.MID.setItems(List.of(
-                Material.ACTIVATOR_RAIL,
                 Material.ALLIUM,
                 Material.ANVIL,
                 Material.AXOLOTL_BUCKET,
@@ -1048,8 +1047,6 @@ public class ItemDifficultiesManager {
                 Material.BLACKSTONE_SLAB,
                 Material.BLACKSTONE_STAIRS,
                 Material.BLACKSTONE_WALL,
-                Material.BLAZE_POWDER,
-                Material.BLAZE_ROD,
                 Material.BLUE_ORCHID,
                 Material.BOW,
                 Material.BREWING_STAND,
@@ -1320,6 +1317,8 @@ public class ItemDifficultiesManager {
                 Material.BLACK_CANDLE,
                 Material.BLACK_SHULKER_BOX,
                 Material.BLADE_POTTERY_SHERD,
+                Material.BLAZE_POWDER,
+                Material.BLAZE_ROD,
                 Material.BLUE_CANDLE,
                 Material.BLUE_ICE,
                 Material.BLUE_SHULKER_BOX,
