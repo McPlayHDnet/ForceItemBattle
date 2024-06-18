@@ -1,15 +1,14 @@
 package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.util.ForceItem;
 import forceitembattle.util.ForceItemPlayer;
-import forceitembattle.util.Teams;
+import forceitembattle.util.Team;
 import lombok.Getter;
-import org.bukkit.entity.Player;
-import org.bukkit.scoreboard.Scoreboard;
-import org.bukkit.scoreboard.Team;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -17,16 +16,16 @@ public class TeamsManager {
 
     private final ForceItemBattle forceItemBattle;
 
-    private final Map<ForceItemPlayer, Teams> pendingInvite;
+    private final Map<ForceItemPlayer, Team> pendingInvite;
     @Getter
-    private final List<Teams> teamsList;
+    private final List<Team> teams;
     @Getter
     private final int maxTeamSize;
 
     public TeamsManager(ForceItemBattle forceItemBattle) {
         this.forceItemBattle = forceItemBattle;
         this.pendingInvite = new ConcurrentHashMap<>();
-        this.teamsList = new ArrayList<>();
+        this.teams = new ArrayList<>();
         this.maxTeamSize = 2;
     }
 
@@ -42,8 +41,8 @@ public class TeamsManager {
             List<ForceItemPlayer> teamPlayers = playersWithoutTeam.subList(0, teamSizeLimit);
             playersWithoutTeam = playersWithoutTeam.subList(teamSizeLimit, playersWithoutTeam.size());
 
-            Teams randomTeam = new Teams(this.teamsList.size() + 1, new ArrayList<>(), null, 0, 0, teamPlayers.toArray(new ForceItemPlayer[0]));
-            this.teamsList.add(randomTeam);
+            Team randomTeam = new Team(this.teams.size() + 1, new ArrayList<>(), null, 0, 0, teamPlayers.toArray(new ForceItemPlayer[0]));
+            this.teams.add(randomTeam);
 
             for (ForceItemPlayer player : teamPlayers) {
                 player.setCurrentTeam(randomTeam);
@@ -51,14 +50,14 @@ public class TeamsManager {
         }
 
         for (ForceItemPlayer player : playersWithoutTeam) {
-            Teams singlePlayerTeam = new Teams(this.teamsList.size() + 1, new ArrayList<>(), null, 0, 0, player);
-            this.teamsList.add(singlePlayerTeam);
+            Team singlePlayerTeam = new Team(this.teams.size() + 1, new ArrayList<>(), null, 0, 0, player);
+            this.teams.add(singlePlayerTeam);
 
             player.setCurrentTeam(singlePlayerTeam);
         }
     }
 
-    public boolean alreadyInTeam(Teams team, ForceItemPlayer player) {
+    public boolean alreadyInTeam(Team team, ForceItemPlayer player) {
         return team.getPlayers().contains(player);
     }
 
@@ -66,12 +65,12 @@ public class TeamsManager {
         return this.pendingInvite.containsKey(player);
     }
 
-    public boolean isTeamFull(Teams team) {
+    public boolean isTeamFull(Team team) {
         return team.getPlayers().size() >= this.getMaxTeamSize();
     }
 
     public void invite(ForceItemPlayer player, ForceItemPlayer target) {
-        Teams team = new Teams(this.teamsList.size() + 1, new ArrayList<>(), null, 0, 0, player);
+        Team team = new Team(this.teams.size() + 1, new ArrayList<>(), null, 0, 0, player);
         if(player.currentTeam() != null) team = player.currentTeam();
         else player.setCurrentTeam(team);
 
@@ -98,8 +97,8 @@ public class TeamsManager {
                 " <click:run_command:/teams decline " + player.player().getName() + "><gray>[<red>Decline<gray>]</click>"
         ));
         this.pendingInvite.put(target, team);
-        this.teamsList.remove(team);
-        this.teamsList.add(team);
+        this.teams.remove(team);
+        this.teams.add(team);
 
         player.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>[#" + team.getTeamId() + "] <white>" + player.player().getName()));
     }
@@ -113,7 +112,7 @@ public class TeamsManager {
             player.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>You cannot interact with yourself :("));
             return;
         }
-        Teams teamInvite = this.pendingInvite.get(player);
+        Team teamInvite = this.pendingInvite.get(player);
         if(teamInvite != null) {
             if(this.isTeamFull(teamInvite)) {
                 player.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>This team is already full"));
@@ -152,7 +151,7 @@ public class TeamsManager {
         this.removeFromTeam(player.currentTeam(), player);
         player.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_aqua>You <red>left <dark_aqua>the team"));
         player.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(player.player().getName()));
-        if(this.getTeamsList().contains(player.currentTeam())) {
+        if(this.getTeams().contains(player.currentTeam())) {
             player.currentTeam().getPlayers().forEach(teamPlayers -> {
                 teamPlayers.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>" + player.player().getName() + " <dark_aqua>left your team"));
             });
@@ -180,10 +179,10 @@ public class TeamsManager {
             }
         });
         this.pendingInvite.clear();
-        this.getTeamsList().clear();
+        this.getTeams().clear();
     }
 
-    private void disbandTeam(Teams team) {
+    private void disbandTeam(Team team) {
         if(team.getPlayers().isEmpty()) {
             this.pendingInvite.forEach((pendingInvitees, inviteesTeam) -> {
                 if(inviteesTeam == team) {
@@ -192,16 +191,16 @@ public class TeamsManager {
                     pendingInvitees.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(pendingInvitees.player().getName()));
                 }
             });
-            this.getTeamsList().remove(team);
+            this.getTeams().remove(team);
         }
     }
 
-    private void addToTeam(Teams team, ForceItemPlayer player) {
+    private void addToTeam(Team team, ForceItemPlayer player) {
         team.addPlayer(player);
         player.setCurrentTeam(team);
     }
 
-    private void removeFromTeam(Teams team, ForceItemPlayer player) {
+    private void removeFromTeam(Team team, ForceItemPlayer player) {
         team.removePlayer(player);
         this.disbandTeam(team);
         player.setCurrentTeam(null);

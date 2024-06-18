@@ -277,6 +277,7 @@ public final class ForceItemBattle extends JavaPlugin {
         new CommandTeams();
         new CommandAskTrade();
         new CommandTrade();
+        new CommandFixSkips();
     }
 
     @Override

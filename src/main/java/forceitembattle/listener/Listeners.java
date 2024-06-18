@@ -52,7 +52,7 @@ public class Listeners implements Listener {
 
         ForceItemPlayer forceItemPlayer = new ForceItemPlayer(player, new ArrayList<>(), null, 0, 0);
         if (this.plugin.getGamemanager().isMidGame() || this.plugin.getGamemanager().isPausedGame()) {
-            if(!this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
+            if (!this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
                 player.getInventory().clear();
                 player.setLevel(0);
                 player.setExp(0);
@@ -138,8 +138,8 @@ public class Listeners implements Listener {
         if (!event.isBackToBack()) {
             Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize(
                     "<green>" + player.getName() + " <gray>" + (event.isSkipped() ? "skipped" : "found") + " <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType()) + " <gold>" + this.plugin.getGamemanager().getMaterialName(itemStack.getType())));
-            if(forceItemPlayer.backToBackStreak() != 0) {
-                if(playerStats.back2backStreak() < forceItemPlayer.backToBackStreak()) {
+            if (forceItemPlayer.backToBackStreak() != 0) {
+                if (playerStats.back2backStreak() < forceItemPlayer.backToBackStreak()) {
                     this.plugin.getStatsManager().addToStats(PlayerStat.BACK_TO_BACK_STREAK, playerStats, forceItemPlayer.backToBackStreak());
                 }
             }
@@ -167,7 +167,7 @@ public class Listeners implements Listener {
 
             } else {
                 for (ForceItemPlayer teamPlayers : forceItemPlayer.currentTeam().getPlayers()) {
-                    if(hasItemInInventory(teamPlayers.player().getInventory(), forceItemPlayer.currentTeam().getCurrentMaterial())) {
+                    if (hasItemInInventory(teamPlayers.player().getInventory(), forceItemPlayer.currentTeam().getCurrentMaterial())) {
                         foundNextItem = true;
                         forceItemPlayer.setBackToBackStreak(backToBacks + 1);
                     }
@@ -175,8 +175,8 @@ public class Listeners implements Listener {
             }
 
             this.plugin.getAchievementManager().achievementsList().forEach(achievement -> {
-                if(achievement.checkRequirements(player, event)) {
-                    for(ForceItemPlayer teamPlayers : forceItemPlayer.currentTeam().getPlayers()) {
+                if (achievement.checkRequirements(player, event)) {
+                    for (ForceItemPlayer teamPlayers : forceItemPlayer.currentTeam().getPlayers()) {
                         Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, () -> achievement.grantTo(teamPlayers), 0L);
                     }
                 }
@@ -218,7 +218,7 @@ public class Listeners implements Listener {
             }
 
             this.plugin.getAchievementManager().achievementsList().forEach(achievement -> {
-                if(achievement.checkRequirements(player, event)) {
+                if (achievement.checkRequirements(player, event)) {
                     Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, () -> achievement.grantTo(forceItemPlayer), 0L);
                 }
             });
@@ -242,7 +242,7 @@ public class Listeners implements Listener {
                 .filter(item -> item != null && !item.getType().isAir() && item.getType() != Material.BARRIER && item.getType() != Material.BUNDLE)
                 .map(ItemStack::getType)
                 .toList().size();
-        Inventory backpack = this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? this.plugin.getBackpack().getTeamBackpack(forceItemPlayer.currentTeam()) : this.plugin.getBackpack().getPlayerBackpack(player);
+        Inventory backpack = this.plugin.getBackpack().getBackpackForPlayer(player);
         int itemsInBackpack = Arrays.stream(backpack.getContents()).filter(item -> item != null && !item.getType().isAir() && item.getType() != Material.BARRIER && item.getType() != Material.BUNDLE).map(ItemStack::getType).toList().size();
         int itemsInShulkerPlayer = Arrays.stream(player.getInventory().getContents())
                 .filter(item -> item != null && !item.getType().isAir() && item.getType().name().contains("SHULKER_BOX"))
@@ -310,7 +310,7 @@ public class Listeners implements Listener {
             return;
         }
 
-        if (!(event.getWhoClicked() instanceof Player player)) {
+        if (!(event.getWhoClicked() instanceof Player)) {
             return;
         }
 
@@ -323,7 +323,7 @@ public class Listeners implements Listener {
         }
 
         if (movedItem != null) {
-            if(!event.getView().getTitle().equals("§8» §3Settings §8● §7Menu")) {
+            if (!event.getView().getTitle().equals("§8» §3Settings §8● §7Menu")) {
                 if (/*Gamemanager.isJoker(movedItem) || */movedItem.getType() == Material.BUNDLE) {
                     event.setCancelled(true);
                     return;
@@ -341,9 +341,11 @@ public class Listeners implements Listener {
 
     @EventHandler
     public void onChat(AsyncPlayerChatEvent asyncPlayerChatEvent) {
-        if(InvSettingsPresets.namingPhase == null) return;
+        if (InvSettingsPresets.namingPhase == null) {
+            return;
+        }
 
-        if(InvSettingsPresets.namingPhase.containsKey(asyncPlayerChatEvent.getPlayer().getUniqueId())) {
+        if (InvSettingsPresets.namingPhase.containsKey(asyncPlayerChatEvent.getPlayer().getUniqueId())) {
             asyncPlayerChatEvent.setCancelled(true);
 
             Bukkit.getScheduler().runTask(this.plugin, () -> {
@@ -371,20 +373,9 @@ public class Listeners implements Listener {
         }
 
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-        ItemStack clickedItem = playerItemConsumeEvent.getItem();
-        Material currentItem = forceItemPlayer.getCurrentMaterial();
-
-        if (clickedItem.getType() == currentItem) {
-            FoundItemEvent foundItemEvent = new FoundItemEvent(player);
-            foundItemEvent.setFoundItem(clickedItem);
-            foundItemEvent.setSkipped(false);
-
-            Bukkit.getPluginManager().callEvent(foundItemEvent);
-        }
 
         this.plugin.getAchievementManager().achievementsList().forEach(achievement -> {
-
-            if(achievement.checkRequirements(player, playerItemConsumeEvent)) {
+            if (achievement.checkRequirements(player, playerItemConsumeEvent)) {
                 Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, () -> achievement.grantTo(forceItemPlayer), 0L);
             }
         });
@@ -392,8 +383,8 @@ public class Listeners implements Listener {
 
     @EventHandler
     public void onOffHand(PlayerSwapHandItemsEvent playerSwapHandItemsEvent) {
-        if(playerSwapHandItemsEvent.getMainHandItem() == null || playerSwapHandItemsEvent.getOffHandItem() == null) return;
-        if( //Gamemanager.isJoker(playerSwapHandItemsEvent.getMainHandItem()) ||
+        if (playerSwapHandItemsEvent.getMainHandItem() == null || playerSwapHandItemsEvent.getOffHandItem() == null) return;
+        if ( //Gamemanager.isJoker(playerSwapHandItemsEvent.getMainHandItem()) ||
                 playerSwapHandItemsEvent.getMainHandItem().getType() == Material.BUNDLE ||
                 // Gamemanager.isJoker(playerSwapHandItemsEvent.getOffHandItem()) ||
                 playerSwapHandItemsEvent.getOffHandItem().getType() == Material.BUNDLE)
@@ -417,7 +408,6 @@ public class Listeners implements Listener {
 
     @EventHandler
     public void onDeath(PlayerDeathEvent event) {
-
         Player player = event.getEntity();
         ForceItemPlayer gamePlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
         String plainDeathMessage = PlainTextComponentSerializer.plainText().serialize(Objects.requireNonNull(event.deathMessage()));
@@ -449,45 +439,11 @@ public class Listeners implements Listener {
     public void onRespawn(PlayerRespawnEvent playerRespawnEvent) {
         Player player = playerRespawnEvent.getPlayer();
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-        ItemStack jokers = Gamemanager.getJokers((this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getRemainingJokers() : forceItemPlayer.remainingJokers()));
-        if ((this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getRemainingJokers() : forceItemPlayer.remainingJokers()) > 0) {
-            // This would work, but players can also move jokers into different
-            // containers like chests, that should not matter though, as they
-            // can't use more than was set.
-            addJokersIfMissing(player, jokers);
-        }
 
         player.getInventory().setItem(8, new ItemBuilder(Material.BUNDLE).setDisplayName("<dark_gray>» <yellow>Backpack").getItemStack());
 
         if (!this.plugin.getSettings().isSettingEnabled(GameSetting.HARD)) {
             forceItemPlayer.createItemDisplay();
-        }
-    }
-
-    private void addJokersIfMissing(Player player, ItemStack jokers) {
-        int slot = player.getInventory().first(Gamemanager.getJokerMaterial());
-
-        if (slot != -1) {
-            // Already has the jokers in their inventory.
-            return;
-        }
-
-        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-        Inventory backpack = (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? plugin.getBackpack().getTeamBackpack(forceItemPlayer.currentTeam()) : plugin.getBackpack().getPlayerBackpack(player));
-        int backpackSlot = backpack == null? -1 : backpack.first(Gamemanager.getJokerMaterial());
-
-        if (backpackSlot != -1) {
-            // Already has the jokers in their backpack.
-            return;
-        }
-
-        if (player.getInventory().firstEmpty() != -1) {
-            player.getInventory().addItem(jokers);
-        } else if (backpack != null && backpack.firstEmpty() != -1) {
-            backpack.addItem(jokers);
-        } else {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>You have no space in your inventory for jokers! <white>Make some space and uhmmmm die))"));
-            // TODO : handle this somehow yes?
         }
     }
 
@@ -613,7 +569,7 @@ public class Listeners implements Listener {
     @EventHandler
     public void onAdvancementGrant(PlayerAdvancementDoneEvent event) {
         Advancement advancement = event.getAdvancement();
-        if(advancement.key().namespace().equals("fib")) {
+        if (advancement.key().namespace().equals("fib")) {
             String plainAdvancement = PlainTextComponentSerializer.plainText().serialize(advancement.displayName());
             String plainAdvancementDescription = PlainTextComponentSerializer.plainText().serialize(Objects.requireNonNull(advancement.getDisplay()).description());
 
@@ -630,9 +586,9 @@ public class Listeners implements Listener {
     @EventHandler
     public void onChangedWorld(PlayerChangedWorldEvent event) {
         Player player = event.getPlayer();
-        if(this.plugin.getGamemanager().isMidGame()) {
+        if (this.plugin.getGamemanager().isMidGame()) {
             ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-            if(player.getWorld().getName().equals("world_the_end")) {
+            if (player.getWorld().getName().equals("world_the_end")) {
                 Location spawnLocation = player.getLocation();
                 spawnLocation.setY(player.getWorld().getHighestBlockYAt(spawnLocation) + 1);
                 player.teleport(spawnLocation);
@@ -651,7 +607,7 @@ public class Listeners implements Listener {
         if (this.plugin.getGamemanager().isMidGame()) {
             ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
             this.plugin.getAchievementManager().achievementsList().forEach(achievement -> {
-                if(achievement.checkRequirements(player, playerTradeEvent)) {
+                if (achievement.checkRequirements(player, playerTradeEvent)) {
                     Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, () -> achievement.grantTo(forceItemPlayer), 0L);
                 }
             });
@@ -665,7 +621,9 @@ public class Listeners implements Listener {
         if (event.getItem() == null) {
             return;
         }
-        if (event.getClickedBlock() == null) return;
+        if (event.getClickedBlock() == null) {
+            return;
+        }
         if (!event.getAction().isRightClick()) {
             return;
         }

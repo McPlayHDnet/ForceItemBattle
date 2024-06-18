@@ -1,11 +1,8 @@
 package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.settings.GameSetting;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.TextComponent;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -20,7 +17,6 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -28,7 +24,7 @@ public class FinishInventory extends InventoryBuilder {
 
     private final Map<Integer, Map<Integer, ItemStack>> pages = new HashMap<>();
 
-    public FinishInventory(ForceItemBattle forceItemBattle, @Nullable ForceItemPlayer targetPlayer, @Nullable Teams targetTeam, Integer place, boolean firstTime) {
+    public FinishInventory(ForceItemBattle forceItemBattle, @Nullable ForceItemPlayer targetPlayer, @Nullable Team targetTeam, Integer place, boolean firstTime) {
         super(9*6, forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold>Items <dark_gray>● <gray>" + (firstTime ? "????????" : (targetTeam == null ? targetPlayer.player().getName() : "Team #" + targetTeam.getTeamId()))));
 
         /* TOP-BORDER */

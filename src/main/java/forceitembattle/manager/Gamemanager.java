@@ -28,7 +28,7 @@ public class Gamemanager {
     private final Map<UUID, ForceItemPlayer> forceItemPlayerMap;
 
     public Map<UUID, Map<Integer, Map<Integer, ItemStack>>> savedInventory = new HashMap<>();
-    public Map<Teams, Map<Integer, Map<Integer, ItemStack>>> savedInventoryTeam = new HashMap<>();
+    public Map<Team, Map<Integer, Map<Integer, ItemStack>>> savedInventoryTeam = new HashMap<>();
 
     @Setter
     @Getter
@@ -225,16 +225,16 @@ public class Gamemanager {
         return placesMap;
     }
 
-    public Map<Teams, Integer> calculatePlaces(List<Teams> teamsList) {
-        List<Teams> sortedTeams = teamsList.stream()
-                .sorted(Comparator.comparingInt(Teams::getCurrentScore).reversed())
+    public Map<Team, Integer> calculatePlaces(List<Team> teams) {
+        List<Team> sortedTeams = teams.stream()
+                .sorted(Comparator.comparingInt(Team::getCurrentScore).reversed())
                 .toList();
 
-        Map<Teams, Integer> placesMap = new LinkedHashMap<>();
+        Map<Team, Integer> placesMap = new LinkedHashMap<>();
 
         int place = 1;
         for(int i = 0; i < sortedTeams.size(); i++) {
-            Teams currentTeam = sortedTeams.get(i);
+            Team currentTeam = sortedTeams.get(i);
 
             if(i > 0 && currentTeam.getCurrentScore() == sortedTeams.get(i - 1).getCurrentScore()) {
                 placesMap.put(currentTeam, placesMap.get(sortedTeams.get(i - 1)));

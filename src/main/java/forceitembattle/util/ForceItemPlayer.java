@@ -23,7 +23,7 @@ public class ForceItemPlayer {
     @Setter
     private Integer currentScore;
     @Setter
-    private Teams currentTeam;
+    private Team currentTeam;
     @Setter
     private int backToBackStreak;
 
@@ -71,7 +71,7 @@ public class ForceItemPlayer {
         return currentScore;
     }
 
-    public Teams currentTeam() {
+    public Team currentTeam() {
         return currentTeam;
     }
 

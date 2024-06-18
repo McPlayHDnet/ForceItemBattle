@@ -175,7 +175,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
                     teamPlayers.player().showTitle(title);
                 }
 
-                this.plugin.getTeamManager().getTeamsList().forEach(teams -> {
+                this.plugin.getTeamManager().getTeams().forEach(teams -> {
                     teams.setRemainingJokers(jokersAmount);
                     int totalPlayers = teams.getPlayers().size();
                     int jokerPerPlayer = jokersAmount / totalPlayers;
