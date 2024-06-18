@@ -57,7 +57,7 @@ public class ItemsListener implements Listener {
             return;
         }
 
-        if (inventoryClickEvent.getView().title().contains(Component.text("§8●"))) {
+        if (inventoryClickEvent.getView().title().contains(Component.text("<dark_gray>●"))) {
             return; //prevents from getting the needed item onClick inside the recipe
         }
 
