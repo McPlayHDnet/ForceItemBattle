@@ -145,7 +145,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
             player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold><b>Force Item Battle</b> <dark_gray>«"));
             player.sendMessage(" ");
             player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● <gray>Duration <dark_gray>» <green>" + timeMinutes + " minutes"));
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● <gray>Joker <dark_gray>» <green>" + jokersAmount));
+            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● <gray>Jokers <dark_gray>» <green>" + jokersAmount));
             for (GameSetting gameSettings : GameSetting.values()) {
                 if(gameSettings.defaultValue() instanceof Integer) continue;
                 player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● <gray>" + gameSettings.displayName() + " <dark_gray>» <green>" + (this.plugin.getSettings().isSettingEnabled(gameSettings) ? "<dark_green>✔" : "<dark_red>✘")));
