@@ -1,7 +1,11 @@
 package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.event.PlayerGrantAchievementEvent;
 import forceitembattle.settings.GameSetting;
+import forceitembattle.settings.achievements.AchievementProgress;
+import forceitembattle.settings.achievements.Achievements;
+import forceitembattle.settings.achievements.PlayerProgress;
 import forceitembattle.settings.preset.GamePreset;
 import forceitembattle.util.*;
 import lombok.Getter;
@@ -63,6 +67,7 @@ public class Gamemanager {
                         .resolver(StandardTags.gradient())
                         .resolver(StandardTags.reset())
                         .resolver(StandardTags.newline())
+                        .resolver(StandardTags.rainbow())
                         .resolver(StandardTags.decorations())
                         .resolver(StandardTags.clickEvent())
                         .resolver(StandardTags.hoverEvent())
@@ -142,6 +147,7 @@ public class Gamemanager {
 
         Bukkit.getOnlinePlayers().forEach(player -> {
             ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
+            ForceItemPlayerStats playerStats = this.forceItemBattle.getStatsManager().playerStats(player.getName());
 
             player.setHealth(20);
             player.setSaturation(20);
@@ -181,12 +187,15 @@ public class Gamemanager {
                 }
             }
 
-            forceItemBattle.getAchievementManager().achievementsList().forEach(achievement -> {
-
-                if(achievement.checkRequirements(forceItemPlayer.player(), null)) {
-                    Bukkit.getScheduler().scheduleSyncDelayedTask(forceItemBattle, () -> achievement.grantTo(forceItemPlayer), 0L);
-                }
-            });
+            Achievements achievement = Achievements.CHICOT;
+            if(playerStats.achievementsDone().contains(achievement.getTitle())) {
+                return;
+            }
+            PlayerProgress playerProgress = this.forceItemBattle.getAchievementManager().playerProgressMap.get(player.getUniqueId());
+            if(playerProgress.getProgress(achievement).getDeathCounter() == achievement.getCondition().getAmount()) {
+                PlayerGrantAchievementEvent grantAchievementEvent = new PlayerGrantAchievementEvent(player, achievement);
+                Bukkit.getPluginManager().callEvent(grantAchievementEvent);
+            }
         });
     }
 

@@ -67,6 +67,8 @@ public final class ForceItemBattle extends JavaPlugin {
     @Getter
     private AchievementManager achievementManager;
     @Getter
+    private AchievementListener achievementListener;
+    @Getter
     @Setter
     private Location spawnLocation;
 
@@ -162,6 +164,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.tradingManager = new TradingManager(this);
         this.commandsManager = new CommandsManager(this);
         this.achievementManager = new AchievementManager(this);
+        this.achievementListener = new AchievementListener(this);
         this.wanderingTraderTimer = new WanderingTraderTimer();
         this.antimatterLocator = new AntimatterLocator();
 
@@ -231,7 +234,8 @@ public final class ForceItemBattle extends JavaPlugin {
                 new RecipeListener(this),
                 new PvPListener(this),
                 new ClickableItemsListener(this),
-                new ItemsListener(this)
+                new ItemsListener(this),
+                new AchievementListener(this)
         );
 
         NamespacedKey namespacedKey = new NamespacedKey("fib", "antimatter_locator");
@@ -278,6 +282,7 @@ public final class ForceItemBattle extends JavaPlugin {
         new CommandAskTrade();
         new CommandTrade();
         new CommandFixSkips();
+        new CommandAchievement();
     }
 
     @Override

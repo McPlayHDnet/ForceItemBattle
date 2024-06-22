@@ -81,4 +81,5 @@ bukkitPluginYaml {
     commands.register("asktrade")
     commands.register("trade")
     commands.register("fixskips")
+    commands.register("achievements")
 }

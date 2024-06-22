@@ -2,8 +2,10 @@ package forceitembattle.listener;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.event.FoundItemEvent;
+import forceitembattle.event.PlayerGrantAchievementEvent;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.settings.GameSetting;
+import forceitembattle.settings.achievements.Achievements;
 import forceitembattle.settings.preset.GamePreset;
 import forceitembattle.settings.preset.InvSettingsPresets;
 import forceitembattle.util.*;
@@ -445,6 +447,22 @@ public class Listeners implements Listener {
         if (!this.plugin.getSettings().isSettingEnabled(GameSetting.HARD)) {
             forceItemPlayer.createItemDisplay();
         }
+    }
+
+    @EventHandler
+    public void onAchievementGrant(PlayerGrantAchievementEvent playerGrantAchievementEvent) {
+        Player player = playerGrantAchievementEvent.getPlayer();
+        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        Achievements achievement = playerGrantAchievementEvent.getAchievement();
+
+        forceItemPlayer.player().playSound(forceItemPlayer.player(), Sound.BLOCK_AMETHYST_BLOCK_RESONATE, 1, 1);
+        Bukkit.getOnlinePlayers().forEach(players -> {
+            players.sendMessage(Component.empty());
+            players.sendMessage(ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize("<dark_gray>[<yellow>❋<dark_gray>] <gold>" + forceItemPlayer.player().getName() + " <gray>has made the achievement <hover:show_text:'<dark_aqua>" + achievement.getTitle() + "<newline><gray>" + achievement.getDescription() + "'><dark_aqua>[" + achievement.getTitle() + "]</hover>"));
+            players.sendMessage(Component.empty());
+        });
+
+        ForceItemBattle.getInstance().getAchievementManager().grantAchievement(ForceItemBattle.getInstance().getStatsManager().playerStats(forceItemPlayer.player().getName()), achievement);
     }
 
     @EventHandler

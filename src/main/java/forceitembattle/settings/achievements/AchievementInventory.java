@@ -11,18 +11,21 @@ import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 
+import java.util.Arrays;
+import java.util.Collections;
+
 public class AchievementInventory extends InventoryBuilder {
 
     private final ForceItemBattle plugin;
     private int currentPage;
 
-    public AchievementInventory(ForceItemBattle plugin, ForceItemPlayer forceItemPlayer) {
+    public AchievementInventory(ForceItemBattle plugin, String playerName) {
         super(9 * 6, plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <dark_aqua>Achievements <dark_gray>● <gray>Settings"));
 
         this.plugin = plugin;
         this.currentPage = 0;
 
-        this.addUpdateHandler(() -> this.updateInventory(forceItemPlayer));
+        this.addUpdateHandler(() -> this.updateInventory(playerName));
     }
 
     private int totalPages(int objectsPerPage) {
@@ -47,13 +50,13 @@ public class AchievementInventory extends InventoryBuilder {
         return headValue;
     }
 
-    private void updateInventory(ForceItemPlayer forceItemPlayer) {
+    private void updateInventory(String playerName) {
         this.setItems(0, 8, new ItemBuilder(Material.CYAN_STAINED_GLASS_PANE).setDisplayName("<green>").addItemFlags(ItemFlag.values()).getItemStack());
         this.setItems(45, 53, new ItemBuilder(Material.CYAN_STAINED_GLASS_PANE).setDisplayName("<green>").addItemFlags(ItemFlag.values()).getItemStack());
 
-        ForceItemPlayerStats playerStats = ForceItemBattle.getInstance().getStatsManager().playerStats(forceItemPlayer.player().getName());
+        ForceItemPlayerStats playerStats = ForceItemBattle.getInstance().getStatsManager().playerStats(playerName);
 
-        int achievementSize = ForceItemBattle.getInstance().getAchievementManager().achievementsList().size();
+        int achievementSize = Achievements.values().length;
         int itemsPerPage = 36;
         int startIndex = this.currentPage * itemsPerPage;
         int endIndex = Math.min(startIndex + itemsPerPage - 1, achievementSize - 1);
@@ -87,10 +90,10 @@ public class AchievementInventory extends InventoryBuilder {
 
         for(int i = startIndex; i <= endIndex; i++) {
             int slotIndex = i - startIndex + 9;
-            Achievement achievements = ForceItemBattle.getInstance().getAchievementManager().achievementsList().get(i);
+            Achievements achievements = Achievements.values()[i];
             String settingDisplayName = "<dark_gray>» <dark_aqua>" + achievements.getTitle();
             Material completedAchievement = playerStats.achievementsDone().contains(achievements.getTitle()) ? Material.LIME_DYE : Material.GRAY_DYE;
-            this.setItem(slotIndex, new ItemBuilder(completedAchievement).setDisplayName(settingDisplayName).setLore(achievements.getDescription()).getItemStack());
+            this.setItem(slotIndex, new ItemBuilder(completedAchievement).setDisplayName(settingDisplayName).setLore(Arrays.asList("", achievements.getDescription(), "")).getItemStack());
         }
     }
 }
