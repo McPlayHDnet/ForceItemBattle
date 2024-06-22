@@ -10,7 +10,7 @@ import org.bukkit.entity.Player;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.UUIDd
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class CommandResult extends CustomCommand {
