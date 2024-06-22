@@ -20,6 +20,7 @@ public class CommandTeams extends CustomCommand {
             return;
         }
 
+
         if(!this.plugin.getGamemanager().isPreGame()) {
             player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>The game already started"));
             return;
