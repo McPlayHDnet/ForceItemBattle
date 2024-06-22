@@ -82,13 +82,21 @@ public class Timer {
                                 (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM) ? "<green>Team score: <white>" + forceItemPlayer.currentTeam().getCurrentScore() : "<green>Your score: <white>" + forceItemPlayer.currentScore())));
 
                 String bossBarTitle = "<gradient:#6eee87:#5fc52e><b>" + this.forceItemBattle.getGamemanager().getMaterialName(material) + " <reset><color:#4e5c24>" + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(false, material);
+                String chainBossTitle = null;
+
+                if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.CHAIN)) {
+                    Material nextMaterial = forceItemPlayer.getNextMaterial();
+                    chainBossTitle = "<gradient:#6eee87:#5fc52e><b>" + this.forceItemBattle.getGamemanager().getMaterialName(nextMaterial) + " <reset><color:#4e5c24>" + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(false, nextMaterial);
+                }
+
+                String finalBossBar = bossBarTitle + (chainBossTitle != null ? " <gray><b>➡</b> " + chainBossTitle : "");
 
                 try {
                     BossBar bar = this.bossBar.get(player.getUniqueId());
-                    bar.name(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(bossBarTitle));
+                    bar.name(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(finalBossBar));
                     player.showBossBar(bar);
                 } catch (NullPointerException e) {
-                    BossBar bar = BossBar.bossBar(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(bossBarTitle), 1, BossBar.Color.WHITE, BossBar.Overlay.NOTCHED_6);
+                    BossBar bar = BossBar.bossBar(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(finalBossBar), 1, BossBar.Color.WHITE, BossBar.Overlay.NOTCHED_6);
                     player.showBossBar(bar);
                     this.bossBar.put(player.getUniqueId(), bar);
                 }

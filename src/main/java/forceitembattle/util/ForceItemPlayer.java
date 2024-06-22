@@ -19,6 +19,8 @@ public class ForceItemPlayer {
     @Setter
     private Material currentMaterial;
     @Setter
+    private Material nextMaterial;
+    @Setter
     private int remainingJokers;
     @Setter
     private Integer currentScore;
@@ -57,6 +59,18 @@ public class ForceItemPlayer {
         }
 
         return currentMaterial();
+    }
+
+    public Material nextMaterial() {
+        return nextMaterial;
+    }
+
+    public Material getNextMaterial() {
+        if (ForceItemBattle.getInstance().getSettings().isSettingEnabled(GameSetting.TEAM)) {
+            return currentTeam().getNextMaterial();
+        }
+
+        return nextMaterial();
     }
 
     public Material previousMaterial() {

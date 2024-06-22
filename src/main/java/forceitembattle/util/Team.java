@@ -17,6 +17,8 @@ public class Team {
     @Setter
     private Material currentMaterial;
     @Setter
+    private Material nextMaterial;
+    @Setter
     private Integer currentScore, remainingJokers;
 
     public Team(int teamId, List<ForceItem> foundItems, Material currentMaterial, Integer currentScore, Integer remainingJokers, ForceItemPlayer... teamPlayers) {

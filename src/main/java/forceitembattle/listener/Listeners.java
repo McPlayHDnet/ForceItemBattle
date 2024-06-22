@@ -142,7 +142,8 @@ public class Listeners implements Listener {
         if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
             forceItemPlayer.currentTeam().setCurrentScore(forceItemPlayer.currentTeam().getCurrentScore() + 1);
             forceItemPlayer.currentTeam().addFoundItemToList(new ForceItem(itemStack.getType(), this.plugin.getTimer().formatSeconds(this.plugin.getTimer().getTimeLeft()), System.currentTimeMillis(), event.isBackToBack(), event.isSkipped()));
-            forceItemPlayer.currentTeam().setCurrentMaterial(this.plugin.getGamemanager().generateMaterial());
+            forceItemPlayer.currentTeam().setCurrentMaterial(forceItemPlayer.currentTeam().getNextMaterial());
+            forceItemPlayer.currentTeam().setNextMaterial(this.plugin.getGamemanager().generateMaterial());
 
             forceItemPlayer.currentTeam().getPlayers().forEach(players -> players.player().playSound(players.player().getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1));
 
@@ -173,7 +174,8 @@ public class Listeners implements Listener {
         } else {
             forceItemPlayer.setCurrentScore(forceItemPlayer.currentScore() + 1);
             forceItemPlayer.addFoundItemToList(new ForceItem(itemStack.getType(), this.plugin.getTimer().formatSeconds(this.plugin.getTimer().getTimeLeft()), System.currentTimeMillis(), event.isBackToBack(), event.isSkipped()));
-            forceItemPlayer.setCurrentMaterial(this.plugin.getGamemanager().generateMaterial());
+            forceItemPlayer.setCurrentMaterial(forceItemPlayer.getNextMaterial());
+            forceItemPlayer.setNextMaterial(this.plugin.getGamemanager().generateMaterial());
 
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
 

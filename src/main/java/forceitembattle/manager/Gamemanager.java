@@ -104,12 +104,14 @@ public class Gamemanager {
             this.forceItemPlayerMap.forEach((uuid, forceItemPlayer) -> {
                 forceItemPlayer.currentTeam().setCurrentScore(0);
                 forceItemPlayer.currentTeam().setCurrentMaterial(this.generateMaterial());
+                forceItemPlayer.currentTeam().setNextMaterial(this.generateMaterial());
             });
         } else {
             Bukkit.getOnlinePlayers().forEach(player -> {
                 ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
                 forceItemPlayer.setCurrentScore(0);
                 forceItemPlayer.setCurrentMaterial(this.generateMaterial());
+                forceItemPlayer.setNextMaterial(this.generateMaterial());
             });
         }
 
