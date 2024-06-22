@@ -140,7 +140,7 @@ public class ClickableItemsListener implements Listener {
         if (!Gamemanager.isJoker(e.getItem())) {
             return;
         }
-        if (e.getAction() != Action.RIGHT_CLICK_AIR) {
+        if (e.getAction() == Action.LEFT_CLICK_AIR || e.getAction() == Action.LEFT_CLICK_BLOCK) {
             return;
         }
 
