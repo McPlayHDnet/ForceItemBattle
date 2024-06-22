@@ -71,34 +71,38 @@ public class Timer {
             if (this.forceItemBattle.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
                 ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
 
-                Material material = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial();
+                if(!forceItemPlayer.isSpectator()) {
+                    Material material = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial();
 
-                player.playerListName(forceItemBattle.getGamemanager().getMiniMessage().deserialize(
-                        (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM) ? "<yellow>[#" + forceItemPlayer.currentTeam().getTeamId() + "] " : "") + "<white>" +
-                        player.getName() + " <gray>[<gold>" + this.forceItemBattle.getGamemanager().getMaterialName(material) + " <reset><color:#4e5c24>" + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(true, material) + "<gray>]"));
+                    player.playerListName(forceItemBattle.getGamemanager().getMiniMessage().deserialize(
+                            (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM) ? "<yellow>[#" + forceItemPlayer.currentTeam().getTeamId() + "] " : "") + "<white>" +
+                                    player.getName() + " <gray>[<gold>" + this.forceItemBattle.getGamemanager().getMaterialName(material) + " <reset><color:#4e5c24>" + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(true, material) + "<gray>]"));
 
-                player.sendActionBar(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(
-                        "<gradient:#fcef64:#fcc44b:#f44c7d><b>" + this.formatSeconds(this.getTimeLeft()) + "</b> <dark_gray>| " +
-                                (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM) ? "<green>Team score: <white>" + forceItemPlayer.currentTeam().getCurrentScore() : "<green>Your score: <white>" + forceItemPlayer.currentScore())));
+                    player.sendActionBar(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(
+                            "<gradient:#fcef64:#fcc44b:#f44c7d><b>" + this.formatSeconds(this.getTimeLeft()) + "</b> <dark_gray>| " +
+                                    (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM) ? "<green>Team score: <white>" + forceItemPlayer.currentTeam().getCurrentScore() : "<green>Your score: <white>" + forceItemPlayer.currentScore())));
 
-                String bossBarTitle = "<gradient:#6eee87:#5fc52e><b>" + this.forceItemBattle.getGamemanager().getMaterialName(material) + " <reset><color:#4e5c24>" + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(false, material);
-                String chainBossTitle = null;
+                    String bossBarTitle = "<gradient:#6eee87:#5fc52e><b>" + this.forceItemBattle.getGamemanager().getMaterialName(material) + " <reset><color:#4e5c24>" + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(false, material);
+                    String chainBossTitle = null;
 
-                if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.CHAIN)) {
-                    Material nextMaterial = forceItemPlayer.getNextMaterial();
-                    chainBossTitle = "<gradient:#6eee87:#5fc52e><b>" + this.forceItemBattle.getGamemanager().getMaterialName(nextMaterial) + " <reset><color:#4e5c24>" + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(false, nextMaterial);
-                }
+                    if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.CHAIN)) {
+                        Material nextMaterial = forceItemPlayer.getNextMaterial();
+                        chainBossTitle = "<gradient:#6eee87:#5fc52e><b>" + this.forceItemBattle.getGamemanager().getMaterialName(nextMaterial) + " <reset><color:#4e5c24>" + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(false, nextMaterial);
+                    }
 
-                String finalBossBar = bossBarTitle + (chainBossTitle != null ? " <gray><b>➡</b> " + chainBossTitle : "");
+                    String finalBossBar = bossBarTitle + (chainBossTitle != null ? " <gray><b>➡</b> " + chainBossTitle : "");
 
-                try {
-                    BossBar bar = this.bossBar.get(player.getUniqueId());
-                    bar.name(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(finalBossBar));
-                    player.showBossBar(bar);
-                } catch (NullPointerException e) {
-                    BossBar bar = BossBar.bossBar(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(finalBossBar), 1, BossBar.Color.WHITE, BossBar.Overlay.NOTCHED_6);
-                    player.showBossBar(bar);
-                    this.bossBar.put(player.getUniqueId(), bar);
+                    try {
+                        BossBar bar = this.bossBar.get(player.getUniqueId());
+                        bar.name(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(finalBossBar));
+                        player.showBossBar(bar);
+                    } catch (NullPointerException e) {
+                        BossBar bar = BossBar.bossBar(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(finalBossBar), 1, BossBar.Color.WHITE, BossBar.Overlay.NOTCHED_6);
+                        player.showBossBar(bar);
+                        this.bossBar.put(player.getUniqueId(), bar);
+                    }
+                } else {
+                    player.sendActionBar(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<gradient:#fcef64:#fcc44b:#f44c7d><b>" + this.formatSeconds(this.getTimeLeft()) + "</b> <dark_gray>| <gold>SPEC"));
                 }
 
             } else {

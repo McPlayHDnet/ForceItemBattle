@@ -8,8 +8,10 @@ import forceitembattle.util.Team;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class CommandResult extends CustomCommand {
 
@@ -68,7 +70,7 @@ public class CommandResult extends CustomCommand {
                 return;
             }
 
-            Map<UUID, ForceItemPlayer> sortedMapDesc = this.plugin.getGamemanager().sortByValue(this.plugin.getGamemanager().forceItemPlayerMap(), false);
+            Map<UUID, ForceItemPlayer> sortedMapDesc = this.plugin.getGamemanager().sortByValue(this.plugin.getGamemanager().forceItemPlayerMap().entrySet().stream().filter(entry -> !entry.getValue().isSpectator()).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new)), false);
             if (this.place == -1) {
                 this.place = sortedMapDesc.size();
             }

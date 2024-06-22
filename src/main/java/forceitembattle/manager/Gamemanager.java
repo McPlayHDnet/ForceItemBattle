@@ -82,6 +82,10 @@ public class Gamemanager {
         this.forceItemBattle.getStatsManager().createPlayerStats(forceItemPlayer);
     }
 
+    public void removePlayer(Player player) {
+        this.forceItemPlayerMap.remove(player.getUniqueId());
+    }
+
     public Material generateMaterial() {
         return this.forceItemBattle.getItemDifficultiesManager().generateRandomMaterial();
     }
@@ -102,6 +106,7 @@ public class Gamemanager {
     public void initializeMats() {
         if(this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM)) {
             this.forceItemPlayerMap.forEach((uuid, forceItemPlayer) -> {
+                if(forceItemPlayer.isSpectator()) return;
                 forceItemPlayer.currentTeam().setCurrentScore(0);
                 forceItemPlayer.currentTeam().setCurrentMaterial(this.generateMaterial());
                 forceItemPlayer.currentTeam().setNextMaterial(this.generateMaterial());
@@ -109,6 +114,7 @@ public class Gamemanager {
         } else {
             Bukkit.getOnlinePlayers().forEach(player -> {
                 ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
+                if(forceItemPlayer.isSpectator()) return;
                 forceItemPlayer.setCurrentScore(0);
                 forceItemPlayer.setCurrentMaterial(this.generateMaterial());
                 forceItemPlayer.setNextMaterial(this.generateMaterial());

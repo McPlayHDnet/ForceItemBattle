@@ -83,6 +83,7 @@ public class Listeners implements Listener {
             player.setGameMode(GameMode.ADVENTURE);
 
             player.getInventory().setItem(4, new ItemBuilder(Material.LIME_DYE).setDisplayName("<dark_gray>» <green>Achievements").getItemStack());
+            player.getInventory().setItem(8, new ItemBuilder(Material.ENDER_PEARL).setDisplayName("<dark_gray>» <gray>Spectate game").getItemStack());
 
         }
         event.joinMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<green>» <yellow>" + player.getName() + " <green>joined"));
@@ -91,7 +92,14 @@ public class Listeners implements Listener {
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent playerQuitEvent) {
         playerQuitEvent.quitMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>« <yellow>" + playerQuitEvent.getPlayer().getName() + " <red>ragequit"));
-        playerQuitEvent.getPlayer().getPassengers().forEach(Entity::remove);
+
+        if(this.plugin.getGamemanager().isPreGame() || this.plugin.getGamemanager().isEndGame()) {
+            this.plugin.getGamemanager().removePlayer(playerQuitEvent.getPlayer());
+        }
+
+        if(this.plugin.getGamemanager().isMidGame()) {
+            playerQuitEvent.getPlayer().getPassengers().forEach(Entity::remove);
+        }
     }
 
     @EventHandler
@@ -420,6 +428,8 @@ public class Listeners implements Listener {
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
         Achievements achievement = playerGrantAchievementEvent.getAchievement();
 
+        if(forceItemPlayer.isSpectator()) return;
+
         forceItemPlayer.player().playSound(forceItemPlayer.player(), Sound.BLOCK_AMETHYST_BLOCK_RESONATE, 1, 1);
         Bukkit.getOnlinePlayers().forEach(players -> {
             players.sendMessage(Component.empty());
@@ -552,6 +562,10 @@ public class Listeners implements Listener {
     @EventHandler
     public void onAdvancementGrant(PlayerAdvancementDoneEvent event) {
         Advancement advancement = event.getAdvancement();
+
+        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(event.getPlayer().getUniqueId());
+        if(forceItemPlayer.isSpectator()) return;
+
         if (advancement.key().namespace().equals("fib")) {
             String plainAdvancement = PlainTextComponentSerializer.plainText().serialize(advancement.displayName());
             String plainAdvancementDescription = PlainTextComponentSerializer.plainText().serialize(Objects.requireNonNull(advancement.getDisplay()).description());
