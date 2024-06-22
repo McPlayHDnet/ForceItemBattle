@@ -11,8 +11,8 @@ import forceitembattle.settings.preset.InvSettingsPresets;
 import forceitembattle.util.*;
 import io.papermc.paper.advancement.AdvancementDisplay;
 import io.papermc.paper.event.player.AsyncChatEvent;
-import io.papermc.paper.event.player.PlayerTradeEvent;
 import lombok.RequiredArgsConstructor;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.*;
 import org.bukkit.advancement.Advancement;
@@ -112,16 +112,6 @@ public class Listeners implements Listener {
             }
             return;
         }
-
-        if (this.plugin.getGamemanager().isMidGame()) {
-            ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-            this.plugin.getAchievementManager().achievementsList().forEach(achievement -> {
-
-                if (achievement.checkRequirements(player, playerMoveEvent)) {
-                    Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, () -> achievement.grantTo(forceItemPlayer), 0L);
-                }
-            });
-        }
     }
 
     /* Custom Found-Item Event */
@@ -176,14 +166,6 @@ public class Listeners implements Listener {
                 }
             }
 
-            this.plugin.getAchievementManager().achievementsList().forEach(achievement -> {
-                if (achievement.checkRequirements(player, event)) {
-                    for (ForceItemPlayer teamPlayers : forceItemPlayer.currentTeam().getPlayers()) {
-                        Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, () -> achievement.grantTo(teamPlayers), 0L);
-                    }
-                }
-            });
-
             if (!foundNextItem) {
                 return;
             }
@@ -201,6 +183,7 @@ public class Listeners implements Listener {
 
             if (this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
                 this.plugin.getStatsManager().addToStats(PlayerStat.TOTAL_ITEMS, this.plugin.getStatsManager().playerStats(player.getName()), 1);
+                playerStats.addFoundItem(forceItemPlayer);
             }
 
             boolean foundNextItem = false;
@@ -218,12 +201,6 @@ public class Listeners implements Listener {
                 foundNextItem = true;
                 forceItemPlayer.setBackToBackStreak(backToBacks + 1);
             }
-
-            this.plugin.getAchievementManager().achievementsList().forEach(achievement -> {
-                if (achievement.checkRequirements(player, event)) {
-                    Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, () -> achievement.grantTo(forceItemPlayer), 0L);
-                }
-            });
 
             if (!foundNextItem) {
                 return;
@@ -373,14 +350,6 @@ public class Listeners implements Listener {
         if (!this.plugin.getGamemanager().isMidGame()) {
             return;
         }
-
-        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-
-        this.plugin.getAchievementManager().achievementsList().forEach(achievement -> {
-            if (achievement.checkRequirements(player, playerItemConsumeEvent)) {
-                Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, () -> achievement.grantTo(forceItemPlayer), 0L);
-            }
-        });
     }
 
     @EventHandler
@@ -422,12 +391,6 @@ public class Listeners implements Listener {
         }
 
         gamePlayer.removeItemDisplay();
-
-        this.plugin.getAchievementManager().achievementsList().forEach(achievement -> {
-            if(achievement.checkRequirements(player, event)) {
-                Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, () -> achievement.grantTo(gamePlayer), 0L);
-            }
-        });
 
         // Automatically respawn player.
         Bukkit.getScheduler().runTaskLater(
@@ -611,52 +574,6 @@ public class Listeners implements Listener {
                 spawnLocation.setY(player.getWorld().getHighestBlockYAt(spawnLocation) + 1);
                 player.teleport(spawnLocation);
             }
-            this.plugin.getAchievementManager().achievementsList().forEach(achievement -> {
-                if(achievement.checkRequirements(player, event)) {
-                    Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, () -> achievement.grantTo(forceItemPlayer), 0L);
-                }
-            });
         }
-    }
-
-    @EventHandler
-    public void onTrade(PlayerTradeEvent playerTradeEvent) {
-        Player player = playerTradeEvent.getPlayer();
-        if (this.plugin.getGamemanager().isMidGame()) {
-            ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-            this.plugin.getAchievementManager().achievementsList().forEach(achievement -> {
-                if (achievement.checkRequirements(player, playerTradeEvent)) {
-                    Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, () -> achievement.grantTo(forceItemPlayer), 0L);
-                }
-            });
-        }
-    }
-
-    @EventHandler
-    public void onOpenLootChest(PlayerInteractEvent event) {
-        Player player = event.getPlayer();
-
-        if (event.getItem() == null) {
-            return;
-        }
-        if (event.getClickedBlock() == null) {
-            return;
-        }
-        if (!event.getAction().isRightClick()) {
-            return;
-        }
-        if (event.getClickedBlock().getType() != Material.CHEST) {
-            return;
-        }
-        if (!this.plugin.getGamemanager().isMidGame()) {
-            return;
-        }
-
-        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-        this.plugin.getAchievementManager().achievementsList().forEach(achievement -> {
-            if (achievement.checkRequirements(player, event)) {
-                Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin, () -> achievement.grantTo(forceItemPlayer), 0L);
-            }
-        });
     }
 }

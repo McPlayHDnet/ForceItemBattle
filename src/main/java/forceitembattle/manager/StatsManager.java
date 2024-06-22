@@ -8,6 +8,7 @@ import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.ForceItemPlayerStats;
 import forceitembattle.util.PlayerStat;
 import org.apache.commons.lang.WordUtils;
+import org.bukkit.Material;
 import org.bukkit.Statistic;
 import org.bukkit.entity.Player;
 
@@ -53,7 +54,9 @@ public class StatsManager {
 
     public void addToStats(PlayerStat playerStat, ForceItemPlayerStats forceItemPlayerStats, int toBeAdded) {
         switch(playerStat) {
-            case TOTAL_ITEMS -> forceItemPlayerStats.setTotalItemsFound(forceItemPlayerStats.totalItemsFound() + toBeAdded);
+            case TOTAL_ITEMS -> {
+                forceItemPlayerStats.setTotalItemsFound(forceItemPlayerStats.totalItemsFound() + toBeAdded);
+            }
             case TRAVELLED -> forceItemPlayerStats.setTravelled(forceItemPlayerStats.travelled() + toBeAdded);
             case GAMES_WON -> forceItemPlayerStats.setGamesWon(forceItemPlayerStats.gamesWon() + toBeAdded);
             case GAMES_PLAYED -> forceItemPlayerStats.setGamesPlayed(forceItemPlayerStats.gamesPlayed() + toBeAdded);
@@ -108,6 +111,15 @@ public class StatsManager {
         forceItemPlayerStats.setBack2backStreak(0);
         forceItemPlayerStats.setWinStreak(0);
         forceItemPlayerStats.setAchievementsDone(new ArrayList<>());
+        forceItemPlayerStats.setMostFoundItems(new TreeMap<>(Comparator.reverseOrder()));
+
+        this.playerStats.put(userName, forceItemPlayerStats);
+        this.saveStats();
+    }
+
+    public void resetAchievements(String userName) {
+        ForceItemPlayerStats forceItemPlayerStats = this.playerStats.get(userName);
+        forceItemPlayerStats.setAchievementsDone(new ArrayList<>());
 
         this.playerStats.put(userName, forceItemPlayerStats);
         this.saveStats();
@@ -147,6 +159,8 @@ public class StatsManager {
                         field.set(playerStats, "");
                     } else if (field.getType().equals(List.class)) {
                         field.set(playerStats, new ArrayList<>());
+                    } else if (field.getType().equals(SortedMap.class)) {
+                        field.set(playerStats, new TreeMap<>(Comparator.reverseOrder()));
                     }
                 }
             }
@@ -178,6 +192,9 @@ public class StatsManager {
         player.sendMessage(" ");
         player.sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● <gray>Rank <dark_gray>» <dark_aqua>#" + this.rank(forceItemPlayerStats.userName())));
         player.sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● <gray>Total items found <dark_gray>» <dark_aqua>" + forceItemPlayerStats.totalItemsFound()));
+        this.getTopFoundItems(forceItemPlayerStats.userName()).forEach((material, count) -> {
+            player.sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("     <dark_gray>➥ <reset>" + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(true, material) + "   <gray>" + this.forceItemBattle.getGamemanager().getMaterialName(material) + " <dark_gray>» <gold>x" + count));
+        });
         player.sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● <gray>Travelled <dark_gray>» <dark_aqua>" + (int)Math.round(forceItemPlayerStats.travelled()) + " blocks"));
         player.sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● <gray>Highest score <dark_gray>» <dark_aqua>" + forceItemPlayerStats.highestScore()));
         player.sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● <gray>Back-to-Back streak <dark_gray>» <dark_aqua>" + forceItemPlayerStats.back2backStreak()));
@@ -198,6 +215,26 @@ public class StatsManager {
             atomicInteger.getAndIncrement();
         });
         player.sendMessage(" ");
+    }
+
+    public Map<Material, Integer> getTopFoundItems(String userName) {
+        ForceItemPlayerStats playerStats = this.playerStats(userName);
+        if (playerStats == null) {
+            return new TreeMap<>();
+        }
+
+        Map<Material, Integer> mostFoundItems = playerStats.mostFoundItems();
+
+        return mostFoundItems.entrySet()
+                .stream()
+                .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue()))
+                .limit(3)
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (e1, e2) -> e1,
+                        LinkedHashMap::new
+                ));
     }
 
     public String placeColor(int place) {

@@ -20,7 +20,7 @@ public class CommandTeams extends CustomCommand {
             return;
         }
 
-        if(this.plugin.getTimer().getTimeLeft() != 0 || this.plugin.getGamemanager().isMidGame()) {
+        if(!this.plugin.getGamemanager().isPreGame()) {
             player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>The game already started"));
             return;
         }
