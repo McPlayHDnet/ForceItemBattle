@@ -21,6 +21,10 @@ public class CommandInfoWiki extends CustomCommand {
         if (this.plugin.getGamemanager().isMidGame()) {
             if (this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
                 ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+                if(forceItemPlayer.isSpectator()) {
+                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>You are not playing."));
+                    return;
+                }
                 item = new ItemStack(forceItemPlayer.getCurrentMaterial());
             } else {
                 player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>You are not playing."));

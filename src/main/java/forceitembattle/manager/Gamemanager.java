@@ -1,7 +1,11 @@
 package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.event.PlayerGrantAchievementEvent;
 import forceitembattle.settings.GameSetting;
+import forceitembattle.settings.achievements.AchievementProgress;
+import forceitembattle.settings.achievements.Achievements;
+import forceitembattle.settings.achievements.PlayerProgress;
 import forceitembattle.settings.preset.GamePreset;
 import forceitembattle.util.*;
 import lombok.Getter;
@@ -28,7 +32,7 @@ public class Gamemanager {
     private final Map<UUID, ForceItemPlayer> forceItemPlayerMap;
 
     public Map<UUID, Map<Integer, Map<Integer, ItemStack>>> savedInventory = new HashMap<>();
-    public Map<Teams, Map<Integer, Map<Integer, ItemStack>>> savedInventoryTeam = new HashMap<>();
+    public Map<Team, Map<Integer, Map<Integer, ItemStack>>> savedInventoryTeam = new HashMap<>();
 
     @Setter
     @Getter
@@ -63,6 +67,7 @@ public class Gamemanager {
                         .resolver(StandardTags.gradient())
                         .resolver(StandardTags.reset())
                         .resolver(StandardTags.newline())
+                        .resolver(StandardTags.rainbow())
                         .resolver(StandardTags.decorations())
                         .resolver(StandardTags.clickEvent())
                         .resolver(StandardTags.hoverEvent())
@@ -75,6 +80,10 @@ public class Gamemanager {
     public void addPlayer(Player player, ForceItemPlayer forceItemPlayer) {
         this.forceItemPlayerMap.put(player.getUniqueId(), forceItemPlayer);
         this.forceItemBattle.getStatsManager().createPlayerStats(forceItemPlayer);
+    }
+
+    public void removePlayer(Player player) {
+        this.forceItemPlayerMap.remove(player.getUniqueId());
     }
 
     public Material generateMaterial() {
@@ -97,14 +106,18 @@ public class Gamemanager {
     public void initializeMats() {
         if(this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM)) {
             this.forceItemPlayerMap.forEach((uuid, forceItemPlayer) -> {
+                if(forceItemPlayer.isSpectator()) return;
                 forceItemPlayer.currentTeam().setCurrentScore(0);
                 forceItemPlayer.currentTeam().setCurrentMaterial(this.generateMaterial());
+                forceItemPlayer.currentTeam().setNextMaterial(this.generateMaterial());
             });
         } else {
             Bukkit.getOnlinePlayers().forEach(player -> {
                 ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
+                if(forceItemPlayer.isSpectator()) return;
                 forceItemPlayer.setCurrentScore(0);
                 forceItemPlayer.setCurrentMaterial(this.generateMaterial());
+                forceItemPlayer.setNextMaterial(this.generateMaterial());
             });
         }
 
@@ -142,6 +155,7 @@ public class Gamemanager {
 
         Bukkit.getOnlinePlayers().forEach(player -> {
             ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
+            ForceItemPlayerStats playerStats = this.forceItemBattle.getStatsManager().playerStats(player.getName());
 
             player.setHealth(20);
             player.setSaturation(20);
@@ -181,12 +195,15 @@ public class Gamemanager {
                 }
             }
 
-            forceItemBattle.getAchievementManager().achievementsList().forEach(achievement -> {
-
-                if(achievement.checkRequirements(forceItemPlayer.player(), null)) {
-                    Bukkit.getScheduler().scheduleSyncDelayedTask(forceItemBattle, () -> achievement.grantTo(forceItemPlayer), 0L);
-                }
-            });
+            Achievements achievement = Achievements.CHICOT;
+            if(playerStats.achievementsDone().contains(achievement.getTitle())) {
+                return;
+            }
+            PlayerProgress playerProgress = this.forceItemBattle.getAchievementManager().playerProgressMap.get(player.getUniqueId());
+            if(playerProgress.getProgress(achievement).getDeathCounter() == achievement.getCondition().getAmount()) {
+                PlayerGrantAchievementEvent grantAchievementEvent = new PlayerGrantAchievementEvent(player, achievement);
+                Bukkit.getPluginManager().callEvent(grantAchievementEvent);
+            }
         });
     }
 
@@ -225,16 +242,16 @@ public class Gamemanager {
         return placesMap;
     }
 
-    public Map<Teams, Integer> calculatePlaces(List<Teams> teamsList) {
-        List<Teams> sortedTeams = teamsList.stream()
-                .sorted(Comparator.comparingInt(Teams::getCurrentScore).reversed())
+    public Map<Team, Integer> calculatePlaces(List<Team> teams) {
+        List<Team> sortedTeams = teams.stream()
+                .sorted(Comparator.comparingInt(Team::getCurrentScore).reversed())
                 .toList();
 
-        Map<Teams, Integer> placesMap = new LinkedHashMap<>();
+        Map<Team, Integer> placesMap = new LinkedHashMap<>();
 
         int place = 1;
         for(int i = 0; i < sortedTeams.size(); i++) {
-            Teams currentTeam = sortedTeams.get(i);
+            Team currentTeam = sortedTeams.get(i);
 
             if(i > 0 && currentTeam.getCurrentScore() == sortedTeams.get(i - 1).getCurrentScore()) {
                 placesMap.put(currentTeam, placesMap.get(sortedTeams.get(i - 1)));

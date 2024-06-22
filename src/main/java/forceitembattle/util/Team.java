@@ -3,14 +3,13 @@ package forceitembattle.util;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Material;
-import org.bukkit.scoreboard.Team;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 @Getter
-public class Teams {
+public class Team {
 
     private final int teamId;
     private final List<ForceItemPlayer> players;
@@ -18,9 +17,11 @@ public class Teams {
     @Setter
     private Material currentMaterial;
     @Setter
+    private Material nextMaterial;
+    @Setter
     private Integer currentScore, remainingJokers;
 
-    public Teams(int teamId, List<ForceItem> foundItems, Material currentMaterial, Integer currentScore, Integer remainingJokers, ForceItemPlayer... teamPlayers) {
+    public Team(int teamId, List<ForceItem> foundItems, Material currentMaterial, Integer currentScore, Integer remainingJokers, ForceItemPlayer... teamPlayers) {
         this.teamId = teamId;
         this.foundItems = foundItems;
         this.currentMaterial = currentMaterial;

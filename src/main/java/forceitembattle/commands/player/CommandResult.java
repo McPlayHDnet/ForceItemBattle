@@ -4,12 +4,14 @@ import forceitembattle.commands.CustomCommand;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.FinishInventory;
 import forceitembattle.util.ForceItemPlayer;
-import forceitembattle.util.Teams;
+import forceitembattle.util.Team;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class CommandResult extends CustomCommand {
 
@@ -30,7 +32,7 @@ public class CommandResult extends CustomCommand {
 
         if (args.length == 1) {
             UUID uuid = null;
-            Teams team = null;
+            Team team = null;
             if(!this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
                 try {
                     uuid = UUID.fromString(args[0]);
@@ -40,7 +42,7 @@ public class CommandResult extends CustomCommand {
                 }
             } else {
                 try {
-                    team = this.plugin.getTeamManager().getTeamsList().get(Integer.parseInt(args[0].replace("#", "")) - 1);
+                    team = this.plugin.getTeamManager().getTeams().get(Integer.parseInt(args[0].replace("#", "")) - 1);
                 } catch (IllegalArgumentException e) {
                     player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>Invalid team."));
                 }
@@ -68,7 +70,7 @@ public class CommandResult extends CustomCommand {
                 return;
             }
 
-            Map<UUID, ForceItemPlayer> sortedMapDesc = this.plugin.getGamemanager().sortByValue(this.plugin.getGamemanager().forceItemPlayerMap(), false);
+            Map<UUID, ForceItemPlayer> sortedMapDesc = this.plugin.getGamemanager().sortByValue(this.plugin.getGamemanager().forceItemPlayerMap().entrySet().stream().filter(entry -> !entry.getValue().isSpectator()).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new)), false);
             if (this.place == -1) {
                 this.place = sortedMapDesc.size();
             }
@@ -88,12 +90,12 @@ public class CommandResult extends CustomCommand {
                 return;
             }
 
-            Map<Teams, Integer> placesMap = this.plugin.getGamemanager().calculatePlaces(this.plugin.getTeamManager().getTeamsList());
+            Map<Team, Integer> placesMap = this.plugin.getGamemanager().calculatePlaces(this.plugin.getTeamManager().getTeams());
             if (this.place == -1) {
                 this.place = placesMap.size();
             }
 
-            Teams currentTeam = placesMap.keySet().toArray(new Teams[0])[this.place - 1];
+            Team currentTeam = placesMap.keySet().toArray(new Team[0])[this.place - 1];
             int currentPlace = placesMap.get(currentTeam);
 
             Bukkit.getOnlinePlayers().forEach(players -> new FinishInventory(this.plugin, null, currentTeam, currentPlace, true).open(players));

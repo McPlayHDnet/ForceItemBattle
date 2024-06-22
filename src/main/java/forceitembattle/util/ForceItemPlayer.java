@@ -19,13 +19,17 @@ public class ForceItemPlayer {
     @Setter
     private Material currentMaterial;
     @Setter
+    private Material nextMaterial;
+    @Setter
     private int remainingJokers;
     @Setter
     private Integer currentScore;
     @Setter
-    private Teams currentTeam;
+    private Team currentTeam;
     @Setter
     private int backToBackStreak;
+    @Setter
+    private boolean isSpectator;
 
     public ForceItemPlayer(Player player, List<ForceItem> foundItems, Material currentMaterial, int remainingJokers, Integer currentScore) {
         this.player = player;
@@ -59,6 +63,18 @@ public class ForceItemPlayer {
         return currentMaterial();
     }
 
+    public Material nextMaterial() {
+        return nextMaterial;
+    }
+
+    public Material getNextMaterial() {
+        if (ForceItemBattle.getInstance().getSettings().isSettingEnabled(GameSetting.TEAM)) {
+            return currentTeam().getNextMaterial();
+        }
+
+        return nextMaterial();
+    }
+
     public Material previousMaterial() {
         return this.foundItems.get(this.foundItems.size() - 1).material();
     }
@@ -71,12 +87,16 @@ public class ForceItemPlayer {
         return currentScore;
     }
 
-    public Teams currentTeam() {
+    public Team currentTeam() {
         return currentTeam;
     }
 
     public int backToBackStreak() {
         return backToBackStreak;
+    }
+
+    public boolean isSpectator() {
+        return isSpectator;
     }
 
     private ArmorStand itemDisplay;

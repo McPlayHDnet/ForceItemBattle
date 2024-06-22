@@ -16,10 +16,7 @@ import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.SmithItemEvent;
-import org.bukkit.event.player.PlayerBucketEmptyEvent;
-import org.bukkit.event.player.PlayerBucketEntityEvent;
-import org.bukkit.event.player.PlayerBucketFillEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.inventory.BrewerInventory;
 import org.bukkit.inventory.CraftingInventory;
 import org.bukkit.inventory.ItemStack;
@@ -60,7 +57,7 @@ public class ItemsListener implements Listener {
             return;
         }
 
-        if (inventoryClickEvent.getView().title().contains(Component.text("§8●"))) {
+        if (inventoryClickEvent.getView().title().contains(Component.text("<dark_gray>●"))) {
             return; //prevents from getting the needed item onClick inside the recipe
         }
 
@@ -138,6 +135,20 @@ public class ItemsListener implements Listener {
 
             checkItemFound(player, forceItemPlayer, clickedItem);
         }
+    }
+
+    @EventHandler
+    public void onConsume(PlayerItemConsumeEvent playerItemConsumeEvent) {
+        Player player = playerItemConsumeEvent.getPlayer();
+
+        if (!this.plugin.getGamemanager().isMidGame()) {
+            return;
+        }
+
+        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        ItemStack clickedItem = playerItemConsumeEvent.getItem();
+
+        checkItemFound(player, forceItemPlayer, clickedItem);
     }
 
     private void checkItemFound(Player player, ForceItemPlayer forceItemPlayer, ItemStack item) {

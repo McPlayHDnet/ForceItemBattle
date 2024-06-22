@@ -6,6 +6,7 @@ import forceitembattle.manager.Gamemanager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.achievements.AchievementInventory;
 import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.util.ItemBuilder;
 import forceitembattle.util.TeleporterInventory;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.*;
@@ -15,6 +16,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
+
+import java.util.ArrayList;
 
 @RequiredArgsConstructor
 public class ClickableItemsListener implements Listener {
@@ -36,7 +39,7 @@ public class ClickableItemsListener implements Listener {
         if (e.getItem().getType() == Material.LIME_DYE) {
             if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
                 player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
-                new AchievementInventory(this.plugin, forceItemPlayer).open(player);
+                new AchievementInventory(this.plugin, forceItemPlayer.player().getName()).open(player);
                 return;
             }
             return;
@@ -140,7 +143,7 @@ public class ClickableItemsListener implements Listener {
         if (!Gamemanager.isJoker(e.getItem())) {
             return;
         }
-        if (e.getAction() != Action.RIGHT_CLICK_AIR) {
+        if (e.getAction() == Action.LEFT_CLICK_AIR || e.getAction() == Action.LEFT_CLICK_BLOCK) {
             return;
         }
 
@@ -188,7 +191,7 @@ public class ClickableItemsListener implements Listener {
     }
 
     @EventHandler
-    public void onOpenAchievements(PlayerInteractEvent e) {
+    public void onPreGame(PlayerInteractEvent e) {
         Player player = e.getPlayer();
         if (!this.plugin.getGamemanager().isPreGame()) {
             return;
@@ -205,7 +208,32 @@ public class ClickableItemsListener implements Listener {
         if (e.getItem().getType() == Material.LIME_DYE) {
             if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
                 player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
-                new AchievementInventory(this.plugin, forceItemPlayer).open(player);
+                new AchievementInventory(this.plugin, player.getName()).open(player);
+                return;
+            }
+            return;
+        }
+
+        if (e.getItem().getType() == Material.ENDER_PEARL) {
+            if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+                e.setCancelled(true);
+                player.playSound(player.getLocation(), Sound.BLOCK_PISTON_CONTRACT, 1, 1);
+                forceItemPlayer.setSpectator(true);
+                player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_aqua>You will <green>spectate <dark_aqua>this round now."));
+                player.getInventory().setItem(8, new ItemBuilder(Material.ENDER_EYE).setDisplayName("<dark_gray>» <gray>Play game").getItemStack());
+                return;
+            }
+            return;
+        }
+
+        if (e.getItem().getType() == Material.ENDER_EYE) {
+            if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+                e.setCancelled(true);
+
+                player.playSound(player.getLocation(), Sound.BLOCK_PISTON_CONTRACT, 1, 1);
+                forceItemPlayer.setSpectator(false);
+                player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_aqua>You will <green>play <dark_aqua>this round now."));
+                player.getInventory().setItem(8, new ItemBuilder(Material.ENDER_PEARL).setDisplayName("<dark_gray>» <gray>Spectate game").getItemStack());
                 return;
             }
         }

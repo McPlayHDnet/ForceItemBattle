@@ -36,6 +36,7 @@ If you want to have item descriptions (useful in case items don't have a craftin
 | `/reset` | `reset the game and generate a new world` |
 | `/stats reset <player>` | `reset all stats of a player` |
 | `/settings` | `pull up the settings menu` |
+| `/stoptimer` | `instantly end the game` |
 
 ### Settings
 | Command | Description     |
@@ -67,6 +68,16 @@ Preset Menu
 Crafting Recipe
 
 ![Crafting Recipe](https://github.com/btlmt-de/FIB/assets/77849496/bfadbcda-ee08-4fb3-a6fd-7eec51c4c6c1)
+
+Item Display
+
+![Bossbar](https://github.com/McPlayHDnet/ForceItemBattle/assets/77849496/13c7aa0d-57a4-41d3-929f-19f12baa0238)
+
+![Chat](https://github.com/McPlayHDnet/ForceItemBattle/assets/77849496/dc5c6ca1-d8c5-4b44-a2b8-1c20367a9956)
+
+
+To display all items you need to use [this resourcepack](https://github.com/btlmt-de/FIB/tree/main/ForceItemBattle)
+
 
 Item Description
 
