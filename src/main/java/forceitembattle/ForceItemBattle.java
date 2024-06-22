@@ -5,24 +5,19 @@ import forceitembattle.commands.admin.*;
 import forceitembattle.commands.player.*;
 import forceitembattle.commands.player.trade.CommandAskTrade;
 import forceitembattle.commands.player.trade.CommandTrade;
-import forceitembattle.listener.Listeners;
-import forceitembattle.listener.PvPListener;
-import forceitembattle.listener.RecipeListener;
+import forceitembattle.listener.*;
 import forceitembattle.manager.*;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.util.*;
-import io.papermc.paper.adventure.PaperAdventure;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.inventory.ItemStack;
+import org.bukkit.event.Listener;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
 
-import javax.naming.Name;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -71,6 +66,8 @@ public final class ForceItemBattle extends JavaPlugin {
     private AntimatterLocator antimatterLocator;
     @Getter
     private AchievementManager achievementManager;
+    @Getter
+    private AchievementListener achievementListener;
     @Getter
     @Setter
     private Location spawnLocation;
@@ -167,6 +164,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.tradingManager = new TradingManager(this);
         this.commandsManager = new CommandsManager(this);
         this.achievementManager = new AchievementManager(this);
+        this.achievementListener = new AchievementListener(this);
         this.wanderingTraderTimer = new WanderingTraderTimer();
         this.antimatterLocator = new AntimatterLocator();
 
@@ -230,9 +228,15 @@ public final class ForceItemBattle extends JavaPlugin {
     }
 
     private void initListeners() {
-        new Listeners(this);
-        new RecipeListener(this);
-        new PvPListener(this);
+        registerListeners(
+                new Listeners(this),
+                new SettingsListener(this),
+                new RecipeListener(this),
+                new PvPListener(this),
+                new ClickableItemsListener(this),
+                new ItemsListener(this),
+                new AchievementListener(this)
+        );
 
         NamespacedKey namespacedKey = new NamespacedKey("fib", "antimatter_locator");
         ShapedRecipe shapedRecipe = new ShapedRecipe(namespacedKey, new ItemBuilder(Material.KNOWLEDGE_BOOK).setDisplayName("<dark_gray>» <dark_purple>Antimatter Locator").getItemStack());
@@ -246,6 +250,12 @@ public final class ForceItemBattle extends JavaPlugin {
         shapedRecipe.setIngredient('Q', Material.QUARTZ);
 
         Bukkit.addRecipe(shapedRecipe);
+    }
+
+    public void registerListeners(Listener... listeners) {
+        for (Listener listener : listeners) {
+            this.getServer().getPluginManager().registerEvents(listener, this);
+        }
     }
 
     private void initCommands() {
@@ -271,6 +281,8 @@ public final class ForceItemBattle extends JavaPlugin {
         new CommandTeams();
         new CommandAskTrade();
         new CommandTrade();
+        new CommandFixSkips();
+        new CommandAchievement();
     }
 
     @Override

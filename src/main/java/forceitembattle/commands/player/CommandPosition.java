@@ -3,6 +3,7 @@ package forceitembattle.commands.player;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.settings.GameSetting;
+import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.ParticleUtils;
 import forceitembattle.util.Scheduler;
 import lombok.NonNull;
@@ -33,6 +34,9 @@ public class CommandPosition extends CustomCommand implements CustomTabCompleter
         if (!this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
             return;
         }
+
+        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        if(forceItemPlayer.isSpectator()) return;
 
         if (args.length < 1 || args[0].equalsIgnoreCase("list")) {
             Scheduler.runAsync(() -> sendAllPositions(player)); // Async because Location#distance takes some time.

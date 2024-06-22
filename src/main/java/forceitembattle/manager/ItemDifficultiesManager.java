@@ -31,20 +31,29 @@ public class ItemDifficultiesManager {
     @Getter
     private HashMap<Material, DescriptionItem> descriptionItems;
 
+    /**
+     * Chat and tablist use smaller icons.
+     */
+    private Map<Material, String> smallIconUnicodes;
+    /**
+     * Bossbar is using bigger icons.
+     */
+    private Map<Material, String> bigIconUnicodes;
+
     private void setupStates() {
         // if this is a toggle setting, just change unlockedAtMinutes to 0 for all
         State.EARLY.setUnlockedAtMinutes(0);
         State.MID.setUnlockedAtMinutes(5);
-        State.LATE.setUnlockedAtMinutes(10);
+        State.LATE.setUnlockedAtMinutes(13);
     }
 
     public List<Material> getAvailableItems() {
-        int timeLeft = this.plugin.getTimer().getTimeLeft() / 60;
-        int totalDuration = this.plugin.getGamemanager().getGameDuration() / 60;
+        int timeLeft = this.plugin.getTimer().getTimeLeft();
+        int totalDuration = this.plugin.getGamemanager().getGameDuration();
         List<Material> items = new ArrayList<>();
 
         for (State state : State.VALUES) {
-            if ((totalDuration - timeLeft) < state.getUnlockedAtMinutes()) {
+            if ((totalDuration - timeLeft) / 60 < state.getUnlockedAtMinutes()) {
                 continue;
             }
 
@@ -101,37 +110,60 @@ public class ItemDifficultiesManager {
         return lines;
     }
 
+    public String getUnicodeFromMaterial(boolean smallIcon, Material material) {
+        return this.getItemUnicodes(smallIcon).getOrDefault(material, "NULL");
+    }
+
+    public Map<Material, String> getItemUnicodes(boolean smallIcon) {
+        if (smallIcon) {
+            if (smallIconUnicodes == null) {
+                smallIconUnicodes = readItemUnicodes(true);
+            }
+
+            return smallIconUnicodes;
+        }
+
+        if (bigIconUnicodes == null) {
+            bigIconUnicodes = readItemUnicodes(false);
+        }
+
+        return bigIconUnicodes;
+    }
+
     /**
-     * Method to read the unicodes from the file,
-     * solution can be better
+     * Method to read the unicodes from the file.
      */
-
-    private Map<Material, String> readItemUnicodes(boolean isChatOrTab) {
+    private Map<Material, String> readItemUnicodes(boolean smallIcon) {
         Map<Material, String> itemsUnicode = new HashMap<>();
+        File file = new File(this.plugin.getDataFolder(), "unicodeItems.json");
 
-        try (FileReader fileReader = new FileReader(new File(this.plugin.getDataFolder(), "unicodeItems.json"))) {
+        if (!file.exists()) {
+            this.plugin.getLogger().warning("`unicodeItems.json` does not exist, not using custom icons");
+            return new HashMap<>();
+        }
+
+        try (FileReader fileReader = new FileReader(file)) {
             Gson gson = new Gson();
             Type mapType = new TypeToken<Map<String, String>[]>(){}.getType();
             Map<String, String>[] items = gson.fromJson(fileReader, mapType);
 
-            for(Map<String, String> entry : items) {
+            for (Map<String, String> entry : items) {
                 String materialName = entry.get("material");
                 String unicode = entry.get("unicode");
 
                 if (materialName != null && unicode != null) {
-                    if(isChatOrTab && materialName.contains("_tabChat")) {
+                    if (smallIcon && materialName.contains("_tabChat")) {
                         Material material = Material.getMaterial(materialName.replace("_tabChat", ""));
-                        if(material != null) {
+                        if (material != null) {
                             itemsUnicode.put(material, unicode);
                         }
 
-                    } else if(!isChatOrTab && !materialName.contains("_tabChat")) {
+                    } else if (!smallIcon && !materialName.contains("_tabChat")) {
                         Material material = Material.getMaterial(materialName);
-                        if(material != null) {
+                        if (material != null) {
                             itemsUnicode.put(material, unicode);
                         }
                     }
-
                 }
             }
         } catch (IOException e) {
@@ -139,10 +171,6 @@ public class ItemDifficultiesManager {
         }
 
         return itemsUnicode;
-    }
-
-    public String getUnicodeFromMaterial(boolean isChatOrTab, Material material) {
-        return this.readItemUnicodes(isChatOrTab).getOrDefault(material, "NULL");
     }
 
     /**
@@ -257,8 +285,10 @@ public class ItemDifficultiesManager {
                 Material.SMOOTH_QUARTZ_SLAB,
                 Material.SMOOTH_QUARTZ_STAIRS,
                 Material.SNOUT_ARMOR_TRIM_SMITHING_TEMPLATE,
+                Material.SOUL_CAMPFIRE,
                 Material.SOUL_SAND,
                 Material.SOUL_SOIL,
+                Material.SOUL_LANTERN,
                 Material.SPECTRAL_ARROW,
                 Material.STRIPPED_CRIMSON_HYPHAE,
                 Material.STRIPPED_CRIMSON_STEM,
@@ -362,6 +392,7 @@ public class ItemDifficultiesManager {
                 Material.NETHERITE_PICKAXE,
                 Material.NETHERITE_SHOVEL,
                 Material.NETHERITE_SWORD,
+                Material.PHANTOM_MEMBRANE,
                 Material.RAISER_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Material.REDSTONE_ORE,
                 Material.SHAPER_ARMOR_TRIM_SMITHING_TEMPLATE,
@@ -395,7 +426,6 @@ public class ItemDifficultiesManager {
                 Material.ACACIA_STAIRS,
                 Material.ACACIA_TRAPDOOR,
                 Material.ACACIA_WOOD,
-                Material.ACTIVATOR_RAIL,
                 Material.ALLIUM,
                 Material.AMETHYST_BLOCK,
                 Material.AMETHYST_SHARD,
@@ -579,12 +609,8 @@ public class ItemDifficultiesManager {
                 Material.DETECTOR_RAIL,
                 Material.DIAMOND,
                 Material.DIAMOND_AXE,
-                Material.DIAMOND_BLOCK,
                 Material.DIAMOND_BOOTS,
-                Material.DIAMOND_CHESTPLATE,
-                Material.DIAMOND_HELMET,
                 Material.DIAMOND_HOE,
-                Material.DIAMOND_LEGGINGS,
                 Material.DIAMOND_PICKAXE,
                 Material.DIAMOND_SHOVEL,
                 Material.DIAMOND_SWORD,
@@ -597,7 +623,6 @@ public class ItemDifficultiesManager {
                 Material.DRIED_KELP_BLOCK,
                 Material.DROPPER,
                 Material.EMERALD,
-                Material.EMERALD_BLOCK,
                 Material.FEATHER,
                 Material.FERN,
                 Material.FILLED_MAP,
@@ -986,6 +1011,7 @@ public class ItemDifficultiesManager {
         ));
 
         State.MID.setItems(List.of(
+                Material.ACTIVATOR_RAIL,
                 Material.ANVIL,
                 Material.AXOLOTL_BUCKET,
                 Material.AZALEA,
@@ -1072,13 +1098,18 @@ public class ItemDifficultiesManager {
                 Material.DEAD_FIRE_CORAL_BLOCK,
                 Material.DEAD_HORN_CORAL_BLOCK,
                 Material.DEAD_TUBE_CORAL_BLOCK,
+                Material.DIAMOND_BLOCK,
+                Material.DIAMOND_CHESTPLATE,
+                Material.DIAMOND_HELMET,
                 Material.DIAMOND_HORSE_ARMOR,
+                Material.DIAMOND_LEGGINGS,
                 Material.DISPENSER,
                 Material.DRIPSTONE_BLOCK,
                 Material.EGG,
                 Material.ENCHANTING_TABLE,
                 Material.ENDER_EYE,
                 Material.ENDER_PEARL,
+                Material.EMERALD_BLOCK,
                 Material.FERMENTED_SPIDER_EYE,
                 Material.FIRE_CHARGE,
                 Material.FISHING_ROD,
@@ -1396,7 +1427,6 @@ public class ItemDifficultiesManager {
                 Material.ORANGE_CANDLE,
                 Material.ORANGE_SHULKER_BOX,
                 Material.PACKED_ICE,
-                Material.PHANTOM_MEMBRANE,
                 Material.PIGLIN_BANNER_PATTERN,
                 Material.PINK_CANDLE,
                 Material.PINK_SHULKER_BOX,

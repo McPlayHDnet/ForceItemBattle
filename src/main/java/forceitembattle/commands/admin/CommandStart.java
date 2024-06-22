@@ -138,14 +138,19 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
         world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
 
         Bukkit.getOnlinePlayers().forEach(player -> {
-
             ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+
+            if(forceItemPlayer.isSpectator()) {
+                player.setGameMode(GameMode.SPECTATOR);
+                player.getInventory().clear();
+                return;
+            }
 
             player.sendMessage(" ");
             player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold><b>Force Item Battle</b> <dark_gray>«"));
             player.sendMessage(" ");
             player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● <gray>Duration <dark_gray>» <green>" + timeMinutes + " minutes"));
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● <gray>Joker <dark_gray>» <green>" + jokersAmount));
+            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● <gray>Jokers <dark_gray>» <green>" + jokersAmount));
             for (GameSetting gameSettings : GameSetting.values()) {
                 if(gameSettings.defaultValue() instanceof Integer) continue;
                 player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● <gray>" + gameSettings.displayName() + " <dark_gray>» <green>" + (this.plugin.getSettings().isSettingEnabled(gameSettings) ? "<dark_green>✔" : "<dark_red>✘")));
@@ -175,7 +180,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
                     teamPlayers.player().showTitle(title);
                 }
 
-                this.plugin.getTeamManager().getTeamsList().forEach(teams -> {
+                this.plugin.getTeamManager().getTeams().forEach(teams -> {
                     teams.setRemainingJokers(jokersAmount);
                     int totalPlayers = teams.getPlayers().size();
                     int jokerPerPlayer = jokersAmount / totalPlayers;
@@ -222,10 +227,9 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
             player.setStatistic(Statistic.TIME_SINCE_REST, 72000); // 1hr = 3600 seconds * 20 ticks
             player.getPassengers().forEach(Entity::remove);
             player.getActivePotionEffects().forEach(potionEffect -> player.removePotionEffect(potionEffect.getType()));
-            player.setGameMode(GameMode.SURVIVAL);
+            player.setGameMode(!forceItemPlayer.isSpectator() ? GameMode.SURVIVAL : GameMode.SPECTATOR);
             player.teleport(spawnLocation);
             player.playSound(player, Sound.BLOCK_END_PORTAL_SPAWN, 1, 1);
-            new ScoreboardManager(player);
 
             if(this.plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK)) {
                 if(this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {

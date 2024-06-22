@@ -1,6 +1,7 @@
 package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.settings.GameSetting;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -14,7 +15,7 @@ public class Backpack {
 
     private final ForceItemBattle forceItemBattle;
     private final Map<UUID, Inventory> playerBackpack;
-    private final Map<Teams, Inventory> teamBackpack;
+    private final Map<Team, Inventory> teamBackpack;
 
     public Backpack(ForceItemBattle forceItemBattle) {
         this.forceItemBattle = forceItemBattle;
@@ -22,12 +23,22 @@ public class Backpack {
         this.teamBackpack = new HashMap<>();
     }
 
+    public Inventory getBackpackForPlayer(Player player) {
+        ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
+
+        if (forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+            return getTeamBackpack(forceItemPlayer.currentTeam());
+        }
+
+        return getPlayerBackpack(player);
+    }
+
     public Inventory getPlayerBackpack(Player player) {
         return this.playerBackpack.get(player.getUniqueId());
     }
 
-    public Inventory getTeamBackpack(Teams teams) {
-        return this.teamBackpack.get(teams);
+    public Inventory getTeamBackpack(Team team) {
+        return this.teamBackpack.get(team);
     }
 
     public void createBackpack(Player player) {
@@ -39,7 +50,7 @@ public class Backpack {
         player.getInventory().setItem(8, new ItemBuilder(Material.BUNDLE).setDisplayName("<dark_gray>» <yellow>Backpack").getItemStack());
     }
 
-    public void createTeamBackpack(Teams team, Player player) {
+    public void createTeamBackpack(Team team, Player player) {
         this.teamBackpack.put(team,
                 Bukkit.createInventory(
                         null,
@@ -52,7 +63,7 @@ public class Backpack {
         player.openInventory(this.playerBackpack.get(player.getUniqueId()));
     }
 
-    public void openTeamBackpack(Teams team, Player player) {
+    public void openTeamBackpack(Team team, Player player) {
         player.openInventory(this.teamBackpack.get(team));
     }
 }
