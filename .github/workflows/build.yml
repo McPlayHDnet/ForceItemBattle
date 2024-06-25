@@ -38,10 +38,10 @@ jobs:
 
       - name: Get Name of Artifact
         run: |
-          ARTIFACT_PATHNAME=$(ls build/libs/*.jar | grep -v '\-dev.jar' | head -n 1)
-          ARTIFACT_NAME=$(basename $ARTIFACT_PATHNAME)
+          ARTIFACT_PATH=$(ls build/libs/*.jar | grep -v '\-dev.jar' | head -n 1)
+          ARTIFACT_NAME=$(basename $ARTIFACT_PATH)
           echo "artifact_name=${ARTIFACT_NAME}" >> $GITHUB_ENV
-          echo "artifact_pathname=${ARTIFACT_PATHNAME}" >> $GITHUB_ENV
+          echo "artifact_path=${ARTIFACT_PATH}" >> $GITHUB_ENV
           echo "Found artifact: ${ARTIFACT_NAME} at ${ARTIFACT_PATHNAME}"
 
       - name: Upload Release Asset
@@ -50,6 +50,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ env.artifact_name }}
-          asset_name: ${{ env.artifact_pathname }}
+          asset_path: ${{ env.artifact_path }}
+          asset_name: ${{ env.artifact_name }}
           asset_content_type: application/java-archive
