@@ -25,6 +25,9 @@ jobs:
       - name: Assemble with Gradle
         run: ./gradlew assemble
 
+      - name: List build directory contents
+        run: ls -R build
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -43,5 +46,5 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: build/libs/*.jar
-          asset_name: my-application-${{ github.run_number }}.jar
+          asset_name: ForceItemBattle-${{ github.run_number }}.jar
           asset_content_type: application/java-archive
