@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "forceitembattle"
-version = "2.0.0"
+version = "2.9.0"
 description = "ForceItemBattle for McPlayHD.net"
 
 java {
