@@ -50,6 +50,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ artifact_name }}
-          asset_name: ${{ artifact_pathname }}
+          asset_path: ${{ env.artifact_name }}
+          asset_name: ${{ env.artifact_pathname }}
           asset_content_type: application/java-archive
