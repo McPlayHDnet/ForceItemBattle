@@ -41,10 +41,10 @@ public class ItemDifficultiesManager {
     private Map<Material, String> bigIconUnicodes;
 
     private void setupStates() {
-        // if this is a toggle setting, just change unlockedAtMinutes to 0 for all
-        State.EARLY.setUnlockedAtMinutes(0);
-        State.MID.setUnlockedAtMinutes(5);
-        State.LATE.setUnlockedAtMinutes(13);
+        // if this is a toggle setting, just change setUnlockedAtPercentage to 0 for all
+        State.EARLY.setUnlockedAtPercentage(0);
+        State.MID.setUnlockedAtPercentage(11.11);
+        State.LATE.setUnlockedAtPercentage(28.88);
     }
 
     public List<Material> getAvailableItems() {
@@ -52,8 +52,11 @@ public class ItemDifficultiesManager {
         int totalDuration = this.plugin.getGamemanager().getGameDuration();
         List<Material> items = new ArrayList<>();
 
+        int elapsedTime = (totalDuration - timeLeft) / 60;
+
         for (State state : State.VALUES) {
-            if ((totalDuration - timeLeft) / 60 < state.getUnlockedAtMinutes()) {
+            int unlockTime = (int) Math.round((totalDuration * (state.getUnlockedAtPercentage() / 100)) / 60);
+            if (elapsedTime < unlockTime) {
                 continue;
             }
 
@@ -1519,7 +1522,7 @@ public class ItemDifficultiesManager {
         private List<Material> items = new ArrayList<>();
 
         @Setter
-        private int unlockedAtMinutes;
+        private double unlockedAtPercentage;
 
     }
 }
