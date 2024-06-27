@@ -125,7 +125,9 @@ public class AchievementManager {
         }
 
         long currentTime = System.currentTimeMillis();
-        long elapsedTime = (currentTime - progress.getStartTime()) / 1000;
+        long gameStartTime = this.forceItemBattle.getGamemanager().getGameStartTime();
+        long elapsedGameTime = (currentTime - gameStartTime) / 1000;
+        long elapsedItemTime = (currentTime - progress.getLastItemTime()) / 1000;
 
         if (condition.isNoSkip() && foundItemEvent.isSkipped() || foundItemEvent.isBackToBack()) {
             progress.resetItemCount();
@@ -133,13 +135,20 @@ public class AchievementManager {
             return false;
         }
 
-        if (condition.getWithinSeconds() > 0 && elapsedTime <= condition.getWithinSeconds()) {
+        if (condition.getWithinSeconds() > 0 && elapsedGameTime <= condition.getWithinSeconds()) {
             progress.incrementItemCount();
-        } else if (condition.getTimeFrame() > 0 && elapsedTime >= condition.getTimeFrame()) {
+            progress.setLastItemTime(currentTime);
+        } else if (condition.getWithinSeconds() > 0 && elapsedGameTime > condition.getWithinSeconds()) {
+            return false;
+        }
+
+        if (condition.getTimeFrame() > 0 && elapsedItemTime >= condition.getTimeFrame()) {
             progress.incrementItemCount();
-        } else {
+            progress.setLastItemTime(currentTime);
+        } else if (condition.getTimeFrame() > 0 && elapsedItemTime < condition.getTimeFrame()) {
             progress.resetItemCount();
             progress.setStartTime(currentTime);
+            return false;
         }
 
         return progress.getItemCount() == condition.getAmount();
@@ -155,8 +164,12 @@ public class AchievementManager {
             return false;
         }
 
-        if (condition.isSameItem() && foundItemEvent.getFoundItem().getType() != progress.getLastItemType()) {
-            progress.resetBack2BackCount();
+        if (condition.isSameItem()) {
+            if (foundItemEvent.getFoundItem().getType() != progress.getLastItemType()) {
+                progress.resetBack2BackCount();
+            } else {
+                progress.incrementBack2BackCount();
+            }
         } else {
             progress.incrementBack2BackCount();
         }

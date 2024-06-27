@@ -15,7 +15,7 @@ public class AchievementProgress {
     private int itemCount, back2BackCount, consecutiveCount, skipCount, deathCounter;
     private final Set<String> visitedDimensions;
     private final Set<BiomeGroup> visitedBiomes;
-    private long startTime;
+    private long startTime, lastItemTime;
     private Material lastItemType;
     private boolean lastItemBackToBack;
 
@@ -28,6 +28,7 @@ public class AchievementProgress {
         this.visitedDimensions = new HashSet<>();
         this.visitedBiomes = new HashSet<>();
         this.startTime = System.currentTimeMillis();
+        this.lastItemTime = System.currentTimeMillis();
         this.lastItemType = null;
         this.lastItemBackToBack = false;
     }
