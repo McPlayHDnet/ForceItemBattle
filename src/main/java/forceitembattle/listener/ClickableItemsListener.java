@@ -17,8 +17,6 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.ArrayList;
-
 @RequiredArgsConstructor
 public class ClickableItemsListener implements Listener {
 
@@ -135,7 +133,7 @@ public class ClickableItemsListener implements Listener {
         if (e.getItem().getType() == Material.KNOWLEDGE_BOOK) {
             if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
                 e.setCancelled(true);
-                this.plugin.getAntimatterLocator().locateAntimatter(forceItemPlayer);
+                this.plugin.getAntimatterLocator().locateAntimatter(forceItemPlayer, e.getItem());
                 return;
             }
         }
