@@ -2,7 +2,6 @@ package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
 import net.kyori.adventure.bossbar.BossBar;
-import net.kyori.adventure.text.Component;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -10,7 +9,6 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.StructureSearchResult;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
@@ -24,7 +22,7 @@ public class AntimatterLocator {
         this.locatedStructures = new ArrayList<>();
     }
 
-    public void locateAntimatter(ForceItemPlayer forceItemPlayer) {
+    public void locateAntimatter(ForceItemPlayer forceItemPlayer, ItemStack locator) {
         if(!this.isInOverworld(forceItemPlayer.player())) {
             forceItemPlayer.player().sendMessage(ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize(prefix + "<red>There is no <dark_aqua>Antimatter <red>in the " + this.getCurrentWorld(forceItemPlayer.player()) + "<red>."));
             return;
@@ -39,7 +37,7 @@ public class AntimatterLocator {
 
         Location structureLocation = structureSearchResult.getLocation();
         if(!this.isAlreadyRevealed(structureLocation)) {
-            this.destroyLocator(forceItemPlayer.player());
+            this.destroyLocator(forceItemPlayer.player(), locator);
             forceItemPlayer.player().playSound(forceItemPlayer.player(), Sound.BLOCK_CONDUIT_AMBIENT_SHORT, 2, 1);
             new BukkitRunnable() {
                 final BossBar bar = BossBar.bossBar(ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize(""), 1, BossBar.Color.WHITE, BossBar.Overlay.NOTCHED_6);
@@ -93,9 +91,10 @@ public class AntimatterLocator {
         return this.locatedStructures.contains(location);
     }
 
-    private void destroyLocator(Player player) {
-        if(player.getInventory().getItemInMainHand().getType() != Material.KNOWLEDGE_BOOK) return;
-        player.getInventory().setItemInMainHand(null);
+    private void destroyLocator(Player player, ItemStack locator) {
+        ItemStack copy = locator.clone();
+        copy.setAmount(1);
+        player.getInventory().removeItem(locator);
     }
 
 }
