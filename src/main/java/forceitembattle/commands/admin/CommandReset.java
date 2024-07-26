@@ -1,9 +1,13 @@
 package forceitembattle.commands.admin;
 
+import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+
+import java.io.File;
+import java.io.IOException;
 
 public class CommandReset extends CustomCommand {
 
@@ -18,8 +22,11 @@ public class CommandReset extends CustomCommand {
         if(player.isOp()) {
             Bukkit.getOnlinePlayers().forEach(onlinePlayer -> onlinePlayer.kick(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_red>Server Reset")));
 
-            this.plugin.getConfig().set("isReset" , true);
-            this.plugin.saveConfig();
+            try {
+                this.plugin.resetFile.createNewFile();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
             Bukkit.spigot().restart();
         }
     }
