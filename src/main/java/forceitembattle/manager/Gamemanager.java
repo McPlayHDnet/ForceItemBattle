@@ -2,6 +2,8 @@ package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.event.PlayerGrantAchievementEvent;
+import forceitembattle.manager.stats.SeasonalStats;
+import forceitembattle.manager.stats.StatsManager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.achievements.AchievementProgress;
 import forceitembattle.settings.achievements.Achievements;
@@ -14,10 +16,7 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.kyori.adventure.text.minimessage.tag.standard.StandardTags;
 import org.apache.commons.lang.WordUtils;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.GameMode;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -79,7 +78,7 @@ public class Gamemanager {
 
     public void addPlayer(Player player, ForceItemPlayer forceItemPlayer) {
         this.forceItemPlayerMap.put(player.getUniqueId(), forceItemPlayer);
-        this.forceItemBattle.getStatsManager().createPlayerStats(forceItemPlayer);
+        //this.forceItemBattle.getStatsManager().createPlayerStats(forceItemPlayer);
     }
 
     public void removePlayer(Player player) {
@@ -155,7 +154,7 @@ public class Gamemanager {
 
         Bukkit.getOnlinePlayers().forEach(player -> {
             ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
-            ForceItemPlayerStats playerStats = this.forceItemBattle.getStatsManager().playerStats(player.getName());
+            ForceItemPlayerStats playerStats = this.forceItemBattle.getStatsManager().loadPlayerStats(player.getName());
 
             player.setHealth(20);
             player.setSaturation(20);
@@ -177,24 +176,36 @@ public class Gamemanager {
                 Map<UUID, ForceItemPlayer> sortedMapDesc = this.sortByValue(this.forceItemPlayerMap(), false);
                 Map<ForceItemPlayer, Integer> placesMap = this.calculatePlaces(sortedMapDesc);
 
-                ForceItemPlayerStats forceItemPlayerStats = this.forceItemBattle.getStatsManager().playerStats(forceItemPlayer.player().getName());
-                this.forceItemBattle.getStatsManager().addToStats(PlayerStat.TRAVELLED, forceItemPlayerStats, this.forceItemBattle.getStatsManager().calculateDistance(forceItemPlayer.player()));
+                ForceItemPlayerStats forceItemPlayerStats = this.forceItemBattle.getStatsManager().loadPlayerStats(forceItemPlayer.player().getName());
+                SeasonalStats seasonalStats = forceItemPlayerStats.getSeasonStats(StatsManager.CURRENT_SEASON);
+                this.forceItemBattle.getStatsManager().updateSoloStats(player.getName(), PlayerStat.TRAVELLED, this.calculateDistance(forceItemPlayer.player()));
 
-                if (forceItemPlayerStats.highestScore() < forceItemPlayer.currentScore()) {
-                    this.forceItemBattle.getStatsManager().addToStats(PlayerStat.HIGHEST_SCORE, forceItemPlayerStats, forceItemPlayer.currentScore());
+                if (seasonalStats.getHighestScore().getSolo() < forceItemPlayer.currentScore()) {
+                    this.forceItemBattle.getStatsManager().updateSoloStats(player.getName(), PlayerStat.HIGHEST_SCORE, forceItemPlayer.currentScore());
+                    if (forceItemPlayer.currentTeam() != null) {
+                        Team currentTeam = forceItemPlayer.currentTeam();
+
+                        for (ForceItemPlayer teamPlayer : currentTeam.getPlayers()) {
+                            if (!teamPlayer.equals(forceItemPlayer)) {
+                                this.forceItemBattle.getStatsManager().updateTeamStats(player.getName(), teamPlayer.player().getName(), forceItemPlayer.currentScore(), PlayerStat.HIGHEST_SCORE);
+                                break;
+                            }
+                        }
+                    }
                 }
 
                 if (placesMap.get(forceItemPlayer) == 1) {
-                    this.forceItemBattle.getStatsManager().addToStats(PlayerStat.GAMES_WON, forceItemPlayerStats, 1);
+                    this.forceItemBattle.getStatsManager().updateSoloStats(player.getName(), PlayerStat.GAMES_WON, 1);
 
-                    this.forceItemBattle.getStatsManager().addToStats(PlayerStat.WIN_STREAK, forceItemPlayerStats, forceItemPlayerStats.winStreak() + 1);
+                    this.forceItemBattle.getStatsManager().updateSoloStats(player.getName(), PlayerStat.WIN_STREAK, seasonalStats.getWinStreak().getSolo() + 1);
                 } else {
-                    if(forceItemPlayerStats.winStreak() != 0) {
-                        this.forceItemBattle.getStatsManager().addToStats(PlayerStat.WIN_STREAK, forceItemPlayerStats, 0);
+                    if(seasonalStats.getWinStreak().getSolo() != 0) {
+                        this.forceItemBattle.getStatsManager().updateSoloStats(player.getName(), PlayerStat.WIN_STREAK, 0);
                     }
                 }
             }
 
+            /*
             Achievements achievement = Achievements.CHICOT;
             if(playerStats.achievementsDone().contains(achievement.getTitle())) {
                 return;
@@ -204,8 +215,35 @@ public class Gamemanager {
                 PlayerGrantAchievementEvent grantAchievementEvent = new PlayerGrantAchievementEvent(player, achievement);
                 Bukkit.getPluginManager().callEvent(grantAchievementEvent);
             }
+
+             */
         });
     }
+
+    public String placeColor(int place) {
+        String placeColor;
+        switch(place) {
+            case 3 -> placeColor = "<red>";
+            case 2 -> placeColor = "<gray>";
+            case 1 -> placeColor = "<gold>";
+            default -> placeColor = "<white>";
+        }
+        return placeColor;
+    }
+
+    public int calculateDistance(Player player) {
+        int distance = 0;
+
+        for(Statistic statistics : Statistic.values()) {
+            //check and get every statistic that has CM (distance based)
+            if(statistics.name().contains("CM")) {
+                distance += player.getStatistic(statistics);
+            }
+        }
+
+        return (int)Math.round((double) distance / 100);
+    }
+
 
     public Map<UUID, ForceItemPlayer> sortByValue(Map<UUID, ForceItemPlayer> unsortMap, final boolean order) {
         List<Map.Entry<UUID, ForceItemPlayer>> list = new LinkedList<>(unsortMap.entrySet());

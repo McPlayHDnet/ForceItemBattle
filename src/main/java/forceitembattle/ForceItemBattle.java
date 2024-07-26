@@ -7,6 +7,7 @@ import forceitembattle.commands.player.trade.CommandAskTrade;
 import forceitembattle.commands.player.trade.CommandTrade;
 import forceitembattle.listener.*;
 import forceitembattle.manager.*;
+import forceitembattle.manager.stats.StatsManager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.util.*;
@@ -160,7 +161,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.backpack = new Backpack(this);
         this.itemDifficultiesManager = new ItemDifficultiesManager(this);
         this.recipeManager = new RecipeManager(this);
-        this.statsManager = new StatsManager(this);
+        this.statsManager = new StatsManager();
         this.positionManager = new PositionManager(this);
         this.teamManager = new TeamsManager(this);
         this.tradingManager = new TradingManager(this);
