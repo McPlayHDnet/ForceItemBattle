@@ -1307,7 +1307,8 @@ public class ItemDifficultiesManager {
                 Material.WARPED_WART_BLOCK,
                 Material.WEEPING_VINES,
                 Material.WET_SPONGE,
-                Material.WHITE_TULIP
+                Material.WHITE_TULIP,
+                Material.WITHER_ROSE
         ));
 
         State.LATE.setItems(List.of(
