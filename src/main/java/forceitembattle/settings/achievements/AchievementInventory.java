@@ -54,7 +54,7 @@ public class AchievementInventory extends InventoryBuilder {
         this.setItems(0, 8, new ItemBuilder(Material.CYAN_STAINED_GLASS_PANE).setDisplayName("<green>").addItemFlags(ItemFlag.values()).getItemStack());
         this.setItems(45, 53, new ItemBuilder(Material.CYAN_STAINED_GLASS_PANE).setDisplayName("<green>").addItemFlags(ItemFlag.values()).getItemStack());
 
-        ForceItemPlayerStats playerStats = ForceItemBattle.getInstance().getStatsManager().playerStats(playerName);
+        ForceItemPlayerStats playerStats = ForceItemBattle.getInstance().getStatsManager().loadPlayerStats(playerName);
 
         int achievementSize = Achievements.values().length;
         int itemsPerPage = 36;
@@ -92,8 +92,8 @@ public class AchievementInventory extends InventoryBuilder {
             int slotIndex = i - startIndex + 9;
             Achievements achievements = Achievements.values()[i];
             String settingDisplayName = "<dark_gray>» <dark_aqua>" + achievements.getTitle();
-            Material completedAchievement = playerStats.achievementsDone().contains(achievements.getTitle()) ? Material.LIME_DYE : Material.GRAY_DYE;
-            this.setItem(slotIndex, new ItemBuilder(completedAchievement).setDisplayName(settingDisplayName).setLore(Arrays.asList("", achievements.getDescription(), "")).getItemStack());
+            //Material completedAchievement = playerStats.achievementsDone().contains(achievements.getTitle()) ? Material.LIME_DYE : Material.GRAY_DYE;
+            this.setItem(slotIndex, new ItemBuilder(Material.RED_DYE).setDisplayName(settingDisplayName).setLore(Arrays.asList("", achievements.getDescription(), "")).getItemStack());
         }
     }
 }

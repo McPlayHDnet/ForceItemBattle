@@ -20,6 +20,7 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
+        /*
         if (args.length == 0) {
             new AchievementInventory(this.plugin, player.getName()).open(player);
             return;
@@ -46,6 +47,8 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
             case "grant" -> this.handleGrantCommand(player, args);
             case "revoke" -> this.handleRevokeCommand(player, args);
         }
+
+         */
     }
 
     @Override
@@ -61,6 +64,7 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
         return achievementNames;
     }
 
+    /*
     private void handleResetCommand(Player player, String[] args) {
         if (args.length != 2) {
             player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>Usage: /achievements reset <username>"));
@@ -123,4 +127,6 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
         this.plugin.getAchievementManager().revokeAchievement(playerStats, achievement);
         player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<green>Successfully revoked <yellow>" + achievementName + " <green>from <yellow>" + targetPlayerName));
     }
+    
+     */
 }
