@@ -6,6 +6,7 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.util.ForceItemPlayerStats;
 import forceitembattle.util.PlayerStat;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.apache.commons.lang.WordUtils;
 import org.bukkit.entity.Player;
 
 import java.io.FileReader;
@@ -16,6 +17,8 @@ import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class StatsManager {
 
@@ -24,6 +27,8 @@ public class StatsManager {
     public static final String CURRENT_SEASON = "1";
 
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+    private final Map<String, ForceItemPlayerStats> playerStats = new HashMap<>();
 
     public StatsManager() {
         this.ensureDirectories();
@@ -67,6 +72,7 @@ public class StatsManager {
             if (Files.exists(Paths.get(filePath))) {
                 FileReader reader = new FileReader(filePath);
                 stats = gson.fromJson(reader, ForceItemPlayerStats.class);
+                this.playerStats.put(playerName, stats);
 
                 if (!stats.hasSeason(CURRENT_SEASON)) {
                     createStats(stats, CURRENT_SEASON);
@@ -239,6 +245,54 @@ public class StatsManager {
         return rank;
     }
 
+    public void topMessage(Player player, List<ForceItemPlayerStats> topList, PlayerStat playerStat) {
+        player.sendMessage(" ");
+        player.sendMessage(ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold><b>Leaderboard</b> <dark_gray>● <green>" + WordUtils.capitalize(playerStat.name().toLowerCase().replace("_", " ")) + " <dark_gray>«"));
+        player.sendMessage(" ");
+        AtomicInteger atomicInteger = new AtomicInteger(1);
+        topList.forEach(tops -> {
+            player.sendMessage(ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize("  <dark_gray>● " + this.placeColor(atomicInteger.get()) + atomicInteger.get() + "<white>. <green>" + tops.getUserName() + " <dark_gray>» <dark_aqua>" + this.getStatByName(tops, playerStat) + (playerStat == PlayerStat.TRAVELLED ? " blocks" : "")));
+            atomicInteger.getAndIncrement();
+        });
+        player.sendMessage(" ");
+    }
+
+    private String placeColor(int place) {
+        return switch (place) {
+            case 1 -> "<gold>";
+            case 2 -> "<gray>";
+            case 3 -> "<dark_gray>";
+            default -> "<white>";
+        };
+    }
+
+    private int getStatByName(ForceItemPlayerStats stats, PlayerStat playerStat) {
+        SeasonalStats seasonalStats = stats.getSeasonStats(CURRENT_SEASON);
+        return switch (playerStat) {
+            case GAMES_PLAYED -> seasonalStats.getGamesPlayed().getSolo();
+            case GAMES_WON -> seasonalStats.getGamesWon().getSolo();
+            case HIGHEST_SCORE -> seasonalStats.getHighestScore().getSolo();
+            case BACK_TO_BACK_STREAK -> seasonalStats.getBack2backStreak().getSolo();
+            case TOTAL_ITEMS -> seasonalStats.getTotalItemsFound().getSolo();
+            case WIN_STREAK -> seasonalStats.getWinStreak().getSolo();
+            case TRAVELLED -> (int) Math.round(seasonalStats.getTravelled());
+        };
+    }
+
+    public List<ForceItemPlayerStats> top(PlayerStat category) {
+        List<ForceItemPlayerStats> statsList = new ArrayList<>(List.copyOf(this.playerStats.values()));
+        statsList.sort((o1, o2) -> {
+            SeasonalStats oSS1 = o1.getSeasonStats(CURRENT_SEASON);
+            SeasonalStats oSS2 = o2.getSeasonStats(CURRENT_SEASON);
+            if (category == PlayerStat.TOTAL_ITEMS) return oSS2.getTotalItemsFound().getSolo() <= oSS1.getTotalItemsFound().getSolo() ? -1 : 1;
+            if (category == PlayerStat.GAMES_WON) return oSS2.getGamesWon().getSolo() <= oSS1.getGamesWon().getSolo() ? -1 : 1;
+            if (category == PlayerStat.TRAVELLED) return oSS2.getTravelled() <= oSS1.getTravelled() ? -1 : 1;
+            if (category == PlayerStat.BACK_TO_BACK_STREAK) return oSS2.getBack2backStreak().getSolo() <= oSS1.getBack2backStreak().getSolo() ? -1 : 1;
+            if (category == PlayerStat.WIN_STREAK) return oSS2.getWinStreak().getSolo() <= oSS1.getWinStreak().getSolo() ? -1 : 1;
+            return oSS2.getHighestScore().getSolo() <= oSS1.getHighestScore().getSolo() ? -1 : 1;
+        });
+        return statsList.stream().limit(10).collect(Collectors.toList());
+    }
 
     private String displayTeamStat(SeasonalStats.GameStats gameStats) {
         if (gameStats.getTeam().isEmpty()) {
