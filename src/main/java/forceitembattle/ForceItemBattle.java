@@ -78,7 +78,7 @@ public final class ForceItemBattle extends JavaPlugin {
     @Getter
     private GameSettings settings;
 
-    public final File resetFile = new File("reset");
+    public final File resetFile = new File(this.getDataFolder() + "/reset");
 
     public ForceItemBattle() {
         instance = this;
