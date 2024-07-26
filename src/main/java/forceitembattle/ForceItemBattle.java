@@ -78,6 +78,8 @@ public final class ForceItemBattle extends JavaPlugin {
     @Getter
     private GameSettings settings;
 
+    public final File resetFile = new File(this.getDataFolder() + "/reset");
+
     public ForceItemBattle() {
         instance = this;
     }
@@ -89,68 +91,9 @@ public final class ForceItemBattle extends JavaPlugin {
         this.settings = new GameSettings(this);
 
         saveConfig();
-        if (!getConfig().contains("isReset")){
-            getConfig().set("isReset" , false);
-            saveConfig();
-            return;
-        }
-
-        if (getConfig().getBoolean("isReset")){
-
-            try {
-                //////////////////////////////////////////////////////////////////////////////
-                //Files.deleteIfExists(getDataFolder().toPath());
-                //////////////////////////////////////////////////////////////////////////////
-
-                File world = new File(Bukkit.getWorldContainer() , "world");
-                File nether = new File(Bukkit.getWorldContainer() , "world_nether");
-                File end = new File(Bukkit.getWorldContainer() , "world_the_end");
-
-                Files.walk(world.toPath())
-                        .sorted(Comparator.reverseOrder())
-                        . map(Path::toFile)
-                        . forEach(File::delete);
-                Files.walk(nether.toPath())
-                        .sorted(Comparator.reverseOrder())
-                        . map(Path::toFile)
-                        . forEach(File::delete);
-                Files.walk(end.toPath())
-                        .sorted(Comparator.reverseOrder())
-                        . map(Path::toFile)
-                        . forEach(File::delete);
-
-                //////////////////////////////////////////////////////////////////////////////
-
-                world.mkdirs();
-                nether.mkdirs();
-                end.mkdirs();
-
-                new File(world , "data").mkdirs();
-                new File(world , "datapacks").mkdirs();
-                new File(world , "playerdata").mkdirs();
-                new File(world , "poi").mkdirs();
-                new File(world , "region").mkdirs();
-
-                new File(nether , "data").mkdirs();
-                new File(nether , "datapacks").mkdirs();
-                new File(nether , "playerdata").mkdirs();
-                new File(nether , "poi").mkdirs();
-                new File(nether , "region").mkdirs();
-
-                new File(end , "data").mkdirs();
-                new File(end , "datapacks").mkdirs();
-                new File(end , "playerdata").mkdirs();
-                new File(end , "poi").mkdirs();
-                new File(end , "region").mkdirs();
-
-                this.copyDatapack("FIB_Worldgen");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            getConfig().set("isReset" , false);
-            saveConfig();
-
+        if (resetFile.exists()) {
+            this.resetWorld();
+            resetFile.delete();
         }
     }
 
@@ -226,6 +169,59 @@ public final class ForceItemBattle extends JavaPlugin {
                     });
 
             System.out.println("Directory copied successfully.");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void resetWorld() {
+        try {
+            //////////////////////////////////////////////////////////////////////////////
+            //Files.deleteIfExists(getDataFolder().toPath());
+            //////////////////////////////////////////////////////////////////////////////
+
+            File world = new File(Bukkit.getWorldContainer() , "world");
+            File nether = new File(Bukkit.getWorldContainer() , "world_nether");
+            File end = new File(Bukkit.getWorldContainer() , "world_the_end");
+
+            Files.walk(world.toPath())
+                    .sorted(Comparator.reverseOrder())
+                    . map(Path::toFile)
+                    . forEach(File::delete);
+            Files.walk(nether.toPath())
+                    .sorted(Comparator.reverseOrder())
+                    . map(Path::toFile)
+                    . forEach(File::delete);
+            Files.walk(end.toPath())
+                    .sorted(Comparator.reverseOrder())
+                    . map(Path::toFile)
+                    . forEach(File::delete);
+
+            //////////////////////////////////////////////////////////////////////////////
+
+            world.mkdirs();
+            nether.mkdirs();
+            end.mkdirs();
+
+            new File(world , "data").mkdirs();
+            new File(world , "datapacks").mkdirs();
+            new File(world , "playerdata").mkdirs();
+            new File(world , "poi").mkdirs();
+            new File(world , "region").mkdirs();
+
+            new File(nether , "data").mkdirs();
+            new File(nether , "datapacks").mkdirs();
+            new File(nether , "playerdata").mkdirs();
+            new File(nether , "poi").mkdirs();
+            new File(nether , "region").mkdirs();
+
+            new File(end , "data").mkdirs();
+            new File(end , "datapacks").mkdirs();
+            new File(end , "playerdata").mkdirs();
+            new File(end , "poi").mkdirs();
+            new File(end , "region").mkdirs();
+
+            this.copyDatapack("FIB_Worldgen");
         } catch (IOException e) {
             e.printStackTrace();
         }
