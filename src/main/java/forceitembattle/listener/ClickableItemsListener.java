@@ -18,8 +18,6 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.ArrayList;
-
 @RequiredArgsConstructor
 public class ClickableItemsListener implements Listener {
 
