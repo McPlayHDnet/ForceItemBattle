@@ -46,7 +46,7 @@ public class AchievementManager {
     }
 
     public void handleEvent(Player player, Event event, Trigger trigger) {
-        UUID uuid = player.getUniqueId();
+        /*UUID uuid = player.getUniqueId();
         this.playerProgressMap.putIfAbsent(uuid, new PlayerProgress());
         PlayerProgress playerProgress = this.playerProgressMap.get(uuid);
         ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(uuid);
@@ -87,6 +87,8 @@ public class AchievementManager {
                 }
             }
         }
+
+         */
     }
 
     private boolean checkObtainItemCondition(Event event, AchievementProgress progress, Condition condition) {
@@ -302,8 +304,9 @@ public class AchievementManager {
             return false;
         }
 
-        ForceItemPlayerStats playerStats = this.forceItemBattle.getStatsManager().playerStats(playerGrantAchievementEvent.getPlayer().getName());
-        return playerStats.achievementsDone().size() == Achievements.values().length;
+        //ForceItemPlayerStats playerStats = this.forceItemBattle.getStatsManager().playerStats(playerGrantAchievementEvent.getPlayer().getName());
+        //return playerStats.achievementsDone().size() == Achievements.values().length;
+        return false;
     }
 
     private boolean isItemFoundInDimension(Material itemType, String dimension) {
@@ -346,6 +349,7 @@ public class AchievementManager {
         return this.achievementProgressMap.get(achievement);
     }
 
+    /*
     public void grantAchievement(ForceItemPlayerStats playerStats, Achievements achievement) {
         if(playerStats.achievementsDone().contains(achievement.getTitle())) {
             return;
@@ -369,4 +373,6 @@ public class AchievementManager {
 
         this.forceItemBattle.getStatsManager().saveStats();
     }
+
+     */
 }

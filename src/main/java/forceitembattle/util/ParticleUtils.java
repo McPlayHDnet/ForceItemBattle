@@ -54,7 +54,7 @@ public class ParticleUtils {
     }
 
     public static void spawnParticleCircleAroundEntity(@NonNull JavaPlugin plugin, @NonNull Entity entity) {
-        spawnParticleCircleAroundBoundingBox(plugin, entity.getLocation(), Particle.SPELL_INSTANT, entity.getBoundingBox(), 0.25);
+        spawnParticleCircleAroundBoundingBox(plugin, entity.getLocation(), Particle.SPLASH, entity.getBoundingBox(), 0.25);
     }
 
     public static void spawnParticleCircleAroundBoundingBox(@NonNull JavaPlugin plugin, @NonNull Location location, @NonNull Particle particle, @NonNull BoundingBox box, double height) {

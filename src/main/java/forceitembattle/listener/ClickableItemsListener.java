@@ -7,6 +7,7 @@ import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.achievements.AchievementInventory;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.ItemBuilder;
+import forceitembattle.util.Locator;
 import forceitembattle.util.TeleporterInventory;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.*;
@@ -130,10 +131,11 @@ public class ClickableItemsListener implements Listener {
             }
         }
 
-        if (e.getItem().getType() == Material.KNOWLEDGE_BOOK) {
+        Locator locator = this.plugin.getLocatorManager().getLocatorByMaterial(e.getItem().getType());
+        if(locator != null) {
             if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
                 e.setCancelled(true);
-                this.plugin.getAntimatterLocator().locateAntimatter(forceItemPlayer, e.getItem());
+                this.plugin.getLocatorManager().locate(locator.getStructureId(), forceItemPlayer);
                 return;
             }
         }

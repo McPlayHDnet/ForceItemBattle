@@ -23,7 +23,7 @@ public class PvPListener implements Listener {
             return;
         }
 
-        if (e.getEntityType() != EntityType.PRIMED_TNT) {
+        if (e.getEntityType() != EntityType.TNT) {
             return;
         }
 
@@ -39,7 +39,7 @@ public class PvPListener implements Listener {
             return;
         }
 
-        if (e.getEntity().getType() == EntityType.MINECART_TNT) {
+        if (e.getEntity().getType() == EntityType.TNT_MINECART) {
             e.setCancelled(true);
         }
     }
@@ -94,7 +94,7 @@ public class PvPListener implements Listener {
             return;
         }
 
-        if (event.getDamager().getType() == EntityType.MINECART_TNT) {
+        if (event.getDamager().getType() == EntityType.TNT_MINECART) {
             event.setCancelled(true);
             return;
         }

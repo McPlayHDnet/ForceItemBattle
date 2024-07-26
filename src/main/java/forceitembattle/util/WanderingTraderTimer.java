@@ -5,8 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 import net.kyori.adventure.text.Component;
 import org.bukkit.*;
-import org.bukkit.craftbukkit.v1_20_R3.inventory.CraftMerchantCustom;
-import org.bukkit.craftbukkit.v1_20_R3.inventory.CraftMerchantRecipe;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.WanderingTrader;
