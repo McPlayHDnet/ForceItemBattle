@@ -242,18 +242,35 @@ public final class ForceItemBattle extends JavaPlugin {
                 new AchievementListener(this)
         );
 
-        NamespacedKey namespacedKey = new NamespacedKey("fib", "antimatter_locator");
-        ShapedRecipe shapedRecipe = new ShapedRecipe(namespacedKey, new ItemBuilder(Material.KNOWLEDGE_BOOK).setDisplayName("<dark_gray>» <dark_purple>Antimatter Locator").getItemStack());
-        shapedRecipe.shape(
+        this.initRecipes();
+    }
+
+    private void initRecipes() {
+        NamespacedKey antimatterKey = new NamespacedKey("fib", "antimatter_locator");
+        ShapedRecipe antimatterRecipe = new ShapedRecipe(antimatterKey, new ItemBuilder(Material.KNOWLEDGE_BOOK).setDisplayName("<dark_gray>» <dark_purple>Antimatter Locator").getItemStack());
+        antimatterRecipe.shape(
                 " N ",
                 "GQG",
                 " N "
         );
-        shapedRecipe.setIngredient('N', Material.NETHER_BRICK);
-        shapedRecipe.setIngredient('G', Material.GLOWSTONE_DUST);
-        shapedRecipe.setIngredient('Q', Material.QUARTZ);
+        antimatterRecipe.setIngredient('N', Material.NETHER_BRICK);
+        antimatterRecipe.setIngredient('G', Material.GLOWSTONE_DUST);
+        antimatterRecipe.setIngredient('Q', Material.QUARTZ);
 
-        Bukkit.addRecipe(shapedRecipe);
+        NamespacedKey chambersKey = new NamespacedKey("fib", "chambers_locator");
+        ShapedRecipe chambersRecipe = new ShapedRecipe(chambersKey, new ItemBuilder(Material.WITHER_ROSE).setDisplayName("<dark_gray>» <gold>Trial Locator").getItemStack());
+        chambersRecipe.shape(
+                "BGB",
+                "GCG",
+                "AAA"
+        );
+        chambersRecipe.setIngredient('B', Material.CUT_COPPER);
+        chambersRecipe.setIngredient('G', Material.GLASS);
+        chambersRecipe.setIngredient('C', Material.COMPASS);
+        chambersRecipe.setIngredient('A', Material.GOLD_INGOT);
+
+        Bukkit.addRecipe(antimatterRecipe);
+        Bukkit.addRecipe(chambersRecipe);
     }
 
     public void registerListeners(Listener... listeners) {
