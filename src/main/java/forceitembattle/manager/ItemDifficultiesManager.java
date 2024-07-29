@@ -243,7 +243,7 @@ public class ItemDifficultiesManager {
                 Material.GILDED_BLACKSTONE,
                 Material.GLOWSTONE,
                 Material.GLOWSTONE_DUST,
-                Material.KNOWLEDGE_BOOK,
+                Material.KNOWLEDGE_BOOK, // Antimatter Depths Locator
                 Material.MAGMA_CREAM,
                 Material.MUSIC_DISC_PIGSTEP,
                 Material.NETHER_GOLD_ORE,
@@ -361,6 +361,8 @@ public class ItemDifficultiesManager {
 
         // list contains hard items that are very unrealistic to obtain in 45 min
         this.veryLateItems = List.of(
+                Material.ARCHER_POTTERY_SHERD,
+                Material.BEACON,
                 Material.BURN_POTTERY_SHERD,
                 Material.CALIBRATED_SCULK_SENSOR,
                 Material.COPPER_ORE,
@@ -393,6 +395,7 @@ public class ItemDifficultiesManager {
                 Material.IRON_ORE,
                 Material.LAPIS_ORE,
                 Material.MACE,
+                Material.MINER_POTTERY_SHERD,
                 Material.MUSIC_DISC_CREATOR,
                 Material.MUSIC_DISC_PRECIPICE,
                 Material.MUSIC_DISC_RELIC,
@@ -408,11 +411,13 @@ public class ItemDifficultiesManager {
                 Material.NETHERITE_SWORD,
                 Material.OMINOUS_BOTTLE,
                 Material.OMINOUS_TRIAL_KEY,
+                Material.PRIZE_POTTERY_SHERD,
                 Material.RAISER_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Material.REDSTONE_ORE,
                 Material.SHAPER_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Material.SHEAF_POTTERY_SHERD,
                 Material.SILENCE_ARMOR_TRIM_SMITHING_TEMPLATE,
+                Material.SKULL_POTTERY_SHERD,
                 Material.TADPOLE_BUCKET,
                 Material.TIDE_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Material.TOTEM_OF_UNDYING,
@@ -1229,6 +1234,7 @@ public class ItemDifficultiesManager {
                 Material.POLISHED_BLACKSTONE_SLAB,
                 Material.POLISHED_BLACKSTONE_STAIRS,
                 Material.POLISHED_BLACKSTONE_WALL,
+                Material.POTION,
                 Material.POWDER_SNOW_BUCKET,
                 Material.PRISMARINE,
                 Material.PRISMARINE_BRICK_SLAB,
@@ -1313,7 +1319,7 @@ public class ItemDifficultiesManager {
                 Material.WEEPING_VINES,
                 Material.WET_SPONGE,
                 Material.WHITE_TULIP,
-                Material.WITHER_ROSE
+                Material.WITHER_ROSE // Trial Chambers Locator
         ));
 
         State.LATE.setItems(List.of(
@@ -1321,6 +1327,7 @@ public class ItemDifficultiesManager {
                 Material.ANCIENT_DEBRIS,
                 Material.ANGLER_POTTERY_SHERD,
                 Material.ARCHER_POTTERY_SHERD,
+                Material.BEACON,
                 Material.BEE_NEST,
                 Material.BEEHIVE,
                 Material.BLACK_CANDLE,
