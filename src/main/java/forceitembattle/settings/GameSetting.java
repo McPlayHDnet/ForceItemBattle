@@ -2,7 +2,6 @@ package forceitembattle.settings;
 
 import org.bukkit.Material;
 
-import javax.annotation.Nullable;
 import java.util.List;
 
 public enum GameSetting {
@@ -13,8 +12,9 @@ public enum GameSetting {
     BACKPACK("Backpack", List.of("", "<gray>Toggle whether you can use <dark_aqua>backpacks<gray>.", ""), "backpack", true, Material.BUNDLE),
     BACKPACKSIZE("Backpack rows", List.of("", "<gray>Changes size of <dark_aqua>backpack<gray>.", ""), "backpackRows", 3, Material.BUNDLE),
     PVP("PvP", List.of("", "<gray>Toggle whether <dark_aqua>PvP <gray>should be enabled or not.", ""), "pvp", false, Material.IRON_SWORD),
-    HARD("Hard", List.of("", "<gray>Toggle whether <dark_aqua>nether <gray>should be accessible.", ""), "hard", true, Material.NETHERRACK),
-    EXTREME("Extreme", List.of("", "<gray>Toggle whether the <dark_aqua>extreme version <gray>should be played.", ""), "extreme", true, Material.END_STONE),
+    HARD("Hard", List.of("", "<gray>Toggle whether <dark_aqua>hard items & nether <gray>should be enabled.", ""), "hard", true, Material.NETHERRACK),
+    EXTREME("Extreme", List.of("", "<gray>Toggle whether the <dark_aqua>extreme version <gray>should be played.", ""), "extreme", true, Material.BEACON),
+    END("End", List.of("", "<gray>Toggle whether <dark_aqua>end <gray>should be accessible.", ""), "end", true, Material.END_STONE),
     FASTER_RANDOM_TICK("Faster plants growth & decay", null, "fasterRandomTick", false, Material.CACTUS),
     POSITIONS("Positions - /pos", List.of("", "<gray>Toggle whether <dark_aqua>positions <gray>can be set.", ""), "positions", true, Material.LIME_WOOL),
     TRADING("Player trading", List.of("", "<gray>Toggle whether players can <dark_aqua>trade items <gray>between each other.", ""), "trading", false, Material.EMERALD),

@@ -188,6 +188,10 @@ public class ItemDifficultiesManager {
         } else if (!plugin.getSettings().isSettingEnabled(GameSetting.EXTREME)) {
             this.veryLateItems.forEach(items::remove);
         }
+
+        if (!plugin.getSettings().isSettingEnabled(GameSetting.END)) {
+            this.endItems.forEach(items::remove);
+        }
     }
 
     public boolean itemInList(Material material) {
@@ -336,6 +340,7 @@ public class ItemDifficultiesManager {
                 Material.ELYTRA,
                 Material.SHULKER_SHELL,
                 Material.SHULKER_BOX,
+                Material.SPIRE_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Material.WHITE_SHULKER_BOX,
                 Material.ORANGE_SHULKER_BOX,
                 Material.MAGENTA_SHULKER_BOX,
