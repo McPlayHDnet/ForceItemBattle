@@ -282,9 +282,6 @@ public class Listeners implements Listener {
 
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
 
-            if (!this.plugin.getSettings().isSettingEnabled(GameSetting.HARD)) {
-                forceItemPlayer.updateItemDisplay();
-            }
 
             if (this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
                 this.plugin.getStatsManager().updateSoloStats(player.getName(), PlayerStat.TOTAL_ITEMS, 1);
@@ -495,8 +492,6 @@ public class Listeners implements Listener {
             event.getDrops().removeIf(Gamemanager::isBackpack);
         }
 
-        gamePlayer.removeItemDisplay();
-
         // Automatically respawn player.
         Bukkit.getScheduler().runTaskLater(
                 this.plugin,
@@ -512,9 +507,6 @@ public class Listeners implements Listener {
 
         player.getInventory().setItem(8, new ItemBuilder(Material.BUNDLE).setDisplayName("<dark_gray>» <yellow>Backpack").getItemStack());
 
-        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.HARD)) {
-            forceItemPlayer.createItemDisplay();
-        }
     }
 
     @EventHandler
@@ -646,7 +638,7 @@ public class Listeners implements Listener {
             return;
         }
 
-        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.HARD)) {
+        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.HARD) || !this.plugin.getSettings().isSettingEnabled(GameSetting.END)) {
             player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>Travelling to other dimensions is disabled!"));
             player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
             playerPortalEvent.setCanCreatePortal(false);

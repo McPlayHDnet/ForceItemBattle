@@ -1,13 +1,9 @@
 package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.event.PlayerGrantAchievementEvent;
 import forceitembattle.manager.stats.SeasonalStats;
 import forceitembattle.manager.stats.StatsManager;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.settings.achievements.AchievementProgress;
-import forceitembattle.settings.achievements.Achievements;
-import forceitembattle.settings.achievements.PlayerProgress;
 import forceitembattle.settings.preset.GamePreset;
 import forceitembattle.util.*;
 import lombok.Getter;
@@ -132,10 +128,6 @@ public class Gamemanager {
             gamePlayer.currentTeam().setCurrentMaterial(this.generateMaterial());
         } else {
             gamePlayer.setCurrentMaterial(this.generateMaterial());
-        }
-
-        if (!this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.HARD)) {
-            gamePlayer.updateItemDisplay();
         }
 
         this.forceItemBattle.getTimer().sendActionBar();

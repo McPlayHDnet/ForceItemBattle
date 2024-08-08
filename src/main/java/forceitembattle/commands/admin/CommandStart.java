@@ -3,7 +3,6 @@ package forceitembattle.commands.admin;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.manager.Gamemanager;
-import forceitembattle.manager.ScoreboardManager;
 import forceitembattle.manager.stats.SeasonalStats;
 import forceitembattle.manager.stats.StatsManager;
 import forceitembattle.settings.GameSetting;
@@ -240,9 +239,6 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
 
             }
 
-            if(!this.plugin.getSettings().isSettingEnabled(GameSetting.HARD)) {
-                forceItemPlayer.createItemDisplay();
-            }
 
             if(this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
                 ForceItemPlayerStats playerStats = this.plugin.getStatsManager().loadPlayerStats(player.getName());
