@@ -638,7 +638,7 @@ public class Listeners implements Listener {
             return;
         }
 
-        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.HARD) || !this.plugin.getSettings().isSettingEnabled(GameSetting.END)) {
+        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.HARD)) {
             player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>Travelling to other dimensions is disabled!"));
             player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
             playerPortalEvent.setCanCreatePortal(false);
