@@ -521,9 +521,17 @@ public class Listeners implements Listener {
     }
 
     @EventHandler
-    public void onRespawn(PlayerRespawnEvent playerRespawnEvent) {
-        Player player = playerRespawnEvent.getPlayer();
+    public void onRespawn(PlayerRespawnEvent event) {
+        if (!this.plugin.getGamemanager().isMidGame()) {
+            return;
+        }
+
+        Player player = event.getPlayer();
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        Boolean keepInventory = player.getWorld().getGameRuleValue(GameRule.KEEP_INVENTORY);
+        if (keepInventory == null || !keepInventory) {
+            player.performCommand("fixskips -silent");
+        }
 
         player.getInventory().setItem(8, new ItemBuilder(Material.BUNDLE).setDisplayName("<dark_gray>» <yellow>Backpack").getItemStack());
 
