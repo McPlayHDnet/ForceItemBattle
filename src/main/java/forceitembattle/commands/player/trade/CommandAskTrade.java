@@ -3,6 +3,7 @@ package forceitembattle.commands.player.trade;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.listener.Listeners;
 import forceitembattle.manager.TradingManager;
+import forceitembattle.settings.GameSetting;
 import forceitembattle.util.ForceItemPlayer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
@@ -21,6 +22,10 @@ public class CommandAskTrade extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
+        if (this.plugin.getSettings().isSettingEnabled(GameSetting.EVENT) && !player.isOp()) {
+            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>You don't have permission to use this command."));
+            return;
+        }
         if(!this.plugin.getGamemanager().isMidGame()) {
 
             return;

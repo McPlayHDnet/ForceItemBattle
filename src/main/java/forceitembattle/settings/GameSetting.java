@@ -22,7 +22,17 @@ public enum GameSetting {
     TRADING_COOLDOWN("Player trading cooldown", List.of("", "<gray>Changes cooldown of <dark_aqua>trading<gray>.", ""), "tradingCooldown", 3, Material.EMERALD),
     ELYTRA("Elytra gliding", List.of("", "<gray>Prevents gliding with an elytra<gray>.", ""), "elytraGliding", true, Material.ELYTRA),
     CHAIN("Force Chain", List.of("", "<gray>Shows the next forced item.", ""), "forceChain", false, Material.CHAIN),
-    STATS("Stats", List.of("", "<gray>Toggle whether this round is played with <dark_aqua>stats<gray>.", ""), "stats", true, Material.WRITABLE_BOOK);
+    STATS("Stats", List.of("", "<gray>Toggle whether this round is played with <dark_aqua>stats<gray>.", ""), "stats", true, Material.WRITABLE_BOOK),
+    EVENT("Event", List.of(
+            "",
+            "<gray>Toggle <dark_aqua>event<gray> modifiers.",
+            "<gray>Some commands are OP only",
+            "<gray>Keep inventory is force enabled for 5 minutes",
+            "",
+            ""
+    ), "eventModifiers", false, Material.CAKE),
+
+    ;
 
     private final String displayName;
     private final List<String> descriptionLore;

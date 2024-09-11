@@ -4,12 +4,12 @@ import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.ForceItemPlayer;
-import forceitembattle.util.ParticleUtils;
 import forceitembattle.util.Scheduler;
-import lombok.NonNull;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.Color;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,6 +26,11 @@ public class CommandPosition extends CustomCommand implements CustomTabCompleter
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
+        if (this.plugin.getSettings().isSettingEnabled(GameSetting.EVENT) && !player.isOp()) {
+            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>You don't have permission to use this command."));
+            return;
+        }
+
         if (!this.plugin.getSettings().isSettingEnabled(GameSetting.POSITIONS)) {
             player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>Positions are disabled in this round!"));
             return;
