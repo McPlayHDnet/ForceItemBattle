@@ -104,7 +104,6 @@ public class ClickableItemsListener implements Listener {
         }
     }
 
-
     @EventHandler
     public void onClick(PlayerInteractEvent e) { // triggered if a joker is used
         Player player = e.getPlayer();

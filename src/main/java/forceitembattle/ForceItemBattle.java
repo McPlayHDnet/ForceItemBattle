@@ -312,6 +312,7 @@ public final class ForceItemBattle extends JavaPlugin {
         new CommandTrade();
         new CommandFixSkips();
         new CommandAchievement();
+        new CommandSpectate();
         new CommandShout();
     }
 

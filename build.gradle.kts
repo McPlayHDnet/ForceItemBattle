@@ -83,4 +83,5 @@ bukkitPluginYaml {
     commands.register("shout")
     commands.register("fixskips")
     commands.register("achievements")
+    commands.register("spectate")
 }
