@@ -80,6 +80,7 @@ bukkitPluginYaml {
     commands.register("teams")
     commands.register("asktrade")
     commands.register("trade")
+    commands.register("shout")
     commands.register("fixskips")
     commands.register("achievements")
 }

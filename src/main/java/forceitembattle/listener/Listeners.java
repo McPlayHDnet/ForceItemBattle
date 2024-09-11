@@ -439,10 +439,30 @@ public class Listeners implements Listener {
     }
 
     @EventHandler
-    public void onChat_(AsyncChatEvent asyncChatEvent) {
-        Player player = asyncChatEvent.getPlayer();
-        asyncChatEvent.setCancelled(true);
-        Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize("<gold>" + player.getName() + " <dark_gray>» <white>" + PlainTextComponentSerializer.plainText().serialize(asyncChatEvent.originalMessage())));
+    public void onChat_(AsyncChatEvent event) {
+        Player player = event.getPlayer();
+
+        event.setCancelled(true);
+        Team currentTeam = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId()).currentTeam();
+
+        if (
+                !this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ||
+                !this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM_CHAT) ||
+                currentTeam == null
+        ) {
+            Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize("<gold>" + player.getName() + " <dark_gray>» <white>" + PlainTextComponentSerializer.plainText().serialize(event.originalMessage())));
+            return;
+        }
+
+        String message = "<rainbow>Team</rainbow> <gray>| <gold>" + player.getName() + " <dark_gray>» <white>" + PlainTextComponentSerializer.plainText().serialize(event.originalMessage());
+        currentTeam.getPlayers().forEach(fibPlayer -> {
+            Player p = fibPlayer.player();
+            if (p == null || !p.isOnline()) {
+                return;
+            }
+
+            p.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(message));
+        });
     }
 
     @EventHandler
