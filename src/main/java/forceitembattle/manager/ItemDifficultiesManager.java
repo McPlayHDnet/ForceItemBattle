@@ -40,8 +40,7 @@ public class ItemDifficultiesManager {
      */
     private Map<Material, String> bigIconUnicodes;
 
-    private void setupStates() {
-        // if this is a toggle setting, just change setUnlockedAtPercentage to 0 for all
+    public void setupStates() {
         State.EARLY.setUnlockedAtPercentage(0);
         State.MID.setUnlockedAtPercentage(11.11);
         State.LATE.setUnlockedAtPercentage(28.88);
@@ -1610,7 +1609,7 @@ public class ItemDifficultiesManager {
     }
 
     @Getter
-    private enum State {
+    public enum State {
 
         EARLY,
 

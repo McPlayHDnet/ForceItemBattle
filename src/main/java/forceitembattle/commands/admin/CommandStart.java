@@ -3,6 +3,7 @@ package forceitembattle.commands.admin;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.manager.Gamemanager;
+import forceitembattle.manager.ItemDifficultiesManager;
 import forceitembattle.manager.stats.SeasonalStats;
 import forceitembattle.manager.stats.StatsManager;
 import forceitembattle.settings.GameSetting;
@@ -128,6 +129,15 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
 
     private void startGame(int timeMinutes, int jokersAmount) {
         this.plugin.getPositionManager().clearPositions();
+        // Fixed 5 / 15 minutes switch times.
+        if (timeMinutes >= 50) {
+            ItemDifficultiesManager.State.EARLY.setUnlockedAtPercentage(0);
+            ItemDifficultiesManager.State.MID.setUnlockedAtPercentage(5. / timeMinutes);
+            ItemDifficultiesManager.State.LATE.setUnlockedAtPercentage(15. / timeMinutes);
+        } else {
+            // If game is under 50 minutes, use percentages
+            this.plugin.getItemDifficultiesManager().setupStates();
+        }
 
         World world = Bukkit.getWorld("world");
         assert world != null;
