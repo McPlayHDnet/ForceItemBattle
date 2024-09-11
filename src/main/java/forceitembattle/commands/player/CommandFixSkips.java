@@ -24,7 +24,13 @@ public class CommandFixSkips extends CustomCommand {
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
 
         boolean usingTeams = this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM);
-        ItemStack jokers = Gamemanager.getJokers((usingTeams ? forceItemPlayer.currentTeam().getRemainingJokers() : forceItemPlayer.remainingJokers()));
+        int remainingJokers = usingTeams ? forceItemPlayer.currentTeam().getRemainingJokers() : forceItemPlayer.remainingJokers();
+        if (remainingJokers == 0) {
+            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>You don't have any jokers left."));
+            return;
+        }
+
+        ItemStack jokers = Gamemanager.getJokers(remainingJokers);
         Inventory backpack = this.plugin.getBackpack().getBackpackForPlayer(player);
 
         backpack.remove(Gamemanager.getJokerMaterial());
