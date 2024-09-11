@@ -188,6 +188,7 @@ public enum FakeRecipe {
 
         return RecipeBuilder.newBuilder(ToolRecipe::new)
                 .apply(recipe -> recipe.addIngredient(new RecipeChoice.MaterialChoice(unwaxed)))
+                .apply(recipe -> recipe.addIngredient(new RecipeChoice.MaterialChoice(Material.HONEYCOMB)))
                 .apply(recipe -> recipe.addInteractionLore(
                         "&7Sneak and Right click with",
                         "&7honeycomb on the placed block.",
