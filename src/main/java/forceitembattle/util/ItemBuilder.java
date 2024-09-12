@@ -6,9 +6,7 @@ import forceitembattle.ForceItemBattle;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
@@ -18,7 +16,10 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.profile.PlayerTextures;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 
 @Getter
 public class ItemBuilder {
@@ -92,7 +93,12 @@ public class ItemBuilder {
 
     public ItemBuilder setLoreLegacy(List<String> loreLines) {
         ItemMeta itemMeta = getItemStack().getItemMeta();
-        itemMeta.setLore(loreLines);
+        List<String> lore = new ArrayList<>();
+        for (String line : loreLines) {
+            lore.add(line.replaceAll("&", "§"));
+        }
+
+        itemMeta.setLore(lore);
         setItemMeta(itemMeta);
         return this;
     }
@@ -100,6 +106,13 @@ public class ItemBuilder {
     public ItemBuilder setDisplayName(String displayName) {
         ItemMeta itemMeta = getItemStack().getItemMeta();
         itemMeta.displayName(ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize(displayName).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE));
+        setItemMeta(itemMeta);
+        return this;
+    }
+
+    public ItemBuilder setDisplayNameLegacy(String displayName) {
+        ItemMeta itemMeta = getItemStack().getItemMeta();
+        itemMeta.setDisplayName(displayName.replaceAll("&", "§"));
         setItemMeta(itemMeta);
         return this;
     }

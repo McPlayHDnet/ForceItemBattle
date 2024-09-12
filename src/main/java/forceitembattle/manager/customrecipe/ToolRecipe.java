@@ -39,8 +39,8 @@ public class ToolRecipe extends ShapelessRecipe {
         return displayItem
                 .addEnchantment(Enchantment.FORTUNE, 1)
                 .addItemFlag(ItemFlag.HIDE_ENCHANTS)
-                .setDisplayName("&fHow to get item:")
-                .setLore(getInteractionLore())
+                .setDisplayNameLegacy("&fHow to get item:")
+                .setLoreLegacy(getInteractionLore())
                 .getItemStack();
     }
 

@@ -21,10 +21,20 @@ public class CommandFixSkips extends CustomCommand {
             return;
         }
 
+        boolean silent = args.length > 0 && args[0].equalsIgnoreCase("-silent");
+
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
 
         boolean usingTeams = this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM);
-        ItemStack jokers = Gamemanager.getJokers((usingTeams ? forceItemPlayer.currentTeam().getRemainingJokers() : forceItemPlayer.remainingJokers()));
+        int remainingJokers = usingTeams ? forceItemPlayer.currentTeam().getRemainingJokers() : forceItemPlayer.remainingJokers();
+        if (remainingJokers == 0) {
+            if (!silent) {
+                player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>You don't have any jokers left."));
+            }
+            return;
+        }
+
+        ItemStack jokers = Gamemanager.getJokers(remainingJokers);
         Inventory backpack = this.plugin.getBackpack().getBackpackForPlayer(player);
 
         backpack.remove(Gamemanager.getJokerMaterial());
@@ -42,6 +52,8 @@ public class CommandFixSkips extends CustomCommand {
         } else {
             player.getInventory().addItem(jokers);
         }
-        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<yellow>Removed all duplicate jokers and gave you <white>" + jokers.getAmount() + "<yellow> jokers."));
+        if (!silent) {
+            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<yellow>Removed all duplicate jokers and gave you <white>" + jokers.getAmount() + "<yellow> jokers."));
+        }
     }
 }
