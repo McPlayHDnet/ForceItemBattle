@@ -132,7 +132,10 @@ public class TeamsManager {
     public void create(ForceItemPlayer first, ForceItemPlayer second, String name) {
         Team team = new Team(this.teams.size() + 1, new ArrayList<>(), null, 0, 0, first);
         team.setName(name);
+        first.setCurrentTeam(team);
         this.addToTeam(team, second);
+
+        this.teams.add(team);
         first.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>[" + team.getTeamDisplay() + "] <white>" + first.player().getName()));
         second.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>[" + team.getTeamDisplay() + "] <white>" + second.player().getName()));
 
@@ -140,6 +143,7 @@ public class TeamsManager {
 
         first.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(message + second.player().getName()));
         second.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(message + first.player().getName()));
+
     }
 
     public void decline(ForceItemPlayer player, ForceItemPlayer target) {
