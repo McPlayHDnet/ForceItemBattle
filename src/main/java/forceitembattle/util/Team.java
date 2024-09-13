@@ -3,6 +3,7 @@ package forceitembattle.util;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Material;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,6 +13,9 @@ import java.util.List;
 public class Team {
 
     private final int teamId;
+    @Setter
+    @Nullable
+    private String name;
     private final List<ForceItemPlayer> players;
     private final List<ForceItem> foundItems;
     @Setter
@@ -29,6 +33,14 @@ public class Team {
         this.remainingJokers = remainingJokers;
         this.players = new ArrayList<>();
         players.addAll(Arrays.asList(teamPlayers));
+    }
+
+    public String getTeamDisplay() {
+        if (this.name != null) {
+            return this.name;
+        }
+
+        return "#" + this.teamId;
     }
 
     public void addPlayer(ForceItemPlayer player) {

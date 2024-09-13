@@ -4,9 +4,7 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.util.ForceItemPlayer;
-import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Scoreboard;
@@ -33,7 +31,7 @@ public class ScoreboardManager {
             Material material = settings.isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial();
 
             if(settings.isSettingEnabled(GameSetting.TEAM)) {
-                currentTeam.prefix(miniMessage.deserialize("<yellow>[#" + forceItemPlayer.currentTeam().getTeamId() + "] "));
+                currentTeam.prefix(miniMessage.deserialize("<yellow>[" + forceItemPlayer.currentTeam().getTeamDisplay() + "] "));
             }
             currentTeam.suffix(miniMessage.deserialize(" <gray>[<gold>" + gameManager.getMaterialName(material) + " <reset><color:#4e5c24>" + ForceItemBattle.getInstance().getItemDifficultiesManager().getUnicodeFromMaterial(true, material) + "<gray>]"));
 
