@@ -27,9 +27,6 @@ public class CommandSpectate extends CustomCommand {
         if (player.getGameMode() == GameMode.SPECTATOR) {
             player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<gray>You are <red>no longer<gray> spectating."));
             player.setGameMode(GameMode.CREATIVE);
-        } else {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<gray>You are <lime>now<gray> spectating."));
-            player.setGameMode(GameMode.SPECTATOR);
         }
 
     }

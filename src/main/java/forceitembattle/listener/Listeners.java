@@ -209,8 +209,10 @@ public class Listeners implements Listener {
          */
 
         if (!event.isBackToBack()) {
-            Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize(
-                    "<green>" + player.getName() + " <gray>" + (event.isSkipped() ? "skipped" : "found") + " <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType()) + " <gold>" + this.plugin.getGamemanager().getMaterialName(itemStack.getType())));
+            if (!this.plugin.getSettings().isSettingEnabled(GameSetting.EVENT)) {
+                Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize(
+                        "<green>" + player.getName() + " <gray>" + (event.isSkipped() ? "skipped" : "found") + " <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType()) + " <gold>" + this.plugin.getGamemanager().getMaterialName(itemStack.getType())));
+            }
             if (this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
                 if (forceItemPlayer.backToBackStreak() != 0) {
                     if (seasonalStats.getBack2backStreak().getSolo() < forceItemPlayer.backToBackStreak()) {
@@ -318,27 +320,30 @@ public class Listeners implements Listener {
         foundNextItemEvent.setBackToBack(true);
         foundNextItemEvent.setSkipped(false);
 
-        int totalItemsInPool = this.plugin.getItemDifficultiesManager().getAvailableItems().size();
-        int itemsInInventory = Arrays.stream(player.getInventory().getContents())
-                .filter(item -> item != null && !item.getType().isAir() && item.getType() != Material.BARRIER && item.getType() != Material.BUNDLE)
-                .map(ItemStack::getType)
-                .toList().size();
-        Inventory backpack = this.plugin.getBackpack().getBackpackForPlayer(player);
-        int itemsInBackpack = Arrays.stream(backpack.getContents()).filter(item -> item != null && !item.getType().isAir() && item.getType() != Material.BARRIER && item.getType() != Material.BUNDLE).map(ItemStack::getType).toList().size();
-        int itemsInShulkerPlayer = Arrays.stream(player.getInventory().getContents())
-                .filter(item -> item != null && !item.getType().isAir() && item.getType().name().contains("SHULKER_BOX"))
-                .mapToInt(this::countItemsInShulkerBox)
-                .sum();
-        int itemsInShulkerBackpack = Arrays.stream(backpack.getContents())
-                .filter(item -> item != null && !item.getType().isAir() && item.getType().name().contains("SHULKER_BOX"))
-                .mapToInt(this::countItemsInShulkerBox)
-                .sum();
-        double probabilityDouble = Math.pow(((double) (itemsInInventory + itemsInBackpack + itemsInShulkerPlayer + itemsInShulkerBackpack) / totalItemsInPool), forceItemPlayer.backToBackStreak());
-        DecimalFormat decimalFormat = new DecimalFormat("#.##");
+        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.EVENT)) {
+            int totalItemsInPool = this.plugin.getItemDifficultiesManager().getAvailableItems().size();
+            int itemsInInventory = Arrays.stream(player.getInventory().getContents())
+                    .filter(item -> item != null && !item.getType().isAir() && item.getType() != Material.BARRIER && item.getType() != Material.BUNDLE)
+                    .map(ItemStack::getType)
+                    .toList().size();
+            Inventory backpack = this.plugin.getBackpack().getBackpackForPlayer(player);
+            int itemsInBackpack = Arrays.stream(backpack.getContents()).filter(item -> item != null && !item.getType().isAir() && item.getType() != Material.BARRIER && item.getType() != Material.BUNDLE).map(ItemStack::getType).toList().size();
+            int itemsInShulkerPlayer = Arrays.stream(player.getInventory().getContents())
+                    .filter(item -> item != null && !item.getType().isAir() && item.getType().name().contains("SHULKER_BOX"))
+                    .mapToInt(this::countItemsInShulkerBox)
+                    .sum();
+            int itemsInShulkerBackpack = Arrays.stream(backpack.getContents())
+                    .filter(item -> item != null && !item.getType().isAir() && item.getType().name().contains("SHULKER_BOX"))
+                    .mapToInt(this::countItemsInShulkerBox)
+                    .sum();
+            double probabilityDouble = Math.pow(((double) (itemsInInventory + itemsInBackpack + itemsInShulkerPlayer + itemsInShulkerBackpack) / totalItemsInPool), forceItemPlayer.backToBackStreak());
+            DecimalFormat decimalFormat = new DecimalFormat("#.##");
 
-        Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize(
-                "<green>" + player.getName() + " <gray>was lucky to already own <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, foundItem.getType()) +
-                        " <gold>" + this.plugin.getGamemanager().getMaterialName(foundItem.getType()) + " <dark_gray>» <aqua>" + decimalFormat.format(probabilityDouble * 100) + "%"));
+            Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize(
+                    "<green>" + player.getName() + " <gray>was lucky to already own <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, foundItem.getType()) +
+                            " <gold>" + this.plugin.getGamemanager().getMaterialName(foundItem.getType()) + " <dark_gray>» <aqua>" + decimalFormat.format(probabilityDouble * 100) + "%"));
+        }
+
         Bukkit.getPluginManager().callEvent(foundNextItemEvent);
     }
 
@@ -454,7 +459,7 @@ public class Listeners implements Listener {
             return;
         }
 
-        String message = "<rainbow>Team</rainbow> <gray>| <gold>" + player.getName() + " <dark_gray>» <white>" + PlainTextComponentSerializer.plainText().serialize(event.originalMessage());
+        String message = "<rainbow>Team :3</rainbow> <gray>| <gold>" + player.getName() + " <dark_gray>» <white>" + PlainTextComponentSerializer.plainText().serialize(event.originalMessage());
         currentTeam.getPlayers().forEach(fibPlayer -> {
             Player p = fibPlayer.player();
             if (p == null || !p.isOnline()) {
@@ -676,6 +681,11 @@ public class Listeners implements Listener {
 
     @EventHandler
     public void onAdvancementGrant(PlayerAdvancementDoneEvent event) {
+        if (this.plugin.getSettings().isSettingEnabled(GameSetting.EVENT)) {
+            event.message(null);
+            return;
+        }
+
         Advancement advancement = event.getAdvancement();
 
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(event.getPlayer().getUniqueId());

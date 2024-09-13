@@ -75,7 +75,7 @@ public class Timer {
                     Material material = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial();
 
                     player.playerListName(forceItemBattle.getGamemanager().getMiniMessage().deserialize(
-                            (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM) ? "<yellow>[#" + forceItemPlayer.currentTeam().getTeamId() + "] " : "") + "<white>" +
+                            (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM) ? "<yellow>[" + forceItemPlayer.currentTeam().getTeamDisplay() + "] " : "") + "<white>" +
                                     player.getName() + " <gray>[<gold>" + this.forceItemBattle.getGamemanager().getMaterialName(material) + " <reset><color:#4e5c24>" + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(true, material) + "<gray>]"));
 
                     player.sendActionBar(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(

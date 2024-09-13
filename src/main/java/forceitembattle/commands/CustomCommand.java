@@ -27,6 +27,13 @@ public abstract class CustomCommand implements CommandExecutor {
         plugin.getCommandsManager().registerCommand(this);
     }
 
+    public void msgUsage(Player player) {
+        String usage = this.getUsage() == null ? "" : " " + this.getUsage();
+        String description = this.getDescription() == null ? "uhhh I guess this is self explanatory?.." : this.getDescription();
+
+        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <white>/" + this.getName() + "<gray>" + usage + " <dark_gray>- <white>" + description));
+    }
+
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (sender instanceof Player player) {
