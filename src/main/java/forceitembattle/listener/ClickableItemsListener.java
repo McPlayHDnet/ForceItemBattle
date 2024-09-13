@@ -86,8 +86,13 @@ public class ClickableItemsListener implements Listener {
         if (e.getItem().getType() == Material.SPYGLASS) {
             if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
                 e.setCancelled(true);
-                player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<gray>You are <green>now<gray> spectating. Use <dark_aqua>/spectate <gray>to toggle off."));
-                player.setGameMode(GameMode.SPECTATOR);
+                if (player.getGameMode() == GameMode.SPECTATOR) {
+                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<gray>You are <red>no longer<gray> spectating."));
+                    player.setGameMode(GameMode.CREATIVE);
+                } else {
+                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<gray>You are <green>now<gray> spectating. Use <dark_aqua>/spectate <gray>to toggle off."));
+                    player.setGameMode(GameMode.SPECTATOR);
+                }
                 return;
             }
             return;

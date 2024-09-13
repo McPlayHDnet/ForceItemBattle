@@ -26,11 +26,6 @@ public class CommandResult extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (this.plugin.getSettings().isSettingEnabled(GameSetting.EVENT) && !player.isOp()) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>You don't have permission to use this command."));
-            return;
-        }
-
         if (this.plugin.getTimer().getTimeLeft() > 0) {
             return;
         }
