@@ -159,7 +159,7 @@ public class ClickableItemsListener implements Listener {
             return;
         }
 
-        if (e.getAction() == Action.LEFT_CLICK_AIR || e.getAction() == Action.LEFT_CLICK_BLOCK) {
+        if (e.getAction() != Action.RIGHT_CLICK_BLOCK && e.getAction() != Action.RIGHT_CLICK_AIR) {
             return;
         }
         if (e.getClickedBlock() != null && e.getClickedBlock().getState() instanceof InventoryHolder) {
