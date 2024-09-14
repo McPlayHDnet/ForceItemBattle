@@ -459,7 +459,7 @@ public class Listeners implements Listener {
             return;
         }
 
-        String message = "<rainbow>Team :3</rainbow> <gray>| <gold>" + player.getName() + " <dark_gray>» <white>" + PlainTextComponentSerializer.plainText().serialize(event.originalMessage());
+        String message = "<green>Team</green> <gray>| <gold>" + player.getName() + " <dark_gray>» <white>" + PlainTextComponentSerializer.plainText().serialize(event.originalMessage());
         currentTeam.getPlayers().forEach(fibPlayer -> {
             Player p = fibPlayer.player();
             if (p == null || !p.isOnline()) {
@@ -535,6 +535,9 @@ public class Listeners implements Listener {
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
         Boolean keepInventory = player.getWorld().getGameRuleValue(GameRule.KEEP_INVENTORY);
         if (keepInventory == null || !keepInventory) {
+            player.getInventory().addItem(new ItemStack(Material.STONE_AXE));
+            player.getInventory().addItem(new ItemStack(Material.STONE_PICKAXE));
+
             player.performCommand("fixskips -silent");
         }
 

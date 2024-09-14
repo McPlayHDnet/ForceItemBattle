@@ -73,7 +73,7 @@ public class FinishInventory extends InventoryBuilder {
                         slots.put(startSlot, itemStack);
                     }
 
-                    Bukkit.getOnlinePlayers().forEach(players -> players.playSound(players.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1, 1));
+                    Bukkit.getOnlinePlayers().forEach(players -> players.playSound(players.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.333F, 1));
 
                     if(startSlot == 16 || startSlot == 25 || startSlot == 34 || startSlot == 43) startSlot += 3;
                     else startSlot++;
@@ -123,7 +123,7 @@ public class FinishInventory extends InventoryBuilder {
                     }
 
                 }
-            }.runTaskTimer(forceItemBattle, 0L, isEvent? 3L :10L);
+            }.runTaskTimer(forceItemBattle, 0L, isEvent? 8L :10L);
         } else {
             //Open Inventory beginning from the first page
             this.addUpdateHandler(() -> {
