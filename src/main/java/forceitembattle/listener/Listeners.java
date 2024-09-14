@@ -459,7 +459,7 @@ public class Listeners implements Listener {
             return;
         }
 
-        String message = "<rainbow>Team :3</rainbow> <gray>| <gold>" + player.getName() + " <dark_gray>» <white>" + PlainTextComponentSerializer.plainText().serialize(event.originalMessage());
+        String message = "<green>Team</green> <gray>| <gold>" + player.getName() + " <dark_gray>» <white>" + PlainTextComponentSerializer.plainText().serialize(event.originalMessage());
         currentTeam.getPlayers().forEach(fibPlayer -> {
             Player p = fibPlayer.player();
             if (p == null || !p.isOnline()) {
