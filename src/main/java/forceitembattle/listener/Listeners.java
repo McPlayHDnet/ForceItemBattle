@@ -209,6 +209,17 @@ public class Listeners implements Listener {
             if (!this.plugin.getSettings().isSettingEnabled(GameSetting.EVENT)) {
                 Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize(
                         "<green>" + player.getName() + " <gray>" + (event.isSkipped() ? "skipped" : "found") + " <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType()) + " <gold>" + this.plugin.getGamemanager().getMaterialName(itemStack.getType())));
+            } else {
+                if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+                    forceItemPlayer.currentTeam().getPlayers().forEach(team -> {
+                        team.player().sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+                                "<green>" + player.getName() + " <gray>" + (event.isSkipped() ? "skipped" : "found") + " <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType()) + " <gold>" + this.plugin.getGamemanager().getMaterialName(itemStack.getType())));
+                    });
+                } else {
+                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+                            "<green>" + player.getName() + " <gray>" + (event.isSkipped() ? "skipped" : "found") + " <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType()) + " <gold>" + this.plugin.getGamemanager().getMaterialName(itemStack.getType())));
+                }
+
             }
             if (this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
                 if (forceItemPlayer.backToBackStreak() != 0) {
@@ -317,7 +328,7 @@ public class Listeners implements Listener {
         foundNextItemEvent.setBackToBack(true);
         foundNextItemEvent.setSkipped(false);
 
-        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.EVENT)) {
+
             int totalItemsInPool = this.plugin.getItemDifficultiesManager().getAvailableItems().size();
             int itemsInInventory = Arrays.stream(player.getInventory().getContents())
                     .filter(item -> item != null && !item.getType().isAir() && item.getType() != Material.BARRIER && item.getType() != Material.BUNDLE)
@@ -336,9 +347,22 @@ public class Listeners implements Listener {
             double probabilityDouble = Math.pow(((double) (itemsInInventory + itemsInBackpack + itemsInShulkerPlayer + itemsInShulkerBackpack) / totalItemsInPool), forceItemPlayer.backToBackStreak());
             DecimalFormat decimalFormat = new DecimalFormat("#.##");
 
+        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.EVENT)) {
             Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize(
                     "<green>" + player.getName() + " <gray>was lucky to already own <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, foundItem.getType()) +
                             " <gold>" + this.plugin.getGamemanager().getMaterialName(foundItem.getType()) + " <dark_gray>» <aqua>" + decimalFormat.format(probabilityDouble * 100) + "%"));
+        } else {
+            if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+                forceItemPlayer.currentTeam().getPlayers().forEach(team -> {
+                    team.player().sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+                            "<green>" + player.getName() + " <gray>was lucky to already own <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, foundItem.getType()) +
+                                    " <gold>" + this.plugin.getGamemanager().getMaterialName(foundItem.getType()) + " <dark_gray>» <aqua>" + decimalFormat.format(probabilityDouble * 100) + "%"));
+                });
+            } else {
+                player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+                        "<green>" + player.getName() + " <gray>was lucky to already own <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, foundItem.getType()) +
+                                " <gold>" + this.plugin.getGamemanager().getMaterialName(foundItem.getType()) + " <dark_gray>» <aqua>" + decimalFormat.format(probabilityDouble * 100) + "%"));
+            }
         }
 
         Bukkit.getPluginManager().callEvent(foundNextItemEvent);
