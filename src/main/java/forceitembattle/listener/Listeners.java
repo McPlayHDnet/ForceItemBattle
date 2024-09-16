@@ -38,7 +38,9 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 
 import java.text.DecimalFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Objects;
 
 @RequiredArgsConstructor
 public class Listeners implements Listener {
@@ -118,77 +120,6 @@ public class Listeners implements Listener {
             }
             return;
         }
-
-        if (this.plugin.getGamemanager().isMidGame()) {
-            Location playerLocation = player.getLocation();
-            Collection<ArmorStand> armorStands = playerLocation.getWorld().getEntitiesByClass(ArmorStand.class);
-            for (ArmorStand armorStand : armorStands) {
-                if (armorStand.getEquipment().getHelmet() != null && armorStand.getEquipment().getHelmet().getType() == Material.SNOWBALL) {
-                    Location armorStandLocation = armorStand.getLocation();
-
-                    double distanceSquared = playerLocation.distanceSquared(armorStandLocation);
-                    double detectionRangeSquared = 1.0;
-
-                    if (distanceSquared <= detectionRangeSquared) {
-                        teleportPlayerRandomly(player);
-                        return;
-                    }
-                }
-            }
-        }
-    }
-
-    private void teleportPlayerRandomly(Player player) {
-        World world = player.getWorld();
-        Random random = new Random();
-
-        int xOffset = random.nextBoolean() ? random.nextInt(5001) + 5000 : -(random.nextInt(5001) + 5000);
-        int zOffset = random.nextBoolean() ? random.nextInt(5001) + 5000 : -(random.nextInt(5001) + 5000);
-
-        Location currentLocation = player.getLocation();
-        Location newLocation = new Location(world, currentLocation.getX() + xOffset, currentLocation.getY(), currentLocation.getZ() + zOffset);
-
-        newLocation.setY(world.getHighestBlockYAt(newLocation) + 1);
-
-        player.teleport(newLocation);
-        player.sendMessage("teleported!");
-    }
-
-    private boolean isInsidePortalFrame(Location location) {
-        int radius = 2;
-        for (int dx = -radius; dx <= radius; dx++) {
-            for (int dy = -radius; dy <= radius; dy++) {
-                for (int dz = -radius; dz <= radius; dz++) {
-                    Block block = location.clone().add(dx, dy, dz).getBlock();
-                    if (block.getType() == Material.CRYING_OBSIDIAN) {
-                        if (isPortalFrame(block)) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean isPortalFrame(Block block) {
-        Location loc = block.getLocation();
-        int frameHeight = 21; // Example frame height
-        int frameWidth = 5; // Example frame width
-
-        // Check vertical frame sides
-        for (int i = 0; i < frameHeight; i++) {
-            if (loc.clone().add(0, i, 0).getBlock().getType() != Material.CRYING_OBSIDIAN) return false;
-            if (loc.clone().add(frameWidth - 1, i, 0).getBlock().getType() != Material.CRYING_OBSIDIAN) return false;
-        }
-
-        // Check horizontal frame sides
-        for (int i = 0; i < frameWidth; i++) {
-            if (loc.clone().add(i, 0, 0).getBlock().getType() != Material.CRYING_OBSIDIAN) return false;
-            if (loc.clone().add(i, frameHeight - 1, 0).getBlock().getType() != Material.CRYING_OBSIDIAN) return false;
-        }
-
-        return true;
     }
 
     /* Custom Found-Item Event */
@@ -828,16 +759,4 @@ public class Listeners implements Listener {
 
     }
 
-    @EventHandler
-    public void onChangedWorld(PlayerChangedWorldEvent event) {
-        Player player = event.getPlayer();
-        if (this.plugin.getGamemanager().isMidGame()) {
-            ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-            if (player.getWorld().getName().equals("world_the_end")) {
-                Location spawnLocation = player.getLocation();
-                spawnLocation.setY(player.getWorld().getHighestBlockYAt(spawnLocation) + 1);
-                player.teleport(spawnLocation);
-            }
-        }
-    }
 }

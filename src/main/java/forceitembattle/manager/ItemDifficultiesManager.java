@@ -349,6 +349,7 @@ public class ItemDifficultiesManager {
                 Material.GRAY_SHULKER_BOX,
                 Material.LIGHT_GRAY_SHULKER_BOX,
                 Material.CYAN_SHULKER_BOX,
+                Material.POPPED_CHORUS_FRUIT,
                 Material.PURPLE_SHULKER_BOX,
                 Material.BLUE_SHULKER_BOX,
                 Material.BROWN_SHULKER_BOX,
