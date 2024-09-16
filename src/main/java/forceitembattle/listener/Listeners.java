@@ -70,6 +70,7 @@ public class Listeners implements Listener {
                 **/
             } else {
                 forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+                forceItemPlayer.setPlayer(player);
                 player.showBossBar(this.plugin.getTimer().getBossBar().get(event.getPlayer().getUniqueId()));
             }
         } else {
