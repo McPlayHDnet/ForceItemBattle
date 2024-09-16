@@ -5,6 +5,7 @@ import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.Team;
 import lombok.Getter;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -129,20 +130,20 @@ public class TeamsManager {
         }
     }
 
-    public void create(ForceItemPlayer first, ForceItemPlayer second, String name) {
+    public void create(ForceItemPlayer first, @Nullable ForceItemPlayer second, String name) {
         Team team = new Team(this.teams.size() + 1, new ArrayList<>(), null, 0, 0, first);
         team.setName(name);
         first.setCurrentTeam(team);
-        this.addToTeam(team, second);
+        if (second != null) this.addToTeam(team, second);
 
         this.teams.add(team);
         first.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>[" + team.getTeamDisplay() + "] <white>" + first.player().getName()));
-        second.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>[" + team.getTeamDisplay() + "] <white>" + second.player().getName()));
+        if (second != null) second.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>[" + team.getTeamDisplay() + "] <white>" + second.player().getName()));
 
         String message = "<dark_aqua>You are now in team <green>" + name + " <dark_aqua>with <yellow>";
 
-        first.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(message + second.player().getName()));
-        second.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(message + first.player().getName()));
+        first.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(message + ((second != null) ? second.player().getName() : "yourself")));
+        if (second != null) second.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(message + first.player().getName()));
 
     }
 
