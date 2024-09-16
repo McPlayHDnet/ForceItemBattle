@@ -638,16 +638,4 @@ public class Listeners implements Listener {
 
     }
 
-    @EventHandler
-    public void onChangedWorld(PlayerChangedWorldEvent event) {
-        Player player = event.getPlayer();
-        if (this.plugin.getGamemanager().isMidGame()) {
-            ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-            if (player.getWorld().getName().equals("world_the_end")) {
-                Location spawnLocation = player.getLocation();
-                spawnLocation.setY(player.getWorld().getHighestBlockYAt(spawnLocation) + 1);
-                player.teleport(spawnLocation);
-            }
-        }
-    }
 }
