@@ -1,14 +1,11 @@
 package forceitembattle.commands.player;
 
 import forceitembattle.commands.CustomCommand;
+import forceitembattle.settings.GameSetting;
 import forceitembattle.util.GameState;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.GameRule;
 import org.bukkit.entity.Player;
-
-import java.time.Duration;
 public class CommandPause extends CustomCommand {
 
     public CommandPause() {
@@ -18,6 +15,11 @@ public class CommandPause extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
+        if (this.plugin.getSettings().isSettingEnabled(GameSetting.EVENT) && !player.isOp()) {
+            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>You don't have permission to use this command."));
+            return;
+        }
+
         if (!this.plugin.getGamemanager().isMidGame()) {
             player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>The timer is already paused."));
             return;

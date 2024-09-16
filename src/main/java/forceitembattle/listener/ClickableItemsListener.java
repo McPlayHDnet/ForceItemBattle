@@ -16,6 +16,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 
 @RequiredArgsConstructor
@@ -83,6 +84,21 @@ public class ClickableItemsListener implements Listener {
             return;
         }
 
+        if (e.getItem().getType() == Material.SPYGLASS) {
+            if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+                e.setCancelled(true);
+                if (player.getGameMode() == GameMode.SPECTATOR) {
+                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<gray>You are <red>no longer<gray> spectating."));
+                    player.setGameMode(GameMode.CREATIVE);
+                } else {
+                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<gray>You are <green>now<gray> spectating. Use <dark_aqua>/spectate <gray>to toggle off."));
+                    player.setGameMode(GameMode.SPECTATOR);
+                }
+                return;
+            }
+            return;
+        }
+
         if (e.getItem().getType() == Material.ENDER_EYE) {
             if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
                 e.setCancelled(true);
@@ -103,7 +119,6 @@ public class ClickableItemsListener implements Listener {
             return;
         }
     }
-
 
     @EventHandler
     public void onClick(PlayerInteractEvent e) { // triggered if a joker is used
@@ -143,7 +158,11 @@ public class ClickableItemsListener implements Listener {
         if (!Gamemanager.isJoker(e.getItem())) {
             return;
         }
-        if (e.getAction() == Action.LEFT_CLICK_AIR || e.getAction() == Action.LEFT_CLICK_BLOCK) {
+
+        if (e.getAction() != Action.RIGHT_CLICK_BLOCK && e.getAction() != Action.RIGHT_CLICK_AIR) {
+            return;
+        }
+        if (e.getClickedBlock() != null && e.getClickedBlock().getState() instanceof InventoryHolder) {
             return;
         }
 

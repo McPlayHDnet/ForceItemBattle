@@ -100,7 +100,7 @@ public class TeamsManager {
         this.teams.remove(team);
         this.teams.add(team);
 
-        player.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>[#" + team.getTeamId() + "] <white>" + player.player().getName()));
+        player.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>[" + team.getTeamDisplay() + "] <white>" + player.player().getName()));
     }
 
     public void accept(ForceItemPlayer player, ForceItemPlayer target) {
@@ -121,12 +121,29 @@ public class TeamsManager {
             this.addToTeam(teamInvite, player);
             player.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_aqua>You <green>accepted <dark_aqua>the invite from <yellow>" + target.player().getName()));
             target.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>" + player.player().getName() + " <dark_aqua>joined your team"));
-            player.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>[#" + teamInvite.getTeamId() + "] <white>" + player.player().getName()));
+            player.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>[" + teamInvite.getTeamDisplay() + "] <white>" + player.player().getName()));
             this.pendingInvite.remove(player);
         } else {
             player.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>You have no invite from <yellow>" + target.player().getName()));
 
         }
+    }
+
+    public void create(ForceItemPlayer first, ForceItemPlayer second, String name) {
+        Team team = new Team(this.teams.size() + 1, new ArrayList<>(), null, 0, 0, first);
+        team.setName(name);
+        first.setCurrentTeam(team);
+        this.addToTeam(team, second);
+
+        this.teams.add(team);
+        first.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>[" + team.getTeamDisplay() + "] <white>" + first.player().getName()));
+        second.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>[" + team.getTeamDisplay() + "] <white>" + second.player().getName()));
+
+        String message = "<dark_aqua>You are now in team <green>" + name + " <dark_aqua>with <yellow>";
+
+        first.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(message + second.player().getName()));
+        second.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(message + first.player().getName()));
+
     }
 
     public void decline(ForceItemPlayer player, ForceItemPlayer target) {

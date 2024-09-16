@@ -120,8 +120,19 @@ public final class ForceItemBattle extends JavaPlugin {
 
         //this 0 delay scheduler is needed in paper, because at that time this code gets initialized and the worlds after that, so we'll wait
         Bukkit.getScheduler().scheduleSyncDelayedTask(this, () -> Bukkit.getWorlds().forEach(world -> {
+            boolean keepInventory = getSettings().isSettingEnabled(GameSetting.KEEP_INVENTORY);
+            if (getSettings().isSettingEnabled(GameSetting.EVENT) && !keepInventory) {
+
+                keepInventory = true;
+                Bukkit.getScheduler().scheduleSyncDelayedTask(
+                        this,
+                        () -> world.setGameRule(GameRule.KEEP_INVENTORY, false),
+                        20 * 60 * 5 // 5 minutes
+                );
+            }
+
             // Apply settings.
-            world.setGameRule(GameRule.KEEP_INVENTORY, getSettings().isSettingEnabled(GameSetting.KEEP_INVENTORY));
+            world.setGameRule(GameRule.KEEP_INVENTORY, keepInventory);
             getSettings().setSettingEnabled(GameSetting.FASTER_RANDOM_TICK, getSettings().isSettingEnabled(GameSetting.FASTER_RANDOM_TICK));
 
             //world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
@@ -236,6 +247,7 @@ public final class ForceItemBattle extends JavaPlugin {
                 new PvPListener(this),
                 new ClickableItemsListener(this),
                 new ItemsListener(this),
+                new PortalListener(this),
                 new AchievementListener(this)
         );
 
@@ -301,6 +313,9 @@ public final class ForceItemBattle extends JavaPlugin {
         new CommandTrade();
         new CommandFixSkips();
         new CommandAchievement();
+        new CommandSpectate();
+        new CommandShout();
+        new CommandForceTeam();
     }
 
     @Override

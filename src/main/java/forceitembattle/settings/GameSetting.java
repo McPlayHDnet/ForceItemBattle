@@ -6,7 +6,8 @@ import java.util.List;
 
 public enum GameSetting {
 
-    TEAM("Teams", List.of("", "<gray>Toggle whether <dark_aqua>teams <gray>are allowered or not.", "<dark_gray><i>Only toggable if 4 or more players are playing!</i>", ""), "isTeamGame", false, Material.RED_BED),
+    TEAM("Teams", List.of("", "<gray>Toggle whether <dark_aqua>teams <gray>are allowed or not.", "<dark_gray><i>Only toggleable if 4 or more players are playing!</i>", ""), "isTeamGame", false, Material.RED_BED),
+    TEAM_CHAT("Team chat", List.of("", "<gray>Toggle whether <dark_aqua>team chat <gray>is enabled or not.", ""), "isTeamChat", false, Material.FILLED_MAP),
     KEEP_INVENTORY("Keep Inventory", List.of("", "<gray>Toggle whether to <dark_aqua>keep items in inventory <gray>when you die or not.", ""), "keepinventory", true, Material.TOTEM_OF_UNDYING),
     FOOD("Food", List.of("", "<gray>Toggle whether you should <dark_aqua>lose hunger <gray>while playing.", ""), "food", true, Material.COOKED_BEEF),
     BACKPACK("Backpack", List.of("", "<gray>Toggle whether you can use <dark_aqua>backpacks<gray>.", ""), "backpack", true, Material.BUNDLE),
@@ -21,7 +22,17 @@ public enum GameSetting {
     TRADING_COOLDOWN("Player trading cooldown", List.of("", "<gray>Changes cooldown of <dark_aqua>trading<gray>.", ""), "tradingCooldown", 3, Material.EMERALD),
     ELYTRA("Elytra gliding", List.of("", "<gray>Prevents gliding with an elytra<gray>.", ""), "elytraGliding", true, Material.ELYTRA),
     CHAIN("Force Chain", List.of("", "<gray>Shows the next forced item.", ""), "forceChain", false, Material.CHAIN),
-    STATS("Stats", List.of("", "<gray>Toggle whether this round is played with <dark_aqua>stats<gray>.", ""), "stats", true, Material.WRITABLE_BOOK);
+    STATS("Stats", List.of("", "<gray>Toggle whether this round is played with <dark_aqua>stats<gray>.", ""), "stats", true, Material.WRITABLE_BOOK),
+    EVENT("Event", List.of(
+            "",
+            "<gray>Toggle <dark_aqua>event<gray> modifiers.",
+            "<gray>Some commands are OP only",
+            "<gray>Keep inventory is force enabled for 5 minutes",
+            "",
+            ""
+    ), "eventModifiers", false, Material.CAKE),
+
+    ;
 
     private final String displayName;
     private final List<String> descriptionLore;

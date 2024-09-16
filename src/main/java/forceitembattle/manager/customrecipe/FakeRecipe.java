@@ -183,6 +183,53 @@ public enum FakeRecipe {
             .build("fib:bone_meal", new ItemStack(Material.BONE_MEAL))
     ),
 
+    WAXED(item -> item.getType().name().startsWith("WAXED_"), item -> {
+        Material unwaxed = Material.valueOf(item.getType().name().replaceFirst("WAXED_", ""));
+
+        return RecipeBuilder.newBuilder(ToolRecipe::new)
+                .apply(recipe -> recipe.addIngredient(new RecipeChoice.MaterialChoice(unwaxed)))
+                .apply(recipe -> recipe.addIngredient(new RecipeChoice.MaterialChoice(Material.HONEYCOMB)))
+                .apply(recipe -> recipe.addInteractionLore(
+                        "&7Sneak and Right click with",
+                        "&7honeycomb on the placed block.",
+                        "&7",
+                        "&eNote! &7Wax can be removed",
+                        "&7by right clicking block with any axe."
+                ))
+                .apply(recipe -> recipe.setStationDisplay(new ItemStack(Material.HONEYCOMB)))
+                .build("fib:waxed", new ItemStack(item.getType()));
+        }
+    ),
+
+    OXIDIZED(item -> item.getType().name().startsWith("EXPOSED_") ||
+            item.getType().name().startsWith("WEATHERED_") ||
+            item.getType().name().startsWith("OXIDIZED_"), item -> {
+
+        Material normal = Material.valueOf(item.getType().name()
+                .replaceFirst("EXPOSED_", "")
+                .replaceFirst("WEATHERED_", "")
+                .replaceFirst("OXIDIZED_", ""));
+
+        return RecipeBuilder.newBuilder(ToolRecipe::new)
+                .apply(recipe -> recipe.addIngredient(new RecipeChoice.MaterialChoice(normal)))
+                .apply(recipe -> recipe.addInteractionLore(
+                        "&7When placed, the copper block",
+                        "&7will oxidize over time.",
+                        "&7",
+                        "&7Stages:",
+                        "&6Normal &8-> &eExposed &8-> &aWeathered &8-> &2Oxidized",
+                        "&7",
+                        "&4IMPORTANT! &7Copper oxidizes faster",
+                        "&7if it is 4+ blocks away from any other copper",
+                        "&7",
+                        "&eNote! &7Oxidation stage can be reduced",
+                        "&7by right clicking block with any axe."
+                ))
+                .apply(recipe -> recipe.setStationDisplay(new ItemStack(Material.CLOCK)))
+                .build("fib:oxidized", new ItemStack(item.getType()));
+        }
+    ),
+
     ;
 
     private static final FakeRecipe[] CACHE = values();

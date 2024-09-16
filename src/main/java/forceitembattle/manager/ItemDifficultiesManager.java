@@ -40,8 +40,7 @@ public class ItemDifficultiesManager {
      */
     private Map<Material, String> bigIconUnicodes;
 
-    private void setupStates() {
-        // if this is a toggle setting, just change setUnlockedAtPercentage to 0 for all
+    public void setupStates() {
         State.EARLY.setUnlockedAtPercentage(0);
         State.MID.setUnlockedAtPercentage(11.11);
         State.LATE.setUnlockedAtPercentage(28.88);
@@ -363,11 +362,8 @@ public class ItemDifficultiesManager {
         // list contains hard items that are very unrealistic to obtain in 45 min
         this.veryLateItems = List.of(
                 Material.ARCHER_POTTERY_SHERD,
-                Material.BEACON,
-                Material.BURN_POTTERY_SHERD,
                 Material.CALIBRATED_SCULK_SENSOR,
                 Material.COPPER_ORE,
-                Material.DANGER_POTTERY_SHERD,
                 Material.DEEPSLATE_COPPER_ORE,
                 Material.DEEPSLATE_DIAMOND_ORE,
                 Material.DEEPSLATE_EMERALD_ORE,
@@ -377,29 +373,19 @@ public class ItemDifficultiesManager {
                 Material.DEEPSLATE_REDSTONE_ORE,
                 Material.DIAMOND_ORE,
                 Material.DISC_FRAGMENT_5,
-                Material.DRAGON_BREATH,
-                Material.DRAGON_EGG,
                 Material.ECHO_SHARD,
                 Material.EMERALD_ORE,
                 Material.END_CRYSTAL,
                 Material.EYE_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Material.FLOW_BANNER_PATTERN,
-                Material.FRIEND_POTTERY_SHERD,
                 Material.GLOBE_BANNER_PATTERN,
                 Material.GOLD_ORE,
                 Material.GUSTER_BANNER_PATTERN,
-                Material.HEART_POTTERY_SHERD,
-                Material.HEARTBREAK_POTTERY_SHERD,
-                Material.HEAVY_CORE,
-                Material.HOST_ARMOR_TRIM_SMITHING_TEMPLATE,
-                Material.HOWL_POTTERY_SHERD,
                 Material.IRON_ORE,
                 Material.LAPIS_ORE,
-                Material.MACE,
                 Material.MINER_POTTERY_SHERD,
                 Material.MUSIC_DISC_CREATOR,
                 Material.MUSIC_DISC_PRECIPICE,
-                Material.MUSIC_DISC_RELIC,
                 Material.NETHERITE_AXE,
                 Material.NETHERITE_BLOCK,
                 Material.NETHERITE_BOOTS,
@@ -413,18 +399,12 @@ public class ItemDifficultiesManager {
                 Material.OMINOUS_BOTTLE,
                 Material.OMINOUS_TRIAL_KEY,
                 Material.PRIZE_POTTERY_SHERD,
-                Material.RAISER_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Material.REDSTONE_ORE,
-                Material.SHAPER_ARMOR_TRIM_SMITHING_TEMPLATE,
-                Material.SHEAF_POTTERY_SHERD,
-                Material.SILENCE_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Material.SKULL_POTTERY_SHERD,
-                Material.TADPOLE_BUCKET,
                 Material.TIDE_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Material.TOTEM_OF_UNDYING,
                 Material.VEX_ARMOR_TRIM_SMITHING_TEMPLATE,
-                Material.WARD_ARMOR_TRIM_SMITHING_TEMPLATE,
-                Material.WAYFINDER_ARMOR_TRIM_SMITHING_TEMPLATE
+                Material.WARD_ARMOR_TRIM_SMITHING_TEMPLATE
         );
 
 
@@ -1087,6 +1067,7 @@ public class ItemDifficultiesManager {
                 Material.CHISELED_NETHER_BRICKS,
                 Material.CHISELED_POLISHED_BLACKSTONE,
                 Material.CHISELED_QUARTZ_BLOCK,
+                Material.COAST_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Material.COBWEB,
                 Material.COMPARATOR,
                 Material.COOKED_RABBIT,
@@ -1328,7 +1309,6 @@ public class ItemDifficultiesManager {
                 Material.ANCIENT_DEBRIS,
                 Material.ANGLER_POTTERY_SHERD,
                 Material.ARCHER_POTTERY_SHERD,
-                Material.BEACON,
                 Material.BEE_NEST,
                 Material.BEEHIVE,
                 Material.BLACK_CANDLE,
@@ -1350,7 +1330,6 @@ public class ItemDifficultiesManager {
                 Material.BUBBLE_CORAL,
                 Material.BUBBLE_CORAL_BLOCK,
                 Material.BUBBLE_CORAL_FAN,
-                Material.BURN_POTTERY_SHERD,
                 Material.CALIBRATED_SCULK_SENSOR,
                 Material.CANDLE,
                 Material.CHAINMAIL_BOOTS,
@@ -1361,14 +1340,12 @@ public class ItemDifficultiesManager {
                 Material.CHORUS_FLOWER,
                 Material.CHORUS_FRUIT,
                 Material.COAL_ORE,
-                Material.COAST_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Material.COPPER_BULB,
                 Material.COPPER_ORE,
                 Material.CUT_RED_SANDSTONE,
                 Material.CUT_RED_SANDSTONE_SLAB,
                 Material.CYAN_CANDLE,
                 Material.CYAN_SHULKER_BOX,
-                Material.DANGER_POTTERY_SHERD,
                 Material.DEAD_BRAIN_CORAL,
                 Material.DEAD_BRAIN_CORAL_FAN,
                 Material.DEAD_BUBBLE_CORAL,
@@ -1390,7 +1367,6 @@ public class ItemDifficultiesManager {
                 Material.DEEPSLATE_REDSTONE_ORE,
                 Material.DIAMOND_ORE,
                 Material.DISC_FRAGMENT_5,
-                Material.DRAGON_BREATH,
                 Material.DRAGON_HEAD,
                 Material.DUNE_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Material.ECHO_SHARD,
@@ -1420,7 +1396,6 @@ public class ItemDifficultiesManager {
                 Material.FIRE_CORAL_FAN,
                 Material.FLOW_BANNER_PATTERN,
                 Material.FLOW_POTTERY_SHERD,
-                Material.FRIEND_POTTERY_SHERD,
                 Material.GILDED_BLACKSTONE,
                 Material.GLOBE_BANNER_PATTERN,
                 Material.GOAT_HORN,
@@ -1432,9 +1407,6 @@ public class ItemDifficultiesManager {
                 Material.GREEN_SHULKER_BOX,
                 Material.GUSTER_BANNER_PATTERN,
                 Material.GUSTER_POTTERY_SHERD,
-                Material.HEART_POTTERY_SHERD,
-                Material.HEARTBREAK_POTTERY_SHERD,
-                Material.HEAVY_CORE,
                 Material.HONEY_BLOCK,
                 Material.HONEY_BOTTLE,
                 Material.HONEYCOMB,
@@ -1442,8 +1414,6 @@ public class ItemDifficultiesManager {
                 Material.HORN_CORAL,
                 Material.HORN_CORAL_BLOCK,
                 Material.HORN_CORAL_FAN,
-                Material.HOST_ARMOR_TRIM_SMITHING_TEMPLATE,
-                Material.HOWL_POTTERY_SHERD,
                 Material.ICE,
                 Material.IRON_ORE,
                 Material.LAPIS_ORE,
@@ -1456,7 +1426,6 @@ public class ItemDifficultiesManager {
                 Material.LIME_CANDLE,
                 Material.LIME_SHULKER_BOX,
                 Material.LODESTONE,
-                Material.MACE,
                 Material.MAGENTA_CANDLE,
                 Material.MAGENTA_SHULKER_BOX,
                 Material.MEDIUM_AMETHYST_BUD,
@@ -1470,7 +1439,6 @@ public class ItemDifficultiesManager {
                 Material.MUSIC_DISC_CREATOR_MUSIC_BOX,
                 Material.MUSIC_DISC_OTHERSIDE,
                 Material.MUSIC_DISC_PRECIPICE,
-                Material.MUSIC_DISC_RELIC,
                 Material.MYCELIUM,
                 Material.NETHER_GOLD_ORE,
                 Material.NETHER_QUARTZ_ORE,
@@ -1512,7 +1480,6 @@ public class ItemDifficultiesManager {
                 Material.PURPUR_PILLAR,
                 Material.PURPUR_SLAB,
                 Material.PURPUR_STAIRS,
-                Material.RAISER_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Material.RED_CANDLE,
                 Material.RED_MUSHROOM_BLOCK,
                 Material.RED_SAND,
@@ -1531,12 +1498,9 @@ public class ItemDifficultiesManager {
                 Material.SCULK_SHRIEKER,
                 Material.SCULK_VEIN,
                 Material.SENTRY_ARMOR_TRIM_SMITHING_TEMPLATE,
-                Material.SHAPER_ARMOR_TRIM_SMITHING_TEMPLATE,
-                Material.SHEAF_POTTERY_SHERD,
                 Material.SHELTER_POTTERY_SHERD,
                 Material.SHULKER_BOX,
                 Material.SHULKER_SHELL,
-                Material.SILENCE_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Material.SKULL_BANNER_PATTERN,
                 Material.SKULL_POTTERY_SHERD,
                 Material.SLIME_BLOCK,
@@ -1549,7 +1513,6 @@ public class ItemDifficultiesManager {
                 Material.SNOUT_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Material.SPIRE_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Material.SPLASH_POTION,
-                Material.TADPOLE_BUCKET,
                 Material.TALL_GRASS,
                 Material.TIDE_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Material.TIPPED_ARROW,
@@ -1590,7 +1553,6 @@ public class ItemDifficultiesManager {
                 Material.WAXED_WEATHERED_CUT_COPPER,
                 Material.WAXED_WEATHERED_CUT_COPPER_SLAB,
                 Material.WAXED_WEATHERED_CUT_COPPER_STAIRS,
-                Material.WAYFINDER_ARMOR_TRIM_SMITHING_TEMPLATE,
                 Material.WEATHERED_CHISELED_COPPER,
                 Material.WEATHERED_COPPER_BULB,
                 Material.WEATHERED_COPPER_DOOR,
@@ -1610,7 +1572,7 @@ public class ItemDifficultiesManager {
     }
 
     @Getter
-    private enum State {
+    public enum State {
 
         EARLY,
 
