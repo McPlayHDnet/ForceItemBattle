@@ -18,8 +18,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.*;
 import org.bukkit.advancement.Advancement;
-import org.bukkit.block.Block;
-import org.bukkit.block.ShulkerBox;
+import org.bukkit.block.*;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -32,10 +31,7 @@ import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.inventory.InventoryAction;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.inventory.*;
 import org.bukkit.event.player.*;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -617,18 +613,117 @@ public class Listeners implements Listener {
 
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
+        Player player = event.getPlayer();
+        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
         if (this.plugin.getGamemanager().isMidGame()) {
+            Block brokenBlock = event.getBlock();
+            Material blockType = brokenBlock.getType();
+            if (blockType.toString().endsWith("_BED")) {
+                Bed bed = (Bed) brokenBlock.getState();
+
+                ForceItemPlayer owner = this.plugin.getProtectionManager().getOwnerOfProtectedBed(bed);
+
+                if (owner != null && !this.plugin.getProtectionManager().canBreakBlock(forceItemPlayer, owner)) {
+                    event.setCancelled(true);
+                    player.playSound(player, Sound.BLOCK_IRON_TRAPDOOR_CLOSE, 1, 1);
+                    return;
+                }
+            }
+
+            if (blockType == Material.CHEST || blockType == Material.TRAPPED_CHEST) {
+                Chest chest = (Chest) brokenBlock.getState();
+
+                ForceItemPlayer owner = this.plugin.getProtectionManager().getOwnerOfProtectedChest(chest);
+
+                if (owner != null && !this.plugin.getProtectionManager().canBreakBlock(forceItemPlayer, owner)) {
+                    event.setCancelled(true);
+                    player.playSound(player, Sound.BLOCK_IRON_TRAPDOOR_CLOSE, 1, 1);
+                    return;
+                }
+            }
+
+            if (blockType == Material.BARREL) {
+                Barrel barrel = (Barrel) brokenBlock.getState();
+
+                ForceItemPlayer owner = this.plugin.getProtectionManager().getOwnerOfProtectedBarrel(barrel);
+
+                if (owner != null && !this.plugin.getProtectionManager().canBreakBlock(forceItemPlayer, owner)) {
+                    event.setCancelled(true);
+                    player.playSound(player, Sound.BLOCK_IRON_TRAPDOOR_CLOSE, 1, 1);
+                    return;
+                }
+            }
+
             return;
         }
         event.setCancelled(true);
     }
 
     @EventHandler
+    public void onChestOpen(InventoryOpenEvent event) {
+        Player player = (Player) event.getPlayer();
+        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        if (this.plugin.getGamemanager().isMidGame()) {
+
+            Inventory inventory = event.getInventory();
+            InventoryType inventoryType = inventory.getType();
+
+            if (inventoryType == InventoryType.CHEST || inventoryType == InventoryType.BARREL) {
+                Location inventoryLocation = inventory.getLocation();
+                if (inventoryLocation == null) {
+                    return;
+                }
+
+                Block inventoryBlock = inventoryLocation.getBlock();
+                Material blockType = inventoryBlock.getType();
+
+                if (blockType == Material.CHEST || blockType == Material.TRAPPED_CHEST) {
+                    Chest chest = (Chest) inventoryBlock.getState();
+                    ForceItemPlayer owner = this.plugin.getProtectionManager().getOwnerOfProtectedChest(chest);
+
+                    if (owner != null && !this.plugin.getProtectionManager().canOpenInventory(forceItemPlayer, owner)) {
+                        event.setCancelled(true);
+                        player.playSound(player, Sound.BLOCK_IRON_TRAPDOOR_CLOSE, 1, 1);
+                        return;
+                    }
+                }
+
+                if (blockType == Material.BARREL) {
+                    Barrel barrel = (Barrel) inventoryBlock.getState();
+
+                    ForceItemPlayer owner = this.plugin.getProtectionManager().getOwnerOfProtectedBarrel(barrel);
+
+                    if (owner != null && !this.plugin.getProtectionManager().canOpenInventory(forceItemPlayer, owner)) {
+                        event.setCancelled(true);
+                        player.playSound(player, Sound.BLOCK_IRON_TRAPDOOR_CLOSE, 1, 1);
+                        return;
+                    }
+                }
+            }
+            return;
+        }
+    }
+
+    @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
         if (Gamemanager.isJoker(event.getBlock().getType())) {
             event.setCancelled(true);
+            return;
         }
         if (this.plugin.getGamemanager().isMidGame()) {
+            ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(event.getPlayer().getUniqueId());
+            Material blockType = event.getBlock().getType();
+
+            if (blockType == Material.CHEST || blockType == Material.TRAPPED_CHEST) {
+                Chest chest = (Chest) event.getBlock().getState();
+                this.plugin.getProtectionManager().protectChest(forceItemPlayer, chest);
+            } else if (blockType == Material.BARREL) {
+                Barrel barrel = (Barrel) event.getBlock().getState();
+                this.plugin.getProtectionManager().protectBarrel(forceItemPlayer, barrel);
+            } else if (blockType == Material.WHITE_BED || blockType.name().endsWith("_BED")) {
+                Bed bed = (Bed) event.getBlock().getState();
+                this.plugin.getProtectionManager().protectBed(forceItemPlayer, bed);
+            }
             return;
         }
         event.setCancelled(true);
