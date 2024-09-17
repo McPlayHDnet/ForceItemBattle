@@ -72,6 +72,8 @@ public final class ForceItemBattle extends JavaPlugin {
     @Getter
     private LocatorManager locatorManager;
     @Getter
+    private ProtectionManager protectionManager;
+    @Getter
     @Setter
     private Location spawnLocation;
 
@@ -112,6 +114,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.achievementManager = new AchievementManager(this);
         this.achievementListener = new AchievementListener(this);
         this.locatorManager = new LocatorManager();
+        this.protectionManager = new ProtectionManager(this);
         this.wanderingTraderTimer = new WanderingTraderTimer();
         this.antimatterLocator = new AntimatterLocator();
 
@@ -247,6 +250,7 @@ public final class ForceItemBattle extends JavaPlugin {
                 new PvPListener(this),
                 new ClickableItemsListener(this),
                 new ItemsListener(this),
+                new PortalListener(this),
                 new AchievementListener(this)
         );
 

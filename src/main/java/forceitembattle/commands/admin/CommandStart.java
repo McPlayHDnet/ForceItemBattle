@@ -132,8 +132,8 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
         // Fixed 5 / 15 minutes switch times.
         if (timeMinutes >= 50) {
             ItemDifficultiesManager.State.EARLY.setUnlockedAtPercentage(0);
-            ItemDifficultiesManager.State.MID.setUnlockedAtPercentage(5. / timeMinutes);
-            ItemDifficultiesManager.State.LATE.setUnlockedAtPercentage(15. / timeMinutes);
+            ItemDifficultiesManager.State.MID.setUnlockedAtPercentage((5. / timeMinutes) * 100);
+            ItemDifficultiesManager.State.LATE.setUnlockedAtPercentage((15. / timeMinutes) * 100);
         } else {
             // If game is under 50 minutes, use percentages
             this.plugin.getItemDifficultiesManager().setupStates();

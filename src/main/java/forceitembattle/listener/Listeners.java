@@ -18,8 +18,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.*;
 import org.bukkit.advancement.Advancement;
-import org.bukkit.block.Block;
-import org.bukkit.block.ShulkerBox;
+import org.bukkit.block.*;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -32,17 +31,16 @@ import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.inventory.InventoryAction;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.inventory.*;
 import org.bukkit.event.player.*;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 
 import java.text.DecimalFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Objects;
 
 @RequiredArgsConstructor
 public class Listeners implements Listener {
@@ -70,6 +68,7 @@ public class Listeners implements Listener {
                 **/
             } else {
                 forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+                forceItemPlayer.setPlayer(player);
                 player.showBossBar(this.plugin.getTimer().getBossBar().get(event.getPlayer().getUniqueId()));
             }
         } else {
@@ -121,77 +120,6 @@ public class Listeners implements Listener {
             }
             return;
         }
-
-        if (this.plugin.getGamemanager().isMidGame()) {
-            Location playerLocation = player.getLocation();
-            Collection<ArmorStand> armorStands = playerLocation.getWorld().getEntitiesByClass(ArmorStand.class);
-            for (ArmorStand armorStand : armorStands) {
-                if (armorStand.getEquipment().getHelmet() != null && armorStand.getEquipment().getHelmet().getType() == Material.SNOWBALL) {
-                    Location armorStandLocation = armorStand.getLocation();
-
-                    double distanceSquared = playerLocation.distanceSquared(armorStandLocation);
-                    double detectionRangeSquared = 1.0;
-
-                    if (distanceSquared <= detectionRangeSquared) {
-                        teleportPlayerRandomly(player);
-                        return;
-                    }
-                }
-            }
-        }
-    }
-
-    private void teleportPlayerRandomly(Player player) {
-        World world = player.getWorld();
-        Random random = new Random();
-
-        int xOffset = random.nextBoolean() ? random.nextInt(5001) + 5000 : -(random.nextInt(5001) + 5000);
-        int zOffset = random.nextBoolean() ? random.nextInt(5001) + 5000 : -(random.nextInt(5001) + 5000);
-
-        Location currentLocation = player.getLocation();
-        Location newLocation = new Location(world, currentLocation.getX() + xOffset, currentLocation.getY(), currentLocation.getZ() + zOffset);
-
-        newLocation.setY(world.getHighestBlockYAt(newLocation) + 1);
-
-        player.teleport(newLocation);
-        player.sendMessage("teleported!");
-    }
-
-    private boolean isInsidePortalFrame(Location location) {
-        int radius = 2;
-        for (int dx = -radius; dx <= radius; dx++) {
-            for (int dy = -radius; dy <= radius; dy++) {
-                for (int dz = -radius; dz <= radius; dz++) {
-                    Block block = location.clone().add(dx, dy, dz).getBlock();
-                    if (block.getType() == Material.CRYING_OBSIDIAN) {
-                        if (isPortalFrame(block)) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean isPortalFrame(Block block) {
-        Location loc = block.getLocation();
-        int frameHeight = 21; // Example frame height
-        int frameWidth = 5; // Example frame width
-
-        // Check vertical frame sides
-        for (int i = 0; i < frameHeight; i++) {
-            if (loc.clone().add(0, i, 0).getBlock().getType() != Material.CRYING_OBSIDIAN) return false;
-            if (loc.clone().add(frameWidth - 1, i, 0).getBlock().getType() != Material.CRYING_OBSIDIAN) return false;
-        }
-
-        // Check horizontal frame sides
-        for (int i = 0; i < frameWidth; i++) {
-            if (loc.clone().add(i, 0, 0).getBlock().getType() != Material.CRYING_OBSIDIAN) return false;
-            if (loc.clone().add(i, frameHeight - 1, 0).getBlock().getType() != Material.CRYING_OBSIDIAN) return false;
-        }
-
-        return true;
     }
 
     /* Custom Found-Item Event */
@@ -212,6 +140,17 @@ public class Listeners implements Listener {
             if (!this.plugin.getSettings().isSettingEnabled(GameSetting.EVENT)) {
                 Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize(
                         "<green>" + player.getName() + " <gray>" + (event.isSkipped() ? "skipped" : "found") + " <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType()) + " <gold>" + this.plugin.getGamemanager().getMaterialName(itemStack.getType())));
+            } else {
+                if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+                    forceItemPlayer.currentTeam().getPlayers().forEach(team -> {
+                        team.player().sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+                                "<green>" + player.getName() + " <gray>" + (event.isSkipped() ? "skipped" : "found") + " <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType()) + " <gold>" + this.plugin.getGamemanager().getMaterialName(itemStack.getType())));
+                    });
+                } else {
+                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+                            "<green>" + player.getName() + " <gray>" + (event.isSkipped() ? "skipped" : "found") + " <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType()) + " <gold>" + this.plugin.getGamemanager().getMaterialName(itemStack.getType())));
+                }
+
             }
             if (this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
                 if (forceItemPlayer.backToBackStreak() != 0) {
@@ -320,7 +259,7 @@ public class Listeners implements Listener {
         foundNextItemEvent.setBackToBack(true);
         foundNextItemEvent.setSkipped(false);
 
-        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.EVENT)) {
+
             int totalItemsInPool = this.plugin.getItemDifficultiesManager().getAvailableItems().size();
             int itemsInInventory = Arrays.stream(player.getInventory().getContents())
                     .filter(item -> item != null && !item.getType().isAir() && item.getType() != Material.BARRIER && item.getType() != Material.BUNDLE)
@@ -339,9 +278,22 @@ public class Listeners implements Listener {
             double probabilityDouble = Math.pow(((double) (itemsInInventory + itemsInBackpack + itemsInShulkerPlayer + itemsInShulkerBackpack) / totalItemsInPool), forceItemPlayer.backToBackStreak());
             DecimalFormat decimalFormat = new DecimalFormat("#.##");
 
+        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.EVENT)) {
             Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize(
                     "<green>" + player.getName() + " <gray>was lucky to already own <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, foundItem.getType()) +
                             " <gold>" + this.plugin.getGamemanager().getMaterialName(foundItem.getType()) + " <dark_gray>» <aqua>" + decimalFormat.format(probabilityDouble * 100) + "%"));
+        } else {
+            if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+                forceItemPlayer.currentTeam().getPlayers().forEach(team -> {
+                    team.player().sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+                            "<green>" + player.getName() + " <gray>was lucky to already own <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, foundItem.getType()) +
+                                    " <gold>" + this.plugin.getGamemanager().getMaterialName(foundItem.getType()) + " <dark_gray>» <aqua>" + decimalFormat.format(probabilityDouble * 100) + "%"));
+                });
+            } else {
+                player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+                        "<green>" + player.getName() + " <gray>was lucky to already own <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, foundItem.getType()) +
+                                " <gold>" + this.plugin.getGamemanager().getMaterialName(foundItem.getType()) + " <dark_gray>» <aqua>" + decimalFormat.format(probabilityDouble * 100) + "%"));
+            }
         }
 
         Bukkit.getPluginManager().callEvent(foundNextItemEvent);
@@ -616,18 +568,117 @@ public class Listeners implements Listener {
 
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
+        Player player = event.getPlayer();
+        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
         if (this.plugin.getGamemanager().isMidGame()) {
+            Block brokenBlock = event.getBlock();
+            Material blockType = brokenBlock.getType();
+            if (blockType.toString().endsWith("_BED")) {
+                Bed bed = (Bed) brokenBlock.getState();
+
+                ForceItemPlayer owner = this.plugin.getProtectionManager().getOwnerOfProtectedBed(bed);
+
+                if (owner != null && !this.plugin.getProtectionManager().canBreakBlock(forceItemPlayer, owner)) {
+                    event.setCancelled(true);
+                    player.playSound(player, Sound.BLOCK_IRON_TRAPDOOR_CLOSE, 1, 1);
+                    return;
+                }
+            }
+
+            if (blockType == Material.CHEST || blockType == Material.TRAPPED_CHEST) {
+                Chest chest = (Chest) brokenBlock.getState();
+
+                ForceItemPlayer owner = this.plugin.getProtectionManager().getOwnerOfProtectedChest(chest);
+
+                if (owner != null && !this.plugin.getProtectionManager().canBreakBlock(forceItemPlayer, owner)) {
+                    event.setCancelled(true);
+                    player.playSound(player, Sound.BLOCK_IRON_TRAPDOOR_CLOSE, 1, 1);
+                    return;
+                }
+            }
+
+            if (blockType == Material.BARREL) {
+                Barrel barrel = (Barrel) brokenBlock.getState();
+
+                ForceItemPlayer owner = this.plugin.getProtectionManager().getOwnerOfProtectedBarrel(barrel);
+
+                if (owner != null && !this.plugin.getProtectionManager().canBreakBlock(forceItemPlayer, owner)) {
+                    event.setCancelled(true);
+                    player.playSound(player, Sound.BLOCK_IRON_TRAPDOOR_CLOSE, 1, 1);
+                    return;
+                }
+            }
+
             return;
         }
         event.setCancelled(true);
     }
 
     @EventHandler
+    public void onChestOpen(InventoryOpenEvent event) {
+        Player player = (Player) event.getPlayer();
+        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        if (this.plugin.getGamemanager().isMidGame()) {
+
+            Inventory inventory = event.getInventory();
+            InventoryType inventoryType = inventory.getType();
+
+            if (inventoryType == InventoryType.CHEST || inventoryType == InventoryType.BARREL) {
+                Location inventoryLocation = inventory.getLocation();
+                if (inventoryLocation == null) {
+                    return;
+                }
+
+                Block inventoryBlock = inventoryLocation.getBlock();
+                Material blockType = inventoryBlock.getType();
+
+                if (blockType == Material.CHEST || blockType == Material.TRAPPED_CHEST) {
+                    Chest chest = (Chest) inventoryBlock.getState();
+                    ForceItemPlayer owner = this.plugin.getProtectionManager().getOwnerOfProtectedChest(chest);
+
+                    if (owner != null && !this.plugin.getProtectionManager().canOpenInventory(forceItemPlayer, owner)) {
+                        event.setCancelled(true);
+                        player.playSound(player, Sound.BLOCK_IRON_TRAPDOOR_CLOSE, 1, 1);
+                        return;
+                    }
+                }
+
+                if (blockType == Material.BARREL) {
+                    Barrel barrel = (Barrel) inventoryBlock.getState();
+
+                    ForceItemPlayer owner = this.plugin.getProtectionManager().getOwnerOfProtectedBarrel(barrel);
+
+                    if (owner != null && !this.plugin.getProtectionManager().canOpenInventory(forceItemPlayer, owner)) {
+                        event.setCancelled(true);
+                        player.playSound(player, Sound.BLOCK_IRON_TRAPDOOR_CLOSE, 1, 1);
+                        return;
+                    }
+                }
+            }
+            return;
+        }
+    }
+
+    @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
         if (Gamemanager.isJoker(event.getBlock().getType())) {
             event.setCancelled(true);
+            return;
         }
         if (this.plugin.getGamemanager().isMidGame()) {
+            ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(event.getPlayer().getUniqueId());
+            Material blockType = event.getBlock().getType();
+
+            if (blockType == Material.CHEST || blockType == Material.TRAPPED_CHEST) {
+                Chest chest = (Chest) event.getBlock().getState();
+                this.plugin.getProtectionManager().protectChest(forceItemPlayer, chest);
+            } else if (blockType == Material.BARREL) {
+                Barrel barrel = (Barrel) event.getBlock().getState();
+                this.plugin.getProtectionManager().protectBarrel(forceItemPlayer, barrel);
+            } else if (blockType == Material.WHITE_BED || blockType.name().endsWith("_BED")) {
+                Bed bed = (Bed) event.getBlock().getState();
+                this.plugin.getProtectionManager().protectBed(forceItemPlayer, bed);
+            }
             return;
         }
         event.setCancelled(true);
@@ -708,16 +759,4 @@ public class Listeners implements Listener {
 
     }
 
-    @EventHandler
-    public void onChangedWorld(PlayerChangedWorldEvent event) {
-        Player player = event.getPlayer();
-        if (this.plugin.getGamemanager().isMidGame()) {
-            ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-            if (player.getWorld().getName().equals("world_the_end")) {
-                Location spawnLocation = player.getLocation();
-                spawnLocation.setY(player.getWorld().getHighestBlockYAt(spawnLocation) + 1);
-                player.teleport(spawnLocation);
-            }
-        }
-    }
 }

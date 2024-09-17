@@ -63,13 +63,7 @@ public class ItemBuilder {
     }
 
     public ItemBuilder setGlowing() {
-        Enchantment enchantment;
-        if (this.itemStack.getType() == Material.BOW) {
-            enchantment = Enchantment.LURE;
-        } else {
-            enchantment = Enchantment.INFINITY;
-        }
-        addEnchantment(enchantment, 0);
+        this.itemStack.addUnsafeEnchantment(Enchantment.UNBREAKING, 1);
         addItemFlag(ItemFlag.HIDE_ENCHANTS);
         return this;
     }
