@@ -91,7 +91,6 @@ public class ProtectionListener implements Listener {
 
         Block block = inventoryLocation.getBlock();
         if (this.plugin.getProtectionManager().canBreakContainer(forceItemPlayer, block)) {
-            this.plugin.getProtectionManager().breakContainer(block);
             return;
         }
 
