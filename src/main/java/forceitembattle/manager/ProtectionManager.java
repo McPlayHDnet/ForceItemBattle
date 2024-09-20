@@ -25,9 +25,10 @@ public class ProtectionManager {
         this.containerMap = new HashMap<>();
     }
 
-    public boolean canBreakBed(@Nullable Player player, Location atLocation) {
+    public boolean isNearProtectedBed(@Nullable Player player, Location atLocation) {
         for (var entry : this.plugin.getGamemanager().forceItemPlayerMap().entrySet()) {
             if (player != null && entry.getKey().equals(player.getUniqueId())) {
+                // ignore breaking your own bed
                 continue;
             }
 
@@ -36,12 +37,13 @@ public class ProtectionManager {
                 continue;
             }
 
-            if (p.getBedLocation().distanceSquared(atLocation) <= 4.0) {
-                return false;
+            // 4 blocks protection radius
+            if (p.getBedLocation().distanceSquared(atLocation) < 16) {
+                return true;
             }
         }
 
-        return true;
+        return false;
     }
 
     public ForceItemPlayer getContainerOwner(Block block) {

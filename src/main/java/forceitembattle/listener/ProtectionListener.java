@@ -4,9 +4,12 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.util.ForceItemPlayer;
 import lombok.RequiredArgsConstructor;
-import org.bukkit.*;
-import org.bukkit.block.Bed;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -48,18 +51,11 @@ public class ProtectionListener implements Listener {
         }
 
         Block brokenBlock = event.getBlock();
-        Material blockType = brokenBlock.getType();
 
-        if (Tag.BEDS.isTagged(blockType)) {
-            Bed bed = (Bed) brokenBlock.getState();
-
-            if (this.plugin.getProtectionManager().canBreakBed(player, bed.getLocation())) {
-                return;
-            }
-
+        if (this.plugin.getProtectionManager().isNearProtectedBed(player, brokenBlock.getLocation())) {
             event.setCancelled(true);
-            player.playSound(player, Sound.BLOCK_IRON_TRAPDOOR_CLOSE, 1, 1);
-            notify("<red>" + player.getName() + " <gray>tried to break a bed at <white>" + string(bed.getLocation()));
+            player.playSound(player, Sound.ENTITY_VILLAGER_NO, 1, 1);
+            notify("<red>" + player.getName() + " <gray>tried to break a block near bed at <white>" + string(brokenBlock.getLocation()));
             return;
         }
 
@@ -70,7 +66,7 @@ public class ProtectionListener implements Listener {
             }
 
             event.setCancelled(true);
-            player.playSound(player, Sound.BLOCK_IRON_TRAPDOOR_CLOSE, 1, 1);
+            player.playSound(player, Sound.ENTITY_VILLAGER_NO, 1, 1);
             notify("<red>" + player.getName() + " <gray>tried to break container at <white>" + string(event.getBlock().getLocation()));
             return;
         }
@@ -95,7 +91,7 @@ public class ProtectionListener implements Listener {
         }
 
         event.setCancelled(true);
-        player.playSound(player, Sound.BLOCK_IRON_TRAPDOOR_CLOSE, 1, 1);
+        player.playSound(player, Sound.ENTITY_VILLAGER_NO, 1, 1);
         notify("<red>" + player.getName() + " <gray>tried to open a container at <white>" + string(block.getLocation()));
         return;
     }
@@ -107,7 +103,25 @@ public class ProtectionListener implements Listener {
             return;
         }
         if (this.plugin.getGamemanager().isMidGame()) {
-            ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(event.getPlayer().getUniqueId());
+            Player player = event.getPlayer();
+            ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+
+            if (this.plugin.getProtectionManager().isNearProtectedBed(event.getPlayer(), event.getBlock().getLocation())) {
+                event.setCancelled(true);
+                player.playSound(player, Sound.ENTITY_VILLAGER_NO, 1, 1);
+                notify("<red>" + player.getName() + " <gray>tried to place a block near bed at <white>" + string(event.getBlock().getLocation()));
+                return;
+            }
+
+            if (event.getBlock().getType() == Material.HOPPER) {
+                if (!this.plugin.getProtectionManager().canBreakContainer(forceItemPlayer, event.getBlock().getRelative(BlockFace.UP))) {
+                    event.setCancelled(true);
+                    player.playSound(player, Sound.ENTITY_VILLAGER_NO, 1, 1);
+                    notify("<red>" + player.getName() + " <gray>tried to place a hopper below a container at <white>" + string(event.getBlock().getLocation()));
+                    return;
+                }
+            }
+
 
             if (event.getBlock().getState() instanceof Inventory) {
                 this.plugin.getProtectionManager().protectContainer(forceItemPlayer, event.getBlock());
@@ -115,34 +129,6 @@ public class ProtectionListener implements Listener {
             return;
         }
         event.setCancelled(true);
-    }
-
-    @EventHandler
-    public void onEntityExplode(EntityExplodeEvent event) {
-        if (this.plugin.getGamemanager().isMidGame()) {
-            event.blockList().removeIf(block -> {
-                boolean remove = !this.plugin.getProtectionManager().canBreakContainer(null, block);
-                if (remove) {
-                    notify("<red>explosion <gray>tried to break a container at <white>" + string(block.getLocation()) + " <gray>[nearby players: " + playersNearby(block.getLocation()) + "]");
-                }
-
-                return remove;
-            });
-        }
-    }
-
-    @EventHandler
-    public void onBlockExplode(EntityExplodeEvent event) {
-        if (this.plugin.getGamemanager().isMidGame()) {
-            event.blockList().removeIf(block -> {
-                boolean remove = !this.plugin.getProtectionManager().canBreakContainer(null, block);
-                if (remove) {
-                    notify("<red>explosion <gray>tried to break a container at <white>" + string(block.getLocation()) + " <gray>[nearby players: " + playersNearby(block.getLocation()) + "]");
-                }
-
-                return remove;
-            });
-        }
     }
 
     @EventHandler
@@ -160,11 +146,24 @@ public class ProtectionListener implements Listener {
     }
 
     @EventHandler
+    public void onEntityExplode(EntityExplodeEvent event) {
+        if (this.plugin.getGamemanager().isMidGame()) {
+            event.blockList().removeIf(block -> isBreakDisallowed("explosion", block));
+        }
+    }
+
+    @EventHandler
+    public void onBlockExplode(EntityExplodeEvent event) {
+        if (this.plugin.getGamemanager().isMidGame()) {
+            event.blockList().removeIf(block -> isBreakDisallowed("explosion", block));
+        }
+    }
+
+    @EventHandler
     public void onBurn(BlockBurnEvent e) {
         if (this.plugin.getGamemanager().isMidGame()) {
-            if (!this.plugin.getProtectionManager().canBreakContainer(null, e.getBlock())) {
+            if (isBreakDisallowed("fire", e.getBlock())) {
                 e.setCancelled(true);
-                notify("<red>fire <gray>tried to break a container at <white>" + string(e.getBlock().getLocation()) + " <gray>[nearby players: " + playersNearby(e.getBlock().getLocation()) + "]");
             }
         }
     }
@@ -218,6 +217,21 @@ public class ProtectionListener implements Listener {
         }
 
         return builder.substring(0, builder.length() - 2);
+    }
+
+    private boolean isBreakDisallowed(String cause, Block block) {
+        boolean disallow = !this.plugin.getProtectionManager().canBreakContainer(null, block);
+        if (disallow) {
+            notify("<red>" + cause + " <gray>tried to break a container at <white>" + string(block.getLocation()) + " <gray>[nearby players: " + playersNearby(block.getLocation()) + "]");
+        } else {
+            disallow = this.plugin.getProtectionManager().isNearProtectedBed(null, block.getLocation());
+
+            if (disallow) {
+                notify("<red>" + cause + " <gray>tried to break a block near bed at <white>" + string(block.getLocation()) + " <gray>[nearby players: " + playersNearby(block.getLocation()) + "]");
+            }
+        }
+
+        return disallow;
     }
 
 
