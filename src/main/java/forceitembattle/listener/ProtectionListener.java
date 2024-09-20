@@ -13,13 +13,11 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockBurnEvent;
-import org.bukkit.event.block.BlockPistonExtendEvent;
-import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.*;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.inventory.Inventory;
 
 import java.util.ArrayList;
@@ -146,23 +144,59 @@ public class ProtectionListener implements Listener {
     }
 
     @EventHandler
-    public void onEntityExplode(EntityExplodeEvent event) {
+    public void onBlockExplode(EntityExplodeEvent event) {
         if (this.plugin.getGamemanager().isMidGame()) {
-            event.blockList().removeIf(block -> isBreakDisallowed("explosion", block));
+            boolean removed = event.blockList().removeIf(this::isBlockProtected);
+
+            if (removed) {
+                notify("<red>explosion <gray>tried to break protected blocks at <white>" + string(event.getLocation()) + " <gray>[nearby: " + playersNearby(event.getLocation()) + "]");
+            }
         }
     }
 
     @EventHandler
-    public void onBlockExplode(EntityExplodeEvent event) {
+    public void onEntityExplode(BlockExplodeEvent event) {
         if (this.plugin.getGamemanager().isMidGame()) {
-            event.blockList().removeIf(block -> isBreakDisallowed("explosion", block));
+            boolean removed = event.blockList().removeIf(this::isBlockProtected);
+
+            if (removed) {
+                notify("<red>explosion <gray>tried to break protected blocks at <white>" + string(event.getBlock().getLocation()) + " <gray>[nearby: " + playersNearby(event.getBlock().getLocation()) + "]");
+            }
+        }
+    }
+
+    @EventHandler
+    public void onLavaSpread(BlockFromToEvent e) {
+        if (e.getBlock().getType() != Material.LAVA) {
+            return;
+        }
+
+        if (this.plugin.getGamemanager().isMidGame()) {
+            if (isBlockProtected(e.getToBlock())) {
+                e.setCancelled(true);
+            }
+        }
+    }
+
+    @EventHandler
+    public void onLavaPlace(PlayerBucketEmptyEvent e) {
+        if (e.getBucket() != Material.LAVA_BUCKET) {
+            return;
+        }
+
+        if (this.plugin.getGamemanager().isMidGame()) {
+            if (isBlockProtected(e.getBlockClicked())) {
+                e.setCancelled(true);
+                e.getPlayer().playSound(e.getPlayer(), Sound.ENTITY_VILLAGER_NO, 1, 1);
+                notify("<red>" + e.getPlayer().getName() + " <gray>tried to place a lava bucket near protected block at <white>" + string(e.getBlockClicked().getLocation()));
+            }
         }
     }
 
     @EventHandler
     public void onBurn(BlockBurnEvent e) {
         if (this.plugin.getGamemanager().isMidGame()) {
-            if (isBreakDisallowed("fire", e.getBlock())) {
+            if (isBlockProtected(e.getBlock())) {
                 e.setCancelled(true);
             }
         }
@@ -219,19 +253,9 @@ public class ProtectionListener implements Listener {
         return builder.substring(0, builder.length() - 2);
     }
 
-    private boolean isBreakDisallowed(String cause, Block block) {
-        boolean disallow = !this.plugin.getProtectionManager().canBreakContainer(null, block);
-        if (disallow) {
-            notify("<red>" + cause + " <gray>tried to break a container at <white>" + string(block.getLocation()) + " <gray>[nearby players: " + playersNearby(block.getLocation()) + "]");
-        } else {
-            disallow = this.plugin.getProtectionManager().isNearProtectedBed(null, block.getLocation());
-
-            if (disallow) {
-                notify("<red>" + cause + " <gray>tried to break a block near bed at <white>" + string(block.getLocation()) + " <gray>[nearby players: " + playersNearby(block.getLocation()) + "]");
-            }
-        }
-
-        return disallow;
+    private boolean isBlockProtected(Block block) {
+        return !this.plugin.getProtectionManager().canBreakContainer(null, block)
+                || this.plugin.getProtectionManager().isNearProtectedBed(null, block.getLocation());
     }
 
 

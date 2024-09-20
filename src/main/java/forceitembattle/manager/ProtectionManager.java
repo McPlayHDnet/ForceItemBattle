@@ -38,7 +38,7 @@ public class ProtectionManager {
             }
 
             // 4 blocks protection radius
-            if (p.getRespawnLocation().distanceSquared(atLocation) < 16) {
+            if (p.getRespawnLocation().distanceSquared(atLocation) < 9) {
                 return true;
             }
         }
