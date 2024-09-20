@@ -96,7 +96,7 @@ public class ItemDifficultiesManager {
     }
 
     public List<String> getDescriptionItemLines(Material material) {
-        List<String> lines = null;
+        List<String> lines = new ArrayList<>();
         if (this.isItemInDescriptionList(material)) {
             if(this.itemHasDescription(material)) {
                 lines = this.getDescriptionItems().get(material)
@@ -397,6 +397,7 @@ public class ItemDifficultiesManager {
                 Material.OMINOUS_BOTTLE,
                 Material.OMINOUS_TRIAL_KEY,
                 Material.PRIZE_POTTERY_SHERD,
+                Material.RECOVERY_COMPASS,
                 Material.REDSTONE_ORE,
                 Material.SKULL_POTTERY_SHERD,
                 Material.TIDE_ARMOR_TRIM_SMITHING_TEMPLATE,
@@ -574,6 +575,7 @@ public class ItemDifficultiesManager {
                 Material.COPPER_DOOR,
                 Material.COPPER_GRATE,
                 Material.COPPER_INGOT,
+                Material.COPPER_TRAPDOOR,
                 Material.CORNFLOWER,
                 Material.CRACKED_DEEPSLATE_BRICKS,
                 Material.CRACKED_DEEPSLATE_TILES,
@@ -1386,6 +1388,7 @@ public class ItemDifficultiesManager {
                 Material.EXPOSED_COPPER_BULB,
                 Material.EXPOSED_COPPER_DOOR,
                 Material.EXPOSED_COPPER_GRATE,
+                Material.EXPOSED_COPPER_TRAPDOOR,
                 Material.EXPOSED_CUT_COPPER,
                 Material.EXPOSED_CUT_COPPER_SLAB,
                 Material.EXPOSED_CUT_COPPER_STAIRS,
@@ -1460,6 +1463,7 @@ public class ItemDifficultiesManager {
                 Material.OXIDIZED_COPPER_BULB,
                 Material.OXIDIZED_COPPER_DOOR,
                 Material.OXIDIZED_COPPER_GRATE,
+                Material.OXIDIZED_COPPER_TRAPDOOR,
                 Material.OXIDIZED_CUT_COPPER,
                 Material.OXIDIZED_CUT_COPPER_SLAB,
                 Material.OXIDIZED_CUT_COPPER_STAIRS,
@@ -1477,6 +1481,7 @@ public class ItemDifficultiesManager {
                 Material.PURPUR_PILLAR,
                 Material.PURPUR_SLAB,
                 Material.PURPUR_STAIRS,
+                Material.RECOVERY_COMPASS,
                 Material.RED_CANDLE,
                 Material.RED_MUSHROOM_BLOCK,
                 Material.RED_SAND,
@@ -1526,6 +1531,7 @@ public class ItemDifficultiesManager {
                 Material.WAXED_COPPER_BULB,
                 Material.WAXED_COPPER_DOOR,
                 Material.WAXED_COPPER_GRATE,
+                Material.WAXED_COPPER_TRAPDOOR,
                 Material.WAXED_CUT_COPPER,
                 Material.WAXED_CUT_COPPER_SLAB,
                 Material.WAXED_CUT_COPPER_STAIRS,
@@ -1533,6 +1539,7 @@ public class ItemDifficultiesManager {
                 Material.WAXED_EXPOSED_COPPER_BULB,
                 Material.WAXED_EXPOSED_COPPER_DOOR,
                 Material.WAXED_EXPOSED_COPPER_GRATE,
+                Material.WAXED_EXPOSED_COPPER_TRAPDOOR,
                 Material.WAXED_EXPOSED_CUT_COPPER,
                 Material.WAXED_EXPOSED_CUT_COPPER_SLAB,
                 Material.WAXED_EXPOSED_CUT_COPPER_STAIRS,
@@ -1540,6 +1547,7 @@ public class ItemDifficultiesManager {
                 Material.WAXED_OXIDIZED_COPPER_BULB,
                 Material.WAXED_OXIDIZED_COPPER_DOOR,
                 Material.WAXED_OXIDIZED_COPPER_GRATE,
+                Material.WAXED_OXIDIZED_COPPER_TRAPDOOR,
                 Material.WAXED_OXIDIZED_CUT_COPPER,
                 Material.WAXED_OXIDIZED_CUT_COPPER_SLAB,
                 Material.WAXED_OXIDIZED_CUT_COPPER_STAIRS,
@@ -1547,6 +1555,7 @@ public class ItemDifficultiesManager {
                 Material.WAXED_WEATHERED_COPPER_BULB,
                 Material.WAXED_WEATHERED_COPPER_DOOR,
                 Material.WAXED_WEATHERED_COPPER_GRATE,
+                Material.WAXED_WEATHERED_COPPER_TRAPDOOR,
                 Material.WAXED_WEATHERED_CUT_COPPER,
                 Material.WAXED_WEATHERED_CUT_COPPER_SLAB,
                 Material.WAXED_WEATHERED_CUT_COPPER_STAIRS,
@@ -1554,8 +1563,9 @@ public class ItemDifficultiesManager {
                 Material.WEATHERED_COPPER_BULB,
                 Material.WEATHERED_COPPER_DOOR,
                 Material.WEATHERED_COPPER_GRATE,
+                Material.WEATHERED_COPPER_TRAPDOOR,
+                Material.WEATHERED_CUT_COPPER_SLAB,
                 Material.WEATHERED_CUT_COPPER_STAIRS,
-                Material.WAXED_WEATHERED_CUT_COPPER_STAIRS,
                 Material.WHITE_CANDLE,
                 Material.WHITE_SHULKER_BOX,
                 Material.WILD_ARMOR_TRIM_SMITHING_TEMPLATE,

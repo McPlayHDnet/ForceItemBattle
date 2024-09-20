@@ -102,13 +102,12 @@ public class PortalListener implements Listener {
             return;
         }
         Player player = event.getPlayer();
-        if (this.playerEndLocations.containsKey(player.getUniqueId())) {
-            player.teleport(this.playerEndLocations.get(player.getUniqueId()));
-            return;
-        }
 
         if (player.getWorld().getName().equals("world_the_end")) {
-            Location spawnLocation = player.getLocation();
+            if (this.playerEndLocations.containsKey(player.getUniqueId())) {
+                player.teleport(this.playerEndLocations.get(player.getUniqueId()));
+                return;
+            }
 
             int xOffset = random.nextBoolean() ? random.nextInt(10_001) + 5000 : -(random.nextInt(10_001) + 5000);
             int zOffset = random.nextBoolean() ? random.nextInt(10_001) + 5000 : -(random.nextInt(10_001) + 5000);
@@ -118,7 +117,7 @@ public class PortalListener implements Listener {
             newLocation.setY(player.getWorld().getHighestBlockYAt(newLocation) + 1);
             playerEndLocations.put(player.getUniqueId(), newLocation);
 
-            player.teleport(spawnLocation);
+            player.teleport(newLocation);
         }
     }
 }

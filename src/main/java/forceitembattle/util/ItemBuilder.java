@@ -86,6 +86,10 @@ public class ItemBuilder {
     }
 
     public ItemBuilder setLoreLegacy(List<String> loreLines) {
+        if (loreLines == null) {
+            loreLines = new ArrayList<>();
+        }
+
         ItemMeta itemMeta = getItemStack().getItemMeta();
         List<String> lore = new ArrayList<>();
         for (String line : loreLines) {
