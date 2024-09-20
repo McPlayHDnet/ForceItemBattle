@@ -10,6 +10,7 @@ import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.Container;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -18,7 +19,6 @@ import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
-import org.bukkit.inventory.Inventory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,7 +57,7 @@ public class ProtectionListener implements Listener {
             return;
         }
 
-        if (brokenBlock.getState() instanceof Inventory) {
+        if (brokenBlock.getState() instanceof Container) {
             if (this.plugin.getProtectionManager().canBreakContainer(forceItemPlayer, event.getBlock())) {
                 this.plugin.getProtectionManager().breakContainer(event.getBlock());
                 return;
@@ -100,33 +100,34 @@ public class ProtectionListener implements Listener {
             event.setCancelled(true);
             return;
         }
-        if (this.plugin.getGamemanager().isMidGame()) {
-            Player player = event.getPlayer();
-            ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-
-            if (this.plugin.getProtectionManager().isNearProtectedBed(event.getPlayer(), event.getBlock().getLocation())) {
-                event.setCancelled(true);
-                player.playSound(player, Sound.ENTITY_VILLAGER_NO, 1, 1);
-                notify("<red>" + player.getName() + " <gray>tried to place a block near bed at <white>" + string(event.getBlock().getLocation()));
-                return;
-            }
-
-            if (event.getBlock().getType() == Material.HOPPER) {
-                if (!this.plugin.getProtectionManager().canBreakContainer(forceItemPlayer, event.getBlock().getRelative(BlockFace.UP))) {
-                    event.setCancelled(true);
-                    player.playSound(player, Sound.ENTITY_VILLAGER_NO, 1, 1);
-                    notify("<red>" + player.getName() + " <gray>tried to place a hopper below a container at <white>" + string(event.getBlock().getLocation()));
-                    return;
-                }
-            }
-
-
-            if (event.getBlock().getState() instanceof Inventory) {
-                this.plugin.getProtectionManager().protectContainer(forceItemPlayer, event.getBlock());
-            }
+        if (!this.plugin.getGamemanager().isMidGame()) {
+            event.setCancelled(true);
             return;
         }
-        event.setCancelled(true);
+
+        Player player = event.getPlayer();
+        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+
+        if (this.plugin.getProtectionManager().isNearProtectedBed(event.getPlayer(), event.getBlock().getLocation())) {
+            event.setCancelled(true);
+            player.playSound(player, Sound.ENTITY_VILLAGER_NO, 1, 1);
+            notify("<red>" + player.getName() + " <gray>tried to place a block near bed at <white>" + string(event.getBlock().getLocation()));
+            return;
+        }
+
+        if (event.getBlock().getType() == Material.HOPPER) {
+            if (!this.plugin.getProtectionManager().canBreakContainer(forceItemPlayer, event.getBlock().getRelative(BlockFace.UP))) {
+                event.setCancelled(true);
+                player.playSound(player, Sound.ENTITY_VILLAGER_NO, 1, 1);
+                notify("<red>" + player.getName() + " <gray>tried to place a hopper below a container at <white>" + string(event.getBlock().getLocation()));
+                return;
+            }
+        }
+
+        if (event.getBlock().getState() instanceof Container) {
+            this.plugin.getProtectionManager().protectContainer(forceItemPlayer, event.getBlock());
+        }
+        return;
     }
 
     @EventHandler
