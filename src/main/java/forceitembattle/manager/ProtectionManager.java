@@ -33,12 +33,12 @@ public class ProtectionManager {
             }
 
             Player p = Bukkit.getPlayer(entry.getKey());
-            if (p == null) {
+            if (p == null || p.getRespawnLocation() == null) {
                 continue;
             }
 
             // 4 blocks protection radius
-            if (p.getBedLocation().distanceSquared(atLocation) < 16) {
+            if (p.getRespawnLocation().distanceSquared(atLocation) < 16) {
                 return true;
             }
         }
