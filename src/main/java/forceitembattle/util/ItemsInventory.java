@@ -213,13 +213,18 @@ public class ItemsInventory extends InventoryBuilder {
                         items++;
                     }
                 }
-
-
             }
 
         }
 
+        if (pages.isEmpty()) {
+            pages.put(0, new HashMap<>());
+        }
 
-        pages.get(currentPage).forEach(this::setItem);
+        if (pages.containsKey(currentPage)) {
+            pages.get(currentPage).forEach(this::setItem);
+        } else {
+            getPlayer().sendMessage("No items to display on this page.");
+        }
     }
 }

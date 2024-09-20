@@ -96,7 +96,7 @@ public class ItemDifficultiesManager {
     }
 
     public List<String> getDescriptionItemLines(Material material) {
-        List<String> lines = null;
+        List<String> lines = new ArrayList<>();
         if (this.isItemInDescriptionList(material)) {
             if(this.itemHasDescription(material)) {
                 lines = this.getDescriptionItems().get(material)
