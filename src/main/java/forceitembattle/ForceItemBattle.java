@@ -248,6 +248,7 @@ public final class ForceItemBattle extends JavaPlugin {
                 new SettingsListener(this),
                 new RecipeListener(this),
                 new PvPListener(this),
+                new ProtectionListener(this),
                 new ClickableItemsListener(this),
                 new ItemsListener(this),
                 new PortalListener(this),
