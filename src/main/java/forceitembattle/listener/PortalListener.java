@@ -82,7 +82,7 @@ public class PortalListener implements Listener {
 
         for (TeleporterLocation teleporterLocation : playerTeleporterLocations.computeIfAbsent(player.getUniqueId(), k -> new ArrayList<>())) {
             if (teleporterLocation.isClose(playerLocation)) {
-                return teleporterLocation.portalLocation;
+                return teleporterLocation.destinationLocation;
             }
         }
         return null;
