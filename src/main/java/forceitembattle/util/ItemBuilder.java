@@ -101,7 +101,15 @@ public class ItemBuilder {
         return this;
     }
 
+    public ItemBuilder setCustomModelData(int customModelData) {
+        ItemMeta itemMeta = getItemStack().getItemMeta();
+        itemMeta.setCustomModelData(customModelData);
+        setItemMeta(itemMeta);
+        return this;
+    }
+
     public ItemBuilder setDisplayName(String displayName) {
+        if (displayName == null) return this;
         ItemMeta itemMeta = getItemStack().getItemMeta();
         itemMeta.displayName(ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize(displayName).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE));
         setItemMeta(itemMeta);

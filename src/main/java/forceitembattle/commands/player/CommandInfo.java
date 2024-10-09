@@ -2,16 +2,17 @@ package forceitembattle.commands.player;
 
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
+import forceitembattle.util.CustomMaterial;
 import forceitembattle.util.DescriptionItem;
 import forceitembattle.util.ForceItemPlayer;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+
+import static forceitembattle.util.RecipeInventory.CUSTOM_MATERIALS;
+import static forceitembattle.util.RecipeInventory.ID_TO_MATERIAL;
 
 public class CommandInfo extends CustomCommand implements CustomTabCompleter {
 
@@ -26,7 +27,7 @@ public class CommandInfo extends CustomCommand implements CustomTabCompleter {
         ItemStack item = player.getInventory().getItemInMainHand();
 
         if (args.length == 1) {
-            Material material = Material.matchMaterial(args[0]);
+            Material material = this.matchMaterial(args[0]);
             if (material == null) {
                 player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>Invalid item name"));
                 return;
@@ -64,8 +65,25 @@ public class CommandInfo extends CustomCommand implements CustomTabCompleter {
         this.plugin.getRecipeManager().createRecipeViewer(player, item);
     }
 
+    private Material matchMaterial(String input) {
+        Material material = ID_TO_MATERIAL.get(input.toLowerCase());
+
+        if (material == null) {
+            material = Material.matchMaterial(input.toLowerCase());
+        }
+
+        return material;
+    }
+
     private static final List<String> MATERIALS = Arrays.stream(Material.values())
-            .map(material -> material.name().toLowerCase())
+            .map(material -> {
+                CustomMaterial customMaterial = CUSTOM_MATERIALS.get(material);
+                if (customMaterial != null) {
+                    return customMaterial.id();
+                } else {
+                    return material.name().toLowerCase();
+                }
+            })
             .sorted()
             .toList();
 
