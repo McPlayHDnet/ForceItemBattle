@@ -12,6 +12,7 @@ import org.bukkit.generator.structure.Structure;
 import org.bukkit.generator.structure.StructureType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.MerchantRecipe;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.*;
@@ -56,7 +57,7 @@ public class WanderingTraderTimer {
         wanderingTrader.setInvulnerable(true);
         wanderingTrader.setAI(false);
         wanderingTrader.setGravity(true);
-        List<MerchantRecipe> merchantRecipes = wanderingTrader.getRecipes();
+        List<MerchantRecipe> merchantRecipes = new ArrayList<>(wanderingTrader.getRecipes());
 
         merchantRecipes.forEach(merchantReciper -> {
             List<ItemStack> ingredients = merchantReciper.getIngredients();
@@ -64,6 +65,12 @@ public class WanderingTraderTimer {
             merchantReciper.setIngredients(ingredients);
             merchantReciper.setMaxUses(Integer.MAX_VALUE);
         });
+        ItemStack wheelOfFortune = new ItemBuilder(Material.NETHER_STAR).setDisplayName("<yellow><b>Wheel of Fortune").setCustomModelData(7).getItemStack();
+
+        MerchantRecipe merchantRecipe = new MerchantRecipe(wheelOfFortune, 1);
+        merchantRecipe.addIngredient(new ItemStack(Material.EMERALD, 1));
+        merchantRecipes.add(merchantRecipe);
+
         wanderingTrader.setRecipes(merchantRecipes);
 
         ForceItemBattle.getInstance().getGamemanager().forceItemPlayerMap().values().forEach(players -> {

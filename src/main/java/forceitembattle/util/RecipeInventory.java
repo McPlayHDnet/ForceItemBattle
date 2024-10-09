@@ -9,8 +9,7 @@ import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class RecipeInventory extends InventoryBuilder {
 
@@ -33,7 +32,22 @@ public class RecipeInventory extends InventoryBuilder {
     );
 
     private static String materialName(Material type) {
+        CustomMaterial customMaterial = CUSTOM_MATERIALS.get(type);
+        if (customMaterial != null) {
+            return customMaterial.containerName();
+        }
         return WordUtils.capitalize(type.name().replace("_", " ").toLowerCase());
+    }
+
+    public static final Map<Material, CustomMaterial> CUSTOM_MATERIALS = Map.of(
+            Material.KNOWLEDGE_BOOK, new CustomMaterial("antimatter_locator", "Antimatter Locator", "<dark_gray>» <dark_purple>Antimatter Locator"),
+            Material.WITHER_ROSE, new CustomMaterial("trial_locator", "Trial Locator", "<dark_gray>» <gold>Trial Locator")
+    );
+
+    public static final Map<String, Material> ID_TO_MATERIAL = new HashMap<>();
+
+    static {
+        CUSTOM_MATERIALS.forEach((material, customMaterial) -> ID_TO_MATERIAL.put(customMaterial.id(), material));
     }
 
     public RecipeInventory(ForceItemBattle forceItemBattle, RecipeViewer recipeViewer, Player player) {

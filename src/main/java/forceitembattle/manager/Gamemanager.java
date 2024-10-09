@@ -20,6 +20,8 @@ import org.bukkit.inventory.ItemStack;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static forceitembattle.util.RecipeInventory.CUSTOM_MATERIALS;
+
 public class Gamemanager {
 
     private final ForceItemBattle forceItemBattle;
@@ -86,6 +88,10 @@ public class Gamemanager {
     }
 
     public String getMaterialName(Material material) {
+        CustomMaterial customMaterial = CUSTOM_MATERIALS.get(material);
+        if (customMaterial != null) {
+            return customMaterial.containerName();
+        }
         return WordUtils.capitalizeFully(material.name().replace("_", " "));
     }
 
