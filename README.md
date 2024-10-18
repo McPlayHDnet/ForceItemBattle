@@ -1,11 +1,9 @@
 
 # ForceItemBattle
 
-ForceItemBattle is a gamemode where players compete to collect specific items as quickly as possible. Here's how it works:
+ForceItemBattle is a gamemode where players compete to collect specific items as quickly as possible. When the game starts, each player is assigned a random item to find. Once a player collects their assigned item, they immediately receive a new one to search for. The goal is to collect as many items as possible within the time limit. The player with the most items found when time runs out wins the battle.
 
-When the game starts, every player gets a random item assigned. The goal is to collect as many items as possible in a specified  time. The player who has found the most items at the end of the time limit wins the battle.
-
-Recommended Minecraft Version: 1.20.4
+Recommended Minecraft Version: 1.21
 
 
 ## Commands & Settings
@@ -25,6 +23,8 @@ Recommended Minecraft Version: 1.20.4
 | `/stats <player>` | `get stats of any player` |
 | `/top <category>` | `get leaderboard of defined category` |
 | `/show <item>` | `displays the item in front of player` |
+| `/shout` | `send global message when team chat is enabled` |
+| `/spectate` | `toggle gamemode spectator after round has ended` |
 
 If you want to have item descriptions (useful in case items don't have a crafting recipe), you can use [this config](https://github.com/btlmt-de/FIB).
 
@@ -37,6 +37,7 @@ If you want to have item descriptions (useful in case items don't have a craftin
 | `/stats reset <player>` | `reset all stats of a player` |
 | `/settings` | `pull up the settings menu` |
 | `/stoptimer` | `instantly end the game` |
+| `/forceteam <team name> <player 1> <player 2>` | `force a team before round start` |
 
 ### Settings
 | Command | Description     |
@@ -44,7 +45,8 @@ If you want to have item descriptions (useful in case items don't have a craftin
 | `PvP` | `enable / disable pvp` |
 | `Food` | `enable / disable food (false -> no food needed)` |
 | `Faster Plants Growth & Decay` | `plants (leaves, farmland) grow / decay faster when active` |
-| `Teams` | `enable / disable team mode (currently not functional, rework in progress)` |
+| `Teams` | `enable / disable team mode` |
+| `Team Chat` | `enable / disable team chat` |
 | `KeepInventory` | `don't lose inventory on death when active` |
 | `Backpack` | `enable / disable additional storage (size adjustable in presets)` |
 | `Stats` | `enable / disable if stats should count for round` |
