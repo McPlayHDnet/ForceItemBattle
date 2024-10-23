@@ -31,6 +31,7 @@ public enum GameSetting {
             "",
             ""
     ), "eventModifiers", false, Material.CAKE),
+    HARDER_TRACKERS("Harder trackers", List.of("", "<gray>Make tracker recipes harder<gray>.", ""), "hardTrackers", false, Material.KNOWLEDGE_BOOK),
 
     ;
 

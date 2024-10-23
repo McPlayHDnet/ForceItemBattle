@@ -128,6 +128,8 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
     }
 
     private void startGame(int timeMinutes, int jokersAmount) {
+        this.plugin.initRecipes();
+
         this.plugin.getPositionManager().clearPositions();
         // Fixed 5 / 15 minutes switch times.
         if (timeMinutes >= 50) {

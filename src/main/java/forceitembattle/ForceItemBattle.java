@@ -255,32 +255,59 @@ public final class ForceItemBattle extends JavaPlugin {
                 new AchievementListener(this)
         );
 
-        this.initRecipes();
     }
 
-    private void initRecipes() {
+    public void initRecipes() {
+        final boolean easyRecipes = !this.settings.isSettingEnabled(GameSetting.HARDER_TRACKERS);
+
         NamespacedKey antimatterKey = new NamespacedKey("fib", "antimatter_locator");
         ShapedRecipe antimatterRecipe = new ShapedRecipe(antimatterKey, new ItemBuilder(Material.KNOWLEDGE_BOOK).setDisplayName("<dark_gray>» <dark_purple>Antimatter Locator").getItemStack());
-        antimatterRecipe.shape(
-                " N ",
-                "GQG",
-                " N "
-        );
-        antimatterRecipe.setIngredient('N', Material.NETHER_BRICK);
-        antimatterRecipe.setIngredient('G', Material.GLOWSTONE_DUST);
-        antimatterRecipe.setIngredient('Q', Material.QUARTZ);
+        if (easyRecipes) {
+            antimatterRecipe.shape(
+                    " N ",
+                    "GQG",
+                    " N "
+            );
+            antimatterRecipe.setIngredient('N', Material.NETHER_BRICK);
+            antimatterRecipe.setIngredient('G', Material.GLOWSTONE_DUST);
+            antimatterRecipe.setIngredient('Q', Material.QUARTZ);
+        } else {
+            antimatterRecipe.shape(
+                    "BGB",
+                    "QEQ",
+                    "BGB"
+            );
+            antimatterRecipe.setIngredient('B', Material.NETHER_BRICK);
+            antimatterRecipe.setIngredient('E', Material.ENDER_EYE);
+            antimatterRecipe.setIngredient('G', Material.GLOWSTONE_DUST);
+            antimatterRecipe.setIngredient('Q', Material.QUARTZ);
+        }
 
         NamespacedKey chambersKey = new NamespacedKey("fib", "chambers_locator");
         ShapedRecipe chambersRecipe = new ShapedRecipe(chambersKey, new ItemBuilder(Material.WITHER_ROSE).setDisplayName("<dark_gray>» <gold>Trial Locator").getItemStack());
-        chambersRecipe.shape(
-                "BGB",
-                "GCG",
-                "AAA"
-        );
-        chambersRecipe.setIngredient('B', Material.CUT_COPPER);
-        chambersRecipe.setIngredient('G', Material.GLASS);
-        chambersRecipe.setIngredient('C', Material.COMPASS);
-        chambersRecipe.setIngredient('A', Material.GOLD_INGOT);
+        if (easyRecipes) {
+            chambersRecipe.shape(
+                    "BGB",
+                    "GCG",
+                    "AAA"
+            );
+            chambersRecipe.setIngredient('B', Material.CUT_COPPER);
+            chambersRecipe.setIngredient('G', Material.GLASS);
+            chambersRecipe.setIngredient('C', Material.COMPASS);
+            chambersRecipe.setIngredient('A', Material.GOLD_INGOT);
+        } else {
+            chambersRecipe.shape(
+                    "OKO",
+                    "GCI",
+                    "ODO"
+            );
+            chambersRecipe.setIngredient('O', Material.OBSIDIAN);
+            chambersRecipe.setIngredient('C', Material.COMPASS);
+            chambersRecipe.setIngredient('K', Material.COPPER_INGOT);
+            chambersRecipe.setIngredient('I', Material.IRON_INGOT);
+            chambersRecipe.setIngredient('G', Material.GOLD_INGOT);
+            chambersRecipe.setIngredient('D', Material.DIAMOND);
+        }
 
         Bukkit.addRecipe(antimatterRecipe);
         Bukkit.addRecipe(chambersRecipe);
