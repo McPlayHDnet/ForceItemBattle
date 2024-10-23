@@ -42,6 +42,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 @RequiredArgsConstructor
 public class Listeners implements Listener {
@@ -260,51 +261,58 @@ public class Listeners implements Listener {
         foundNextItemEvent.setBackToBack(true);
         foundNextItemEvent.setSkipped(false);
 
-
-            int totalItemsInPool = this.plugin.getItemDifficultiesManager().getAvailableItems().size();
-            int itemsInInventory = Arrays.stream(player.getInventory().getContents())
-                    .filter(item -> item != null && !item.getType().isAir() && item.getType() != Material.BARRIER && item.getType() != Material.BUNDLE)
-                    .map(ItemStack::getType)
-                    .toList().size();
-            Inventory backpack = this.plugin.getBackpack().getBackpackForPlayer(player);
-            int itemsInBackpack = Arrays.stream(backpack.getContents()).filter(item -> item != null && !item.getType().isAir() && item.getType() != Material.BARRIER && item.getType() != Material.BUNDLE).map(ItemStack::getType).toList().size();
-            int itemsInShulkerPlayer = Arrays.stream(player.getInventory().getContents())
-                    .filter(item -> item != null && !item.getType().isAir() && item.getType().name().contains("SHULKER_BOX"))
-                    .mapToInt(this::countItemsInShulkerBox)
-                    .sum();
-            int itemsInShulkerBackpack = Arrays.stream(backpack.getContents())
-                    .filter(item -> item != null && !item.getType().isAir() && item.getType().name().contains("SHULKER_BOX"))
-                    .mapToInt(this::countItemsInShulkerBox)
-                    .sum();
-            double probabilityDouble = Math.pow(((double) (itemsInInventory + itemsInBackpack + itemsInShulkerPlayer + itemsInShulkerBackpack) / totalItemsInPool), forceItemPlayer.backToBackStreak());
-            DecimalFormat decimalFormat = new DecimalFormat("#.##");
+        String probability = getItemProbability(player, forceItemPlayer);
 
         if (!this.plugin.getSettings().isSettingEnabled(GameSetting.EVENT)) {
             Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize(
                     "<green>" + player.getName() + " <gray>was lucky to already own <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, foundItem.getType()) +
-                            " <gold>" + this.plugin.getGamemanager().getMaterialName(foundItem.getType()) + " <dark_gray>» <aqua>" + decimalFormat.format(probabilityDouble * 100) + "%"));
+                            " <gold>" + this.plugin.getGamemanager().getMaterialName(foundItem.getType()) + " <dark_gray>» <aqua>" + probability));
         } else {
             if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
                 forceItemPlayer.currentTeam().getPlayers().forEach(team -> {
                     team.player().sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
                             "<green>" + player.getName() + " <gray>was lucky to already own <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, foundItem.getType()) +
-                                    " <gold>" + this.plugin.getGamemanager().getMaterialName(foundItem.getType()) + " <dark_gray>» <aqua>" + decimalFormat.format(probabilityDouble * 100) + "%"));
+                                    " <gold>" + this.plugin.getGamemanager().getMaterialName(foundItem.getType()) + " <dark_gray>» <aqua>" + probability));
                 });
             } else {
                 player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
                         "<green>" + player.getName() + " <gray>was lucky to already own <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, foundItem.getType()) +
-                                " <gold>" + this.plugin.getGamemanager().getMaterialName(foundItem.getType()) + " <dark_gray>» <aqua>" + decimalFormat.format(probabilityDouble * 100) + "%"));
+                                " <gold>" + this.plugin.getGamemanager().getMaterialName(foundItem.getType()) + " <dark_gray>» <aqua>" + probability));
             }
         }
 
         Bukkit.getPluginManager().callEvent(foundNextItemEvent);
     }
 
+    private String getItemProbability(Player player, ForceItemPlayer forceItemPlayer) {
+        int totalItemsInPool = this.plugin.getItemDifficultiesManager().getAvailableItems().size();
+        int itemsInInventory = Arrays.stream(player.getInventory().getContents())
+                .filter(item -> item != null && !Gamemanager.isJoker(item) && !Gamemanager.isBackpack(item))
+                .map(ItemStack::getType)
+                .toList().size();
+        Inventory backpack = this.plugin.getBackpack().getBackpackForPlayer(player);
+        int itemsInBackpack = Arrays.stream(backpack.getContents())
+                .filter(item -> item != null && !Gamemanager.isJoker(item) && !Gamemanager.isBackpack(item))
+                .map(ItemStack::getType)
+                .toList().size();
+
+        int itemsInShulkers = Stream.concat(
+                        Arrays.stream(player.getInventory().getContents()),
+                        Arrays.stream(backpack.getContents())
+                ).filter(item -> item != null && Tag.SHULKER_BOXES.isTagged(item.getType()))
+                .mapToInt(this::countItemsInShulkerBox)
+                .sum();
+        double probabilityDouble = Math.pow(((double) (itemsInInventory + itemsInBackpack + itemsInShulkers) / totalItemsInPool), forceItemPlayer.backToBackStreak());
+        DecimalFormat decimalFormat = new DecimalFormat("#.##");
+
+        return decimalFormat.format(probabilityDouble * 100) + "%";
+    }
+
     private int countItemsInShulkerBox(ItemStack shulkerBox) {
         BlockStateMeta blockStateMeta = (BlockStateMeta) shulkerBox.getItemMeta();
-        if(blockStateMeta != null && blockStateMeta.getBlockState() instanceof ShulkerBox box) {
+        if (blockStateMeta != null && blockStateMeta.getBlockState() instanceof ShulkerBox box) {
             return (int) Arrays.stream(box.getInventory().getContents())
-                    .filter(item -> item != null && !item.getType().isAir() && item.getType() != Material.BARRIER && item.getType() != Material.BUNDLE)
+                    .filter(item -> item != null && !Gamemanager.isJoker(item) && !Gamemanager.isBackpack(item))
                     .count();
         }
         return 0;
@@ -313,6 +321,10 @@ public class Listeners implements Listener {
     public static boolean hasItemInInventory(Inventory inventory, Material targetMaterial) {
         for (ItemStack inventoryItem : inventory.getContents()) {
             if (inventoryItem == null) {
+                continue;
+            }
+
+            if (Gamemanager.isBackpack(inventoryItem) || Gamemanager.isJoker(inventoryItem)) {
                 continue;
             }
 
@@ -363,7 +375,7 @@ public class Listeners implements Listener {
 
         if (movedItem != null) {
             if (!event.getView().getTitle().equals("§8» §3Settings §8● §7Menu")) {
-                if (/*Gamemanager.isJoker(movedItem) || */movedItem.getType() == Material.BUNDLE) {
+                if (Gamemanager.isBackpack(movedItem)) {
                     event.setCancelled(true);
                     return;
                 }
@@ -424,22 +436,12 @@ public class Listeners implements Listener {
     }
 
     @EventHandler
-    public void onConsume(PlayerItemConsumeEvent playerItemConsumeEvent) {
-        Player player = playerItemConsumeEvent.getPlayer();
+    public void onOffHand(PlayerSwapHandItemsEvent event) {
+        if (Gamemanager.isBackpack(event.getMainHandItem()) ||
+                Gamemanager.isBackpack(event.getOffHandItem())) {
 
-        if (!this.plugin.getGamemanager().isMidGame()) {
-            return;
+            event.setCancelled(true);
         }
-    }
-
-    @EventHandler
-    public void onOffHand(PlayerSwapHandItemsEvent playerSwapHandItemsEvent) {
-        if (playerSwapHandItemsEvent.getMainHandItem() == null || playerSwapHandItemsEvent.getOffHandItem() == null) return;
-        if ( //Gamemanager.isJoker(playerSwapHandItemsEvent.getMainHandItem()) ||
-                playerSwapHandItemsEvent.getMainHandItem().getType() == Material.BUNDLE ||
-                // Gamemanager.isJoker(playerSwapHandItemsEvent.getOffHandItem()) ||
-                playerSwapHandItemsEvent.getOffHandItem().getType() == Material.BUNDLE)
-            playerSwapHandItemsEvent.setCancelled(true);
     }
 
     @EventHandler
@@ -494,7 +496,7 @@ public class Listeners implements Listener {
             player.performCommand("fixskips -silent");
         }
 
-        player.getInventory().setItem(8, new ItemBuilder(Material.BUNDLE).setDisplayName("<dark_gray>» <yellow>Backpack").getItemStack());
+        player.getInventory().setItem(8, Gamemanager.createBackpack());
 
     }
 
@@ -534,7 +536,7 @@ public class Listeners implements Listener {
     @EventHandler
     public void onDrop(PlayerDropItemEvent event) {
         if (Gamemanager.isJoker(event.getItemDrop().getItemStack())
-                || event.getItemDrop().getItemStack().getType() == Material.BUNDLE) {
+                || Gamemanager.isBackpack(event.getItemDrop().getItemStack())) {
 
             event.setCancelled(true);
         }

@@ -1,5 +1,6 @@
 package forceitembattle.manager;
 
+import de.tr7zw.nbtapi.NBT;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.stats.SeasonalStats;
 import forceitembattle.manager.stats.StatsManager;
@@ -372,7 +373,20 @@ public class Gamemanager {
                 .getItemStack();
     }
 
-    public static boolean isJoker(Material material) {
+    public static ItemStack createBackpack() {
+        ItemStack itemStack = new ItemBuilder(Material.BUNDLE)
+                .setDisplayName("<dark_gray>» <yellow>Backpack")
+                .getItemStack();
+
+        NBT.modify(itemStack, nbt -> {
+            nbt.setBoolean("backpack", true);
+        });
+
+        return itemStack;
+    }
+
+    private static boolean isJoker(Material material) {
+        // TODO change to also use NBT maybe
         return material == JOKER_MATERIAL;
     }
 
@@ -380,11 +394,13 @@ public class Gamemanager {
         return isJoker(itemStack.getType());
     }
 
-    public static boolean isBackpack(Material material) {
-        return material == Material.BUNDLE;
-    }
-
     public static boolean isBackpack(ItemStack itemStack) {
-        return isBackpack(itemStack.getType());
+        if (itemStack.getType() != Material.BUNDLE) {
+            return false;
+        }
+
+        return NBT.get(itemStack, nbt -> {
+            return nbt.hasTag("backpack");
+        });
     }
 }

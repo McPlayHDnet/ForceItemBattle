@@ -17,10 +17,18 @@ java {
     toolchain.languageVersion = JavaLanguageVersion.of(21)
 }
 
+repositories {
+    maven {
+        name = "CodeMC"
+        url = uri("https://repo.codemc.io/repository/maven-public/")
+    }
+}
+
 dependencies {
     paperweight.paperDevBundle("1.21-R0.1-SNAPSHOT")
     // paperweight.foliaDevBundle("1.20.4-R0.1-SNAPSHOT")
     // paperweight.devBundle("com.example.paperfork", "1.20.4-R0.1-SNAPSHOT")
+    compileOnly("de.tr7zw", "item-nbt-api-plugin", "2.13.3-SNAPSHOT")
 }
 
 tasks {

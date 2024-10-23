@@ -1,9 +1,9 @@
 package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.manager.Gamemanager;
 import forceitembattle.settings.GameSetting;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 
@@ -47,7 +47,7 @@ public class Backpack {
                         null,
                         this.forceItemBattle.getConfig().getInt("settings.backpackRows") * 9,
                         this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold>Backpack <dark_gray>● <gray>Menu")));
-        player.getInventory().setItem(8, new ItemBuilder(Material.BUNDLE).setDisplayName("<dark_gray>» <yellow>Backpack").getItemStack());
+        player.getInventory().setItem(8, Gamemanager.createBackpack());
     }
 
     public void createTeamBackpack(Team team, Player player) {
@@ -56,7 +56,7 @@ public class Backpack {
                         null,
                         this.forceItemBattle.getConfig().getInt("settings.backpackRows") * 9,
                         this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold>Backpack <dark_gray>● <gray>Menu")));
-        player.getInventory().setItem(8, new ItemBuilder(Material.BUNDLE).setDisplayName("<dark_gray>» <yellow>Backpack").getItemStack());
+        player.getInventory().setItem(8, Gamemanager.createBackpack());
     }
 
     public void openPlayerBackpack(Player player) {

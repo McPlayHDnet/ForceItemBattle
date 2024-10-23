@@ -96,7 +96,7 @@ public class ProtectionListener implements Listener {
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
-        if (Gamemanager.isJoker(event.getBlock().getType())) {
+        if (Gamemanager.isJoker(event.getItemInHand())) {
             event.setCancelled(true);
             return;
         }
