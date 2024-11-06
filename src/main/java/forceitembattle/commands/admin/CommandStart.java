@@ -102,6 +102,11 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
                     );
                 }
 
+                if (seconds == 10) {
+                    showTeams();
+                    return;
+                }
+
                 String subtitle = getSubtitle();
                 Title.Times times = Title.Times.times(Duration.ofMillis(0), Duration.ofMillis(1000), Duration.ofMillis(500));
                 Title startingTitle = Title.title(plugin.getGamemanager().getMiniMessage().deserialize("<green>" + seconds), plugin.getGamemanager().getMiniMessage().deserialize(subtitle), times);
@@ -110,12 +115,37 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
                 );
             }
 
+            private void showTeams() {
+                if (!plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+                    return;
+                }
+
+                Bukkit.getOnlinePlayers().forEach(player -> {
+                    ForceItemPlayer forceItemPlayer = plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+                    if (forceItemPlayer.isSpectator()) {
+                        return;
+                    }
+
+                    for (ForceItemPlayer teammate : forceItemPlayer.currentTeam().getPlayers()) {
+                        if (teammate == forceItemPlayer) continue;
+
+                        Component subTitle = plugin.getGamemanager().getMiniMessage()
+                                .deserialize("<yellow>Team " + teammate.currentTeam().getTeamDisplay() + " <gray>| <green>" + forceItemPlayer.player().getName());
+
+                        Title.Times times = Title.Times.times(Duration.ofMillis(600), Duration.ofMillis(2000), Duration.ofMillis(600));
+                        Title title = Title.title(Component.empty(), subTitle, times);
+
+                        teammate.player().showTitle(title);
+                    }
+                });
+            }
+
             private String getSubtitle() {
                 String subTitle = "";
 
                 switch (seconds) {
-                    case 9, 8 -> subTitle = "<white>» <gold>" + (plugin.getTimer().getTimeLeft() / 60) + " minutes <white>«";
-                    case 7, 6 -> subTitle = "<white>» <gold>" + jokersAmount + " Joker <white>«";
+                    case 8 -> subTitle = "<white>» <gold>" + (plugin.getTimer().getTimeLeft() / 60) + " minutes <white>«";
+                    case 6 -> subTitle = "<white>» <gold>" + jokersAmount + " Jokers <white>«";
                     case 5 -> subTitle = "<white>» <gold>/info & /infowiki <white>«";
                     case 4 -> subTitle = "<white>» <gold>/spawn & /bed <white>«";
                     case 3, 2 -> subTitle = "<white>» <gold>Collect as many items as possible <white>«";
@@ -180,16 +210,6 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
             player.getInventory().clear();
 
             if(this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-                for(ForceItemPlayer teamPlayers : forceItemPlayer.currentTeam().getPlayers()) {
-                    if(teamPlayers == forceItemPlayer) continue;
-
-                    Component subTitle = this.plugin.getGamemanager().getMiniMessage().deserialize("<yellow>Team " + teamPlayers.currentTeam().getTeamDisplay() + " <gray>| <green>" + forceItemPlayer.player().getName());
-
-                    Title.Times times = Title.Times.times(Duration.ofMillis(600), Duration.ofMillis(2000), Duration.ofMillis(600));
-                    Title title = Title.title(Component.empty(), subTitle, times);
-
-                    teamPlayers.player().showTitle(title);
-                }
 
                 this.plugin.getTeamManager().getTeams().forEach(teams -> {
                     teams.setRemainingJokers(jokersAmount);

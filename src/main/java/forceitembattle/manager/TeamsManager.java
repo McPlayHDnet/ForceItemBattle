@@ -47,6 +47,7 @@ public class TeamsManager {
 
             for (ForceItemPlayer player : teamPlayers) {
                 player.setCurrentTeam(randomTeam);
+                player.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>[" + randomTeam.getTeamDisplay() + "] <white>" + player.player().getName()));
             }
         }
 
@@ -55,6 +56,7 @@ public class TeamsManager {
             this.teams.add(singlePlayerTeam);
 
             player.setCurrentTeam(singlePlayerTeam);
+            player.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>[" + singlePlayerTeam.getTeamDisplay() + "] <white>" + player.player().getName()));
         }
     }
 
