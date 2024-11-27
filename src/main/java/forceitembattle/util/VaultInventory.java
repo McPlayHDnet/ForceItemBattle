@@ -103,5 +103,7 @@ public class VaultInventory extends InventoryBuilder {
                 }
             }.runTaskTimer(this.plugin, 0L, 1L);
         });
+
+        this.addClickHandler(inventoryClickEvent -> inventoryClickEvent.setCancelled(true));
     }
 }
