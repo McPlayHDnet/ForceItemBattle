@@ -13,16 +13,14 @@ import forceitembattle.settings.preset.InvSettingsPresets;
 import forceitembattle.util.*;
 import io.papermc.paper.advancement.AdvancementDisplay;
 import io.papermc.paper.event.player.AsyncChatEvent;
+import io.papermc.paper.event.player.PlayerTradeEvent;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.*;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.block.ShulkerBox;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityPickupItemEvent;
@@ -121,6 +119,22 @@ public class Listeners implements Listener {
                 playerMoveEvent.setTo(newLocation);
             }
             return;
+        }
+    }
+
+    @EventHandler
+    public void onTrade(PlayerTradeEvent playerTradeEvent) {
+        Player player = playerTradeEvent.getPlayer();
+        if (playerTradeEvent.getVillager() instanceof WanderingTrader wanderingTrader) {
+            if (playerTradeEvent.getTrade().getResult().getType() != Material.NETHER_STAR) return;
+
+            Boolean canBuy = this.plugin.getWanderingTraderTimer().getCanBuyWheel().get(player.getUniqueId());
+            if (canBuy == null || canBuy) {
+                this.plugin.getWanderingTraderTimer().getCanBuyWheel().put(player.getUniqueId(), Boolean.FALSE);
+                player.closeInventory();
+            } else {
+                playerTradeEvent.setCancelled(true);
+            }
         }
     }
 

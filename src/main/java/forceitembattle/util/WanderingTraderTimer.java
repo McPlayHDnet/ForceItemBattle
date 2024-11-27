@@ -23,9 +23,13 @@ public class WanderingTraderTimer {
 
     private int randomAfterStartSpawnTime, timer;
 
+    private final Map<UUID, Boolean> canBuyWheel;
+
     public WanderingTraderTimer() {
         this.randomAfterStartSpawnTime = (new Random().nextInt(4) + 7) * 60; //random number between 7 and 10 -> [7, 10]
         this.timer += this.randomAfterStartSpawnTime + 1;
+
+        this.canBuyWheel = new HashMap<>();
     }
 
     public void startTimer() {
@@ -67,13 +71,16 @@ public class WanderingTraderTimer {
         });
         ItemStack wheelOfFortune = new ItemBuilder(Material.NETHER_STAR).setDisplayName("<yellow><b>Wheel of Fortune").setCustomModelData(7).getItemStack();
 
-        MerchantRecipe merchantRecipe = new MerchantRecipe(wheelOfFortune, 1);
+        MerchantRecipe merchantRecipe = new MerchantRecipe(wheelOfFortune, Integer.MAX_VALUE);
         merchantRecipe.addIngredient(new ItemStack(Material.EMERALD, 1));
         merchantRecipes.add(merchantRecipe);
 
         wanderingTrader.setRecipes(merchantRecipes);
 
+        this.canBuyWheel.clear();
         ForceItemBattle.getInstance().getGamemanager().forceItemPlayerMap().values().forEach(players -> {
+            this.canBuyWheel.put(players.player().getUniqueId(), Boolean.TRUE);
+
             players.player().sendMessage(ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold>Position <dark_gray>┃ <gray>The <green>Wandering Trader <gray>just spawned at <dark_aqua>" + (int) traderLocation.getX() + "<gray>, <dark_aqua>" + (int) traderLocation.getY() + "<gray>, <dark_aqua>" + (int) traderLocation.getZ() + this.distance(players.player().getLocation(), traderLocation)));
 
             ForceItemBattle.getInstance().getPositionManager().playParticleLine(players.player(), traderLocation, Color.LIME);
