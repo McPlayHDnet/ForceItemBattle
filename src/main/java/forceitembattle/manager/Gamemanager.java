@@ -1,6 +1,5 @@
 package forceitembattle.manager;
 
-import de.tr7zw.nbtapi.NBT;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.stats.SeasonalStats;
 import forceitembattle.manager.stats.StatsManager;
@@ -17,6 +16,8 @@ import org.bukkit.*;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -366,6 +367,8 @@ public class Gamemanager {
         return JOKER_MATERIAL;
     }
 
+    public static final NamespacedKey BACKPACK_KEY = new NamespacedKey(ForceItemBattle.getInstance(), "backpack");
+
     public static ItemStack getJokers(int amount) {
         return new ItemBuilder(JOKER_MATERIAL)
                 .setAmount(amount)
@@ -378,9 +381,9 @@ public class Gamemanager {
                 .setDisplayName("<dark_gray>» <yellow>Backpack")
                 .getItemStack();
 
-        NBT.modify(itemStack, nbt -> {
-            nbt.setBoolean("backpack", true);
-        });
+        ItemMeta itemMeta = itemStack.getItemMeta();
+        itemMeta.getPersistentDataContainer().set(BACKPACK_KEY, PersistentDataType.BOOLEAN, Boolean.TRUE);
+        itemStack.setItemMeta(itemMeta);
 
         return itemStack;
     }
@@ -399,8 +402,11 @@ public class Gamemanager {
             return false;
         }
 
-        return NBT.get(itemStack, nbt -> {
-            return nbt.hasTag("backpack");
-        });
+        ItemMeta itemMeta = itemStack.getItemMeta();
+        if (!itemMeta.getPersistentDataContainer().has(BACKPACK_KEY)) {
+            return false;
+        }
+
+        return Boolean.TRUE.equals(itemStack.getItemMeta().getPersistentDataContainer().get(BACKPACK_KEY, PersistentDataType.BOOLEAN));
     }
 }

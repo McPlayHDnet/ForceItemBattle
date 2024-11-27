@@ -2,14 +2,14 @@ import xyz.jpenilla.resourcefactory.bukkit.BukkitPluginYaml
 
 plugins {
     `java-library`
-    id("io.papermc.paperweight.userdev") version "1.7.1"
+    id("io.papermc.paperweight.userdev") version "1.7.5"
     id("xyz.jpenilla.run-paper") version "2.2.3" // Adds runServer and runMojangMappedServer tasks for testing
     id("xyz.jpenilla.resource-factory-bukkit-convention") version "1.1.1" // Generates plugin.yml based on the Gradle config
     id("io.freefair.lombok") version "8.6"
 }
 
 group = "forceitembattle"
-version = "3.0.1"
+version = "3.1.0"
 description = "ForceItemBattle for McPlayHD.net"
 
 java {
@@ -28,7 +28,6 @@ dependencies {
     paperweight.paperDevBundle("1.21.3-R0.1-SNAPSHOT")
     // paperweight.foliaDevBundle("1.20.4-R0.1-SNAPSHOT")
     // paperweight.devBundle("com.example.paperfork", "1.20.4-R0.1-SNAPSHOT")
-    compileOnly("de.tr7zw", "item-nbt-api-plugin", "2.13.3-SNAPSHOT")
 }
 
 tasks {
@@ -93,4 +92,6 @@ bukkitPluginYaml {
     commands.register("achievements")
     commands.register("spectate")
     commands.register("forceteam")
+    commands.register("vault")
+    commands.register("wt")
 }
