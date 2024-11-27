@@ -16,6 +16,8 @@ import org.bukkit.*;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -365,6 +367,8 @@ public class Gamemanager {
         return JOKER_MATERIAL;
     }
 
+    public static final NamespacedKey BACKPACK_KEY = new NamespacedKey(ForceItemBattle.getInstance(), "backpack");
+
     public static ItemStack getJokers(int amount) {
         return new ItemBuilder(JOKER_MATERIAL)
                 .setAmount(amount)
@@ -372,7 +376,20 @@ public class Gamemanager {
                 .getItemStack();
     }
 
-    public static boolean isJoker(Material material) {
+    public static ItemStack createBackpack() {
+        ItemStack itemStack = new ItemBuilder(Material.BUNDLE)
+                .setDisplayName("<dark_gray>» <yellow>Backpack")
+                .getItemStack();
+
+        ItemMeta itemMeta = itemStack.getItemMeta();
+        itemMeta.getPersistentDataContainer().set(BACKPACK_KEY, PersistentDataType.BOOLEAN, Boolean.TRUE);
+        itemStack.setItemMeta(itemMeta);
+
+        return itemStack;
+    }
+
+    private static boolean isJoker(Material material) {
+        // TODO change to also use NBT maybe
         return material == JOKER_MATERIAL;
     }
 
@@ -380,11 +397,16 @@ public class Gamemanager {
         return isJoker(itemStack.getType());
     }
 
-    public static boolean isBackpack(Material material) {
-        return material == Material.BUNDLE;
-    }
-
     public static boolean isBackpack(ItemStack itemStack) {
-        return isBackpack(itemStack.getType());
+        if (itemStack.getType() != Material.BUNDLE) {
+            return false;
+        }
+
+        ItemMeta itemMeta = itemStack.getItemMeta();
+        if (!itemMeta.getPersistentDataContainer().has(BACKPACK_KEY)) {
+            return false;
+        }
+
+        return Boolean.TRUE.equals(itemStack.getItemMeta().getPersistentDataContainer().get(BACKPACK_KEY, PersistentDataType.BOOLEAN));
     }
 }

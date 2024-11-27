@@ -132,7 +132,7 @@ public class ClickableItemsListener implements Listener {
 
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
 
-        if (e.getItem().getType() == Material.BUNDLE) {
+        if (Gamemanager.isBackpack(e.getItem())) {
             if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
                 if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
                     this.plugin.getBackpack().openTeamBackpack(forceItemPlayer.currentTeam(), player);
