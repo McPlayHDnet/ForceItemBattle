@@ -122,6 +122,24 @@ public enum FakeRecipe {
                 .build("fib:concrete", new ItemStack(item.getType()));
     }),
 
+    BUNDLE(item -> item.getType().name().endsWith("_BUNDLE"), item -> {
+        Material bundle = item.getType();
+        String colorName = bundle.name().replace("_BUNDLE", "");
+        Material dye;
+
+        try {
+            dye = Material.valueOf(colorName + "_DYE");
+        } catch (IllegalArgumentException e) {
+            dye = Material.GRAY_DYE; // Default color ig
+        }
+
+        Material finalDye = dye;
+        return RecipeBuilder.newBuilder(ShapelessRecipe::new)
+                .apply(recipe -> recipe.addIngredient(new RecipeChoice.MaterialChoice(Material.BUNDLE, Material.WHITE_BUNDLE, Material.LIGHT_GRAY_BUNDLE, Material.GRAY_BUNDLE, Material.BLACK_BUNDLE, Material.BROWN_BUNDLE, Material.RED_BUNDLE, Material.ORANGE_BUNDLE, Material.YELLOW_BUNDLE, Material.LIME_BUNDLE, Material.GREEN_BUNDLE, Material.CYAN_BUNDLE, Material.LIGHT_BLUE_BUNDLE, Material.BLUE_BUNDLE, Material.PURPLE_BUNDLE, Material.MAGENTA_BUNDLE, Material.PINK_BUNDLE)))
+                .apply(recipe -> recipe.addIngredient(finalDye))
+                .build("fib:bundle", new ItemStack(bundle));
+    }),
+
     STRIPPED_WOOD(item -> item.getType().name().startsWith("STRIPPED_"), item -> {
         Material fullWood = Material.valueOf(item.getType().name().replace("STRIPPED_", ""));
 
