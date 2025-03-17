@@ -1,6 +1,7 @@
 package forceitembattle.manager.customrecipe;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.settings.GameSetting;
 import forceitembattle.util.ItemBuilder;
 import org.bukkit.Material;
 import org.bukkit.inventory.*;
@@ -19,6 +20,38 @@ public enum FakeRecipe {
                     .apply(shapedRecipe -> shapedRecipe.setIngredient('G', Material.GLOWSTONE_DUST))
                     .apply(shapedRecipe -> shapedRecipe.setIngredient('Q', Material.QUARTZ))
                     .build("fib:antimatter_locator", new ItemBuilder(Material.KNOWLEDGE_BOOK).setDisplayName("<dark_gray>» <dark_purple>Antimatter Locator").getItemStack())
+    ),
+
+    END_STRUCTURE_HARD(Material.KNOWLEDGE_BOOK, item ->
+            RecipeBuilder.newBuilder(ShapedRecipe::new)
+                    .apply(shapedRecipe -> shapedRecipe.shape("BGB", "QEQ", "BGB"))
+                    .apply(shapedRecipe -> shapedRecipe.setIngredient('B', Material.NETHER_BRICK))
+                    .apply(shapedRecipe -> shapedRecipe.setIngredient('E', Material.ENDER_EYE))
+                    .apply(shapedRecipe -> shapedRecipe.setIngredient('G', Material.GLOWSTONE_DUST))
+                    .apply(shapedRecipe -> shapedRecipe.setIngredient('Q', Material.QUARTZ))
+                    .build("fib:antimatter_locator", new ItemBuilder(Material.KNOWLEDGE_BOOK).setDisplayName("<dark_gray>» <dark_purple>Antimatter Locator").getItemStack())
+    ),
+
+    CHAMBER_STRUCTURE(Material.WITHER_ROSE, item ->
+            RecipeBuilder.newBuilder(ShapedRecipe::new)
+                    .apply(shapedRecipe -> shapedRecipe.shape("BGB", "GCG", "AAA"))
+                    .apply(shapedRecipe -> shapedRecipe.setIngredient('B', Material.CUT_COPPER))
+                    .apply(shapedRecipe -> shapedRecipe.setIngredient('G', Material.GLASS))
+                    .apply(shapedRecipe -> shapedRecipe.setIngredient('C', Material.COMPASS))
+                    .apply(shapedRecipe -> shapedRecipe.setIngredient('A', Material.GOLD_INGOT))
+                    .build("fib:chambers_locator", new ItemBuilder(Material.WITHER_ROSE).setDisplayName("<dark_gray>» <gold>Trial Locator").getItemStack())
+    ),
+
+    CHAMBER_STRUCTURE_HARD(Material.WITHER_ROSE, item ->
+            RecipeBuilder.newBuilder(ShapedRecipe::new)
+                    .apply(shapedRecipe -> shapedRecipe.shape("OKO", "GCI", "ODO"))
+                    .apply(shapedRecipe -> shapedRecipe.setIngredient('O', Material.OBSIDIAN))
+                    .apply(shapedRecipe -> shapedRecipe.setIngredient('C', Material.COMPASS))
+                    .apply(shapedRecipe -> shapedRecipe.setIngredient('K', Material.COPPER_INGOT))
+                    .apply(shapedRecipe -> shapedRecipe.setIngredient('I', Material.IRON_INGOT))
+                    .apply(shapedRecipe -> shapedRecipe.setIngredient('G', Material.GOLD_INGOT))
+                    .apply(shapedRecipe -> shapedRecipe.setIngredient('D', Material.DIAMOND))
+                    .build("fib:chambers_locator", new ItemBuilder(Material.WITHER_ROSE).setDisplayName("<dark_gray>» <gold>Trial Locator").getItemStack())
     ),
 
     SUSPICIOUS_STEW(Material.SUSPICIOUS_STEW, item ->
@@ -87,6 +120,24 @@ public enum FakeRecipe {
                 ))
                 .apply(recipe -> recipe.setStationDisplay(new ItemStack(Material.WOODEN_PICKAXE)))
                 .build("fib:concrete", new ItemStack(item.getType()));
+    }),
+
+    BUNDLE(item -> item.getType().name().endsWith("_BUNDLE"), item -> {
+        Material bundle = item.getType();
+        String colorName = bundle.name().replace("_BUNDLE", "");
+        Material dye;
+
+        try {
+            dye = Material.valueOf(colorName + "_DYE");
+        } catch (IllegalArgumentException e) {
+            dye = Material.GRAY_DYE; // Default color ig
+        }
+
+        Material finalDye = dye;
+        return RecipeBuilder.newBuilder(ShapelessRecipe::new)
+                .apply(recipe -> recipe.addIngredient(new RecipeChoice.MaterialChoice(Material.BUNDLE, Material.WHITE_BUNDLE, Material.LIGHT_GRAY_BUNDLE, Material.GRAY_BUNDLE, Material.BLACK_BUNDLE, Material.BROWN_BUNDLE, Material.RED_BUNDLE, Material.ORANGE_BUNDLE, Material.YELLOW_BUNDLE, Material.LIME_BUNDLE, Material.GREEN_BUNDLE, Material.CYAN_BUNDLE, Material.LIGHT_BLUE_BUNDLE, Material.BLUE_BUNDLE, Material.PURPLE_BUNDLE, Material.MAGENTA_BUNDLE, Material.PINK_BUNDLE)))
+                .apply(recipe -> recipe.addIngredient(finalDye))
+                .build("fib:bundle", new ItemStack(bundle));
     }),
 
     STRIPPED_WOOD(item -> item.getType().name().startsWith("STRIPPED_"), item -> {
@@ -259,7 +310,10 @@ public enum FakeRecipe {
     public static FakeRecipe forItem(ItemStack item) {
         for (FakeRecipe recipe : CACHE) {
             if (recipe.itemMatcher.test(item)) {
-                return recipe;
+                boolean isRecipeHard = recipe.name().endsWith("_HARD");
+                if (isRecipeHard == ForceItemBattle.getInstance().getSettings().isSettingEnabled(GameSetting.HARDER_TRACKERS)) {
+                    return recipe;
+                }
             }
         }
         return null;
