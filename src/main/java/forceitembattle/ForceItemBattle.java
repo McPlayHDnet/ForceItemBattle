@@ -88,6 +88,7 @@ public final class ForceItemBattle extends JavaPlugin {
 
     @Override
     public void onLoad() {
+        ConsoleLogger.startCapturing();
         saveConfig();
 
         this.settings = new GameSettings(this);
@@ -347,6 +348,7 @@ public final class ForceItemBattle extends JavaPlugin {
         new CommandSpectate();
         new CommandShout();
         new CommandForceTeam();
+        new CommandLogConsole();
     }
 
     @Override
