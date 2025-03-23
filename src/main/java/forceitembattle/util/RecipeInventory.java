@@ -270,12 +270,6 @@ public class RecipeInventory extends InventoryBuilder {
                 break;
             }
 
-            if (material.name().contains("BUNDLE")) {
-                lore.clear();
-                lore.add(" <dark_gray>» <dark_aqua>any bundle");
-                break;
-            }
-
             if (recipeViewer.itemStack().getType() == Material.SMOKER || recipeViewer.itemStack().getType() == Material.CAMPFIRE || recipeViewer.itemStack().getType() == Material.SOUL_CAMPFIRE || recipeViewer.itemStack().getType() == Material.CHARCOAL) {
                 lore.clear();
                 lore.add(" <dark_gray>» <dark_aqua>any wooden log/wood (and stripped variants)");
@@ -303,7 +297,6 @@ public class RecipeInventory extends InventoryBuilder {
                 lore.add(" <dark_gray>» <dark_aqua>any leaves");
                 break;
             }
-
         }
 
         itemBuilder.setLore(lore);
