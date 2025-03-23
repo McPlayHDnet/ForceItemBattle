@@ -92,6 +92,5 @@ bukkitPluginYaml {
     commands.register("achievements")
     commands.register("spectate")
     commands.register("forceteam")
-    commands.register("vault")
-    commands.register("wt")
+    commands.register("log")
 }
