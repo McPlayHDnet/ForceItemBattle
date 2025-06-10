@@ -4,7 +4,7 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
-import org.apache.commons.lang.WordUtils;
+import org.apache.commons.text.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;

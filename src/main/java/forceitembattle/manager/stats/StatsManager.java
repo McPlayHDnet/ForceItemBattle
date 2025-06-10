@@ -6,7 +6,7 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.util.ForceItemPlayerStats;
 import forceitembattle.util.PlayerStat;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import org.apache.commons.lang.WordUtils;
+import org.apache.commons.text.WordUtils;
 import org.bukkit.entity.Player;
 
 import java.io.FileReader;
@@ -15,8 +15,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
