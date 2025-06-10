@@ -1,12 +1,9 @@
 package forceitembattle.commands.admin;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
-import java.io.File;
 import java.io.IOException;
 
 public class CommandReset extends CustomCommand {
@@ -27,7 +24,7 @@ public class CommandReset extends CustomCommand {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            Bukkit.spigot().restart();
+            Bukkit.restart();
         }
     }
 }
