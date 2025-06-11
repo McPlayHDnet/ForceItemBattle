@@ -5,7 +5,6 @@ import com.google.gson.Gson;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.DescriptionItem;
-import forceitembattle.util.ItemBuilder;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.ChatColor;
@@ -531,6 +530,7 @@ public class ItemDifficultiesManager {
                 Material.BRUSH,
                 Material.BUCKET,
                 Material.BUNDLE,
+                Material.BUSH,
                 Material.CALCITE,
                 Material.CAMPFIRE,
                 Material.CARROT,
@@ -641,6 +641,7 @@ public class ItemDifficultiesManager {
                 Material.FEATHER,
                 Material.FERN,
                 Material.FILLED_MAP,
+                Material.FIREFLY_BUSH,
                 Material.FIREWORK_ROCKET,
                 Material.FIREWORK_STAR,
                 Material.FLETCHING_TABLE,
@@ -736,6 +737,7 @@ public class ItemDifficultiesManager {
                 Material.LAPIS_BLOCK,
                 Material.LAPIS_LAZULI,
                 Material.LAVA_BUCKET,
+                Material.LEAF_LITTER,
                 Material.LEATHER,
                 Material.LEATHER_BOOTS,
                 Material.LEATHER_CHESTPLATE,
@@ -772,6 +774,7 @@ public class ItemDifficultiesManager {
                 Material.LIGHTNING_ROD,
                 Material.LILAC,
                 Material.LILY_OF_THE_VALLEY,
+                Material.LODESTONE,
                 Material.MAGENTA_BANNER,
                 Material.MAGENTA_BED,
                 Material.MAGENTA_BUNDLE,
@@ -1047,6 +1050,7 @@ public class ItemDifficultiesManager {
                 Material.WHITE_STAINED_GLASS_PANE,
                 Material.WHITE_TERRACOTTA,
                 Material.WHITE_WOOL,
+                Material.WILDFLOWERS,
                 Material.WOLF_ARMOR,
                 Material.WOODEN_AXE,
                 Material.WOODEN_HOE,
@@ -1088,6 +1092,7 @@ public class ItemDifficultiesManager {
                 Material.BOW,
                 Material.BREWING_STAND,
                 Material.CACTUS,
+                Material.CACTUS_FLOWER,
                 Material.CAKE,
                 Material.CHERRY_BOAT,
                 Material.CHERRY_BUTTON,
@@ -1297,6 +1302,7 @@ public class ItemDifficultiesManager {
                 Material.SEA_LANTERN,
                 Material.SEA_PICKLE,
                 Material.SHROOMLIGHT,
+                Material.SHORT_DRY_GRASS,
                 Material.SLIME_BALL,
                 Material.SMALL_DRIPLEAF,
                 Material.SMOOTH_QUARTZ,
@@ -1323,6 +1329,7 @@ public class ItemDifficultiesManager {
                 Material.STRIPPED_PALE_OAK_WOOD,
                 Material.STRIPPED_WARPED_HYPHAE,
                 Material.STRIPPED_WARPED_STEM,
+                Material.TALL_DRY_GRASS,
                 Material.TNT,
                 Material.TNT_MINECART,
                 Material.TROPICAL_FISH,
@@ -1475,7 +1482,6 @@ public class ItemDifficultiesManager {
                 Material.LIGHT_GRAY_SHULKER_BOX,
                 Material.LIME_CANDLE,
                 Material.LIME_SHULKER_BOX,
-                Material.LODESTONE,
                 Material.MAGENTA_CANDLE,
                 Material.MAGENTA_SHULKER_BOX,
                 Material.MEDIUM_AMETHYST_BUD,
