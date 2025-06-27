@@ -63,6 +63,7 @@ public class Gamemanager {
         this.miniMessage = MiniMessage.builder()
                 .tags(TagResolver.builder()
                         .resolver(StandardTags.color())
+                        .resolver(StandardTags.shadowColor())
                         .resolver(StandardTags.gradient())
                         .resolver(StandardTags.reset())
                         .resolver(StandardTags.newline())
