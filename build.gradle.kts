@@ -1,5 +1,4 @@
 import xyz.jpenilla.resourcefactory.bukkit.BukkitPluginYaml
-import xyz.jpenilla.resourcefactory.bukkit.bukkitPluginYaml
 
 plugins {
     `java-library`
