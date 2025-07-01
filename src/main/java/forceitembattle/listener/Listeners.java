@@ -381,7 +381,7 @@ public class Listeners implements Listener {
 
         ItemStack movedItem = event.getCurrentItem();
 
-        if (event.getAction() == InventoryAction.HOTBAR_SWAP || event.getAction() == InventoryAction.HOTBAR_MOVE_AND_READD) {
+        if (event.getAction() == InventoryAction.HOTBAR_SWAP) {
             if (event.getHotbarButton() >= 0) {
                 movedItem = event.getWhoClicked().getInventory().getItem(event.getHotbarButton());
             }
