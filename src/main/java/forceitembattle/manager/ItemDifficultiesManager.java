@@ -1515,6 +1515,7 @@ public class ItemDifficultiesManager {
                 Material.MUSIC_DISC_CAT,
                 Material.MUSIC_DISC_CREATOR,
                 Material.MUSIC_DISC_CREATOR_MUSIC_BOX,
+                Material.MUSIC_DISC_LAVA_CHICKEN,
                 Material.MUSIC_DISC_OTHERSIDE,
                 Material.MUSIC_DISC_PRECIPICE,
                 Material.MYCELIUM,

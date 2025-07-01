@@ -1,4 +1,3 @@
-import jdk.javadoc.internal.tool.resources.javadoc
 import xyz.jpenilla.resourcefactory.bukkit.BukkitPluginYaml
 import xyz.jpenilla.resourcefactory.bukkit.bukkitPluginYaml
 
@@ -27,7 +26,7 @@ repositories {
 }
 
 dependencies {
-    paperweight.paperDevBundle("1.21.6-R0.1-SNAPSHOT")
+    paperweight.paperDevBundle("1.21.7-R0.1-SNAPSHOT")
     implementation("org.apache.commons:commons-text:1.13.1")
     // paperweight.foliaDevBundle("1.20.4-R0.1-SNAPSHOT")
     // paperweight.devBundle("com.example.paperfork", "1.20.4-R0.1-SNAPSHOT")
