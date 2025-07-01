@@ -11,7 +11,7 @@ import lombok.Setter;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.kyori.adventure.text.minimessage.tag.standard.StandardTags;
-import org.apache.commons.lang.WordUtils;
+import org.apache.commons.text.WordUtils;
 import org.bukkit.*;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -63,6 +63,7 @@ public class Gamemanager {
         this.miniMessage = MiniMessage.builder()
                 .tags(TagResolver.builder()
                         .resolver(StandardTags.color())
+                        .resolver(StandardTags.shadowColor())
                         .resolver(StandardTags.gradient())
                         .resolver(StandardTags.reset())
                         .resolver(StandardTags.newline())
