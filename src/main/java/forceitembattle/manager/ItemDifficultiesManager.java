@@ -40,6 +40,8 @@ public class ItemDifficultiesManager {
      */
     private Map<Material, String> bigIconUnicodes;
 
+    private final static Random FIXED_RANDOM = new Random(new Random().nextLong());
+
     public void setupStates() {
         State.EARLY.setUnlockedAtPercentage(0);
         State.MID.setUnlockedAtPercentage(11.11);
@@ -85,6 +87,18 @@ public class ItemDifficultiesManager {
         filterDisabledItems(items);
 
         return items.get(random.nextInt(items.size()));
+    }
+
+    public Material generateSeededRandomMaterial() {
+        List<Material> items = getAvailableItems();
+
+        filterDisabledItems(items);
+
+        if (items.isEmpty()) {
+            throw new IllegalStateException("No available items after filtering.");
+        }
+
+        return items.get(FIXED_RANDOM.nextInt(items.size()));
     }
 
     public boolean isItemInDescriptionList(Material material) {
