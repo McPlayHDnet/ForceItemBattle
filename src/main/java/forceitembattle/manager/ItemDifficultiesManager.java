@@ -163,6 +163,11 @@ public class ItemDifficultiesManager {
             Type mapType = new TypeToken<Map<String, String>[]>(){}.getType();
             Map<String, String>[] items = gson.fromJson(fileReader, mapType);
 
+            if (items == null) {
+                this.plugin.getLogger().warning("`unicodeItems.json` could not be parsed. Ensure the format is a JSON array ob objects with 'material' and 'unicode'");
+                return new HashMap<>();
+            }
+
             for (Map<String, String> entry : items) {
                 String materialName = entry.get("material");
                 String unicode = entry.get("unicode");
