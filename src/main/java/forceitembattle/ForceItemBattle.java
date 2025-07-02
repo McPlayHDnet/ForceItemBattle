@@ -139,6 +139,7 @@ public final class ForceItemBattle extends JavaPlugin {
             getSettings().setSettingEnabled(GameSetting.FASTER_RANDOM_TICK, getSettings().isSettingEnabled(GameSetting.FASTER_RANDOM_TICK));
 
             //world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
+            world.setGameRule(GameRule.LOCATOR_BAR, false);
             world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
             world.setGameRule(GameRule.SPECTATORS_GENERATE_CHUNKS, false);
             world.setGameRule(GameRule.DO_TRADER_SPAWNING, false);
