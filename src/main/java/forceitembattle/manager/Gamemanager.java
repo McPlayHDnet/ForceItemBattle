@@ -90,6 +90,10 @@ public class Gamemanager {
         return this.forceItemBattle.getItemDifficultiesManager().generateRandomMaterial();
     }
 
+    public Material generateSeededMaterial() {
+        return this.forceItemBattle.getItemDifficultiesManager().generateSeededRandomMaterial();
+    }
+
     public String getMaterialName(Material material) {
         CustomMaterial customMaterial = CUSTOM_MATERIALS.get(material);
         if (customMaterial != null) {
@@ -112,16 +116,27 @@ public class Gamemanager {
             this.forceItemPlayerMap.forEach((uuid, forceItemPlayer) -> {
                 if(forceItemPlayer.isSpectator()) return;
                 forceItemPlayer.currentTeam().setCurrentScore(0);
-                forceItemPlayer.currentTeam().setCurrentMaterial(this.generateMaterial());
-                forceItemPlayer.currentTeam().setNextMaterial(this.generateMaterial());
+                if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.RUN)) {
+                    forceItemPlayer.currentTeam().setCurrentMaterial(this.generateSeededMaterial());
+                    forceItemPlayer.currentTeam().setNextMaterial(this.generateSeededMaterial());
+                } else {
+                    forceItemPlayer.currentTeam().setCurrentMaterial(this.generateMaterial());
+                    forceItemPlayer.currentTeam().setNextMaterial(this.generateMaterial());
+                }
             });
         } else {
             Bukkit.getOnlinePlayers().forEach(player -> {
                 ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
                 if(forceItemPlayer.isSpectator()) return;
                 forceItemPlayer.setCurrentScore(0);
-                forceItemPlayer.setCurrentMaterial(this.generateMaterial());
-                forceItemPlayer.setNextMaterial(this.generateMaterial());
+                if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.RUN)) {
+                    forceItemPlayer.setCurrentMaterial(this.generateSeededMaterial());
+                    forceItemPlayer.setNextMaterial(this.generateSeededMaterial());
+                } else {
+                    forceItemPlayer.setCurrentMaterial(this.generateMaterial());
+                    forceItemPlayer.setNextMaterial(this.generateMaterial());
+                }
+
             });
         }
 
