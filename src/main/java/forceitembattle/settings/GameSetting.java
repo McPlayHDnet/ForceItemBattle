@@ -22,6 +22,7 @@ public enum GameSetting {
     TRADING_COOLDOWN("Player trading cooldown", List.of("", "<gray>Changes cooldown of <dark_aqua>trading<gray>.", ""), "tradingCooldown", 3, Material.EMERALD),
     ELYTRA("Elytra gliding", List.of("", "<gray>Prevents gliding with an elytra<gray>.", ""), "elytraGliding", true, Material.ELYTRA),
     CHAIN("Force Chain", List.of("", "<gray>Shows the next forced item.", ""), "forceChain", false, Material.CHAIN),
+    RUN("Run Battle", List.of("", "<gray>Only the first player that gets the item, gets the point.", ""), "runBattle", false, Material.CLOCK),
     STATS("Stats", List.of("", "<gray>Toggle whether this round is played with <dark_aqua>stats<gray>.", ""), "stats", true, Material.WRITABLE_BOOK),
     EVENT("Event", List.of(
             "",
