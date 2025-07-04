@@ -137,19 +137,33 @@ public class Gamemanager {
 
     }
 
-    public void forceSkipItem(Player player) {
+    public void forceSkipItem(Player player, boolean adminCommand) {
         if (!forceItemPlayerExist(player.getUniqueId())) {
             return;
         }
 
+        boolean runMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.RUN);
+        boolean teamMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM);
+
+        Material currentMaterial = runMode ? this.generateSeededMaterial() : this.generateMaterial();
+        Material nextMaterial = runMode ? this.generateSeededMaterial() : this.generateMaterial();
+
         ForceItemPlayer gamePlayer = getForceItemPlayer(player.getUniqueId());
-        if(this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-            gamePlayer.currentTeam().setCurrentMaterial(this.generateMaterial());
+        if(teamMode) {
+            forceItemPlayerMap().values().forEach(p -> {
+                if (!adminCommand) gamePlayer.currentTeam().setRemainingJokers(gamePlayer.currentTeam().getRemainingJokers() - 1);
+                p.currentTeam().setCurrentMaterial(currentMaterial);
+                p.currentTeam().setNextMaterial(nextMaterial);
+            });
         } else {
-            gamePlayer.setCurrentMaterial(this.generateMaterial());
+            forceItemPlayerMap().values().forEach(p -> {
+                if (!adminCommand) gamePlayer.setRemainingJokers(gamePlayer.remainingJokers() - 1);
+                p.setCurrentMaterial(currentMaterial);
+                p.setNextMaterial(nextMaterial);
+            });
         }
 
-        this.forceItemBattle.getTimer().sendActionBar();
+        //this.forceItemBattle.getTimer().sendActionBar();
     }
 
     public void giveSpectatorItems(Player player) {
