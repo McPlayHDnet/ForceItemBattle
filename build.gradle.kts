@@ -93,4 +93,6 @@ bukkitPluginYaml {
     commands.register("achievements")
     commands.register("spectate")
     commands.register("forceteam")
+    commands.register("vote")
+    commands.register("voteskip")
 }

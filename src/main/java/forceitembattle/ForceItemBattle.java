@@ -351,6 +351,8 @@ public final class ForceItemBattle extends JavaPlugin {
         new CommandSpectate();
         new CommandShout();
         new CommandForceTeam();
+        new CommandVote();
+        new CommandVoteSkip();
     }
 
     @Override
