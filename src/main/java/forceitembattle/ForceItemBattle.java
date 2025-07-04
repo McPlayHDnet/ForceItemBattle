@@ -74,6 +74,8 @@ public final class ForceItemBattle extends JavaPlugin {
     @Getter
     private ProtectionManager protectionManager;
     @Getter
+    private VoteSkipManager voteSkipManager;
+    @Getter
     @Setter
     private Location spawnLocation;
 
@@ -117,6 +119,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.protectionManager = new ProtectionManager(this);
         this.wanderingTraderTimer = new WanderingTraderTimer();
         this.antimatterLocator = new AntimatterLocator();
+        this.voteSkipManager = new VoteSkipManager();
 
         this.initListeners();
         this.initCommands();
