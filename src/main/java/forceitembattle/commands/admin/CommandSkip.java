@@ -2,7 +2,6 @@ package forceitembattle.commands.admin;
 
 import forceitembattle.commands.CustomCommand;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
 public class CommandSkip extends CustomCommand {
@@ -31,7 +30,7 @@ public class CommandSkip extends CustomCommand {
             if (target != null) {
                 player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<gray>Skipped this item for " + target.getName()));
                 //this.forceItemBattle.logToFile("[" + this.forceItemBattle.getTimer().getTime() + "] | " + args[0] + " skipped " + this.forceItemBattle.getGamemanager().getCurrentMaterial(Bukkit.getPlayer(args[0])));
-                this.plugin.getGamemanager().forceSkipItem(target);
+                this.plugin.getGamemanager().forceSkipItem(target, true);
             } else {
                 player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>This player is not online"));
             }
