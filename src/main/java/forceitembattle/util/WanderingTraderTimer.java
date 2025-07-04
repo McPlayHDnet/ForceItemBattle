@@ -1,21 +1,27 @@
 package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
+import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.datacomponent.item.CustomModelData;
 import lombok.Getter;
 import lombok.Setter;
-import net.kyori.adventure.text.Component;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.Color;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Player;
 import org.bukkit.entity.WanderingTrader;
-import org.bukkit.generator.structure.Structure;
-import org.bukkit.generator.structure.StructureType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.MerchantRecipe;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.UUID;
 
 @Setter
 @Getter
@@ -69,7 +75,10 @@ public class WanderingTraderTimer {
             merchantReciper.setIngredients(ingredients);
             merchantReciper.setMaxUses(Integer.MAX_VALUE);
         });
-        ItemStack wheelOfFortune = new ItemBuilder(Material.NETHER_STAR).setDisplayName("<yellow><b>Wheel of Fortune").setCustomModelData(7).getItemStack();
+        ItemStack wheelOfFortune = new ItemBuilder(Material.NETHER_STAR).setDisplayName("<yellow><b>Wheel of Fortune").getItemStack();
+        wheelOfFortune.setData(DataComponentTypes.CUSTOM_MODEL_DATA, CustomModelData.customModelData()
+                .addString("wheel")
+                .build());
 
         MerchantRecipe merchantRecipe = new MerchantRecipe(wheelOfFortune, Integer.MAX_VALUE);
         merchantRecipe.addIngredient(new ItemStack(Material.EMERALD, 1));

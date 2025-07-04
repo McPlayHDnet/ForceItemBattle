@@ -5,9 +5,18 @@ import forceitembattle.event.FoundItemEvent;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.achievements.AchievementInventory;
-import forceitembattle.util.*;
+import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.util.ItemBuilder;
+import forceitembattle.util.Locator;
+import forceitembattle.util.TeleporterInventory;
+import forceitembattle.util.VaultInventory;
 import lombok.RequiredArgsConstructor;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.Sound;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -145,8 +154,8 @@ public class ClickableItemsListener implements Listener {
 
         if (e.getItem().getType() == Material.NETHER_STAR) {
             if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
-                if (!e.getItem().getItemMeta().hasCustomModelData()) return;
-                if (e.getItem().getItemMeta().getCustomModelData() == 7) { // wheel of fortune
+                if (!e.getItem().getItemMeta().hasCustomModelDataComponent()) return;
+                if (e.getItem().getItemMeta().getCustomModelDataComponent().getStrings().getFirst().equals("wheel")) { // wheel of fortune
                     new VaultInventory(this.plugin).open(player);
                     player.getInventory().getItemInMainHand().setAmount(player.getInventory().getItemInMainHand().getAmount() - 1);
                 }
