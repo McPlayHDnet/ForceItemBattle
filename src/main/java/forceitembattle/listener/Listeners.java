@@ -192,10 +192,12 @@ public class Listeners implements Listener {
             forceItemPlayer.setBackToBackStreak(0);
         }
 
+        boolean shouldApplyScoreAndSound = !isRunMode || (isRunMode && !event.isSkipped());
+
         if (isTeamGame) {
             Team team = forceItemPlayer.currentTeam();
 
-            if (!event.isSkipped()) {
+            if (shouldApplyScoreAndSound) {
                 team.setCurrentScore(team.getCurrentScore() + 1);
                 team.addFoundItemToList(new ForceItem(itemStack.getType(),
                         plugin.getTimer().formatSeconds(plugin.getTimer().getTimeLeft()),
@@ -235,7 +237,7 @@ public class Listeners implements Listener {
 
         } else {
             // Solo mode
-            if (!event.isSkipped()) {
+            if (shouldApplyScoreAndSound) {
                 forceItemPlayer.setCurrentScore(forceItemPlayer.currentScore() + 1);
                 forceItemPlayer.addFoundItemToList(new ForceItem(itemStack.getType(),
                         plugin.getTimer().formatSeconds(plugin.getTimer().getTimeLeft()),
