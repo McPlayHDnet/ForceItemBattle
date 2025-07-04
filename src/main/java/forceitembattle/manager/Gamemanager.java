@@ -115,23 +115,40 @@ public class Gamemanager {
         boolean runMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.RUN);
         boolean teamMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM);
 
-        Material currentMaterial = runMode ? this.generateSeededMaterial() : this.generateMaterial();
-        Material nextMaterial = runMode ? this.generateSeededMaterial() : this.generateMaterial();
+        Material globalCurrent = null;
+        Material globalNext = null;
+
+        if (runMode) {
+            globalCurrent = this.generateSeededMaterial();
+            globalNext = this.generateSeededMaterial();
+        }
 
         if (teamMode) {
+            Material finalGlobalCurrent = globalCurrent;
+            Material finalGlobalNext = globalNext;
             this.forceItemPlayerMap.forEach((uuid, forceItemPlayer) -> {
                 if (forceItemPlayer.isSpectator()) return;
+
+                Material current = runMode ? finalGlobalCurrent : this.generateMaterial();
+                Material next = runMode ? finalGlobalNext : this.generateMaterial();
+
                 forceItemPlayer.currentTeam().setCurrentScore(0);
-                forceItemPlayer.currentTeam().setCurrentMaterial(currentMaterial);
-                forceItemPlayer.currentTeam().setNextMaterial(nextMaterial);
+                forceItemPlayer.currentTeam().setCurrentMaterial(current);
+                forceItemPlayer.currentTeam().setNextMaterial(next);
             });
         } else {
+            Material finalGlobalCurrent1 = globalCurrent;
+            Material finalGlobalNext1 = globalNext;
             Bukkit.getOnlinePlayers().forEach(player -> {
                 ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
                 if (forceItemPlayer.isSpectator()) return;
+
+                Material current = runMode ? finalGlobalCurrent1 : this.generateMaterial();
+                Material next = runMode ? finalGlobalNext1 : this.generateMaterial();
+
                 forceItemPlayer.setCurrentScore(0);
-                forceItemPlayer.setCurrentMaterial(currentMaterial);
-                forceItemPlayer.setNextMaterial(nextMaterial);
+                forceItemPlayer.setCurrentMaterial(current);
+                forceItemPlayer.setNextMaterial(next);
             });
         }
 
