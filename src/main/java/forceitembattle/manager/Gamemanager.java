@@ -112,31 +112,26 @@ public class Gamemanager {
     }
 
     public void initializeMats() {
-        if(this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+        boolean runMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.RUN);
+        boolean teamMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM);
+
+        Material currentMaterial = runMode ? this.generateSeededMaterial() : this.generateMaterial();
+        Material nextMaterial = runMode ? this.generateSeededMaterial() : this.generateMaterial();
+
+        if (teamMode) {
             this.forceItemPlayerMap.forEach((uuid, forceItemPlayer) -> {
-                if(forceItemPlayer.isSpectator()) return;
+                if (forceItemPlayer.isSpectator()) return;
                 forceItemPlayer.currentTeam().setCurrentScore(0);
-                if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.RUN)) {
-                    forceItemPlayer.currentTeam().setCurrentMaterial(this.generateSeededMaterial());
-                    forceItemPlayer.currentTeam().setNextMaterial(this.generateSeededMaterial());
-                } else {
-                    forceItemPlayer.currentTeam().setCurrentMaterial(this.generateMaterial());
-                    forceItemPlayer.currentTeam().setNextMaterial(this.generateMaterial());
-                }
+                forceItemPlayer.currentTeam().setCurrentMaterial(currentMaterial);
+                forceItemPlayer.currentTeam().setNextMaterial(nextMaterial);
             });
         } else {
             Bukkit.getOnlinePlayers().forEach(player -> {
                 ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
-                if(forceItemPlayer.isSpectator()) return;
+                if (forceItemPlayer.isSpectator()) return;
                 forceItemPlayer.setCurrentScore(0);
-                if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.RUN)) {
-                    forceItemPlayer.setCurrentMaterial(this.generateSeededMaterial());
-                    forceItemPlayer.setNextMaterial(this.generateSeededMaterial());
-                } else {
-                    forceItemPlayer.setCurrentMaterial(this.generateMaterial());
-                    forceItemPlayer.setNextMaterial(this.generateMaterial());
-                }
-
+                forceItemPlayer.setCurrentMaterial(currentMaterial);
+                forceItemPlayer.setNextMaterial(nextMaterial);
             });
         }
 
