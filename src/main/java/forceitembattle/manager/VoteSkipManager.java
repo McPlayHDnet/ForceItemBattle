@@ -66,6 +66,14 @@ public class VoteSkipManager {
             this.noVotes.add(uuid);
             player.sendMessage(this.miniMessage.deserialize("<gray>You voted for <red><b>NO</b><gray>!"));
         }
+
+        int totalPlayers = ForceItemBattle.getInstance().getGamemanager().forceItemPlayerMap().size();
+        int totalVotes = this.yesVotes.size() + this.noVotes.size();
+
+        if (totalVotes >= totalPlayers) {
+            if (this.voteTask != null) this.voteTask.cancel();
+            this.endVoting();
+        }
     }
 
     public void endVoting() {
