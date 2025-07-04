@@ -30,7 +30,7 @@ public class CommandVoteSkip extends CustomCommand {
 
         ForceItemPlayer forceItemPlayer = ForceItemBattle.getInstance().getGamemanager().getForceItemPlayer(player.getUniqueId());
 
-        if (forceItemPlayer.remainingJokers() == 0 || forceItemPlayer.currentTeam().getRemainingJokers() == 0) {
+        if (forceItemPlayer.remainingJokers() == 0 || (forceItemPlayer.currentTeam() != null && forceItemPlayer.currentTeam().getRemainingJokers() == 0)) {
             player.sendMessage(this.miniMessage.deserialize("<red>You dont have any jokers to vote!"));
             return;
         }
