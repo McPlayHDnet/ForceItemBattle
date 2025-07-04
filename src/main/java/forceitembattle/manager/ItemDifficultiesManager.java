@@ -40,7 +40,8 @@ public class ItemDifficultiesManager {
      */
     private Map<Material, String> bigIconUnicodes;
 
-    private final static Random FIXED_RANDOM = new Random(new Random().nextLong());
+    private final Random FIXED_RANDOM;
+    private final long FIXED_RANDOM_SEED;
 
     public void setupStates() {
         State.EARLY.setUnlockedAtPercentage(0);
@@ -223,6 +224,9 @@ public class ItemDifficultiesManager {
 
     public ItemDifficultiesManager(ForceItemBattle forceItemBattle) {
         this.plugin = forceItemBattle;
+
+        this.FIXED_RANDOM_SEED = new Random().nextLong();
+        this.FIXED_RANDOM = new Random(FIXED_RANDOM_SEED);
 
         this.descriptionItems = new HashMap<>();
         this.netherItems = List.of(
