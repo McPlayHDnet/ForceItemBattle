@@ -74,6 +74,8 @@ public final class ForceItemBattle extends JavaPlugin {
     @Getter
     private ProtectionManager protectionManager;
     @Getter
+    private VoteSkipManager voteSkipManager;
+    @Getter
     @Setter
     private Location spawnLocation;
 
@@ -117,6 +119,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.protectionManager = new ProtectionManager(this);
         this.wanderingTraderTimer = new WanderingTraderTimer();
         this.antimatterLocator = new AntimatterLocator();
+        this.voteSkipManager = new VoteSkipManager();
 
         this.initListeners();
         this.initCommands();
@@ -139,6 +142,7 @@ public final class ForceItemBattle extends JavaPlugin {
             getSettings().setSettingEnabled(GameSetting.FASTER_RANDOM_TICK, getSettings().isSettingEnabled(GameSetting.FASTER_RANDOM_TICK));
 
             //world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
+            world.setGameRule(GameRule.LOCATOR_BAR, false);
             world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
             world.setGameRule(GameRule.SPECTATORS_GENERATE_CHUNKS, false);
             world.setGameRule(GameRule.DO_TRADER_SPAWNING, false);
@@ -347,6 +351,8 @@ public final class ForceItemBattle extends JavaPlugin {
         new CommandSpectate();
         new CommandShout();
         new CommandForceTeam();
+        new CommandVote();
+        new CommandVoteSkip();
     }
 
     @Override

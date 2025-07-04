@@ -147,155 +147,159 @@ public class Listeners implements Listener {
         ForceItemPlayerStats playerStats = this.plugin.getStatsManager().loadPlayerStats(player.getName());
         SeasonalStats seasonalStats = playerStats.getSeasonStats(StatsManager.CURRENT_SEASON);
 
+        boolean isTeamGame = this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM);
+        boolean isRunMode = this.plugin.getSettings().isSettingEnabled(GameSetting.RUN);
+        boolean isEventDisabled = !this.plugin.getSettings().isSettingEnabled(GameSetting.EVENT);
+        boolean isStatsEnabled = this.plugin.getSettings().isSettingEnabled(GameSetting.STATS);
+
+        int backToBacks = forceItemPlayer.backToBackStreak();
+
         /**
          * this specific colorcode is inside the resource pack - credits: https://github.com/PuckiSilver/NoShadow
          * new Color(78, 92, 36) + unicode;
          */
 
         if (!event.isBackToBack()) {
-            if (!this.plugin.getSettings().isSettingEnabled(GameSetting.EVENT)) {
-                Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize(
-                        "<green>" + player.getName() + " <gray>" + (event.isSkipped() ? "skipped" : "found") + " <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType()) + " <gold>" + this.plugin.getGamemanager().getMaterialName(itemStack.getType())));
+            String action = event.isSkipped() ? "skipped" : "found";
+            String unicode = plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType());
+            String materialName = plugin.getGamemanager().getMaterialName(itemStack.getType());
+            Component message = plugin.getGamemanager().getMiniMessage().deserialize(
+                    "<green>" + player.getName() + " <gray>" + action + " <reset>" + unicode + " <gold>" + materialName);
+
+            if (isEventDisabled) {
+                Bukkit.broadcast(message);
+            } else if (isTeamGame) {
+                forceItemPlayer.currentTeam().getPlayers().forEach(p -> p.player().sendMessage(message));
             } else {
-                if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-                    forceItemPlayer.currentTeam().getPlayers().forEach(team -> {
-                        team.player().sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
-                                "<green>" + player.getName() + " <gray>" + (event.isSkipped() ? "skipped" : "found") + " <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType()) + " <gold>" + this.plugin.getGamemanager().getMaterialName(itemStack.getType())));
-                    });
-                } else {
-                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
-                            "<green>" + player.getName() + " <gray>" + (event.isSkipped() ? "skipped" : "found") + " <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType()) + " <gold>" + this.plugin.getGamemanager().getMaterialName(itemStack.getType())));
-                }
-
+                player.sendMessage(message);
             }
-            if (this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
-                if (forceItemPlayer.backToBackStreak() != 0) {
-                    if (seasonalStats.getBack2backStreak().getSolo() < forceItemPlayer.backToBackStreak()) {
-                        if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-                            Team currentTeam = forceItemPlayer.currentTeam();
 
-                            for (ForceItemPlayer teamPlayer : currentTeam.getPlayers()) {
-                                if (!teamPlayer.equals(forceItemPlayer)) {
-                                    this.plugin.getStatsManager().updateTeamStats(player.getName(), teamPlayer.player().getName(), forceItemPlayer.backToBackStreak(), PlayerStat.BACK_TO_BACK_STREAK);
-                                }
+            if (isStatsEnabled && backToBacks != 0 && !isRunMode) {
+                if (seasonalStats.getBack2backStreak().getSolo() < backToBacks) {
+                    if (isTeamGame) {
+                        for (ForceItemPlayer teammate : forceItemPlayer.currentTeam().getPlayers()) {
+                            if (!teammate.equals(forceItemPlayer)) {
+                                plugin.getStatsManager().updateTeamStats(
+                                        player.getName(), teammate.player().getName(), backToBacks, PlayerStat.BACK_TO_BACK_STREAK);
                             }
-                        } else {
-                            this.plugin.getStatsManager().updateSoloStats(player.getName(), PlayerStat.BACK_TO_BACK_STREAK, forceItemPlayer.backToBackStreak());
                         }
+                    } else {
+                        plugin.getStatsManager().updateSoloStats(player.getName(), PlayerStat.BACK_TO_BACK_STREAK, backToBacks);
                     }
                 }
             }
+
             forceItemPlayer.setBackToBackStreak(0);
         }
-        int backToBacks = forceItemPlayer.backToBackStreak();
 
-        if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-            forceItemPlayer.currentTeam().setCurrentScore(forceItemPlayer.currentTeam().getCurrentScore() + 1);
-            forceItemPlayer.currentTeam().addFoundItemToList(new ForceItem(itemStack.getType(), this.plugin.getTimer().formatSeconds(this.plugin.getTimer().getTimeLeft()), System.currentTimeMillis(), event.isBackToBack(), event.isSkipped()));
-            forceItemPlayer.currentTeam().setCurrentMaterial(forceItemPlayer.currentTeam().getNextMaterial());
-            forceItemPlayer.currentTeam().setNextMaterial(this.plugin.getGamemanager().generateMaterial());
+        boolean shouldApplyScoreAndSound = !isRunMode || (isRunMode && !event.isSkipped());
 
-            forceItemPlayer.currentTeam().getPlayers().forEach(players -> players.player().playSound(players.player().getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1));
+        if (isTeamGame) {
+            Team team = forceItemPlayer.currentTeam();
 
-            if (this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
-                Team currentTeam = forceItemPlayer.currentTeam();
-
-                for (ForceItemPlayer teamPlayer : currentTeam.getPlayers()) {
-                    if (!teamPlayer.equals(forceItemPlayer)) {
-                        this.plugin.getStatsManager().updateTeamStats(player.getName(), teamPlayer.player().getName(), 1, PlayerStat.TOTAL_ITEMS);
-                    }
-                }
+            if (shouldApplyScoreAndSound) {
+                team.setCurrentScore(team.getCurrentScore() + 1);
+                team.addFoundItemToList(new ForceItem(itemStack.getType(),
+                        plugin.getTimer().formatSeconds(plugin.getTimer().getTimeLeft()),
+                        System.currentTimeMillis(), event.isBackToBack(), event.isSkipped()));
+                team.getPlayers().forEach(p -> p.player().playSound(p.player().getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1));
             }
 
-            boolean foundNextItem = false;
+            if (isRunMode) {
+                Material currentMaterial = this.plugin.getGamemanager().generateSeededMaterial();
 
-            if (forceItemPlayer.currentTeam().getPreviousMaterial() == forceItemPlayer.currentTeam().getCurrentMaterial()) {
-                foundNextItem = true;
-                forceItemPlayer.setBackToBackStreak(backToBacks + 1);
-
-            } else if (this.plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK) &&
-                    hasItemInInventory(this.plugin.getBackpack().getTeamBackpack(forceItemPlayer.currentTeam()), forceItemPlayer.currentTeam().getCurrentMaterial())) {
-                foundNextItem = true;
-                forceItemPlayer.setBackToBackStreak(backToBacks + 1);
-
+                plugin.getGamemanager().forceItemPlayerMap().values().forEach(p -> {
+                    Team t = p.currentTeam();
+                    t.setCurrentMaterial(t.getNextMaterial());
+                    t.setNextMaterial(currentMaterial);
+                });
+                return;
             } else {
-                for (ForceItemPlayer teamPlayers : forceItemPlayer.currentTeam().getPlayers()) {
-                    if (hasItemInInventory(teamPlayers.player().getInventory(), forceItemPlayer.currentTeam().getCurrentMaterial())) {
-                        foundNextItem = true;
-                        forceItemPlayer.setBackToBackStreak(backToBacks + 1);
+                team.setCurrentMaterial(team.getNextMaterial());
+                team.setNextMaterial(plugin.getGamemanager().generateMaterial());
+            }
+
+            // Stats update
+            if (isStatsEnabled) {
+                for (ForceItemPlayer teammate : team.getPlayers()) {
+                    if (!teammate.equals(forceItemPlayer)) {
+                        plugin.getStatsManager().updateTeamStats(
+                                player.getName(), teammate.player().getName(), 1, PlayerStat.TOTAL_ITEMS);
                     }
                 }
             }
 
-            if (!foundNextItem) {
+            if (checkForBackToBack(forceItemPlayer, team.getCurrentMaterial())) {
+                forceItemPlayer.setBackToBackStreak(backToBacks + 1);
+            } else if (!isRunMode) {
                 return;
             }
 
         } else {
-            forceItemPlayer.setCurrentScore(forceItemPlayer.currentScore() + 1);
-            forceItemPlayer.addFoundItemToList(new ForceItem(itemStack.getType(), this.plugin.getTimer().formatSeconds(this.plugin.getTimer().getTimeLeft()), System.currentTimeMillis(), event.isBackToBack(), event.isSkipped()));
-            forceItemPlayer.setCurrentMaterial(forceItemPlayer.getNextMaterial());
-            forceItemPlayer.setNextMaterial(this.plugin.getGamemanager().generateMaterial());
-
-            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
-
-
-            if (this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
-                this.plugin.getStatsManager().updateSoloStats(player.getName(), PlayerStat.TOTAL_ITEMS, 1);
-                //playerStats.addFoundItem(forceItemPlayer);
+            // Solo mode
+            if (shouldApplyScoreAndSound) {
+                forceItemPlayer.setCurrentScore(forceItemPlayer.currentScore() + 1);
+                forceItemPlayer.addFoundItemToList(new ForceItem(itemStack.getType(),
+                        plugin.getTimer().formatSeconds(plugin.getTimer().getTimeLeft()),
+                        System.currentTimeMillis(), event.isBackToBack(), event.isSkipped()));
+                player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
             }
 
-            boolean foundNextItem = false;
+            if (isRunMode) {
+                Material currentMaterial = this.plugin.getGamemanager().generateSeededMaterial();
 
-            if (forceItemPlayer.previousMaterial() == forceItemPlayer.currentMaterial()) {
-                foundNextItem = true;
-                forceItemPlayer.setBackToBackStreak(backToBacks + 1);
-
-            } else if (hasItemInInventory(player.getInventory(), forceItemPlayer.currentMaterial())) {
-                foundNextItem = true;
-                forceItemPlayer.setBackToBackStreak(backToBacks + 1);
-
-            } else if (this.plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK) &&
-                    hasItemInInventory(this.plugin.getBackpack().getPlayerBackpack(player), forceItemPlayer.currentMaterial())) {
-                foundNextItem = true;
-                forceItemPlayer.setBackToBackStreak(backToBacks + 1);
+                plugin.getGamemanager().forceItemPlayerMap().values().forEach(p -> {
+                    p.setCurrentMaterial(p.getNextMaterial());
+                    p.setNextMaterial(currentMaterial);
+                });
+                return;
+            } else {
+                forceItemPlayer.setCurrentMaterial(forceItemPlayer.getNextMaterial());
+                forceItemPlayer.setNextMaterial(plugin.getGamemanager().generateMaterial());
             }
 
-            if (!foundNextItem) {
+            if (isStatsEnabled) {
+                plugin.getStatsManager().updateSoloStats(player.getName(), PlayerStat.TOTAL_ITEMS, 1);
+            }
+
+            if (checkForBackToBack(forceItemPlayer, forceItemPlayer.currentMaterial())) {
+                forceItemPlayer.setBackToBackStreak(backToBacks + 1);
+            } else if (!isRunMode) {
                 return;
             }
         }
 
-        // Handle finding item back to back
-
+        // Trigger back-to-back event
         ItemStack foundItem = new ItemStack(forceItemPlayer.getCurrentMaterial());
-
         FoundItemEvent foundNextItemEvent = new FoundItemEvent(player);
         foundNextItemEvent.setFoundItem(foundItem);
         foundNextItemEvent.setBackToBack(true);
         foundNextItemEvent.setSkipped(false);
 
         String probability = getItemProbability(player, forceItemPlayer);
+        String unicode = plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, foundItem.getType());
+        String materialName = plugin.getGamemanager().getMaterialName(foundItem.getType());
+        Component message = plugin.getGamemanager().getMiniMessage().deserialize(
+                "<green>" + player.getName() + " <gray>was lucky to already own <reset>" + unicode +
+                        " <gold>" + materialName + " <dark_gray>» <aqua>" + probability);
 
-        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.EVENT)) {
-            Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize(
-                    "<green>" + player.getName() + " <gray>was lucky to already own <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, foundItem.getType()) +
-                            " <gold>" + this.plugin.getGamemanager().getMaterialName(foundItem.getType()) + " <dark_gray>» <aqua>" + probability));
+        if (isEventDisabled) {
+            Bukkit.broadcast(message);
+        } else if (isTeamGame) {
+            forceItemPlayer.currentTeam().getPlayers().forEach(p -> p.player().sendMessage(message));
         } else {
-            if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-                forceItemPlayer.currentTeam().getPlayers().forEach(team -> {
-                    team.player().sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
-                            "<green>" + player.getName() + " <gray>was lucky to already own <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, foundItem.getType()) +
-                                    " <gold>" + this.plugin.getGamemanager().getMaterialName(foundItem.getType()) + " <dark_gray>» <aqua>" + probability));
-                });
-            } else {
-                player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
-                        "<green>" + player.getName() + " <gray>was lucky to already own <reset>" + this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, foundItem.getType()) +
-                                " <gold>" + this.plugin.getGamemanager().getMaterialName(foundItem.getType()) + " <dark_gray>» <aqua>" + probability));
-            }
+            player.sendMessage(message);
         }
 
         Bukkit.getPluginManager().callEvent(foundNextItemEvent);
+    }
+
+    private boolean checkForBackToBack(ForceItemPlayer player, Material currentMaterial) {
+        if (player.previousMaterial() == currentMaterial) return true;
+        if (plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK)) {
+            if (hasItemInInventory(plugin.getBackpack().getPlayerBackpack(player.player()), currentMaterial)) return true;
+        }
+        return hasItemInInventory(player.player().getInventory(), currentMaterial);
     }
 
     private String getItemProbability(Player player, ForceItemPlayer forceItemPlayer) {

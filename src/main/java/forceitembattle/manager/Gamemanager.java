@@ -90,6 +90,10 @@ public class Gamemanager {
         return this.forceItemBattle.getItemDifficultiesManager().generateRandomMaterial();
     }
 
+    public Material generateSeededMaterial() {
+        return this.forceItemBattle.getItemDifficultiesManager().generateSeededRandomMaterial();
+    }
+
     public String getMaterialName(Material material) {
         CustomMaterial customMaterial = CUSTOM_MATERIALS.get(material);
         if (customMaterial != null) {
@@ -108,38 +112,75 @@ public class Gamemanager {
     }
 
     public void initializeMats() {
-        if(this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+        boolean runMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.RUN);
+        boolean teamMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM);
+
+        Material globalCurrent = null;
+        Material globalNext = null;
+
+        if (runMode) {
+            globalCurrent = this.generateSeededMaterial();
+            globalNext = this.generateSeededMaterial();
+        }
+
+        if (teamMode) {
+            Material finalGlobalCurrent = globalCurrent;
+            Material finalGlobalNext = globalNext;
             this.forceItemPlayerMap.forEach((uuid, forceItemPlayer) -> {
-                if(forceItemPlayer.isSpectator()) return;
+                if (forceItemPlayer.isSpectator()) return;
+
+                Material current = runMode ? finalGlobalCurrent : this.generateMaterial();
+                Material next = runMode ? finalGlobalNext : this.generateMaterial();
+
                 forceItemPlayer.currentTeam().setCurrentScore(0);
-                forceItemPlayer.currentTeam().setCurrentMaterial(this.generateMaterial());
-                forceItemPlayer.currentTeam().setNextMaterial(this.generateMaterial());
+                forceItemPlayer.currentTeam().setCurrentMaterial(current);
+                forceItemPlayer.currentTeam().setNextMaterial(next);
             });
         } else {
+            Material finalGlobalCurrent1 = globalCurrent;
+            Material finalGlobalNext1 = globalNext;
             Bukkit.getOnlinePlayers().forEach(player -> {
                 ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
-                if(forceItemPlayer.isSpectator()) return;
+                if (forceItemPlayer.isSpectator()) return;
+
+                Material current = runMode ? finalGlobalCurrent1 : this.generateMaterial();
+                Material next = runMode ? finalGlobalNext1 : this.generateMaterial();
+
                 forceItemPlayer.setCurrentScore(0);
-                forceItemPlayer.setCurrentMaterial(this.generateMaterial());
-                forceItemPlayer.setNextMaterial(this.generateMaterial());
+                forceItemPlayer.setCurrentMaterial(current);
+                forceItemPlayer.setNextMaterial(next);
             });
         }
 
     }
 
-    public void forceSkipItem(Player player) {
+    public void forceSkipItem(Player player, boolean adminCommand) {
         if (!forceItemPlayerExist(player.getUniqueId())) {
             return;
         }
 
+        boolean runMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.RUN);
+        boolean teamMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM);
+
+        Material currentMaterial = runMode ? this.generateSeededMaterial() : this.generateMaterial();
+        Material nextMaterial = runMode ? this.generateSeededMaterial() : this.generateMaterial();
+
         ForceItemPlayer gamePlayer = getForceItemPlayer(player.getUniqueId());
-        if(this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-            gamePlayer.currentTeam().setCurrentMaterial(this.generateMaterial());
+        if(teamMode) {
+            forceItemPlayerMap().values().forEach(p -> {
+                if (!adminCommand) gamePlayer.currentTeam().setRemainingJokers(gamePlayer.currentTeam().getRemainingJokers() - 1);
+                p.currentTeam().setCurrentMaterial(currentMaterial);
+                p.currentTeam().setNextMaterial(nextMaterial);
+            });
         } else {
-            gamePlayer.setCurrentMaterial(this.generateMaterial());
+            forceItemPlayerMap().values().forEach(p -> {
+                if (!adminCommand) gamePlayer.setRemainingJokers(gamePlayer.remainingJokers() - 1);
+                p.setCurrentMaterial(currentMaterial);
+                p.setNextMaterial(nextMaterial);
+            });
         }
 
-        this.forceItemBattle.getTimer().sendActionBar();
+        //this.forceItemBattle.getTimer().sendActionBar();
     }
 
     public void giveSpectatorItems(Player player) {

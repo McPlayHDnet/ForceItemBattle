@@ -40,6 +40,9 @@ public class ItemDifficultiesManager {
      */
     private Map<Material, String> bigIconUnicodes;
 
+    private final Random FIXED_RANDOM;
+    private final long FIXED_RANDOM_SEED;
+
     public void setupStates() {
         State.EARLY.setUnlockedAtPercentage(0);
         State.MID.setUnlockedAtPercentage(11.11);
@@ -85,6 +88,18 @@ public class ItemDifficultiesManager {
         filterDisabledItems(items);
 
         return items.get(random.nextInt(items.size()));
+    }
+
+    public Material generateSeededRandomMaterial() {
+        List<Material> items = getAvailableItems();
+
+        filterDisabledItems(items);
+
+        if (items.isEmpty()) {
+            throw new IllegalStateException("No available items after filtering.");
+        }
+
+        return items.get(FIXED_RANDOM.nextInt(items.size()));
     }
 
     public boolean isItemInDescriptionList(Material material) {
@@ -149,6 +164,11 @@ public class ItemDifficultiesManager {
             Type mapType = new TypeToken<Map<String, String>[]>(){}.getType();
             Map<String, String>[] items = gson.fromJson(fileReader, mapType);
 
+            if (items == null) {
+                this.plugin.getLogger().warning("`unicodeItems.json` could not be parsed. Ensure the format is a JSON array ob objects with 'material' and 'unicode'");
+                return new HashMap<>();
+            }
+
             for (Map<String, String> entry : items) {
                 String materialName = entry.get("material");
                 String unicode = entry.get("unicode");
@@ -204,6 +224,9 @@ public class ItemDifficultiesManager {
 
     public ItemDifficultiesManager(ForceItemBattle forceItemBattle) {
         this.plugin = forceItemBattle;
+
+        this.FIXED_RANDOM_SEED = new Random().nextLong();
+        this.FIXED_RANDOM = new Random(FIXED_RANDOM_SEED);
 
         this.descriptionItems = new HashMap<>();
         this.netherItems = List.of(

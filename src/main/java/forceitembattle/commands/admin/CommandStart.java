@@ -246,7 +246,9 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
                 });
             } else {
                 forceItemPlayer.setRemainingJokers(jokersAmount);
-                player.getInventory().setItem(4, Gamemanager.getJokers(jokersAmount));
+                if (!this.plugin.getSettings().isSettingEnabled(GameSetting.RUN)) {
+                    player.getInventory().setItem(4, Gamemanager.getJokers(jokersAmount));
+                }
             }
 
             player.getInventory().addItem(new ItemStack(Material.STONE_AXE));
