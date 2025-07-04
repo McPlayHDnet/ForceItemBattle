@@ -109,8 +109,12 @@ public class VoteSkipManager {
             player.sendMessage(" ");
         });
 
-        if (skipItem) {
+        if (this.initiator.currentTeam() == null) {
             this.initiator.setRemainingJokers(this.initiator.remainingJokers() - 1);
+        } else {
+            this.initiator.currentTeam().setRemainingJokers(this.initiator.currentTeam().getRemainingJokers() - 1);
+        }
+        if (skipItem) {
             ForceItemBattle.getInstance().getGamemanager().forceSkipItem(this.initiator.player(), false);
         }
 
