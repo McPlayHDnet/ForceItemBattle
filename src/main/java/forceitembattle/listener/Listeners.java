@@ -105,7 +105,7 @@ public class Listeners implements Listener {
     @EventHandler
     public void onMove(PlayerMoveEvent playerMoveEvent) {
         Player player = playerMoveEvent.getPlayer();
-        if (this.plugin.getGamemanager().isPreGame() || this.plugin.getGamemanager().isPausedGame()) {
+        if (this.plugin.getGamemanager().isPausedGame()) {
             Location from = playerMoveEvent.getFrom();
             Location to = playerMoveEvent.getTo();
 
