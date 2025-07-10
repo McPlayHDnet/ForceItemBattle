@@ -147,6 +147,10 @@ public final class ForceItemBattle extends JavaPlugin {
             world.setGameRule(GameRule.SPECTATORS_GENERATE_CHUNKS, false);
             world.setGameRule(GameRule.DO_TRADER_SPAWNING, false);
             world.setGameRule(GameRule.DO_INSOMNIA, false);
+
+            WorldBorder worldBorder = world.getWorldBorder();
+            worldBorder.setCenter(world.getSpawnLocation());
+            worldBorder.setSize(30);
         }), 0L);
 
         if(this.getConfig().isConfigurationSection("descriptions")) {
