@@ -231,7 +231,7 @@ public class Listeners implements Listener {
 
             if (checkForBackToBack(forceItemPlayer, team.getCurrentMaterial())) {
                 forceItemPlayer.setBackToBackStreak(backToBacks + 1);
-            } else if (!isRunMode) {
+            } else {
                 return;
             }
 
@@ -264,7 +264,7 @@ public class Listeners implements Listener {
 
             if (checkForBackToBack(forceItemPlayer, forceItemPlayer.currentMaterial())) {
                 forceItemPlayer.setBackToBackStreak(backToBacks + 1);
-            } else if (!isRunMode) {
+            } else {
                 return;
             }
         }
