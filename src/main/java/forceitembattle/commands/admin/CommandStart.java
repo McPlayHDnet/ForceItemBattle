@@ -176,6 +176,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
         Location spawnLocation = world.getSpawnLocation();
         setupSpawnLocation(spawnLocation);
 
+        world.getWorldBorder().reset();
         world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
 
         Bukkit.getOnlinePlayers().forEach(player -> {
@@ -261,7 +262,6 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
             player.getPassengers().forEach(Entity::remove);
             player.getActivePotionEffects().forEach(potionEffect -> player.removePotionEffect(potionEffect.getType()));
             player.setGameMode(!forceItemPlayer.isSpectator() ? GameMode.SURVIVAL : GameMode.SPECTATOR);
-            player.teleport(spawnLocation);
             player.playSound(player, Sound.BLOCK_END_PORTAL_SPAWN, 1, 1);
 
             if(this.plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK)) {
