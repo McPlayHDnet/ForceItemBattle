@@ -10,17 +10,33 @@ import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.achievements.Achievements;
 import forceitembattle.settings.preset.GamePreset;
 import forceitembattle.settings.preset.InvSettingsPresets;
-import forceitembattle.util.*;
+import forceitembattle.util.ForceItem;
+import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.util.ForceItemPlayerStats;
+import forceitembattle.util.InventoryBuilder;
+import forceitembattle.util.ItemBuilder;
+import forceitembattle.util.PlayerStat;
+import forceitembattle.util.Team;
 import io.papermc.paper.advancement.AdvancementDisplay;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import io.papermc.paper.event.player.PlayerTradeEvent;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
+import org.bukkit.GameRule;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.Sound;
+import org.bukkit.Tag;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.block.ShulkerBox;
-import org.bukkit.entity.*;
+import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
+import org.bukkit.entity.WanderingTrader;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityPickupItemEvent;
@@ -31,10 +47,21 @@ import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
-import org.bukkit.event.player.*;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerAdvancementDoneEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerInteractAtEntityEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerPortalEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
+import org.bukkit.inventory.meta.BundleMeta;
+import org.bukkit.inventory.meta.ItemMeta;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -307,12 +334,14 @@ public class Listeners implements Listener {
         int itemsInInventory = Arrays.stream(player.getInventory().getContents())
                 .filter(item -> item != null && !Gamemanager.isJoker(item) && !Gamemanager.isBackpack(item))
                 .map(ItemStack::getType)
-                .toList().size();
+                .mapToInt(x -> 1)
+                .sum();
         Inventory backpack = this.plugin.getBackpack().getBackpackForPlayer(player);
         int itemsInBackpack = Arrays.stream(backpack.getContents())
                 .filter(item -> item != null && !Gamemanager.isJoker(item) && !Gamemanager.isBackpack(item))
                 .map(ItemStack::getType)
-                .toList().size();
+                .mapToInt(x -> 1)
+                .sum();
 
         int itemsInShulkers = Stream.concat(
                         Arrays.stream(player.getInventory().getContents()),
@@ -320,7 +349,14 @@ public class Listeners implements Listener {
                 ).filter(item -> item != null && Tag.SHULKER_BOXES.isTagged(item.getType()))
                 .mapToInt(this::countItemsInShulkerBox)
                 .sum();
-        double probabilityDouble = Math.pow(((double) (itemsInInventory + itemsInBackpack + itemsInShulkers) / totalItemsInPool), forceItemPlayer.backToBackStreak());
+
+        int itemsInBundles = Stream.concat(
+                        Arrays.stream(player.getInventory().getContents()),
+                        Arrays.stream(backpack.getContents())
+                ).filter(item -> item != null && !Gamemanager.isBackpack(item) && Tag.ITEMS_BUNDLES.isTagged(item.getType()))
+                .mapToInt(this::countItemsInBundles)
+                .sum();
+        double probabilityDouble = Math.pow(((double) (itemsInInventory + itemsInBackpack + itemsInShulkers + itemsInBundles) / totalItemsInPool), forceItemPlayer.backToBackStreak());
         DecimalFormat decimalFormat = new DecimalFormat("#.##");
 
         return decimalFormat.format(probabilityDouble * 100) + "%";
@@ -336,34 +372,51 @@ public class Listeners implements Listener {
         return 0;
     }
 
+    private int countItemsInBundles(ItemStack bundle) {
+        BundleMeta bundleMeta = (BundleMeta) bundle.getItemMeta();
+        if (bundleMeta != null && bundleMeta.hasItems()) {
+            return (int) bundleMeta.getItems().stream().filter(item -> item != null && !Gamemanager.isJoker(item)).count();
+        }
+        return 0;
+    }
+
     public static boolean hasItemInInventory(Inventory inventory, Material targetMaterial) {
         for (ItemStack inventoryItem : inventory.getContents()) {
-            if (inventoryItem == null) {
-                continue;
-            }
-
-            if (Gamemanager.isBackpack(inventoryItem) || Gamemanager.isJoker(inventoryItem)) {
-                continue;
-            }
-
-            if (inventoryItem.getType() == targetMaterial) {
+            if (containsMaterial(inventoryItem, targetMaterial)) {
                 return true;
             }
+        }
 
-            if (!(inventoryItem.getItemMeta() instanceof BlockStateMeta blockStateMeta)) {
-                continue;
-            }
+        return false;
+    }
 
-            if (!(blockStateMeta.getBlockState() instanceof ShulkerBox shulkerBox)) {
-                continue;
-            }
+    private static boolean containsMaterial(ItemStack item, Material targetMaterial) {
+        if (item == null || Gamemanager.isBackpack(item) || Gamemanager.isJoker(item)) {
+            return false;
+        }
 
-            for (ItemStack shulkerItem : shulkerBox.getInventory().getContents()) {
-                if (shulkerItem == null) {
-                    continue;
+        if (item.getType() == targetMaterial) {
+            return true;
+        }
+
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return false;
+
+        // Check inside shulker boxes
+        if (meta instanceof BlockStateMeta blockStateMeta) {
+            if (blockStateMeta.getBlockState() instanceof ShulkerBox shulkerBox) {
+                for (ItemStack shulkerItem : shulkerBox.getInventory().getContents()) {
+                    if (containsMaterial(shulkerItem, targetMaterial)) {
+                        return true;
+                    }
                 }
+            }
+        }
 
-                if (shulkerItem.getType() == targetMaterial) {
+        // Check inside bundles
+        if (meta instanceof BundleMeta bundleMeta) {
+            for (ItemStack bundleItem : bundleMeta.getItems()) {
+                if (containsMaterial(bundleItem, targetMaterial)) {
                     return true;
                 }
             }
