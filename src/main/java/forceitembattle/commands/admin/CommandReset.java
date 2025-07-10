@@ -17,7 +17,12 @@ public class CommandReset extends CustomCommand {
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
         if(player.isOp()) {
-            Bukkit.getOnlinePlayers().forEach(onlinePlayer -> onlinePlayer.kick(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_red>Server Reset")));
+            Bukkit.getOnlinePlayers().forEach(onlinePlayer -> onlinePlayer.kick(this.plugin.getGamemanager().getMiniMessage().deserialize(
+                    "<dark_gray>» <gold><b>ForceItemBattle</b> <dark_gray>«" +
+                            "\n" +
+                            "<red>The world is being reset!" +
+                            "\n"
+            )));
 
             try {
                 this.plugin.resetFile.createNewFile();
