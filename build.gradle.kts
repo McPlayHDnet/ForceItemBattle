@@ -2,10 +2,10 @@ import xyz.jpenilla.resourcefactory.bukkit.BukkitPluginYaml
 
 plugins {
     `java-library`
-    id("io.papermc.paperweight.userdev") version "2.0.0-beta.17"
-    id("xyz.jpenilla.run-paper") version "2.3.1" // Adds runServer and runMojangMappedServer tasks for testing
-    id("xyz.jpenilla.resource-factory-bukkit-convention") version "1.3.0" // Generates plugin.yml based on the Gradle config
-    id("io.freefair.lombok") version "8.14"
+    id("io.papermc.paperweight.userdev") version "2.0.0-beta.19"
+    id("xyz.jpenilla.run-paper") version "3.0.1" // Adds runServer and runMojangMappedServer tasks for testing
+    id("xyz.jpenilla.resource-factory-bukkit-convention") version "1.3.1" // Generates plugin.yml based on the Gradle config
+    id("io.freefair.lombok") version "9.0.0"
 }
 
 group = "forceitembattle"
@@ -25,7 +25,7 @@ repositories {
 }
 
 dependencies {
-    paperweight.paperDevBundle("1.21.7-R0.1-SNAPSHOT")
+    paperweight.paperDevBundle("1.21.9-R0.1-SNAPSHOT")
     implementation("org.apache.commons:commons-text:1.13.1")
     // paperweight.foliaDevBundle("1.20.4-R0.1-SNAPSHOT")
     // paperweight.devBundle("com.example.paperfork", "1.20.4-R0.1-SNAPSHOT")
