@@ -26,7 +26,6 @@ import forceitembattle.commands.player.CommandSpawn;
 import forceitembattle.commands.player.CommandSpectate;
 import forceitembattle.commands.player.CommandStats;
 import forceitembattle.commands.player.CommandTeams;
-import forceitembattle.commands.player.CommandTrader;
 import forceitembattle.commands.player.CommandVote;
 import forceitembattle.commands.player.CommandVoteSkip;
 import forceitembattle.commands.player.trade.CommandAskTrade;
@@ -410,7 +409,6 @@ public final class ForceItemBattle extends JavaPlugin {
         new CommandForceTeam();
         new CommandVote();
         new CommandVoteSkip();
-        new CommandTrader();
     }
 
     @Override
