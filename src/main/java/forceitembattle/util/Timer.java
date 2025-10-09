@@ -76,18 +76,20 @@ public class Timer {
 
                     player.playerListName(forceItemBattle.getGamemanager().getMiniMessage().deserialize(
                             (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM) ? "<yellow>[" + forceItemPlayer.currentTeam().getTeamDisplay() + "] " : "") + "<white>" +
-                                    player.getName() + " <gray>[<gold>" + this.forceItemBattle.getGamemanager().getMaterialName(material) + " <reset>" + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(true, material) + "<gray>]"));
+                                    player.getName() + " <gray>[<gold>" + this.forceItemBattle.getGamemanager().getMaterialName(material) + " <reset><shadow:black:0.4>" + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(true, material) + "</shadow><gray>]"));
 
                     player.sendActionBar(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(
                             "<gradient:#fcef64:#fcc44b:#f44c7d><b>" + this.formatSeconds(this.getTimeLeft()) + "</b> <dark_gray>| " +
                                     (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM) ? "<green>Team score: <white>" + forceItemPlayer.currentTeam().getCurrentScore() : "<green>Your score: <white>" + forceItemPlayer.currentScore())));
 
-                    String bossBarTitle = "<gradient:#6eee87:#5fc52e><b>" + this.forceItemBattle.getGamemanager().getMaterialName(material) + " <reset>" + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(false, material);
+
+                    String bossBarTitle = "<gradient:#6eee87:#5fc52e><b>" + this.forceItemBattle.getGamemanager().getMaterialName(material) +
+                            " <reset><shadow:black:0.4>" + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(false, material) + "</shadow>";
                     String chainBossTitle = null;
 
                     if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.CHAIN)) {
                         Material nextMaterial = forceItemPlayer.getNextMaterial();
-                        chainBossTitle = "<gradient:#6eee87:#5fc52e><b>" + this.forceItemBattle.getGamemanager().getMaterialName(nextMaterial) + " <reset>" + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(false, nextMaterial);
+                        chainBossTitle = "<gradient:#6eee87:#5fc52e><b>" + this.forceItemBattle.getGamemanager().getMaterialName(nextMaterial) + " <reset><shadow:black:0.4>" + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(false, nextMaterial) + "</shadow>";
                     }
 
                     String finalBossBar = bossBarTitle + (chainBossTitle != null ? " <gray><b>➡</b> " + chainBossTitle : "");
