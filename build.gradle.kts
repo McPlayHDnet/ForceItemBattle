@@ -64,7 +64,7 @@ bukkitPluginYaml {
     load = BukkitPluginYaml.PluginLoadOrder.STARTUP
     authors.add("threeseconds")
     authors.add("stupxd")
-    authors.add("FireBladeHunter")
+    authors.add("eltobito")
     apiVersion = "1.21"
     commands.register("start")
     commands.register("settings")
