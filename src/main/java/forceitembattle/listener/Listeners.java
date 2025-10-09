@@ -192,7 +192,7 @@ public class Listeners implements Listener {
             String unicode = plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType());
             String materialName = plugin.getGamemanager().getMaterialName(itemStack.getType());
             Component message = plugin.getGamemanager().getMiniMessage().deserialize(
-                    "<green>" + player.getName() + " <gray>" + action + " <reset>" + unicode + " <gold>" + materialName);
+                    "<green>" + player.getName() + " <gray>" + action + " <reset><shadow:black:0.4>" + unicode + "</shadow> <gold>" + materialName);
 
             if (isEventDisabled) {
                 Bukkit.broadcast(message);
