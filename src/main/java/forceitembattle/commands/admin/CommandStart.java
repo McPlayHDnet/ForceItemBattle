@@ -176,7 +176,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
         Location spawnLocation = world.getSpawnLocation();
         setupSpawnLocation(spawnLocation);
 
-        world.getWorldBorder().reset();
+        Bukkit.getWorlds().forEach(worlds -> world.getWorldBorder().reset());
         world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
 
         Bukkit.getOnlinePlayers().forEach(player -> {
