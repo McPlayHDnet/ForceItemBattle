@@ -61,10 +61,12 @@ import forceitembattle.util.WanderingTraderTimer;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
 import org.bukkit.GameRule;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.World;
 import org.bukkit.WorldBorder;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.event.Listener;
@@ -203,6 +205,8 @@ public final class ForceItemBattle extends JavaPlugin {
             WorldBorder worldBorder = world.getWorldBorder();
             worldBorder.setCenter(world.getSpawnLocation());
             worldBorder.setSize(30);
+
+            forceloadChunksAround(world.getSpawnLocation(), 2);
         }), 0L);
 
         if(this.getConfig().isConfigurationSection("descriptions")) {
@@ -218,6 +222,19 @@ public final class ForceItemBattle extends JavaPlugin {
                 });
             } else {
                 throw new NullPointerException("'descriptions' does not exist in the config.yml");
+            }
+        }
+    }
+
+    public void forceloadChunksAround(Location center, int radiusChunks) {
+        World world = center.getWorld();
+        int centerChunkX = center.getChunk().getX();
+        int centerChunkZ = center.getChunk().getZ();
+
+        for (int x = centerChunkX - radiusChunks; x <= centerChunkX + radiusChunks; x++) {
+            for (int z = centerChunkZ - radiusChunks; z <= centerChunkZ + radiusChunks; z++) {
+                Chunk chunk = world.getChunkAt(x, z);
+                chunk.setForceLoaded(true);
             }
         }
     }
