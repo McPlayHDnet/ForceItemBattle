@@ -56,6 +56,6 @@ public class Team {
     }
 
     public Material getPreviousMaterial() {
-        return this.foundItems.get(this.foundItems.size() - 1).material();
+        return this.foundItems.getLast().material();
     }
 }

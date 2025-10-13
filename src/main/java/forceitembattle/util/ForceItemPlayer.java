@@ -73,7 +73,7 @@ public class ForceItemPlayer {
     }
 
     public Material previousMaterial() {
-        return this.foundItems.get(this.foundItems.size() - 1).material();
+        return this.foundItems.getLast().material();
     }
 
     public int remainingJokers() {
