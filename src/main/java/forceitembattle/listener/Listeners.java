@@ -182,11 +182,6 @@ public class Listeners implements Listener {
 
         int backToBacks = forceItemPlayer.backToBackStreak();
 
-        /**
-         * this specific colorcode is inside the resource pack - credits: https://github.com/PuckiSilver/NoShadow
-         * new Color(78, 92, 36) + unicode;
-         */
-
         if (!event.isBackToBack()) {
             String action = event.isSkipped() ? "skipped" : "found";
             String unicode = plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType());
