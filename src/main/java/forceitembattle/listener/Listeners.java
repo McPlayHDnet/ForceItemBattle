@@ -20,6 +20,7 @@ import forceitembattle.util.Team;
 import io.papermc.paper.advancement.AdvancementDisplay;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import io.papermc.paper.event.player.PlayerTradeEvent;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
@@ -64,10 +65,7 @@ import org.bukkit.inventory.meta.BundleMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 @RequiredArgsConstructor
 public class Listeners implements Listener {
@@ -78,7 +76,7 @@ public class Listeners implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
 
-        ForceItemPlayer forceItemPlayer = new ForceItemPlayer(player, new ArrayList<>(), null, 0, 0);
+        ForceItemPlayer forceItemPlayer = new ForceItemPlayer(player, null, 0, 0);
         if (this.plugin.getGamemanager().isMidGame() || this.plugin.getGamemanager().isPausedGame()) {
             if (!this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
                 player.getInventory().clear();
@@ -172,130 +170,217 @@ public class Listeners implements Listener {
         Player player = event.getPlayer();
         ItemStack itemStack = event.getFoundItem();
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-        ForceItemPlayerStats playerStats = this.plugin.getStatsManager().loadPlayerStats(player.getName());
-        SeasonalStats seasonalStats = playerStats.getSeasonStats(StatsManager.CURRENT_SEASON);
 
-        boolean isTeamGame = this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM);
-        boolean isRunMode = this.plugin.getSettings().isSettingEnabled(GameSetting.RUN);
-        boolean isEventDisabled = !this.plugin.getSettings().isSettingEnabled(GameSetting.EVENT);
-        boolean isStatsEnabled = this.plugin.getSettings().isSettingEnabled(GameSetting.STATS);
-
-        int backToBacks = forceItemPlayer.backToBackStreak();
+        GameContext context = new GameContext(
+                forceItemPlayer.currentTeam() != null,
+                plugin.getSettings().isSettingEnabled(GameSetting.RUN),
+                !plugin.getSettings().isSettingEnabled(GameSetting.EVENT),
+                plugin.getSettings().isSettingEnabled(GameSetting.STATS),
+                plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK)
+        );
 
         if (!event.isBackToBack()) {
-            String action = event.isSkipped() ? "skipped" : "found";
-            String unicode = plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType());
-            String materialName = plugin.getGamemanager().getMaterialName(itemStack.getType());
-            Component message = plugin.getGamemanager().getMiniMessage().deserialize(
-                    "<green>" + player.getName() + " <gray>" + action + " <reset><shadow:black:0.4>" + unicode + "</shadow> <gold>" + materialName);
-
-            if (isEventDisabled) {
-                Bukkit.broadcast(message);
-            } else if (isTeamGame) {
-                forceItemPlayer.currentTeam().getPlayers().forEach(p -> p.player().sendMessage(message));
-            } else {
-                player.sendMessage(message);
-            }
-
-            if (isStatsEnabled && backToBacks != 0 && !isRunMode) {
-                if (seasonalStats.getBack2backStreak().getSolo() < backToBacks) {
-                    if (isTeamGame) {
-                        for (ForceItemPlayer teammate : forceItemPlayer.currentTeam().getPlayers()) {
-                            if (!teammate.equals(forceItemPlayer)) {
-                                plugin.getStatsManager().updateTeamStats(
-                                        player.getName(), teammate.player().getName(), backToBacks, PlayerStat.BACK_TO_BACK_STREAK);
-                            }
-                        }
-                    } else {
-                        plugin.getStatsManager().updateSoloStats(player.getName(), PlayerStat.BACK_TO_BACK_STREAK, backToBacks);
-                    }
-                }
-            }
+            handleRegularFind(event, player, itemStack, forceItemPlayer, context);
         }
 
-        boolean shouldApplyScoreAndSound = !isRunMode || (isRunMode && !event.isSkipped());
-
-        if (isTeamGame) {
-            Team team = forceItemPlayer.currentTeam();
-
-            if (shouldApplyScoreAndSound) {
-                team.setCurrentScore(team.getCurrentScore() + 1);
-                team.addFoundItemToList(new ForceItem(itemStack.getType(),
-                        plugin.getTimer().formatSeconds(plugin.getTimer().getTimeLeft()),
-                        System.currentTimeMillis(), event.isBackToBack(), event.isSkipped()));
-                team.getPlayers().forEach(p -> p.player().playSound(p.player().getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1));
-            }
-
-            if (isRunMode) {
-                Material currentMaterial = this.plugin.getGamemanager().generateSeededMaterial();
-                plugin.getGamemanager().forceItemPlayerMap().values().forEach(p -> {
-                    Team t = p.currentTeam();
-                    t.setCurrentMaterial(t.getNextMaterial());
-                    t.setNextMaterial(currentMaterial);
-                });
-                return;
-            }
-
-            Material nextMaterial = plugin.getGamemanager().generateMaterial();
-            Material currentMaterial = team.getNextMaterial();
-
-            team.setCurrentMaterial(currentMaterial);
-            team.setNextMaterial(nextMaterial);
-
-            if (isStatsEnabled) {
-                for (ForceItemPlayer teammate : team.getPlayers()) {
-                    if (!teammate.equals(forceItemPlayer)) {
-                        plugin.getStatsManager().updateTeamStats(
-                                player.getName(), teammate.player().getName(), 1, PlayerStat.TOTAL_ITEMS);
-                    }
-                }
-            }
-
-            if (checkForBackToBack(forceItemPlayer, nextMaterial, isTeamGame)) {
-                forceItemPlayer.setBackToBackStreak(backToBacks + 1);
-                triggerBackToBackEvent(forceItemPlayer, player);
-            } else {
-                forceItemPlayer.setBackToBackStreak(0);
-            }
-            return;
-        }
+        boolean shouldApplyScoreAndSound = !context.isRunMode() || !event.isSkipped();
 
         if (shouldApplyScoreAndSound) {
-            forceItemPlayer.setCurrentScore(forceItemPlayer.currentScore() + 1);
-            forceItemPlayer.addFoundItemToList(new ForceItem(itemStack.getType(),
-                    plugin.getTimer().formatSeconds(plugin.getTimer().getTimeLeft()),
-                    System.currentTimeMillis(), event.isBackToBack(), event.isSkipped()));
-            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
+            applyScoreAndSound(forceItemPlayer, itemStack, event, context);
         }
 
-        if (isRunMode) {
-            Material currentMaterial = this.plugin.getGamemanager().generateSeededMaterial();
-            plugin.getGamemanager().forceItemPlayerMap().values().forEach(p -> {
-                p.setCurrentMaterial(p.getNextMaterial());
-                p.setNextMaterial(currentMaterial);
-            });
-            return;
-        }
+        updateMaterials(forceItemPlayer, event, context);
+        updateStats(forceItemPlayer, player, context, event.isBackToBack());
+        handleBackToBackCheck(forceItemPlayer, player, context);
+    }
 
-        Material nextMaterial = plugin.getGamemanager().generateMaterial();
-        Material currentMaterial = forceItemPlayer.getNextMaterial();
+    private void handleRegularFind(FoundItemEvent event, Player player, ItemStack itemStack, ForceItemPlayer forceItemPlayer, GameContext context) {
+        String action = event.isSkipped() ? "skipped" : "found";
+        String unicode = plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType());
+        String materialName = plugin.getGamemanager().getMaterialName(itemStack.getType());
 
-        forceItemPlayer.setCurrentMaterial(currentMaterial);
-        forceItemPlayer.setNextMaterial(nextMaterial);
+        Component message = plugin.getGamemanager().getMiniMessage().deserialize(
+                String.format("<green>%s <gray>%s <reset><shadow:black:0.4>%s</shadow> <gold>%s",
+                        player.getName(), action, unicode, materialName)
+        );
 
-        if (isStatsEnabled) {
-            plugin.getStatsManager().updateSoloStats(player.getName(), PlayerStat.TOTAL_ITEMS, 1);
-        }
+        broadcastMessage(message, forceItemPlayer, context);
+        updateBackToBackStats(forceItemPlayer, player, context);
+    }
 
-        if (checkForBackToBack(forceItemPlayer, nextMaterial, isTeamGame)) {
-            forceItemPlayer.setBackToBackStreak(backToBacks + 1);
-            triggerBackToBackEvent(forceItemPlayer, player);
+    private void broadcastMessage(Component message, ForceItemPlayer forceItemPlayer, GameContext context) {
+        if (context.isEventDisabled()) {
+            Bukkit.broadcast(message);
+        } else if (context.isTeamGame()) {
+            forceItemPlayer.currentTeam().getPlayers().forEach(p -> p.player().sendMessage(message));
         } else {
-            forceItemPlayer.setBackToBackStreak(0);
+            forceItemPlayer.player().sendMessage(message);
         }
     }
 
-    private void triggerBackToBackEvent(ForceItemPlayer forceItemPlayer, Player player) {
+    private void updateBackToBackStats(ForceItemPlayer forceItemPlayer, Player player, GameContext context) {
+        if (!context.isStatsEnabled() || context.isRunMode()) {
+            return;
+        }
+
+        int backToBacks = forceItemPlayer.backToBackStreak();
+        if (backToBacks == 0) {
+            return;
+        }
+
+        ForceItemPlayerStats playerStats = plugin.getStatsManager().loadPlayerStats(player.getName());
+        SeasonalStats seasonalStats = playerStats.getSeasonStats(StatsManager.CURRENT_SEASON);
+
+        if (seasonalStats.getBack2backStreak().getSolo() >= backToBacks) {
+            return;
+        }
+
+        if (context.isTeamGame()) {
+            forceItemPlayer.currentTeam().getPlayers().stream()
+                    .filter(teammate -> !teammate.equals(forceItemPlayer))
+                    .forEach(teammate -> plugin.getStatsManager().updateTeamStats(
+                            player.getName(),
+                            teammate.player().getName(),
+                            backToBacks,
+                            PlayerStat.BACK_TO_BACK_STREAK
+                    ));
+        } else {
+            plugin.getStatsManager().updateSoloStats(
+                    player.getName(),
+                    PlayerStat.BACK_TO_BACK_STREAK,
+                    backToBacks
+            );
+        }
+    }
+
+    private void applyScoreAndSound(ForceItemPlayer forceItemPlayer, ItemStack itemStack,
+                                    FoundItemEvent event, GameContext context) {
+        ForceItem forceItem = new ForceItem(
+                itemStack.getType(),
+                plugin.getTimer().formatSeconds(plugin.getTimer().getTimeLeft()),
+                System.currentTimeMillis(),
+                event.isBackToBack(),
+                event.isSkipped()
+        );
+
+        if (context.isTeamGame()) {
+            Team team = forceItemPlayer.currentTeam();
+            team.setCurrentScore(team.getCurrentScore() + 1);
+            team.addFoundItemToList(forceItem);
+            team.getPlayers().forEach(p ->
+                    p.player().playSound(p.player().getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1)
+            );
+        } else {
+            forceItemPlayer.setCurrentScore(forceItemPlayer.currentScore() + 1);
+            forceItemPlayer.addFoundItemToList(forceItem);
+            forceItemPlayer.player().playSound(
+                    forceItemPlayer.player().getLocation(),
+                    Sound.BLOCK_NOTE_BLOCK_BELL,
+                    1,
+                    1
+            );
+        }
+    }
+
+    private void updateMaterials(ForceItemPlayer forceItemPlayer, FoundItemEvent event, GameContext context) {
+        if (context.isRunMode()) {
+            updateSeededMaterials(forceItemPlayer, context);
+        } else {
+            updateRandomMaterials(forceItemPlayer, context);
+        }
+    }
+
+    private void updateSeededMaterials(ForceItemPlayer forceItemPlayer, GameContext context) {
+        Material currentMaterial = plugin.getGamemanager().generateSeededMaterial();
+
+        if (context.isTeamGame()) {
+            plugin.getGamemanager().forceItemPlayerMap().values().forEach(p -> {
+                Team team = p.currentTeam();
+                team.setPreviousMaterial(team.getCurrentMaterial());
+                team.setCurrentMaterial(team.getNextMaterial());
+                team.setNextMaterial(currentMaterial);
+            });
+        } else {
+            plugin.getGamemanager().forceItemPlayerMap().values().forEach(p -> {
+                p.setPreviousMaterial(p.currentMaterial());
+                p.setCurrentMaterial(p.getNextMaterial());
+                p.setNextMaterial(currentMaterial);
+            });
+        }
+    }
+
+    private void updateRandomMaterials(ForceItemPlayer forceItemPlayer, GameContext context) {
+        Material nextMaterial = plugin.getGamemanager().generateMaterial();
+
+        if (context.isTeamGame()) {
+            Team team = forceItemPlayer.currentTeam();
+            Material currentMaterial = team.getNextMaterial();
+            team.setPreviousMaterial(team.getCurrentMaterial());
+            team.setCurrentMaterial(currentMaterial);
+            team.setNextMaterial(nextMaterial);
+        } else {
+            Material currentMaterial = forceItemPlayer.getNextMaterial();
+            forceItemPlayer.setPreviousMaterial(forceItemPlayer.currentMaterial());
+            forceItemPlayer.setCurrentMaterial(currentMaterial);
+            forceItemPlayer.setNextMaterial(nextMaterial);
+        }
+    }
+
+    private void updateStats(ForceItemPlayer forceItemPlayer, Player player,
+                             GameContext context, boolean isBackToBack) {
+        if (!context.isStatsEnabled() || context.isRunMode() || isBackToBack) {
+            return;
+        }
+
+        if (context.isTeamGame()) {
+            forceItemPlayer.currentTeam().getPlayers().stream()
+                    .filter(teammate -> !teammate.equals(forceItemPlayer))
+                    .forEach(teammate -> plugin.getStatsManager().updateTeamStats(
+                            player.getName(),
+                            teammate.player().getName(),
+                            1,
+                            PlayerStat.TOTAL_ITEMS
+                    ));
+        } else {
+            plugin.getStatsManager().updateSoloStats(player.getName(), PlayerStat.TOTAL_ITEMS, 1);
+        }
+    }
+
+    private void handleBackToBackCheck(ForceItemPlayer forceItemPlayer, Player player, GameContext context) {
+        if (context.isRunMode()) {
+            return;
+        }
+
+        Material currentMaterial = context.isTeamGame()
+                ? forceItemPlayer.currentTeam().getCurrentMaterial()
+                : forceItemPlayer.getCurrentMaterial();
+
+        BackToBackResult result = checkForBackToBack(forceItemPlayer, currentMaterial, context);
+
+        if (result.hasBackToBack()) {
+            forceItemPlayer.setBackToBackStreak(forceItemPlayer.backToBackStreak() + 1);
+
+            if (result.getTeammateWhoHasIt() != null) {
+                ForceItemPlayer teammate = result.getTeammateWhoHasIt();
+                teammate.setBackToBackStreak(teammate.backToBackStreak() + 1);
+            }
+
+            if (context.isTeamGame() && forceItemPlayer.currentTeam() != null) {
+                Team team = forceItemPlayer.currentTeam();
+                team.setBackToBackStreak(team.getBackToBackStreak() + 1);
+            }
+
+            triggerBackToBackEvent(forceItemPlayer, player, result, context);
+        } else {
+            forceItemPlayer.setBackToBackStreak(0);
+
+            if (context.isTeamGame() && forceItemPlayer.currentTeam() != null) {
+                forceItemPlayer.currentTeam().setBackToBackStreak(0);
+            }
+        }
+    }
+
+    private void triggerBackToBackEvent(ForceItemPlayer forceItemPlayer, Player player, BackToBackResult result, GameContext context) {
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             ItemStack foundItem = new ItemStack(forceItemPlayer.getCurrentMaterial());
             FoundItemEvent foundNextItemEvent = new FoundItemEvent(player);
@@ -306,100 +391,191 @@ public class Listeners implements Listener {
             String probability = getItemProbability(player, forceItemPlayer);
             String unicode = plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, foundItem.getType());
             String materialName = plugin.getGamemanager().getMaterialName(foundItem.getType());
-            Component message = plugin.getGamemanager().getMiniMessage().deserialize(
-                    "<green>" + player.getName() + " <gray>was lucky to already own <reset>" + unicode +
-                            " <gold>" + materialName + " <dark_gray>» <aqua>" + probability
-            );
 
-            boolean isTeamGame = plugin.getSettings().isSettingEnabled(GameSetting.TEAM);
-            boolean isEventDisabled = !plugin.getSettings().isSettingEnabled(GameSetting.EVENT);
-
-            if (isEventDisabled) {
-                Bukkit.broadcast(message);
-            } else if (isTeamGame) {
-                forceItemPlayer.currentTeam().getPlayers().forEach(p -> p.player().sendMessage(message));
+            Component message;
+            if (result.getTeammateWhoHasIt() != null) {
+                // Teammate has the item
+                ForceItemPlayer teammate = result.getTeammateWhoHasIt();
+                message = plugin.getGamemanager().getMiniMessage().deserialize(
+                        String.format("<green>%s <gray>was lucky that <green>%s <gray>already owns <reset>%s <gold>%s <dark_gray>» <aqua>%s",
+                                player.getName(), teammate.player().getName(), unicode, materialName, probability)
+                );
             } else {
-                player.sendMessage(message);
+                // Player themselves has the item
+                message = plugin.getGamemanager().getMiniMessage().deserialize(
+                        String.format("<green>%s <gray>was lucky to already own <reset>%s <gold>%s <dark_gray>» <aqua>%s",
+                                player.getName(), unicode, materialName, probability)
+                );
             }
 
+            GameContext broadcastContext = new GameContext(
+                    forceItemPlayer.currentTeam() != null,
+                    false,
+                    !plugin.getSettings().isSettingEnabled(GameSetting.EVENT),
+                    false,
+                    false
+            );
+
+            broadcastMessage(message, forceItemPlayer, broadcastContext);
             Bukkit.getPluginManager().callEvent(foundNextItemEvent);
         }, 1L);
     }
 
-    private boolean checkForBackToBack(ForceItemPlayer player, Material currentMaterial, boolean isTeamGame) {
-        Material previousMaterial = isTeamGame
+    private BackToBackResult checkForBackToBack(ForceItemPlayer player, Material targetMaterial, GameContext context) {
+        Material previousMaterial = context.isTeamGame()
                 ? player.currentTeam().getPreviousMaterial()
                 : player.previousMaterial();
 
-        if (previousMaterial != null && previousMaterial == currentMaterial) return true;
+        if (previousMaterial == targetMaterial) {
+            return new BackToBackResult(true, null);
+        }
 
-        if (plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK)) {
-            Inventory backpackInventory = isTeamGame
+        if (hasItemInInventory(player.player().getInventory(), targetMaterial)) {
+            return new BackToBackResult(true, null);
+        }
+
+        if (context.isBackpackEnabled()) {
+            Inventory backpackInventory = context.isTeamGame()
                     ? plugin.getBackpack().getTeamBackpack(player.currentTeam())
                     : plugin.getBackpack().getPlayerBackpack(player.player());
 
-            if (hasItemInInventory(backpackInventory, currentMaterial)) return true;
+            if (hasItemInInventory(backpackInventory, targetMaterial)) {
+                return new BackToBackResult(true, null);
+            }
         }
 
-        return hasItemInInventory(player.player().getInventory(), currentMaterial);
+        if (context.isTeamGame() && player.currentTeam() != null) {
+            for (ForceItemPlayer teammate : player.currentTeam().getPlayers()) {
+                if (teammate.equals(player)) {
+                    continue;
+                }
+
+                if (hasItemInInventory(teammate.player().getInventory(), targetMaterial)) {
+                    return new BackToBackResult(true, teammate);
+                }
+
+                if (context.isBackpackEnabled()) {
+                    Inventory teammateBackpack = plugin.getBackpack().getPlayerBackpack(teammate.player());
+                    if (hasItemInInventory(teammateBackpack, targetMaterial)) {
+                        return new BackToBackResult(true, teammate);
+                    }
+                }
+            }
+        }
+
+        return new BackToBackResult(false, null);
     }
 
     private String getItemProbability(Player player, ForceItemPlayer forceItemPlayer) {
-        int totalItemsInPool = this.plugin.getItemDifficultiesManager().getAvailableItems().size();
-        int itemsInInventory = Arrays.stream(player.getInventory().getContents())
-                .filter(item -> item != null && !Gamemanager.isJoker(item) && !Gamemanager.isBackpack(item))
-                .map(ItemStack::getType)
-                .mapToInt(x -> 1)
-                .sum();
-        Inventory backpack = this.plugin.getBackpack().getBackpackForPlayer(player);
-        int itemsInBackpack = Arrays.stream(backpack.getContents())
-                .filter(item -> item != null && !Gamemanager.isJoker(item) && !Gamemanager.isBackpack(item))
-                .map(ItemStack::getType)
-                .mapToInt(x -> 1)
-                .sum();
+        int totalItemsInPool = plugin.getItemDifficultiesManager().getAvailableItems().size();
+        boolean isBackpackEnabled = plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK);
+        boolean isTeamGame = forceItemPlayer.currentTeam() != null;
 
-        int itemsInShulkers = Stream.concat(
-                        Arrays.stream(player.getInventory().getContents()),
-                        Arrays.stream(backpack.getContents())
-                ).filter(item -> item != null && Tag.SHULKER_BOXES.isTagged(item.getType()))
-                .mapToInt(this::countItemsInShulkerBox)
-                .sum();
+        int totalItems = 0;
+        int streak = forceItemPlayer.backToBackStreak();
 
-        int itemsInBundles = Stream.concat(
-                        Arrays.stream(player.getInventory().getContents()),
-                        Arrays.stream(backpack.getContents())
-                ).filter(item -> item != null && !Gamemanager.isBackpack(item) && Tag.ITEMS_BUNDLES.isTagged(item.getType()))
-                .mapToInt(this::countItemsInBundles)
-                .sum();
-        double probabilityDouble = Math.pow(((double) (itemsInInventory + itemsInBackpack + itemsInShulkers + itemsInBundles) / totalItemsInPool), forceItemPlayer.backToBackStreak());
-        DecimalFormat decimalFormat = new DecimalFormat("#.##");
+        if (isTeamGame) {
+            Team team = forceItemPlayer.currentTeam();
 
-        return decimalFormat.format(probabilityDouble * 100) + "%";
+            for (ForceItemPlayer teammate : team.getPlayers()) {
+                totalItems += countItemsInInventory(teammate.player().getInventory());
+            }
+
+            if (isBackpackEnabled) {
+                Inventory teamBackpack = plugin.getBackpack().getTeamBackpack(team);
+                totalItems += countItemsInInventory(teamBackpack);
+            }
+
+            streak = Math.max(streak, team.getBackToBackStreak());
+        } else {
+            totalItems = countItemsInInventory(player.getInventory());
+
+            if (isBackpackEnabled) {
+                Inventory backpack = plugin.getBackpack().getPlayerBackpack(player);
+                totalItems += countItemsInInventory(backpack);
+            }
+        }
+
+        double probability = Math.pow((double) totalItems / totalItemsInPool, streak);
+
+        DecimalFormat percentFormat = new DecimalFormat("#.##");
+        return percentFormat.format(probability * 100) + "%";
+    }
+
+    private int countItemsInInventory(Inventory inventory) {
+        if (inventory == null) {
+            return 0;
+        }
+
+        int count = 0;
+
+        for (ItemStack item : inventory.getContents()) {
+            if (item == null || Gamemanager.isJoker(item) || Gamemanager.isBackpack(item)) {
+                continue;
+            }
+
+            count++;
+
+            if (Tag.SHULKER_BOXES.isTagged(item.getType())) {
+                count += countItemsInShulkerBox(item);
+            }
+
+            if (Tag.ITEMS_BUNDLES.isTagged(item.getType())) {
+                count += countItemsInBundles(item);
+            }
+        }
+
+        return count;
     }
 
     private int countItemsInShulkerBox(ItemStack shulkerBox) {
-        BlockStateMeta blockStateMeta = (BlockStateMeta) shulkerBox.getItemMeta();
-        if (blockStateMeta != null && blockStateMeta.getBlockState() instanceof ShulkerBox box) {
-            return (int) Arrays.stream(box.getInventory().getContents())
-                    .filter(item -> item != null && !Gamemanager.isJoker(item) && !Gamemanager.isBackpack(item))
-                    .count();
+        ItemMeta meta = shulkerBox.getItemMeta();
+        if (!(meta instanceof BlockStateMeta blockStateMeta)) {
+            return 0;
         }
-        return 0;
+
+        if (!(blockStateMeta.getBlockState() instanceof ShulkerBox box)) {
+            return 0;
+        }
+
+        int count = 0;
+        for (ItemStack item : box.getInventory().getContents()) {
+            if (item == null || Gamemanager.isJoker(item) || Gamemanager.isBackpack(item)) {
+                continue;
+            }
+
+            count++;
+
+            if (Tag.ITEMS_BUNDLES.isTagged(item.getType())) {
+                count += countItemsInBundles(item);
+            }
+        }
+
+        return count;
     }
 
     private int countItemsInBundles(ItemStack bundle) {
-        BundleMeta bundleMeta = (BundleMeta) bundle.getItemMeta();
-        if (bundleMeta != null && bundleMeta.hasItems()) {
-            return (int) bundleMeta.getItems().stream().filter(item -> item != null && !Gamemanager.isJoker(item)).count();
+        ItemMeta meta = bundle.getItemMeta();
+        if (!(meta instanceof BundleMeta bundleMeta)) {
+            return 0;
         }
-        return 0;
+
+        if (!bundleMeta.hasItems()) {
+            return 0;
+        }
+
+        return (int) bundleMeta.getItems().stream()
+                .filter(item -> item != null && !Gamemanager.isJoker(item))
+                .count();
     }
 
     public static boolean hasItemInInventory(Inventory inventory, Material targetMaterial) {
-        if (inventory == null) return false;
+        if (inventory == null) {
+            return false;
+        }
 
-        for (ItemStack inventoryItem : inventory.getContents()) {
-            if (containsMaterial(inventoryItem, targetMaterial)) {
+        for (ItemStack item : inventory.getContents()) {
+            if (containsMaterial(item, targetMaterial)) {
                 return true;
             }
         }
@@ -417,21 +593,20 @@ public class Listeners implements Listener {
         }
 
         ItemMeta meta = item.getItemMeta();
-        if (meta == null) return false;
+        if (meta == null) {
+            return false;
+        }
 
-        // Check inside shulker boxes
-        if (meta instanceof BlockStateMeta blockStateMeta) {
-            if (blockStateMeta.getBlockState() instanceof ShulkerBox shulkerBox) {
-                for (ItemStack shulkerItem : shulkerBox.getInventory().getContents()) {
-                    if (containsMaterial(shulkerItem, targetMaterial)) {
-                        return true;
-                    }
+        if (meta instanceof BlockStateMeta blockStateMeta
+                && blockStateMeta.getBlockState() instanceof ShulkerBox shulkerBox) {
+            for (ItemStack shulkerItem : shulkerBox.getInventory().getContents()) {
+                if (containsMaterial(shulkerItem, targetMaterial)) {
+                    return true;
                 }
             }
         }
 
-        // Check inside bundles
-        if (meta instanceof BundleMeta bundleMeta) {
+        if (meta instanceof BundleMeta bundleMeta && bundleMeta.hasItems()) {
             for (ItemStack bundleItem : bundleMeta.getItems()) {
                 if (containsMaterial(bundleItem, targetMaterial)) {
                     return true;
@@ -735,4 +910,42 @@ public class Listeners implements Listener {
 
     }
 
+    private static class GameContext {
+        private final boolean teamGame;
+        private final boolean runMode;
+        private final boolean eventDisabled;
+        private final boolean statsEnabled;
+        private final boolean backpackEnabled;
+
+        public GameContext(boolean teamGame, boolean runMode, boolean eventDisabled,
+                           boolean statsEnabled, boolean backpackEnabled) {
+            this.teamGame = teamGame;
+            this.runMode = runMode;
+            this.eventDisabled = eventDisabled;
+            this.statsEnabled = statsEnabled;
+            this.backpackEnabled = backpackEnabled;
+        }
+
+        public boolean isTeamGame() { return teamGame; }
+        public boolean isRunMode() { return runMode; }
+        public boolean isEventDisabled() { return eventDisabled; }
+        public boolean isStatsEnabled() { return statsEnabled; }
+        public boolean isBackpackEnabled() { return backpackEnabled; }
+    }
+
+    private static class BackToBackResult {
+        private final boolean hasBackToBack;
+        @Getter
+        private final ForceItemPlayer teammateWhoHasIt;
+
+        public BackToBackResult(boolean hasBackToBack, ForceItemPlayer teammateWhoHasIt) {
+            this.hasBackToBack = hasBackToBack;
+            this.teammateWhoHasIt = teammateWhoHasIt;
+        }
+
+        public boolean hasBackToBack() {
+            return hasBackToBack;
+        }
+
+    }
 }
