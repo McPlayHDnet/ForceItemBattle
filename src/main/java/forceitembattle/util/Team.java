@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 @Getter
@@ -23,11 +24,15 @@ public class Team {
     @Setter
     private Material nextMaterial;
     @Setter
+    private Material previousMaterial;
+    @Setter
+    private int backToBackStreak;
+    @Setter
     private Integer currentScore, remainingJokers;
 
-    public Team(int teamId, List<ForceItem> foundItems, Material currentMaterial, Integer currentScore, Integer remainingJokers, ForceItemPlayer... teamPlayers) {
+    public Team(int teamId, Material currentMaterial, Integer currentScore, Integer remainingJokers, ForceItemPlayer... teamPlayers) {
         this.teamId = teamId;
-        this.foundItems = foundItems;
+        this.foundItems = new ArrayList<>();
         this.currentMaterial = currentMaterial;
         this.currentScore = currentScore;
         this.remainingJokers = remainingJokers;
@@ -52,10 +57,12 @@ public class Team {
     }
 
     public void addFoundItemToList(ForceItem forceItem) {
-        this.foundItems.add(forceItem);
+        if (forceItem != null) {
+            this.foundItems.add(forceItem);
+        }
     }
 
-    public Material getPreviousMaterial() {
-        return this.foundItems.getLast().material();
+    public List<ForceItem> getFoundItems() {
+        return Collections.unmodifiableList(foundItems);
     }
 }

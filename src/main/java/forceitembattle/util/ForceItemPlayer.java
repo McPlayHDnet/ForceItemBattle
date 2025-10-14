@@ -1,11 +1,12 @@
 package forceitembattle.util;
 
-import forceitembattle.ForceItemBattle;
-import forceitembattle.settings.GameSetting;
 import lombok.Setter;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ForceItemPlayer {
@@ -18,6 +19,8 @@ public class ForceItemPlayer {
     @Setter
     private Material nextMaterial;
     @Setter
+    private Material previousMaterial;
+    @Setter
     private int remainingJokers;
     @Setter
     private Integer currentScore;
@@ -28,9 +31,9 @@ public class ForceItemPlayer {
     @Setter
     private boolean isSpectator;
 
-    public ForceItemPlayer(Player player, List<ForceItem> foundItems, Material currentMaterial, int remainingJokers, Integer currentScore) {
+    public ForceItemPlayer(Player player, Material currentMaterial, int remainingJokers, Integer currentScore) {
         this.player = player;
-        this.foundItems = foundItems;
+        this.foundItems = new ArrayList<>();
         this.currentMaterial = currentMaterial;
         this.remainingJokers = remainingJokers;
         this.currentScore = currentScore;
@@ -41,11 +44,13 @@ public class ForceItemPlayer {
     }
 
     public List<ForceItem> foundItems() {
-        return foundItems;
+        return Collections.unmodifiableList(foundItems);
     }
 
     public void addFoundItemToList(ForceItem forceItem) {
-        this.foundItems.add(forceItem);
+        if (forceItem != null) {
+            this.foundItems.add(forceItem);
+        }
     }
 
     public Material currentMaterial() {
@@ -53,11 +58,10 @@ public class ForceItemPlayer {
     }
 
     public Material getCurrentMaterial() {
-        if (ForceItemBattle.getInstance().getSettings().isSettingEnabled(GameSetting.TEAM)) {
-            return currentTeam().getCurrentMaterial();
+        if (currentTeam != null) {
+            return currentTeam.getCurrentMaterial();
         }
-
-        return currentMaterial();
+        return currentMaterial;
     }
 
     public Material nextMaterial() {
@@ -65,15 +69,23 @@ public class ForceItemPlayer {
     }
 
     public Material getNextMaterial() {
-        if (ForceItemBattle.getInstance().getSettings().isSettingEnabled(GameSetting.TEAM)) {
-            return currentTeam().getNextMaterial();
+        if (currentTeam != null) {
+            return currentTeam.getNextMaterial();
         }
-
-        return nextMaterial();
+        return nextMaterial;
     }
 
+    @Nullable
     public Material previousMaterial() {
-        return this.foundItems.getLast().material();
+        return previousMaterial;
+    }
+
+    @Nullable
+    public Material getPreviousMaterial() {
+        if (currentTeam != null) {
+            return currentTeam.getPreviousMaterial();
+        }
+        return previousMaterial;
     }
 
     public int remainingJokers() {

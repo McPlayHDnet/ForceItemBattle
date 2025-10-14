@@ -42,7 +42,7 @@ public class TeamsManager {
             List<ForceItemPlayer> teamPlayers = playersWithoutTeam.subList(0, teamSizeLimit);
             playersWithoutTeam = playersWithoutTeam.subList(teamSizeLimit, playersWithoutTeam.size());
 
-            Team randomTeam = new Team(this.teams.size() + 1, new ArrayList<>(), null, 0, 0, teamPlayers.toArray(new ForceItemPlayer[0]));
+            Team randomTeam = new Team(this.teams.size() + 1, null, 0, 0, teamPlayers.toArray(new ForceItemPlayer[0]));
             this.teams.add(randomTeam);
 
             for (ForceItemPlayer player : teamPlayers) {
@@ -52,7 +52,7 @@ public class TeamsManager {
         }
 
         for (ForceItemPlayer player : playersWithoutTeam) {
-            Team singlePlayerTeam = new Team(this.teams.size() + 1, new ArrayList<>(), null, 0, 0, player);
+            Team singlePlayerTeam = new Team(this.teams.size() + 1, null, 0, 0, player);
             this.teams.add(singlePlayerTeam);
 
             player.setCurrentTeam(singlePlayerTeam);
@@ -73,7 +73,7 @@ public class TeamsManager {
     }
 
     public void invite(ForceItemPlayer player, ForceItemPlayer target) {
-        Team team = new Team(this.teams.size() + 1, new ArrayList<>(), null, 0, 0, player);
+        Team team = new Team(this.teams.size() + 1, null, 0, 0, player);
         if(player.currentTeam() != null) team = player.currentTeam();
         else player.setCurrentTeam(team);
 
@@ -133,7 +133,7 @@ public class TeamsManager {
     }
 
     public void create(ForceItemPlayer first, @Nullable ForceItemPlayer second, String name) {
-        Team team = new Team(this.teams.size() + 1, new ArrayList<>(), null, 0, 0, first);
+        Team team = new Team(this.teams.size() + 1, null, 0, 0, first);
         team.setName(name);
         first.setCurrentTeam(team);
         if (second != null) this.addToTeam(team, second);
