@@ -496,10 +496,34 @@ public class Listeners implements Listener {
             }
         }
 
-        double probability = Math.pow((double) totalItems / totalItemsInPool, streak);
+        double baseProbability = (double) totalItems / totalItemsInPool;
+
+        Material prev = forceItemPlayer.getPreviousMaterial();
+        Material current = forceItemPlayer.getCurrentMaterial();
+
+        if (prev != null && current == prev) {
+            baseProbability *= 0.05;
+            streak += 1;
+        }
+
+        double probability = Math.pow(baseProbability, streak);
+
+        String rarity;
+        if (probability <= 0.001) {
+            rarity = "<gradient:#FF00DD:#9905E3><b>RNGESUS</b></gradient>"; // ~0.1% or less
+            player.playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_DEATH, 0.3f, 1f);
+        } else if (probability <= 0.01) {
+            rarity = "<gold><b>LEGENDARY</b></gold>";
+            player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 0f);
+        } else {
+            rarity = "<dark_purple><b>EPIC</b></dark_purple>";
+            player.playSound(player.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1f, 1f);
+        }
 
         DecimalFormat percentFormat = new DecimalFormat("#.##");
-        return percentFormat.format(probability * 100) + "%";
+        String formattedProbability = percentFormat.format(probability * 100) + "%";
+
+        return formattedProbability + " <dark_gray>(<reset>" + rarity + "<dark_gray>)";
     }
 
     private int countItemsInInventory(Inventory inventory) {
