@@ -64,8 +64,11 @@ import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.BundleMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 @RequiredArgsConstructor
 public class Listeners implements Listener {
@@ -471,126 +474,147 @@ public class Listeners implements Listener {
         boolean isBackpackEnabled = plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK);
         boolean isTeamGame = forceItemPlayer.currentTeam() != null;
 
-        int totalItems = 0;
+        Set<Material> uniqueMaterials = new HashSet<>();
         int streak = forceItemPlayer.backToBackStreak();
 
         if (isTeamGame) {
             Team team = forceItemPlayer.currentTeam();
 
             for (ForceItemPlayer teammate : team.getPlayers()) {
-                totalItems += countItemsInInventory(teammate.player().getInventory());
+                collectUniqueMaterials(teammate.player().getInventory(), uniqueMaterials);
             }
 
             if (isBackpackEnabled) {
                 Inventory teamBackpack = plugin.getBackpack().getTeamBackpack(team);
-                totalItems += countItemsInInventory(teamBackpack);
+                collectUniqueMaterials(teamBackpack, uniqueMaterials);
             }
 
             streak = Math.max(streak, team.getBackToBackStreak());
         } else {
-            totalItems = countItemsInInventory(player.getInventory());
+            collectUniqueMaterials(player.getInventory(), uniqueMaterials);
 
             if (isBackpackEnabled) {
                 Inventory backpack = plugin.getBackpack().getPlayerBackpack(player);
-                totalItems += countItemsInInventory(backpack);
+                collectUniqueMaterials(backpack, uniqueMaterials);
             }
         }
 
-        double baseProbability = (double) totalItems / totalItemsInPool;
+        int totalItems = uniqueMaterials.size();
 
         Material prev = forceItemPlayer.getPreviousMaterial();
         Material current = forceItemPlayer.getCurrentMaterial();
 
+        if (current != null && uniqueMaterials.contains(current)) {
+            totalItems--;
+        }
+
+        double baseProbability = (double) totalItems / totalItemsInPool;
+
         if (prev != null && current == prev) {
             baseProbability *= 0.05;
-            streak += 1;
         }
 
         double probability = Math.pow(baseProbability, streak);
+        double probabilityPercent = probability * 100;
 
         String rarity;
         if (probability <= 0.001) {
-            rarity = "<gradient:#FF00DD:#9905E3><b>RNGESUS</b></gradient>"; // ~0.1% or less
+            rarity = "<gradient:#E41EBC:#9A4992><b>RNGESUS</b></gradient>"; // ~0.1% or less
             player.playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_DEATH, 0.3f, 1f);
         } else if (probability <= 0.01) {
             rarity = "<gold><b>LEGENDARY</b></gold>";
             player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 0f);
-        } else {
+        } else if (probability <= 0.05) {
             rarity = "<dark_purple><b>EPIC</b></dark_purple>";
             player.playSound(player.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1f, 1f);
+        } else {
+            rarity = "<blue><b>RARE</b></blue>";
+            player.playSound(player.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1f, 1.5f);
         }
 
-        DecimalFormat percentFormat = new DecimalFormat("#.##");
-        String formattedProbability = percentFormat.format(probability * 100) + "%";
+        String formattedProbability;
+        if (probabilityPercent >= 1) {
+            DecimalFormat df = new DecimalFormat("0.##");
+            df.setRoundingMode(RoundingMode.HALF_UP);
+            formattedProbability = df.format(probabilityPercent) + "%";
+        } else {
+            int leadingZeros = 0;
+            double temp = probabilityPercent;
+            while (temp < 1 && leadingZeros < 15) {
+                temp *= 10;
+                leadingZeros++;
+            }
+
+            int totalDecimals = leadingZeros + 2;
+
+            DecimalFormat df = new DecimalFormat("0." + "#".repeat(Math.max(0, totalDecimals)));
+            df.setRoundingMode(RoundingMode.HALF_UP);
+            formattedProbability = df.format(probabilityPercent) + "%";
+        }
 
         return formattedProbability + " <dark_gray>(<reset>" + rarity + "<dark_gray>)";
     }
 
-    private int countItemsInInventory(Inventory inventory) {
-        if (inventory == null) {
-            return 0;
-        }
-
-        int count = 0;
-
+    private void collectUniqueMaterials(Inventory inventory, Set<Material> uniqueMaterials) {
         for (ItemStack item : inventory.getContents()) {
             if (item == null || Gamemanager.isJoker(item) || Gamemanager.isBackpack(item)) {
                 continue;
             }
 
-            count++;
+            Material type = item.getType();
+            uniqueMaterials.add(type);
 
-            if (Tag.SHULKER_BOXES.isTagged(item.getType())) {
-                count += countItemsInShulkerBox(item);
+            if (Tag.SHULKER_BOXES.isTagged(type)) {
+                collectUniqueMaterialsFromShulkerBox(item, uniqueMaterials);
             }
 
-            if (Tag.ITEMS_BUNDLES.isTagged(item.getType())) {
-                count += countItemsInBundles(item);
+            if (Tag.ITEMS_BUNDLES.isTagged(type)) {
+                collectUniqueMaterialsFromBundle(item, uniqueMaterials);
             }
         }
-
-        return count;
     }
 
-    private int countItemsInShulkerBox(ItemStack shulkerBox) {
+    private void collectUniqueMaterialsFromShulkerBox(ItemStack shulkerBox, Set<Material> uniqueMaterials) {
         ItemMeta meta = shulkerBox.getItemMeta();
         if (!(meta instanceof BlockStateMeta blockStateMeta)) {
-            return 0;
+            return;
         }
 
         if (!(blockStateMeta.getBlockState() instanceof ShulkerBox box)) {
-            return 0;
+            return;
         }
 
-        int count = 0;
         for (ItemStack item : box.getInventory().getContents()) {
             if (item == null || Gamemanager.isJoker(item) || Gamemanager.isBackpack(item)) {
                 continue;
             }
 
-            count++;
+            Material type = item.getType();
+            uniqueMaterials.add(type);
 
-            if (Tag.ITEMS_BUNDLES.isTagged(item.getType())) {
-                count += countItemsInBundles(item);
+            if (Tag.ITEMS_BUNDLES.isTagged(type)) {
+                collectUniqueMaterialsFromBundle(item, uniqueMaterials);
             }
         }
-
-        return count;
     }
 
-    private int countItemsInBundles(ItemStack bundle) {
+    private void collectUniqueMaterialsFromBundle(ItemStack bundle, Set<Material> uniqueMaterials) {
         ItemMeta meta = bundle.getItemMeta();
         if (!(meta instanceof BundleMeta bundleMeta)) {
-            return 0;
+            return;
         }
 
         if (!bundleMeta.hasItems()) {
-            return 0;
+            return;
         }
 
-        return (int) bundleMeta.getItems().stream()
-                .filter(item -> item != null && !Gamemanager.isJoker(item))
-                .count();
+        for (ItemStack item : bundleMeta.getItems()) {
+            if (item == null || Gamemanager.isJoker(item)) {
+                continue;
+            }
+
+            uniqueMaterials.add(item.getType());
+        }
     }
 
     public static boolean hasItemInInventory(Inventory inventory, Material targetMaterial) {
