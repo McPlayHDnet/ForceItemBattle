@@ -95,5 +95,4 @@ bukkitPluginYaml {
     commands.register("forceteam")
     commands.register("vote")
     commands.register("voteskip")
-    commands.register("wt")
 }
