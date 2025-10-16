@@ -504,15 +504,9 @@ public class Listeners implements Listener {
         Material prev = forceItemPlayer.getPreviousMaterial();
         Material current = forceItemPlayer.getCurrentMaterial();
 
-        if (current != null && uniqueMaterials.contains(current)) {
-            totalItems--;
-        }
-
         double baseProbability = (double) totalItems / totalItemsInPool;
 
-        if (prev != null && current == prev) {
-            baseProbability *= 0.05;
-        }
+        baseProbability = Math.min(baseProbability, 1.0); // 100% cap
 
         double probability = Math.pow(baseProbability, streak);
         double probabilityPercent = probability * 100;
