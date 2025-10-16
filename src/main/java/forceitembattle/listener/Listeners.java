@@ -10,13 +10,7 @@ import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.achievements.Achievements;
 import forceitembattle.settings.preset.GamePreset;
 import forceitembattle.settings.preset.InvSettingsPresets;
-import forceitembattle.util.ForceItem;
-import forceitembattle.util.ForceItemPlayer;
-import forceitembattle.util.ForceItemPlayerStats;
-import forceitembattle.util.InventoryBuilder;
-import forceitembattle.util.ItemBuilder;
-import forceitembattle.util.PlayerStat;
-import forceitembattle.util.Team;
+import forceitembattle.util.*;
 import io.papermc.paper.advancement.AdvancementDisplay;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import io.papermc.paper.event.player.PlayerTradeEvent;
@@ -24,20 +18,10 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
-import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
-import org.bukkit.GameRule;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.Sound;
-import org.bukkit.Tag;
+import org.bukkit.*;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.block.ShulkerBox;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Player;
-import org.bukkit.entity.WanderingTrader;
+import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityPickupItemEvent;
@@ -48,16 +32,7 @@ import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
-import org.bukkit.event.player.PlayerAdvancementDoneEvent;
-import org.bukkit.event.player.PlayerDropItemEvent;
-import org.bukkit.event.player.PlayerInteractAtEntityEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.event.player.PlayerPortalEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerRespawnEvent;
-import org.bukkit.event.player.PlayerSwapHandItemsEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
@@ -504,15 +479,20 @@ public class Listeners implements Listener {
         Material prev = forceItemPlayer.getPreviousMaterial();
         Material current = forceItemPlayer.getCurrentMaterial();
 
-        if (current != null && uniqueMaterials.contains(current)) {
-            totalItems--;
-        }
+
+        // Ich glaube das macht keinen Sinn, weil wenn ein neues Item zugewiesen wird, ist das aktuelle
+        // Item bereits im Inventar und sollte somit berücksichtigt werden.
+        //if (current != null && uniqueMaterials.contains(current)) {
+        //    totalItems--;
+        //}
 
         double baseProbability = (double) totalItems / totalItemsInPool;
 
         if (prev != null && current == prev) {
-            baseProbability *= 0.05;
+            baseProbability = 1.0 / totalItemsInPool; // vorher war mal 0,05? Mathematisch korrekt das gleiche wiederzubekommen ist 1 / total
         }
+
+        baseProbability = Math.min(baseProbability, 1.0); // 100% cap
 
         double probability = Math.pow(baseProbability, streak);
         double probabilityPercent = probability * 100;
