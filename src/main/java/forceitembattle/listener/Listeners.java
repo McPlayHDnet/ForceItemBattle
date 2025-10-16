@@ -512,7 +512,10 @@ public class Listeners implements Listener {
         double probabilityPercent = probability * 100;
 
         String rarity;
-        if (probability <= 0.001) {
+        if (prev != null && current == prev) {
+            rarity = "<gradient:#73FF00:#14C8FF><b>EXTRAORDINARY</b></gradient>";
+            player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 0f);
+        } else if (probability <= 0.001) {
             rarity = "<gradient:#E41EBC:#9A4992><b>RNGESUS</b></gradient>"; // ~0.1% or less
             player.playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_DEATH, 0.3f, 1f);
         } else if (probability <= 0.01) {
