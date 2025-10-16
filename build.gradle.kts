@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "forceitembattle"
-version = "3.9.0"
+version = "3.9.1"
 description = "ForceItemBattle for McPlayHD.net"
 
 java {
@@ -95,4 +95,5 @@ bukkitPluginYaml {
     commands.register("forceteam")
     commands.register("vote")
     commands.register("voteskip")
+    commands.register("wt")
 }
