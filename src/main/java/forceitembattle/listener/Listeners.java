@@ -855,13 +855,14 @@ public class Listeners implements Listener {
         if (!(event.getEntity() instanceof Player)) {
             return;
         }
-        if (this.plugin.getSettings().isSettingEnabled(GameSetting.FOOD)) {
+        if (plugin.getGamemanager().isPreGame()) {
+            event.setCancelled(true);
             return;
         }
-        if (!this.plugin.getGamemanager().isPreGame()) {
-            return;
+
+        if (!plugin.getSettings().isSettingEnabled(GameSetting.FOOD)) {
+            event.setCancelled(true);
         }
-        event.setCancelled(true);
     }
 
     @EventHandler
