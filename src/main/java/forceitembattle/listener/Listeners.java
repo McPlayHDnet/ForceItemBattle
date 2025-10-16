@@ -479,18 +479,7 @@ public class Listeners implements Listener {
         Material prev = forceItemPlayer.getPreviousMaterial();
         Material current = forceItemPlayer.getCurrentMaterial();
 
-
-        // Ich glaube das macht keinen Sinn, weil wenn ein neues Item zugewiesen wird, ist das aktuelle
-        // Item bereits im Inventar und sollte somit berücksichtigt werden.
-        //if (current != null && uniqueMaterials.contains(current)) {
-        //    totalItems--;
-        //}
-
         double baseProbability = (double) totalItems / totalItemsInPool;
-
-        if (prev != null && current == prev) {
-            baseProbability = 1.0 / totalItemsInPool; // vorher war mal 0,05? Mathematisch korrekt das gleiche wiederzubekommen ist 1 / total
-        }
 
         baseProbability = Math.min(baseProbability, 1.0); // 100% cap
 
