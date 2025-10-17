@@ -113,8 +113,11 @@ public class Listeners implements Listener {
 
             player.getInventory().setItem(4, new ItemBuilder(Material.LIME_DYE).setDisplayName("<dark_gray>» <green>Achievements").getItemStack());
             player.getInventory().setItem(8, new ItemBuilder(Material.ENDER_PEARL).setDisplayName("<dark_gray>» <gray>Spectate game").getItemStack());
-
         }
+
+        plugin.getScoreboardManager().setupForPlayer(player);
+        plugin.getScoreboardManager().updateAllPlayers();
+
         player.sendPlayerListHeader(this.plugin.getGamemanager().getMiniMessage().deserialize("<!shadow>\n\n\n\uebA0\n"));
         event.joinMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<green>» <yellow>" + player.getName() + " <green>joined"));
     }
@@ -195,6 +198,7 @@ public class Listeners implements Listener {
 
         updateMaterials(forceItemPlayer, event, context);
         updateStats(forceItemPlayer, player, context, event.isBackToBack());
+        this.plugin.getScoreboardManager().updateAllPlayers();
         handleBackToBackCheck(forceItemPlayer, player, context);
     }
 
