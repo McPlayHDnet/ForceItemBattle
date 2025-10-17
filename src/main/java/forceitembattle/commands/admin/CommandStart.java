@@ -299,6 +299,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
         Bukkit.getWorld("world").setTime(0);
 
         this.plugin.getGamemanager().setCurrentGameState(GameState.MID_GAME);
+        this.plugin.getScoreboardManager().updateAllPlayers();
     }
 
     private void setupSpawnLocation(Location location) {

@@ -74,9 +74,9 @@ public class Timer {
                 if(!forceItemPlayer.isSpectator()) {
                     Material material = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial();
 
-                    player.playerListName(forceItemBattle.getGamemanager().getMiniMessage().deserialize(
-                            (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM) ? "<yellow>[" + forceItemPlayer.currentTeam().getTeamDisplay() + "] " : "") + "<white>" +
-                                    player.getName() + " <gray>[<gold>" + this.forceItemBattle.getGamemanager().getMaterialName(material) + " <reset><shadow:black:0.4>" + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(true, material) + "</shadow><gray>]"));
+                    //player.playerListName(forceItemBattle.getGamemanager().getMiniMessage().deserialize(
+                    //        (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM) ? "<yellow>[" + forceItemPlayer.currentTeam().getTeamDisplay() + "] " : "") + "<white>" +
+                    //                player.getName() + " <gray>[<gold>" + this.forceItemBattle.getGamemanager().getMaterialName(material) + " <reset><shadow:black:0.4>" + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(true, material) + "</shadow><gray>]"));
 
                     player.sendActionBar(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(
                             "<gradient:#fcef64:#fcc44b:#f44c7d><b>" + this.formatSeconds(this.getTimeLeft()) + "</b> <dark_gray>| " +

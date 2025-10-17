@@ -4,48 +4,99 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.util.ForceItemPlayer;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
+import java.util.Comparator;
+import java.util.List;
+
 public class ScoreboardManager {
 
-    public ScoreboardManager(Player player) {
-        //this.updatePlayerPrefix(player);
+    private final ForceItemBattle plugin;
+
+    public ScoreboardManager(ForceItemBattle plugin) {
+        this.plugin = plugin;
     }
 
-    public void updatePlayerPrefix(Player player) {
-        Scoreboard scoreboard = player.getScoreboard();
-        Gamemanager gameManager = ForceItemBattle.getInstance().getGamemanager();
-        MiniMessage miniMessage = gameManager.getMiniMessage();
-        GameSettings settings = ForceItemBattle.getInstance().getSettings();
+    public void setupForPlayer(Player player) {
+        if (player.getScoreboard() == Bukkit.getScoreboardManager().getMainScoreboard()) {
+            player.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
+        }
+        updateForPlayer(player);
+    }
 
-        for (ForceItemPlayer forceItemPlayer : gameManager.forceItemPlayerMap().values()) {
-            Team currentTeam = scoreboard.getTeam(getTeamName(settings, forceItemPlayer));
-            if (currentTeam == null) {
-                currentTeam = scoreboard.registerNewTeam(getTeamName(settings, forceItemPlayer));
+    public void updateAllPlayers() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            updateForPlayer(player);
+        }
+    }
+
+    public void updateForPlayer(Player viewer) {
+        Gamemanager gameManager = plugin.getGamemanager();
+        MiniMessage mini = gameManager.getMiniMessage();
+        GameSettings settings = plugin.getSettings();
+        Scoreboard board = viewer.getScoreboard();
+
+        board.getTeams().forEach(Team::unregister);
+
+        List<ForceItemPlayer> fibPlayers = gameManager.forceItemPlayerMap().values()
+                .stream()
+                .sorted(Comparator.comparingInt(p -> {
+                    forceitembattle.util.Team team = p.currentTeam();
+                    return team != null ? team.getTeamId() : Integer.MAX_VALUE;
+                }))
+                .toList();
+
+        for (ForceItemPlayer fibPlayer : fibPlayers) {
+            Player target = fibPlayer.player();
+            if (target == null) continue;
+
+            String teamName = getUniqueTeamName(settings, fibPlayer);
+            org.bukkit.scoreboard.Team team = board.getTeam(teamName);
+            if (team == null) {
+                team = board.registerNewTeam(teamName);
             }
 
-            Material material = settings.isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial();
-
-            if(settings.isSettingEnabled(GameSetting.TEAM)) {
-                currentTeam.prefix(miniMessage.deserialize("<yellow>[" + forceItemPlayer.currentTeam().getTeamDisplay() + "] "));
+            if (settings.isSettingEnabled(GameSetting.TEAM) && fibPlayer.currentTeam() != null) {
+                team.prefix(mini.deserialize("<yellow>[" + fibPlayer.currentTeam().getTeamDisplay() + "] "));
+            } else {
+                team.prefix(mini.deserialize(""));
             }
-            currentTeam.suffix(miniMessage.deserialize(" <gray>[<gold>" + gameManager.getMaterialName(material) + " <reset><color:#4e5c24>" + ForceItemBattle.getInstance().getItemDifficultiesManager().getUnicodeFromMaterial(true, material) + "<gray>]"));
 
-            currentTeam.addPlayer(forceItemPlayer.player());
+            Material mat;
 
+            if (settings.isSettingEnabled(GameSetting.TEAM) && fibPlayer.currentTeam() != null) {
+                mat = fibPlayer.currentTeam().getCurrentMaterial();
+            } else {
+                mat = fibPlayer.currentMaterial();
+            }
+
+            if (mat != null) {
+                String itemIcon = ForceItemBattle.getInstance()
+                        .getItemDifficultiesManager()
+                        .getUnicodeFromMaterial(true, mat);
+
+                team.suffix(mini.deserialize(
+                        " <gray>[<gold>" + gameManager.getMaterialName(mat)
+                                + " <reset><color:#4e5c24>" + itemIcon + "<gray>]"
+                ));
+            } else {
+                team.suffix(Component.empty());
+            }
+
+            team.addPlayer(fibPlayer.player());
         }
-
     }
 
-    private String getTeamName(GameSettings gameSettings, ForceItemPlayer forceItemPlayer) {
-        if(!gameSettings.isSettingEnabled(GameSetting.TEAM)) {
-            return String.valueOf(forceItemPlayer.player().getUniqueId());
+    private String getUniqueTeamName(GameSettings settings, ForceItemPlayer fibPlayer) {
+        if (!settings.isSettingEnabled(GameSetting.TEAM) || fibPlayer.currentTeam() == null) {
+            return "P_" + fibPlayer.player().getUniqueId().toString().substring(0, 10);
         }
-        return String.valueOf(forceItemPlayer.currentTeam().getTeamId()) + forceItemPlayer.currentTeam().getTeamId();
+        return "T_" + fibPlayer.currentTeam().getTeamId();
     }
-
 }

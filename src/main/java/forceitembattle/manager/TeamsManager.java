@@ -47,7 +47,7 @@ public class TeamsManager {
 
             for (ForceItemPlayer player : teamPlayers) {
                 player.setCurrentTeam(randomTeam);
-                player.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>[" + randomTeam.getTeamDisplay() + "] <white>" + player.player().getName()));
+                //player.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>[" + randomTeam.getTeamDisplay() + "] <white>" + player.player().getName()));
             }
         }
 
@@ -56,8 +56,10 @@ public class TeamsManager {
             this.teams.add(singlePlayerTeam);
 
             player.setCurrentTeam(singlePlayerTeam);
-            player.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>[" + singlePlayerTeam.getTeamDisplay() + "] <white>" + player.player().getName()));
+            this.forceItemBattle.getScoreboardManager().updateAllPlayers();
+            //player.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>[" + singlePlayerTeam.getTeamDisplay() + "] <white>" + player.player().getName()));
         }
+        this.forceItemBattle.getScoreboardManager().updateAllPlayers();
     }
 
     public boolean alreadyInTeam(Team team, ForceItemPlayer player) {
@@ -103,7 +105,8 @@ public class TeamsManager {
         this.teams.remove(team);
         this.teams.add(team);
 
-        player.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>[" + team.getTeamDisplay() + "] <white>" + player.player().getName()));
+        this.forceItemBattle.getScoreboardManager().updateAllPlayers();
+        //player.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>[" + team.getTeamDisplay() + "] <white>" + player.player().getName()));
     }
 
     public void accept(ForceItemPlayer player, ForceItemPlayer target) {
@@ -124,12 +127,13 @@ public class TeamsManager {
             this.addToTeam(teamInvite, player);
             player.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_aqua>You <green>accepted <dark_aqua>the invite from <yellow>" + target.player().getName()));
             target.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>" + player.player().getName() + " <dark_aqua>joined your team"));
-            player.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>[" + teamInvite.getTeamDisplay() + "] <white>" + player.player().getName()));
+            //player.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>[" + teamInvite.getTeamDisplay() + "] <white>" + player.player().getName()));
             this.pendingInvite.remove(player);
         } else {
             player.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>You have no invite from <yellow>" + target.player().getName()));
 
         }
+        this.forceItemBattle.getScoreboardManager().updateAllPlayers();
     }
 
     public void create(ForceItemPlayer first, @Nullable ForceItemPlayer second, String name) {
@@ -139,7 +143,8 @@ public class TeamsManager {
         if (second != null) this.addToTeam(team, second);
 
         this.teams.add(team);
-        first.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>[" + team.getTeamDisplay() + "] <white>" + first.player().getName()));
+        this.forceItemBattle.getScoreboardManager().updateAllPlayers();
+        //first.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>[" + team.getTeamDisplay() + "] <white>" + first.player().getName()));
         if (second != null) second.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>[" + team.getTeamDisplay() + "] <white>" + second.player().getName()));
 
         String message = "<dark_aqua>You are now in team <green>" + name + " <dark_aqua>with <yellow>";
@@ -170,12 +175,13 @@ public class TeamsManager {
         }
         this.removeFromTeam(player.currentTeam(), player);
         player.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_aqua>You <red>left <dark_aqua>the team"));
-        player.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(player.player().getName()));
+        //player.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(player.player().getName()));
         if(this.getTeams().contains(player.currentTeam())) {
             player.currentTeam().getPlayers().forEach(teamPlayers -> {
                 teamPlayers.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>" + player.player().getName() + " <dark_aqua>left your team"));
             });
         }
+        this.forceItemBattle.getScoreboardManager().updateAllPlayers();
     }
 
     public void showTeamList(ForceItemPlayer player) {
