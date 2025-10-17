@@ -518,10 +518,14 @@ public class Listeners implements Listener {
             player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 0f);
         } else if (probability <= 0.001) {
             rarity = "<gradient:#E41EBC:#9A4992><b>RNGESUS</b></gradient>"; // ~0.1% or less
-            player.playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_DEATH, 0.3f, 1f);
+            Bukkit.getOnlinePlayers().forEach(players -> {
+                players.playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_DEATH, 0.3f, 1f);
+            });
         } else if (probability <= 0.01) {
             rarity = "<gold><b>LEGENDARY</b></gold>";
-            player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 0f);
+            Bukkit.getOnlinePlayers().forEach(players -> {
+                players.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 0f);
+            });
         } else if (probability <= 0.05) {
             rarity = "<dark_purple><b>EPIC</b></dark_purple>";
             player.playSound(player.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1f, 1f);
