@@ -1,6 +1,7 @@
 package forceitembattle.listener;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.commands.player.CommandShout;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.event.PlayerGrantAchievementEvent;
 import forceitembattle.manager.Gamemanager;
@@ -723,23 +724,35 @@ public class Listeners implements Listener {
         event.setCancelled(true);
         Team currentTeam = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId()).currentTeam();
 
-        if (
-                !this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ||
-                !this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM_CHAT) ||
-                currentTeam == null
-        ) {
-            Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize("<gold>" + player.getName() + " <dark_gray>» <white>" + PlainTextComponentSerializer.plainText().serialize(event.originalMessage())));
+        if (CommandShout.isShouting(player)) {
+            Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize(
+                    "<gold>" + player.getName() + " <dark_gray>» <white>" +
+                            PlainTextComponentSerializer.plainText().serialize(event.originalMessage())
+            ));
             return;
         }
 
-        String message = "<green>Team</green> <gray>| <gold>" + player.getName() + " <dark_gray>» <white>" + PlainTextComponentSerializer.plainText().serialize(event.originalMessage());
+        // Normal team chat
+        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)
+                || !this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM_CHAT)
+                || currentTeam == null) {
+
+            Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize(
+                    "<gold>" + player.getName() + " <dark_gray>» <white>" +
+                            PlainTextComponentSerializer.plainText().serialize(event.originalMessage())
+            ));
+            return;
+        }
+
+        String message = "<green>Team</green> <gray>| <gold>" + player.getName() +
+                " <dark_gray>» <white>" +
+                PlainTextComponentSerializer.plainText().serialize(event.originalMessage());
+
         currentTeam.getPlayers().forEach(fibPlayer -> {
             Player p = fibPlayer.player();
-            if (p == null || !p.isOnline()) {
-                return;
+            if (p != null && p.isOnline()) {
+                p.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(message));
             }
-
-            p.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(message));
         });
     }
 
