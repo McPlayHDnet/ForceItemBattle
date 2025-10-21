@@ -74,14 +74,21 @@ public class Timer {
                 if(!forceItemPlayer.isSpectator()) {
                     Material material = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial();
 
-                    //player.playerListName(forceItemBattle.getGamemanager().getMiniMessage().deserialize(
-                    //        (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM) ? "<yellow>[" + forceItemPlayer.currentTeam().getTeamDisplay() + "] " : "") + "<white>" +
-                    //                player.getName() + " <gray>[<gold>" + this.forceItemBattle.getGamemanager().getMaterialName(material) + " <reset><shadow:black:0.4>" + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(true, material) + "</shadow><gray>]"));
+                    boolean teamMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM);
+                    boolean scoreShown = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.SCORE);
+                    String timeText = "<gradient:#fcef64:#fcc44b:#ff9e59><b>" + this.formatSeconds(this.getTimeLeft()) + "</b></gradient>";
+                    String scoreText = "";
+                    if (scoreShown) {
+                        scoreText = teamMode
+                                ? "<dark_gray>| <green>Team score: <white>" + forceItemPlayer.currentTeam().getCurrentScore()
+                                : "<dark_gray>| <green>Your score: <white>" + forceItemPlayer.currentScore();
+                    }
 
-                    player.sendActionBar(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(
-                            "<gradient:#fcef64:#fcc44b:#f44c7d><b>" + this.formatSeconds(this.getTimeLeft()) + "</b> <dark_gray>| " +
-                                    (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM) ? "<green>Team score: <white>" + forceItemPlayer.currentTeam().getCurrentScore() : "<green>Your score: <white>" + forceItemPlayer.currentScore())));
-
+                    player.sendActionBar(
+                            this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(
+                                    timeText + " " + scoreText
+                            )
+                    );
 
                     String bossBarTitle = "<gradient:#6eee87:#5fc52e><b>" + this.forceItemBattle.getGamemanager().getMaterialName(material) +
                             " <reset><shadow:black:0.4>" + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(false, material) + "</shadow>";
