@@ -254,6 +254,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
 
             player.getInventory().addItem(new ItemStack(Material.STONE_AXE));
             player.getInventory().addItem(new ItemStack(Material.STONE_PICKAXE));
+            player.getInventory().addItem(new ItemStack(Material.STONE_SHOVEL));
 
             player.setLevel(0);
             player.setExp(0);
