@@ -5,12 +5,15 @@ import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.CustomModelData;
 import lombok.Getter;
 import lombok.Setter;
+import net.kyori.adventure.bossbar.BossBar;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
 import org.bukkit.entity.WanderingTrader;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.MerchantRecipe;
@@ -27,7 +30,7 @@ import java.util.UUID;
 @Getter
 public class WanderingTraderTimer {
 
-    private int randomAfterStartSpawnTime, timer;
+    private int randomAfterStartSpawnTime, timer, traderTimer;
 
     private final Map<UUID, Boolean> canBuyWheel;
 
@@ -87,23 +90,49 @@ public class WanderingTraderTimer {
         wanderingTrader.setRecipes(merchantRecipes);
 
         this.canBuyWheel.clear();
+        Map<UUID, BossBar> playerBossBars = new HashMap<>();
         ForceItemBattle.getInstance().getGamemanager().forceItemPlayerMap().values().forEach(players -> {
             this.canBuyWheel.put(players.player().getUniqueId(), Boolean.TRUE);
 
             players.player().sendMessage(ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold>Position <dark_gray>┃ <gray>The <green>Wandering Trader <gray>just spawned at <dark_aqua>" + (int) traderLocation.getX() + "<gray>, <dark_aqua>" + (int) traderLocation.getY() + "<gray>, <dark_aqua>" + (int) traderLocation.getZ() + this.distance(players.player().getLocation(), traderLocation)));
-
             ForceItemBattle.getInstance().getPositionManager().playParticleLine(players.player(), traderLocation, Color.LIME);
         });
 
-        BukkitRunnable despawnTask = new BukkitRunnable() {
+        traderTimer = 5 * 60;
+
+        new BukkitRunnable() {
             @Override
             public void run() {
-                wanderingTrader.remove();
-                Bukkit.broadcast(ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold>Position <dark_gray>┃ <gray>The <green>Wandering Trader <gray>just despawned! :("));
-                setTimer(5 * 60);
+                if (traderTimer <= 0 || wanderingTrader.isDead()) {
+                    Bukkit.getOnlinePlayers().forEach(player -> {
+                        player.sendPlayerListFooter(Component.empty());
+                    });
+                    wanderingTrader.remove();
+                    cancel();
+                    Bukkit.broadcast(ForceItemBattle.getInstance().getGamemanager().getMiniMessage()
+                            .deserialize("<dark_gray>» <gold>Position <dark_gray>┃ <gray>The <green>Wandering Trader <gray>just despawned! :("));
+                    return;
+                }
+
+                Bukkit.getOnlinePlayers().forEach(player -> {
+                    String footerText = "\n<green><b>Wandering Trader</b>\n"
+                            + locationToString(traderLocation) + "\n"
+                            + formatColoredTime(traderTimer) + "\n";
+                    Component footer = ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize(footerText);
+                    player.sendPlayerListFooter(footer);
+                });
+
+                traderTimer--;
             }
-        };
-        despawnTask.runTaskLater(ForceItemBattle.getInstance(), 6000L); // 20 ticks per second, 5 minutes = 5 * 60 * 20 ticks
+        }.runTaskTimer(ForceItemBattle.getInstance(), 0L, 20L);
+    }
+
+    private String locationToString(Location location) {
+        if (location.getWorld() == null) {
+            return "<red>unknown location";
+        }
+
+        return "<dark_aqua>" + location.getBlockX() + "<gray>, <dark_aqua>" + location.getBlockY() + "<gray>, <dark_aqua>" + location.getBlockZ();
     }
 
     private String distance(Location playerLocation, Location destination) {
@@ -135,6 +164,29 @@ public class WanderingTraderTimer {
         }
 
         return "<green>overworld";
+    }
+
+    private String formatColoredTime(int remainingSeconds) {
+        remainingSeconds = Math.max(remainingSeconds, 0);
+
+        int minutes = remainingSeconds / 60;
+        int seconds = remainingSeconds % 60;
+
+        String timeString = String.format("%02d:%02d", minutes, seconds);
+
+        String colorTag;
+
+        if (remainingSeconds <= 10) {
+            colorTag = "<dark_red>";
+        } else if (remainingSeconds <= 30) {
+            colorTag = "<red>";
+        } else if (remainingSeconds <= 120) {
+            colorTag = "<gold>";
+        } else {
+            colorTag = "<green>";
+        }
+
+        return colorTag + timeString;
     }
 
     private Location getRandomLocationWithinSpawnChunks(Location location, int chunkRadius) {
