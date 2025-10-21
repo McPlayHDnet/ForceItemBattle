@@ -11,6 +11,8 @@ import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.achievements.Achievements;
 import forceitembattle.settings.preset.GamePreset;
 import forceitembattle.settings.preset.InvSettingsPresets;
+import forceitembattle.util.BackToBack;
+import forceitembattle.util.BackToBackProbability;
 import forceitembattle.util.ForceItem;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.ForceItemPlayerStats;
@@ -263,11 +265,19 @@ public class Listeners implements Listener {
 
     private void applyScoreAndSound(ForceItemPlayer forceItemPlayer, ItemStack itemStack,
                                     FoundItemEvent event, GameContext context) {
+        BackToBack back2Back = new BackToBack(event.isBackToBack());
+
+        if (event.isBackToBack()) {
+            BackToBackProbability probability = calculateBack2BackProbability(forceItemPlayer, context);
+            back2Back.setPercentage(probability.percentage());
+            back2Back.setRarity(probability.formatted());
+        }
+
         ForceItem forceItem = new ForceItem(
                 itemStack.getType(),
                 plugin.getTimer().formatSeconds(plugin.getTimer().getTimeLeft()),
                 System.currentTimeMillis(),
-                event.isBackToBack(),
+                back2Back,
                 event.isSkipped()
         );
 
@@ -396,7 +406,7 @@ public class Listeners implements Listener {
             foundNextItemEvent.setBackToBack(true);
             foundNextItemEvent.setSkipped(false);
 
-            String probability = getItemProbability(player, forceItemPlayer);
+            BackToBackProbability probability = calculateBack2BackProbability(forceItemPlayer, context);
             String unicode = plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, foundItem.getType());
             String materialName = plugin.getGamemanager().getMaterialName(foundItem.getType());
 
@@ -406,15 +416,17 @@ public class Listeners implements Listener {
                 ForceItemPlayer teammate = result.getTeammateWhoHasIt();
                 message = plugin.getGamemanager().getMiniMessage().deserialize(
                         String.format("<green>%s <gray>was lucky that <green>%s <gray>already owns <reset>%s <gold>%s <dark_gray>» <aqua>%s",
-                                player.getName(), teammate.player().getName(), unicode, materialName, probability)
+                                player.getName(), teammate.player().getName(), unicode, materialName, probability.formatted())
                 );
             } else {
                 // Player themselves has the item
                 message = plugin.getGamemanager().getMiniMessage().deserialize(
                         String.format("<green>%s <gray>was lucky to already own <reset>%s <gold>%s <dark_gray>» <aqua>%s",
-                                player.getName(), unicode, materialName, probability)
+                                player.getName(), unicode, materialName, probability.formatted())
                 );
             }
+
+            playRaritySound(player, probability.rarity());
 
             GameContext broadcastContext = new GameContext(
                     forceItemPlayer.currentTeam() != null,
@@ -427,6 +439,106 @@ public class Listeners implements Listener {
             broadcastMessage(message, forceItemPlayer, broadcastContext);
             Bukkit.getPluginManager().callEvent(foundNextItemEvent);
         }, 1L);
+    }
+
+    private BackToBackProbability calculateBack2BackProbability(ForceItemPlayer forceItemPlayer, GameContext context) {
+        Player player = forceItemPlayer.player();
+        int totalItemsInPool = plugin.getItemDifficultiesManager().getAvailableItems().size();
+        boolean isBackpackEnabled = plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK);
+        boolean isTeamGame = forceItemPlayer.currentTeam() != null;
+
+        Set<Material> uniqueMaterials = new HashSet<>();
+        int streak = forceItemPlayer.backToBackStreak();
+
+        if (isTeamGame) {
+            Team team = forceItemPlayer.currentTeam();
+
+            for (ForceItemPlayer teammate : team.getPlayers()) {
+                collectUniqueMaterials(teammate.player().getInventory(), uniqueMaterials);
+            }
+
+            if (isBackpackEnabled) {
+                Inventory teamBackpack = plugin.getBackpack().getTeamBackpack(team);
+                collectUniqueMaterials(teamBackpack, uniqueMaterials);
+            }
+
+            streak = Math.max(streak, team.getBackToBackStreak());
+        } else {
+            collectUniqueMaterials(player.getInventory(), uniqueMaterials);
+
+            if (isBackpackEnabled) {
+                Inventory backpack = plugin.getBackpack().getPlayerBackpack(player);
+                collectUniqueMaterials(backpack, uniqueMaterials);
+            }
+        }
+
+        int totalItems = uniqueMaterials.size();
+
+        Material prev = forceItemPlayer.getPreviousMaterial();
+        Material current = forceItemPlayer.getCurrentMaterial();
+
+        double baseProbability = (double) totalItems / totalItemsInPool;
+        baseProbability = Math.min(baseProbability, 1.0); // 100% cap
+
+        double probability = Math.pow(baseProbability, streak);
+        double probabilityPercent = probability * 100;
+
+        String rarity;
+        if (prev != null && current == prev) {
+            rarity = "EXTRAORDINARY";
+        } else if (probability <= 0.001) {
+            rarity = "RNGESUS"; // ~0.1% or less
+        } else if (probability <= 0.01) {
+            rarity = "LEGENDARY";
+        } else if (probability <= 0.05) {
+            rarity = "EPIC";
+        } else {
+            rarity = "RARE";
+        }
+
+        String formattedProbability;
+        if (probabilityPercent >= 1) {
+            DecimalFormat df = new DecimalFormat("0.##");
+            df.setRoundingMode(RoundingMode.HALF_UP);
+            formattedProbability = df.format(probabilityPercent) + "%";
+        } else {
+            int leadingZeros = 0;
+            double temp = probabilityPercent;
+            while (temp < 1 && leadingZeros < 15) {
+                temp *= 10;
+                leadingZeros++;
+            }
+
+            int totalDecimals = leadingZeros + 2;
+
+            DecimalFormat df = new DecimalFormat("0." + "#".repeat(Math.max(0, totalDecimals)));
+            df.setRoundingMode(RoundingMode.HALF_UP);
+            formattedProbability = df.format(probabilityPercent) + "%";
+        }
+
+        String rarityFormatted = switch (rarity) {
+            case "EXTRAORDINARY" -> "<gradient:#73FF00:#14C8FF><b>EXTRAORDINARY</b></gradient>";
+            case "RNGESUS" -> "<gradient:#E41EBC:#9A4992><b>RNGESUS</b></gradient>";
+            case "LEGENDARY" -> "<gold><b>LEGENDARY</b></gold>";
+            case "EPIC" -> "<dark_purple><b>EPIC</b></dark_purple>";
+            default -> "<blue><b>RARE</b></blue>";
+        };
+
+        String formatted = formattedProbability + " <dark_gray>(<reset>" + rarityFormatted + "<dark_gray>)";
+
+        return new BackToBackProbability(probabilityPercent, rarity, formatted);
+    }
+
+    private void playRaritySound(Player player, String rarity) {
+        switch (rarity) {
+            case "EXTRAORDINARY" -> player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 0f);
+            case "RNGESUS" -> Bukkit.getOnlinePlayers().forEach(p ->
+                    p.playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_DEATH, 0.3f, 1f));
+            case "LEGENDARY" -> Bukkit.getOnlinePlayers().forEach(p ->
+                    p.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 0f));
+            case "EPIC" -> player.playSound(player.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1f, 1f);
+            case "RARE" -> player.playSound(player.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1f, 1.5f);
+        }
     }
 
     private BackToBackResult checkForBackToBack(ForceItemPlayer player, Material targetMaterial, GameContext context) {
