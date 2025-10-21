@@ -202,7 +202,8 @@ public class Listeners implements Listener {
         handleBackToBackCheck(forceItemPlayer, player, context);
     }
 
-    private void handleRegularFind(FoundItemEvent event, Player player, ItemStack itemStack, ForceItemPlayer forceItemPlayer, GameContext context) {
+    private void handleRegularFind(FoundItemEvent event, Player player, ItemStack itemStack,
+                                   ForceItemPlayer forceItemPlayer, GameContext context) {
         String action = event.isSkipped() ? "skipped" : "found";
         String unicode = plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType());
         String materialName = plugin.getGamemanager().getMaterialName(itemStack.getType());
@@ -214,6 +215,12 @@ public class Listeners implements Listener {
 
         broadcastMessage(message, forceItemPlayer, context);
         updateBackToBackStats(forceItemPlayer, player, context);
+
+        forceItemPlayer.setLastItemWasSkipped(event.isSkipped());
+
+        if (event.isSkipped()) {
+            forceItemPlayer.setLastSkippedMaterial(itemStack.getType());
+        }
     }
 
     private void broadcastMessage(Component message, ForceItemPlayer forceItemPlayer, GameContext context) {
@@ -388,13 +395,17 @@ public class Listeners implements Listener {
         }
     }
 
-    private void triggerBackToBackEvent(ForceItemPlayer forceItemPlayer, Player player, BackToBackResult result, GameContext context) {
+    private void triggerBackToBackEvent(ForceItemPlayer forceItemPlayer, Player player,
+                                        BackToBackResult result, GameContext context) {
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             ItemStack foundItem = new ItemStack(forceItemPlayer.getCurrentMaterial());
             FoundItemEvent foundNextItemEvent = new FoundItemEvent(player);
             foundNextItemEvent.setFoundItem(foundItem);
             foundNextItemEvent.setBackToBack(true);
             foundNextItemEvent.setSkipped(false);
+
+            // Pass the skip status from the previous item to the B2B event
+            foundNextItemEvent.setPreviousItemWasSkipped(forceItemPlayer.isLastItemWasSkipped());
 
             String probability = getItemProbability(player, forceItemPlayer);
             String unicode = plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, foundItem.getType());
@@ -835,16 +846,20 @@ public class Listeners implements Listener {
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
         Achievements achievement = playerGrantAchievementEvent.getAchievement();
 
-        if(forceItemPlayer.isSpectator()) return;
+        if (forceItemPlayer == null || forceItemPlayer.isSpectator()) return;
 
+        // Play sound
         forceItemPlayer.player().playSound(forceItemPlayer.player(), Sound.BLOCK_AMETHYST_BLOCK_RESONATE, 1, 1);
+
+        // Broadcast achievement to all players
         Bukkit.getOnlinePlayers().forEach(players -> {
             players.sendMessage(Component.empty());
-            players.sendMessage(ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize("<dark_gray>[<yellow>❋<dark_gray>] <gold>" + forceItemPlayer.player().getName() + " <gray>has made the achievement <hover:show_text:'<dark_aqua>" + achievement.getTitle() + "<newline><gray>" + achievement.getDescription() + "'><dark_aqua>[" + achievement.getTitle() + "]</hover>"));
+            players.sendMessage(ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize(
+                    "<dark_gray>[<yellow>★<dark_gray>] <gold>" + forceItemPlayer.player().getName() +
+                            " <gray>has made the achievement <hover:show_text:'<dark_aqua>" + achievement.getTitle() +
+                            "<newline><gray>" + achievement.getDescription() + "'><dark_aqua>[" + achievement.getTitle() + "]</hover>"));
             players.sendMessage(Component.empty());
         });
-
-        //ForceItemBattle.getInstance().getAchievementManager().grantAchievement(ForceItemBattle.getInstance().getStatsManager().playerStats(forceItemPlayer.player().getName()), achievement);
     }
 
     @EventHandler

@@ -194,6 +194,7 @@ public class Gamemanager {
 
     public void finishGame() {
         this.setCurrentGameState(GameState.END_GAME);
+        ForceItemBattle.getInstance().getAchievementManager().checkGameEndAchievements();
 
         Bukkit.getOnlinePlayers().forEach(player -> {
             ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());

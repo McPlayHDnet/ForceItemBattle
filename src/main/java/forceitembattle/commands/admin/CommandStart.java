@@ -78,7 +78,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
         this.plugin.getGamemanager().initializeMats();
 
         if (gamePreset == null) {
-            if (Integer.parseInt(args[1]) > 64) {
+            if (Integer.parseInt(args[1]) > 522) {
                 player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>The maximum amount of jokers is 64."));
                 return;
             }
@@ -299,6 +299,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
         Bukkit.getWorld("world").setTime(0);
 
         this.plugin.getGamemanager().setCurrentGameState(GameState.MID_GAME);
+        this.plugin.getAchievementManager().resetProgress();
         this.plugin.getScoreboardManager().updateAllPlayers();
     }
 

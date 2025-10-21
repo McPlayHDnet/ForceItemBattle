@@ -30,6 +30,10 @@ public class ForceItemPlayer {
     private int backToBackStreak;
     @Setter
     private boolean isSpectator;
+    @Setter
+    private boolean lastItemWasSkipped;
+    @Setter
+    private Material lastSkippedMaterial;
 
     public ForceItemPlayer(Player player, Material currentMaterial, int remainingJokers, Integer currentScore) {
         this.player = player;
@@ -37,6 +41,8 @@ public class ForceItemPlayer {
         this.currentMaterial = currentMaterial;
         this.remainingJokers = remainingJokers;
         this.currentScore = currentScore;
+        this.lastItemWasSkipped = false;
+        this.lastSkippedMaterial = null;
     }
 
     public Player player() {
@@ -106,6 +112,14 @@ public class ForceItemPlayer {
 
     public boolean isSpectator() {
         return isSpectator;
+    }
+
+    public boolean isLastItemWasSkipped() {
+        return lastItemWasSkipped;
+    }
+
+    public Material getLastSkippedMaterial() {
+        return lastSkippedMaterial;
     }
 
 }

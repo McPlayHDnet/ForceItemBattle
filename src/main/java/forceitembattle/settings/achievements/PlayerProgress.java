@@ -5,16 +5,20 @@ import java.util.Map;
 
 public class PlayerProgress {
 
-    private Map<Achievements, AchievementProgress> achievementProgressMap;
+    private final Map<Achievements, AchievementProgress> progressMap;
 
     public PlayerProgress() {
-        this.achievementProgressMap = new HashMap<>();
-        for(Achievements achievements : Achievements.values()) {
-            this.achievementProgressMap.put(achievements, new AchievementProgress());
+        this.progressMap = new HashMap<>();
+        for (Achievements achievement : Achievements.values()) {
+            this.progressMap.put(achievement, new AchievementProgress());
         }
     }
 
     public AchievementProgress getProgress(Achievements achievement) {
-        return this.achievementProgressMap.get(achievement);
+        return this.progressMap.get(achievement);
+    }
+
+    public Map<Achievements, AchievementProgress> getAllProgress() {
+        return this.progressMap;
     }
 }

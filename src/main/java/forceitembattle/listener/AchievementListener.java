@@ -3,8 +3,7 @@ package forceitembattle.listener;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.event.PlayerGrantAchievementEvent;
-import forceitembattle.manager.AchievementManager;
-import forceitembattle.settings.achievements.*;
+import forceitembattle.settings.achievements.Trigger;
 import io.papermc.paper.event.player.PlayerTradeEvent;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.entity.Player;
@@ -22,13 +21,19 @@ public class AchievementListener implements Listener {
 
     private final ForceItemBattle plugin;
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.MONITOR) // Changed to MONITOR so it runs AFTER Listeners.updateMaterials()
     public void onItemObtain(FoundItemEvent event) {
         Player player = event.getPlayer();
+
+        if (!event.isBackToBack() && !event.isSkipped()) {
+            this.plugin.getAchievementManager().onNewItemReceived(player.getUniqueId());
+        }
+
         this.plugin.getAchievementManager().handleEvent(player, event, Trigger.OBTAIN_ITEM);
         this.plugin.getAchievementManager().handleEvent(player, event, Trigger.OBTAIN_ITEM_IN_TIME);
         this.plugin.getAchievementManager().handleEvent(player, event, Trigger.BACK_TO_BACK);
         this.plugin.getAchievementManager().handleEvent(player, event, Trigger.SKIP_ITEM);
+        this.plugin.getAchievementManager().handleEvent(player, event, Trigger.INVENTORY_FULL);
     }
 
     @EventHandler
@@ -44,35 +49,34 @@ public class AchievementListener implements Listener {
     }
 
     @EventHandler
-    public void onTrade(PlayerTradeEvent event) {
+    public void onPlayerDeath(PlayerDeathEvent event) {
         Player player = event.getPlayer();
-        this.plugin.getAchievementManager().handleEvent(player, event, Trigger.TRADING);
+        this.plugin.getAchievementManager().handleEvent(player, event, Trigger.DYING);
     }
 
     @EventHandler
-    public void onEatItem(PlayerItemConsumeEvent event) {
+    public void onPlayerConsume(PlayerItemConsumeEvent event) {
         Player player = event.getPlayer();
         this.plugin.getAchievementManager().handleEvent(player, event, Trigger.EATING);
     }
 
     @EventHandler
-    public void onAchievement(PlayerGrantAchievementEvent event) {
+    public void onPlayerInteract(PlayerInteractEvent event) {
+        Player player = event.getPlayer();
+        // Handle both loot chests and beehive harvesting
+        this.plugin.getAchievementManager().handleEvent(player, event, Trigger.LOOT);
+        this.plugin.getAchievementManager().handleEvent(player, event, Trigger.BEEHIVE_HARVEST);
+    }
+
+    @EventHandler
+    public void onPlayerTrade(PlayerTradeEvent event) {
+        Player player = event.getPlayer();
+        this.plugin.getAchievementManager().handleEvent(player, event, Trigger.TRADING);
+    }
+
+    @EventHandler
+    public void onAchievementGrant(PlayerGrantAchievementEvent event) {
         Player player = event.getPlayer();
         this.plugin.getAchievementManager().handleEvent(player, event, Trigger.ACHIEVEMENT);
     }
-
-    @EventHandler
-    public void onInteract(PlayerInteractEvent event) {
-        Player player = event.getPlayer();
-        this.plugin.getAchievementManager().handleEvent(player, event, Trigger.LOOT);
-    }
-
-    @EventHandler
-    public void onDeath(PlayerDeathEvent event) {
-        Player player = event.getPlayer();
-        this.plugin.getAchievementManager().handleEvent(player, event, Trigger.DYING);
-    }
-
-
-
 }

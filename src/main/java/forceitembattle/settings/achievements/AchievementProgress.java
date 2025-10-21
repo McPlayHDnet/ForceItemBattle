@@ -12,12 +12,15 @@ import java.util.Set;
 @Setter
 public class AchievementProgress {
 
-    private int itemCount, back2BackCount, consecutiveCount, skipCount, deathCounter;
+    private int itemCount, back2BackCount, consecutiveCount, skipCount, deathCounter, tradeCount, lootCount;
     private final Set<String> visitedDimensions;
     private final Set<BiomeGroup> visitedBiomes;
-    private long startTime, lastItemTime;
-    private Material lastItemType;
-    private boolean lastItemBackToBack;
+    private final Set<Material> woodTypesCollected;
+    private final Set<Material> stoneTypesCollected;
+    private final Set<Material> lootedMaterials;
+    private long startTime, lastItemTime, itemReceivedTime;
+    private Material lastItemType, lastSkippedItem;
+    private boolean lastItemBackToBack, firstItemCollected;
 
     public AchievementProgress() {
         this.itemCount = 0;
@@ -25,12 +28,20 @@ public class AchievementProgress {
         this.consecutiveCount = 0;
         this.skipCount = 0;
         this.deathCounter = 0;
+        this.tradeCount = 0;
+        this.lootCount = 0;
         this.visitedDimensions = new HashSet<>();
         this.visitedBiomes = new HashSet<>();
+        this.woodTypesCollected = new HashSet<>();
+        this.stoneTypesCollected = new HashSet<>();
+        this.lootedMaterials = new HashSet<>();
         this.startTime = System.currentTimeMillis();
         this.lastItemTime = System.currentTimeMillis();
+        this.itemReceivedTime = System.currentTimeMillis();
         this.lastItemType = null;
+        this.lastSkippedItem = null;
         this.lastItemBackToBack = false;
+        this.firstItemCollected = false;
     }
 
     public void incrementItemCount() {
@@ -51,6 +62,14 @@ public class AchievementProgress {
 
     public void incrementDeathCount() {
         this.deathCounter++;
+    }
+
+    public void incrementTradeCount() {
+        this.tradeCount++;
+    }
+
+    public void incrementLootCount() {
+        this.lootCount++;
     }
 
     public void resetItemCount() {
@@ -77,6 +96,14 @@ public class AchievementProgress {
         this.startTime = System.currentTimeMillis();
     }
 
+    public void resetTradeCount() {
+        this.tradeCount = 0;
+    }
+
+    public void resetLootCount() {
+        this.lootCount = 0;
+    }
+
     public void addVisitedDimension(String dimension) {
         this.visitedDimensions.add(dimension);
     }
@@ -85,4 +112,15 @@ public class AchievementProgress {
         this.visitedBiomes.add(biome);
     }
 
+    public void addWoodType(Material wood) {
+        this.woodTypesCollected.add(wood);
+    }
+
+    public void addStoneType(Material stone) {
+        this.stoneTypesCollected.add(stone);
+    }
+
+    public void addLootedMaterial(Material material) {
+        this.lootedMaterials.add(material);
+    }
 }

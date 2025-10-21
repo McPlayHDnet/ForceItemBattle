@@ -434,6 +434,10 @@ public final class ForceItemBattle extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (this.achievementManager != null) {
+            this.achievementManager.getAchievementStorage().saveAchievements();
+            getLogger().info("Achievements saved!");
+        }
         reloadConfig();
         if (getConfig().getBoolean("isReset")) {
             getConfig().set("timer.time", 0);

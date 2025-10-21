@@ -14,6 +14,8 @@ public enum Trigger {
     TRADING(false),
     EATING(false),
     LOOT(false),
+    BEEHIVE_HARVEST(false),
+    INVENTORY_FULL(false),
     ACHIEVEMENT(false);
 
     private final boolean achieveableInTeams;
