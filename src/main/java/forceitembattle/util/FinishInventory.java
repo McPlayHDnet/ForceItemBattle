@@ -15,6 +15,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import javax.annotation.Nullable;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -68,7 +69,26 @@ public class FinishInventory extends InventoryBuilder {
                         placedItems = -1;
                     } else {
                         ForceItem forceItem = items.get(placedItems);
-                        ItemStack itemStack = new ItemBuilder(forceItem.material()).setDisplayName(WordUtils.capitalize(forceItem.material().name().replace("_", " ").toLowerCase()) + (forceItem.usedSkip() ? " <red><b>SKIPPED</b>" : "") + (forceItem.isBackToBack() ? " <aqua><b>B2B</b>" : "") + " <dark_gray>» <gold>" + forceItem.timeNeeded()).setGlowing(forceItem.usedSkip()).getItemStack();
+
+                        String displayName = WordUtils.capitalizeFully(forceItem.material().name().replace("_", " "))
+                                + " <dark_gray>» <gold>" + forceItem.timeNeeded();
+
+                        List<String> lore = new ArrayList<>();
+
+                        if (forceItem.usedSkip()) {
+                            lore.add("");
+                            lore.add("<dark_gray>[<red>Joker<dark_gray>]");
+                        }
+                        if (forceItem.back2Back().isActive()) {
+                            lore.add("");
+                            lore.add("<dark_gray>[<dark_aqua>B2B <dark_gray>» <aqua>" + forceItem.back2Back().getRarity() + "<dark_gray>]");
+                        }
+
+                        ItemStack itemStack = new ItemBuilder(forceItem.material())
+                                .setDisplayName(displayName)
+                                .setLore(lore)
+                                .setGlowing(forceItem.usedSkip())
+                                .getItemStack();
                         setItem(startSlot, itemStack);
                         slots.put(startSlot, itemStack);
                     }
