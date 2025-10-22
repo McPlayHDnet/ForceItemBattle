@@ -25,10 +25,6 @@ public class AchievementListener implements Listener {
     public void onItemObtain(FoundItemEvent event) {
         Player player = event.getPlayer();
 
-        if (!event.isBackToBack() && !event.isSkipped()) {
-            this.plugin.getAchievementManager().onNewItemReceived(player.getUniqueId());
-        }
-
         this.plugin.getAchievementManager().handleEvent(player, event, Trigger.OBTAIN_ITEM);
         this.plugin.getAchievementManager().handleEvent(player, event, Trigger.OBTAIN_ITEM_IN_TIME);
         this.plugin.getAchievementManager().handleEvent(player, event, Trigger.BACK_TO_BACK);
@@ -63,9 +59,18 @@ public class AchievementListener implements Listener {
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
-        // Handle both loot chests and beehive harvesting
-        this.plugin.getAchievementManager().handleEvent(player, event, Trigger.LOOT);
+        // Only handle beehive harvesting here
         this.plugin.getAchievementManager().handleEvent(player, event, Trigger.BEEHIVE_HARVEST);
+    }
+
+    @EventHandler
+    public void onInventoryOpen(org.bukkit.event.inventory.InventoryOpenEvent event) {
+        if (!(event.getPlayer() instanceof Player player)) {
+            return;
+        }
+
+        // Check for loot achievements when opening chest inventory
+        this.plugin.getAchievementManager().handleEvent(player, event, Trigger.LOOT);
     }
 
     @EventHandler

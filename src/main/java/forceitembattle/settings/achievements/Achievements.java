@@ -1,75 +1,145 @@
 package forceitembattle.settings.achievements;
 
+import forceitembattle.settings.achievements.handlers.*;
 import forceitembattle.util.BiomeGroup;
 import forceitembattle.util.CustomItem;
 import lombok.Getter;
 import org.bukkit.Material;
 
+import java.util.Set;
+
 @Getter
 public enum Achievements {
 
-    // OBTAIN_ITEMS Achievements (Team-based except ONE_IN_A_MILLION)
-    ITEM_COLLECTOR("Item Collector", "Find 40 items in 1 round", new Condition(Trigger.OBTAIN_ITEM).amount(40)),
-    ITEM_GATHERER("Item Gatherer", "Find 50 items in 1 round", new Condition(Trigger.OBTAIN_ITEM).amount(50)),
-    ITEM_HOARDER("Item Hoarder", "Find 60 items in 1 round", new Condition(Trigger.OBTAIN_ITEM).amount(60)),
-    RELENTLESS_COLLECTOR("Relentless Collector", "Find 70 items in 1 round", new Condition(Trigger.OBTAIN_ITEM).amount(70)),
-    ULTIMATE_COLLECTOR("Ultimate Collector", "Find 85 items in 1 round", new Condition(Trigger.OBTAIN_ITEM).amount(85)),
-    ONE_DIMENSION_WONDER("One Dimension Wonder", "Get 10 overworld items in a row", new Condition(Trigger.OBTAIN_ITEM).amount(10).dimension("world").consecutive()),
-    INFINITE_FIRE("Infinite Fire", "Get 5 nether items in a row", new Condition(Trigger.OBTAIN_ITEM).amount(5).dimension("world_nether").consecutive()),
-    ITS_SO_EMPTY("It's so empty", "Get 3 end items in a row", new Condition(Trigger.OBTAIN_ITEM).amount(3).dimension("world_the_end").consecutive()),
-    WAIT_WOOD("Wait Wood?", "Get at least 1 item for each wood type in 1 round", new Condition(Trigger.OBTAIN_ITEM).woodTypes()),
-    THATS_A_ROCK_JIM("That's a Rock, Jim", "Get 3 stone type items in a row", new Condition(Trigger.OBTAIN_ITEM).amount(3).stoneTypes().consecutive()),
-    ONE_IN_A_MILLION("One in a Million", "Get a very rare mob drop (Trident or Wither Skeleton Skull)", new Condition(Trigger.OBTAIN_ITEM).rareMobDrop().playerBased()),
+    // OBTAIN_ITEM achievements
+    ITEM_COLLECTOR("Item Collector", "Collect 40 items in one round",
+            new CounterHandler(40, false, null)),
 
-    // OBTAIN_ITEMS_TIME_FRAME Achievements
-    SPEED_COLLECTOR("Speed Collector", "Collect 7 items within the first 5 minutes of the game", new Condition(Trigger.OBTAIN_ITEM_IN_TIME).amount(7).noSkip().withinSeconds(5 * 60)),
-    QUICK_GRAB("Quick Grab", "Collect an item within the first 30 seconds of round start", new Condition(Trigger.OBTAIN_ITEM_IN_TIME).amount(1).noSkip().withinSeconds(30).playerBased()),
-    PROCRASTINATOR("Procrastinator", "Skip an item 10 minutes after receiving it", new Condition(Trigger.OBTAIN_ITEM_IN_TIME).amount(1).skipAfterSeconds(10 * 60)),
-    WAS_IT_WORTHWHILE("Was It Worthwhile?", "Collect an item that took you 15 minutes to find", new Condition(Trigger.OBTAIN_ITEM_IN_TIME).amount(1).noSkip().timeFrameInSeconds(15 * 60)),
-    CLOSE_CALL("Close Call", "Collect an item within the last 5 seconds of the round (no skip)", new Condition(Trigger.OBTAIN_ITEM_IN_TIME).amount(1).noSkip().closeCall(5).playerBased()),
-    EARLY_BIRD("Early Bird", "Be the first player to collect an item", new Condition(Trigger.OBTAIN_ITEM_IN_TIME).amount(1).firstPlayer().playerBased()),
+    ITEM_GATHERER("Item Gatherer", "Collect 50 items in one round",
+            new CounterHandler(50, false, null)),
 
-    // BACK_TO_BACK Achievements
-    BACK_TO_BACK("Back-to-Back", "Get 1 b2b item", new Condition(Trigger.BACK_TO_BACK).amount(1)),
-    DOUBLE_TROUBLE("Double Trouble", "Get 2 b2b items", new Condition(Trigger.BACK_TO_BACK).amount(2)),
-    OH_BABY_A_TRIPLE("Oh Baby A Triple!", "Get 3 b2b items", new Condition(Trigger.BACK_TO_BACK).amount(3)),
-    FOUR_LEAF_CLOVER("Four-leaf Clover", "Get 4 b2b items", new Condition(Trigger.BACK_TO_BACK).amount(4)),
-    DEJA_VU("Déjà Vu", "Get the same item b2b", new Condition(Trigger.BACK_TO_BACK).amount(1).sameItem()),
-    ACCIDENTAL_GENIUS("Accidental Genius", "Skip an item and get it again", new Condition(Trigger.BACK_TO_BACK).amount(1).skippedThenGot()),
+    ITEM_HOARDER("Item Hoarder", "Collect 60 items in one round",
+            new CounterHandler(60, false, null)),
 
-    // VISIT Achievements
-    BIOME_HOPPER("Biome Hopper", "Visit all overworld basic biomes in 1 round", new Condition(Trigger.VISIT).biomeList(BiomeGroup.values())),
-    ALWAYS_ON_THE_GO("Always On The Go", "Visit all dimensions in 1 round", new Condition(Trigger.VISIT).dimension("world", "world_nether", "world_the_end")),
+    RELENTLESS_COLLECTOR("Relentless Collector", "Collect 70 items in one round",
+            new CounterHandler(70, false, null)),
 
-    // PLAYER_ACTION Achievements
-    CHICOT("Chicot", "Do not die in 1 round", new Condition(Trigger.DYING).amount(0)),
-    UNLUCKY("Unlucky", "Skip 3 times in a row", new Condition(Trigger.SKIP_ITEM).amount(3).consecutive()),
-    LUCKY_ROW("Lucky Row", "Don't skip for 10 items in a row", new Condition(Trigger.OBTAIN_ITEM).amount(10).noSkip().consecutive()),
-    YOU_GET_WHAT_YOU_GET("You Get What You Get", "Don't skip for 15 items in a row", new Condition(Trigger.OBTAIN_ITEM).amount(15).noSkip().consecutive()),
-    CONNOISSEUR("Connoisseur", "Eat Cavendish", new Condition(Trigger.EATING).amount(1).customItem(new CustomItem(Material.ENCHANTED_GOLDEN_APPLE, "cavendish", null))),
-    THANK_YOU("Thank you", "Use the wandering trader for 10 trades in 1 round", new Condition(Trigger.TRADING).amount(10)),
-    FUCK_THIS("Fuck this", "Skip an item within 3 seconds of receiving it", new Condition(Trigger.SKIP_ITEM).amount(1).withinSeconds(3)),
+    ULTIMATE_COLLECTOR("Ultimate Collector", "Collect 85 items in one round",
+            new CounterHandler(85, false, null)),
 
-    // PLAYER Achievements
-    A_BALANCED_INVENTORY("A Balanced Inventory", "Have every inventory + backpack slots filled", new Condition(Trigger.INVENTORY_FULL)),
+    ONE_DIMENSION_WONDER("One Dimension Wonder", "Collect 10 overworld items in a row",
+            new CounterHandler(10, true, "world")),
 
-    // PLAYER_LOOTED Achievements
-    WHEEL_OF_FORTUNE("Wheel of Fortune", "Loot a Legendary", new Condition(Trigger.LOOT).amount(1).customItem(new CustomItem(null, "[LEGENDARY]"))),
-    WILL_IT_BREAK("Will it break?", "Loot Cavendish", new Condition(Trigger.LOOT).amount(1).customItem(new CustomItem(Material.ENCHANTED_GOLDEN_APPLE, 1, "Cavendish"))),
-    HONEY_HONEY("Honey, honey, how you thrill me, aha, honey honey", "Harvest 2 beehives in 1 round", new Condition(Trigger.BEEHIVE_HARVEST).amount(2)),
-    BELIEVER("Believer", "Find a needed item from loot chest in 1 round", new Condition(Trigger.LOOT).neededItem()),
+    INFINITE_FIRE("Infinite Fire", "Collect 5 nether items in a row",
+            new CounterHandler(5, true, "world_nether")),
 
-    // COMPLETED_ACHIEVEMENTS
-    COMPLETIONIST("Completionist++", "Complete all Achievements", new Condition(Trigger.ACHIEVEMENT));
+    ITS_SO_EMPTY("It's so empty", "Collect 3 end items in a row",
+            new CounterHandler(3, true, "world_the_end")),
+
+    WAIT_WOOD("Wait Wood?", "Collect at least one item from each wood type in one round",
+            CollectionHandler.woodTypesHandler()),
+
+    THATS_A_ROCK_JIM("That's a Rock, Jim", "Collect 3 stone-type items in a row",
+            new ConsecutiveStoneHandler(3)),
+
+    ONE_IN_A_MILLION("One in a Million", "Collect a very rare mob drop (Trident or Wither Skeleton Skull)",
+            new RareMobDropHandler(1)),
+
+    LUCKY_ROW("Lucky Row", "Collect 10 items in a row without skipping any",
+            new CounterHandler(10, true, null)),
+
+    YOU_GET_WHAT_YOU_GET("You Get What You Get", "Collect 15 items in a row without skipping any",
+            new CounterHandler(15, true, null)),
+
+    // TIME-BASED achievements
+    SPEED_COLLECTOR("Speed Collector", "Collect 7 items within the first 5 minutes of the round",
+            new TimeBasedHandler(7, 5 * 60, 0, 0, 0, true, false, false)),
+
+    QUICK_GRAB("Quick Grab", "Collect an item within the first 30 seconds without skipping",
+            new TimeBasedHandler(1, 30, 0, 0, 0, true, false, true)),
+
+    PROCRASTINATOR("Procrastinator", "Skip an item after keeping it for 10 minutes",
+            new TimeBasedHandler(1, 0, 0, 10 * 60, 0, false, false, false)),
+
+    WAS_IT_WORTHWHILE("Was It Worthwhile?", "Collect an item that took you at least 15 minutes to find",
+            new TimeBasedHandler(1, 0, 15 * 60, 0, 0, true, false, false)),
+
+    CLOSE_CALL("Close Call", "Collect an item within the last 5 seconds of the round",
+            new TimeBasedHandler(1, 0, 0, 0, 5, true, false, true)),
+
+    EARLY_BIRD("Early Bird", "Be the first player to collect any item in the round",
+            new TimeBasedHandler(1, 0, 0, 0, 0, false, true, true)),
+
+    // BACK-TO-BACK achievements
+    BACK_TO_BACK("Back-to-Back", "Get your next required item immediately",
+            new BackToBackHandler(1, false, false)),
+
+    DOUBLE_TROUBLE("Double Trouble", "Get 2 back-to-back items in a row",
+            new BackToBackHandler(2, false, false)),
+
+    OH_BABY_A_TRIPLE("Oh Baby A Triple!", "Get 3 back-to-back items in a row",
+            new BackToBackHandler(3, false, false)),
+
+    FOUR_LEAF_CLOVER("Four-leaf Clover", "Get 4 back-to-back items in a row",
+            new BackToBackHandler(4, false, false)),
+
+    DEJA_VU("Déjà Vu", "Get the same item type twice in a row as back-to-back",
+            new BackToBackHandler(1, true, false)),
+
+    ACCIDENTAL_GENIUS("Accidental Genius", "Skip an item, then get it again as back-to-back",
+            new BackToBackHandler(1, false, true)),
+
+    // VISIT achievements
+    BIOME_HOPPER("Biome Hopper", "Visit all basic overworld biomes in one round",
+            CollectionHandler.biomeHandler(Set.of(BiomeGroup.values()))),
+
+    ALWAYS_ON_THE_GO("Always On The Go", "Visit all three dimensions in one round",
+            CollectionHandler.dimensionHandler(Set.of("world", "world_nether", "world_the_end"))),
+
+    // SKIP achievements
+    UNLUCKY("Unlucky", "Skip 3 items in a row",
+            new SkipHandler(3, true, 0)),
+
+    FUCK_THIS("Fuck this", "Skip an item within 3 seconds of receiving it",
+            new SkipHandler(1, false, 3)),
+
+    // ACTION achievements
+    CHICOT("Chicot", "Complete a round without dying",
+            new DeathCounterHandler(0)),
+
+    CONNOISSEUR("Connoisseur", "Eat Cavendish",
+            new EatingHandler(1, new CustomItem(Material.ENCHANTED_GOLDEN_APPLE, "cavendish", null))),
+
+    THANK_YOU("Thank you", "Trade with the wandering trader 10 times in one round",
+            new TradingHandler(10)),
+
+    A_BALANCED_INVENTORY("A Balanced Inventory", "Fill every slot in your inventory (including backpack if enabled)",
+            new InventoryFullHandler()),
+
+    HONEY_HONEY("Honey, honey, how you thrill me, aha, honey honey", "Harvest 2 full beehives with shears",
+            new BeehiveHandler(2)),
+
+    // LOOT achievements
+    WHEEL_OF_FORTUNE("Wheel of Fortune", "Find a Legendary item in a loot chest",
+            new LootHandler(1, new CustomItem(null, "[LEGENDARY]"), false)),
+
+    WILL_IT_BREAK("Will it break?", "Find Cavendish in a loot chest",
+            new LootHandler(1, new CustomItem(Material.ENCHANTED_GOLDEN_APPLE, 1, "Cavendish"), false)),
+
+    BELIEVER("Believer", "Find your currently needed item in a loot chest",
+            new LootHandler(1, null, true)),
+
+    // META achievement
+    COMPLETIONIST("Completionist++", "Complete all achievements",
+            new CompletionistHandler());
 
     private final String title;
     private final String description;
-    private final Condition condition;
+    private final AchievementHandler<?> handler;
 
-    Achievements(String title, String description, Condition condition) {
+    Achievements(String title, String description, AchievementHandler<?> handler) {
         this.title = title;
         this.description = description;
-        this.condition = condition;
+        this.handler = handler;
     }
-
 }
