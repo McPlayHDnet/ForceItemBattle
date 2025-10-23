@@ -41,22 +41,22 @@ public class Backpack {
         return this.teamBackpack.get(team);
     }
 
-    public void createBackpack(Player player) {
-        this.playerBackpack.put(player.getUniqueId(),
+    public void createBackpack(ForceItemPlayer fibPlayer) {
+        this.playerBackpack.put(fibPlayer.player().getUniqueId(),
                 Bukkit.createInventory(
                         null,
                         this.forceItemBattle.getConfig().getInt("settings.backpackRows") * 9,
                         this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold>Backpack <dark_gray>● <gray>Menu")));
-        player.getInventory().setItem(8, Gamemanager.createBackpack());
+        fibPlayer.player().getInventory().setItem(8, Gamemanager.createBackpack(fibPlayer, this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM)));
     }
 
-    public void createTeamBackpack(Team team, Player player) {
+    public void createTeamBackpack(Team team, ForceItemPlayer fibPlayer) {
         this.teamBackpack.put(team,
                 Bukkit.createInventory(
                         null,
                         this.forceItemBattle.getConfig().getInt("settings.backpackRows") * 9,
                         this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold>Backpack <dark_gray>● <gray>Menu")));
-        player.getInventory().setItem(8, Gamemanager.createBackpack());
+        fibPlayer.player().getInventory().setItem(8, Gamemanager.createBackpack(fibPlayer, this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM)));
     }
 
     public void openPlayerBackpack(Player player) {

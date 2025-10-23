@@ -70,9 +70,10 @@ public class ScoreboardManager {
 
                 boolean sameTeam = viewerTeam != null && viewerTeam.equals(fibPlayer.currentTeam());
 
-                String color = sameTeam ? "<green>" : "<yellow>";
+                String color = sameTeam ? "<b>" : "";
+                String suffix = sameTeam ? "</b>" : "";
 
-                team.prefix(mini.deserialize(color + "[" + fibPlayer.currentTeam().getTeamDisplay() + "] "));
+                team.prefix(mini.deserialize(color + fibPlayer.currentTeam().getTeamDisplay() + suffix + " "));
             } else {
                 team.prefix(mini.deserialize(""));
             }

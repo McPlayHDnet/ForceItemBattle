@@ -267,9 +267,9 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
 
             if(this.plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK)) {
                 if(this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-                    this.plugin.getBackpack().createTeamBackpack(forceItemPlayer.currentTeam(), player);
+                    this.plugin.getBackpack().createTeamBackpack(forceItemPlayer.currentTeam(), forceItemPlayer);
                 } else {
-                    this.plugin.getBackpack().createBackpack(player);
+                    this.plugin.getBackpack().createBackpack(forceItemPlayer);
                 }
 
             }
