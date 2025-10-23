@@ -933,6 +933,7 @@ public class Listeners implements Listener {
         if (keepInventory == null || !keepInventory) {
             player.getInventory().addItem(new ItemStack(Material.STONE_AXE));
             player.getInventory().addItem(new ItemStack(Material.STONE_PICKAXE));
+            player.getInventory().addItem(new ItemStack(Material.STONE_SHOVEL));
 
             player.performCommand("fixskips -silent");
         }
