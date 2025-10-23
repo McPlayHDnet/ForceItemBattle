@@ -938,7 +938,7 @@ public class Listeners implements Listener {
             player.performCommand("fixskips -silent");
         }
 
-        player.getInventory().setItem(8, Gamemanager.createBackpack());
+        player.getInventory().setItem(8, Gamemanager.createBackpack(forceItemPlayer, this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)));
 
     }
 

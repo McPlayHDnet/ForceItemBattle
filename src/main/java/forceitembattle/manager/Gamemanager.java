@@ -418,8 +418,13 @@ public class Gamemanager {
                 .getItemStack();
     }
 
-    public static ItemStack createBackpack() {
-        ItemStack itemStack = new ItemBuilder(Material.BUNDLE)
+    public static ItemStack createBackpack(ForceItemPlayer forceItemPlayer, boolean isTeamMode) {
+        Material bundle = Material.BUNDLE;
+        if (isTeamMode) {
+            bundle = Material.getMaterial(forceItemPlayer.currentTeam().getColor().name() + "_BUNDLE");
+        }
+
+        ItemStack itemStack = new ItemBuilder(bundle)
                 .setDisplayName("<dark_gray>» <yellow>Backpack")
                 .getItemStack();
 
@@ -440,7 +445,7 @@ public class Gamemanager {
     }
 
     public static boolean isBackpack(ItemStack itemStack) {
-        if (itemStack.getType() != Material.BUNDLE) {
+        if (!itemStack.getType().name().contains("BUNDLE")) {
             return false;
         }
 
