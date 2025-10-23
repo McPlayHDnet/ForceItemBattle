@@ -93,7 +93,7 @@ public class ScoreboardManager {
 
                 team.suffix(mini.deserialize(
                         " <gray>[<gold>" + gameManager.getMaterialName(mat)
-                                + " <reset><color:#4e5c24>" + itemIcon + "<gray>]"
+                                + " <reset><shadow:black:0.4>" + itemIcon + "</shadow><gray>]"
                 ));
             } else {
                 team.suffix(Component.empty());
