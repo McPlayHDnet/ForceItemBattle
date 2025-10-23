@@ -129,6 +129,13 @@ public class Listeners implements Listener {
         playerQuitEvent.quitMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>« <yellow>" + playerQuitEvent.getPlayer().getName() + " <red>ragequit"));
 
         if(this.plugin.getGamemanager().isPreGame() || this.plugin.getGamemanager().isEndGame()) {
+            if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+                ForceItemPlayer fibPlayer = this.plugin.getGamemanager().getForceItemPlayer(playerQuitEvent.getPlayer().getUniqueId());
+                if (fibPlayer != null && fibPlayer.currentTeam() != null) {
+                    this.plugin.getTeamManager().leave(fibPlayer);
+                }
+            }
+
             this.plugin.getGamemanager().removePlayer(playerQuitEvent.getPlayer());
         }
 
