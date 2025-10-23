@@ -399,6 +399,11 @@ public class Listeners implements Listener {
         } else {
             forceItemPlayer.setBackToBackStreak(0);
 
+            if (result.getTeammateWhoHasIt() != null) {
+                ForceItemPlayer teammate = result.getTeammateWhoHasIt();
+                teammate.setBackToBackStreak(0);
+            }
+
             if (context.isTeamGame() && forceItemPlayer.currentTeam() != null) {
                 forceItemPlayer.currentTeam().setBackToBackStreak(0);
             }
@@ -580,104 +585,10 @@ public class Listeners implements Listener {
                 if (hasItemInInventory(teammate.player().getInventory(), targetMaterial)) {
                     return new BackToBackResult(true, teammate);
                 }
-
-                if (context.isBackpackEnabled()) {
-                    Inventory teammateBackpack = plugin.getBackpack().getPlayerBackpack(teammate.player());
-                    if (hasItemInInventory(teammateBackpack, targetMaterial)) {
-                        return new BackToBackResult(true, teammate);
-                    }
-                }
             }
         }
 
         return new BackToBackResult(false, null);
-    }
-
-    private String getItemProbability(Player player, ForceItemPlayer forceItemPlayer) {
-        int totalItemsInPool = plugin.getItemDifficultiesManager().getAvailableItems().size();
-        boolean isBackpackEnabled = plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK);
-        boolean isTeamGame = forceItemPlayer.currentTeam() != null;
-
-        Set<Material> uniqueMaterials = new HashSet<>();
-        int streak = forceItemPlayer.backToBackStreak();
-
-        if (isTeamGame) {
-            Team team = forceItemPlayer.currentTeam();
-
-            for (ForceItemPlayer teammate : team.getPlayers()) {
-                collectUniqueMaterials(teammate.player().getInventory(), uniqueMaterials);
-            }
-
-            if (isBackpackEnabled) {
-                Inventory teamBackpack = plugin.getBackpack().getTeamBackpack(team);
-                collectUniqueMaterials(teamBackpack, uniqueMaterials);
-            }
-
-            streak = Math.max(streak, team.getBackToBackStreak());
-        } else {
-            collectUniqueMaterials(player.getInventory(), uniqueMaterials);
-
-            if (isBackpackEnabled) {
-                Inventory backpack = plugin.getBackpack().getPlayerBackpack(player);
-                collectUniqueMaterials(backpack, uniqueMaterials);
-            }
-        }
-
-        int totalItems = uniqueMaterials.size();
-
-        Material prev = forceItemPlayer.getPreviousMaterial();
-        Material current = forceItemPlayer.getCurrentMaterial();
-
-        double baseProbability = (double) totalItems / totalItemsInPool;
-
-        baseProbability = Math.min(baseProbability, 1.0); // 100% cap
-
-        double probability = Math.pow(baseProbability, streak);
-        double probabilityPercent = probability * 100;
-
-        String rarity;
-        if (prev != null && current == prev) {
-            rarity = "<gradient:#73FF00:#14C8FF><b>EXTRAORDINARY</b></gradient>";
-            player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 0f);
-        } else if (probability <= 0.001) {
-            rarity = "<gradient:#E41EBC:#9A4992><b>RNGESUS</b></gradient>"; // ~0.1% or less
-            Bukkit.getOnlinePlayers().forEach(players -> {
-                players.playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_DEATH, 0.3f, 1f);
-            });
-        } else if (probability <= 0.01) {
-            rarity = "<gold><b>LEGENDARY</b></gold>";
-            Bukkit.getOnlinePlayers().forEach(players -> {
-                players.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 0f);
-            });
-        } else if (probability <= 0.05) {
-            rarity = "<dark_purple><b>EPIC</b></dark_purple>";
-            player.playSound(player.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1f, 1f);
-        } else {
-            rarity = "<blue><b>RARE</b></blue>";
-            player.playSound(player.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1f, 1.5f);
-        }
-
-        String formattedProbability;
-        if (probabilityPercent >= 1) {
-            DecimalFormat df = new DecimalFormat("0.##");
-            df.setRoundingMode(RoundingMode.HALF_UP);
-            formattedProbability = df.format(probabilityPercent) + "%";
-        } else {
-            int leadingZeros = 0;
-            double temp = probabilityPercent;
-            while (temp < 1 && leadingZeros < 15) {
-                temp *= 10;
-                leadingZeros++;
-            }
-
-            int totalDecimals = leadingZeros + 2;
-
-            DecimalFormat df = new DecimalFormat("0." + "#".repeat(Math.max(0, totalDecimals)));
-            df.setRoundingMode(RoundingMode.HALF_UP);
-            formattedProbability = df.format(probabilityPercent) + "%";
-        }
-
-        return formattedProbability + " <dark_gray>(<reset>" + rarity + "<dark_gray>)";
     }
 
     private void collectUniqueMaterials(Inventory inventory, Set<Material> uniqueMaterials) {
