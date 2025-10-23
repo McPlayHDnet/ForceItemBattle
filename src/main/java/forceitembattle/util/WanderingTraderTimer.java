@@ -13,7 +13,6 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Player;
 import org.bukkit.entity.WanderingTrader;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.MerchantRecipe;
@@ -36,8 +35,7 @@ public class WanderingTraderTimer {
 
     public WanderingTraderTimer() {
         this.randomAfterStartSpawnTime = (new Random().nextInt(4) + 7) * 60; //random number between 7 and 10 -> [7, 10]
-        this.timer += this.randomAfterStartSpawnTime + 1;
-
+        this.timer = this.randomAfterStartSpawnTime;
         this.canBuyWheel = new HashMap<>();
     }
 
@@ -48,14 +46,14 @@ public class WanderingTraderTimer {
                 if (!ForceItemBattle.getInstance().getGamemanager().isMidGame()) {
                     return;
                 }
-                int elapsedSeconds = timer;
 
-                if(elapsedSeconds == 0) {
+                if (timer <= 0) {
                     spawnWanderingTrader();
+                    randomAfterStartSpawnTime = (new Random().nextInt(4) + 7) * 60;
+                    timer = randomAfterStartSpawnTime;
+                } else {
+                    timer--;
                 }
-
-                elapsedSeconds--;
-                timer = elapsedSeconds;
             }
         };
 
@@ -64,8 +62,10 @@ public class WanderingTraderTimer {
 
     public void spawnWanderingTrader() {
         World world = Bukkit.getWorld("world");
+        if (world == null) return;
+
         Location traderLocation = this.getRandomLocationWithinSpawnChunks(world.getSpawnLocation(), 5);
-        WanderingTrader wanderingTrader = (WanderingTrader) world.spawnEntity(traderLocation.add(0.0, 1.0, 0.0), EntityType.WANDERING_TRADER);
+        WanderingTrader wanderingTrader = (WanderingTrader) world.spawnEntity(traderLocation.clone().add(0.0, 1.0, 0.0), EntityType.WANDERING_TRADER);
         wanderingTrader.setGlowing(true);
         wanderingTrader.setInvulnerable(true);
         wanderingTrader.setAI(false);
