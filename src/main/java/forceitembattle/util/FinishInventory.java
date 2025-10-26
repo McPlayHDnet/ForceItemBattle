@@ -118,12 +118,16 @@ public class FinishInventory extends InventoryBuilder {
 
                             @Override
                             public void run() {
+                                clearCloseHandlers();
+
+                                // just for safety in case there is a re-open in the very last tick... don't think this will ever happen but yeah why not
+                                Bukkit.getScheduler().runTaskLater(forceItemBattle, () -> {
+                                    Bukkit.getOnlinePlayers().forEach(p -> {
+                                        if (p.getOpenInventory().getTopInventory() == getInventory()) p.closeInventory();
+                                    });
+                                }, 1L);
 
                                 for(Player players : Bukkit.getOnlinePlayers()) {
-                                    if(players.getOpenInventory().getTopInventory() == getInventory()) {
-                                        players.closeInventory();
-                                    }
-
                                     Component mainTitle = forceItemBattle.getGamemanager().getMiniMessage().deserialize(placeColor + place + "<white>. " + teamDisplay);
                                     Component subTitle = forceItemBattle.getGamemanager().getMiniMessage().deserialize("<gold>" + (placedItems + 1) + " Items found");
 
@@ -205,6 +209,17 @@ public class FinishInventory extends InventoryBuilder {
         }
 
         this.addClickHandler(inventoryClickEvent -> inventoryClickEvent.setCancelled(true));
+        if (firstTime) {
+            this.addCloseHandler(event -> {
+                Player player = (Player) event.getPlayer();
+
+                Bukkit.getScheduler().runTaskLater(forceItemBattle, () -> {
+                    if (!player.isOnline()) return;
+
+                    player.openInventory(getInventory());
+                }, 1L);
+            });
+        }
     }
 
     private void placeItems(Map<Integer, ItemStack> itemStacksPerPage) {
