@@ -63,17 +63,7 @@ public class ScoreboardManager {
             }
 
             if (settings.isSettingEnabled(GameSetting.TEAM) && fibPlayer.currentTeam() != null) {
-                forceitembattle.util.Team viewerTeam = gameManager.forceItemPlayerMap()
-                        .getOrDefault(viewer.getUniqueId(), null) != null
-                        ? gameManager.forceItemPlayerMap().get(viewer.getUniqueId()).currentTeam()
-                        : null;
-
-                boolean sameTeam = viewerTeam != null && viewerTeam.equals(fibPlayer.currentTeam());
-
-                String color = sameTeam ? "<b>" : "";
-                String suffix = sameTeam ? "</b>" : "";
-
-                team.prefix(mini.deserialize(color + fibPlayer.currentTeam().getTeamDisplay() + suffix + " "));
+                team.prefix(mini.deserialize(fibPlayer.currentTeam().getTeamDisplay() + " "));
             } else {
                 team.prefix(mini.deserialize(""));
             }
