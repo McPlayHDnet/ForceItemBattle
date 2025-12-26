@@ -559,7 +559,7 @@ public class ItemDifficultiesManager {
         register(Material.CLAY, State.EARLY);
         register(Material.CLAY_BALL, State.EARLY);
         register(Material.CLOCK, State.EARLY);
-        register(Material.CLOSED_EYEBLOSSOM, State.EARLY);
+        register(Material.CLOSED_EYEBLOSSOM, State.MID);
         register(Material.COAL, State.EARLY);
         register(Material.COAL_BLOCK, State.EARLY);
         register(Material.COAL_ORE, State.LATE);
@@ -1138,7 +1138,7 @@ public class ItemDifficultiesManager {
         register(Material.OBSIDIAN, State.EARLY);
         register(Material.OMINOUS_BOTTLE, State.LATE, ItemTag.EXTREME);
         register(Material.OMINOUS_TRIAL_KEY, State.LATE, ItemTag.EXTREME);
-        register(Material.OPEN_EYEBLOSSOM, State.EARLY);
+        register(Material.OPEN_EYEBLOSSOM, State.MID);
         register(Material.ORANGE_BANNER, State.EARLY);
         register(Material.ORANGE_BED, State.EARLY);
         register(Material.ORANGE_BUNDLE, State.EARLY);
