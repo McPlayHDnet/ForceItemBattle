@@ -63,7 +63,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
-import org.bukkit.GameRule;
+import org.bukkit.GameRules;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -190,21 +190,21 @@ public final class ForceItemBattle extends JavaPlugin {
                 keepInventory = true;
                 Bukkit.getScheduler().scheduleSyncDelayedTask(
                         this,
-                        () -> world.setGameRule(GameRule.KEEP_INVENTORY, false),
+                        () -> world.setGameRule(GameRules.KEEP_INVENTORY, false),
                         20 * 60 * 5 // 5 minutes
                 );
             }
 
             // Apply settings.
-            world.setGameRule(GameRule.KEEP_INVENTORY, keepInventory);
+            world.setGameRule(GameRules.KEEP_INVENTORY, keepInventory);
             getSettings().setSettingEnabled(GameSetting.FASTER_RANDOM_TICK, getSettings().isSettingEnabled(GameSetting.FASTER_RANDOM_TICK));
 
             //world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
-            world.setGameRule(GameRule.LOCATOR_BAR, false);
-            world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
-            world.setGameRule(GameRule.SPECTATORS_GENERATE_CHUNKS, false);
-            world.setGameRule(GameRule.DO_TRADER_SPAWNING, false);
-            world.setGameRule(GameRule.DO_INSOMNIA, false);
+            world.setGameRule(GameRules.LOCATOR_BAR, false);
+            world.setGameRule(GameRules.ADVANCE_TIME, false);
+            world.setGameRule(GameRules.SPECTATORS_GENERATE_CHUNKS, false);
+            world.setGameRule(GameRules.SPAWN_WANDERING_TRADERS, false);
+            world.setGameRule(GameRules.SPAWN_PHANTOMS, false);
 
             WorldBorder worldBorder = world.getWorldBorder();
             worldBorder.setCenter(world.getSpawnLocation());
