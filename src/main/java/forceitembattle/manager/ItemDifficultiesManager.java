@@ -327,6 +327,9 @@ public class ItemDifficultiesManager {
      * Register a single item with its state and optional tags.
      */
     private void register(Material material, State state, ItemTag... tags) {
+        if (itemRegistry.containsKey(material)) {
+            plugin.getLogger().warning("Duplicate registration: " + material.name());
+        }
         itemRegistry.put(material, new ItemDefinition(material, state, tags));
     }
 
@@ -774,6 +777,7 @@ public class ItemDifficultiesManager {
         register(Material.EXPERIENCE_BOTTLE, State.LATE);
         register(Material.EXPLORER_POTTERY_SHERD, State.LATE);
         register(Material.EXPOSED_CHISELED_COPPER, State.LATE);
+        register(Material.EXPOSED_COPPER, State.LATE);
         register(Material.EXPOSED_COPPER_BARS, State.LATE);
         register(Material.EXPOSED_COPPER_BULB, State.LATE);
         register(Material.EXPOSED_COPPER_CHAIN, State.LATE);
@@ -1309,6 +1313,7 @@ public class ItemDifficultiesManager {
         register(Material.RECOVERY_COMPASS, State.LATE, ItemTag.EXTREME);
         register(Material.RED_BANNER, State.EARLY);
         register(Material.RED_BED, State.EARLY);
+        register(Material.RED_BUNDLE, State.EARLY);
         register(Material.RED_CANDLE, State.LATE);
         register(Material.RED_CARPET, State.EARLY);
         register(Material.RED_CONCRETE, State.EARLY);
@@ -1516,7 +1521,7 @@ public class ItemDifficultiesManager {
         register(Material.WARPED_BUTTON, State.MID, ItemTag.NETHER);
         register(Material.WARPED_DOOR, State.MID, ItemTag.NETHER);
         register(Material.WARPED_FENCE, State.MID, ItemTag.NETHER);
-        register(Material.WARPED_FENCE_GATE, State.MID);
+        register(Material.WARPED_FENCE_GATE, State.MID, ItemTag.NETHER);
         register(Material.WARPED_FUNGUS, State.MID, ItemTag.NETHER);
         register(Material.WARPED_FUNGUS_ON_A_STICK, State.MID, ItemTag.NETHER);
         register(Material.WARPED_HANGING_SIGN, State.MID, ItemTag.NETHER);
