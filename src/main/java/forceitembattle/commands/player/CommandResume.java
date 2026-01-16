@@ -4,7 +4,7 @@ import forceitembattle.commands.CustomCommand;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.GameState;
 import org.bukkit.Bukkit;
-import org.bukkit.GameRule;
+import org.bukkit.GameRules;
 import org.bukkit.entity.Player;
 
 public class CommandResume extends CustomCommand {
@@ -27,7 +27,7 @@ public class CommandResume extends CustomCommand {
         }
 
         Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize("<gold>The timer has been resumed!"));
-        Bukkit.getWorld("world").setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
+        Bukkit.getWorld("world").setGameRule(GameRules.ADVANCE_TIME, true);
         this.plugin.getGamemanager().setCurrentGameState(GameState.MID_GAME);
     }
 }

@@ -177,7 +177,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
         setupSpawnLocation(spawnLocation);
 
         Bukkit.getWorlds().forEach(worlds -> worlds.getWorldBorder().reset());
-        world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
+        world.setGameRule(GameRules.ADVANCE_TIME, true);
 
         Bukkit.getOnlinePlayers().forEach(player -> {
             ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());

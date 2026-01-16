@@ -16,39 +16,140 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class ItemDifficultiesManager {
 
     private final ForceItemBattle plugin;
 
+    /**
+     * Tags that describe item properties/requirements.
+     * An item can have multiple tags.
+     */
+    public enum ItemTag {
+        /** Item requires nether access to obtain */
+        NETHER,
+        /** Item requires end access to obtain */
+        END,
+        /** Item is extremely hard/unrealistic to obtain in 45 minutes */
+        EXTREME
+    }
+
+    /**
+     * Defines an item with its game state (when it unlocks) and tags (requirements/properties).
+     */
+    public record ItemDefinition(Material material, State state, Set<ItemTag> tags) {
+        public ItemDefinition(Material material, State state, ItemTag... tags) {
+            this(material, state, tags.length == 0 ? Set.of() : EnumSet.copyOf(Arrays.asList(tags)));
+        }
+
+        public boolean hasTag(ItemTag tag) {
+            return tags.contains(tag);
+        }
+
+        public boolean hasAnyTag(ItemTag... checkTags) {
+            for (ItemTag tag : checkTags) {
+                if (tags.contains(tag)) return true;
+            }
+            return false;
+        }
+    }
+
     @Getter
-    private final List<Material> netherItems;
-    @Getter
-    private final List<Material> endItems;
-    private final List<Material> veryLateItems;
+    private final Map<Material, ItemDefinition> itemRegistry = new HashMap<>();
 
     @Getter
     private HashMap<Material, DescriptionItem> descriptionItems;
 
-    /**
-     * Chat and tablist use smaller icons.
-     */
     private Map<Material, String> smallIconUnicodes;
-    /**
-     * Bossbar is using bigger icons.
-     */
     private Map<Material, String> bigIconUnicodes;
 
     private final Random FIXED_RANDOM;
     private final long FIXED_RANDOM_SEED;
 
+    public ItemDifficultiesManager(ForceItemBattle forceItemBattle) {
+        this.plugin = forceItemBattle;
+
+        this.FIXED_RANDOM_SEED = new Random().nextLong();
+        this.FIXED_RANDOM = new Random(FIXED_RANDOM_SEED);
+
+        this.descriptionItems = new HashMap<>();
+
+        registerAllItems();
+        setupStates();
+    }
+
     public void setupStates() {
         State.EARLY.setUnlockedAtPercentage(0);
         State.MID.setUnlockedAtPercentage(11.11);
         State.LATE.setUnlockedAtPercentage(28.88);
+
+        // Populate state item lists from registry
+        for (State state : State.VALUES) {
+            state.setItems(getItemsByState(state));
+        }
     }
 
+    /**
+     * Get all items that have the NETHER tag.
+     */
+    public List<Material> getNetherItems() {
+        return getItemsByTag(ItemTag.NETHER);
+    }
+
+    /**
+     * Get all items that have the END tag.
+     */
+    public List<Material> getEndItems() {
+        return getItemsByTag(ItemTag.END);
+    }
+
+    /**
+     * Get all items that have the EXTREME tag.
+     */
+    public List<Material> getExtremeItems() {
+        return getItemsByTag(ItemTag.EXTREME);
+    }
+
+    /**
+     * Get all items with a specific tag.
+     */
+    public List<Material> getItemsByTag(ItemTag tag) {
+        return itemRegistry.values().stream()
+                .filter(def -> def.hasTag(tag))
+                .map(ItemDefinition::material)
+                .toList();
+    }
+
+    /**
+     * Get all items for a specific game state.
+     */
+    public List<Material> getItemsByState(State state) {
+        return itemRegistry.values().stream()
+                .filter(def -> def.state() == state)
+                .map(ItemDefinition::material)
+                .toList();
+    }
+
+    /**
+     * Get overworld items.
+     */
+    public Set<Material> getOverworldItems() {
+        return itemRegistry.values().stream()
+                .filter(def -> !def.hasAnyTag(ItemTag.NETHER, ItemTag.END))
+                .map(ItemDefinition::material)
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * Get all registered items.
+     */
+    public Set<Material> getAllItems() {
+        return new HashSet<>(itemRegistry.keySet());
+    }
+
+    /**
+     * Get items available based on elapsed game time.
+     */
     public List<Material> getAvailableItems() {
         int timeLeft = this.plugin.getTimer().getTimeLeft();
         int totalDuration = this.plugin.getGamemanager().getGameDuration();
@@ -58,41 +159,29 @@ public class ItemDifficultiesManager {
 
         for (State state : State.VALUES) {
             int unlockTime = (int) Math.round((totalDuration * (state.getUnlockedAtPercentage() / 100)) / 60);
-            if (elapsedTime < unlockTime) {
-                continue;
+            if (elapsedTime >= unlockTime) {
+                items.addAll(state.getItems());
             }
-
-            items.addAll(state.getItems());
         }
 
         return items;
     }
 
-    public Set<Material> getOverworldItems() {
-        return Stream.of(State.EARLY.getItems(), State.MID.getItems(), State.LATE.getItems())
-                .flatMap(List::stream)
-                .filter(item -> !this.netherItems.contains(item) && !this.endItems.contains(item))
-                .collect(Collectors.toSet());
-    }
-
-    public Set<Material> getAllItems() {
-        return Stream.of(State.EARLY.getItems(), State.MID.getItems(), State.LATE.getItems())
-                .flatMap(List::stream)
-                .collect(Collectors.toSet());
-    }
+    // ==================== ITEM GENERATION ====================
 
     public Material generateRandomMaterial() {
-        Random random = new Random();
-        List<Material> items = getAvailableItems();
-
+        List<Material> items = new ArrayList<>(getAvailableItems());
         filterDisabledItems(items);
 
-        return items.get(random.nextInt(items.size()));
+        if (items.isEmpty()) {
+            throw new IllegalStateException("No available items after filtering.");
+        }
+
+        return items.get(new Random().nextInt(items.size()));
     }
 
     public Material generateSeededRandomMaterial() {
-        List<Material> items = getAvailableItems();
-
+        List<Material> items = new ArrayList<>(getAvailableItems());
         filterDisabledItems(items);
 
         if (items.isEmpty()) {
@@ -102,30 +191,73 @@ public class ItemDifficultiesManager {
         return items.get(FIXED_RANDOM.nextInt(items.size()));
     }
 
+    /**
+     * Filter out items based on game settings.
+     */
+    private void filterDisabledItems(Collection<Material> items) {
+        items.removeIf(material -> {
+            ItemDefinition def = itemRegistry.get(material);
+            if (def == null) return false;
+
+            // If HARD mode is disabled, remove NETHER and EXTREME items
+            if (!plugin.getSettings().isSettingEnabled(GameSetting.HARD)) {
+                if (def.hasAnyTag(ItemTag.NETHER, ItemTag.EXTREME)) {
+                    return true;
+                }
+            }
+            // If EXTREME mode is disabled (but HARD is enabled), only remove EXTREME items
+            else if (!plugin.getSettings().isSettingEnabled(GameSetting.EXTREME)) {
+                if (def.hasTag(ItemTag.EXTREME)) {
+                    return true;
+                }
+            }
+
+            // If END is disabled, remove END items
+            if (!plugin.getSettings().isSettingEnabled(GameSetting.END)) {
+                if (def.hasTag(ItemTag.END)) {
+                    return true;
+                }
+            }
+
+            return false;
+        });
+    }
+
+    public boolean itemInList(Material material) {
+        return this.getAvailableItems().contains(material);
+    }
+
+    public boolean itemInAllLists(Material material) {
+        return itemRegistry.containsKey(material);
+    }
+
+    // ==================== DESCRIPTIONS ====================
+
     public boolean isItemInDescriptionList(Material material) {
-        return this.getDescriptionItems().containsKey(material);
+        return this.descriptionItems.containsKey(material);
     }
 
     public boolean itemHasDescription(Material material) {
-        return this.getDescriptionItems().get(material) != null;
+        return this.descriptionItems.get(material) != null;
     }
 
     public List<String> getDescriptionItemLines(Material material) {
-        List<String> lines = new ArrayList<>();
-        if (this.isItemInDescriptionList(material)) {
-            if(this.itemHasDescription(material)) {
-                lines = this.getDescriptionItems().get(material)
-                        .lines()
-                        .stream()
-                        .map(line -> ChatColor.translateAlternateColorCodes('&', line))
-                        .toList();
-                // lines = this.getDescriptionItems().get(material).lines();
-            } else {
-                throw new NullPointerException(material.name() + " does not have a description");
-            }
+        if (!isItemInDescriptionList(material)) {
+            return new ArrayList<>();
         }
-        return lines;
+
+        if (!itemHasDescription(material)) {
+            throw new NullPointerException(material.name() + " does not have a description");
+        }
+
+        return this.descriptionItems.get(material)
+                .lines()
+                .stream()
+                .map(line -> ChatColor.translateAlternateColorCodes('&', line))
+                .toList();
     }
+
+    // ==================== UNICODE ICONS ====================
 
     public String getUnicodeFromMaterial(boolean smallIcon, Material material) {
         return this.getItemUnicodes(smallIcon).getOrDefault(material, "NULL");
@@ -136,20 +268,15 @@ public class ItemDifficultiesManager {
             if (smallIconUnicodes == null) {
                 smallIconUnicodes = readItemUnicodes(true);
             }
-
             return smallIconUnicodes;
         }
 
         if (bigIconUnicodes == null) {
             bigIconUnicodes = readItemUnicodes(false);
         }
-
         return bigIconUnicodes;
     }
 
-    /**
-     * Method to read the unicodes from the file.
-     */
     private Map<Material, String> readItemUnicodes(boolean smallIcon) {
         Map<Material, String> itemsUnicode = new HashMap<>();
         File file = new File(this.plugin.getDataFolder(), "unicodeItems.json");
@@ -165,7 +292,7 @@ public class ItemDifficultiesManager {
             Map<String, String>[] items = gson.fromJson(fileReader, mapType);
 
             if (items == null) {
-                this.plugin.getLogger().warning("`unicodeItems.json` could not be parsed. Ensure the format is a JSON array ob objects with 'material' and 'unicode'");
+                this.plugin.getLogger().warning("`unicodeItems.json` could not be parsed.");
                 return new HashMap<>();
             }
 
@@ -179,7 +306,6 @@ public class ItemDifficultiesManager {
                         if (material != null) {
                             itemsUnicode.put(material, unicode);
                         }
-
                     } else if (!smallIcon && !materialName.contains("_tabChat")) {
                         Material material = Material.getMaterial(materialName);
                         if (material != null) {
@@ -195,1577 +321,1354 @@ public class ItemDifficultiesManager {
         return itemsUnicode;
     }
 
+    // ==================== ITEM LIST ====================
+
     /**
-     * Filter out items disabled by the settings
+     * Register a single item with its state and optional tags.
      */
-    private void filterDisabledItems(Collection<Material> items) {
-        if (!plugin.getSettings().isSettingEnabled(GameSetting.HARD)) {
-            this.netherItems.forEach(items::remove);
-
-            this.veryLateItems.forEach(items::remove);
-
-        } else if (!plugin.getSettings().isSettingEnabled(GameSetting.EXTREME)) {
-            this.veryLateItems.forEach(items::remove);
+    private void register(Material material, State state, ItemTag... tags) {
+        if (itemRegistry.containsKey(material)) {
+            plugin.getLogger().warning("Duplicate registration: " + material.name());
         }
-
-        if (!plugin.getSettings().isSettingEnabled(GameSetting.END)) {
-            this.endItems.forEach(items::remove);
-        }
+        itemRegistry.put(material, new ItemDefinition(material, state, tags));
     }
 
-    public boolean itemInList(Material material) {
-        return this.getAvailableItems().contains(material);
-    }
-
-    public boolean itemInAllLists(Material material) {
-        return this.getAllItems().contains(material);
-    }
-
-
-    public ItemDifficultiesManager(ForceItemBattle forceItemBattle) {
-        this.plugin = forceItemBattle;
-
-        this.FIXED_RANDOM_SEED = new Random().nextLong();
-        this.FIXED_RANDOM = new Random(FIXED_RANDOM_SEED);
-
-        this.descriptionItems = new HashMap<>();
-        this.netherItems = List.of(
-                Material.ANCIENT_DEBRIS,
-                Material.BASALT,
-                Material.BLACKSTONE,
-                Material.BLACKSTONE_SLAB,
-                Material.BLACKSTONE_STAIRS,
-                Material.BLACKSTONE_WALL,
-                Material.BLAZE_POWDER,
-                Material.BLAZE_ROD,
-                Material.CHISELED_POLISHED_BLACKSTONE,
-                Material.CHISELED_QUARTZ_BLOCK,
-                Material.COMPARATOR,
-                Material.CRACKED_POLISHED_BLACKSTONE_BRICKS,
-                Material.CRIMSON_BUTTON,
-                Material.CRIMSON_DOOR,
-                Material.CRIMSON_FENCE,
-                Material.CRIMSON_FENCE_GATE,
-                Material.CRIMSON_FUNGUS,
-                Material.CRIMSON_HANGING_SIGN,
-                Material.CRIMSON_HYPHAE,
-                Material.CRIMSON_NYLIUM,
-                Material.CRIMSON_PLANKS,
-                Material.CRIMSON_PRESSURE_PLATE,
-                Material.CRIMSON_ROOTS,
-                Material.CRIMSON_SIGN,
-                Material.CRIMSON_SLAB,
-                Material.CRIMSON_STAIRS,
-                Material.CRIMSON_STEM,
-                Material.CRIMSON_TRAPDOOR,
-                Material.DAYLIGHT_DETECTOR,
-                Material.DRIED_GHAST,
-                Material.ENDER_EYE,
-                Material.SPLASH_POTION,
-                Material.GHAST_TEAR,
-                Material.GILDED_BLACKSTONE,
-                Material.GLOWSTONE,
-                Material.GLOWSTONE_DUST,
-                Material.KNOWLEDGE_BOOK, // Antimatter Depths Locator
-                Material.MAGMA_CREAM,
-                Material.MUSIC_DISC_PIGSTEP,
-                Material.MUSIC_DISC_TEARS,
-                Material.NETHER_GOLD_ORE,
-                Material.NETHER_QUARTZ_ORE,
-                Material.NETHER_SPROUTS,
-                Material.NETHER_WART,
-                Material.NETHER_WART_BLOCK,
-                Material.NETHERITE_AXE,
-                Material.NETHERITE_BOOTS,
-                Material.NETHERITE_CHESTPLATE,
-                Material.NETHERITE_HELMET,
-                Material.NETHERITE_HOE,
-                Material.NETHERITE_INGOT,
-                Material.NETHERITE_LEGGINGS,
-                Material.NETHERITE_PICKAXE,
-                Material.NETHERITE_SCRAP,
-                Material.NETHERITE_SHOVEL,
-                Material.NETHERITE_SWORD,
-                Material.NETHERITE_UPGRADE_SMITHING_TEMPLATE,
-                Material.PIGLIN_BANNER_PATTERN,
-                Material.POLISHED_BLACKSTONE,
-                Material.POLISHED_BLACKSTONE_BRICK_SLAB,
-                Material.POLISHED_BLACKSTONE_BRICK_STAIRS,
-                Material.POLISHED_BLACKSTONE_BRICK_WALL,
-                Material.POLISHED_BLACKSTONE_BRICKS,
-                Material.POLISHED_BLACKSTONE_BUTTON,
-                Material.POLISHED_BLACKSTONE_SLAB,
-                Material.POLISHED_BLACKSTONE_STAIRS,
-                Material.POLISHED_BLACKSTONE_WALL,
-                Material.QUARTZ_BLOCK,
-                Material.QUARTZ_BRICKS,
-                Material.QUARTZ_PILLAR,
-                Material.QUARTZ_SLAB,
-                Material.QUARTZ_STAIRS,
-                Material.RED_NETHER_BRICK_SLAB,
-                Material.RED_NETHER_BRICK_STAIRS,
-                Material.RED_NETHER_BRICK_WALL,
-                Material.RED_NETHER_BRICKS,
-                Material.REDSTONE_LAMP,
-                Material.RESPAWN_ANCHOR,
-                Material.RIB_ARMOR_TRIM_SMITHING_TEMPLATE,
-                Material.SHROOMLIGHT,
-                Material.SKULL_BANNER_PATTERN,
-                Material.SMOOTH_QUARTZ,
-                Material.SMOOTH_QUARTZ_SLAB,
-                Material.SMOOTH_QUARTZ_STAIRS,
-                Material.SNOUT_ARMOR_TRIM_SMITHING_TEMPLATE,
-                Material.SOUL_CAMPFIRE,
-                Material.SOUL_SAND,
-                Material.SOUL_SOIL,
-                Material.SOUL_LANTERN,
-                Material.SPECTRAL_ARROW,
-                Material.STRIPPED_CRIMSON_HYPHAE,
-                Material.STRIPPED_CRIMSON_STEM,
-                Material.STRIPPED_WARPED_HYPHAE,
-                Material.STRIPPED_WARPED_STEM,
-                Material.TWISTING_VINES,
-                Material.WARPED_BUTTON,
-                Material.WARPED_DOOR,
-                Material.WARPED_FENCE,
-                Material.WARPED_FUNGUS,
-                Material.WARPED_FUNGUS_ON_A_STICK,
-                Material.WARPED_HANGING_SIGN,
-                Material.WARPED_HYPHAE,
-                Material.WARPED_NYLIUM,
-                Material.WARPED_PLANKS,
-                Material.WARPED_PRESSURE_PLATE,
-                Material.WARPED_ROOTS,
-                Material.WARPED_SIGN,
-                Material.WARPED_SLAB,
-                Material.WARPED_STAIRS,
-                Material.WARPED_STEM,
-                Material.WARPED_TRAPDOOR,
-                Material.WARPED_WART_BLOCK,
-                Material.WEEPING_VINES,
-                Material.WITHER_SKELETON_SKULL
-        );
-
-        this.endItems = List.of(
-                Material.END_STONE,
-                Material.END_STONE_BRICK_SLAB,
-                Material.END_STONE_BRICK_STAIRS,
-                Material.END_STONE_BRICK_WALL,
-                Material.END_STONE_BRICKS,
-                Material.PURPUR_BLOCK,
-                Material.PURPUR_PILLAR,
-                Material.PURPUR_SLAB,
-                Material.PURPUR_STAIRS,
-                Material.CHORUS_FRUIT,
-                Material.CHORUS_FLOWER,
-                Material.DRAGON_HEAD,
-                Material.END_ROD,
-                Material.ELYTRA,
-                Material.SHULKER_SHELL,
-                Material.SHULKER_BOX,
-                Material.SPIRE_ARMOR_TRIM_SMITHING_TEMPLATE,
-                Material.WHITE_SHULKER_BOX,
-                Material.ORANGE_SHULKER_BOX,
-                Material.MAGENTA_SHULKER_BOX,
-                Material.LIGHT_BLUE_SHULKER_BOX,
-                Material.YELLOW_SHULKER_BOX,
-                Material.LIME_SHULKER_BOX,
-                Material.PINK_SHULKER_BOX,
-                Material.GRAY_SHULKER_BOX,
-                Material.LIGHT_GRAY_SHULKER_BOX,
-                Material.CYAN_SHULKER_BOX,
-                Material.POPPED_CHORUS_FRUIT,
-                Material.PURPLE_SHULKER_BOX,
-                Material.BLUE_SHULKER_BOX,
-                Material.BROWN_SHULKER_BOX,
-                Material.GREEN_SHULKER_BOX,
-                Material.RED_SHULKER_BOX,
-                Material.BLACK_SHULKER_BOX
-        );
-
-        // list contains hard items that are very unrealistic to obtain in 45 min
-        this.veryLateItems = List.of(
-                Material.ARCHER_POTTERY_SHERD,
-                Material.CALIBRATED_SCULK_SENSOR,
-                Material.COPPER_ORE,
-                Material.DEEPSLATE_COPPER_ORE,
-                Material.DEEPSLATE_DIAMOND_ORE,
-                Material.DEEPSLATE_EMERALD_ORE,
-                Material.DEEPSLATE_GOLD_ORE,
-                Material.DEEPSLATE_IRON_ORE,
-                Material.DEEPSLATE_LAPIS_ORE,
-                Material.DEEPSLATE_REDSTONE_ORE,
-                Material.DIAMOND_ORE,
-                Material.DISC_FRAGMENT_5,
-                Material.ECHO_SHARD,
-                Material.EMERALD_ORE,
-                Material.END_CRYSTAL,
-                Material.EYE_ARMOR_TRIM_SMITHING_TEMPLATE,
-                Material.FLOW_BANNER_PATTERN,
-                Material.GLOBE_BANNER_PATTERN,
-                Material.GOLD_ORE,
-                Material.GUSTER_BANNER_PATTERN,
-                Material.IRON_ORE,
-                Material.LAPIS_ORE,
-                Material.MINER_POTTERY_SHERD,
-                Material.MUSIC_DISC_CREATOR,
-                Material.MUSIC_DISC_PRECIPICE,
-                Material.NETHERITE_AXE,
-                Material.NETHERITE_BOOTS,
-                Material.NETHERITE_CHESTPLATE,
-                Material.NETHERITE_HELMET,
-                Material.NETHERITE_HOE,
-                Material.NETHERITE_LEGGINGS,
-                Material.NETHERITE_PICKAXE,
-                Material.NETHERITE_SHOVEL,
-                Material.NETHERITE_SWORD,
-                Material.OMINOUS_BOTTLE,
-                Material.OMINOUS_TRIAL_KEY,
-                Material.PRIZE_POTTERY_SHERD,
-                Material.RECOVERY_COMPASS,
-                Material.REDSTONE_ORE,
-                Material.SKULL_POTTERY_SHERD,
-                Material.TIDE_ARMOR_TRIM_SMITHING_TEMPLATE,
-                Material.TOTEM_OF_UNDYING,
-                Material.VEX_ARMOR_TRIM_SMITHING_TEMPLATE,
-                Material.WARD_ARMOR_TRIM_SMITHING_TEMPLATE
-        );
-
-
-        // Ideally these should be in the enum constructors, but here is fine, I guess.
-        State.EARLY.setItems(List.of(
-                Material.ACACIA_BOAT,
-                Material.ACACIA_BUTTON,
-                Material.ACACIA_CHEST_BOAT,
-                Material.ACACIA_DOOR,
-                Material.ACACIA_FENCE,
-                Material.ACACIA_FENCE_GATE,
-                Material.ACACIA_HANGING_SIGN,
-                Material.ACACIA_LEAVES,
-                Material.ACACIA_LOG,
-                Material.ACACIA_PLANKS,
-                Material.ACACIA_PRESSURE_PLATE,
-                Material.ACACIA_SAPLING,
-                Material.ACACIA_SHELF,
-                Material.ACACIA_SIGN,
-                Material.ACACIA_SLAB,
-                Material.ACACIA_STAIRS,
-                Material.ACACIA_TRAPDOOR,
-                Material.ACACIA_WOOD,
-                Material.ACTIVATOR_RAIL,
-                Material.AMETHYST_BLOCK,
-                Material.AMETHYST_SHARD,
-                Material.ANDESITE,
-                Material.ANDESITE_SLAB,
-                Material.ANDESITE_STAIRS,
-                Material.ANDESITE_WALL,
-                Material.APPLE,
-                Material.ARMADILLO_SCUTE,
-                Material.ARMOR_STAND,
-                Material.ARROW,
-                Material.AZURE_BLUET,
-                Material.BAKED_POTATO,
-                Material.BAMBOO,
-                Material.BAMBOO_BLOCK,
-                Material.BAMBOO_BUTTON,
-                Material.BAMBOO_CHEST_RAFT,
-                Material.BAMBOO_DOOR,
-                Material.BAMBOO_FENCE,
-                Material.BAMBOO_FENCE_GATE,
-                Material.BAMBOO_HANGING_SIGN,
-                Material.BAMBOO_MOSAIC,
-                Material.BAMBOO_MOSAIC_SLAB,
-                Material.BAMBOO_MOSAIC_STAIRS,
-                Material.BAMBOO_PLANKS,
-                Material.BAMBOO_PRESSURE_PLATE,
-                Material.BAMBOO_RAFT,
-                Material.BAMBOO_SHELF,
-                Material.BAMBOO_SIGN,
-                Material.BAMBOO_SLAB,
-                Material.BAMBOO_STAIRS,
-                Material.BAMBOO_TRAPDOOR,
-                Material.BARREL,
-                Material.BEEF,
-                Material.BELL,
-                Material.BIRCH_BOAT,
-                Material.BIRCH_BUTTON,
-                Material.BIRCH_CHEST_BOAT,
-                Material.BIRCH_DOOR,
-                Material.BIRCH_FENCE,
-                Material.BIRCH_FENCE_GATE,
-                Material.BIRCH_HANGING_SIGN,
-                Material.BIRCH_LEAVES,
-                Material.BIRCH_LOG,
-                Material.BIRCH_PLANKS,
-                Material.BIRCH_PRESSURE_PLATE,
-                Material.BIRCH_SAPLING,
-                Material.BIRCH_SHELF,
-                Material.BIRCH_SIGN,
-                Material.BIRCH_SLAB,
-                Material.BIRCH_STAIRS,
-                Material.BIRCH_TRAPDOOR,
-                Material.BIRCH_WOOD,
-                Material.BLACK_BANNER,
-                Material.BLACK_BED,
-                Material.BLACK_BUNDLE,
-                Material.BLACK_CARPET,
-                Material.BLACK_CONCRETE,
-                Material.BLACK_CONCRETE_POWDER,
-                Material.BLACK_DYE,
-                Material.BLACK_GLAZED_TERRACOTTA,
-                Material.BLACK_HARNESS,
-                Material.BLACK_STAINED_GLASS,
-                Material.BLACK_STAINED_GLASS_PANE,
-                Material.BLACK_TERRACOTTA,
-                Material.BLACK_WOOL,
-                Material.BLAST_FURNACE,
-                Material.BLUE_BANNER,
-                Material.BLUE_BED,
-                Material.BLUE_BUNDLE,
-                Material.BLUE_CARPET,
-                Material.BLUE_CONCRETE,
-                Material.BLUE_CONCRETE_POWDER,
-                Material.BLUE_DYE,
-                Material.BLUE_EGG,
-                Material.BLUE_GLAZED_TERRACOTTA,
-                Material.BLUE_HARNESS,
-                Material.BLUE_STAINED_GLASS,
-                Material.BLUE_STAINED_GLASS_PANE,
-                Material.BLUE_TERRACOTTA,
-                Material.BLUE_WOOL,
-                Material.BONE,
-                Material.BONE_BLOCK,
-                Material.BONE_MEAL,
-                Material.BOOK,
-                Material.BOOKSHELF,
-                Material.BOWL,
-                Material.BREAD,
-                Material.BRICK,
-                Material.BRICK_SLAB,
-                Material.BRICK_STAIRS,
-                Material.BRICK_WALL,
-                Material.BRICKS,
-                Material.BROWN_BANNER,
-                Material.BROWN_BED,
-                Material.BROWN_BUNDLE,
-                Material.BROWN_CARPET,
-                Material.BROWN_CONCRETE,
-                Material.BROWN_CONCRETE_POWDER,
-                Material.BROWN_DYE,
-                Material.BROWN_EGG,
-                Material.BROWN_GLAZED_TERRACOTTA,
-                Material.BROWN_HARNESS,
-                Material.BROWN_MUSHROOM,
-                Material.BROWN_STAINED_GLASS,
-                Material.BROWN_STAINED_GLASS_PANE,
-                Material.BROWN_TERRACOTTA,
-                Material.BROWN_WOOL,
-                Material.BRUSH,
-                Material.BUCKET,
-                Material.BUNDLE,
-                Material.BUSH,
-                Material.CALCITE,
-                Material.CAMPFIRE,
-                Material.CARROT,
-                Material.CARROT_ON_A_STICK,
-                Material.CARTOGRAPHY_TABLE,
-                Material.CARVED_PUMPKIN,
-                Material.CAULDRON,
-                Material.IRON_CHAIN,
-                Material.CHARCOAL,
-                Material.CHEST,
-                Material.CHEST_MINECART,
-                Material.CHICKEN,
-                Material.CHISELED_BOOKSHELF,
-                Material.CHISELED_COPPER,
-                Material.CHISELED_DEEPSLATE,
-                Material.CHISELED_SANDSTONE,
-                Material.CHISELED_STONE_BRICKS,
-                Material.CHISELED_TUFF,
-                Material.CHISELED_TUFF_BRICKS,
-                Material.CLAY,
-                Material.CLAY_BALL,
-                Material.CLOCK,
-                Material.CLOSED_EYEBLOSSOM,
-                Material.COAL,
-                Material.COAL_BLOCK,
-                Material.COARSE_DIRT,
-                Material.COBBLED_DEEPSLATE,
-                Material.COBBLED_DEEPSLATE_SLAB,
-                Material.COBBLED_DEEPSLATE_STAIRS,
-                Material.COBBLED_DEEPSLATE_WALL,
-                Material.COBBLESTONE,
-                Material.COBBLESTONE_SLAB,
-                Material.COBBLESTONE_STAIRS,
-                Material.COBBLESTONE_WALL,
-                Material.COCOA_BEANS,
-                Material.COD,
-                Material.COD_BUCKET,
-                Material.COMPASS,
-                Material.COMPOSTER,
-                Material.COOKED_BEEF,
-                Material.COOKED_CHICKEN,
-                Material.COOKED_COD,
-                Material.COOKED_MUTTON,
-                Material.COOKED_PORKCHOP,
-                Material.COOKED_SALMON,
-                Material.COOKIE,
-                Material.COPPER_AXE,
-                Material.COPPER_BARS,
-                Material.COPPER_BLOCK,
-                Material.COPPER_BOOTS,
-                Material.COPPER_CHAIN,
-                Material.COPPER_CHEST,
-                Material.COPPER_CHESTPLATE,
-                Material.COPPER_DOOR,
-                Material.COPPER_GRATE,
-                Material.COPPER_HELMET,
-                Material.COPPER_HOE,
-                Material.COPPER_INGOT,
-                Material.COPPER_LANTERN,
-                Material.COPPER_LEGGINGS,
-                Material.COPPER_NUGGET,
-                Material.COPPER_PICKAXE,
-                Material.COPPER_SHOVEL,
-                Material.COPPER_SWORD,
-                Material.COPPER_TORCH,
-                Material.COPPER_TRAPDOOR,
-                Material.CORNFLOWER,
-                Material.CRACKED_DEEPSLATE_BRICKS,
-                Material.CRACKED_DEEPSLATE_TILES,
-                Material.CRACKED_STONE_BRICKS,
-                Material.CRAFTER,
-                Material.CRAFTING_TABLE,
-                Material.CUT_COPPER,
-                Material.CUT_COPPER_SLAB,
-                Material.CUT_COPPER_STAIRS,
-                Material.CUT_SANDSTONE,
-                Material.CUT_SANDSTONE_SLAB,
-                Material.DANDELION,
-                Material.DARK_OAK_BOAT,
-                Material.DARK_OAK_BUTTON,
-                Material.DARK_OAK_CHEST_BOAT,
-                Material.DARK_OAK_DOOR,
-                Material.DARK_OAK_FENCE,
-                Material.DARK_OAK_FENCE_GATE,
-                Material.DARK_OAK_HANGING_SIGN,
-                Material.DARK_OAK_LEAVES,
-                Material.DARK_OAK_LOG,
-                Material.DARK_OAK_PLANKS,
-                Material.DARK_OAK_PRESSURE_PLATE,
-                Material.DARK_OAK_SAPLING,
-                Material.DARK_OAK_SHELF,
-                Material.DARK_OAK_SIGN,
-                Material.DARK_OAK_SLAB,
-                Material.DARK_OAK_STAIRS,
-                Material.DARK_OAK_TRAPDOOR,
-                Material.DARK_OAK_WOOD,
-                Material.DEEPSLATE,
-                Material.DEEPSLATE_BRICK_SLAB,
-                Material.DEEPSLATE_BRICK_STAIRS,
-                Material.DEEPSLATE_BRICK_WALL,
-                Material.DEEPSLATE_BRICKS,
-                Material.DEEPSLATE_TILE_SLAB,
-                Material.DEEPSLATE_TILE_STAIRS,
-                Material.DEEPSLATE_TILE_WALL,
-                Material.DEEPSLATE_TILES,
-                Material.DETECTOR_RAIL,
-                Material.DIAMOND,
-                Material.DIAMOND_AXE,
-                Material.DIAMOND_BOOTS,
-                Material.DIAMOND_HOE,
-                Material.DIAMOND_PICKAXE,
-                Material.DIAMOND_SHOVEL,
-                Material.DIAMOND_SWORD,
-                Material.DIORITE,
-                Material.DIORITE_SLAB,
-                Material.DIORITE_STAIRS,
-                Material.DIORITE_WALL,
-                Material.DIRT,
-                Material.DRIED_KELP,
-                Material.DRIED_KELP_BLOCK,
-                Material.DROPPER,
-                Material.EMERALD,
-                Material.FEATHER,
-                Material.FERN,
-                Material.FILLED_MAP,
-                Material.FIREFLY_BUSH,
-                Material.FIREWORK_ROCKET,
-                Material.FIREWORK_STAR,
-                Material.FLETCHING_TABLE,
-                Material.FLINT,
-                Material.FLINT_AND_STEEL,
-                Material.FLOWER_BANNER_PATTERN,
-                Material.FLOWER_POT,
-                Material.FURNACE,
-                Material.FURNACE_MINECART,
-                Material.GLASS,
-                Material.GLASS_BOTTLE,
-                Material.GLASS_PANE,
-                Material.GLISTERING_MELON_SLICE,
-                Material.GLOW_INK_SAC,
-                Material.GLOW_ITEM_FRAME,
-                Material.GLOW_LICHEN,
-                Material.GOLD_BLOCK,
-                Material.GOLD_INGOT,
-                Material.GOLD_NUGGET,
-                Material.GOLDEN_APPLE,
-                Material.GOLDEN_AXE,
-                Material.GOLDEN_BOOTS,
-                Material.GOLDEN_CARROT,
-                Material.GOLDEN_CHESTPLATE,
-                Material.GOLDEN_HELMET,
-                Material.GOLDEN_HOE,
-                Material.GOLDEN_LEGGINGS,
-                Material.GOLDEN_PICKAXE,
-                Material.GOLDEN_SHOVEL,
-                Material.GOLDEN_SWORD,
-                Material.GRANITE,
-                Material.GRANITE_SLAB,
-                Material.GRANITE_STAIRS,
-                Material.GRANITE_WALL,
-                Material.GRAVEL,
-                Material.GRAY_BANNER,
-                Material.GRAY_BED,
-                Material.GRAY_BUNDLE,
-                Material.GRAY_CARPET,
-                Material.GRAY_CONCRETE,
-                Material.GRAY_CONCRETE_POWDER,
-                Material.GRAY_DYE,
-                Material.GRAY_GLAZED_TERRACOTTA,
-                Material.GRAY_HARNESS,
-                Material.GRAY_STAINED_GLASS,
-                Material.GRAY_STAINED_GLASS_PANE,
-                Material.GRAY_TERRACOTTA,
-                Material.GRAY_WOOL,
-                Material.GRINDSTONE,
-                Material.GUNPOWDER,
-                Material.HAY_BLOCK,
-                Material.HEAVY_WEIGHTED_PRESSURE_PLATE,
-                Material.HOPPER,
-                Material.HOPPER_MINECART,
-                Material.INK_SAC,
-                Material.IRON_AXE,
-                Material.IRON_BARS,
-                Material.IRON_BLOCK,
-                Material.IRON_BOOTS,
-                Material.IRON_CHESTPLATE,
-                Material.IRON_DOOR,
-                Material.IRON_HELMET,
-                Material.IRON_HOE,
-                Material.IRON_INGOT,
-                Material.IRON_LEGGINGS,
-                Material.IRON_NUGGET,
-                Material.IRON_PICKAXE,
-                Material.IRON_SHOVEL,
-                Material.IRON_SWORD,
-                Material.IRON_TRAPDOOR,
-                Material.ITEM_FRAME,
-                Material.JACK_O_LANTERN,
-                Material.JUKEBOX,
-                Material.JUNGLE_BOAT,
-                Material.JUNGLE_BUTTON,
-                Material.JUNGLE_CHEST_BOAT,
-                Material.JUNGLE_DOOR,
-                Material.JUNGLE_FENCE,
-                Material.JUNGLE_FENCE_GATE,
-                Material.JUNGLE_HANGING_SIGN,
-                Material.JUNGLE_LEAVES,
-                Material.JUNGLE_LOG,
-                Material.JUNGLE_PLANKS,
-                Material.JUNGLE_PRESSURE_PLATE,
-                Material.JUNGLE_SAPLING,
-                Material.JUNGLE_SHELF,
-                Material.JUNGLE_SIGN,
-                Material.JUNGLE_SLAB,
-                Material.JUNGLE_STAIRS,
-                Material.JUNGLE_TRAPDOOR,
-                Material.JUNGLE_WOOD,
-                Material.KELP,
-                Material.LADDER,
-                Material.LANTERN,
-                Material.LAPIS_BLOCK,
-                Material.LAPIS_LAZULI,
-                Material.LAVA_BUCKET,
-                Material.LEAF_LITTER,
-                Material.LEATHER,
-                Material.LEATHER_BOOTS,
-                Material.LEATHER_CHESTPLATE,
-                Material.LEATHER_HELMET,
-                Material.LEATHER_HORSE_ARMOR,
-                Material.LEATHER_LEGGINGS,
-                Material.LECTERN,
-                Material.LEVER,
-                Material.LIGHT_BLUE_BANNER,
-                Material.LIGHT_BLUE_BED,
-                Material.LIGHT_BLUE_BUNDLE,
-                Material.LIGHT_BLUE_CARPET,
-                Material.LIGHT_BLUE_CONCRETE,
-                Material.LIGHT_BLUE_CONCRETE_POWDER,
-                Material.LIGHT_BLUE_DYE,
-                Material.LIGHT_BLUE_GLAZED_TERRACOTTA,
-                Material.LIGHT_BLUE_HARNESS,
-                Material.LIGHT_BLUE_STAINED_GLASS,
-                Material.LIGHT_BLUE_STAINED_GLASS_PANE,
-                Material.LIGHT_BLUE_TERRACOTTA,
-                Material.LIGHT_BLUE_WOOL,
-                Material.LIGHT_GRAY_BANNER,
-                Material.LIGHT_GRAY_BED,
-                Material.LIGHT_GRAY_BUNDLE,
-                Material.LIGHT_GRAY_CARPET,
-                Material.LIGHT_GRAY_CONCRETE,
-                Material.LIGHT_GRAY_CONCRETE_POWDER,
-                Material.LIGHT_GRAY_DYE,
-                Material.LIGHT_GRAY_GLAZED_TERRACOTTA,
-                Material.LIGHT_GRAY_HARNESS,
-                Material.LIGHT_GRAY_STAINED_GLASS,
-                Material.LIGHT_GRAY_STAINED_GLASS_PANE,
-                Material.LIGHT_GRAY_TERRACOTTA,
-                Material.LIGHT_GRAY_WOOL,
-                Material.LIGHT_WEIGHTED_PRESSURE_PLATE,
-                Material.LIGHTNING_ROD,
-                Material.LILAC,
-                Material.LILY_OF_THE_VALLEY,
-                Material.LODESTONE,
-                Material.MAGENTA_BANNER,
-                Material.MAGENTA_BED,
-                Material.MAGENTA_BUNDLE,
-                Material.MAGENTA_CARPET,
-                Material.MAGENTA_CONCRETE,
-                Material.MAGENTA_CONCRETE_POWDER,
-                Material.MAGENTA_DYE,
-                Material.MAGENTA_GLAZED_TERRACOTTA,
-                Material.MAGENTA_HARNESS,
-                Material.MAGENTA_STAINED_GLASS,
-                Material.MAGENTA_STAINED_GLASS_PANE,
-                Material.MAGENTA_TERRACOTTA,
-                Material.MAGENTA_WOOL,
-                Material.MAGMA_BLOCK,
-                Material.MAP,
-                Material.MELON,
-                Material.MELON_SEEDS,
-                Material.MELON_SLICE,
-                Material.MILK_BUCKET,
-                Material.MINECART,
-                Material.MOSSY_COBBLESTONE,
-                Material.MOSSY_COBBLESTONE_SLAB,
-                Material.MOSSY_COBBLESTONE_STAIRS,
-                Material.MOSSY_COBBLESTONE_WALL,
-                Material.MOSSY_STONE_BRICK_SLAB,
-                Material.MOSSY_STONE_BRICK_STAIRS,
-                Material.MOSSY_STONE_BRICK_WALL,
-                Material.MOSSY_STONE_BRICKS,
-                Material.MUD,
-                Material.MUD_BRICK_SLAB,
-                Material.MUD_BRICK_STAIRS,
-                Material.MUD_BRICK_WALL,
-                Material.MUD_BRICKS,
-                Material.MUTTON,
-                Material.NETHERRACK,
-                Material.NOTE_BLOCK,
-                Material.OAK_BOAT,
-                Material.OAK_BUTTON,
-                Material.OAK_CHEST_BOAT,
-                Material.OAK_DOOR,
-                Material.OAK_FENCE,
-                Material.OAK_FENCE_GATE,
-                Material.OAK_HANGING_SIGN,
-                Material.OAK_LEAVES,
-                Material.OAK_LOG,
-                Material.OAK_PLANKS,
-                Material.OAK_PRESSURE_PLATE,
-                Material.OAK_SAPLING,
-                Material.OAK_SHELF,
-                Material.OAK_SIGN,
-                Material.OAK_SLAB,
-                Material.OAK_STAIRS,
-                Material.OAK_TRAPDOOR,
-                Material.OAK_WOOD,
-                Material.OBSIDIAN,
-                Material.OPEN_EYEBLOSSOM,
-                Material.ORANGE_BANNER,
-                Material.ORANGE_BED,
-                Material.ORANGE_BUNDLE,
-                Material.ORANGE_CARPET,
-                Material.ORANGE_CONCRETE,
-                Material.ORANGE_CONCRETE_POWDER,
-                Material.ORANGE_DYE,
-                Material.ORANGE_GLAZED_TERRACOTTA,
-                Material.ORANGE_HARNESS,
-                Material.ORANGE_STAINED_GLASS,
-                Material.ORANGE_STAINED_GLASS_PANE,
-                Material.ORANGE_TERRACOTTA,
-                Material.ORANGE_WOOL,
-                Material.OXEYE_DAISY,
-                Material.PACKED_MUD,
-                Material.PAINTING,
-                Material.PAPER,
-                Material.PEONY,
-                Material.PINK_BANNER,
-                Material.PINK_BED,
-                Material.PINK_BUNDLE,
-                Material.PINK_CARPET,
-                Material.PINK_CONCRETE,
-                Material.PINK_CONCRETE_POWDER,
-                Material.PINK_DYE,
-                Material.PINK_GLAZED_TERRACOTTA,
-                Material.PINK_HARNESS,
-                Material.PINK_STAINED_GLASS,
-                Material.PINK_STAINED_GLASS_PANE,
-                Material.PINK_TERRACOTTA,
-                Material.PINK_WOOL,
-                Material.PISTON,
-                Material.POLISHED_ANDESITE,
-                Material.POLISHED_ANDESITE_SLAB,
-                Material.POLISHED_ANDESITE_STAIRS,
-                Material.POLISHED_DEEPSLATE,
-                Material.POLISHED_DEEPSLATE_SLAB,
-                Material.POLISHED_DEEPSLATE_STAIRS,
-                Material.POLISHED_DEEPSLATE_WALL,
-                Material.POLISHED_DIORITE,
-                Material.POLISHED_DIORITE_SLAB,
-                Material.POLISHED_DIORITE_STAIRS,
-                Material.POLISHED_GRANITE,
-                Material.POLISHED_GRANITE_SLAB,
-                Material.POLISHED_GRANITE_STAIRS,
-                Material.POLISHED_TUFF,
-                Material.POLISHED_TUFF_SLAB,
-                Material.POLISHED_TUFF_STAIRS,
-                Material.POLISHED_TUFF_WALL,
-                Material.POPPY,
-                Material.PORKCHOP,
-                Material.POTATO,
-                Material.POWERED_RAIL,
-                Material.PUMPKIN,
-                Material.PUMPKIN_PIE,
-                Material.PUMPKIN_SEEDS,
-                Material.PURPLE_BANNER,
-                Material.PURPLE_BED,
-                Material.PURPLE_BUNDLE,
-                Material.PURPLE_CARPET,
-                Material.PURPLE_CONCRETE,
-                Material.PURPLE_CONCRETE_POWDER,
-                Material.PURPLE_DYE,
-                Material.PURPLE_GLAZED_TERRACOTTA,
-                Material.PURPLE_HARNESS,
-                Material.PURPLE_STAINED_GLASS,
-                Material.PURPLE_STAINED_GLASS_PANE,
-                Material.PURPLE_TERRACOTTA,
-                Material.PURPLE_WOOL,
-                Material.RAIL,
-                Material.RAW_COPPER,
-                Material.RAW_COPPER_BLOCK,
-                Material.RAW_GOLD,
-                Material.RAW_GOLD_BLOCK,
-                Material.RAW_IRON,
-                Material.RAW_IRON_BLOCK,
-                Material.RED_BANNER,
-                Material.RED_BED,
-                Material.RED_CARPET,
-                Material.RED_CONCRETE,
-                Material.RED_CONCRETE_POWDER,
-                Material.RED_DYE,
-                Material.RED_GLAZED_TERRACOTTA,
-                Material.RED_HARNESS,
-                Material.RED_MUSHROOM,
-                Material.RED_STAINED_GLASS,
-                Material.RED_STAINED_GLASS_PANE,
-                Material.RED_TERRACOTTA,
-                Material.RED_WOOL,
-                Material.REDSTONE,
-                Material.REDSTONE_BLOCK,
-                Material.REDSTONE_TORCH,
-                Material.REPEATER,
-                Material.ROSE_BUSH,
-                Material.ROTTEN_FLESH,
-                Material.SADDLE,
-                Material.SALMON,
-                Material.SALMON_BUCKET,
-                Material.SAND,
-                Material.SANDSTONE,
-                Material.SANDSTONE_SLAB,
-                Material.SANDSTONE_STAIRS,
-                Material.SANDSTONE_WALL,
-                Material.SEAGRASS,
-                Material.SHEARS,
-                Material.SHIELD,
-                Material.SHORT_GRASS,
-                Material.SMITHING_TABLE,
-                Material.SMOKER,
-                Material.SMOOTH_BASALT,
-                Material.SMOOTH_SANDSTONE,
-                Material.SMOOTH_SANDSTONE_SLAB,
-                Material.SMOOTH_SANDSTONE_STAIRS,
-                Material.SMOOTH_STONE,
-                Material.SMOOTH_STONE_SLAB,
-                Material.SNOW,
-                Material.SNOW_BLOCK,
-                Material.SNOWBALL,
-                Material.SPRUCE_BOAT,
-                Material.SPRUCE_BUTTON,
-                Material.SPRUCE_CHEST_BOAT,
-                Material.SPRUCE_DOOR,
-                Material.SPRUCE_FENCE,
-                Material.SPRUCE_FENCE_GATE,
-                Material.SPRUCE_HANGING_SIGN,
-                Material.SPRUCE_LEAVES,
-                Material.SPRUCE_LOG,
-                Material.SPRUCE_PLANKS,
-                Material.SPRUCE_PRESSURE_PLATE,
-                Material.SPRUCE_SAPLING,
-                Material.SPRUCE_SHELF,
-                Material.SPRUCE_SIGN,
-                Material.SPRUCE_SLAB,
-                Material.SPRUCE_STAIRS,
-                Material.SPRUCE_TRAPDOOR,
-                Material.SPRUCE_WOOD,
-                Material.SPYGLASS,
-                Material.STICK,
-                Material.STONE,
-                Material.STONE_AXE,
-                Material.STONE_BRICK_SLAB,
-                Material.STONE_BRICK_STAIRS,
-                Material.STONE_BRICK_WALL,
-                Material.STONE_BRICKS,
-                Material.STONE_BUTTON,
-                Material.STONE_HOE,
-                Material.STONE_PICKAXE,
-                Material.STONE_PRESSURE_PLATE,
-                Material.STONE_SHOVEL,
-                Material.STONE_SLAB,
-                Material.STONE_STAIRS,
-                Material.STONE_SWORD,
-                Material.STONECUTTER,
-                Material.STRIPPED_ACACIA_LOG,
-                Material.STRIPPED_ACACIA_WOOD,
-                Material.STRIPPED_BAMBOO_BLOCK,
-                Material.STRIPPED_BIRCH_LOG,
-                Material.STRIPPED_BIRCH_WOOD,
-                Material.STRIPPED_DARK_OAK_LOG,
-                Material.STRIPPED_DARK_OAK_WOOD,
-                Material.STRIPPED_JUNGLE_LOG,
-                Material.STRIPPED_JUNGLE_WOOD,
-                Material.STRIPPED_OAK_LOG,
-                Material.STRIPPED_OAK_WOOD,
-                Material.STRIPPED_SPRUCE_LOG,
-                Material.STRIPPED_SPRUCE_WOOD,
-                Material.SUGAR,
-                Material.SUGAR_CANE,
-                Material.SUNFLOWER,
-                Material.SUSPICIOUS_STEW,
-                Material.SWEET_BERRIES,
-                Material.TARGET,
-                Material.TERRACOTTA,
-                Material.TINTED_GLASS,
-                Material.TORCH,
-                Material.TRAPPED_CHEST,
-                Material.TRIPWIRE_HOOK,
-                Material.TUFF,
-                Material.TUFF_BRICK_SLAB,
-                Material.TUFF_BRICK_STAIRS,
-                Material.TUFF_BRICK_WALL,
-                Material.TUFF_BRICKS,
-                Material.TUFF_SLAB,
-                Material.TUFF_STAIRS,
-                Material.TUFF_WALL,
-                Material.VINE,
-                Material.WATER_BUCKET,
-                Material.WHEAT,
-                Material.WHEAT_SEEDS,
-                Material.WHITE_BANNER,
-                Material.WHITE_BED,
-                Material.WHITE_BUNDLE,
-                Material.WHITE_CARPET,
-                Material.WHITE_CONCRETE,
-                Material.WHITE_CONCRETE_POWDER,
-                Material.WHITE_DYE,
-                Material.WHITE_GLAZED_TERRACOTTA,
-                Material.WHITE_HARNESS,
-                Material.WHITE_STAINED_GLASS,
-                Material.WHITE_STAINED_GLASS_PANE,
-                Material.WHITE_TERRACOTTA,
-                Material.WHITE_WOOL,
-                Material.WILDFLOWERS,
-                Material.WOLF_ARMOR,
-                Material.WOODEN_AXE,
-                Material.WOODEN_HOE,
-                Material.WOODEN_PICKAXE,
-                Material.WOODEN_SHOVEL,
-                Material.WOODEN_SWORD,
-                Material.WRITABLE_BOOK,
-                Material.WRITTEN_BOOK,
-                Material.YELLOW_BANNER,
-                Material.YELLOW_BED,
-                Material.YELLOW_BUNDLE,
-                Material.YELLOW_CARPET,
-                Material.YELLOW_CONCRETE,
-                Material.YELLOW_CONCRETE_POWDER,
-                Material.YELLOW_DYE,
-                Material.YELLOW_GLAZED_TERRACOTTA,
-                Material.YELLOW_HARNESS,
-                Material.YELLOW_STAINED_GLASS,
-                Material.YELLOW_STAINED_GLASS_PANE,
-                Material.YELLOW_TERRACOTTA,
-                Material.YELLOW_WOOL
-        ));
-
-        State.MID.setItems(List.of(
-                Material.ALLIUM,
-                Material.ANVIL,
-                Material.AXOLOTL_BUCKET,
-                Material.AZALEA,
-                Material.AZALEA_LEAVES,
-                Material.BASALT,
-                Material.BEETROOT,
-                Material.BEETROOT_SEEDS,
-                Material.BEETROOT_SOUP,
-                Material.BIG_DRIPLEAF,
-                Material.BLACKSTONE,
-                Material.BLACKSTONE_SLAB,
-                Material.BLACKSTONE_STAIRS,
-                Material.BLACKSTONE_WALL,
-                Material.BLUE_ORCHID,
-                Material.BOW,
-                Material.BREWING_STAND,
-                Material.CACTUS,
-                Material.CACTUS_FLOWER,
-                Material.CAKE,
-                Material.CHERRY_BOAT,
-                Material.CHERRY_BUTTON,
-                Material.CHERRY_CHEST_BOAT,
-                Material.CHERRY_DOOR,
-                Material.CHERRY_FENCE,
-                Material.CHERRY_FENCE_GATE,
-                Material.CHERRY_HANGING_SIGN,
-                Material.CHERRY_LEAVES,
-                Material.CHERRY_LOG,
-                Material.CHERRY_PLANKS,
-                Material.CHERRY_PRESSURE_PLATE,
-                Material.CHERRY_SAPLING,
-                Material.CHERRY_SHELF,
-                Material.CHERRY_SIGN,
-                Material.CHERRY_SLAB,
-                Material.CHERRY_STAIRS,
-                Material.CHERRY_TRAPDOOR,
-                Material.CHERRY_WOOD,
-                Material.CHIPPED_ANVIL,
-                Material.CHISELED_NETHER_BRICKS,
-                Material.CHISELED_POLISHED_BLACKSTONE,
-                Material.CHISELED_QUARTZ_BLOCK,
-                Material.COAST_ARMOR_TRIM_SMITHING_TEMPLATE,
-                Material.COBWEB,
-                Material.COMPARATOR,
-                Material.COPPER_HORSE_ARMOR,
-                Material.COOKED_RABBIT,
-                Material.CRACKED_NETHER_BRICKS,
-                Material.CRACKED_POLISHED_BLACKSTONE_BRICKS,
-                Material.CRIMSON_BUTTON,
-                Material.CRIMSON_DOOR,
-                Material.CRIMSON_FENCE,
-                Material.CRIMSON_FENCE_GATE,
-                Material.CRIMSON_FUNGUS,
-                Material.CRIMSON_HANGING_SIGN,
-                Material.CRIMSON_HYPHAE,
-                Material.CRIMSON_NYLIUM,
-                Material.CRIMSON_PLANKS,
-                Material.CRIMSON_PRESSURE_PLATE,
-                Material.CRIMSON_ROOTS,
-                Material.CRIMSON_SHELF,
-                Material.CRIMSON_SIGN,
-                Material.CRIMSON_SLAB,
-                Material.CRIMSON_STAIRS,
-                Material.CRIMSON_STEM,
-                Material.CRIMSON_TRAPDOOR,
-                Material.CRYING_OBSIDIAN,
-                Material.CROSSBOW,
-                Material.CYAN_BANNER,
-                Material.CYAN_BED,
-                Material.CYAN_BUNDLE,
-                Material.CYAN_CARPET,
-                Material.CYAN_CONCRETE,
-                Material.CYAN_CONCRETE_POWDER,
-                Material.CYAN_DYE,
-                Material.CYAN_GLAZED_TERRACOTTA,
-                Material.CYAN_HARNESS,
-                Material.CYAN_STAINED_GLASS,
-                Material.CYAN_STAINED_GLASS_PANE,
-                Material.CYAN_TERRACOTTA,
-                Material.CYAN_WOOL,
-                Material.DAMAGED_ANVIL,
-                Material.DARK_PRISMARINE,
-                Material.DARK_PRISMARINE_SLAB,
-                Material.DARK_PRISMARINE_STAIRS,
-                Material.DAYLIGHT_DETECTOR,
-                Material.DEAD_BRAIN_CORAL_BLOCK,
-                Material.DEAD_BUBBLE_CORAL_BLOCK,
-                Material.DEAD_BUSH,
-                Material.DEAD_FIRE_CORAL_BLOCK,
-                Material.DEAD_HORN_CORAL_BLOCK,
-                Material.DEAD_TUBE_CORAL_BLOCK,
-                Material.DIAMOND_BLOCK,
-                Material.DIAMOND_CHESTPLATE,
-                Material.DIAMOND_HELMET,
-                Material.DIAMOND_HORSE_ARMOR,
-                Material.DIAMOND_LEGGINGS,
-                Material.DISPENSER,
-                Material.DRIED_GHAST,
-                Material.DRIPSTONE_BLOCK,
-                Material.EGG,
-                Material.ENCHANTING_TABLE,
-                Material.ENDER_EYE,
-                Material.ENDER_PEARL,
-                Material.EMERALD_BLOCK,
-                Material.FERMENTED_SPIDER_EYE,
-                Material.FIRE_CHARGE,
-                Material.FISHING_ROD,
-                Material.FLOWERING_AZALEA,
-                Material.FLOWERING_AZALEA_LEAVES,
-                Material.GHAST_TEAR,
-                Material.GLOW_BERRIES,
-                Material.GLOWSTONE,
-                Material.GLOWSTONE_DUST,
-                Material.GOLDEN_HORSE_ARMOR,
-                Material.GREEN_BANNER,
-                Material.GREEN_BED,
-                Material.GREEN_BUNDLE,
-                Material.GREEN_CARPET,
-                Material.GREEN_CONCRETE,
-                Material.GREEN_CONCRETE_POWDER,
-                Material.GREEN_DYE,
-                Material.GREEN_GLAZED_TERRACOTTA,
-                Material.GREEN_HARNESS,
-                Material.GREEN_STAINED_GLASS,
-                Material.GREEN_STAINED_GLASS_PANE,
-                Material.GREEN_TERRACOTTA,
-                Material.GREEN_WOOL,
-                Material.HANGING_ROOTS,
-                Material.HEART_OF_THE_SEA,
-                Material.IRON_HORSE_ARMOR,
-                Material.KNOWLEDGE_BOOK,
-                Material.LEAD,
-                Material.LILY_PAD,
-                Material.LIME_BANNER,
-                Material.LIME_BED,
-                Material.LIME_BUNDLE,
-                Material.LIME_CARPET,
-                Material.LIME_CONCRETE,
-                Material.LIME_CONCRETE_POWDER,
-                Material.LIME_DYE,
-                Material.LIME_GLAZED_TERRACOTTA,
-                Material.LIME_HARNESS,
-                Material.LIME_STAINED_GLASS,
-                Material.LIME_STAINED_GLASS_PANE,
-                Material.LIME_TERRACOTTA,
-                Material.LIME_WOOL,
-                Material.LOOM,
-                Material.MAGMA_CREAM,
-                Material.MANGROVE_BOAT,
-                Material.MANGROVE_BUTTON,
-                Material.MANGROVE_CHEST_BOAT,
-                Material.MANGROVE_DOOR,
-                Material.MANGROVE_FENCE,
-                Material.MANGROVE_FENCE_GATE,
-                Material.MANGROVE_HANGING_SIGN,
-                Material.MANGROVE_LEAVES,
-                Material.MANGROVE_LOG,
-                Material.MANGROVE_PLANKS,
-                Material.MANGROVE_PRESSURE_PLATE,
-                Material.MANGROVE_PROPAGULE,
-                Material.MANGROVE_ROOTS,
-                Material.MANGROVE_SHELF,
-                Material.MANGROVE_SIGN,
-                Material.MANGROVE_SLAB,
-                Material.MANGROVE_STAIRS,
-                Material.MANGROVE_TRAPDOOR,
-                Material.MANGROVE_WOOD,
-                Material.MOSS_BLOCK,
-                Material.MOSS_CARPET,
-                Material.MUDDY_MANGROVE_ROOTS,
-                Material.MUSHROOM_STEW,
-                Material.MUSIC_DISC_PIGSTEP,
-                Material.MUSIC_DISC_TEARS,
-                Material.NAME_TAG,
-                Material.NAUTILUS_SHELL,
-                Material.NETHER_BRICK,
-                Material.NETHER_BRICK_FENCE,
-                Material.NETHER_BRICK_SLAB,
-                Material.NETHER_BRICK_STAIRS,
-                Material.NETHER_BRICK_WALL,
-                Material.NETHER_BRICKS,
-                Material.NETHER_SPROUTS,
-                Material.NETHER_WART,
-                Material.NETHER_WART_BLOCK,
-                Material.OBSERVER,
-                Material.ORANGE_TULIP,
-                Material.PINK_PETALS,
-                Material.PINK_TULIP,
-                Material.POINTED_DRIPSTONE,
-                Material.POISONOUS_POTATO,
-                Material.POLISHED_BASALT,
-                Material.POLISHED_BLACKSTONE,
-                Material.POLISHED_BLACKSTONE_BRICK_SLAB,
-                Material.POLISHED_BLACKSTONE_BRICK_STAIRS,
-                Material.POLISHED_BLACKSTONE_BRICK_WALL,
-                Material.POLISHED_BLACKSTONE_BRICKS,
-                Material.POLISHED_BLACKSTONE_BUTTON,
-                Material.POLISHED_BLACKSTONE_PRESSURE_PLATE,
-                Material.POLISHED_BLACKSTONE_SLAB,
-                Material.POLISHED_BLACKSTONE_STAIRS,
-                Material.POLISHED_BLACKSTONE_WALL,
-                Material.POTION,
-                Material.POWDER_SNOW_BUCKET,
-                Material.PRISMARINE,
-                Material.PRISMARINE_BRICK_SLAB,
-                Material.PRISMARINE_BRICK_STAIRS,
-                Material.PRISMARINE_BRICKS,
-                Material.PRISMARINE_CRYSTALS,
-                Material.PRISMARINE_SHARD,
-                Material.PRISMARINE_SLAB,
-                Material.PRISMARINE_STAIRS,
-                Material.PRISMARINE_WALL,
-                Material.PUFFERFISH,
-                Material.PUFFERFISH_BUCKET,
-                Material.QUARTZ,
-                Material.QUARTZ_BLOCK,
-                Material.QUARTZ_BRICKS,
-                Material.QUARTZ_PILLAR,
-                Material.QUARTZ_SLAB,
-                Material.QUARTZ_STAIRS,
-                Material.RABBIT,
-                Material.RABBIT_FOOT,
-                Material.RABBIT_HIDE,
-                Material.RABBIT_STEW,
-                Material.RED_NETHER_BRICK_SLAB,
-                Material.RED_NETHER_BRICK_STAIRS,
-                Material.RED_NETHER_BRICK_WALL,
-                Material.RED_NETHER_BRICKS,
-                Material.RED_TULIP,
-                Material.REDSTONE_LAMP,
-                Material.ROOTED_DIRT,
-                Material.SCAFFOLDING,
-                Material.SEA_LANTERN,
-                Material.SEA_PICKLE,
-                Material.SHROOMLIGHT,
-                Material.SHORT_DRY_GRASS,
-                Material.SLIME_BALL,
-                Material.SMALL_DRIPLEAF,
-                Material.SMOOTH_QUARTZ,
-                Material.SMOOTH_QUARTZ_SLAB,
-                Material.SMOOTH_QUARTZ_STAIRS,
-                Material.SOUL_CAMPFIRE,
-                Material.SOUL_LANTERN,
-                Material.SOUL_SAND,
-                Material.SOUL_SOIL,
-                Material.SOUL_TORCH,
-                Material.SPECTRAL_ARROW,
-                Material.SPIDER_EYE,
-                Material.SPONGE,
-                Material.SPORE_BLOSSOM,
-                Material.STICKY_PISTON,
-                Material.STRING,
-                Material.STRIPPED_CHERRY_LOG,
-                Material.STRIPPED_CHERRY_WOOD,
-                Material.STRIPPED_CRIMSON_HYPHAE,
-                Material.STRIPPED_CRIMSON_STEM,
-                Material.STRIPPED_MANGROVE_LOG,
-                Material.STRIPPED_MANGROVE_WOOD,
-                Material.STRIPPED_WARPED_HYPHAE,
-                Material.STRIPPED_WARPED_STEM,
-                Material.TALL_DRY_GRASS,
-                Material.TNT,
-                Material.TNT_MINECART,
-                Material.TROPICAL_FISH,
-                Material.TROPICAL_FISH_BUCKET,
-                Material.TWISTING_VINES,
-                Material.WARPED_BUTTON,
-                Material.WARPED_DOOR,
-                Material.WARPED_FENCE,
-                Material.WARPED_FENCE_GATE,
-                Material.WARPED_FUNGUS,
-                Material.WARPED_FUNGUS_ON_A_STICK,
-                Material.WARPED_HANGING_SIGN,
-                Material.WARPED_HYPHAE,
-                Material.WARPED_NYLIUM,
-                Material.WARPED_PLANKS,
-                Material.WARPED_PRESSURE_PLATE,
-                Material.WARPED_ROOTS,
-                Material.WARPED_SHELF,
-                Material.WARPED_SIGN,
-                Material.WARPED_SLAB,
-                Material.WARPED_STAIRS,
-                Material.WARPED_STEM,
-                Material.WARPED_TRAPDOOR,
-                Material.WARPED_WART_BLOCK,
-                Material.WEEPING_VINES,
-                Material.WET_SPONGE,
-                Material.WHITE_TULIP,
-                Material.WITHER_ROSE // Trial Chambers Locator
-        ));
-
-        State.LATE.setItems(List.of(
-                Material.AMETHYST_CLUSTER,
-                Material.ANCIENT_DEBRIS,
-                Material.ANGLER_POTTERY_SHERD,
-                Material.ARCHER_POTTERY_SHERD,
-                Material.BEE_NEST,
-                Material.BEEHIVE,
-                Material.BLACK_CANDLE,
-                Material.BLACK_SHULKER_BOX,
-                Material.BLADE_POTTERY_SHERD,
-                Material.BLAZE_POWDER,
-                Material.BLAZE_ROD,
-                Material.BLUE_CANDLE,
-                Material.BLUE_ICE,
-                Material.BLUE_SHULKER_BOX,
-                Material.BOLT_ARMOR_TRIM_SMITHING_TEMPLATE,
-                Material.BRAIN_CORAL,
-                Material.BRAIN_CORAL_BLOCK,
-                Material.BRAIN_CORAL_FAN,
-                Material.BREEZE_ROD,
-                Material.BROWN_CANDLE,
-                Material.BROWN_MUSHROOM_BLOCK,
-                Material.BROWN_SHULKER_BOX,
-                Material.BUBBLE_CORAL,
-                Material.BUBBLE_CORAL_BLOCK,
-                Material.BUBBLE_CORAL_FAN,
-                Material.CALIBRATED_SCULK_SENSOR,
-                Material.CANDLE,
-                Material.CHAINMAIL_BOOTS,
-                Material.CHAINMAIL_CHESTPLATE,
-                Material.CHAINMAIL_HELMET,
-                Material.CHAINMAIL_LEGGINGS,
-                Material.CHISELED_RED_SANDSTONE,
-                Material.CHISELED_RESIN_BRICKS,
-                Material.CHORUS_FLOWER,
-                Material.CHORUS_FRUIT,
-                Material.COAL_ORE,
-                Material.COPPER_BULB,
-                Material.COPPER_GOLEM_STATUE,
-                Material.COPPER_ORE,
-                Material.CREAKING_HEART,
-                Material.CUT_RED_SANDSTONE,
-                Material.CUT_RED_SANDSTONE_SLAB,
-                Material.CYAN_CANDLE,
-                Material.CYAN_SHULKER_BOX,
-                Material.DEAD_BRAIN_CORAL,
-                Material.DEAD_BRAIN_CORAL_FAN,
-                Material.DEAD_BUBBLE_CORAL,
-                Material.DEAD_BUBBLE_CORAL_FAN,
-                Material.DEAD_FIRE_CORAL,
-                Material.DEAD_FIRE_CORAL_FAN,
-                Material.DEAD_HORN_CORAL,
-                Material.DEAD_HORN_CORAL_FAN,
-                Material.DEAD_TUBE_CORAL,
-                Material.DEAD_TUBE_CORAL_FAN,
-                Material.DECORATED_POT,
-                Material.DEEPSLATE_COAL_ORE,
-                Material.DEEPSLATE_COPPER_ORE,
-                Material.DEEPSLATE_DIAMOND_ORE,
-                Material.DEEPSLATE_EMERALD_ORE,
-                Material.DEEPSLATE_GOLD_ORE,
-                Material.DEEPSLATE_IRON_ORE,
-                Material.DEEPSLATE_LAPIS_ORE,
-                Material.DEEPSLATE_REDSTONE_ORE,
-                Material.DIAMOND_ORE,
-                Material.DISC_FRAGMENT_5,
-                Material.DRAGON_HEAD,
-                Material.DUNE_ARMOR_TRIM_SMITHING_TEMPLATE,
-                Material.ECHO_SHARD,
-                Material.ELYTRA,
-                Material.EMERALD_ORE,
-                Material.ENCHANTED_BOOK,
-                Material.ENCHANTED_GOLDEN_APPLE,
-                Material.END_CRYSTAL,
-                Material.END_ROD,
-                Material.END_STONE,
-                Material.END_STONE_BRICK_SLAB,
-                Material.END_STONE_BRICK_STAIRS,
-                Material.END_STONE_BRICK_WALL,
-                Material.END_STONE_BRICKS,
-                Material.ENDER_CHEST,
-                Material.EXPERIENCE_BOTTLE,
-                Material.EXPLORER_POTTERY_SHERD,
-                Material.EXPOSED_CHISELED_COPPER,
-                Material.EXPOSED_COPPER_BARS,
-                Material.EXPOSED_COPPER_BULB,
-                Material.EXPOSED_COPPER_CHAIN,
-                Material.EXPOSED_COPPER_CHEST,
-                Material.EXPOSED_COPPER_DOOR,
-                Material.EXPOSED_COPPER_GOLEM_STATUE,
-                Material.EXPOSED_COPPER_GRATE,
-                Material.EXPOSED_COPPER_LANTERN,
-                Material.EXPOSED_COPPER_TRAPDOOR,
-                Material.EXPOSED_CUT_COPPER,
-                Material.EXPOSED_CUT_COPPER_SLAB,
-                Material.EXPOSED_CUT_COPPER_STAIRS,
-                Material.EXPOSED_LIGHTNING_ROD,
-                Material.FIRE_CORAL,
-                Material.FIRE_CORAL_BLOCK,
-                Material.FIRE_CORAL_FAN,
-                Material.FLOW_BANNER_PATTERN,
-                Material.FLOW_POTTERY_SHERD,
-                Material.GILDED_BLACKSTONE,
-                Material.GLOBE_BANNER_PATTERN,
-                Material.GOAT_HORN,
-                Material.GOLD_ORE,
-                Material.GRASS_BLOCK,
-                Material.GRAY_CANDLE,
-                Material.GRAY_SHULKER_BOX,
-                Material.GREEN_CANDLE,
-                Material.GREEN_SHULKER_BOX,
-                Material.GUSTER_BANNER_PATTERN,
-                Material.GUSTER_POTTERY_SHERD,
-                Material.HONEY_BLOCK,
-                Material.HONEY_BOTTLE,
-                Material.HONEYCOMB,
-                Material.HONEYCOMB_BLOCK,
-                Material.HORN_CORAL,
-                Material.HORN_CORAL_BLOCK,
-                Material.HORN_CORAL_FAN,
-                Material.ICE,
-                Material.IRON_ORE,
-                Material.LAPIS_ORE,
-                Material.LARGE_AMETHYST_BUD,
-                Material.LARGE_FERN,
-                Material.LIGHT_BLUE_CANDLE,
-                Material.LIGHT_BLUE_SHULKER_BOX,
-                Material.LIGHT_GRAY_CANDLE,
-                Material.LIGHT_GRAY_SHULKER_BOX,
-                Material.LIME_CANDLE,
-                Material.LIME_SHULKER_BOX,
-                Material.MAGENTA_CANDLE,
-                Material.MAGENTA_SHULKER_BOX,
-                Material.MEDIUM_AMETHYST_BUD,
-                Material.MINER_POTTERY_SHERD,
-                Material.MOJANG_BANNER_PATTERN,
-                Material.MOURNER_POTTERY_SHERD,
-                Material.MUSHROOM_STEM,
-                Material.MUSIC_DISC_13,
-                Material.MUSIC_DISC_CAT,
-                Material.MUSIC_DISC_CREATOR,
-                Material.MUSIC_DISC_CREATOR_MUSIC_BOX,
-                Material.MUSIC_DISC_LAVA_CHICKEN,
-                Material.MUSIC_DISC_OTHERSIDE,
-                Material.MUSIC_DISC_PRECIPICE,
-                Material.MYCELIUM,
-                Material.NETHER_GOLD_ORE,
-                Material.NETHER_QUARTZ_ORE,
-                Material.NETHERITE_AXE,
-                Material.NETHERITE_BOOTS,
-                Material.NETHERITE_CHESTPLATE,
-                Material.NETHERITE_HELMET,
-                Material.NETHERITE_HOE,
-                Material.NETHERITE_INGOT,
-                Material.NETHERITE_LEGGINGS,
-                Material.NETHERITE_PICKAXE,
-                Material.NETHERITE_SCRAP,
-                Material.NETHERITE_SHOVEL,
-                Material.NETHERITE_SWORD,
-                Material.NETHERITE_UPGRADE_SMITHING_TEMPLATE,
-                Material.OMINOUS_BOTTLE,
-                Material.OMINOUS_TRIAL_KEY,
-                Material.ORANGE_CANDLE,
-                Material.ORANGE_SHULKER_BOX,
-                Material.OXIDIZED_CHISELED_COPPER,
-                Material.OXIDIZED_COPPER,
-                Material.OXIDIZED_COPPER_BARS,
-                Material.OXIDIZED_COPPER_BULB,
-                Material.OXIDIZED_COPPER_CHAIN,
-                Material.OXIDIZED_COPPER_CHEST,
-                Material.OXIDIZED_COPPER_DOOR,
-                Material.OXIDIZED_COPPER_GOLEM_STATUE,
-                Material.OXIDIZED_COPPER_GRATE,
-                Material.OXIDIZED_COPPER_LANTERN,
-                Material.OXIDIZED_COPPER_TRAPDOOR,
-                Material.OXIDIZED_CUT_COPPER,
-                Material.OXIDIZED_CUT_COPPER_SLAB,
-                Material.OXIDIZED_CUT_COPPER_STAIRS,
-                Material.OXIDIZED_LIGHTNING_ROD,
-                Material.PACKED_ICE,
-                Material.PALE_HANGING_MOSS,
-                Material.PALE_MOSS_BLOCK,
-                Material.PALE_MOSS_CARPET,
-                Material.PALE_OAK_BOAT,
-                Material.PALE_OAK_BUTTON,
-                Material.PALE_OAK_CHEST_BOAT,
-                Material.PALE_OAK_DOOR,
-                Material.PALE_OAK_FENCE,
-                Material.PALE_OAK_FENCE_GATE,
-                Material.PALE_OAK_HANGING_SIGN,
-                Material.PALE_OAK_LEAVES,
-                Material.PALE_OAK_LOG,
-                Material.PALE_OAK_PLANKS,
-                Material.PALE_OAK_PRESSURE_PLATE,
-                Material.PALE_OAK_SAPLING,
-                Material.PALE_OAK_SHELF,
-                Material.PALE_OAK_SIGN,
-                Material.PALE_OAK_SLAB,
-                Material.PALE_OAK_STAIRS,
-                Material.PALE_OAK_TRAPDOOR,
-                Material.PALE_OAK_WOOD,
-                Material.PIGLIN_BANNER_PATTERN,
-                Material.PINK_CANDLE,
-                Material.PINK_SHULKER_BOX,
-                Material.PLENTY_POTTERY_SHERD,
-                Material.PODZOL,
-                Material.POPPED_CHORUS_FRUIT,
-                Material.PRIZE_POTTERY_SHERD,
-                Material.PURPLE_CANDLE,
-                Material.PURPLE_SHULKER_BOX,
-                Material.PURPUR_BLOCK,
-                Material.PURPUR_PILLAR,
-                Material.PURPUR_SLAB,
-                Material.PURPUR_STAIRS,
-                Material.RECOVERY_COMPASS,
-                Material.RED_CANDLE,
-                Material.RED_MUSHROOM_BLOCK,
-                Material.RED_SAND,
-                Material.RED_SANDSTONE,
-                Material.RED_SANDSTONE_SLAB,
-                Material.RED_SANDSTONE_STAIRS,
-                Material.RED_SANDSTONE_WALL,
-                Material.RED_SHULKER_BOX,
-                Material.REDSTONE_ORE,
-                Material.RESIN_BLOCK,
-                Material.RESIN_BRICK,
-                Material.RESIN_BRICK_SLAB,
-                Material.RESIN_BRICK_STAIRS,
-                Material.RESIN_BRICK_WALL,
-                Material.RESIN_BRICKS,
-                Material.RESIN_CLUMP,
-                Material.RESPAWN_ANCHOR,
-                Material.RIB_ARMOR_TRIM_SMITHING_TEMPLATE,
-                Material.SCRAPE_POTTERY_SHERD,
-                Material.SCULK,
-                Material.SCULK_CATALYST,
-                Material.SCULK_SENSOR,
-                Material.SCULK_SHRIEKER,
-                Material.SCULK_VEIN,
-                Material.SENTRY_ARMOR_TRIM_SMITHING_TEMPLATE,
-                Material.SHELTER_POTTERY_SHERD,
-                Material.SHULKER_BOX,
-                Material.SHULKER_SHELL,
-                Material.SKULL_BANNER_PATTERN,
-                Material.SKULL_POTTERY_SHERD,
-                Material.SLIME_BLOCK,
-                Material.SMALL_AMETHYST_BUD,
-                Material.SMOOTH_RED_SANDSTONE,
-                Material.SMOOTH_RED_SANDSTONE_SLAB,
-                Material.SMOOTH_RED_SANDSTONE_STAIRS,
-                Material.SNIFFER_EGG,
-                Material.SNORT_POTTERY_SHERD,
-                Material.SNOUT_ARMOR_TRIM_SMITHING_TEMPLATE,
-                Material.SPIRE_ARMOR_TRIM_SMITHING_TEMPLATE,
-                Material.SPLASH_POTION,
-                Material.STRIPPED_PALE_OAK_LOG,
-                Material.STRIPPED_PALE_OAK_WOOD,
-                Material.TALL_GRASS,
-                Material.TIDE_ARMOR_TRIM_SMITHING_TEMPLATE,
-                Material.TIPPED_ARROW,
-                Material.TOTEM_OF_UNDYING,
-                Material.TRIAL_KEY,
-                Material.TRIDENT,
-                Material.TUBE_CORAL,
-                Material.TUBE_CORAL_BLOCK,
-                Material.TUBE_CORAL_FAN,
-                Material.VEX_ARMOR_TRIM_SMITHING_TEMPLATE,
-                Material.WARD_ARMOR_TRIM_SMITHING_TEMPLATE,
-                Material.WAXED_CHISELED_COPPER,
-                Material.WAXED_COPPER_BARS,
-                Material.WAXED_COPPER_BLOCK,
-                Material.WAXED_COPPER_BULB,
-                Material.WAXED_COPPER_CHAIN,
-                Material.WAXED_COPPER_CHEST,
-                Material.WAXED_COPPER_DOOR,
-                Material.WAXED_COPPER_GOLEM_STATUE,
-                Material.WAXED_COPPER_GRATE,
-                Material.WAXED_COPPER_LANTERN,
-                Material.WAXED_COPPER_TRAPDOOR,
-                Material.WAXED_CUT_COPPER,
-                Material.WAXED_CUT_COPPER_SLAB,
-                Material.WAXED_CUT_COPPER_STAIRS,
-                Material.WAXED_EXPOSED_CHISELED_COPPER,
-                Material.WAXED_EXPOSED_COPPER,
-                Material.WAXED_EXPOSED_COPPER_BARS,
-                Material.WAXED_EXPOSED_COPPER_BULB,
-                Material.WAXED_EXPOSED_COPPER_CHAIN,
-                Material.WAXED_EXPOSED_COPPER_CHEST,
-                Material.WAXED_EXPOSED_COPPER_DOOR,
-                Material.WAXED_EXPOSED_COPPER_GOLEM_STATUE,
-                Material.WAXED_EXPOSED_COPPER_GRATE,
-                Material.WAXED_EXPOSED_COPPER_LANTERN,
-                Material.WAXED_EXPOSED_COPPER_TRAPDOOR,
-                Material.WAXED_EXPOSED_CUT_COPPER,
-                Material.WAXED_EXPOSED_CUT_COPPER_SLAB,
-                Material.WAXED_EXPOSED_CUT_COPPER_STAIRS,
-                Material.WAXED_EXPOSED_LIGHTNING_ROD,
-                Material.WAXED_LIGHTNING_ROD,
-                Material.WAXED_OXIDIZED_CHISELED_COPPER,
-                Material.WAXED_OXIDIZED_COPPER_BARS,
-                Material.WAXED_OXIDIZED_COPPER_BULB,
-                Material.WAXED_OXIDIZED_COPPER_CHAIN,
-                Material.WAXED_OXIDIZED_COPPER_CHEST,
-                Material.WAXED_OXIDIZED_COPPER_DOOR,
-                Material.WAXED_OXIDIZED_COPPER_GOLEM_STATUE,
-                Material.WAXED_OXIDIZED_COPPER_GRATE,
-                Material.WAXED_OXIDIZED_COPPER_LANTERN,
-                Material.WAXED_OXIDIZED_COPPER_TRAPDOOR,
-                Material.WAXED_OXIDIZED_CUT_COPPER,
-                Material.WAXED_OXIDIZED_CUT_COPPER_SLAB,
-                Material.WAXED_OXIDIZED_CUT_COPPER_STAIRS,
-                Material.WAXED_OXIDIZED_LIGHTNING_ROD,
-                Material.WAXED_WEATHERED_CHISELED_COPPER,
-                Material.WAXED_WEATHERED_COPPER,
-                Material.WAXED_WEATHERED_COPPER_BARS,
-                Material.WAXED_WEATHERED_COPPER_BULB,
-                Material.WAXED_WEATHERED_COPPER_CHAIN,
-                Material.WAXED_WEATHERED_COPPER_CHEST,
-                Material.WAXED_WEATHERED_COPPER_DOOR,
-                Material.WAXED_WEATHERED_COPPER_GOLEM_STATUE,
-                Material.WAXED_WEATHERED_COPPER_GRATE,
-                Material.WAXED_WEATHERED_COPPER_LANTERN,
-                Material.WAXED_WEATHERED_COPPER_TRAPDOOR,
-                Material.WAXED_WEATHERED_CUT_COPPER,
-                Material.WAXED_WEATHERED_CUT_COPPER_SLAB,
-                Material.WAXED_WEATHERED_CUT_COPPER_STAIRS,
-                Material.WAXED_WEATHERED_LIGHTNING_ROD,
-                Material.WEATHERED_CHISELED_COPPER,
-                Material.WEATHERED_COPPER,
-                Material.WEATHERED_COPPER_BARS,
-                Material.WEATHERED_COPPER_BULB,
-                Material.WEATHERED_COPPER_CHAIN,
-                Material.WEATHERED_COPPER_CHEST,
-                Material.WEATHERED_COPPER_DOOR,
-                Material.WEATHERED_COPPER_GOLEM_STATUE,
-                Material.WEATHERED_COPPER_GRATE,
-                Material.WEATHERED_COPPER_LANTERN,
-                Material.WEATHERED_COPPER_TRAPDOOR,
-                Material.WEATHERED_CUT_COPPER,
-                Material.WEATHERED_CUT_COPPER_SLAB,
-                Material.WEATHERED_CUT_COPPER_STAIRS,
-                Material.WEATHERED_LIGHTNING_ROD,
-                Material.WHITE_CANDLE,
-                Material.WHITE_SHULKER_BOX,
-                Material.WILD_ARMOR_TRIM_SMITHING_TEMPLATE,
-                Material.WIND_CHARGE,
-                Material.WITHER_SKELETON_SKULL,
-                Material.YELLOW_CANDLE,
-                Material.YELLOW_SHULKER_BOX
-        ));
-
-        setupStates();
+    private void registerAllItems() {
+        register(Material.ACACIA_BOAT, State.EARLY);
+        register(Material.ACACIA_BUTTON, State.EARLY);
+        register(Material.ACACIA_CHEST_BOAT, State.EARLY);
+        register(Material.ACACIA_DOOR, State.EARLY);
+        register(Material.ACACIA_FENCE, State.EARLY);
+        register(Material.ACACIA_FENCE_GATE, State.EARLY);
+        register(Material.ACACIA_HANGING_SIGN, State.EARLY);
+        register(Material.ACACIA_LEAVES, State.EARLY);
+        register(Material.ACACIA_LOG, State.EARLY);
+        register(Material.ACACIA_PLANKS, State.EARLY);
+        register(Material.ACACIA_PRESSURE_PLATE, State.EARLY);
+        register(Material.ACACIA_SAPLING, State.EARLY);
+        register(Material.ACACIA_SHELF, State.EARLY);
+        register(Material.ACACIA_SIGN, State.EARLY);
+        register(Material.ACACIA_SLAB, State.EARLY);
+        register(Material.ACACIA_STAIRS, State.EARLY);
+        register(Material.ACACIA_TRAPDOOR, State.EARLY);
+        register(Material.ACACIA_WOOD, State.EARLY);
+        register(Material.ACTIVATOR_RAIL, State.EARLY);
+        register(Material.ALLIUM, State.MID);
+        register(Material.AMETHYST_BLOCK, State.EARLY);
+        register(Material.AMETHYST_CLUSTER, State.LATE);
+        register(Material.AMETHYST_SHARD, State.EARLY);
+        register(Material.ANCIENT_DEBRIS, State.LATE, ItemTag.NETHER);
+        register(Material.ANDESITE, State.EARLY);
+        register(Material.ANDESITE_SLAB, State.EARLY);
+        register(Material.ANDESITE_STAIRS, State.EARLY);
+        register(Material.ANDESITE_WALL, State.EARLY);
+        register(Material.ANGLER_POTTERY_SHERD, State.LATE);
+        register(Material.ANVIL, State.MID);
+        register(Material.APPLE, State.EARLY);
+        register(Material.ARCHER_POTTERY_SHERD, State.LATE, ItemTag.EXTREME);
+        register(Material.ARMADILLO_SCUTE, State.EARLY);
+        register(Material.ARMOR_STAND, State.EARLY);
+        register(Material.ARROW, State.EARLY);
+        register(Material.AXOLOTL_BUCKET, State.MID);
+        register(Material.AZALEA, State.MID);
+        register(Material.AZALEA_LEAVES, State.MID);
+        register(Material.AZURE_BLUET, State.EARLY);
+        register(Material.BAKED_POTATO, State.EARLY);
+        register(Material.BAMBOO, State.EARLY);
+        register(Material.BAMBOO_BLOCK, State.EARLY);
+        register(Material.BAMBOO_BUTTON, State.EARLY);
+        register(Material.BAMBOO_CHEST_RAFT, State.EARLY);
+        register(Material.BAMBOO_DOOR, State.EARLY);
+        register(Material.BAMBOO_FENCE, State.EARLY);
+        register(Material.BAMBOO_FENCE_GATE, State.EARLY);
+        register(Material.BAMBOO_HANGING_SIGN, State.EARLY);
+        register(Material.BAMBOO_MOSAIC, State.EARLY);
+        register(Material.BAMBOO_MOSAIC_SLAB, State.EARLY);
+        register(Material.BAMBOO_MOSAIC_STAIRS, State.EARLY);
+        register(Material.BAMBOO_PLANKS, State.EARLY);
+        register(Material.BAMBOO_PRESSURE_PLATE, State.EARLY);
+        register(Material.BAMBOO_RAFT, State.EARLY);
+        register(Material.BAMBOO_SHELF, State.EARLY);
+        register(Material.BAMBOO_SIGN, State.EARLY);
+        register(Material.BAMBOO_SLAB, State.EARLY);
+        register(Material.BAMBOO_STAIRS, State.EARLY);
+        register(Material.BAMBOO_TRAPDOOR, State.EARLY);
+        register(Material.BARREL, State.EARLY);
+        register(Material.BASALT, State.MID, ItemTag.NETHER);
+        register(Material.BEE_NEST, State.LATE);
+        register(Material.BEEF, State.EARLY);
+        register(Material.BEEHIVE, State.LATE);
+        register(Material.BEETROOT, State.MID);
+        register(Material.BEETROOT_SEEDS, State.MID);
+        register(Material.BEETROOT_SOUP, State.MID);
+        register(Material.BELL, State.EARLY);
+        register(Material.BIG_DRIPLEAF, State.MID);
+        register(Material.BIRCH_BOAT, State.EARLY);
+        register(Material.BIRCH_BUTTON, State.EARLY);
+        register(Material.BIRCH_CHEST_BOAT, State.EARLY);
+        register(Material.BIRCH_DOOR, State.EARLY);
+        register(Material.BIRCH_FENCE, State.EARLY);
+        register(Material.BIRCH_FENCE_GATE, State.EARLY);
+        register(Material.BIRCH_HANGING_SIGN, State.EARLY);
+        register(Material.BIRCH_LEAVES, State.EARLY);
+        register(Material.BIRCH_LOG, State.EARLY);
+        register(Material.BIRCH_PLANKS, State.EARLY);
+        register(Material.BIRCH_PRESSURE_PLATE, State.EARLY);
+        register(Material.BIRCH_SAPLING, State.EARLY);
+        register(Material.BIRCH_SHELF, State.EARLY);
+        register(Material.BIRCH_SIGN, State.EARLY);
+        register(Material.BIRCH_SLAB, State.EARLY);
+        register(Material.BIRCH_STAIRS, State.EARLY);
+        register(Material.BIRCH_TRAPDOOR, State.EARLY);
+        register(Material.BIRCH_WOOD, State.EARLY);
+        register(Material.BLACK_BANNER, State.EARLY);
+        register(Material.BLACK_BED, State.EARLY);
+        register(Material.BLACK_BUNDLE, State.EARLY);
+        register(Material.BLACK_CANDLE, State.LATE);
+        register(Material.BLACK_CARPET, State.EARLY);
+        register(Material.BLACK_CONCRETE, State.EARLY);
+        register(Material.BLACK_CONCRETE_POWDER, State.EARLY);
+        register(Material.BLACK_DYE, State.EARLY);
+        register(Material.BLACK_GLAZED_TERRACOTTA, State.EARLY);
+        register(Material.BLACK_HARNESS, State.EARLY);
+        register(Material.BLACK_SHULKER_BOX, State.LATE, ItemTag.END);
+        register(Material.BLACK_STAINED_GLASS, State.EARLY);
+        register(Material.BLACK_STAINED_GLASS_PANE, State.EARLY);
+        register(Material.BLACK_TERRACOTTA, State.EARLY);
+        register(Material.BLACK_WOOL, State.EARLY);
+        register(Material.BLACKSTONE, State.MID, ItemTag.NETHER);
+        register(Material.BLACKSTONE_SLAB, State.MID, ItemTag.NETHER);
+        register(Material.BLACKSTONE_STAIRS, State.MID, ItemTag.NETHER);
+        register(Material.BLACKSTONE_WALL, State.MID, ItemTag.NETHER);
+        register(Material.BLADE_POTTERY_SHERD, State.LATE);
+        register(Material.BLAST_FURNACE, State.EARLY);
+        register(Material.BLAZE_POWDER, State.LATE, ItemTag.NETHER);
+        register(Material.BLAZE_ROD, State.LATE, ItemTag.NETHER);
+        register(Material.BLUE_BANNER, State.EARLY);
+        register(Material.BLUE_BED, State.EARLY);
+        register(Material.BLUE_BUNDLE, State.EARLY);
+        register(Material.BLUE_CANDLE, State.LATE);
+        register(Material.BLUE_CARPET, State.EARLY);
+        register(Material.BLUE_CONCRETE, State.EARLY);
+        register(Material.BLUE_CONCRETE_POWDER, State.EARLY);
+        register(Material.BLUE_DYE, State.EARLY);
+        register(Material.BLUE_EGG, State.EARLY);
+        register(Material.BLUE_GLAZED_TERRACOTTA, State.EARLY);
+        register(Material.BLUE_HARNESS, State.EARLY);
+        register(Material.BLUE_ICE, State.LATE);
+        register(Material.BLUE_ORCHID, State.MID);
+        register(Material.BLUE_SHULKER_BOX, State.LATE, ItemTag.END);
+        register(Material.BLUE_STAINED_GLASS, State.EARLY);
+        register(Material.BLUE_STAINED_GLASS_PANE, State.EARLY);
+        register(Material.BLUE_TERRACOTTA, State.EARLY);
+        register(Material.BLUE_WOOL, State.EARLY);
+        register(Material.BOLT_ARMOR_TRIM_SMITHING_TEMPLATE, State.LATE);
+        register(Material.BONE, State.EARLY);
+        register(Material.BONE_BLOCK, State.EARLY);
+        register(Material.BONE_MEAL, State.EARLY);
+        register(Material.BOOK, State.EARLY);
+        register(Material.BOOKSHELF, State.EARLY);
+        register(Material.BOW, State.MID);
+        register(Material.BOWL, State.EARLY);
+        register(Material.BRAIN_CORAL, State.LATE);
+        register(Material.BRAIN_CORAL_BLOCK, State.LATE);
+        register(Material.BRAIN_CORAL_FAN, State.LATE);
+        register(Material.BREAD, State.EARLY);
+        register(Material.BREEZE_ROD, State.LATE);
+        register(Material.BREWING_STAND, State.MID);
+        register(Material.BRICK, State.EARLY);
+        register(Material.BRICK_SLAB, State.EARLY);
+        register(Material.BRICK_STAIRS, State.EARLY);
+        register(Material.BRICK_WALL, State.EARLY);
+        register(Material.BRICKS, State.EARLY);
+        register(Material.BROWN_BANNER, State.EARLY);
+        register(Material.BROWN_BED, State.EARLY);
+        register(Material.BROWN_BUNDLE, State.EARLY);
+        register(Material.BROWN_CANDLE, State.LATE);
+        register(Material.BROWN_CARPET, State.EARLY);
+        register(Material.BROWN_CONCRETE, State.EARLY);
+        register(Material.BROWN_CONCRETE_POWDER, State.EARLY);
+        register(Material.BROWN_DYE, State.EARLY);
+        register(Material.BROWN_EGG, State.EARLY);
+        register(Material.BROWN_GLAZED_TERRACOTTA, State.EARLY);
+        register(Material.BROWN_HARNESS, State.EARLY);
+        register(Material.BROWN_MUSHROOM, State.EARLY);
+        register(Material.BROWN_MUSHROOM_BLOCK, State.LATE);
+        register(Material.BROWN_SHULKER_BOX, State.LATE, ItemTag.END);
+        register(Material.BROWN_STAINED_GLASS, State.EARLY);
+        register(Material.BROWN_STAINED_GLASS_PANE, State.EARLY);
+        register(Material.BROWN_TERRACOTTA, State.EARLY);
+        register(Material.BROWN_WOOL, State.EARLY);
+        register(Material.BRUSH, State.EARLY);
+        register(Material.BUBBLE_CORAL, State.LATE);
+        register(Material.BUBBLE_CORAL_BLOCK, State.LATE);
+        register(Material.BUBBLE_CORAL_FAN, State.LATE);
+        register(Material.BUCKET, State.EARLY);
+        register(Material.BUNDLE, State.EARLY);
+        register(Material.BUSH, State.EARLY);
+        register(Material.CACTUS, State.MID);
+        register(Material.CACTUS_FLOWER, State.MID);
+        register(Material.CAKE, State.MID);
+        register(Material.CALCITE, State.EARLY);
+        register(Material.CALIBRATED_SCULK_SENSOR, State.LATE, ItemTag.EXTREME);
+        register(Material.CAMPFIRE, State.EARLY);
+        register(Material.CANDLE, State.LATE);
+        register(Material.CARROT, State.EARLY);
+        register(Material.CARROT_ON_A_STICK, State.EARLY);
+        register(Material.CARTOGRAPHY_TABLE, State.EARLY);
+        register(Material.CARVED_PUMPKIN, State.EARLY);
+        register(Material.CAULDRON, State.EARLY);
+        register(Material.CHAINMAIL_BOOTS, State.LATE);
+        register(Material.CHAINMAIL_CHESTPLATE, State.LATE);
+        register(Material.CHAINMAIL_HELMET, State.LATE);
+        register(Material.CHAINMAIL_LEGGINGS, State.LATE);
+        register(Material.CHARCOAL, State.EARLY);
+        register(Material.CHERRY_BOAT, State.MID);
+        register(Material.CHERRY_BUTTON, State.MID);
+        register(Material.CHERRY_CHEST_BOAT, State.MID);
+        register(Material.CHERRY_DOOR, State.MID);
+        register(Material.CHERRY_FENCE, State.MID);
+        register(Material.CHERRY_FENCE_GATE, State.MID);
+        register(Material.CHERRY_HANGING_SIGN, State.MID);
+        register(Material.CHERRY_LEAVES, State.MID);
+        register(Material.CHERRY_LOG, State.MID);
+        register(Material.CHERRY_PLANKS, State.MID);
+        register(Material.CHERRY_PRESSURE_PLATE, State.MID);
+        register(Material.CHERRY_SAPLING, State.MID);
+        register(Material.CHERRY_SHELF, State.MID);
+        register(Material.CHERRY_SIGN, State.MID);
+        register(Material.CHERRY_SLAB, State.MID);
+        register(Material.CHERRY_STAIRS, State.MID);
+        register(Material.CHERRY_TRAPDOOR, State.MID);
+        register(Material.CHERRY_WOOD, State.MID);
+        register(Material.CHEST, State.EARLY);
+        register(Material.CHEST_MINECART, State.EARLY);
+        register(Material.CHICKEN, State.EARLY);
+        register(Material.CHIPPED_ANVIL, State.MID);
+        register(Material.CHISELED_BOOKSHELF, State.EARLY);
+        register(Material.CHISELED_COPPER, State.EARLY);
+        register(Material.CHISELED_DEEPSLATE, State.EARLY);
+        register(Material.CHISELED_NETHER_BRICKS, State.MID);
+        register(Material.CHISELED_POLISHED_BLACKSTONE, State.MID, ItemTag.NETHER);
+        register(Material.CHISELED_QUARTZ_BLOCK, State.MID, ItemTag.NETHER);
+        register(Material.CHISELED_RED_SANDSTONE, State.LATE);
+        register(Material.CHISELED_RESIN_BRICKS, State.LATE);
+        register(Material.CHISELED_SANDSTONE, State.EARLY);
+        register(Material.CHISELED_STONE_BRICKS, State.EARLY);
+        register(Material.CHISELED_TUFF, State.EARLY);
+        register(Material.CHISELED_TUFF_BRICKS, State.EARLY);
+        register(Material.CHORUS_FLOWER, State.LATE, ItemTag.END);
+        register(Material.CHORUS_FRUIT, State.LATE, ItemTag.END);
+        register(Material.CLAY, State.EARLY);
+        register(Material.CLAY_BALL, State.EARLY);
+        register(Material.CLOCK, State.EARLY);
+        register(Material.CLOSED_EYEBLOSSOM, State.MID);
+        register(Material.COAL, State.EARLY);
+        register(Material.COAL_BLOCK, State.EARLY);
+        register(Material.COAL_ORE, State.LATE);
+        register(Material.COARSE_DIRT, State.EARLY);
+        register(Material.COAST_ARMOR_TRIM_SMITHING_TEMPLATE, State.MID);
+        register(Material.COBBLED_DEEPSLATE, State.EARLY);
+        register(Material.COBBLED_DEEPSLATE_SLAB, State.EARLY);
+        register(Material.COBBLED_DEEPSLATE_STAIRS, State.EARLY);
+        register(Material.COBBLED_DEEPSLATE_WALL, State.EARLY);
+        register(Material.COBBLESTONE, State.EARLY);
+        register(Material.COBBLESTONE_SLAB, State.EARLY);
+        register(Material.COBBLESTONE_STAIRS, State.EARLY);
+        register(Material.COBBLESTONE_WALL, State.EARLY);
+        register(Material.COBWEB, State.MID);
+        register(Material.COCOA_BEANS, State.EARLY);
+        register(Material.COD, State.EARLY);
+        register(Material.COD_BUCKET, State.EARLY);
+        register(Material.COMPARATOR, State.MID, ItemTag.NETHER);
+        register(Material.COMPASS, State.EARLY);
+        register(Material.COMPOSTER, State.EARLY);
+        register(Material.COOKED_BEEF, State.EARLY);
+        register(Material.COOKED_CHICKEN, State.EARLY);
+        register(Material.COOKED_COD, State.EARLY);
+        register(Material.COOKED_MUTTON, State.EARLY);
+        register(Material.COOKED_PORKCHOP, State.EARLY);
+        register(Material.COOKED_RABBIT, State.MID);
+        register(Material.COOKED_SALMON, State.EARLY);
+        register(Material.COOKIE, State.EARLY);
+        register(Material.COPPER_AXE, State.EARLY);
+        register(Material.COPPER_BARS, State.EARLY);
+        register(Material.COPPER_BLOCK, State.EARLY);
+        register(Material.COPPER_BOOTS, State.EARLY);
+        register(Material.COPPER_BULB, State.LATE);
+        register(Material.COPPER_CHAIN, State.EARLY);
+        register(Material.COPPER_CHEST, State.EARLY);
+        register(Material.COPPER_CHESTPLATE, State.EARLY);
+        register(Material.COPPER_DOOR, State.EARLY);
+        register(Material.COPPER_GOLEM_STATUE, State.LATE);
+        register(Material.COPPER_GRATE, State.EARLY);
+        register(Material.COPPER_HELMET, State.EARLY);
+        register(Material.COPPER_HOE, State.EARLY);
+        register(Material.COPPER_HORSE_ARMOR, State.MID);
+        register(Material.COPPER_INGOT, State.EARLY);
+        register(Material.COPPER_LANTERN, State.EARLY);
+        register(Material.COPPER_LEGGINGS, State.EARLY);
+        register(Material.COPPER_NAUTILUS_ARMOR, State.EARLY);
+        register(Material.COPPER_NUGGET, State.EARLY);
+        register(Material.COPPER_ORE, State.LATE, ItemTag.EXTREME);
+        register(Material.COPPER_PICKAXE, State.EARLY);
+        register(Material.COPPER_SHOVEL, State.EARLY);
+        register(Material.COPPER_SPEAR, State.EARLY);
+        register(Material.COPPER_SWORD, State.EARLY);
+        register(Material.COPPER_TORCH, State.EARLY);
+        register(Material.COPPER_TRAPDOOR, State.EARLY);
+        register(Material.CORNFLOWER, State.EARLY);
+        register(Material.CRACKED_DEEPSLATE_BRICKS, State.EARLY);
+        register(Material.CRACKED_DEEPSLATE_TILES, State.EARLY);
+        register(Material.CRACKED_NETHER_BRICKS, State.MID);
+        register(Material.CRACKED_POLISHED_BLACKSTONE_BRICKS, State.MID, ItemTag.NETHER);
+        register(Material.CRACKED_STONE_BRICKS, State.EARLY);
+        register(Material.CRAFTER, State.EARLY);
+        register(Material.CRAFTING_TABLE, State.EARLY);
+        register(Material.CREAKING_HEART, State.LATE);
+        register(Material.CRIMSON_BUTTON, State.MID, ItemTag.NETHER);
+        register(Material.CRIMSON_DOOR, State.MID, ItemTag.NETHER);
+        register(Material.CRIMSON_FENCE, State.MID, ItemTag.NETHER);
+        register(Material.CRIMSON_FENCE_GATE, State.MID, ItemTag.NETHER);
+        register(Material.CRIMSON_FUNGUS, State.MID, ItemTag.NETHER);
+        register(Material.CRIMSON_HANGING_SIGN, State.MID, ItemTag.NETHER);
+        register(Material.CRIMSON_HYPHAE, State.MID, ItemTag.NETHER);
+        register(Material.CRIMSON_NYLIUM, State.MID, ItemTag.NETHER);
+        register(Material.CRIMSON_PLANKS, State.MID, ItemTag.NETHER);
+        register(Material.CRIMSON_PRESSURE_PLATE, State.MID, ItemTag.NETHER);
+        register(Material.CRIMSON_ROOTS, State.MID, ItemTag.NETHER);
+        register(Material.CRIMSON_SHELF, State.MID, ItemTag.NETHER);
+        register(Material.CRIMSON_SIGN, State.MID, ItemTag.NETHER);
+        register(Material.CRIMSON_SLAB, State.MID, ItemTag.NETHER);
+        register(Material.CRIMSON_STAIRS, State.MID, ItemTag.NETHER);
+        register(Material.CRIMSON_STEM, State.MID, ItemTag.NETHER);
+        register(Material.CRIMSON_TRAPDOOR, State.MID, ItemTag.NETHER);
+        register(Material.CROSSBOW, State.MID);
+        register(Material.CRYING_OBSIDIAN, State.MID);
+        register(Material.CUT_COPPER, State.EARLY);
+        register(Material.CUT_COPPER_SLAB, State.EARLY);
+        register(Material.CUT_COPPER_STAIRS, State.EARLY);
+        register(Material.CUT_RED_SANDSTONE, State.LATE);
+        register(Material.CUT_RED_SANDSTONE_SLAB, State.LATE);
+        register(Material.CUT_SANDSTONE, State.EARLY);
+        register(Material.CUT_SANDSTONE_SLAB, State.EARLY);
+        register(Material.CYAN_BANNER, State.MID);
+        register(Material.CYAN_BED, State.MID);
+        register(Material.CYAN_BUNDLE, State.MID);
+        register(Material.CYAN_CANDLE, State.LATE);
+        register(Material.CYAN_CARPET, State.MID);
+        register(Material.CYAN_CONCRETE, State.MID);
+        register(Material.CYAN_CONCRETE_POWDER, State.MID);
+        register(Material.CYAN_DYE, State.MID);
+        register(Material.CYAN_GLAZED_TERRACOTTA, State.MID);
+        register(Material.CYAN_HARNESS, State.MID);
+        register(Material.CYAN_SHULKER_BOX, State.LATE, ItemTag.END);
+        register(Material.CYAN_STAINED_GLASS, State.MID);
+        register(Material.CYAN_STAINED_GLASS_PANE, State.MID);
+        register(Material.CYAN_TERRACOTTA, State.MID);
+        register(Material.CYAN_WOOL, State.MID);
+        register(Material.DAMAGED_ANVIL, State.MID);
+        register(Material.DANDELION, State.EARLY);
+        register(Material.DARK_OAK_BOAT, State.EARLY);
+        register(Material.DARK_OAK_BUTTON, State.EARLY);
+        register(Material.DARK_OAK_CHEST_BOAT, State.EARLY);
+        register(Material.DARK_OAK_DOOR, State.EARLY);
+        register(Material.DARK_OAK_FENCE, State.EARLY);
+        register(Material.DARK_OAK_FENCE_GATE, State.EARLY);
+        register(Material.DARK_OAK_HANGING_SIGN, State.EARLY);
+        register(Material.DARK_OAK_LEAVES, State.EARLY);
+        register(Material.DARK_OAK_LOG, State.EARLY);
+        register(Material.DARK_OAK_PLANKS, State.EARLY);
+        register(Material.DARK_OAK_PRESSURE_PLATE, State.EARLY);
+        register(Material.DARK_OAK_SAPLING, State.EARLY);
+        register(Material.DARK_OAK_SHELF, State.EARLY);
+        register(Material.DARK_OAK_SIGN, State.EARLY);
+        register(Material.DARK_OAK_SLAB, State.EARLY);
+        register(Material.DARK_OAK_STAIRS, State.EARLY);
+        register(Material.DARK_OAK_TRAPDOOR, State.EARLY);
+        register(Material.DARK_OAK_WOOD, State.EARLY);
+        register(Material.DARK_PRISMARINE, State.MID);
+        register(Material.DARK_PRISMARINE_SLAB, State.MID);
+        register(Material.DARK_PRISMARINE_STAIRS, State.MID);
+        register(Material.DAYLIGHT_DETECTOR, State.MID, ItemTag.NETHER);
+        register(Material.DEAD_BRAIN_CORAL, State.LATE);
+        register(Material.DEAD_BRAIN_CORAL_BLOCK, State.MID);
+        register(Material.DEAD_BRAIN_CORAL_FAN, State.LATE);
+        register(Material.DEAD_BUBBLE_CORAL, State.LATE);
+        register(Material.DEAD_BUBBLE_CORAL_BLOCK, State.MID);
+        register(Material.DEAD_BUBBLE_CORAL_FAN, State.LATE);
+        register(Material.DEAD_BUSH, State.MID);
+        register(Material.DEAD_FIRE_CORAL, State.LATE);
+        register(Material.DEAD_FIRE_CORAL_BLOCK, State.MID);
+        register(Material.DEAD_FIRE_CORAL_FAN, State.LATE);
+        register(Material.DEAD_HORN_CORAL, State.LATE);
+        register(Material.DEAD_HORN_CORAL_BLOCK, State.MID);
+        register(Material.DEAD_HORN_CORAL_FAN, State.LATE);
+        register(Material.DEAD_TUBE_CORAL, State.LATE);
+        register(Material.DEAD_TUBE_CORAL_BLOCK, State.MID);
+        register(Material.DEAD_TUBE_CORAL_FAN, State.LATE);
+        register(Material.DECORATED_POT, State.LATE);
+        register(Material.DEEPSLATE, State.EARLY);
+        register(Material.DEEPSLATE_BRICK_SLAB, State.EARLY);
+        register(Material.DEEPSLATE_BRICK_STAIRS, State.EARLY);
+        register(Material.DEEPSLATE_BRICK_WALL, State.EARLY);
+        register(Material.DEEPSLATE_BRICKS, State.EARLY);
+        register(Material.DEEPSLATE_COAL_ORE, State.LATE);
+        register(Material.DEEPSLATE_COPPER_ORE, State.LATE, ItemTag.EXTREME);
+        register(Material.DEEPSLATE_DIAMOND_ORE, State.LATE, ItemTag.EXTREME);
+        register(Material.DEEPSLATE_EMERALD_ORE, State.LATE, ItemTag.EXTREME);
+        register(Material.DEEPSLATE_GOLD_ORE, State.LATE, ItemTag.EXTREME);
+        register(Material.DEEPSLATE_IRON_ORE, State.LATE, ItemTag.EXTREME);
+        register(Material.DEEPSLATE_LAPIS_ORE, State.LATE, ItemTag.EXTREME);
+        register(Material.DEEPSLATE_REDSTONE_ORE, State.LATE, ItemTag.EXTREME);
+        register(Material.DEEPSLATE_TILE_SLAB, State.EARLY);
+        register(Material.DEEPSLATE_TILE_STAIRS, State.EARLY);
+        register(Material.DEEPSLATE_TILE_WALL, State.EARLY);
+        register(Material.DEEPSLATE_TILES, State.EARLY);
+        register(Material.DETECTOR_RAIL, State.EARLY);
+        register(Material.DIAMOND, State.EARLY);
+        register(Material.DIAMOND_AXE, State.EARLY);
+        register(Material.DIAMOND_BLOCK, State.MID);
+        register(Material.DIAMOND_BOOTS, State.EARLY);
+        register(Material.DIAMOND_CHESTPLATE, State.MID);
+        register(Material.DIAMOND_HELMET, State.MID);
+        register(Material.DIAMOND_HOE, State.EARLY);
+        register(Material.DIAMOND_HORSE_ARMOR, State.MID);
+        register(Material.DIAMOND_LEGGINGS, State.MID);
+        register(Material.DIAMOND_NAUTILUS_ARMOR, State.EARLY);
+        register(Material.DIAMOND_ORE, State.LATE, ItemTag.EXTREME);
+        register(Material.DIAMOND_PICKAXE, State.EARLY);
+        register(Material.DIAMOND_SHOVEL, State.EARLY);
+        register(Material.DIAMOND_SPEAR, State.EARLY);
+        register(Material.DIAMOND_SWORD, State.EARLY);
+        register(Material.DIORITE, State.EARLY);
+        register(Material.DIORITE_SLAB, State.EARLY);
+        register(Material.DIORITE_STAIRS, State.EARLY);
+        register(Material.DIORITE_WALL, State.EARLY);
+        register(Material.DIRT, State.EARLY);
+        register(Material.DISC_FRAGMENT_5, State.LATE, ItemTag.EXTREME);
+        register(Material.DISPENSER, State.MID);
+        register(Material.DRAGON_HEAD, State.LATE, ItemTag.END);
+        register(Material.DRIED_GHAST, State.MID, ItemTag.NETHER);
+        register(Material.DRIED_KELP, State.EARLY);
+        register(Material.DRIED_KELP_BLOCK, State.EARLY);
+        register(Material.DRIPSTONE_BLOCK, State.MID);
+        register(Material.DROPPER, State.EARLY);
+        register(Material.DUNE_ARMOR_TRIM_SMITHING_TEMPLATE, State.LATE);
+        register(Material.ECHO_SHARD, State.LATE, ItemTag.EXTREME);
+        register(Material.EGG, State.MID);
+        register(Material.ELYTRA, State.LATE, ItemTag.END);
+        register(Material.EMERALD, State.EARLY);
+        register(Material.EMERALD_BLOCK, State.MID);
+        register(Material.EMERALD_ORE, State.LATE, ItemTag.EXTREME);
+        register(Material.ENCHANTED_BOOK, State.LATE);
+        register(Material.ENCHANTED_GOLDEN_APPLE, State.LATE);
+        register(Material.ENCHANTING_TABLE, State.MID);
+        register(Material.END_CRYSTAL, State.LATE, ItemTag.EXTREME);
+        register(Material.END_ROD, State.LATE, ItemTag.END);
+        register(Material.END_STONE, State.LATE, ItemTag.END);
+        register(Material.END_STONE_BRICK_SLAB, State.LATE, ItemTag.END);
+        register(Material.END_STONE_BRICK_STAIRS, State.LATE, ItemTag.END);
+        register(Material.END_STONE_BRICK_WALL, State.LATE, ItemTag.END);
+        register(Material.END_STONE_BRICKS, State.LATE, ItemTag.END);
+        register(Material.ENDER_CHEST, State.LATE);
+        register(Material.ENDER_EYE, State.MID, ItemTag.NETHER);
+        register(Material.ENDER_PEARL, State.MID);
+        register(Material.EXPERIENCE_BOTTLE, State.LATE);
+        register(Material.EXPLORER_POTTERY_SHERD, State.LATE);
+        register(Material.EXPOSED_CHISELED_COPPER, State.LATE);
+        register(Material.EXPOSED_COPPER, State.LATE);
+        register(Material.EXPOSED_COPPER_BARS, State.LATE);
+        register(Material.EXPOSED_COPPER_BULB, State.LATE);
+        register(Material.EXPOSED_COPPER_CHAIN, State.LATE);
+        register(Material.EXPOSED_COPPER_CHEST, State.LATE);
+        register(Material.EXPOSED_COPPER_DOOR, State.LATE);
+        register(Material.EXPOSED_COPPER_GOLEM_STATUE, State.LATE);
+        register(Material.EXPOSED_COPPER_GRATE, State.LATE);
+        register(Material.EXPOSED_COPPER_LANTERN, State.LATE);
+        register(Material.EXPOSED_COPPER_TRAPDOOR, State.LATE);
+        register(Material.EXPOSED_CUT_COPPER, State.LATE);
+        register(Material.EXPOSED_CUT_COPPER_SLAB, State.LATE);
+        register(Material.EXPOSED_CUT_COPPER_STAIRS, State.LATE);
+        register(Material.EXPOSED_LIGHTNING_ROD, State.LATE);
+        register(Material.EYE_ARMOR_TRIM_SMITHING_TEMPLATE, State.LATE, ItemTag.EXTREME);
+        register(Material.FEATHER, State.EARLY);
+        register(Material.FERMENTED_SPIDER_EYE, State.MID);
+        register(Material.FERN, State.EARLY);
+        register(Material.FILLED_MAP, State.EARLY);
+        register(Material.FIRE_CHARGE, State.MID);
+        register(Material.FIRE_CORAL, State.LATE);
+        register(Material.FIRE_CORAL_BLOCK, State.LATE);
+        register(Material.FIRE_CORAL_FAN, State.LATE);
+        register(Material.FIREFLY_BUSH, State.EARLY);
+        register(Material.FIREWORK_ROCKET, State.EARLY);
+        register(Material.FIREWORK_STAR, State.EARLY);
+        register(Material.FISHING_ROD, State.MID);
+        register(Material.FLETCHING_TABLE, State.EARLY);
+        register(Material.FLINT, State.EARLY);
+        register(Material.FLINT_AND_STEEL, State.EARLY);
+        register(Material.FLOW_BANNER_PATTERN, State.LATE, ItemTag.EXTREME);
+        register(Material.FLOW_POTTERY_SHERD, State.LATE);
+        register(Material.FLOWER_BANNER_PATTERN, State.EARLY);
+        register(Material.FLOWER_POT, State.EARLY);
+        register(Material.FLOWERING_AZALEA, State.MID);
+        register(Material.FLOWERING_AZALEA_LEAVES, State.MID);
+        register(Material.FURNACE, State.EARLY);
+        register(Material.FURNACE_MINECART, State.EARLY);
+        register(Material.GHAST_TEAR, State.MID, ItemTag.NETHER);
+        register(Material.GILDED_BLACKSTONE, State.LATE, ItemTag.NETHER);
+        register(Material.GLASS, State.EARLY);
+        register(Material.GLASS_BOTTLE, State.EARLY);
+        register(Material.GLASS_PANE, State.EARLY);
+        register(Material.GLISTERING_MELON_SLICE, State.EARLY);
+        register(Material.GLOBE_BANNER_PATTERN, State.LATE, ItemTag.EXTREME);
+        register(Material.GLOW_BERRIES, State.MID);
+        register(Material.GLOW_INK_SAC, State.EARLY);
+        register(Material.GLOW_ITEM_FRAME, State.EARLY);
+        register(Material.GLOW_LICHEN, State.EARLY);
+        register(Material.GLOWSTONE, State.MID, ItemTag.NETHER);
+        register(Material.GLOWSTONE_DUST, State.MID, ItemTag.NETHER);
+        register(Material.GOAT_HORN, State.LATE);
+        register(Material.GOLD_BLOCK, State.EARLY);
+        register(Material.GOLD_INGOT, State.EARLY);
+        register(Material.GOLD_NUGGET, State.EARLY);
+        register(Material.GOLD_ORE, State.LATE, ItemTag.EXTREME);
+        register(Material.GOLDEN_APPLE, State.EARLY);
+        register(Material.GOLDEN_AXE, State.EARLY);
+        register(Material.GOLDEN_BOOTS, State.EARLY);
+        register(Material.GOLDEN_CARROT, State.EARLY);
+        register(Material.GOLDEN_CHESTPLATE, State.EARLY);
+        register(Material.GOLDEN_HELMET, State.EARLY);
+        register(Material.GOLDEN_HOE, State.EARLY);
+        register(Material.GOLDEN_HORSE_ARMOR, State.MID);
+        register(Material.GOLDEN_LEGGINGS, State.EARLY);
+        register(Material.GOLDEN_NAUTILUS_ARMOR, State.EARLY);
+        register(Material.GOLDEN_PICKAXE, State.EARLY);
+        register(Material.GOLDEN_SHOVEL, State.EARLY);
+        register(Material.GOLDEN_SPEAR, State.EARLY);
+        register(Material.GOLDEN_SWORD, State.EARLY);
+        register(Material.GRANITE, State.EARLY);
+        register(Material.GRANITE_SLAB, State.EARLY);
+        register(Material.GRANITE_STAIRS, State.EARLY);
+        register(Material.GRANITE_WALL, State.EARLY);
+        register(Material.GRASS_BLOCK, State.LATE);
+        register(Material.GRAVEL, State.EARLY);
+        register(Material.GRAY_BANNER, State.EARLY);
+        register(Material.GRAY_BED, State.EARLY);
+        register(Material.GRAY_BUNDLE, State.EARLY);
+        register(Material.GRAY_CANDLE, State.LATE);
+        register(Material.GRAY_CARPET, State.EARLY);
+        register(Material.GRAY_CONCRETE, State.EARLY);
+        register(Material.GRAY_CONCRETE_POWDER, State.EARLY);
+        register(Material.GRAY_DYE, State.EARLY);
+        register(Material.GRAY_GLAZED_TERRACOTTA, State.EARLY);
+        register(Material.GRAY_HARNESS, State.EARLY);
+        register(Material.GRAY_SHULKER_BOX, State.LATE, ItemTag.END);
+        register(Material.GRAY_STAINED_GLASS, State.EARLY);
+        register(Material.GRAY_STAINED_GLASS_PANE, State.EARLY);
+        register(Material.GRAY_TERRACOTTA, State.EARLY);
+        register(Material.GRAY_WOOL, State.EARLY);
+        register(Material.GREEN_BANNER, State.MID);
+        register(Material.GREEN_BED, State.MID);
+        register(Material.GREEN_BUNDLE, State.MID);
+        register(Material.GREEN_CANDLE, State.LATE);
+        register(Material.GREEN_CARPET, State.MID);
+        register(Material.GREEN_CONCRETE, State.MID);
+        register(Material.GREEN_CONCRETE_POWDER, State.MID);
+        register(Material.GREEN_DYE, State.MID);
+        register(Material.GREEN_GLAZED_TERRACOTTA, State.MID);
+        register(Material.GREEN_HARNESS, State.MID);
+        register(Material.GREEN_SHULKER_BOX, State.LATE, ItemTag.END);
+        register(Material.GREEN_STAINED_GLASS, State.MID);
+        register(Material.GREEN_STAINED_GLASS_PANE, State.MID);
+        register(Material.GREEN_TERRACOTTA, State.MID);
+        register(Material.GREEN_WOOL, State.MID);
+        register(Material.GRINDSTONE, State.EARLY);
+        register(Material.GUNPOWDER, State.EARLY);
+        register(Material.GUSTER_BANNER_PATTERN, State.LATE, ItemTag.EXTREME);
+        register(Material.GUSTER_POTTERY_SHERD, State.LATE);
+        register(Material.HANGING_ROOTS, State.MID);
+        register(Material.HAY_BLOCK, State.EARLY);
+        register(Material.HEART_OF_THE_SEA, State.MID);
+        register(Material.HEAVY_WEIGHTED_PRESSURE_PLATE, State.EARLY);
+        register(Material.HONEY_BLOCK, State.LATE);
+        register(Material.HONEY_BOTTLE, State.LATE);
+        register(Material.HONEYCOMB, State.LATE);
+        register(Material.HONEYCOMB_BLOCK, State.LATE);
+        register(Material.HOPPER, State.EARLY);
+        register(Material.HOPPER_MINECART, State.EARLY);
+        register(Material.HORN_CORAL, State.LATE);
+        register(Material.HORN_CORAL_BLOCK, State.LATE);
+        register(Material.HORN_CORAL_FAN, State.LATE);
+        register(Material.ICE, State.LATE);
+        register(Material.INK_SAC, State.EARLY);
+        register(Material.IRON_AXE, State.EARLY);
+        register(Material.IRON_BARS, State.EARLY);
+        register(Material.IRON_BLOCK, State.EARLY);
+        register(Material.IRON_BOOTS, State.EARLY);
+        register(Material.IRON_CHAIN, State.EARLY);
+        register(Material.IRON_CHESTPLATE, State.EARLY);
+        register(Material.IRON_DOOR, State.EARLY);
+        register(Material.IRON_HELMET, State.EARLY);
+        register(Material.IRON_HOE, State.EARLY);
+        register(Material.IRON_HORSE_ARMOR, State.MID);
+        register(Material.IRON_INGOT, State.EARLY);
+        register(Material.IRON_LEGGINGS, State.EARLY);
+        register(Material.IRON_NAUTILUS_ARMOR, State.EARLY);
+        register(Material.IRON_NUGGET, State.EARLY);
+        register(Material.IRON_ORE, State.LATE, ItemTag.EXTREME);
+        register(Material.IRON_PICKAXE, State.EARLY);
+        register(Material.IRON_SHOVEL, State.EARLY);
+        register(Material.IRON_SPEAR, State.EARLY);
+        register(Material.IRON_SWORD, State.EARLY);
+        register(Material.IRON_TRAPDOOR, State.EARLY);
+        register(Material.ITEM_FRAME, State.EARLY);
+        register(Material.JACK_O_LANTERN, State.EARLY);
+        register(Material.JUKEBOX, State.EARLY);
+        register(Material.JUNGLE_BOAT, State.EARLY);
+        register(Material.JUNGLE_BUTTON, State.EARLY);
+        register(Material.JUNGLE_CHEST_BOAT, State.EARLY);
+        register(Material.JUNGLE_DOOR, State.EARLY);
+        register(Material.JUNGLE_FENCE, State.EARLY);
+        register(Material.JUNGLE_FENCE_GATE, State.EARLY);
+        register(Material.JUNGLE_HANGING_SIGN, State.EARLY);
+        register(Material.JUNGLE_LEAVES, State.EARLY);
+        register(Material.JUNGLE_LOG, State.EARLY);
+        register(Material.JUNGLE_PLANKS, State.EARLY);
+        register(Material.JUNGLE_PRESSURE_PLATE, State.EARLY);
+        register(Material.JUNGLE_SAPLING, State.EARLY);
+        register(Material.JUNGLE_SHELF, State.EARLY);
+        register(Material.JUNGLE_SIGN, State.EARLY);
+        register(Material.JUNGLE_SLAB, State.EARLY);
+        register(Material.JUNGLE_STAIRS, State.EARLY);
+        register(Material.JUNGLE_TRAPDOOR, State.EARLY);
+        register(Material.JUNGLE_WOOD, State.EARLY);
+        register(Material.KELP, State.EARLY);
+        register(Material.KNOWLEDGE_BOOK, State.MID, ItemTag.NETHER);
+        register(Material.LADDER, State.EARLY);
+        register(Material.LANTERN, State.EARLY);
+        register(Material.LAPIS_BLOCK, State.EARLY);
+        register(Material.LAPIS_LAZULI, State.EARLY);
+        register(Material.LAPIS_ORE, State.LATE, ItemTag.EXTREME);
+        register(Material.LARGE_AMETHYST_BUD, State.LATE);
+        register(Material.LARGE_FERN, State.LATE);
+        register(Material.LAVA_BUCKET, State.EARLY);
+        register(Material.LEAD, State.MID);
+        register(Material.LEAF_LITTER, State.EARLY);
+        register(Material.LEATHER, State.EARLY);
+        register(Material.LEATHER_BOOTS, State.EARLY);
+        register(Material.LEATHER_CHESTPLATE, State.EARLY);
+        register(Material.LEATHER_HELMET, State.EARLY);
+        register(Material.LEATHER_HORSE_ARMOR, State.EARLY);
+        register(Material.LEATHER_LEGGINGS, State.EARLY);
+        register(Material.LECTERN, State.EARLY);
+        register(Material.LEVER, State.EARLY);
+        register(Material.LIGHT_BLUE_BANNER, State.EARLY);
+        register(Material.LIGHT_BLUE_BED, State.EARLY);
+        register(Material.LIGHT_BLUE_BUNDLE, State.EARLY);
+        register(Material.LIGHT_BLUE_CANDLE, State.LATE);
+        register(Material.LIGHT_BLUE_CARPET, State.EARLY);
+        register(Material.LIGHT_BLUE_CONCRETE, State.EARLY);
+        register(Material.LIGHT_BLUE_CONCRETE_POWDER, State.EARLY);
+        register(Material.LIGHT_BLUE_DYE, State.EARLY);
+        register(Material.LIGHT_BLUE_GLAZED_TERRACOTTA, State.EARLY);
+        register(Material.LIGHT_BLUE_HARNESS, State.EARLY);
+        register(Material.LIGHT_BLUE_SHULKER_BOX, State.LATE, ItemTag.END);
+        register(Material.LIGHT_BLUE_STAINED_GLASS, State.EARLY);
+        register(Material.LIGHT_BLUE_STAINED_GLASS_PANE, State.EARLY);
+        register(Material.LIGHT_BLUE_TERRACOTTA, State.EARLY);
+        register(Material.LIGHT_BLUE_WOOL, State.EARLY);
+        register(Material.LIGHT_GRAY_BANNER, State.EARLY);
+        register(Material.LIGHT_GRAY_BED, State.EARLY);
+        register(Material.LIGHT_GRAY_BUNDLE, State.EARLY);
+        register(Material.LIGHT_GRAY_CANDLE, State.LATE);
+        register(Material.LIGHT_GRAY_CARPET, State.EARLY);
+        register(Material.LIGHT_GRAY_CONCRETE, State.EARLY);
+        register(Material.LIGHT_GRAY_CONCRETE_POWDER, State.EARLY);
+        register(Material.LIGHT_GRAY_DYE, State.EARLY);
+        register(Material.LIGHT_GRAY_GLAZED_TERRACOTTA, State.EARLY);
+        register(Material.LIGHT_GRAY_HARNESS, State.EARLY);
+        register(Material.LIGHT_GRAY_SHULKER_BOX, State.LATE, ItemTag.END);
+        register(Material.LIGHT_GRAY_STAINED_GLASS, State.EARLY);
+        register(Material.LIGHT_GRAY_STAINED_GLASS_PANE, State.EARLY);
+        register(Material.LIGHT_GRAY_TERRACOTTA, State.EARLY);
+        register(Material.LIGHT_GRAY_WOOL, State.EARLY);
+        register(Material.LIGHT_WEIGHTED_PRESSURE_PLATE, State.EARLY);
+        register(Material.LIGHTNING_ROD, State.EARLY);
+        register(Material.LILAC, State.EARLY);
+        register(Material.LILY_OF_THE_VALLEY, State.EARLY);
+        register(Material.LILY_PAD, State.MID);
+        register(Material.LIME_BANNER, State.MID);
+        register(Material.LIME_BED, State.MID);
+        register(Material.LIME_BUNDLE, State.MID);
+        register(Material.LIME_CANDLE, State.LATE);
+        register(Material.LIME_CARPET, State.MID);
+        register(Material.LIME_CONCRETE, State.MID);
+        register(Material.LIME_CONCRETE_POWDER, State.MID);
+        register(Material.LIME_DYE, State.MID);
+        register(Material.LIME_GLAZED_TERRACOTTA, State.MID);
+        register(Material.LIME_HARNESS, State.MID);
+        register(Material.LIME_SHULKER_BOX, State.LATE, ItemTag.END);
+        register(Material.LIME_STAINED_GLASS, State.MID);
+        register(Material.LIME_STAINED_GLASS_PANE, State.MID);
+        register(Material.LIME_TERRACOTTA, State.MID);
+        register(Material.LIME_WOOL, State.MID);
+        register(Material.LODESTONE, State.EARLY);
+        register(Material.LOOM, State.MID);
+        register(Material.MAGENTA_BANNER, State.EARLY);
+        register(Material.MAGENTA_BED, State.EARLY);
+        register(Material.MAGENTA_BUNDLE, State.EARLY);
+        register(Material.MAGENTA_CANDLE, State.LATE);
+        register(Material.MAGENTA_CARPET, State.EARLY);
+        register(Material.MAGENTA_CONCRETE, State.EARLY);
+        register(Material.MAGENTA_CONCRETE_POWDER, State.EARLY);
+        register(Material.MAGENTA_DYE, State.EARLY);
+        register(Material.MAGENTA_GLAZED_TERRACOTTA, State.EARLY);
+        register(Material.MAGENTA_HARNESS, State.EARLY);
+        register(Material.MAGENTA_SHULKER_BOX, State.LATE, ItemTag.END);
+        register(Material.MAGENTA_STAINED_GLASS, State.EARLY);
+        register(Material.MAGENTA_STAINED_GLASS_PANE, State.EARLY);
+        register(Material.MAGENTA_TERRACOTTA, State.EARLY);
+        register(Material.MAGENTA_WOOL, State.EARLY);
+        register(Material.MAGMA_BLOCK, State.EARLY);
+        register(Material.MAGMA_CREAM, State.MID, ItemTag.NETHER);
+        register(Material.MANGROVE_BOAT, State.MID);
+        register(Material.MANGROVE_BUTTON, State.MID);
+        register(Material.MANGROVE_CHEST_BOAT, State.MID);
+        register(Material.MANGROVE_DOOR, State.MID);
+        register(Material.MANGROVE_FENCE, State.MID);
+        register(Material.MANGROVE_FENCE_GATE, State.MID);
+        register(Material.MANGROVE_HANGING_SIGN, State.MID);
+        register(Material.MANGROVE_LEAVES, State.MID);
+        register(Material.MANGROVE_LOG, State.MID);
+        register(Material.MANGROVE_PLANKS, State.MID);
+        register(Material.MANGROVE_PRESSURE_PLATE, State.MID);
+        register(Material.MANGROVE_PROPAGULE, State.MID);
+        register(Material.MANGROVE_ROOTS, State.MID);
+        register(Material.MANGROVE_SHELF, State.MID);
+        register(Material.MANGROVE_SIGN, State.MID);
+        register(Material.MANGROVE_SLAB, State.MID);
+        register(Material.MANGROVE_STAIRS, State.MID);
+        register(Material.MANGROVE_TRAPDOOR, State.MID);
+        register(Material.MANGROVE_WOOD, State.MID);
+        register(Material.MAP, State.EARLY);
+        register(Material.MEDIUM_AMETHYST_BUD, State.LATE);
+        register(Material.MELON, State.EARLY);
+        register(Material.MELON_SEEDS, State.EARLY);
+        register(Material.MELON_SLICE, State.EARLY);
+        register(Material.MILK_BUCKET, State.EARLY);
+        register(Material.MINECART, State.EARLY);
+        register(Material.MINER_POTTERY_SHERD, State.LATE, ItemTag.EXTREME);
+        register(Material.MOJANG_BANNER_PATTERN, State.LATE);
+        register(Material.MOSS_BLOCK, State.MID);
+        register(Material.MOSS_CARPET, State.MID);
+        register(Material.MOSSY_COBBLESTONE, State.EARLY);
+        register(Material.MOSSY_COBBLESTONE_SLAB, State.EARLY);
+        register(Material.MOSSY_COBBLESTONE_STAIRS, State.EARLY);
+        register(Material.MOSSY_COBBLESTONE_WALL, State.EARLY);
+        register(Material.MOSSY_STONE_BRICK_SLAB, State.EARLY);
+        register(Material.MOSSY_STONE_BRICK_STAIRS, State.EARLY);
+        register(Material.MOSSY_STONE_BRICK_WALL, State.EARLY);
+        register(Material.MOSSY_STONE_BRICKS, State.EARLY);
+        register(Material.MOURNER_POTTERY_SHERD, State.LATE);
+        register(Material.MUD, State.EARLY);
+        register(Material.MUD_BRICK_SLAB, State.EARLY);
+        register(Material.MUD_BRICK_STAIRS, State.EARLY);
+        register(Material.MUD_BRICK_WALL, State.EARLY);
+        register(Material.MUD_BRICKS, State.EARLY);
+        register(Material.MUDDY_MANGROVE_ROOTS, State.MID);
+        register(Material.MUSHROOM_STEM, State.LATE);
+        register(Material.MUSHROOM_STEW, State.MID);
+        register(Material.MUSIC_DISC_13, State.LATE);
+        register(Material.MUSIC_DISC_CAT, State.LATE);
+        register(Material.MUSIC_DISC_CREATOR, State.LATE, ItemTag.EXTREME);
+        register(Material.MUSIC_DISC_CREATOR_MUSIC_BOX, State.LATE);
+        register(Material.MUSIC_DISC_LAVA_CHICKEN, State.LATE);
+        register(Material.MUSIC_DISC_OTHERSIDE, State.LATE);
+        register(Material.MUSIC_DISC_PIGSTEP, State.MID, ItemTag.NETHER);
+        register(Material.MUSIC_DISC_PRECIPICE, State.LATE, ItemTag.EXTREME);
+        register(Material.MUSIC_DISC_TEARS, State.MID, ItemTag.NETHER);
+        register(Material.MUTTON, State.EARLY);
+        register(Material.MYCELIUM, State.LATE);
+        register(Material.NAME_TAG, State.MID);
+        register(Material.NAUTILUS_SHELL, State.MID);
+        register(Material.NETHER_BRICK, State.MID);
+        register(Material.NETHER_BRICK_FENCE, State.MID);
+        register(Material.NETHER_BRICK_SLAB, State.MID);
+        register(Material.NETHER_BRICK_STAIRS, State.MID);
+        register(Material.NETHER_BRICK_WALL, State.MID);
+        register(Material.NETHER_BRICKS, State.MID);
+        register(Material.NETHER_GOLD_ORE, State.LATE, ItemTag.NETHER);
+        register(Material.NETHER_QUARTZ_ORE, State.LATE, ItemTag.NETHER);
+        register(Material.NETHER_SPROUTS, State.MID, ItemTag.NETHER);
+        register(Material.NETHER_WART, State.MID, ItemTag.NETHER);
+        register(Material.NETHER_WART_BLOCK, State.MID, ItemTag.NETHER);
+        register(Material.NETHERITE_AXE, State.LATE, ItemTag.NETHER, ItemTag.EXTREME);
+        register(Material.NETHERITE_BOOTS, State.LATE, ItemTag.NETHER, ItemTag.EXTREME);
+        register(Material.NETHERITE_CHESTPLATE, State.LATE, ItemTag.NETHER, ItemTag.EXTREME);
+        register(Material.NETHERITE_HELMET, State.LATE, ItemTag.NETHER, ItemTag.EXTREME);
+        register(Material.NETHERITE_HOE, State.LATE, ItemTag.NETHER, ItemTag.EXTREME);
+        register(Material.NETHERITE_HORSE_ARMOR, State.LATE, ItemTag.NETHER, ItemTag.EXTREME);
+        register(Material.NETHERITE_INGOT, State.LATE, ItemTag.NETHER);
+        register(Material.NETHERITE_LEGGINGS, State.LATE, ItemTag.NETHER, ItemTag.EXTREME);
+        register(Material.NETHERITE_NAUTILUS_ARMOR, State.LATE, ItemTag.NETHER, ItemTag.EXTREME);
+        register(Material.NETHERITE_PICKAXE, State.LATE, ItemTag.NETHER, ItemTag.EXTREME);
+        register(Material.NETHERITE_SCRAP, State.LATE, ItemTag.NETHER);
+        register(Material.NETHERITE_SHOVEL, State.LATE, ItemTag.NETHER, ItemTag.EXTREME);
+        register(Material.NETHERITE_SPEAR, State.LATE, ItemTag.NETHER, ItemTag.EXTREME);
+        register(Material.NETHERITE_SWORD, State.LATE, ItemTag.NETHER, ItemTag.EXTREME);
+        register(Material.NETHERITE_UPGRADE_SMITHING_TEMPLATE, State.LATE, ItemTag.NETHER);
+        register(Material.NETHERRACK, State.EARLY);
+        register(Material.NOTE_BLOCK, State.EARLY);
+        register(Material.OAK_BOAT, State.EARLY);
+        register(Material.OAK_BUTTON, State.EARLY);
+        register(Material.OAK_CHEST_BOAT, State.EARLY);
+        register(Material.OAK_DOOR, State.EARLY);
+        register(Material.OAK_FENCE, State.EARLY);
+        register(Material.OAK_FENCE_GATE, State.EARLY);
+        register(Material.OAK_HANGING_SIGN, State.EARLY);
+        register(Material.OAK_LEAVES, State.EARLY);
+        register(Material.OAK_LOG, State.EARLY);
+        register(Material.OAK_PLANKS, State.EARLY);
+        register(Material.OAK_PRESSURE_PLATE, State.EARLY);
+        register(Material.OAK_SAPLING, State.EARLY);
+        register(Material.OAK_SHELF, State.EARLY);
+        register(Material.OAK_SIGN, State.EARLY);
+        register(Material.OAK_SLAB, State.EARLY);
+        register(Material.OAK_STAIRS, State.EARLY);
+        register(Material.OAK_TRAPDOOR, State.EARLY);
+        register(Material.OAK_WOOD, State.EARLY);
+        register(Material.OBSERVER, State.MID);
+        register(Material.OBSIDIAN, State.EARLY);
+        register(Material.OMINOUS_BOTTLE, State.LATE, ItemTag.EXTREME);
+        register(Material.OMINOUS_TRIAL_KEY, State.LATE, ItemTag.EXTREME);
+        register(Material.OPEN_EYEBLOSSOM, State.MID);
+        register(Material.ORANGE_BANNER, State.EARLY);
+        register(Material.ORANGE_BED, State.EARLY);
+        register(Material.ORANGE_BUNDLE, State.EARLY);
+        register(Material.ORANGE_CANDLE, State.LATE);
+        register(Material.ORANGE_CARPET, State.EARLY);
+        register(Material.ORANGE_CONCRETE, State.EARLY);
+        register(Material.ORANGE_CONCRETE_POWDER, State.EARLY);
+        register(Material.ORANGE_DYE, State.EARLY);
+        register(Material.ORANGE_GLAZED_TERRACOTTA, State.EARLY);
+        register(Material.ORANGE_HARNESS, State.EARLY);
+        register(Material.ORANGE_SHULKER_BOX, State.LATE, ItemTag.END);
+        register(Material.ORANGE_STAINED_GLASS, State.EARLY);
+        register(Material.ORANGE_STAINED_GLASS_PANE, State.EARLY);
+        register(Material.ORANGE_TERRACOTTA, State.EARLY);
+        register(Material.ORANGE_TULIP, State.MID);
+        register(Material.ORANGE_WOOL, State.EARLY);
+        register(Material.OXEYE_DAISY, State.EARLY);
+        register(Material.OXIDIZED_CHISELED_COPPER, State.LATE);
+        register(Material.OXIDIZED_COPPER, State.LATE);
+        register(Material.OXIDIZED_COPPER_BARS, State.LATE);
+        register(Material.OXIDIZED_COPPER_BULB, State.LATE);
+        register(Material.OXIDIZED_COPPER_CHAIN, State.LATE);
+        register(Material.OXIDIZED_COPPER_CHEST, State.LATE);
+        register(Material.OXIDIZED_COPPER_DOOR, State.LATE);
+        register(Material.OXIDIZED_COPPER_GOLEM_STATUE, State.LATE);
+        register(Material.OXIDIZED_COPPER_GRATE, State.LATE);
+        register(Material.OXIDIZED_COPPER_LANTERN, State.LATE);
+        register(Material.OXIDIZED_COPPER_TRAPDOOR, State.LATE);
+        register(Material.OXIDIZED_CUT_COPPER, State.LATE);
+        register(Material.OXIDIZED_CUT_COPPER_SLAB, State.LATE);
+        register(Material.OXIDIZED_CUT_COPPER_STAIRS, State.LATE);
+        register(Material.OXIDIZED_LIGHTNING_ROD, State.LATE);
+        register(Material.PACKED_ICE, State.LATE);
+        register(Material.PACKED_MUD, State.EARLY);
+        register(Material.PAINTING, State.EARLY);
+        register(Material.PALE_HANGING_MOSS, State.LATE);
+        register(Material.PALE_MOSS_BLOCK, State.LATE);
+        register(Material.PALE_MOSS_CARPET, State.LATE);
+        register(Material.PALE_OAK_BOAT, State.LATE);
+        register(Material.PALE_OAK_BUTTON, State.LATE);
+        register(Material.PALE_OAK_CHEST_BOAT, State.LATE);
+        register(Material.PALE_OAK_DOOR, State.LATE);
+        register(Material.PALE_OAK_FENCE, State.LATE);
+        register(Material.PALE_OAK_FENCE_GATE, State.LATE);
+        register(Material.PALE_OAK_HANGING_SIGN, State.LATE);
+        register(Material.PALE_OAK_LEAVES, State.LATE);
+        register(Material.PALE_OAK_LOG, State.LATE);
+        register(Material.PALE_OAK_PLANKS, State.LATE);
+        register(Material.PALE_OAK_PRESSURE_PLATE, State.LATE);
+        register(Material.PALE_OAK_SAPLING, State.LATE);
+        register(Material.PALE_OAK_SHELF, State.LATE);
+        register(Material.PALE_OAK_SIGN, State.LATE);
+        register(Material.PALE_OAK_SLAB, State.LATE);
+        register(Material.PALE_OAK_STAIRS, State.LATE);
+        register(Material.PALE_OAK_TRAPDOOR, State.LATE);
+        register(Material.PALE_OAK_WOOD, State.LATE);
+        register(Material.PAPER, State.EARLY);
+        register(Material.PEONY, State.EARLY);
+        register(Material.PIGLIN_BANNER_PATTERN, State.LATE, ItemTag.NETHER);
+        register(Material.PINK_BANNER, State.EARLY);
+        register(Material.PINK_BED, State.EARLY);
+        register(Material.PINK_BUNDLE, State.EARLY);
+        register(Material.PINK_CANDLE, State.LATE);
+        register(Material.PINK_CARPET, State.EARLY);
+        register(Material.PINK_CONCRETE, State.EARLY);
+        register(Material.PINK_CONCRETE_POWDER, State.EARLY);
+        register(Material.PINK_DYE, State.EARLY);
+        register(Material.PINK_GLAZED_TERRACOTTA, State.EARLY);
+        register(Material.PINK_HARNESS, State.EARLY);
+        register(Material.PINK_PETALS, State.MID);
+        register(Material.PINK_SHULKER_BOX, State.LATE, ItemTag.END);
+        register(Material.PINK_STAINED_GLASS, State.EARLY);
+        register(Material.PINK_STAINED_GLASS_PANE, State.EARLY);
+        register(Material.PINK_TERRACOTTA, State.EARLY);
+        register(Material.PINK_TULIP, State.MID);
+        register(Material.PINK_WOOL, State.EARLY);
+        register(Material.PISTON, State.EARLY);
+        register(Material.PLENTY_POTTERY_SHERD, State.LATE);
+        register(Material.PODZOL, State.LATE);
+        register(Material.POINTED_DRIPSTONE, State.MID);
+        register(Material.POISONOUS_POTATO, State.MID);
+        register(Material.POLISHED_ANDESITE, State.EARLY);
+        register(Material.POLISHED_ANDESITE_SLAB, State.EARLY);
+        register(Material.POLISHED_ANDESITE_STAIRS, State.EARLY);
+        register(Material.POLISHED_BASALT, State.MID);
+        register(Material.POLISHED_BLACKSTONE, State.MID, ItemTag.NETHER);
+        register(Material.POLISHED_BLACKSTONE_BRICK_SLAB, State.MID, ItemTag.NETHER);
+        register(Material.POLISHED_BLACKSTONE_BRICK_STAIRS, State.MID, ItemTag.NETHER);
+        register(Material.POLISHED_BLACKSTONE_BRICK_WALL, State.MID, ItemTag.NETHER);
+        register(Material.POLISHED_BLACKSTONE_BRICKS, State.MID, ItemTag.NETHER);
+        register(Material.POLISHED_BLACKSTONE_BUTTON, State.MID, ItemTag.NETHER);
+        register(Material.POLISHED_BLACKSTONE_PRESSURE_PLATE, State.MID);
+        register(Material.POLISHED_BLACKSTONE_SLAB, State.MID, ItemTag.NETHER);
+        register(Material.POLISHED_BLACKSTONE_STAIRS, State.MID, ItemTag.NETHER);
+        register(Material.POLISHED_BLACKSTONE_WALL, State.MID, ItemTag.NETHER);
+        register(Material.POLISHED_DEEPSLATE, State.EARLY);
+        register(Material.POLISHED_DEEPSLATE_SLAB, State.EARLY);
+        register(Material.POLISHED_DEEPSLATE_STAIRS, State.EARLY);
+        register(Material.POLISHED_DEEPSLATE_WALL, State.EARLY);
+        register(Material.POLISHED_DIORITE, State.EARLY);
+        register(Material.POLISHED_DIORITE_SLAB, State.EARLY);
+        register(Material.POLISHED_DIORITE_STAIRS, State.EARLY);
+        register(Material.POLISHED_GRANITE, State.EARLY);
+        register(Material.POLISHED_GRANITE_SLAB, State.EARLY);
+        register(Material.POLISHED_GRANITE_STAIRS, State.EARLY);
+        register(Material.POLISHED_TUFF, State.EARLY);
+        register(Material.POLISHED_TUFF_SLAB, State.EARLY);
+        register(Material.POLISHED_TUFF_STAIRS, State.EARLY);
+        register(Material.POLISHED_TUFF_WALL, State.EARLY);
+        register(Material.POPPED_CHORUS_FRUIT, State.LATE, ItemTag.END);
+        register(Material.POPPY, State.EARLY);
+        register(Material.PORKCHOP, State.EARLY);
+        register(Material.POTATO, State.EARLY);
+        register(Material.POTION, State.MID);
+        register(Material.POWDER_SNOW_BUCKET, State.MID);
+        register(Material.POWERED_RAIL, State.EARLY);
+        register(Material.PRISMARINE, State.MID);
+        register(Material.PRISMARINE_BRICK_SLAB, State.MID);
+        register(Material.PRISMARINE_BRICK_STAIRS, State.MID);
+        register(Material.PRISMARINE_BRICKS, State.MID);
+        register(Material.PRISMARINE_CRYSTALS, State.MID);
+        register(Material.PRISMARINE_SHARD, State.MID);
+        register(Material.PRISMARINE_SLAB, State.MID);
+        register(Material.PRISMARINE_STAIRS, State.MID);
+        register(Material.PRISMARINE_WALL, State.MID);
+        register(Material.PRIZE_POTTERY_SHERD, State.LATE, ItemTag.EXTREME);
+        register(Material.PUFFERFISH, State.MID);
+        register(Material.PUFFERFISH_BUCKET, State.MID);
+        register(Material.PUMPKIN, State.EARLY);
+        register(Material.PUMPKIN_PIE, State.EARLY);
+        register(Material.PUMPKIN_SEEDS, State.EARLY);
+        register(Material.PURPLE_BANNER, State.EARLY);
+        register(Material.PURPLE_BED, State.EARLY);
+        register(Material.PURPLE_BUNDLE, State.EARLY);
+        register(Material.PURPLE_CANDLE, State.LATE);
+        register(Material.PURPLE_CARPET, State.EARLY);
+        register(Material.PURPLE_CONCRETE, State.EARLY);
+        register(Material.PURPLE_CONCRETE_POWDER, State.EARLY);
+        register(Material.PURPLE_DYE, State.EARLY);
+        register(Material.PURPLE_GLAZED_TERRACOTTA, State.EARLY);
+        register(Material.PURPLE_HARNESS, State.EARLY);
+        register(Material.PURPLE_SHULKER_BOX, State.LATE, ItemTag.END);
+        register(Material.PURPLE_STAINED_GLASS, State.EARLY);
+        register(Material.PURPLE_STAINED_GLASS_PANE, State.EARLY);
+        register(Material.PURPLE_TERRACOTTA, State.EARLY);
+        register(Material.PURPLE_WOOL, State.EARLY);
+        register(Material.PURPUR_BLOCK, State.LATE, ItemTag.END);
+        register(Material.PURPUR_PILLAR, State.LATE, ItemTag.END);
+        register(Material.PURPUR_SLAB, State.LATE, ItemTag.END);
+        register(Material.PURPUR_STAIRS, State.LATE, ItemTag.END);
+        register(Material.QUARTZ, State.MID);
+        register(Material.QUARTZ_BLOCK, State.MID, ItemTag.NETHER);
+        register(Material.QUARTZ_BRICKS, State.MID, ItemTag.NETHER);
+        register(Material.QUARTZ_PILLAR, State.MID, ItemTag.NETHER);
+        register(Material.QUARTZ_SLAB, State.MID, ItemTag.NETHER);
+        register(Material.QUARTZ_STAIRS, State.MID, ItemTag.NETHER);
+        register(Material.RABBIT, State.MID);
+        register(Material.RABBIT_FOOT, State.MID);
+        register(Material.RABBIT_HIDE, State.MID);
+        register(Material.RABBIT_STEW, State.MID);
+        register(Material.RAIL, State.EARLY);
+        register(Material.RAW_COPPER, State.EARLY);
+        register(Material.RAW_COPPER_BLOCK, State.EARLY);
+        register(Material.RAW_GOLD, State.EARLY);
+        register(Material.RAW_GOLD_BLOCK, State.EARLY);
+        register(Material.RAW_IRON, State.EARLY);
+        register(Material.RAW_IRON_BLOCK, State.EARLY);
+        register(Material.RECOVERY_COMPASS, State.LATE, ItemTag.EXTREME);
+        register(Material.RED_BANNER, State.EARLY);
+        register(Material.RED_BED, State.EARLY);
+        register(Material.RED_BUNDLE, State.EARLY);
+        register(Material.RED_CANDLE, State.LATE);
+        register(Material.RED_CARPET, State.EARLY);
+        register(Material.RED_CONCRETE, State.EARLY);
+        register(Material.RED_CONCRETE_POWDER, State.EARLY);
+        register(Material.RED_DYE, State.EARLY);
+        register(Material.RED_GLAZED_TERRACOTTA, State.EARLY);
+        register(Material.RED_HARNESS, State.EARLY);
+        register(Material.RED_MUSHROOM, State.EARLY);
+        register(Material.RED_MUSHROOM_BLOCK, State.LATE);
+        register(Material.RED_NETHER_BRICK_SLAB, State.MID, ItemTag.NETHER);
+        register(Material.RED_NETHER_BRICK_STAIRS, State.MID, ItemTag.NETHER);
+        register(Material.RED_NETHER_BRICK_WALL, State.MID, ItemTag.NETHER);
+        register(Material.RED_NETHER_BRICKS, State.MID, ItemTag.NETHER);
+        register(Material.RED_SAND, State.LATE);
+        register(Material.RED_SANDSTONE, State.LATE);
+        register(Material.RED_SANDSTONE_SLAB, State.LATE);
+        register(Material.RED_SANDSTONE_STAIRS, State.LATE);
+        register(Material.RED_SANDSTONE_WALL, State.LATE);
+        register(Material.RED_SHULKER_BOX, State.LATE, ItemTag.END);
+        register(Material.RED_STAINED_GLASS, State.EARLY);
+        register(Material.RED_STAINED_GLASS_PANE, State.EARLY);
+        register(Material.RED_TERRACOTTA, State.EARLY);
+        register(Material.RED_TULIP, State.MID);
+        register(Material.RED_WOOL, State.EARLY);
+        register(Material.REDSTONE, State.EARLY);
+        register(Material.REDSTONE_BLOCK, State.EARLY);
+        register(Material.REDSTONE_LAMP, State.MID, ItemTag.NETHER);
+        register(Material.REDSTONE_ORE, State.LATE, ItemTag.EXTREME);
+        register(Material.REDSTONE_TORCH, State.EARLY);
+        register(Material.REPEATER, State.EARLY);
+        register(Material.RESIN_BLOCK, State.LATE);
+        register(Material.RESIN_BRICK, State.LATE);
+        register(Material.RESIN_BRICK_SLAB, State.LATE);
+        register(Material.RESIN_BRICK_STAIRS, State.LATE);
+        register(Material.RESIN_BRICK_WALL, State.LATE);
+        register(Material.RESIN_BRICKS, State.LATE);
+        register(Material.RESIN_CLUMP, State.LATE);
+        register(Material.RESPAWN_ANCHOR, State.LATE, ItemTag.NETHER);
+        register(Material.RIB_ARMOR_TRIM_SMITHING_TEMPLATE, State.LATE, ItemTag.NETHER);
+        register(Material.ROOTED_DIRT, State.MID);
+        register(Material.ROSE_BUSH, State.EARLY);
+        register(Material.ROTTEN_FLESH, State.EARLY);
+        register(Material.SADDLE, State.EARLY);
+        register(Material.SALMON, State.EARLY);
+        register(Material.SALMON_BUCKET, State.EARLY);
+        register(Material.SAND, State.EARLY);
+        register(Material.SANDSTONE, State.EARLY);
+        register(Material.SANDSTONE_SLAB, State.EARLY);
+        register(Material.SANDSTONE_STAIRS, State.EARLY);
+        register(Material.SANDSTONE_WALL, State.EARLY);
+        register(Material.SCAFFOLDING, State.MID);
+        register(Material.SCRAPE_POTTERY_SHERD, State.LATE);
+        register(Material.SCULK, State.LATE);
+        register(Material.SCULK_CATALYST, State.LATE);
+        register(Material.SCULK_SENSOR, State.LATE);
+        register(Material.SCULK_SHRIEKER, State.LATE);
+        register(Material.SCULK_VEIN, State.LATE);
+        register(Material.SEA_LANTERN, State.MID);
+        register(Material.SEA_PICKLE, State.MID);
+        register(Material.SEAGRASS, State.EARLY);
+        register(Material.SENTRY_ARMOR_TRIM_SMITHING_TEMPLATE, State.LATE);
+        register(Material.SHEARS, State.EARLY);
+        register(Material.SHELTER_POTTERY_SHERD, State.LATE);
+        register(Material.SHIELD, State.EARLY);
+        register(Material.SHORT_DRY_GRASS, State.MID);
+        register(Material.SHORT_GRASS, State.EARLY);
+        register(Material.SHROOMLIGHT, State.MID, ItemTag.NETHER);
+        register(Material.SHULKER_BOX, State.LATE, ItemTag.END);
+        register(Material.SHULKER_SHELL, State.LATE, ItemTag.END);
+        register(Material.SKULL_BANNER_PATTERN, State.LATE, ItemTag.NETHER);
+        register(Material.SKULL_POTTERY_SHERD, State.LATE, ItemTag.EXTREME);
+        register(Material.SLIME_BALL, State.MID);
+        register(Material.SLIME_BLOCK, State.LATE);
+        register(Material.SMALL_AMETHYST_BUD, State.LATE);
+        register(Material.SMALL_DRIPLEAF, State.MID);
+        register(Material.SMITHING_TABLE, State.EARLY);
+        register(Material.SMOKER, State.EARLY);
+        register(Material.SMOOTH_BASALT, State.EARLY);
+        register(Material.SMOOTH_QUARTZ, State.MID, ItemTag.NETHER);
+        register(Material.SMOOTH_QUARTZ_SLAB, State.MID, ItemTag.NETHER);
+        register(Material.SMOOTH_QUARTZ_STAIRS, State.MID, ItemTag.NETHER);
+        register(Material.SMOOTH_RED_SANDSTONE, State.LATE);
+        register(Material.SMOOTH_RED_SANDSTONE_SLAB, State.LATE);
+        register(Material.SMOOTH_RED_SANDSTONE_STAIRS, State.LATE);
+        register(Material.SMOOTH_SANDSTONE, State.EARLY);
+        register(Material.SMOOTH_SANDSTONE_SLAB, State.EARLY);
+        register(Material.SMOOTH_SANDSTONE_STAIRS, State.EARLY);
+        register(Material.SMOOTH_STONE, State.EARLY);
+        register(Material.SMOOTH_STONE_SLAB, State.EARLY);
+        register(Material.SNIFFER_EGG, State.LATE);
+        register(Material.SNORT_POTTERY_SHERD, State.LATE);
+        register(Material.SNOUT_ARMOR_TRIM_SMITHING_TEMPLATE, State.LATE, ItemTag.NETHER);
+        register(Material.SNOW, State.EARLY);
+        register(Material.SNOW_BLOCK, State.EARLY);
+        register(Material.SNOWBALL, State.EARLY);
+        register(Material.SOUL_CAMPFIRE, State.MID, ItemTag.NETHER);
+        register(Material.SOUL_LANTERN, State.MID, ItemTag.NETHER);
+        register(Material.SOUL_SAND, State.MID, ItemTag.NETHER);
+        register(Material.SOUL_SOIL, State.MID, ItemTag.NETHER);
+        register(Material.SOUL_TORCH, State.MID);
+        register(Material.SPECTRAL_ARROW, State.MID, ItemTag.NETHER);
+        register(Material.SPIDER_EYE, State.MID);
+        register(Material.SPIRE_ARMOR_TRIM_SMITHING_TEMPLATE, State.LATE, ItemTag.END);
+        register(Material.SPLASH_POTION, State.LATE, ItemTag.NETHER);
+        register(Material.SPONGE, State.MID);
+        register(Material.SPORE_BLOSSOM, State.MID);
+        register(Material.SPRUCE_BOAT, State.EARLY);
+        register(Material.SPRUCE_BUTTON, State.EARLY);
+        register(Material.SPRUCE_CHEST_BOAT, State.EARLY);
+        register(Material.SPRUCE_DOOR, State.EARLY);
+        register(Material.SPRUCE_FENCE, State.EARLY);
+        register(Material.SPRUCE_FENCE_GATE, State.EARLY);
+        register(Material.SPRUCE_HANGING_SIGN, State.EARLY);
+        register(Material.SPRUCE_LEAVES, State.EARLY);
+        register(Material.SPRUCE_LOG, State.EARLY);
+        register(Material.SPRUCE_PLANKS, State.EARLY);
+        register(Material.SPRUCE_PRESSURE_PLATE, State.EARLY);
+        register(Material.SPRUCE_SAPLING, State.EARLY);
+        register(Material.SPRUCE_SHELF, State.EARLY);
+        register(Material.SPRUCE_SIGN, State.EARLY);
+        register(Material.SPRUCE_SLAB, State.EARLY);
+        register(Material.SPRUCE_STAIRS, State.EARLY);
+        register(Material.SPRUCE_TRAPDOOR, State.EARLY);
+        register(Material.SPRUCE_WOOD, State.EARLY);
+        register(Material.SPYGLASS, State.EARLY);
+        register(Material.STICK, State.EARLY);
+        register(Material.STICKY_PISTON, State.MID);
+        register(Material.STONE, State.EARLY);
+        register(Material.STONE_AXE, State.EARLY);
+        register(Material.STONE_BRICK_SLAB, State.EARLY);
+        register(Material.STONE_BRICK_STAIRS, State.EARLY);
+        register(Material.STONE_BRICK_WALL, State.EARLY);
+        register(Material.STONE_BRICKS, State.EARLY);
+        register(Material.STONE_BUTTON, State.EARLY);
+        register(Material.STONE_HOE, State.EARLY);
+        register(Material.STONE_PICKAXE, State.EARLY);
+        register(Material.STONE_PRESSURE_PLATE, State.EARLY);
+        register(Material.STONE_SHOVEL, State.EARLY);
+        register(Material.STONE_SLAB, State.EARLY);
+        register(Material.STONE_SPEAR, State.EARLY);
+        register(Material.STONE_STAIRS, State.EARLY);
+        register(Material.STONE_SWORD, State.EARLY);
+        register(Material.STONECUTTER, State.EARLY);
+        register(Material.STRING, State.MID);
+        register(Material.STRIPPED_ACACIA_LOG, State.EARLY);
+        register(Material.STRIPPED_ACACIA_WOOD, State.EARLY);
+        register(Material.STRIPPED_BAMBOO_BLOCK, State.EARLY);
+        register(Material.STRIPPED_BIRCH_LOG, State.EARLY);
+        register(Material.STRIPPED_BIRCH_WOOD, State.EARLY);
+        register(Material.STRIPPED_CHERRY_LOG, State.MID);
+        register(Material.STRIPPED_CHERRY_WOOD, State.MID);
+        register(Material.STRIPPED_CRIMSON_HYPHAE, State.MID, ItemTag.NETHER);
+        register(Material.STRIPPED_CRIMSON_STEM, State.MID, ItemTag.NETHER);
+        register(Material.STRIPPED_DARK_OAK_LOG, State.EARLY);
+        register(Material.STRIPPED_DARK_OAK_WOOD, State.EARLY);
+        register(Material.STRIPPED_JUNGLE_LOG, State.EARLY);
+        register(Material.STRIPPED_JUNGLE_WOOD, State.EARLY);
+        register(Material.STRIPPED_MANGROVE_LOG, State.MID);
+        register(Material.STRIPPED_MANGROVE_WOOD, State.MID);
+        register(Material.STRIPPED_OAK_LOG, State.EARLY);
+        register(Material.STRIPPED_OAK_WOOD, State.EARLY);
+        register(Material.STRIPPED_PALE_OAK_LOG, State.LATE);
+        register(Material.STRIPPED_PALE_OAK_WOOD, State.LATE);
+        register(Material.STRIPPED_SPRUCE_LOG, State.EARLY);
+        register(Material.STRIPPED_SPRUCE_WOOD, State.EARLY);
+        register(Material.STRIPPED_WARPED_HYPHAE, State.MID, ItemTag.NETHER);
+        register(Material.STRIPPED_WARPED_STEM, State.MID, ItemTag.NETHER);
+        register(Material.SUGAR, State.EARLY);
+        register(Material.SUGAR_CANE, State.EARLY);
+        register(Material.SUNFLOWER, State.EARLY);
+        register(Material.SUSPICIOUS_STEW, State.EARLY);
+        register(Material.SWEET_BERRIES, State.EARLY);
+        register(Material.TALL_DRY_GRASS, State.MID);
+        register(Material.TALL_GRASS, State.LATE);
+        register(Material.TARGET, State.EARLY);
+        register(Material.TERRACOTTA, State.EARLY);
+        register(Material.TIDE_ARMOR_TRIM_SMITHING_TEMPLATE, State.LATE, ItemTag.EXTREME);
+        register(Material.TINTED_GLASS, State.EARLY);
+        register(Material.TIPPED_ARROW, State.LATE);
+        register(Material.TNT, State.MID);
+        register(Material.TNT_MINECART, State.MID);
+        register(Material.TORCH, State.EARLY);
+        register(Material.TOTEM_OF_UNDYING, State.LATE, ItemTag.EXTREME);
+        register(Material.TRAPPED_CHEST, State.EARLY);
+        register(Material.TRIAL_KEY, State.LATE);
+        register(Material.TRIDENT, State.LATE);
+        register(Material.TRIPWIRE_HOOK, State.EARLY);
+        register(Material.TROPICAL_FISH, State.MID);
+        register(Material.TROPICAL_FISH_BUCKET, State.MID);
+        register(Material.TUBE_CORAL, State.LATE);
+        register(Material.TUBE_CORAL_BLOCK, State.LATE);
+        register(Material.TUBE_CORAL_FAN, State.LATE);
+        register(Material.TUFF, State.EARLY);
+        register(Material.TUFF_BRICK_SLAB, State.EARLY);
+        register(Material.TUFF_BRICK_STAIRS, State.EARLY);
+        register(Material.TUFF_BRICK_WALL, State.EARLY);
+        register(Material.TUFF_BRICKS, State.EARLY);
+        register(Material.TUFF_SLAB, State.EARLY);
+        register(Material.TUFF_STAIRS, State.EARLY);
+        register(Material.TUFF_WALL, State.EARLY);
+        register(Material.TWISTING_VINES, State.MID, ItemTag.NETHER);
+        register(Material.VEX_ARMOR_TRIM_SMITHING_TEMPLATE, State.LATE, ItemTag.EXTREME);
+        register(Material.VINE, State.EARLY);
+        register(Material.WARD_ARMOR_TRIM_SMITHING_TEMPLATE, State.LATE, ItemTag.EXTREME);
+        register(Material.WARPED_BUTTON, State.MID, ItemTag.NETHER);
+        register(Material.WARPED_DOOR, State.MID, ItemTag.NETHER);
+        register(Material.WARPED_FENCE, State.MID, ItemTag.NETHER);
+        register(Material.WARPED_FENCE_GATE, State.MID, ItemTag.NETHER);
+        register(Material.WARPED_FUNGUS, State.MID, ItemTag.NETHER);
+        register(Material.WARPED_FUNGUS_ON_A_STICK, State.MID, ItemTag.NETHER);
+        register(Material.WARPED_HANGING_SIGN, State.MID, ItemTag.NETHER);
+        register(Material.WARPED_HYPHAE, State.MID, ItemTag.NETHER);
+        register(Material.WARPED_NYLIUM, State.MID, ItemTag.NETHER);
+        register(Material.WARPED_PLANKS, State.MID, ItemTag.NETHER);
+        register(Material.WARPED_PRESSURE_PLATE, State.MID, ItemTag.NETHER);
+        register(Material.WARPED_ROOTS, State.MID, ItemTag.NETHER);
+        register(Material.WARPED_SHELF, State.MID, ItemTag.NETHER);
+        register(Material.WARPED_SIGN, State.MID, ItemTag.NETHER);
+        register(Material.WARPED_SLAB, State.MID, ItemTag.NETHER);
+        register(Material.WARPED_STAIRS, State.MID, ItemTag.NETHER);
+        register(Material.WARPED_STEM, State.MID, ItemTag.NETHER);
+        register(Material.WARPED_TRAPDOOR, State.MID, ItemTag.NETHER);
+        register(Material.WARPED_WART_BLOCK, State.MID, ItemTag.NETHER);
+        register(Material.WATER_BUCKET, State.EARLY);
+        register(Material.WAXED_CHISELED_COPPER, State.LATE);
+        register(Material.WAXED_COPPER_BARS, State.LATE);
+        register(Material.WAXED_COPPER_BLOCK, State.LATE);
+        register(Material.WAXED_COPPER_BULB, State.LATE);
+        register(Material.WAXED_COPPER_CHAIN, State.LATE);
+        register(Material.WAXED_COPPER_CHEST, State.LATE);
+        register(Material.WAXED_COPPER_DOOR, State.LATE);
+        register(Material.WAXED_COPPER_GOLEM_STATUE, State.LATE);
+        register(Material.WAXED_COPPER_GRATE, State.LATE);
+        register(Material.WAXED_COPPER_LANTERN, State.LATE);
+        register(Material.WAXED_COPPER_TRAPDOOR, State.LATE);
+        register(Material.WAXED_CUT_COPPER, State.LATE);
+        register(Material.WAXED_CUT_COPPER_SLAB, State.LATE);
+        register(Material.WAXED_CUT_COPPER_STAIRS, State.LATE);
+        register(Material.WAXED_EXPOSED_CHISELED_COPPER, State.LATE);
+        register(Material.WAXED_EXPOSED_COPPER, State.LATE);
+        register(Material.WAXED_EXPOSED_COPPER_BARS, State.LATE);
+        register(Material.WAXED_EXPOSED_COPPER_BULB, State.LATE);
+        register(Material.WAXED_EXPOSED_COPPER_CHAIN, State.LATE);
+        register(Material.WAXED_EXPOSED_COPPER_CHEST, State.LATE);
+        register(Material.WAXED_EXPOSED_COPPER_DOOR, State.LATE);
+        register(Material.WAXED_EXPOSED_COPPER_GOLEM_STATUE, State.LATE);
+        register(Material.WAXED_EXPOSED_COPPER_GRATE, State.LATE);
+        register(Material.WAXED_EXPOSED_COPPER_LANTERN, State.LATE);
+        register(Material.WAXED_EXPOSED_COPPER_TRAPDOOR, State.LATE);
+        register(Material.WAXED_EXPOSED_CUT_COPPER, State.LATE);
+        register(Material.WAXED_EXPOSED_CUT_COPPER_SLAB, State.LATE);
+        register(Material.WAXED_EXPOSED_CUT_COPPER_STAIRS, State.LATE);
+        register(Material.WAXED_EXPOSED_LIGHTNING_ROD, State.LATE);
+        register(Material.WAXED_LIGHTNING_ROD, State.LATE);
+        register(Material.WAXED_OXIDIZED_CHISELED_COPPER, State.LATE);
+        register(Material.WAXED_OXIDIZED_COPPER, State.LATE);
+        register(Material.WAXED_OXIDIZED_COPPER_BARS, State.LATE);
+        register(Material.WAXED_OXIDIZED_COPPER_BULB, State.LATE);
+        register(Material.WAXED_OXIDIZED_COPPER_CHAIN, State.LATE);
+        register(Material.WAXED_OXIDIZED_COPPER_CHEST, State.LATE);
+        register(Material.WAXED_OXIDIZED_COPPER_DOOR, State.LATE);
+        register(Material.WAXED_OXIDIZED_COPPER_GOLEM_STATUE, State.LATE);
+        register(Material.WAXED_OXIDIZED_COPPER_GRATE, State.LATE);
+        register(Material.WAXED_OXIDIZED_COPPER_LANTERN, State.LATE);
+        register(Material.WAXED_OXIDIZED_COPPER_TRAPDOOR, State.LATE);
+        register(Material.WAXED_OXIDIZED_CUT_COPPER, State.LATE);
+        register(Material.WAXED_OXIDIZED_CUT_COPPER_SLAB, State.LATE);
+        register(Material.WAXED_OXIDIZED_CUT_COPPER_STAIRS, State.LATE);
+        register(Material.WAXED_OXIDIZED_LIGHTNING_ROD, State.LATE);
+        register(Material.WAXED_WEATHERED_CHISELED_COPPER, State.LATE);
+        register(Material.WAXED_WEATHERED_COPPER, State.LATE);
+        register(Material.WAXED_WEATHERED_COPPER_BARS, State.LATE);
+        register(Material.WAXED_WEATHERED_COPPER_BULB, State.LATE);
+        register(Material.WAXED_WEATHERED_COPPER_CHAIN, State.LATE);
+        register(Material.WAXED_WEATHERED_COPPER_CHEST, State.LATE);
+        register(Material.WAXED_WEATHERED_COPPER_DOOR, State.LATE);
+        register(Material.WAXED_WEATHERED_COPPER_GOLEM_STATUE, State.LATE);
+        register(Material.WAXED_WEATHERED_COPPER_GRATE, State.LATE);
+        register(Material.WAXED_WEATHERED_COPPER_LANTERN, State.LATE);
+        register(Material.WAXED_WEATHERED_COPPER_TRAPDOOR, State.LATE);
+        register(Material.WAXED_WEATHERED_CUT_COPPER, State.LATE);
+        register(Material.WAXED_WEATHERED_CUT_COPPER_SLAB, State.LATE);
+        register(Material.WAXED_WEATHERED_CUT_COPPER_STAIRS, State.LATE);
+        register(Material.WAXED_WEATHERED_LIGHTNING_ROD, State.LATE);
+        register(Material.WEATHERED_CHISELED_COPPER, State.LATE);
+        register(Material.WEATHERED_COPPER, State.LATE);
+        register(Material.WEATHERED_COPPER_BARS, State.LATE);
+        register(Material.WEATHERED_COPPER_BULB, State.LATE);
+        register(Material.WEATHERED_COPPER_CHAIN, State.LATE);
+        register(Material.WEATHERED_COPPER_CHEST, State.LATE);
+        register(Material.WEATHERED_COPPER_DOOR, State.LATE);
+        register(Material.WEATHERED_COPPER_GOLEM_STATUE, State.LATE);
+        register(Material.WEATHERED_COPPER_GRATE, State.LATE);
+        register(Material.WEATHERED_COPPER_LANTERN, State.LATE);
+        register(Material.WEATHERED_COPPER_TRAPDOOR, State.LATE);
+        register(Material.WEATHERED_CUT_COPPER, State.LATE);
+        register(Material.WEATHERED_CUT_COPPER_SLAB, State.LATE);
+        register(Material.WEATHERED_CUT_COPPER_STAIRS, State.LATE);
+        register(Material.WEATHERED_LIGHTNING_ROD, State.LATE);
+        register(Material.WEEPING_VINES, State.MID, ItemTag.NETHER);
+        register(Material.WET_SPONGE, State.MID);
+        register(Material.WHEAT, State.EARLY);
+        register(Material.WHEAT_SEEDS, State.EARLY);
+        register(Material.WHITE_BANNER, State.EARLY);
+        register(Material.WHITE_BED, State.EARLY);
+        register(Material.WHITE_BUNDLE, State.EARLY);
+        register(Material.WHITE_CANDLE, State.LATE);
+        register(Material.WHITE_CARPET, State.EARLY);
+        register(Material.WHITE_CONCRETE, State.EARLY);
+        register(Material.WHITE_CONCRETE_POWDER, State.EARLY);
+        register(Material.WHITE_DYE, State.EARLY);
+        register(Material.WHITE_GLAZED_TERRACOTTA, State.EARLY);
+        register(Material.WHITE_HARNESS, State.EARLY);
+        register(Material.WHITE_SHULKER_BOX, State.LATE, ItemTag.END);
+        register(Material.WHITE_STAINED_GLASS, State.EARLY);
+        register(Material.WHITE_STAINED_GLASS_PANE, State.EARLY);
+        register(Material.WHITE_TERRACOTTA, State.EARLY);
+        register(Material.WHITE_TULIP, State.MID);
+        register(Material.WHITE_WOOL, State.EARLY);
+        register(Material.WILD_ARMOR_TRIM_SMITHING_TEMPLATE, State.LATE);
+        register(Material.WILDFLOWERS, State.EARLY);
+        register(Material.WIND_CHARGE, State.LATE);
+        register(Material.WITHER_ROSE, State.MID);
+        register(Material.WITHER_SKELETON_SKULL, State.LATE, ItemTag.NETHER);
+        register(Material.WOLF_ARMOR, State.EARLY);
+        register(Material.WOODEN_AXE, State.EARLY);
+        register(Material.WOODEN_HOE, State.EARLY);
+        register(Material.WOODEN_PICKAXE, State.EARLY);
+        register(Material.WOODEN_SHOVEL, State.EARLY);
+        register(Material.WOODEN_SPEAR, State.EARLY);
+        register(Material.WOODEN_SWORD, State.EARLY);
+        register(Material.WRITABLE_BOOK, State.EARLY);
+        register(Material.WRITTEN_BOOK, State.EARLY);
+        register(Material.YELLOW_BANNER, State.EARLY);
+        register(Material.YELLOW_BED, State.EARLY);
+        register(Material.YELLOW_BUNDLE, State.EARLY);
+        register(Material.YELLOW_CANDLE, State.LATE);
+        register(Material.YELLOW_CARPET, State.EARLY);
+        register(Material.YELLOW_CONCRETE, State.EARLY);
+        register(Material.YELLOW_CONCRETE_POWDER, State.EARLY);
+        register(Material.YELLOW_DYE, State.EARLY);
+        register(Material.YELLOW_GLAZED_TERRACOTTA, State.EARLY);
+        register(Material.YELLOW_HARNESS, State.EARLY);
+        register(Material.YELLOW_SHULKER_BOX, State.LATE, ItemTag.END);
+        register(Material.YELLOW_STAINED_GLASS, State.EARLY);
+        register(Material.YELLOW_STAINED_GLASS_PANE, State.EARLY);
+        register(Material.YELLOW_TERRACOTTA, State.EARLY);
+        register(Material.YELLOW_WOOL, State.EARLY);
     }
 
     @Getter
     public enum State {
-
         EARLY,
-
         MID,
-
-        LATE,
-
-        ;
+        LATE;
 
         static final State[] VALUES = values();
 
@@ -1774,6 +1677,5 @@ public class ItemDifficultiesManager {
 
         @Setter
         private double unlockedAtPercentage;
-
     }
 }
