@@ -120,7 +120,7 @@ public class Listeners implements Listener {
         plugin.getScoreboardManager().setupForPlayer(player);
         plugin.getScoreboardManager().updateAllPlayers();
 
-        player.sendPlayerListHeader(this.plugin.getGamemanager().getMiniMessage().deserialize("<!shadow>\n\n\n\uebA0\n"));
+        player.sendPlayerListHeader(this.plugin.getGamemanager().getMiniMessage().deserialize("<!shadow>\n\n\n\ue000\n"));
         event.joinMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<green>» <yellow>" + player.getName() + " <green>joined"));
     }
 
