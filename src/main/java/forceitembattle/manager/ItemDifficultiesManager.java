@@ -468,6 +468,7 @@ public class ItemDifficultiesManager {
         register(Material.BONE_MEAL, State.EARLY);
         register(Material.BOOK, State.EARLY);
         register(Material.BOOKSHELF, State.EARLY);
+        register(Material.BORDURE_INDENTED_BANNER_PATTERN, State.EARLY);
         register(Material.BOW, State.MID);
         register(Material.BOWL, State.EARLY);
         register(Material.BRAIN_CORAL, State.LATE);
