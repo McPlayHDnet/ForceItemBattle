@@ -796,6 +796,7 @@ public class ItemDifficultiesManager {
         register(Material.FEATHER, State.EARLY);
         register(Material.FERMENTED_SPIDER_EYE, State.MID);
         register(Material.FERN, State.EARLY);
+        register(Material.FIELD_MASONED_BANNER_PATTERN, State.EARLY);
         register(Material.FILLED_MAP, State.EARLY);
         register(Material.FIRE_CHARGE, State.MID);
         register(Material.FIRE_CORAL, State.LATE);
