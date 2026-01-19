@@ -468,6 +468,7 @@ public class ItemDifficultiesManager {
         register(Material.BONE_MEAL, State.EARLY);
         register(Material.BOOK, State.EARLY);
         register(Material.BOOKSHELF, State.EARLY);
+        register(Material.BORDURE_INDENTED_BANNER_PATTERN, State.EARLY);
         register(Material.BOW, State.MID);
         register(Material.BOWL, State.EARLY);
         register(Material.BRAIN_CORAL, State.LATE);
@@ -583,6 +584,7 @@ public class ItemDifficultiesManager {
         register(Material.COMPARATOR, State.MID, ItemTag.NETHER);
         register(Material.COMPASS, State.EARLY);
         register(Material.COMPOSTER, State.EARLY);
+        register(Material.CONDUIT, State.LATE, ItemTag.EXTREME);
         register(Material.COOKED_BEEF, State.EARLY);
         register(Material.COOKED_CHICKEN, State.EARLY);
         register(Material.COOKED_COD, State.EARLY);
@@ -795,6 +797,7 @@ public class ItemDifficultiesManager {
         register(Material.FEATHER, State.EARLY);
         register(Material.FERMENTED_SPIDER_EYE, State.MID);
         register(Material.FERN, State.EARLY);
+        register(Material.FIELD_MASONED_BANNER_PATTERN, State.EARLY);
         register(Material.FILLED_MAP, State.EARLY);
         register(Material.FIRE_CHARGE, State.MID);
         register(Material.FIRE_CORAL, State.LATE);
@@ -807,6 +810,7 @@ public class ItemDifficultiesManager {
         register(Material.FLETCHING_TABLE, State.EARLY);
         register(Material.FLINT, State.EARLY);
         register(Material.FLINT_AND_STEEL, State.EARLY);
+        register(Material.FLOW_ARMOR_TRIM_SMITHING_TEMPLATE, State.LATE, ItemTag.EXTREME);
         register(Material.FLOW_BANNER_PATTERN, State.LATE, ItemTag.EXTREME);
         register(Material.FLOW_POTTERY_SHERD, State.LATE);
         register(Material.FLOWER_BANNER_PATTERN, State.EARLY);
@@ -1015,6 +1019,7 @@ public class ItemDifficultiesManager {
         register(Material.LIME_WOOL, State.MID);
         register(Material.LODESTONE, State.EARLY);
         register(Material.LOOM, State.MID);
+        register(Material.MACE, State.LATE, ItemTag.EXTREME);
         register(Material.MAGENTA_BANNER, State.EARLY);
         register(Material.MAGENTA_BED, State.EARLY);
         register(Material.MAGENTA_BUNDLE, State.EARLY);
