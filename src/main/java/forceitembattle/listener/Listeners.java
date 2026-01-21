@@ -91,12 +91,12 @@ public class Listeners implements Listener {
                 player.setGameMode(GameMode.SPECTATOR);
 
                 /** todo
-                this.plugin.getGamemanager().giveSpectatorItems(player);
+                 this.plugin.getGamemanager().giveSpectatorItems(player);
 
-                this.plugin.getGamemanager().forceItemPlayerMap().values().forEach(gamePlayers -> {
-                    gamePlayers.player().hidePlayer(this.plugin, player);
-                });
-                **/
+                 this.plugin.getGamemanager().forceItemPlayerMap().values().forEach(gamePlayers -> {
+                 gamePlayers.player().hidePlayer(this.plugin, player);
+                 });
+                 **/
             } else {
                 forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
                 forceItemPlayer.setPlayer(player);
@@ -383,29 +383,28 @@ public class Listeners implements Listener {
         BackToBackResult result = checkForBackToBack(forceItemPlayer, currentMaterial, context);
 
         if (result.hasBackToBack()) {
-            forceItemPlayer.setBackToBackStreak(forceItemPlayer.backToBackStreak() + 1);
-
-            if (result.getTeammateWhoHasIt() != null) {
-                ForceItemPlayer teammate = result.getTeammateWhoHasIt();
-                teammate.setBackToBackStreak(teammate.backToBackStreak() + 1);
-            }
-
-            if (context.isTeamGame() && forceItemPlayer.currentTeam() != null) {
+            if (context.isTeamGame()) {
                 Team team = forceItemPlayer.currentTeam();
                 team.setBackToBackStreak(team.getBackToBackStreak() + 1);
+
+                for (ForceItemPlayer teammate : team.getPlayers()) {
+                    teammate.setBackToBackStreak(teammate.backToBackStreak() + 1);
+                }
+            } else {
+                forceItemPlayer.setBackToBackStreak(forceItemPlayer.backToBackStreak() + 1);
             }
 
             triggerBackToBackEvent(forceItemPlayer, player, result, context);
         } else {
-            forceItemPlayer.setBackToBackStreak(0);
+            if (context.isTeamGame()) {
+                Team team = forceItemPlayer.currentTeam();
+                team.setBackToBackStreak(0);
 
-            if (result.getTeammateWhoHasIt() != null) {
-                ForceItemPlayer teammate = result.getTeammateWhoHasIt();
-                teammate.setBackToBackStreak(0);
-            }
-
-            if (context.isTeamGame() && forceItemPlayer.currentTeam() != null) {
-                forceItemPlayer.currentTeam().setBackToBackStreak(0);
+                for (ForceItemPlayer teammate : team.getPlayers()) {
+                    teammate.setBackToBackStreak(0);
+                }
+            } else {
+                forceItemPlayer.setBackToBackStreak(0);
             }
         }
     }
