@@ -91,12 +91,12 @@ public class Listeners implements Listener {
                 player.setGameMode(GameMode.SPECTATOR);
 
                 /** todo
-                 this.plugin.getGamemanager().giveSpectatorItems(player);
+                this.plugin.getGamemanager().giveSpectatorItems(player);
 
-                 this.plugin.getGamemanager().forceItemPlayerMap().values().forEach(gamePlayers -> {
-                 gamePlayers.player().hidePlayer(this.plugin, player);
-                 });
-                 **/
+                this.plugin.getGamemanager().forceItemPlayerMap().values().forEach(gamePlayers -> {
+                    gamePlayers.player().hidePlayer(this.plugin, player);
+                });
+                **/
             } else {
                 forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
                 forceItemPlayer.setPlayer(player);
