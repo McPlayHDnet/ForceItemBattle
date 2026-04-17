@@ -842,6 +842,7 @@ public class ItemDifficultiesManager {
         register(Material.GOLDEN_BOOTS, State.EARLY);
         register(Material.GOLDEN_CARROT, State.MID);
         register(Material.GOLDEN_CHESTPLATE, State.EARLY);
+        register(Material.GOLDEN_DANDELION, State.EARLY);
         register(Material.GOLDEN_HELMET, State.EARLY);
         register(Material.GOLDEN_HOE, State.EARLY);
         register(Material.GOLDEN_HORSE_ARMOR, State.MID);
