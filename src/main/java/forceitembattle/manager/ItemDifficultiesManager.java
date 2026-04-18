@@ -842,6 +842,7 @@ public class ItemDifficultiesManager {
         register(Material.GOLDEN_BOOTS, State.EARLY);
         register(Material.GOLDEN_CARROT, State.MID);
         register(Material.GOLDEN_CHESTPLATE, State.EARLY);
+        register(Material.GOLDEN_DANDELION, State.EARLY);
         register(Material.GOLDEN_HELMET, State.EARLY);
         register(Material.GOLDEN_HOE, State.EARLY);
         register(Material.GOLDEN_HORSE_ARMOR, State.MID);
@@ -1095,7 +1096,7 @@ public class ItemDifficultiesManager {
         register(Material.MUSIC_DISC_TEARS, State.MID, ItemTag.NETHER);
         register(Material.MUTTON, State.EARLY);
         register(Material.MYCELIUM, State.LATE);
-        register(Material.NAME_TAG, State.MID);
+        register(Material.NAME_TAG, State.EARLY);
         register(Material.NAUTILUS_SHELL, State.MID);
         register(Material.NETHER_BRICK, State.MID);
         register(Material.NETHER_BRICK_FENCE, State.MID);
