@@ -245,8 +245,6 @@ public final class ForceItemBattle extends JavaPlugin {
 
     private void copyDatapack(String datapackName) {
         File world = new File(Bukkit.getWorldContainer() , "world");
-        File nether = new File(Bukkit.getWorldContainer() , "world_nether");
-        File end = new File(Bukkit.getWorldContainer() , "world_the_end");
 
         try {
             // Create Path objects for source and destination directories
@@ -276,46 +274,31 @@ public final class ForceItemBattle extends JavaPlugin {
             //Files.deleteIfExists(getDataFolder().toPath());
             //////////////////////////////////////////////////////////////////////////////
 
-            File world = new File(Bukkit.getWorldContainer() , "world");
-            File nether = new File(Bukkit.getWorldContainer() , "world_nether");
-            File end = new File(Bukkit.getWorldContainer() , "world_the_end");
+            File world = new File(Bukkit.getWorldContainer(), "world");
 
-            Files.walk(world.toPath())
-                    .sorted(Comparator.reverseOrder())
-                    . map(Path::toFile)
-                    . forEach(File::delete);
-            Files.walk(nether.toPath())
-                    .sorted(Comparator.reverseOrder())
-                    . map(Path::toFile)
-                    . forEach(File::delete);
-            Files.walk(end.toPath())
-                    .sorted(Comparator.reverseOrder())
-                    . map(Path::toFile)
-                    . forEach(File::delete);
+            if (world.exists()) {
+                Files.walk(world.toPath())
+                        .sorted(Comparator.reverseOrder())
+                        .map(Path::toFile)
+                        .forEach(File::delete);
+            }
 
             //////////////////////////////////////////////////////////////////////////////
 
             world.mkdirs();
-            nether.mkdirs();
-            end.mkdirs();
 
-            new File(world , "data").mkdirs();
-            new File(world , "datapacks").mkdirs();
-            new File(world , "playerdata").mkdirs();
-            new File(world , "poi").mkdirs();
-            new File(world , "region").mkdirs();
-
-            new File(nether , "data").mkdirs();
-            new File(nether , "datapacks").mkdirs();
-            new File(nether , "playerdata").mkdirs();
-            new File(nether , "poi").mkdirs();
-            new File(nether , "region").mkdirs();
-
-            new File(end , "data").mkdirs();
-            new File(end , "datapacks").mkdirs();
-            new File(end , "playerdata").mkdirs();
-            new File(end , "poi").mkdirs();
-            new File(end , "region").mkdirs();
+            new File(world, "datapacks").mkdirs();
+            new File(world, "data").mkdirs();
+            new File(world, "players").mkdirs();
+            new File(world, "dimensions/minecraft/overworld/region").mkdirs();
+            new File(world, "dimensions/minecraft/overworld/entities").mkdirs();
+            new File(world, "dimensions/minecraft/overworld/poi").mkdirs();
+            new File(world, "dimensions/minecraft/the_nether/region").mkdirs();
+            new File(world, "dimensions/minecraft/the_nether/entities").mkdirs();
+            new File(world, "dimensions/minecraft/the_nether/poi").mkdirs();
+            new File(world, "dimensions/minecraft/the_end/region").mkdirs();
+            new File(world, "dimensions/minecraft/the_end/entities").mkdirs();
+            new File(world, "dimensions/minecraft/the_end/poi").mkdirs();
 
             this.copyDatapack("FIB_Worldgen");
         } catch (IOException e) {
