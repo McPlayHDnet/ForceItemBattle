@@ -61,6 +61,7 @@ import forceitembattle.util.Timer;
 import forceitembattle.util.WanderingTraderTimer;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.io.FileUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.GameRules;
@@ -84,7 +85,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
@@ -139,8 +139,6 @@ public final class ForceItemBattle extends JavaPlugin {
     @Getter
     private GameSettings settings;
 
-    public final File resetFile = new File(this.getDataFolder() + "/reset");
-
     public ForceItemBattle() {
         instance = this;
     }
@@ -152,10 +150,6 @@ public final class ForceItemBattle extends JavaPlugin {
         this.settings = new GameSettings(this);
 
         saveConfig();
-        if (resetFile.exists()) {
-            this.resetWorld();
-            resetFile.delete();
-        }
     }
 
     @Override
@@ -268,42 +262,25 @@ public final class ForceItemBattle extends JavaPlugin {
         }
     }
 
-    private void resetWorld() {
-        try {
-            //////////////////////////////////////////////////////////////////////////////
-            //Files.deleteIfExists(getDataFolder().toPath());
-            //////////////////////////////////////////////////////////////////////////////
+    public void scheduleReset() {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                File world = new File(Bukkit.getWorldContainer(), "world").toPath().normalize().toFile();
+                if (world.exists()) {
+                    FileUtils.deleteDirectory(world);
+                    System.out.println("[FIB] World deleted successfully.");
+                }
 
-            File world = new File(Bukkit.getWorldContainer(), "world");
-
-            if (world.exists()) {
-                Files.walk(world.toPath())
-                        .sorted(Comparator.reverseOrder())
-                        .map(Path::toFile)
-                        .forEach(File::delete);
+                world.mkdirs();
+                new File(world, "datapacks").mkdirs();
+                this.copyDatapack("FIB_Worldgen");
+                System.out.println("[FIB] Datapack copied.");
+            } catch (IOException e) {
+                e.printStackTrace();
             }
+        }));
 
-            //////////////////////////////////////////////////////////////////////////////
-
-            world.mkdirs();
-
-            new File(world, "datapacks").mkdirs();
-            new File(world, "data").mkdirs();
-            new File(world, "players").mkdirs();
-            new File(world, "dimensions/minecraft/overworld/region").mkdirs();
-            new File(world, "dimensions/minecraft/overworld/entities").mkdirs();
-            new File(world, "dimensions/minecraft/overworld/poi").mkdirs();
-            new File(world, "dimensions/minecraft/the_nether/region").mkdirs();
-            new File(world, "dimensions/minecraft/the_nether/entities").mkdirs();
-            new File(world, "dimensions/minecraft/the_nether/poi").mkdirs();
-            new File(world, "dimensions/minecraft/the_end/region").mkdirs();
-            new File(world, "dimensions/minecraft/the_end/entities").mkdirs();
-            new File(world, "dimensions/minecraft/the_end/poi").mkdirs();
-
-            this.copyDatapack("FIB_Worldgen");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Bukkit.restart();
     }
 
     private void initListeners() {
