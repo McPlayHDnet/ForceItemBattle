@@ -4,8 +4,6 @@ import forceitembattle.commands.CustomCommand;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-import java.io.IOException;
-
 public class CommandReset extends CustomCommand {
 
     public CommandReset() {
@@ -24,12 +22,7 @@ public class CommandReset extends CustomCommand {
                             "\n"
             )));
 
-            try {
-                this.plugin.resetFile.createNewFile();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            Bukkit.restart();
+            this.plugin.scheduleReset();
         }
     }
 }
