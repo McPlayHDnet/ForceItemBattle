@@ -510,7 +510,7 @@ public class ItemDifficultiesManager {
         register(Material.CACTUS, State.MID);
         register(Material.CACTUS_FLOWER, State.MID);
         register(Material.CAKE, State.MID);
-        register(Material.CALCITE, State.EARLY);
+        register(Material.CALCITE, State.MID);
         register(Material.CALIBRATED_SCULK_SENSOR, State.LATE, ItemTag.EXTREME);
         register(Material.CAMPFIRE, State.EARLY);
         register(Material.CANDLE, State.LATE);
@@ -1497,7 +1497,7 @@ public class ItemDifficultiesManager {
         register(Material.TARGET, State.EARLY);
         register(Material.TERRACOTTA, State.EARLY);
         register(Material.TIDE_ARMOR_TRIM_SMITHING_TEMPLATE, State.LATE, ItemTag.EXTREME);
-        register(Material.TINTED_GLASS, State.EARLY);
+        register(Material.TINTED_GLASS, State.MID);
         register(Material.TIPPED_ARROW, State.LATE);
         register(Material.TNT, State.MID);
         register(Material.TNT_MINECART, State.MID);
