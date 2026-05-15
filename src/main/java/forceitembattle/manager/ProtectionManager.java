@@ -33,7 +33,7 @@ public class ProtectionManager {
             }
 
             Player p = Bukkit.getPlayer(entry.getKey());
-            if (p == null || p.getRespawnLocation() == null) {
+            if (p == null || p.getRespawnLocation() == null || p.getRespawnLocation().getWorld() != atLocation.getWorld()) {
                 continue;
             }
 
