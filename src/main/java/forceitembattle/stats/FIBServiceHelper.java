@@ -22,7 +22,7 @@ import java.util.logging.Level;
 
 public class FIBServiceHelper {
 
-    private static final String DEFAULT_BASE_URL = "http://127.0.0.7:29705";
+    private static final String DEFAULT_BASE_URL = "http://127.0.0.7:29708";
 
     private final FibStatisticsControllerApi api;
     private final ForceItemBattle plugin;
