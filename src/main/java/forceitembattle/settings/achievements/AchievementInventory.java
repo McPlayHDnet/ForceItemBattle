@@ -2,17 +2,13 @@ package forceitembattle.settings.achievements;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.util.ForceItemPlayer;
-import forceitembattle.util.ForceItemPlayerStats;
 import forceitembattle.util.InventoryBuilder;
 import forceitembattle.util.ItemBuilder;
 import org.bukkit.Material;
 import org.bukkit.Sound;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 
 import java.util.Arrays;
-import java.util.Collections;
 
 public class AchievementInventory extends InventoryBuilder {
 
@@ -53,8 +49,6 @@ public class AchievementInventory extends InventoryBuilder {
     private void updateInventory(String playerName) {
         this.setItems(0, 8, new ItemBuilder(Material.CYAN_STAINED_GLASS_PANE).setDisplayName("<green>").addItemFlags(ItemFlag.values()).getItemStack());
         this.setItems(45, 53, new ItemBuilder(Material.CYAN_STAINED_GLASS_PANE).setDisplayName("<green>").addItemFlags(ItemFlag.values()).getItemStack());
-
-        ForceItemPlayerStats playerStats = ForceItemBattle.getInstance().getStatsManager().loadPlayerStats(playerName);
 
         int achievementSize = Achievements.values().length;
         int itemsPerPage = 36;

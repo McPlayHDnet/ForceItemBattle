@@ -29,6 +29,10 @@ public class ForceItemPlayer {
     @Setter
     private int backToBackStreak;
     @Setter
+    private int itemStreak;
+    @Setter
+    private long lastItemAssignedAt;
+    @Setter
     private boolean isSpectator;
 
     public ForceItemPlayer(Player player, Material currentMaterial, int remainingJokers, Integer currentScore) {
@@ -102,6 +106,14 @@ public class ForceItemPlayer {
 
     public int backToBackStreak() {
         return backToBackStreak;
+    }
+
+    public int itemStreak() {
+        return itemStreak;
+    }
+
+    public long lastItemAssignedAt() {
+        return lastItemAssignedAt;
     }
 
     public boolean isSpectator() {

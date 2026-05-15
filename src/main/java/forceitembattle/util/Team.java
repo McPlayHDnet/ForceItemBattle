@@ -32,6 +32,8 @@ public class Team {
     @Setter
     private int backToBackStreak;
     @Setter
+    private long lastItemAssignedAt;
+    @Setter
     private Integer currentScore, remainingJokers;
 
     public Team(int teamId, Material currentMaterial, Integer currentScore, Integer remainingJokers, ForceItemPlayer... teamPlayers) {
