@@ -25,8 +25,7 @@ repositories {
     }
     maven {
         name = "mcplayhd"
-        url = uri("https://maven.mcplayhd.net/releases")
-        credentials(PasswordCredentials::class)
+        url = uri("https://maven.mcplayhd.net/public-releases")
     }
 }
 
