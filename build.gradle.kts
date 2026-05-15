@@ -6,6 +6,7 @@ plugins {
     id("xyz.jpenilla.run-paper") version "3.0.1" // Adds runServer and runMojangMappedServer tasks for testing
     id("xyz.jpenilla.resource-factory-bukkit-convention") version "1.3.1" // Generates plugin.yml based on the Gradle config
     id("io.freefair.lombok") version "9.0.0"
+    id("com.gradleup.shadow") version "9.4.1"
 }
 
 group = "forceitembattle"
@@ -22,11 +23,17 @@ repositories {
         name = "CodeMC"
         url = uri("https://repo.codemc.io/repository/maven-public/")
     }
+    maven {
+        name = "mcplayhd"
+        url = uri("https://maven.mcplayhd.net/releases")
+        credentials(PasswordCredentials::class)
+    }
 }
 
 dependencies {
     paperweight.paperDevBundle("26.1.2.build.+")
     implementation("org.apache.commons:commons-text:1.13.1")
+    implementation("de.threeseconds:FIBServiceClient:0.0.3")
     // paperweight.foliaDevBundle("1.20.4-R0.1-SNAPSHOT")
     // paperweight.devBundle("com.example.paperfork", "1.20.4-R0.1-SNAPSHOT")
 }
@@ -43,51 +50,60 @@ tasks {
         options.encoding = Charsets.UTF_8.name() // We want UTF-8 for everything
     }
 
-    /*
-    reobfJar {
-      // This is an example of how you might change the output location for reobfJar. It's recommended not to do this
-      // for a variety of reasons, however it's asked frequently enough that an example of how to do it is included here.
-      outputJar = layout.buildDirectory.file("libs/PaperweightTestPlugin-${project.version}.jar")
+    shadowJar {
+        relocate("org.openapitools", "forceitembattle.libs.openapitools")
+        relocate("okhttp3", "forceitembattle.libs.okhttp3")
+        relocate("okio", "forceitembattle.libs.okio")
+        relocate("io.gsonfire", "forceitembattle.libs.gsonfire")
+
+        minimize {
+            exclude(dependency("de.threeseconds:FIBServiceClient:.*"))
+        }
+
+        archiveClassifier.set("")
     }
-     */
+
+    build {
+        dependsOn(shadowJar)
+    }
 }
 
 // Configure plugin.yml generation
 // - name, version, and description are inherited from the Gradle project.
 bukkitPluginYaml {
-    main = "forceitembattle.ForceItemBattle"
-    load = BukkitPluginYaml.PluginLoadOrder.STARTUP
-    authors.add("threeseconds")
-    authors.add("stupxd")
-    authors.add("eltobito")
-    apiVersion = "26.1.2"
-    commands.register("start")
-    commands.register("settings")
-    commands.register("skip")
-    commands.register("reset")
-    commands.register("bp")
-    commands.register("result")
-    commands.register("items")
-    commands.register("info")
-    commands.register("infowiki")
-    commands.register("spawn")
-    commands.register("bed")
-    commands.register("pause")
-    commands.register("resume")
-    commands.register("help")
-    commands.register("stats")
-    commands.register("top")
-    commands.register("pos")
-    commands.register("ping")
-    commands.register("stoptimer")
-    commands.register("teams")
-    commands.register("asktrade")
-    commands.register("trade")
-    commands.register("shout")
-    commands.register("fixskips")
-    commands.register("achievements")
-    commands.register("spectate")
-    commands.register("forceteam")
-    commands.register("vote")
-    commands.register("voteskip")
+main = "forceitembattle.ForceItemBattle"
+load = BukkitPluginYaml.PluginLoadOrder.STARTUP
+authors.add("threeseconds")
+authors.add("stupxd")
+authors.add("eltobito")
+apiVersion = "26.1.2"
+commands.register("start")
+commands.register("settings")
+commands.register("skip")
+commands.register("reset")
+commands.register("bp")
+commands.register("result")
+commands.register("items")
+commands.register("info")
+commands.register("infowiki")
+commands.register("spawn")
+commands.register("bed")
+commands.register("pause")
+commands.register("resume")
+commands.register("help")
+commands.register("stats")
+commands.register("top")
+commands.register("pos")
+commands.register("ping")
+commands.register("stoptimer")
+commands.register("teams")
+commands.register("asktrade")
+commands.register("trade")
+commands.register("shout")
+commands.register("fixskips")
+commands.register("achievements")
+commands.register("spectate")
+commands.register("forceteam")
+commands.register("vote")
+commands.register("voteskip")
 }

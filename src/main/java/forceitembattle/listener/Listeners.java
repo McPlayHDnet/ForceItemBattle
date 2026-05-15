@@ -5,20 +5,17 @@ import forceitembattle.commands.player.CommandShout;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.event.PlayerGrantAchievementEvent;
 import forceitembattle.manager.Gamemanager;
-import forceitembattle.manager.stats.SeasonalStats;
-import forceitembattle.manager.stats.StatsManager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.achievements.Achievements;
 import forceitembattle.settings.preset.GamePreset;
 import forceitembattle.settings.preset.InvSettingsPresets;
+import forceitembattle.stats.FIBServiceHelper;
 import forceitembattle.util.BackToBack;
 import forceitembattle.util.BackToBackProbability;
 import forceitembattle.util.ForceItem;
 import forceitembattle.util.ForceItemPlayer;
-import forceitembattle.util.ForceItemPlayerStats;
 import forceitembattle.util.InventoryBuilder;
 import forceitembattle.util.ItemBuilder;
-import forceitembattle.util.PlayerStat;
 import forceitembattle.util.Team;
 import io.papermc.paper.advancement.AdvancementDisplay;
 import io.papermc.paper.event.player.AsyncChatEvent;
@@ -70,6 +67,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -205,8 +203,17 @@ public class Listeners implements Listener {
             applyScoreAndSound(forceItemPlayer, itemStack, event, context);
         }
 
+        long timeSpentMs = 0;
+        if (!event.isBackToBack()) {
+            boolean isTeam = forceItemPlayer.currentTeam() != null;
+            long assignedAt = isTeam ? forceItemPlayer.currentTeam().getLastItemAssignedAt() : forceItemPlayer.lastItemAssignedAt();
+            if (assignedAt > 0) {
+                timeSpentMs = System.currentTimeMillis() - assignedAt;
+            }
+        }
+
         updateMaterials(forceItemPlayer, event, context);
-        updateStats(forceItemPlayer, player, context, event.isBackToBack());
+        updateStats(forceItemPlayer, player, context, event.isBackToBack(), event.getFoundItem().getType(), event.isSkipped(), timeSpentMs);
         this.plugin.getScoreboardManager().updateAllPlayers();
         handleBackToBackCheck(forceItemPlayer, player, context);
     }
@@ -245,27 +252,23 @@ public class Listeners implements Listener {
             return;
         }
 
-        ForceItemPlayerStats playerStats = plugin.getStatsManager().loadPlayerStats(player.getName());
-        SeasonalStats seasonalStats = playerStats.getSeasonStats(StatsManager.CURRENT_SEASON);
-
-        if (seasonalStats.getBack2backStreak().getSolo() >= backToBacks) {
-            return;
-        }
+        FIBServiceHelper fibServiceHelper = plugin.getFibServiceHelper();
 
         if (context.isTeamGame()) {
             forceItemPlayer.currentTeam().getPlayers().stream()
                     .filter(teammate -> !teammate.equals(forceItemPlayer))
-                    .forEach(teammate -> plugin.getStatsManager().updateTeamStats(
-                            player.getName(),
-                            teammate.player().getName(),
-                            backToBacks,
-                            PlayerStat.BACK_TO_BACK_STREAK
-                    ));
+                    .forEach(teammate -> {
+                        fibServiceHelper.updateMemberStatisticsAsync(
+                                player.getUniqueId(),
+                                teammate.player().getUniqueId(),
+                                player.getUniqueId(),
+                                FIBServiceHelper.memberUpdate().highestB2BStreak(backToBacks)
+                        );
+                    });
         } else {
-            plugin.getStatsManager().updateSoloStats(
-                    player.getName(),
-                    PlayerStat.BACK_TO_BACK_STREAK,
-                    backToBacks
+            fibServiceHelper.updateSoloStatisticsAsync(
+                    player.getUniqueId(),
+                    FIBServiceHelper.soloUpdate().highestB2BStreak(backToBacks)
             );
         }
     }
@@ -278,6 +281,10 @@ public class Listeners implements Listener {
             BackToBackProbability probability = calculateBack2BackProbability(forceItemPlayer, context);
             back2Back.setPercentage(probability.percentage());
             back2Back.setRarity(probability.formatted());
+
+            if (context.isStatsEnabled() && !context.isRunMode()) {
+                trackRarity(forceItemPlayer, probability.rarity(), context);
+            }
         }
 
         ForceItem forceItem = new ForceItem(
@@ -307,6 +314,36 @@ public class Listeners implements Listener {
         }
     }
 
+    private void trackRarity(ForceItemPlayer forceItemPlayer, String rarity, GameContext context) {
+        FIBServiceHelper helper = plugin.getFibServiceHelper();
+        Player player = forceItemPlayer.player();
+
+        var raritiesUpdate = switch (rarity) {
+            case "RARE" -> FIBServiceHelper.raritiesUpdate().rareAdd(1L);
+            case "EPIC" -> FIBServiceHelper.raritiesUpdate().epicAdd(1L);
+            case "LEGENDARY" -> FIBServiceHelper.raritiesUpdate().legendaryAdd(1L);
+            case "RNGESUS" -> FIBServiceHelper.raritiesUpdate().rngesusAdd(1L);
+            case "EXTRAORDINARY" -> FIBServiceHelper.raritiesUpdate().extraordinaryAdd(1L);
+            default -> null;
+        };
+
+        if (raritiesUpdate == null) return;
+
+        if (context.isTeamGame()) {
+            forceItemPlayer.currentTeam().getPlayers().stream()
+                    .filter(teammate -> !teammate.equals(forceItemPlayer))
+                    .forEach(teammate -> helper.updateMemberStatisticsAsync(
+                            player.getUniqueId(),
+                            teammate.player().getUniqueId(),
+                            player.getUniqueId(),
+                            FIBServiceHelper.memberUpdate().raritiesAdd(raritiesUpdate)
+                    ));
+        } else {
+            helper.updateSoloStatisticsAsync(player.getUniqueId(),
+                    FIBServiceHelper.soloUpdate().raritiesAdd(raritiesUpdate));
+        }
+    }
+
     private void updateMaterials(ForceItemPlayer forceItemPlayer, FoundItemEvent event, GameContext context) {
         if (context.isRunMode()) {
             updateSeededMaterials(forceItemPlayer, context);
@@ -317,6 +354,7 @@ public class Listeners implements Listener {
 
     private void updateSeededMaterials(ForceItemPlayer forceItemPlayer, GameContext context) {
         Material currentMaterial = plugin.getGamemanager().generateSeededMaterial();
+        long now = System.currentTimeMillis();
 
         if (context.isTeamGame()) {
             plugin.getGamemanager().forceItemPlayerMap().values().forEach(p -> {
@@ -324,18 +362,21 @@ public class Listeners implements Listener {
                 team.setPreviousMaterial(team.getCurrentMaterial());
                 team.setCurrentMaterial(team.getNextMaterial());
                 team.setNextMaterial(currentMaterial);
+                team.setLastItemAssignedAt(now);
             });
         } else {
             plugin.getGamemanager().forceItemPlayerMap().values().forEach(p -> {
                 p.setPreviousMaterial(p.currentMaterial());
                 p.setCurrentMaterial(p.getNextMaterial());
                 p.setNextMaterial(currentMaterial);
+                p.setLastItemAssignedAt(now);
             });
         }
     }
 
     private void updateRandomMaterials(ForceItemPlayer forceItemPlayer, GameContext context) {
         Material nextMaterial = plugin.getGamemanager().generateMaterial();
+        long now = System.currentTimeMillis();
 
         if (context.isTeamGame()) {
             Team team = forceItemPlayer.currentTeam();
@@ -343,31 +384,71 @@ public class Listeners implements Listener {
             team.setPreviousMaterial(team.getCurrentMaterial());
             team.setCurrentMaterial(currentMaterial);
             team.setNextMaterial(nextMaterial);
+            team.setLastItemAssignedAt(now);
         } else {
             Material currentMaterial = forceItemPlayer.getNextMaterial();
             forceItemPlayer.setPreviousMaterial(forceItemPlayer.currentMaterial());
             forceItemPlayer.setCurrentMaterial(currentMaterial);
             forceItemPlayer.setNextMaterial(nextMaterial);
+            forceItemPlayer.setLastItemAssignedAt(now);
         }
     }
 
     private void updateStats(ForceItemPlayer forceItemPlayer, Player player,
-                             GameContext context, boolean isBackToBack) {
+                             GameContext context, boolean isBackToBack, Material foundMaterial, boolean isSkipped, long timeSpentMs) {
         if (!context.isStatsEnabled() || context.isRunMode() || isBackToBack) {
             return;
         }
 
+        FIBServiceHelper fibServiceHelper = plugin.getFibServiceHelper();
+        String itemName = foundMaterial.name();
+
+        if (isSkipped) {
+            forceItemPlayer.setItemStreak(0);
+        } else {
+            forceItemPlayer.setItemStreak(forceItemPlayer.itemStreak() + 1);
+        }
+
         if (context.isTeamGame()) {
+            int teamStreak = forceItemPlayer.itemStreak();
+            if (!isSkipped) {
+                fibServiceHelper.updateTeamStatisticsAsync(
+                        player.getUniqueId(),
+                        forceItemPlayer.currentTeam().getPlayers().stream()
+                                .filter(t -> !t.equals(forceItemPlayer)).findFirst()
+                                .map(t -> t.player().getUniqueId()).orElse(player.getUniqueId()),
+                        FIBServiceHelper.teamUpdate().longestItemStreak(teamStreak)
+                );
+            }
+
+            long finalTimeSpentMs = timeSpentMs;
             forceItemPlayer.currentTeam().getPlayers().stream()
                     .filter(teammate -> !teammate.equals(forceItemPlayer))
-                    .forEach(teammate -> plugin.getStatsManager().updateTeamStats(
-                            player.getName(),
-                            teammate.player().getName(),
-                            1,
-                            PlayerStat.TOTAL_ITEMS
-                    ));
+                    .forEach(teammate -> {
+                        var memberUpdate = FIBServiceHelper.memberUpdate()
+                                .totalItemsFoundAdd(1L)
+                                .itemCountsAdd(Map.of(itemName, 1L));
+                        if (finalTimeSpentMs > 0) {
+                            memberUpdate.totalTimeSpentOnItemsAdd(finalTimeSpentMs);
+                        }
+                        fibServiceHelper.updateMemberStatisticsAsync(
+                                player.getUniqueId(),
+                                teammate.player().getUniqueId(),
+                                player.getUniqueId(),
+                                memberUpdate
+                        );
+                    });
         } else {
-            plugin.getStatsManager().updateSoloStats(player.getName(), PlayerStat.TOTAL_ITEMS, 1);
+            var soloUpdate = FIBServiceHelper.soloUpdate()
+                    .totalItemsFoundAdd(1L)
+                    .itemCountsAdd(Map.of(itemName, 1L));
+            if (!isSkipped) {
+                soloUpdate.longestItemStreak(forceItemPlayer.itemStreak());
+            }
+            if (timeSpentMs > 0) {
+                soloUpdate.totalTimeSpentOnItemsAdd(timeSpentMs);
+            }
+            fibServiceHelper.updateSoloStatisticsAsync(player.getUniqueId(), soloUpdate);
         }
     }
 
@@ -829,6 +910,23 @@ public class Listeners implements Listener {
         if (!event.getKeepInventory()) {
             event.getDrops().removeIf(Gamemanager::isJoker);
             event.getDrops().removeIf(Gamemanager::isBackpack);
+        }
+
+        if (this.plugin.getGamemanager().isMidGame() && this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
+            FIBServiceHelper helper = plugin.getFibServiceHelper();
+            if (gamePlayer != null && gamePlayer.currentTeam() != null) {
+                gamePlayer.currentTeam().getPlayers().stream()
+                        .filter(teammate -> !teammate.equals(gamePlayer))
+                        .forEach(teammate -> helper.updateMemberStatisticsAsync(
+                                player.getUniqueId(),
+                                teammate.player().getUniqueId(),
+                                player.getUniqueId(),
+                                FIBServiceHelper.memberUpdate().deathsAdd(1L)
+                        ));
+            } else {
+                helper.updateSoloStatisticsAsync(player.getUniqueId(),
+                        FIBServiceHelper.soloUpdate().deathsAdd(1L));
+            }
         }
 
         // Automatically respawn player.

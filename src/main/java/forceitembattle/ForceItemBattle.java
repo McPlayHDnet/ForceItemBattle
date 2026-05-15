@@ -50,9 +50,9 @@ import forceitembattle.manager.ScoreboardManager;
 import forceitembattle.manager.TeamsManager;
 import forceitembattle.manager.TradingManager;
 import forceitembattle.manager.VoteSkipManager;
-import forceitembattle.manager.stats.StatsManager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
+import forceitembattle.stats.FIBServiceHelper;
 import forceitembattle.util.AntimatterLocator;
 import forceitembattle.util.Backpack;
 import forceitembattle.util.DescriptionItem;
@@ -104,8 +104,6 @@ public final class ForceItemBattle extends JavaPlugin {
     @Getter
     private RecipeManager recipeManager;
     @Getter
-    private StatsManager statsManager;
-    @Getter
     private PositionManager positionManager;
     @Getter
     private WanderingTraderTimer wanderingTraderTimer;
@@ -133,6 +131,8 @@ public final class ForceItemBattle extends JavaPlugin {
     @Getter
     private ScoreboardManager scoreboardManager;
     @Getter
+    private FIBServiceHelper fibServiceHelper;
+    @Getter
     @Setter
     private Location spawnLocation;
 
@@ -159,7 +159,6 @@ public final class ForceItemBattle extends JavaPlugin {
         this.backpack = new Backpack(this);
         this.itemDifficultiesManager = new ItemDifficultiesManager(this);
         this.recipeManager = new RecipeManager(this);
-        this.statsManager = new StatsManager();
         this.positionManager = new PositionManager(this);
         this.teamManager = new TeamsManager(this);
         this.tradingManager = new TradingManager(this);
@@ -172,6 +171,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.antimatterLocator = new AntimatterLocator();
         this.voteSkipManager = new VoteSkipManager();
         this.scoreboardManager = new ScoreboardManager(this);
+        this.fibServiceHelper = new FIBServiceHelper(this);
 
         this.initListeners();
         this.initCommands();

@@ -1,6 +1,9 @@
 package forceitembattle.listener;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.settings.GameSetting;
+import forceitembattle.stats.FIBServiceHelper;
+import forceitembattle.util.ForceItemPlayer;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -51,6 +54,21 @@ public class PortalListener implements Listener {
     }
 
     private void teleportPlayerRandomly(Player player) {
+        if (this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
+            FIBServiceHelper helper = this.plugin.getFibServiceHelper();
+            ForceItemPlayer fip = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+            if (fip != null && fip.currentTeam() != null) {
+                fip.currentTeam().getPlayers().stream()
+                        .filter(t -> !t.equals(fip))
+                        .forEach(t -> helper.updateMemberStatisticsAsync(
+                                player.getUniqueId(), t.player().getUniqueId(), player.getUniqueId(),
+                                FIBServiceHelper.memberUpdate().enteredAntimatterTeleporterAdd(1L)));
+            } else {
+                helper.updateSoloStatisticsAsync(player.getUniqueId(),
+                        FIBServiceHelper.soloUpdate().enteredAntimatterTeleporterAdd(1L));
+            }
+        }
+
         Location existingLocation = this.findExistingLocation(player);
         if (existingLocation != null) {
             player.teleport(existingLocation);

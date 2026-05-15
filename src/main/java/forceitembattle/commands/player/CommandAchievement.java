@@ -2,13 +2,10 @@ package forceitembattle.commands.player;
 
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
-import forceitembattle.settings.achievements.AchievementInventory;
 import forceitembattle.settings.achievements.Achievements;
-import forceitembattle.util.ForceItemPlayerStats;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class CommandAchievement extends CustomCommand implements CustomTabCompleter {
