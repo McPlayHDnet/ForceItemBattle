@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "forceitembattle"
-version = "3.9.7"
+version = "4.0.0"
 description = "ForceItemBattle for McPlayHD.net"
 
 java {
@@ -30,7 +30,7 @@ repositories {
 }
 
 dependencies {
-    paperweight.paperDevBundle("26.1.2.build.+")
+    paperweight.paperDevBundle("26.2.build.+")
     implementation("org.apache.commons:commons-text:1.13.1")
     implementation("de.threeseconds:FIBServiceClient:0.0.3")
     // paperweight.foliaDevBundle("1.20.4-R0.1-SNAPSHOT")
