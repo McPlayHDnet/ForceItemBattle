@@ -1532,6 +1532,7 @@ public class ItemDifficultiesManager {
         register(Material.TNT, State.MID);
         register(Material.TNT_MINECART, State.MID);
         register(Material.TORCH, State.EARLY);
+        register(Material.TORCHFLOWER, State.EARLY);
         register(Material.TOTEM_OF_UNDYING, State.LATE, ItemTag.EXTREME);
         register(Material.TRAPPED_CHEST, State.EARLY);
         register(Material.TRIAL_KEY, State.LATE);
