@@ -3,7 +3,7 @@ package forceitembattle.settings;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.preset.GamePreset;
 import org.bukkit.Bukkit;
-import org.bukkit.GameRule;
+import org.bukkit.GameRules;
 import org.bukkit.configuration.ConfigurationSection;
 import org.checkerframework.checker.units.qual.A;
 
@@ -69,11 +69,11 @@ public class GameSettings {
 
     public void setSettingEnabled(GameSetting gameSetting, boolean enabled) {
         if(gameSetting == GameSetting.KEEP_INVENTORY)
-            Bukkit.getWorlds().forEach(worlds -> worlds.setGameRule(GameRule.KEEP_INVENTORY, enabled));
+            Bukkit.getWorlds().forEach(worlds -> worlds.setGameRule(GameRules.KEEP_INVENTORY, enabled));
 
         if(gameSetting == GameSetting.FASTER_RANDOM_TICK)
             // 3 is the default random tick speed. 40 is much faster version
-            Bukkit.getWorlds().forEach(worlds -> worlds.setGameRule(GameRule.RANDOM_TICK_SPEED, enabled ? 40 : 3));
+            Bukkit.getWorlds().forEach(worlds -> worlds.setGameRule(GameRules.RANDOM_TICK_SPEED, enabled ? 40 : 3));
 
 
         this.plugin.getConfig().set(gameSetting.configPath(), enabled);

@@ -1,10 +1,9 @@
 package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.manager.stats.SeasonalStats;
-import forceitembattle.manager.stats.StatsManager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.preset.GamePreset;
+import forceitembattle.stats.FIBServiceHelper;
 import forceitembattle.util.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -114,6 +113,7 @@ public class Gamemanager {
     public void initializeMats() {
         boolean runMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.RUN);
         boolean teamMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM);
+        long now = System.currentTimeMillis();
 
         Material globalCurrent = null;
         Material globalNext = null;
@@ -135,6 +135,7 @@ public class Gamemanager {
                 forceItemPlayer.currentTeam().setCurrentScore(0);
                 forceItemPlayer.currentTeam().setCurrentMaterial(current);
                 forceItemPlayer.currentTeam().setNextMaterial(next);
+                forceItemPlayer.currentTeam().setLastItemAssignedAt(now);
             });
         } else {
             Material finalGlobalCurrent1 = globalCurrent;
@@ -149,6 +150,7 @@ public class Gamemanager {
                 forceItemPlayer.setCurrentScore(0);
                 forceItemPlayer.setCurrentMaterial(current);
                 forceItemPlayer.setNextMaterial(next);
+                forceItemPlayer.setLastItemAssignedAt(now);
             });
         }
 
@@ -198,8 +200,6 @@ public class Gamemanager {
 
         Bukkit.getOnlinePlayers().forEach(player -> {
             ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
-            ForceItemPlayerStats playerStats = this.forceItemBattle.getStatsManager().loadPlayerStats(player.getName());
-
             player.setHealth(20);
             player.setSaturation(20);
             player.getInventory().clear();
@@ -217,34 +217,31 @@ public class Gamemanager {
             }
 
             if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.STATS)) {
+                FIBServiceHelper helper = this.forceItemBattle.getFibServiceHelper();
                 Map<UUID, ForceItemPlayer> sortedMapDesc = this.sortByValue(this.forceItemPlayerMap(), false);
                 Map<ForceItemPlayer, Integer> placesMap = this.calculatePlaces(sortedMapDesc);
 
-                ForceItemPlayerStats forceItemPlayerStats = this.forceItemBattle.getStatsManager().loadPlayerStats(forceItemPlayer.player().getName());
-                SeasonalStats seasonalStats = forceItemPlayerStats.getSeasonStats(StatsManager.CURRENT_SEASON);
-                this.forceItemBattle.getStatsManager().updateSoloStats(player.getName(), PlayerStat.TRAVELLED, this.calculateDistance(forceItemPlayer.player()));
-
-                if (seasonalStats.getHighestScore().getSolo() < forceItemPlayer.currentScore()) {
-                    this.forceItemBattle.getStatsManager().updateSoloStats(player.getName(), PlayerStat.HIGHEST_SCORE, forceItemPlayer.currentScore());
-                    if (forceItemPlayer.currentTeam() != null) {
-                        Team currentTeam = forceItemPlayer.currentTeam();
-
-                        for (ForceItemPlayer teamPlayer : currentTeam.getPlayers()) {
-                            if (!teamPlayer.equals(forceItemPlayer)) {
-                                this.forceItemBattle.getStatsManager().updateTeamStats(player.getName(), teamPlayer.player().getName(), forceItemPlayer.currentScore(), PlayerStat.HIGHEST_SCORE);
-                                break;
-                            }
-                        }
-                    }
-                }
+                var soloUpdate = FIBServiceHelper.soloUpdate()
+                        .blocksTravelledAdd((long) this.calculateDistance(forceItemPlayer.player()))
+                        .highestScore((long) forceItemPlayer.currentScore());
 
                 if (placesMap.get(forceItemPlayer) == 1) {
-                    this.forceItemBattle.getStatsManager().updateSoloStats(player.getName(), PlayerStat.GAMES_WON, 1);
+                    soloUpdate.gamesWonAdd(1);
+                }
 
-                    this.forceItemBattle.getStatsManager().updateSoloStats(player.getName(), PlayerStat.WIN_STREAK, seasonalStats.getWinStreak().getSolo() + 1);
-                } else {
-                    if(seasonalStats.getWinStreak().getSolo() != 0) {
-                        this.forceItemBattle.getStatsManager().updateSoloStats(player.getName(), PlayerStat.WIN_STREAK, 0);
+                helper.updateSoloStatisticsAsync(player.getUniqueId(), soloUpdate);
+
+                if (forceItemPlayer.currentTeam() != null) {
+                    Team currentTeam = forceItemPlayer.currentTeam();
+                    for (ForceItemPlayer teamPlayer : currentTeam.getPlayers()) {
+                        if (!teamPlayer.equals(forceItemPlayer)) {
+                            helper.updateTeamStatisticsAsync(
+                                    player.getUniqueId(),
+                                    teamPlayer.player().getUniqueId(),
+                                    FIBServiceHelper.teamUpdate().highestScore((long) forceItemPlayer.currentScore())
+                            );
+                            break;
+                        }
                     }
                 }
             }
@@ -419,8 +416,13 @@ public class Gamemanager {
                 .getItemStack();
     }
 
-    public static ItemStack createBackpack() {
-        ItemStack itemStack = new ItemBuilder(Material.BUNDLE)
+    public static ItemStack createBackpack(ForceItemPlayer forceItemPlayer, boolean isTeamMode) {
+        Material bundle = Material.BUNDLE;
+        if (isTeamMode) {
+            bundle = Material.getMaterial(forceItemPlayer.currentTeam().getColor().name() + "_BUNDLE");
+        }
+
+        ItemStack itemStack = new ItemBuilder(bundle)
                 .setDisplayName("<dark_gray>» <yellow>Backpack")
                 .getItemStack();
 
@@ -441,7 +443,7 @@ public class Gamemanager {
     }
 
     public static boolean isBackpack(ItemStack itemStack) {
-        if (itemStack.getType() != Material.BUNDLE) {
+        if (!itemStack.getType().name().contains("BUNDLE")) {
             return false;
         }
 

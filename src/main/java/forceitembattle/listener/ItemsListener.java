@@ -2,6 +2,7 @@ package forceitembattle.listener;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.event.FoundItemEvent;
+import forceitembattle.manager.Gamemanager;
 import forceitembattle.util.ForceItemPlayer;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
@@ -156,6 +157,8 @@ public class ItemsListener implements Listener {
         if (item == null) {
             return;
         }
+
+        if (Gamemanager.isBackpack(item)) return;
 
         if (item.getType() == currentItem) {
             FoundItemEvent foundItemEvent = new FoundItemEvent(player);

@@ -4,10 +4,9 @@ import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.ItemDifficultiesManager;
-import forceitembattle.manager.stats.SeasonalStats;
-import forceitembattle.manager.stats.StatsManager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.preset.GamePreset;
+import forceitembattle.stats.FIBServiceHelper;
 import forceitembattle.util.*;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
@@ -177,7 +176,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
         setupSpawnLocation(spawnLocation);
 
         Bukkit.getWorlds().forEach(worlds -> worlds.getWorldBorder().reset());
-        world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, true);
+        world.setGameRule(GameRules.ADVANCE_TIME, true);
 
         Bukkit.getOnlinePlayers().forEach(player -> {
             ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
@@ -267,19 +266,18 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
 
             if(this.plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK)) {
                 if(this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-                    this.plugin.getBackpack().createTeamBackpack(forceItemPlayer.currentTeam(), player);
+                    this.plugin.getBackpack().createTeamBackpack(forceItemPlayer.currentTeam(), forceItemPlayer);
                 } else {
-                    this.plugin.getBackpack().createBackpack(player);
+                    this.plugin.getBackpack().createBackpack(forceItemPlayer);
                 }
 
             }
 
 
-            if(this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
-                ForceItemPlayerStats playerStats = this.plugin.getStatsManager().loadPlayerStats(player.getName());
-                SeasonalStats seasonalStats = playerStats.getSeasonStats(StatsManager.CURRENT_SEASON);
-                if(!this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-                    this.plugin.getStatsManager().updateSoloStats(player.getName(), PlayerStat.GAMES_PLAYED, seasonalStats.getGamesPlayed().getSolo() + 1);
+            if (this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
+                FIBServiceHelper helper = this.plugin.getFibServiceHelper();
+                if (!this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+                    helper.updateSoloStatisticsAsync(player.getUniqueId(), FIBServiceHelper.soloUpdate().gamesPlayedAdd(1));
                     return;
                 }
                 if (forceItemPlayer.currentTeam() != null) {
@@ -287,7 +285,11 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
 
                     for (ForceItemPlayer teamPlayer : currentTeam.getPlayers()) {
                         if (!teamPlayer.equals(forceItemPlayer)) {
-                            this.plugin.getStatsManager().updateTeamStats(player.getName(), teamPlayer.player().getName(), 1, PlayerStat.GAMES_PLAYED);
+                            helper.updateTeamStatisticsAsync(
+                                    player.getUniqueId(),
+                                    teamPlayer.player().getUniqueId(),
+                                    FIBServiceHelper.teamUpdate().gamesPlayedAdd(1)
+                            );
                             break;
                         }
                     }

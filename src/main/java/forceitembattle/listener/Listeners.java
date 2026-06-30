@@ -5,20 +5,17 @@ import forceitembattle.commands.player.CommandShout;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.event.PlayerGrantAchievementEvent;
 import forceitembattle.manager.Gamemanager;
-import forceitembattle.manager.stats.SeasonalStats;
-import forceitembattle.manager.stats.StatsManager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.achievements.Achievements;
 import forceitembattle.settings.preset.GamePreset;
 import forceitembattle.settings.preset.InvSettingsPresets;
+import forceitembattle.stats.FIBServiceHelper;
 import forceitembattle.util.BackToBack;
 import forceitembattle.util.BackToBackProbability;
 import forceitembattle.util.ForceItem;
 import forceitembattle.util.ForceItemPlayer;
-import forceitembattle.util.ForceItemPlayerStats;
 import forceitembattle.util.InventoryBuilder;
 import forceitembattle.util.ItemBuilder;
-import forceitembattle.util.PlayerStat;
 import forceitembattle.util.Team;
 import io.papermc.paper.advancement.AdvancementDisplay;
 import io.papermc.paper.event.player.AsyncChatEvent;
@@ -29,7 +26,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
-import org.bukkit.GameRule;
+import org.bukkit.GameRules;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -70,6 +67,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -120,7 +118,7 @@ public class Listeners implements Listener {
         plugin.getScoreboardManager().setupForPlayer(player);
         plugin.getScoreboardManager().updateAllPlayers();
 
-        player.sendPlayerListHeader(this.plugin.getGamemanager().getMiniMessage().deserialize("<!shadow>\n\n\n\uebA0\n"));
+        player.sendPlayerListHeader(this.plugin.getGamemanager().getMiniMessage().deserialize("<!shadow>\n\n\n\ue000\n"));
         event.joinMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<green>» <yellow>" + player.getName() + " <green>joined"));
     }
 
@@ -129,6 +127,13 @@ public class Listeners implements Listener {
         playerQuitEvent.quitMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>« <yellow>" + playerQuitEvent.getPlayer().getName() + " <red>ragequit"));
 
         if(this.plugin.getGamemanager().isPreGame() || this.plugin.getGamemanager().isEndGame()) {
+            if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+                ForceItemPlayer fibPlayer = this.plugin.getGamemanager().getForceItemPlayer(playerQuitEvent.getPlayer().getUniqueId());
+                if (fibPlayer != null && fibPlayer.currentTeam() != null) {
+                    this.plugin.getTeamManager().leave(fibPlayer);
+                }
+            }
+
             this.plugin.getGamemanager().removePlayer(playerQuitEvent.getPlayer());
         }
 
@@ -198,8 +203,17 @@ public class Listeners implements Listener {
             applyScoreAndSound(forceItemPlayer, itemStack, event, context);
         }
 
+        long timeSpentMs = 0;
+        if (!event.isBackToBack()) {
+            boolean isTeam = forceItemPlayer.currentTeam() != null;
+            long assignedAt = isTeam ? forceItemPlayer.currentTeam().getLastItemAssignedAt() : forceItemPlayer.lastItemAssignedAt();
+            if (assignedAt > 0) {
+                timeSpentMs = System.currentTimeMillis() - assignedAt;
+            }
+        }
+
         updateMaterials(forceItemPlayer, event, context);
-        updateStats(forceItemPlayer, player, context, event.isBackToBack());
+        updateStats(forceItemPlayer, player, context, event.isBackToBack(), event.getFoundItem().getType(), event.isSkipped(), timeSpentMs);
         this.plugin.getScoreboardManager().updateAllPlayers();
         handleBackToBackCheck(forceItemPlayer, player, context);
     }
@@ -238,27 +252,23 @@ public class Listeners implements Listener {
             return;
         }
 
-        ForceItemPlayerStats playerStats = plugin.getStatsManager().loadPlayerStats(player.getName());
-        SeasonalStats seasonalStats = playerStats.getSeasonStats(StatsManager.CURRENT_SEASON);
-
-        if (seasonalStats.getBack2backStreak().getSolo() >= backToBacks) {
-            return;
-        }
+        FIBServiceHelper fibServiceHelper = plugin.getFibServiceHelper();
 
         if (context.isTeamGame()) {
             forceItemPlayer.currentTeam().getPlayers().stream()
                     .filter(teammate -> !teammate.equals(forceItemPlayer))
-                    .forEach(teammate -> plugin.getStatsManager().updateTeamStats(
-                            player.getName(),
-                            teammate.player().getName(),
-                            backToBacks,
-                            PlayerStat.BACK_TO_BACK_STREAK
-                    ));
+                    .forEach(teammate -> {
+                        fibServiceHelper.updateMemberStatisticsAsync(
+                                player.getUniqueId(),
+                                teammate.player().getUniqueId(),
+                                player.getUniqueId(),
+                                FIBServiceHelper.memberUpdate().highestB2BStreak(backToBacks)
+                        );
+                    });
         } else {
-            plugin.getStatsManager().updateSoloStats(
-                    player.getName(),
-                    PlayerStat.BACK_TO_BACK_STREAK,
-                    backToBacks
+            fibServiceHelper.updateSoloStatisticsAsync(
+                    player.getUniqueId(),
+                    FIBServiceHelper.soloUpdate().highestB2BStreak(backToBacks)
             );
         }
     }
@@ -271,6 +281,10 @@ public class Listeners implements Listener {
             BackToBackProbability probability = calculateBack2BackProbability(forceItemPlayer, context);
             back2Back.setPercentage(probability.percentage());
             back2Back.setRarity(probability.formatted());
+
+            if (context.isStatsEnabled() && !context.isRunMode()) {
+                trackRarity(forceItemPlayer, probability.rarity(), context);
+            }
         }
 
         ForceItem forceItem = new ForceItem(
@@ -300,6 +314,36 @@ public class Listeners implements Listener {
         }
     }
 
+    private void trackRarity(ForceItemPlayer forceItemPlayer, String rarity, GameContext context) {
+        FIBServiceHelper helper = plugin.getFibServiceHelper();
+        Player player = forceItemPlayer.player();
+
+        var raritiesUpdate = switch (rarity) {
+            case "RARE" -> FIBServiceHelper.raritiesUpdate().rareAdd(1L);
+            case "EPIC" -> FIBServiceHelper.raritiesUpdate().epicAdd(1L);
+            case "LEGENDARY" -> FIBServiceHelper.raritiesUpdate().legendaryAdd(1L);
+            case "RNGESUS" -> FIBServiceHelper.raritiesUpdate().rngesusAdd(1L);
+            case "EXTRAORDINARY" -> FIBServiceHelper.raritiesUpdate().extraordinaryAdd(1L);
+            default -> null;
+        };
+
+        if (raritiesUpdate == null) return;
+
+        if (context.isTeamGame()) {
+            forceItemPlayer.currentTeam().getPlayers().stream()
+                    .filter(teammate -> !teammate.equals(forceItemPlayer))
+                    .forEach(teammate -> helper.updateMemberStatisticsAsync(
+                            player.getUniqueId(),
+                            teammate.player().getUniqueId(),
+                            player.getUniqueId(),
+                            FIBServiceHelper.memberUpdate().raritiesAdd(raritiesUpdate)
+                    ));
+        } else {
+            helper.updateSoloStatisticsAsync(player.getUniqueId(),
+                    FIBServiceHelper.soloUpdate().raritiesAdd(raritiesUpdate));
+        }
+    }
+
     private void updateMaterials(ForceItemPlayer forceItemPlayer, FoundItemEvent event, GameContext context) {
         if (context.isRunMode()) {
             updateSeededMaterials(forceItemPlayer, context);
@@ -310,6 +354,7 @@ public class Listeners implements Listener {
 
     private void updateSeededMaterials(ForceItemPlayer forceItemPlayer, GameContext context) {
         Material currentMaterial = plugin.getGamemanager().generateSeededMaterial();
+        long now = System.currentTimeMillis();
 
         if (context.isTeamGame()) {
             plugin.getGamemanager().forceItemPlayerMap().values().forEach(p -> {
@@ -317,18 +362,21 @@ public class Listeners implements Listener {
                 team.setPreviousMaterial(team.getCurrentMaterial());
                 team.setCurrentMaterial(team.getNextMaterial());
                 team.setNextMaterial(currentMaterial);
+                team.setLastItemAssignedAt(now);
             });
         } else {
             plugin.getGamemanager().forceItemPlayerMap().values().forEach(p -> {
                 p.setPreviousMaterial(p.currentMaterial());
                 p.setCurrentMaterial(p.getNextMaterial());
                 p.setNextMaterial(currentMaterial);
+                p.setLastItemAssignedAt(now);
             });
         }
     }
 
     private void updateRandomMaterials(ForceItemPlayer forceItemPlayer, GameContext context) {
         Material nextMaterial = plugin.getGamemanager().generateMaterial();
+        long now = System.currentTimeMillis();
 
         if (context.isTeamGame()) {
             Team team = forceItemPlayer.currentTeam();
@@ -336,31 +384,71 @@ public class Listeners implements Listener {
             team.setPreviousMaterial(team.getCurrentMaterial());
             team.setCurrentMaterial(currentMaterial);
             team.setNextMaterial(nextMaterial);
+            team.setLastItemAssignedAt(now);
         } else {
             Material currentMaterial = forceItemPlayer.getNextMaterial();
             forceItemPlayer.setPreviousMaterial(forceItemPlayer.currentMaterial());
             forceItemPlayer.setCurrentMaterial(currentMaterial);
             forceItemPlayer.setNextMaterial(nextMaterial);
+            forceItemPlayer.setLastItemAssignedAt(now);
         }
     }
 
     private void updateStats(ForceItemPlayer forceItemPlayer, Player player,
-                             GameContext context, boolean isBackToBack) {
+                             GameContext context, boolean isBackToBack, Material foundMaterial, boolean isSkipped, long timeSpentMs) {
         if (!context.isStatsEnabled() || context.isRunMode() || isBackToBack) {
             return;
         }
 
+        FIBServiceHelper fibServiceHelper = plugin.getFibServiceHelper();
+        String itemName = foundMaterial.name();
+
+        if (isSkipped) {
+            forceItemPlayer.setItemStreak(0);
+        } else {
+            forceItemPlayer.setItemStreak(forceItemPlayer.itemStreak() + 1);
+        }
+
         if (context.isTeamGame()) {
+            int teamStreak = forceItemPlayer.itemStreak();
+            if (!isSkipped) {
+                fibServiceHelper.updateTeamStatisticsAsync(
+                        player.getUniqueId(),
+                        forceItemPlayer.currentTeam().getPlayers().stream()
+                                .filter(t -> !t.equals(forceItemPlayer)).findFirst()
+                                .map(t -> t.player().getUniqueId()).orElse(player.getUniqueId()),
+                        FIBServiceHelper.teamUpdate().longestItemStreak(teamStreak)
+                );
+            }
+
+            long finalTimeSpentMs = timeSpentMs;
             forceItemPlayer.currentTeam().getPlayers().stream()
                     .filter(teammate -> !teammate.equals(forceItemPlayer))
-                    .forEach(teammate -> plugin.getStatsManager().updateTeamStats(
-                            player.getName(),
-                            teammate.player().getName(),
-                            1,
-                            PlayerStat.TOTAL_ITEMS
-                    ));
+                    .forEach(teammate -> {
+                        var memberUpdate = FIBServiceHelper.memberUpdate()
+                                .totalItemsFoundAdd(1L)
+                                .itemCountsAdd(Map.of(itemName, 1L));
+                        if (finalTimeSpentMs > 0) {
+                            memberUpdate.totalTimeSpentOnItemsAdd(finalTimeSpentMs);
+                        }
+                        fibServiceHelper.updateMemberStatisticsAsync(
+                                player.getUniqueId(),
+                                teammate.player().getUniqueId(),
+                                player.getUniqueId(),
+                                memberUpdate
+                        );
+                    });
         } else {
-            plugin.getStatsManager().updateSoloStats(player.getName(), PlayerStat.TOTAL_ITEMS, 1);
+            var soloUpdate = FIBServiceHelper.soloUpdate()
+                    .totalItemsFoundAdd(1L)
+                    .itemCountsAdd(Map.of(itemName, 1L));
+            if (!isSkipped) {
+                soloUpdate.longestItemStreak(forceItemPlayer.itemStreak());
+            }
+            if (timeSpentMs > 0) {
+                soloUpdate.totalTimeSpentOnItemsAdd(timeSpentMs);
+            }
+            fibServiceHelper.updateSoloStatisticsAsync(player.getUniqueId(), soloUpdate);
         }
     }
 
@@ -391,6 +479,11 @@ public class Listeners implements Listener {
             triggerBackToBackEvent(forceItemPlayer, player, result, context);
         } else {
             forceItemPlayer.setBackToBackStreak(0);
+
+            if (result.getTeammateWhoHasIt() != null) {
+                ForceItemPlayer teammate = result.getTeammateWhoHasIt();
+                teammate.setBackToBackStreak(0);
+            }
 
             if (context.isTeamGame() && forceItemPlayer.currentTeam() != null) {
                 forceItemPlayer.currentTeam().setBackToBackStreak(0);
@@ -573,104 +666,10 @@ public class Listeners implements Listener {
                 if (hasItemInInventory(teammate.player().getInventory(), targetMaterial)) {
                     return new BackToBackResult(true, teammate);
                 }
-
-                if (context.isBackpackEnabled()) {
-                    Inventory teammateBackpack = plugin.getBackpack().getPlayerBackpack(teammate.player());
-                    if (hasItemInInventory(teammateBackpack, targetMaterial)) {
-                        return new BackToBackResult(true, teammate);
-                    }
-                }
             }
         }
 
         return new BackToBackResult(false, null);
-    }
-
-    private String getItemProbability(Player player, ForceItemPlayer forceItemPlayer) {
-        int totalItemsInPool = plugin.getItemDifficultiesManager().getAvailableItems().size();
-        boolean isBackpackEnabled = plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK);
-        boolean isTeamGame = forceItemPlayer.currentTeam() != null;
-
-        Set<Material> uniqueMaterials = new HashSet<>();
-        int streak = forceItemPlayer.backToBackStreak();
-
-        if (isTeamGame) {
-            Team team = forceItemPlayer.currentTeam();
-
-            for (ForceItemPlayer teammate : team.getPlayers()) {
-                collectUniqueMaterials(teammate.player().getInventory(), uniqueMaterials);
-            }
-
-            if (isBackpackEnabled) {
-                Inventory teamBackpack = plugin.getBackpack().getTeamBackpack(team);
-                collectUniqueMaterials(teamBackpack, uniqueMaterials);
-            }
-
-            streak = Math.max(streak, team.getBackToBackStreak());
-        } else {
-            collectUniqueMaterials(player.getInventory(), uniqueMaterials);
-
-            if (isBackpackEnabled) {
-                Inventory backpack = plugin.getBackpack().getPlayerBackpack(player);
-                collectUniqueMaterials(backpack, uniqueMaterials);
-            }
-        }
-
-        int totalItems = uniqueMaterials.size();
-
-        Material prev = forceItemPlayer.getPreviousMaterial();
-        Material current = forceItemPlayer.getCurrentMaterial();
-
-        double baseProbability = (double) totalItems / totalItemsInPool;
-
-        baseProbability = Math.min(baseProbability, 1.0); // 100% cap
-
-        double probability = Math.pow(baseProbability, streak);
-        double probabilityPercent = probability * 100;
-
-        String rarity;
-        if (prev != null && current == prev) {
-            rarity = "<gradient:#73FF00:#14C8FF><b>EXTRAORDINARY</b></gradient>";
-            player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 0f);
-        } else if (probability <= 0.001) {
-            rarity = "<gradient:#E41EBC:#9A4992><b>RNGESUS</b></gradient>"; // ~0.1% or less
-            Bukkit.getOnlinePlayers().forEach(players -> {
-                players.playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_DEATH, 0.3f, 1f);
-            });
-        } else if (probability <= 0.01) {
-            rarity = "<gold><b>LEGENDARY</b></gold>";
-            Bukkit.getOnlinePlayers().forEach(players -> {
-                players.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 0f);
-            });
-        } else if (probability <= 0.05) {
-            rarity = "<dark_purple><b>EPIC</b></dark_purple>";
-            player.playSound(player.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1f, 1f);
-        } else {
-            rarity = "<blue><b>RARE</b></blue>";
-            player.playSound(player.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1f, 1.5f);
-        }
-
-        String formattedProbability;
-        if (probabilityPercent >= 1) {
-            DecimalFormat df = new DecimalFormat("0.##");
-            df.setRoundingMode(RoundingMode.HALF_UP);
-            formattedProbability = df.format(probabilityPercent) + "%";
-        } else {
-            int leadingZeros = 0;
-            double temp = probabilityPercent;
-            while (temp < 1 && leadingZeros < 15) {
-                temp *= 10;
-                leadingZeros++;
-            }
-
-            int totalDecimals = leadingZeros + 2;
-
-            DecimalFormat df = new DecimalFormat("0." + "#".repeat(Math.max(0, totalDecimals)));
-            df.setRoundingMode(RoundingMode.HALF_UP);
-            formattedProbability = df.format(probabilityPercent) + "%";
-        }
-
-        return formattedProbability + " <dark_gray>(<reset>" + rarity + "<dark_gray>)";
     }
 
     private void collectUniqueMaterials(Inventory inventory, Set<Material> uniqueMaterials) {
@@ -913,6 +912,23 @@ public class Listeners implements Listener {
             event.getDrops().removeIf(Gamemanager::isBackpack);
         }
 
+        if (this.plugin.getGamemanager().isMidGame() && this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
+            FIBServiceHelper helper = plugin.getFibServiceHelper();
+            if (gamePlayer != null && gamePlayer.currentTeam() != null) {
+                gamePlayer.currentTeam().getPlayers().stream()
+                        .filter(teammate -> !teammate.equals(gamePlayer))
+                        .forEach(teammate -> helper.updateMemberStatisticsAsync(
+                                player.getUniqueId(),
+                                teammate.player().getUniqueId(),
+                                player.getUniqueId(),
+                                FIBServiceHelper.memberUpdate().deathsAdd(1L)
+                        ));
+            } else {
+                helper.updateSoloStatisticsAsync(player.getUniqueId(),
+                        FIBServiceHelper.soloUpdate().deathsAdd(1L));
+            }
+        }
+
         // Automatically respawn player.
         Bukkit.getScheduler().runTaskLater(
                 this.plugin,
@@ -929,15 +945,16 @@ public class Listeners implements Listener {
 
         Player player = event.getPlayer();
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-        Boolean keepInventory = player.getWorld().getGameRuleValue(GameRule.KEEP_INVENTORY);
+        Boolean keepInventory = player.getWorld().getGameRuleValue(GameRules.KEEP_INVENTORY);
         if (keepInventory == null || !keepInventory) {
             player.getInventory().addItem(new ItemStack(Material.STONE_AXE));
             player.getInventory().addItem(new ItemStack(Material.STONE_PICKAXE));
+            player.getInventory().addItem(new ItemStack(Material.STONE_SHOVEL));
 
             player.performCommand("fixskips -silent");
         }
 
-        player.getInventory().setItem(8, Gamemanager.createBackpack());
+        player.getInventory().setItem(8, Gamemanager.createBackpack(forceItemPlayer, this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)));
 
     }
 

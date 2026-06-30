@@ -160,6 +160,10 @@ public class InventoryBuilder implements InventoryHolder {
         this.updateHandlers.forEach(Runnable::run);
     }
 
+    public void clearCloseHandlers() {
+        this.closeHandlers.clear();
+    }
+
     public void open(Player player) {
         this.player = player;
         this.update();

@@ -50,9 +50,9 @@ import forceitembattle.manager.ScoreboardManager;
 import forceitembattle.manager.TeamsManager;
 import forceitembattle.manager.TradingManager;
 import forceitembattle.manager.VoteSkipManager;
-import forceitembattle.manager.stats.StatsManager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
+import forceitembattle.stats.FIBServiceHelper;
 import forceitembattle.util.AntimatterLocator;
 import forceitembattle.util.Backpack;
 import forceitembattle.util.DescriptionItem;
@@ -61,9 +61,10 @@ import forceitembattle.util.Timer;
 import forceitembattle.util.WanderingTraderTimer;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.io.FileUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
-import org.bukkit.GameRule;
+import org.bukkit.GameRules;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -84,7 +85,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
@@ -103,8 +103,6 @@ public final class ForceItemBattle extends JavaPlugin {
     private ItemDifficultiesManager itemDifficultiesManager;
     @Getter
     private RecipeManager recipeManager;
-    @Getter
-    private StatsManager statsManager;
     @Getter
     private PositionManager positionManager;
     @Getter
@@ -133,13 +131,13 @@ public final class ForceItemBattle extends JavaPlugin {
     @Getter
     private ScoreboardManager scoreboardManager;
     @Getter
+    private FIBServiceHelper fibServiceHelper;
+    @Getter
     @Setter
     private Location spawnLocation;
 
     @Getter
     private GameSettings settings;
-
-    public final File resetFile = new File(this.getDataFolder() + "/reset");
 
     public ForceItemBattle() {
         instance = this;
@@ -152,10 +150,6 @@ public final class ForceItemBattle extends JavaPlugin {
         this.settings = new GameSettings(this);
 
         saveConfig();
-        if (resetFile.exists()) {
-            this.resetWorld();
-            resetFile.delete();
-        }
     }
 
     @Override
@@ -165,7 +159,6 @@ public final class ForceItemBattle extends JavaPlugin {
         this.backpack = new Backpack(this);
         this.itemDifficultiesManager = new ItemDifficultiesManager(this);
         this.recipeManager = new RecipeManager(this);
-        this.statsManager = new StatsManager();
         this.positionManager = new PositionManager(this);
         this.teamManager = new TeamsManager(this);
         this.tradingManager = new TradingManager(this);
@@ -178,6 +171,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.antimatterLocator = new AntimatterLocator();
         this.voteSkipManager = new VoteSkipManager();
         this.scoreboardManager = new ScoreboardManager(this);
+        this.fibServiceHelper = new FIBServiceHelper(this);
 
         this.initListeners();
         this.initCommands();
@@ -190,21 +184,21 @@ public final class ForceItemBattle extends JavaPlugin {
                 keepInventory = true;
                 Bukkit.getScheduler().scheduleSyncDelayedTask(
                         this,
-                        () -> world.setGameRule(GameRule.KEEP_INVENTORY, false),
+                        () -> world.setGameRule(GameRules.KEEP_INVENTORY, false),
                         20 * 60 * 5 // 5 minutes
                 );
             }
 
             // Apply settings.
-            world.setGameRule(GameRule.KEEP_INVENTORY, keepInventory);
+            world.setGameRule(GameRules.KEEP_INVENTORY, keepInventory);
             getSettings().setSettingEnabled(GameSetting.FASTER_RANDOM_TICK, getSettings().isSettingEnabled(GameSetting.FASTER_RANDOM_TICK));
 
             //world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
-            world.setGameRule(GameRule.LOCATOR_BAR, false);
-            world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, false);
-            world.setGameRule(GameRule.SPECTATORS_GENERATE_CHUNKS, false);
-            world.setGameRule(GameRule.DO_TRADER_SPAWNING, false);
-            world.setGameRule(GameRule.DO_INSOMNIA, false);
+            world.setGameRule(GameRules.LOCATOR_BAR, false);
+            world.setGameRule(GameRules.ADVANCE_TIME, false);
+            world.setGameRule(GameRules.SPECTATORS_GENERATE_CHUNKS, false);
+            world.setGameRule(GameRules.SPAWN_WANDERING_TRADERS, false);
+            world.setGameRule(GameRules.SPAWN_PHANTOMS, false);
 
             WorldBorder worldBorder = world.getWorldBorder();
             worldBorder.setCenter(world.getSpawnLocation());
@@ -245,8 +239,6 @@ public final class ForceItemBattle extends JavaPlugin {
 
     private void copyDatapack(String datapackName) {
         File world = new File(Bukkit.getWorldContainer() , "world");
-        File nether = new File(Bukkit.getWorldContainer() , "world_nether");
-        File end = new File(Bukkit.getWorldContainer() , "world_the_end");
 
         try {
             // Create Path objects for source and destination directories
@@ -270,57 +262,25 @@ public final class ForceItemBattle extends JavaPlugin {
         }
     }
 
-    private void resetWorld() {
-        try {
-            //////////////////////////////////////////////////////////////////////////////
-            //Files.deleteIfExists(getDataFolder().toPath());
-            //////////////////////////////////////////////////////////////////////////////
+    public void scheduleReset() {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                File world = new File(Bukkit.getWorldContainer(), "world").toPath().normalize().toFile();
+                if (world.exists()) {
+                    FileUtils.deleteDirectory(world);
+                    System.out.println("[FIB] World deleted successfully.");
+                }
 
-            File world = new File(Bukkit.getWorldContainer() , "world");
-            File nether = new File(Bukkit.getWorldContainer() , "world_nether");
-            File end = new File(Bukkit.getWorldContainer() , "world_the_end");
+                world.mkdirs();
+                new File(world, "datapacks").mkdirs();
+                this.copyDatapack("FIB_Worldgen");
+                System.out.println("[FIB] Datapack copied.");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }));
 
-            Files.walk(world.toPath())
-                    .sorted(Comparator.reverseOrder())
-                    . map(Path::toFile)
-                    . forEach(File::delete);
-            Files.walk(nether.toPath())
-                    .sorted(Comparator.reverseOrder())
-                    . map(Path::toFile)
-                    . forEach(File::delete);
-            Files.walk(end.toPath())
-                    .sorted(Comparator.reverseOrder())
-                    . map(Path::toFile)
-                    . forEach(File::delete);
-
-            //////////////////////////////////////////////////////////////////////////////
-
-            world.mkdirs();
-            nether.mkdirs();
-            end.mkdirs();
-
-            new File(world , "data").mkdirs();
-            new File(world , "datapacks").mkdirs();
-            new File(world , "playerdata").mkdirs();
-            new File(world , "poi").mkdirs();
-            new File(world , "region").mkdirs();
-
-            new File(nether , "data").mkdirs();
-            new File(nether , "datapacks").mkdirs();
-            new File(nether , "playerdata").mkdirs();
-            new File(nether , "poi").mkdirs();
-            new File(nether , "region").mkdirs();
-
-            new File(end , "data").mkdirs();
-            new File(end , "datapacks").mkdirs();
-            new File(end , "playerdata").mkdirs();
-            new File(end , "poi").mkdirs();
-            new File(end , "region").mkdirs();
-
-            this.copyDatapack("FIB_Worldgen");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Bukkit.restart();
     }
 
     private void initListeners() {
