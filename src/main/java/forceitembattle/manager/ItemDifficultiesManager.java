@@ -959,7 +959,7 @@ public class ItemDifficultiesManager {
         register(Material.JUNGLE_TRAPDOOR, State.EARLY);
         register(Material.JUNGLE_WOOD, State.EARLY);
         register(Material.KELP, State.EARLY);
-        register(Material.KNOWLEDGE_BOOK, State.MID, ItemTag.NETHER);
+        register(Material.KNOWLEDGE_BOOK, State.MID, ItemTag.NETHER); // Antimatter Locator
         register(Material.LADDER, State.EARLY);
         register(Material.LANTERN, State.EARLY);
         register(Material.LAPIS_BLOCK, State.EARLY);
@@ -1118,6 +1118,7 @@ public class ItemDifficultiesManager {
         register(Material.NETHER_GOLD_ORE, State.LATE, ItemTag.NETHER);
         register(Material.NETHER_QUARTZ_ORE, State.LATE, ItemTag.NETHER);
         register(Material.NETHER_SPROUTS, State.MID, ItemTag.NETHER);
+        register(Material.NETHER_STAR, State.EARLY); // Wheel of Fortune
         register(Material.NETHER_WART, State.MID, ItemTag.NETHER);
         register(Material.NETHER_WART_BLOCK, State.MID, ItemTag.NETHER);
         register(Material.NETHERITE_AXE, State.LATE, ItemTag.NETHER, ItemTag.EXTREME);
@@ -1532,7 +1533,7 @@ public class ItemDifficultiesManager {
         register(Material.TNT, State.MID);
         register(Material.TNT_MINECART, State.MID);
         register(Material.TORCH, State.EARLY);
-        register(Material.TORCHFLOWER, State.EARLY);
+        register(Material.TORCHFLOWER, State.EARLY); // Weathered Captains Journal
         register(Material.TOTEM_OF_UNDYING, State.LATE, ItemTag.EXTREME);
         register(Material.TRAPPED_CHEST, State.EARLY);
         register(Material.TRIAL_KEY, State.LATE);
@@ -1673,7 +1674,7 @@ public class ItemDifficultiesManager {
         register(Material.WILD_ARMOR_TRIM_SMITHING_TEMPLATE, State.LATE);
         register(Material.WILDFLOWERS, State.EARLY);
         register(Material.WIND_CHARGE, State.LATE);
-        register(Material.WITHER_ROSE, State.MID);
+        register(Material.WITHER_ROSE, State.MID); // Trial Locator
         register(Material.WITHER_SKELETON_SKULL, State.LATE, ItemTag.NETHER);
         register(Material.WOLF_ARMOR, State.EARLY);
         register(Material.WOODEN_AXE, State.EARLY);
