@@ -30,6 +30,7 @@ public class AchievementInventory extends InventoryBuilder {
         // Pull their achievements from the service and refresh once they arrive.
         this.plugin.getAchievementManager().getAchievementStorage()
                 .loadPlayer(playerUUID, this::updateInventory);
+        this.addClickHandler(inventoryClickEvent -> inventoryClickEvent.setCancelled(true));
     }
 
     private int totalPages(int objectsPerPage) {

@@ -2,6 +2,7 @@ package forceitembattle.commands.player;
 
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
+import forceitembattle.achievements.AchievementInventory;
 import forceitembattle.achievements.Achievements;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -9,7 +10,6 @@ import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 public class CommandAchievement extends CustomCommand implements CustomTabCompleter {
@@ -56,40 +56,12 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
 
         final String name = targetName;
 
-        // Achievements are read from the service-backed cache, which is only
-        // populated for loaded (online) players. Load the target from the service
-        // first (a no-op if already cached), then render on the main thread.
         this.plugin.getAchievementManager().getAchievementStorage().loadPlayer(targetUUID, () -> {
             if (!player.isOnline()) {
                 return;
             }
-            Set<String> achievements = this.plugin.getAchievementManager()
-                    .getAchievementStorage().getPlayerAchievements(targetUUID);
-            displayAchievements(player, name, achievements);
+            new AchievementInventory(this.plugin, name, targetUUID).open(player);
         });
-    }
-
-    private void displayAchievements(Player player, String targetName, Set<String> achievements) {
-        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
-                "<gray>========== <gold>Achievements for " + targetName + " <gray>=========="));
-
-        if (achievements.isEmpty()) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
-                    "<yellow>No achievements unlocked yet!"));
-        } else {
-            for (String achievementName : achievements) {
-                try {
-                    Achievements achievement = Achievements.valueOf(achievementName);
-                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
-                            "<dark_aqua>✓ " + achievement.getTitle() + " <gray>- " + achievement.getDescription()));
-                } catch (IllegalArgumentException e) {
-                    // Skip achievements that no longer exist in the enum
-                }
-            }
-        }
-
-        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
-                "<gray>Total: <gold>" + achievements.size() + "<gray>/<gold>" + Achievements.values().length));
     }
 
     private void handleGrantCommand(Player player, String[] args) {
