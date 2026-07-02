@@ -24,15 +24,20 @@ repositories {
         url = uri("https://repo.codemc.io/repository/maven-public/")
     }
     maven {
+        // TODO: deploy FIBService to public-releases, change uri later and remove credentials object
+        /**
+         * url = uri("https://maven.mcplayhd.net/public-releases")
+         */
         name = "mcplayhd"
-        url = uri("https://maven.mcplayhd.net/public-releases")
+        url = uri("https://maven.mcplayhd.net/releases")
+        credentials(PasswordCredentials::class)
     }
 }
 
 dependencies {
     paperweight.paperDevBundle("26.2.build.+")
     implementation("org.apache.commons:commons-text:1.13.1")
-    implementation("de.threeseconds:FIBServiceClient:0.0.3")
+    implementation("de.threeseconds:FIBServiceClient:0.0.4")
     // paperweight.foliaDevBundle("1.20.4-R0.1-SNAPSHOT")
     // paperweight.devBundle("com.example.paperfork", "1.20.4-R0.1-SNAPSHOT")
 }
@@ -70,39 +75,39 @@ tasks {
 // Configure plugin.yml generation
 // - name, version, and description are inherited from the Gradle project.
 bukkitPluginYaml {
-main = "forceitembattle.ForceItemBattle"
-load = BukkitPluginYaml.PluginLoadOrder.STARTUP
-authors.add("threeseconds")
-authors.add("stupxd")
-authors.add("eltobito")
-apiVersion = "26.1.2"
-commands.register("start")
-commands.register("settings")
-commands.register("skip")
-commands.register("reset")
-commands.register("bp")
-commands.register("result")
-commands.register("items")
-commands.register("info")
-commands.register("infowiki")
-commands.register("spawn")
-commands.register("bed")
-commands.register("pause")
-commands.register("resume")
-commands.register("help")
-commands.register("stats")
-commands.register("top")
-commands.register("pos")
-commands.register("ping")
-commands.register("stoptimer")
-commands.register("teams")
-commands.register("asktrade")
-commands.register("trade")
-commands.register("shout")
-commands.register("fixskips")
-commands.register("achievements")
-commands.register("spectate")
-commands.register("forceteam")
-commands.register("vote")
-commands.register("voteskip")
+    main = "forceitembattle.ForceItemBattle"
+    load = BukkitPluginYaml.PluginLoadOrder.STARTUP
+    authors.add("threeseconds")
+    authors.add("stupxd")
+    authors.add("eltobito")
+    apiVersion = "26.1.2"
+    commands.register("start")
+    commands.register("settings")
+    commands.register("skip")
+    commands.register("reset")
+    commands.register("bp")
+    commands.register("result")
+    commands.register("items")
+    commands.register("info")
+    commands.register("infowiki")
+    commands.register("spawn")
+    commands.register("bed")
+    commands.register("pause")
+    commands.register("resume")
+    commands.register("help")
+    commands.register("stats")
+    commands.register("top")
+    commands.register("pos")
+    commands.register("ping")
+    commands.register("stoptimer")
+    commands.register("teams")
+    commands.register("asktrade")
+    commands.register("trade")
+    commands.register("shout")
+    commands.register("fixskips")
+    commands.register("achievements")
+    commands.register("spectate")
+    commands.register("forceteam")
+    commands.register("vote")
+    commands.register("voteskip")
 }
