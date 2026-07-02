@@ -1,11 +1,12 @@
-package forceitembattle.settings.achievements.handlers;
+package forceitembattle.achievements.handlers;
 
-import forceitembattle.settings.achievements.Trigger;
+import forceitembattle.achievements.Trigger;
 import forceitembattle.util.ForceItemPlayer;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 
 /**
@@ -30,6 +31,12 @@ public class BeehiveHandler implements AchievementHandler<SimpleProgress> {
     @Override
     public boolean check(Event event, SimpleProgress progress, ForceItemPlayer forceItemPlayer) {
         if (!(event instanceof PlayerInteractEvent interactEvent)) {
+            return false;
+        }
+
+        // PlayerInteractEvent fires once per hand; only count the main hand so a
+        // single right-click doesn't increment twice.
+        if (interactEvent.getHand() != EquipmentSlot.HAND) {
             return false;
         }
 

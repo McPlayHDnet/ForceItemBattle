@@ -1,10 +1,12 @@
 package forceitembattle.listener;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.event.AntimatterTeleporterUseEvent;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.stats.FIBServiceHelper;
 import forceitembattle.util.ForceItemPlayer;
 import lombok.RequiredArgsConstructor;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -71,6 +73,8 @@ public class PortalListener implements Listener {
 
         Location existingLocation = this.findExistingLocation(player);
         if (existingLocation != null) {
+            // Re-using a teleporter already used this round — not a new/distinct one.
+            Bukkit.getPluginManager().callEvent(new AntimatterTeleporterUseEvent(player, false));
             player.teleport(existingLocation);
             return;
         }
@@ -91,6 +95,10 @@ public class PortalListener implements Listener {
         }
 
         playerTeleporterLocations.get(player.getUniqueId()).add(new TeleporterLocation(currentLocation, newLocation));
+
+        // A teleporter this player hasn't used before this round — counts as distinct.
+        Bukkit.getPluginManager().callEvent(new AntimatterTeleporterUseEvent(player, true));
+
         player.teleport(newLocation);
     }
 

@@ -1,6 +1,6 @@
 package forceitembattle.event;
 
-import forceitembattle.settings.achievements.Achievements;
+import forceitembattle.achievements.Achievements;
 import lombok.Getter;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;

@@ -1,8 +1,8 @@
-package forceitembattle.settings.achievements.handlers;
+package forceitembattle.achievements.handlers;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.event.FoundItemEvent;
-import forceitembattle.settings.achievements.Trigger;
+import forceitembattle.achievements.Trigger;
 import forceitembattle.util.ForceItemPlayer;
 import org.bukkit.event.Event;
 
@@ -71,13 +71,27 @@ public class TimeBasedHandler implements AchievementHandler<TimeProgress> {
             return false;
         }
 
-        long currentTime = System.currentTimeMillis();
-        long elapsedGameTime = (currentTime - progress.gameStartTime) / 1000;
-        long elapsedItemTime = (currentTime - progress.lastItemTime) / 1000;
+        ForceItemBattle fib = ForceItemBattle.getInstance();
+        // Pause-aware game clock: the Timer only counts down during MID_GAME, so
+        // deriving elapsed/remaining from it (instead of wall time) stays correct
+        // across /pause and /resume. Mirrors ItemDifficultiesManager's elapsed calc.
+        int gameDuration = fib.getGamemanager().getGameDuration();   // total round seconds
+        int secondsLeft = fib.getTimer().getTimeLeft();              // seconds remaining
+        long elapsedGameTime = gameDuration - secondsLeft;           // seconds since round start
 
-        // Update item received time for non-b2b, non-skip items
+        // Anchor per-item markers to the round start on first use. The first item
+        // is assigned at game start, i.e. when secondsLeft == gameDuration.
+        if (!progress.initialized) {
+            progress.lastItemSecondsLeft = gameDuration;
+            progress.itemReceivedSecondsLeft = gameDuration;
+            progress.initialized = true;
+        }
+
+        long elapsedItemTime = progress.lastItemSecondsLeft - secondsLeft; // seconds since last counted item
+
+        // Update item received marker for non-b2b, non-skip items
         if (!foundEvent.isBackToBack() && !foundEvent.isSkipped()) {
-            progress.itemReceivedTime = currentTime;
+            progress.itemReceivedSecondsLeft = secondsLeft;
         }
 
         // Track if player has skipped
@@ -90,7 +104,7 @@ public class TimeBasedHandler implements AchievementHandler<TimeProgress> {
             if (!foundEvent.isSkipped()) {
                 return false; // Not a skip, so can't be procrastinator
             }
-            long timeSinceReceived = (currentTime - progress.itemReceivedTime) / 1000;
+            long timeSinceReceived = progress.itemReceivedSecondsLeft - secondsLeft;
             return timeSinceReceived >= skipAfterSeconds;
         }
 
@@ -110,7 +124,6 @@ public class TimeBasedHandler implements AchievementHandler<TimeProgress> {
                 return false; // B2B doesn't count as "first item"
             }
             if (!progress.firstItemCollected) {
-                ForceItemBattle fib = ForceItemBattle.getInstance();
                 boolean isFirstGlobally = fib.getGamemanager().forceItemPlayerMap().values().stream()
                         .filter(p -> !p.isSpectator())
                         .allMatch(p -> p.foundItems().isEmpty() ||
@@ -124,12 +137,16 @@ public class TimeBasedHandler implements AchievementHandler<TimeProgress> {
             return false;
         }
 
-        // CLOSE CALL - within last X seconds of round
+        // CLOSE CALL / final-window - count items collected within the last X seconds.
+        // targetAmount=1 → CLOSE_CALL (one item in the window)
+        // targetAmount=3 → BUZZER_BEATER (three items in the window)
         if (closeCallSeconds > 0) {
-            ForceItemBattle fib = ForceItemBattle.getInstance();
-            long totalRoundTime = fib.getGamemanager().getGameDuration();
-            long remainingTime = totalRoundTime - elapsedGameTime;
-            return remainingTime <= closeCallSeconds;
+            if (secondsLeft > closeCallSeconds) {
+                return false; // Not in the final window yet
+            }
+            progress.count++;
+            progress.lastItemSecondsLeft = secondsLeft;
+            return progress.count >= targetAmount;
         }
 
         // Within X seconds from game start
@@ -138,7 +155,7 @@ public class TimeBasedHandler implements AchievementHandler<TimeProgress> {
                 return false;
             }
             progress.count++;
-            progress.lastItemTime = currentTime;
+            progress.lastItemSecondsLeft = secondsLeft;
             return progress.count >= targetAmount;
         }
 
@@ -146,11 +163,11 @@ public class TimeBasedHandler implements AchievementHandler<TimeProgress> {
         if (timeFrameSeconds > 0) {
             if (elapsedItemTime < timeFrameSeconds) {
                 progress.count = 0;
-                progress.lastItemTime = currentTime;
+                progress.lastItemSecondsLeft = secondsLeft;
                 return false;
             }
             progress.count++;
-            progress.lastItemTime = currentTime;
+            progress.lastItemSecondsLeft = secondsLeft;
             return progress.count >= targetAmount;
         }
 

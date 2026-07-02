@@ -1,15 +1,17 @@
-package forceitembattle.settings.achievements.handlers;
+package forceitembattle.achievements.handlers;
 
-import forceitembattle.settings.achievements.Trigger;
+import forceitembattle.achievements.Trigger;
 import forceitembattle.util.CustomItem;
 import forceitembattle.util.ForceItemPlayer;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Material;
-import org.bukkit.block.Chest;
 import org.bukkit.event.Event;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+
+import java.util.Locale;
 
 /**
  * Handler for loot-based achievements
@@ -40,7 +42,10 @@ public class LootHandler implements AchievementHandler<SimpleProgress> {
             return false;
         }
 
-        if (!(openEvent.getInventory().getHolder() instanceof Chest)) {
+        // InventoryType.CHEST covers both single and double chests. (Checking
+        // `getHolder() instanceof Chest` missed double chests, whose holder is a
+        // DoubleChest, not a Chest.)
+        if (openEvent.getInventory().getType() != InventoryType.CHEST) {
             return false;
         }
 
@@ -80,7 +85,7 @@ public class LootHandler implements AchievementHandler<SimpleProgress> {
 
         if (customItem.getCheckedName() != null) {
             String displayName = PlainTextComponentSerializer.plainText().serialize(item.displayName());
-            if (!displayName.contains(customItem.getCheckedName())) {
+            if (!displayName.toLowerCase(Locale.ROOT).contains(customItem.getCheckedName().toLowerCase(Locale.ROOT))) {
                 return false;
             }
         }

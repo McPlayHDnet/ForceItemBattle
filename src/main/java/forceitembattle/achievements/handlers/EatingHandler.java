@@ -1,6 +1,6 @@
-package forceitembattle.settings.achievements.handlers;
+package forceitembattle.achievements.handlers;
 
-import forceitembattle.settings.achievements.Trigger;
+import forceitembattle.achievements.Trigger;
 import forceitembattle.util.CustomItem;
 import forceitembattle.util.ForceItemPlayer;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
@@ -8,6 +8,8 @@ import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+
+import java.util.Locale;
 
 /**
  * Handler for eating-based achievements
@@ -55,8 +57,10 @@ public class EatingHandler implements AchievementHandler<SimpleProgress> {
         }
 
         if (requiredItem.getCheckedName() != null) {
+            // Case-insensitive: the CONNOISSEUR definition uses "cavendish" while
+            // the item is displayed "Cavendish", so a case-sensitive match failed.
             String displayName = PlainTextComponentSerializer.plainText().serialize(item.displayName());
-            if (!displayName.contains(requiredItem.getCheckedName())) {
+            if (!displayName.toLowerCase(Locale.ROOT).contains(requiredItem.getCheckedName().toLowerCase(Locale.ROOT))) {
                 return false;
             }
         }

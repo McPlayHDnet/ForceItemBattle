@@ -1,8 +1,9 @@
-package forceitembattle.settings.achievements.handlers;
+package forceitembattle.achievements.handlers;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.event.FoundItemEvent;
-import forceitembattle.settings.achievements.Trigger;
+import forceitembattle.settings.GameSetting;
+import forceitembattle.achievements.Trigger;
 import forceitembattle.util.ForceItemPlayer;
 import org.bukkit.Material;
 import org.bukkit.event.Event;
@@ -30,11 +31,16 @@ public class CounterHandler implements AchievementHandler<CounterProgress> {
             return false;
         }
 
-        // For SIMPLE counter achievements (Find X items total)
-        // Just check the player's actual item count (includes skips!)
         if (!requireConsecutive && dimension == null) {
-            // Use the player's actual found items count
-            int totalItems = forceItemPlayer.foundItems().size();
+            var fib = ForceItemBattle.getInstance();
+            int totalItems;
+            if (fib.getSettings().isSettingEnabled(GameSetting.TEAM) && forceItemPlayer.currentTeam() != null) {
+                totalItems = forceItemPlayer.currentTeam().getPlayers().stream()
+                        .mapToInt(teamMember -> teamMember.foundItems().size())
+                        .sum();
+            } else {
+                totalItems = forceItemPlayer.foundItems().size();
+            }
             return totalItems >= targetAmount;
         }
 

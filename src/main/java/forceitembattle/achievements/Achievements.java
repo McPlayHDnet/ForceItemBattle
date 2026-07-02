@@ -1,9 +1,10 @@
-package forceitembattle.settings.achievements;
+package forceitembattle.achievements;
 
-import forceitembattle.settings.achievements.handlers.*;
+import forceitembattle.achievements.handlers.*;
 import forceitembattle.util.BiomeGroup;
 import forceitembattle.util.CustomItem;
 import lombok.Getter;
+import org.bukkit.block.Biome;
 import org.bukkit.Material;
 
 import java.util.Set;
@@ -51,12 +52,15 @@ public enum Achievements {
     YOU_GET_WHAT_YOU_GET("You Get What You Get", "Collect 15 items in a row without skipping any",
             new CounterHandler(15, true, null)),
 
+    THERE_IS_NO_WAY("There Is No Way", "Get your assigned item from the Wheel of Fortune",
+            new WheelOfFortuneHandler()),
+
     // TIME-BASED achievements
     SPEED_COLLECTOR("Speed Collector", "Collect 7 items within the first 5 minutes of the round",
             new TimeBasedHandler(7, 5 * 60, 0, 0, 0, true, false, false)),
 
     QUICK_GRAB("Quick Grab", "Collect an item within the first 30 seconds without skipping",
-            new TimeBasedHandler(1, 30, 0, 0, 0, true, false, true)),
+            new TimeBasedHandler(1, 30, 0, 0, 0, true, false, false)),
 
     PROCRASTINATOR("Procrastinator", "Skip an item after keeping it for 10 minutes",
             new TimeBasedHandler(1, 0, 0, 10 * 60, 0, false, false, false)),
@@ -65,7 +69,10 @@ public enum Achievements {
             new TimeBasedHandler(1, 0, 15 * 60, 0, 0, true, false, false)),
 
     CLOSE_CALL("Close Call", "Collect an item within the last 5 seconds of the round",
-            new TimeBasedHandler(1, 0, 0, 0, 5, true, false, true)),
+            new TimeBasedHandler(1, 0, 0, 0, 5, false, false, false)),
+
+    BUZZER_BEATER("Buzzer Beater", "Collect 3 items in the final minute",
+            new TimeBasedHandler(3, 0, 0, 0, 60, false, false, false)),
 
     EARLY_BIRD("Early Bird", "Be the first player to collect any item in the round",
             new TimeBasedHandler(1, 0, 0, 0, 0, false, true, true)),
@@ -93,8 +100,15 @@ public enum Achievements {
     BIOME_HOPPER("Biome Hopper", "Visit all basic overworld biomes in one round",
             CollectionHandler.biomeHandler(Set.of(BiomeGroup.values()))),
 
+    CAVE_HOPPER("Cave Hopper", "Visit all cave biomes in one round",
+            CollectionHandler.caveBiomeHandler(Set.of(
+                    Biome.DEEP_DARK, Biome.DRIPSTONE_CAVES, Biome.LUSH_CAVES, Biome.SULFUR_CAVES))),
+
     ALWAYS_ON_THE_GO("Always On The Go", "Visit all three dimensions in one round",
             CollectionHandler.dimensionHandler(Set.of("world", "world_nether", "world_the_end"))),
+
+    PALE_PLEASE("Pale Please", "Use 10 different antimatter teleporters in one game",
+            new AntimatterTeleporterUsesHandler(10)),
 
     // SKIP achievements
     UNLUCKY("Unlucky", "Skip 3 items in a row",
@@ -118,6 +132,9 @@ public enum Achievements {
 
     HONEY_HONEY("Honey, honey, how you thrill me, aha, honey honey", "Harvest 2 full beehives with shears",
             new BeehiveHandler(2)),
+
+    GOLD_GOLD_GOLD("Gold Gold Gold", "Use the Wheel of Fortune 15 times in one game",
+            new WheelOfFortuneUsesHandler(15)),
 
     // LOOT achievements
     WHEEL_OF_FORTUNE("Wheel of Fortune", "Find a Legendary item in a loot chest",

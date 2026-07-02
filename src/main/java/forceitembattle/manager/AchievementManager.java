@@ -3,12 +3,20 @@ package forceitembattle.manager;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.event.PlayerGrantAchievementEvent;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.settings.achievements.AchievementStorage;
-import forceitembattle.settings.achievements.Achievements;
-import forceitembattle.settings.achievements.Trigger;
-import forceitembattle.settings.achievements.handlers.AchievementHandler;
-import forceitembattle.settings.achievements.handlers.ProgressTracker;
-import forceitembattle.settings.achievements.handlers.SimpleProgress;
+import forceitembattle.achievements.AchievementMode;
+import forceitembattle.achievements.AchievementStorage;
+import forceitembattle.achievements.Achievements;
+import forceitembattle.achievements.Trigger;
+import forceitembattle.achievements.handlers.AchievementHandler;
+import forceitembattle.achievements.handlers.BackToBackProgress;
+import forceitembattle.achievements.handlers.CollectionHandler;
+import forceitembattle.achievements.handlers.CollectionProgress;
+import forceitembattle.achievements.handlers.ConsecutiveStoneHandler;
+import forceitembattle.achievements.handlers.CounterProgress;
+import forceitembattle.achievements.handlers.ProgressTracker;
+import forceitembattle.achievements.handlers.SimpleProgress;
+import forceitembattle.achievements.handlers.SkipProgress;
+import forceitembattle.achievements.handlers.TimeProgress;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.Team;
 import org.bukkit.Bukkit;
@@ -33,18 +41,13 @@ public class AchievementManager {
         this.achievementsByTrigger = buildTriggerMap();
     }
 
-    /**
-     * Pre-builds a map of achievements grouped by trigger for faster lookups
-     */
     private Map<Trigger, List<Achievements>> buildTriggerMap() {
         Map<Trigger, List<Achievements>> map = new EnumMap<>(Trigger.class);
 
-        // Initialize empty lists for all triggers
         for (Trigger trigger : Trigger.values()) {
             map.put(trigger, new ArrayList<>());
         }
 
-        // Group achievements by their trigger
         for (Achievements achievement : Achievements.values()) {
             Trigger trigger = achievement.getHandler().getTrigger();
             map.get(trigger).add(achievement);
@@ -124,19 +127,58 @@ public class AchievementManager {
 
     private void grantAchievement(Player player, Achievements achievement,
                                   boolean isTeamAchievement, ForceItemPlayer forceItemPlayer) {
-        storage.addAchievement(player.getUniqueId(), achievement);
-        Bukkit.getPluginManager().callEvent(new PlayerGrantAchievementEvent(player, achievement));
+        Team team = forceItemPlayer.currentTeam();
+        boolean teamGame = plugin.getSettings().isSettingEnabled(GameSetting.TEAM) && team != null;
 
-        if (isTeamAchievement && forceItemPlayer.currentTeam() != null) {
-            for (ForceItemPlayer teamMember : forceItemPlayer.currentTeam().getPlayers()) {
-                if (!teamMember.player().getUniqueId().equals(forceItemPlayer.player().getUniqueId())) {
-                    storage.addAchievement(teamMember.player().getUniqueId(), achievement);
-                    Bukkit.getPluginManager().callEvent(
-                            new PlayerGrantAchievementEvent(teamMember.player(), achievement)
-                    );
+        // Grant to the triggering player.
+        writeUnlock(player.getUniqueId(), player, achievement, team, teamGame);
+
+        // Team-eligible achievements are also granted to the rest of the team.
+        // (Which achievements are team-eligible vs player-only is decided by the
+        // handler flags — that scoping is unchanged here.)
+        if (isTeamAchievement && team != null) {
+            for (ForceItemPlayer teamMember : team.getPlayers()) {
+                UUID memberUuid = teamMember.player().getUniqueId();
+                if (!memberUuid.equals(player.getUniqueId())) {
+                    writeUnlock(memberUuid, teamMember.player(), achievement, team, teamGame);
                 }
             }
         }
+    }
+
+    /**
+     * Persists one unlock (with the correct mode + teammate) and, if the player
+     * is online, fires the grant event so downstream listeners (announcements,
+     * Completionist) run. A player in a team game with no resolvable teammate
+     * (e.g. a solo remnant of a team) is recorded as SOLO to keep service data
+     * valid.
+     */
+    private void writeUnlock(UUID memberUuid, Player memberPlayer, Achievements achievement,
+                             Team team, boolean teamGame) {
+        UUID teammate = teamGame ? teammateOf(memberUuid, team) : null;
+        AchievementMode mode = teammate != null ? AchievementMode.TEAM : AchievementMode.SOLO;
+
+        storage.addAchievement(memberUuid, achievement, mode, teammate);
+
+        if (memberPlayer != null && memberPlayer.isOnline()) {
+            Bukkit.getPluginManager().callEvent(new PlayerGrantAchievementEvent(memberPlayer, achievement));
+        }
+    }
+
+    /**
+     * The other member of a (two-player) team, or null if none can be resolved.
+     */
+    private UUID teammateOf(UUID memberUuid, Team team) {
+        if (team == null) {
+            return null;
+        }
+        for (ForceItemPlayer p : team.getPlayers()) {
+            UUID uuid = p.player().getUniqueId();
+            if (!uuid.equals(memberUuid)) {
+                return uuid;
+            }
+        }
+        return null;
     }
 
     /**
@@ -146,6 +188,8 @@ public class AchievementManager {
         if (!plugin.getGamemanager().isEndGame()) {
             return;
         }
+
+        boolean teamGameEnabled = plugin.getSettings().isSettingEnabled(GameSetting.TEAM);
 
         // Check all players
         for (UUID uuid : plugin.getGamemanager().forceItemPlayerMap().keySet()) {
@@ -170,14 +214,12 @@ public class AchievementManager {
             // Check death count
             if (tracker instanceof SimpleProgress simpleProgress) {
                 if (simpleProgress.deathCount == 0) {
-                    Player player = fip.player();
-                    if (player != null && player.isOnline()) {
-                        Bukkit.getPluginManager().callEvent(
-                                new PlayerGrantAchievementEvent(player, Achievements.CHICOT)
-                        );
-                    } else {
-                        storage.addAchievement(uuid, Achievements.CHICOT);
-                    }
+                    Team team = fip.currentTeam();
+                    boolean teamGame = teamGameEnabled && team != null;
+                    // writeUnlock persists with the right mode/teammate and fires
+                    // the event only if the player is online (so Completionist can
+                    // still chain); offline players are simply persisted.
+                    writeUnlock(uuid, fip.player(), Achievements.CHICOT, team, teamGame);
                 }
             }
         }
@@ -186,6 +228,69 @@ public class AchievementManager {
     public void resetProgress() {
         playerProgress.clear();
         teamProgress.clear();
+    }
+
+    /**
+     * The live progress tracker for a player+achievement in the current round,
+     * or null if none exists yet. Checks the player's own progress and, for
+     * team-shared achievements, the team's progress.
+     */
+    public ProgressTracker getProgress(UUID uuid, Achievements achievement) {
+        Map<Achievements, ProgressTracker> playerMap = playerProgress.get(uuid);
+        if (playerMap != null && playerMap.get(achievement) != null) {
+            return playerMap.get(achievement);
+        }
+        ForceItemPlayer fip = plugin.getGamemanager().getForceItemPlayer(uuid);
+        if (fip != null && fip.currentTeam() != null) {
+            Map<Achievements, ProgressTracker> teamMap = teamProgress.get(fip.currentTeam());
+            if (teamMap != null) {
+                return teamMap.get(achievement);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * description of how far along a player's achievement is,
+     * for debugging (e.g. a /achievements progress command). Progress is
+     * in-memory and per-round, so this only reflects the current game.
+     */
+    public String describeProgress(UUID uuid, Achievements achievement) {
+        ProgressTracker tracker = getProgress(uuid, achievement);
+        if (tracker == null) {
+            return "not started";
+        }
+
+        if (tracker instanceof CollectionProgress<?> collection) {
+            AchievementHandler<?> handler = achievement.getHandler();
+            if (handler instanceof CollectionHandler<?> collectionHandler) {
+                Set<?> required = collectionHandler.getRequiredItems();
+                Set<Object> missing = new HashSet<>(required);
+                missing.removeAll(collection.collected);
+                String base = collection.collected.size() + "/" + required.size() + " collected";
+                return missing.isEmpty() ? base + " (complete)" : base + ", missing: " + missing;
+            }
+            return collection.collected.size() + " collected: " + collection.collected;
+        }
+        if (tracker instanceof CounterProgress counter) {
+            return "count=" + counter.count + ", consecutive=" + counter.consecutiveCount;
+        }
+        if (tracker instanceof TimeProgress time) {
+            return "count=" + time.count + ", hasSkipped=" + time.hasSkipped;
+        }
+        if (tracker instanceof SkipProgress skip) {
+            return "skips=" + skip.skipCount;
+        }
+        if (tracker instanceof BackToBackProgress backToBack) {
+            return "backToBack=" + backToBack.b2bCount;
+        }
+        if (tracker instanceof ConsecutiveStoneHandler.Progress stone) {
+            return "consecutiveStone=" + stone.consecutiveCount;
+        }
+        if (tracker instanceof SimpleProgress simple) {
+            return "count=" + simple.count + (simple.deathCount != 0 ? ", deaths=" + simple.deathCount : "");
+        }
+        return "in progress";
     }
 
     public AchievementStorage getAchievementStorage() {

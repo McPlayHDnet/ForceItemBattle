@@ -2,7 +2,7 @@ package forceitembattle.commands.player;
 
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
-import forceitembattle.settings.achievements.Achievements;
+import forceitembattle.achievements.Achievements;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -24,7 +24,7 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
     public void onPlayerCommand(Player player, String label, String[] args) {
         if (args.length == 0) {
             player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
-                    "<red>Usage: /achievements <list|grant|revoke|reset> [player] [achievement]"));
+                    "<red>Usage: /achievements <list|grant|revoke|reset|progress> [player] [achievement]"));
             return;
         }
 
@@ -35,8 +35,9 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
             case "grant" -> handleGrantCommand(player, args);
             case "revoke" -> handleRevokeCommand(player, args);
             case "reset" -> handleResetCommand(player, args);
+            case "progress" -> handleProgressCommand(player, args);
             default -> player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
-                    "<red>Unknown subcommand. Use: list, grant, revoke, or reset"));
+                    "<red>Unknown subcommand. Use: list, grant, revoke, reset, or progress"));
         }
     }
 
@@ -50,11 +51,25 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
         } else {
             OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
             targetUUID = target.getUniqueId();
-            targetName = target.getName();
+            targetName = target.getName() != null ? target.getName() : args[1];
         }
 
-        Set<String> achievements = this.plugin.getAchievementManager().getAchievementStorage().getPlayerAchievements(targetUUID);
+        final String name = targetName;
 
+        // Achievements are read from the service-backed cache, which is only
+        // populated for loaded (online) players. Load the target from the service
+        // first (a no-op if already cached), then render on the main thread.
+        this.plugin.getAchievementManager().getAchievementStorage().loadPlayer(targetUUID, () -> {
+            if (!player.isOnline()) {
+                return;
+            }
+            Set<String> achievements = this.plugin.getAchievementManager()
+                    .getAchievementStorage().getPlayerAchievements(targetUUID);
+            displayAchievements(player, name, achievements);
+        });
+    }
+
+    private void displayAchievements(Player player, String targetName, Set<String> achievements) {
         player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
                 "<gray>========== <gold>Achievements for " + targetName + " <gray>=========="));
 
@@ -68,7 +83,7 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
                     player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
                             "<dark_aqua>✓ " + achievement.getTitle() + " <gray>- " + achievement.getDescription()));
                 } catch (IllegalArgumentException e) {
-                    // Skip invalid achievements
+                    // Skip achievements that no longer exist in the enum
                 }
             }
         }
@@ -142,13 +157,69 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
                 "<green>Successfully reset all achievements for <yellow>" + target.getName()));
     }
 
+    private void handleProgressCommand(Player player, String[] args) {
+        UUID targetUUID;
+        String targetName;
+        String achievementArg;
+
+        if (args.length == 2) {
+            targetUUID = player.getUniqueId();
+            targetName = player.getName();
+            achievementArg = args[1];
+        } else if (args.length == 3) {
+            Player target = Bukkit.getPlayerExact(args[1]);
+            if (target == null) {
+                player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+                        "<red>Player must be online to inspect live progress."));
+                return;
+            }
+            targetUUID = target.getUniqueId();
+            targetName = target.getName();
+            achievementArg = args[2];
+        } else {
+            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+                    "<red>Usage: /achievements progress [player] <achievement>"));
+            return;
+        }
+
+        Achievements achievement;
+        try {
+            achievement = Achievements.valueOf(achievementArg.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+                    "<red>Achievement <yellow>" + achievementArg.toUpperCase() + " <red>does not exist!"));
+            return;
+        }
+
+        String progress = this.plugin.getAchievementManager().describeProgress(targetUUID, achievement);
+        boolean unlocked = this.plugin.getAchievementManager()
+                .getAchievementStorage().hasAchievement(targetUUID, achievement);
+
+        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+                "<gray>===== <gold>" + achievement.getTitle() + " <gray>(" + targetName + ") ====="));
+        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+                "<gray>" + achievement.getDescription()));
+        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+                "<gray>Status: " + (unlocked ? "<green>Unlocked" : "<yellow>In progress")));
+        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+                "<gray>Progress: <white>" + progress));
+    }
+
     @Override
     public List<String> onTabComplete(Player player, String label, String[] args) {
         if (args.length == 1) {
-            return List.of("list", "grant", "revoke", "reset");
+            return List.of("list", "grant", "revoke", "reset", "progress");
         }
 
         if (args.length == 2) {
+            // progress self-form: /achievements progress <achievement>
+            if (args[0].equalsIgnoreCase("progress")) {
+                List<String> achievementNames = new ArrayList<>();
+                for (Achievements achievement : Achievements.values()) {
+                    achievementNames.add(achievement.name());
+                }
+                return achievementNames;
+            }
             List<String> playerNames = new ArrayList<>();
             for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
                 playerNames.add(onlinePlayer.getName());
@@ -156,7 +227,9 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
             return playerNames;
         }
 
-        if (args.length == 3 && (args[0].equalsIgnoreCase("grant") || args[0].equalsIgnoreCase("revoke"))) {
+        if (args.length == 3 && (args[0].equalsIgnoreCase("grant")
+                || args[0].equalsIgnoreCase("revoke")
+                || args[0].equalsIgnoreCase("progress"))) {
             List<String> achievementNames = new ArrayList<>();
             for (Achievements achievement : Achievements.values()) {
                 achievementNames.add(achievement.name());

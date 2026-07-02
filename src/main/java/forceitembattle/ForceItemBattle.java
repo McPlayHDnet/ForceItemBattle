@@ -164,7 +164,6 @@ public final class ForceItemBattle extends JavaPlugin {
         this.tradingManager = new TradingManager(this);
         this.commandsManager = new CommandsManager(this);
         this.achievementManager = new AchievementManager(this);
-        this.achievementListener = new AchievementListener(this);
         this.locatorManager = new LocatorManager();
         this.protectionManager = new ProtectionManager(this);
         this.wanderingTraderTimer = new WanderingTraderTimer();
@@ -394,10 +393,6 @@ public final class ForceItemBattle extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        if (this.achievementManager != null) {
-            this.achievementManager.getAchievementStorage().saveAchievements();
-            getLogger().info("Achievements saved!");
-        }
         reloadConfig();
         if (getConfig().getBoolean("isReset")) {
             getConfig().set("timer.time", 0);

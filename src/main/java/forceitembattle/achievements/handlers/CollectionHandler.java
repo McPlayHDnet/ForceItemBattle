@@ -1,7 +1,7 @@
-package forceitembattle.settings.achievements.handlers;
+package forceitembattle.achievements.handlers;
 
 import forceitembattle.event.FoundItemEvent;
-import forceitembattle.settings.achievements.Trigger;
+import forceitembattle.achievements.Trigger;
 import forceitembattle.util.BiomeGroup;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.MaterialCategory;
@@ -32,6 +32,11 @@ public class CollectionHandler<T> implements AchievementHandler<CollectionProgre
     @Override
     public Trigger getTrigger() {
         return trigger;
+    }
+
+    /** The set this achievement needs fully collected (used by progress inspection). */
+    public Set<T> getRequiredItems() {
+        return requiredItems;
     }
 
     @Override
@@ -73,6 +78,31 @@ public class CollectionHandler<T> implements AchievementHandler<CollectionProgre
                     if (group.getBiomes().contains(biome)) {
                         return group;
                     }
+                }
+            }
+            return null;
+        });
+    }
+
+    public static CollectionHandler<Biome> caveBiomeHandler(Set<Biome> requiredBiomes) {
+        return new CollectionHandler<>(Trigger.VISIT, requiredBiomes, (event, player, progress) -> {
+            if (event instanceof PlayerMoveEvent moveEvent) {
+                int x = moveEvent.getTo().getBlockX();
+                int y = moveEvent.getTo().getBlockY();
+                int z = moveEvent.getTo().getBlockZ();
+
+                CollectionProgress.LastCheckedPosition current =
+                        new CollectionProgress.LastCheckedPosition(x, y, z);
+
+                if (current.equals(progress.lastPosition)) {
+                    return null; // Same block, no need to check
+                }
+
+                progress.lastPosition = current;
+
+                Biome biome = moveEvent.getTo().getBlock().getBiome();
+                if (requiredBiomes.contains(biome)) {
+                    return biome;
                 }
             }
             return null;

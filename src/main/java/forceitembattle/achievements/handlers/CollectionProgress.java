@@ -1,4 +1,4 @@
-package forceitembattle.settings.achievements.handlers;
+package forceitembattle.achievements.handlers;
 
 import java.util.HashSet;
 import java.util.Objects;

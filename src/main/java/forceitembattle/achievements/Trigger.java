@@ -1,4 +1,4 @@
-package forceitembattle.settings.achievements;
+package forceitembattle.achievements;
 
 import lombok.Getter;
 
@@ -15,6 +15,8 @@ public enum Trigger {
     LOOT(false),
     BEEHIVE_HARVEST(false),
     INVENTORY_FULL(false),
+    WHEEL_OF_FORTUNE(false),
+    ANTIMATTER_TELEPORTER(false),
     ACHIEVEMENT(false);
 
     private final boolean achieveableInTeams;

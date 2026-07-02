@@ -1,4 +1,4 @@
-package forceitembattle.settings.achievements.handlers;
+package forceitembattle.achievements.handlers;
 
 import org.bukkit.Material;
 

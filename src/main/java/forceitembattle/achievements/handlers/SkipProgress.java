@@ -1,4 +1,4 @@
-package forceitembattle.settings.achievements.handlers;
+package forceitembattle.achievements.handlers;
 
 public class SkipProgress implements ProgressTracker {
     public int skipCount = 0;

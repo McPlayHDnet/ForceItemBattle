@@ -6,7 +6,7 @@ import forceitembattle.event.FoundItemEvent;
 import forceitembattle.event.PlayerGrantAchievementEvent;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.settings.achievements.Achievements;
+import forceitembattle.achievements.Achievements;
 import forceitembattle.settings.preset.GamePreset;
 import forceitembattle.settings.preset.InvSettingsPresets;
 import forceitembattle.stats.FIBServiceHelper;

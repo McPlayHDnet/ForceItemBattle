@@ -1,4 +1,4 @@
-package forceitembattle.settings.achievements;
+package forceitembattle.achievements;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.util.InventoryBuilder;
@@ -25,6 +25,11 @@ public class AchievementInventory extends InventoryBuilder {
         this.playerUUID = playerUUID;
 
         this.addUpdateHandler(this::updateInventory);
+
+        // The viewed player may not be cached yet (e.g. an offline player).
+        // Pull their achievements from the service and refresh once they arrive.
+        this.plugin.getAchievementManager().getAchievementStorage()
+                .loadPlayer(playerUUID, this::updateInventory);
     }
 
     private int totalPages(int objectsPerPage) {

@@ -4,7 +4,7 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.settings.achievements.AchievementInventory;
+import forceitembattle.achievements.AchievementInventory;
 import forceitembattle.stats.FIBServiceHelper;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.ItemBuilder;

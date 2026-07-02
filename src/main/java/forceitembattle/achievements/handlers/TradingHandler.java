@@ -1,6 +1,6 @@
-package forceitembattle.settings.achievements.handlers;
+package forceitembattle.achievements.handlers;
 
-import forceitembattle.settings.achievements.Trigger;
+import forceitembattle.achievements.Trigger;
 import forceitembattle.util.ForceItemPlayer;
 import io.papermc.paper.event.player.PlayerTradeEvent;
 import org.bukkit.entity.WanderingTrader;

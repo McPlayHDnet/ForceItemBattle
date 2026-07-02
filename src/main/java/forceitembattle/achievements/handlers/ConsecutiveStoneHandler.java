@@ -1,14 +1,11 @@
-package forceitembattle.settings.achievements.handlers;
+package forceitembattle.achievements.handlers;
 
 import forceitembattle.event.FoundItemEvent;
-import forceitembattle.settings.achievements.Trigger;
+import forceitembattle.achievements.Trigger;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.MaterialCategory;
 import org.bukkit.Material;
 import org.bukkit.event.Event;
-
-import java.util.HashSet;
-import java.util.Set;
 
 public class ConsecutiveStoneHandler implements AchievementHandler<ConsecutiveStoneHandler.Progress> {
 
@@ -20,7 +17,6 @@ public class ConsecutiveStoneHandler implements AchievementHandler<ConsecutiveSt
 
     public static class Progress implements ProgressTracker {
         public int consecutiveCount = 0;
-        public final Set<Material> stoneTypes = new HashSet<>();
     }
 
     @Override
@@ -36,19 +32,16 @@ public class ConsecutiveStoneHandler implements AchievementHandler<ConsecutiveSt
 
         if (foundEvent.isSkipped()) {
             progress.consecutiveCount = 0;
-            progress.stoneTypes.clear();
             return false;
         }
 
         Material itemType = foundEvent.getFoundItem().getType();
 
         if (MaterialCategory.isStoneType(itemType)) {
-            progress.stoneTypes.add(itemType);
             progress.consecutiveCount++;
             return progress.consecutiveCount >= targetAmount;
         } else {
             progress.consecutiveCount = 0;
-            progress.stoneTypes.clear();
             return false;
         }
     }
