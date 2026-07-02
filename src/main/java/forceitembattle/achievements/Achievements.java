@@ -31,6 +31,9 @@ public enum Achievements {
     ONE_DIMENSION_WONDER("One Dimension Wonder", "Collect 10 overworld items in a row",
             new CounterHandler(10, true, "world")),
 
+    NEVER_LEFT_HOME("Never Left Home", "Collect 20 overworld items in a row",
+            new CounterHandler(20, true, "world")),
+
     INFINITE_FIRE("Infinite Fire", "Collect 5 nether items in a row",
             new CounterHandler(5, true, "world_nether")),
 
@@ -52,8 +55,17 @@ public enum Achievements {
     YOU_GET_WHAT_YOU_GET("You Get What You Get", "Collect 15 items in a row without skipping any",
             new CounterHandler(15, true, null)),
 
+    THEY_SEE_ME_ROLLIN("They See Me Rollin", "Collect 25 items in a row without skipping any",
+            new CounterHandler(25, true, null)),
+
     THERE_IS_NO_WAY("There Is No Way", "Get your assigned item from the Wheel of Fortune",
             new WheelOfFortuneHandler()),
+
+    SEEING_TRIPLE("Seeing Triple", "Get the same item assigned 3 times in a single round",
+            new RepeatItemHandler(3)),
+
+    STATISTICAL_ANOMALY("Statistical Anomaly", "Get the same item assigned 5 times in a single round",
+            new RepeatItemHandler(5)),
 
     // TIME-BASED achievements
     SPEED_COLLECTOR("Speed Collector", "Collect 7 items within the first 5 minutes of the round",
@@ -96,6 +108,18 @@ public enum Achievements {
     ACCIDENTAL_GENIUS("Accidental Genius", "Skip an item, then get it again as back-to-back",
             new BackToBackHandler(1, false, true)),
 
+    THE_HARD_WAY("The Hard Way", "Finish a game without a single back-to-back",
+            new NoBackToBackHandler()),
+
+    NO_HANDOUTS("No Handouts", "Win a game without a single back-to-back",
+            new NoBackToBackHandler()),
+
+    HIGH_ROLLER("High Roller", "Get 5 or more back-to-backs in a single game",
+            new BackToBackCountHandler(5)),
+
+    JACKPOT("Jackpot", "Get 10 or more back-to-backs in a single game",
+            new BackToBackCountHandler(10)),
+
     // VISIT achievements
     BIOME_HOPPER("Biome Hopper", "Visit all basic overworld biomes in one round",
             CollectionHandler.biomeHandler(Set.of(BiomeGroup.values()))),
@@ -109,6 +133,12 @@ public enum Achievements {
 
     PALE_PLEASE("Pale Please", "Use 10 different antimatter teleporters in one game",
             new AntimatterTeleporterUsesHandler(10)),
+
+    NO_SHORTCUTS("No Shortcuts", "Finish a game without entering the Antimatter Teleporter",
+            new NoAntimatterHandler()),
+
+    IT_IS_BEAUTIFUL("It is beautiful", "Finish a game without leaving the Overworld",
+            new NoOverworldExitHandler()),
 
     // SKIP achievements
     UNLUCKY("Unlucky", "Skip 3 items in a row",

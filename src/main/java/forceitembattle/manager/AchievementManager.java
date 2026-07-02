@@ -13,6 +13,7 @@ import forceitembattle.achievements.handlers.CollectionHandler;
 import forceitembattle.achievements.handlers.CollectionProgress;
 import forceitembattle.achievements.handlers.ConsecutiveStoneHandler;
 import forceitembattle.achievements.handlers.CounterProgress;
+import forceitembattle.achievements.handlers.ItemFrequencyProgress;
 import forceitembattle.achievements.handlers.ProgressTracker;
 import forceitembattle.achievements.handlers.SimpleProgress;
 import forceitembattle.achievements.handlers.SkipProgress;
@@ -198,31 +199,77 @@ public class AchievementManager {
                 continue;
             }
 
-            // Skip if already has Chicot
-            if (storage.hasAchievement(uuid, Achievements.CHICOT)) {
-                continue;
-            }
+            Team team = fip.currentTeam();
+            boolean teamGame = teamGameEnabled && team != null;
 
-            // Initialize progress if not exists
-            playerProgress.putIfAbsent(uuid, new HashMap<>());
-            Map<Achievements, ProgressTracker> progress = playerProgress.get(uuid);
-
-            // Get or create progress tracker for Chicot
-            progress.putIfAbsent(Achievements.CHICOT, Achievements.CHICOT.getHandler().createProgress());
-            ProgressTracker tracker = progress.get(Achievements.CHICOT);
-
-            // Check death count
-            if (tracker instanceof SimpleProgress simpleProgress) {
-                if (simpleProgress.deathCount == 0) {
-                    Team team = fip.currentTeam();
-                    boolean teamGame = teamGameEnabled && team != null;
-                    // writeUnlock persists with the right mode/teammate and fires
-                    // the event only if the player is online (so Completionist can
-                    // still chain); offline players are simply persisted.
+            // CHICOT — finish with no deaths.
+            if (!storage.hasAchievement(uuid, Achievements.CHICOT)) {
+                playerProgress.putIfAbsent(uuid, new HashMap<>());
+                Map<Achievements, ProgressTracker> progress = playerProgress.get(uuid);
+                progress.putIfAbsent(Achievements.CHICOT, Achievements.CHICOT.getHandler().createProgress());
+                if (progress.get(Achievements.CHICOT) instanceof SimpleProgress simpleProgress
+                        && simpleProgress.deathCount == 0) {
+                    // writeUnlock persists with the right mode/teammate and fires the
+                    // event only if the player is online (so Completionist can chain).
                     writeUnlock(uuid, fip.player(), Achievements.CHICOT, team, teamGame);
                 }
             }
+
+            // THE_HARD_WAY — finish the game without a single back-to-back.
+            if (!storage.hasAchievement(uuid, Achievements.THE_HARD_WAY)
+                    && !hadOccurrence(uuid, Achievements.THE_HARD_WAY)) {
+                writeUnlock(uuid, fip.player(), Achievements.THE_HARD_WAY, team, teamGame);
+            }
+
+            // NO_HANDOUTS — win the game without a single back-to-back.
+            if (!storage.hasAchievement(uuid, Achievements.NO_HANDOUTS)
+                    && !hadOccurrence(uuid, Achievements.NO_HANDOUTS)
+                    && didWin(fip, teamGame)) {
+                writeUnlock(uuid, fip.player(), Achievements.NO_HANDOUTS, team, teamGame);
+            }
+
+            // NO_SHORTCUTS — finish without entering the Antimatter Teleporter.
+            if (!storage.hasAchievement(uuid, Achievements.NO_SHORTCUTS)
+                    && !hadOccurrence(uuid, Achievements.NO_SHORTCUTS)) {
+                writeUnlock(uuid, fip.player(), Achievements.NO_SHORTCUTS, team, teamGame);
+            }
+
+            // OVERWORLD_PURIST — finish without leaving the Overworld.
+            if (!storage.hasAchievement(uuid, Achievements.IT_IS_BEAUTIFUL)
+                    && !hadOccurrence(uuid, Achievements.IT_IS_BEAUTIFUL)) {
+                writeUnlock(uuid, fip.player(), Achievements.IT_IS_BEAUTIFUL, team, teamGame);
+            }
         }
+    }
+
+    /**
+     * True if this achievement's tracker recorded at least one occurrence this
+     * round. The tracker is the shared team tracker for team-eligible achievements,
+     * so it reflects whether either teammate triggered it. A missing tracker means
+     * it never fired.
+     */
+    private boolean hadOccurrence(UUID uuid, Achievements achievement) {
+        return getProgress(uuid, achievement) instanceof SimpleProgress simpleProgress
+                && simpleProgress.count > 0;
+    }
+
+    /**
+     * True if the player (solo) or their team (teams) finished in 1st place.
+     * Ties for 1st count as a win.
+     */
+    private boolean didWin(ForceItemPlayer fip, boolean teamGame) {
+        var gamemanager = plugin.getGamemanager();
+        if (teamGame && fip.currentTeam() != null) {
+            List<Team> teams = gamemanager.forceItemPlayerMap().values().stream()
+                    .map(ForceItemPlayer::currentTeam)
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .toList();
+            Integer place = gamemanager.calculatePlaces(teams).get(fip.currentTeam());
+            return place != null && place == 1;
+        }
+        Integer place = gamemanager.calculatePlaces(gamemanager.forceItemPlayerMap()).get(fip);
+        return place != null && place == 1;
     }
 
     public void resetProgress() {
@@ -251,7 +298,7 @@ public class AchievementManager {
     }
 
     /**
-     * description of how far along a player's achievement is,
+     * Human-readable description of how far along a player's achievement is,
      * for debugging (e.g. a /achievements progress command). Progress is
      * in-memory and per-round, so this only reflects the current game.
      */
@@ -274,6 +321,10 @@ public class AchievementManager {
         }
         if (tracker instanceof CounterProgress counter) {
             return "count=" + counter.count + ", consecutive=" + counter.consecutiveCount;
+        }
+        if (tracker instanceof ItemFrequencyProgress frequency) {
+            int highest = frequency.counts.values().stream().mapToInt(Integer::intValue).max().orElse(0);
+            return "highest same-item count=" + highest;
         }
         if (tracker instanceof TimeProgress time) {
             return "count=" + time.count + ", hasSkipped=" + time.hasSkipped;
