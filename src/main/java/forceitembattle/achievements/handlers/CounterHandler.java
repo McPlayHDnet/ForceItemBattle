@@ -2,7 +2,6 @@ package forceitembattle.achievements.handlers;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.event.FoundItemEvent;
-import forceitembattle.settings.GameSetting;
 import forceitembattle.achievements.Trigger;
 import forceitembattle.util.ForceItemPlayer;
 import org.bukkit.Material;
@@ -32,21 +31,13 @@ public class CounterHandler implements AchievementHandler<CounterProgress> {
         }
 
         if (!requireConsecutive && dimension == null) {
-            var fib = ForceItemBattle.getInstance();
-            int totalItems;
-            if (fib.getSettings().isSettingEnabled(GameSetting.TEAM) && forceItemPlayer.currentTeam() != null) {
-                totalItems = forceItemPlayer.currentTeam().getPlayers().stream()
-                        .mapToInt(teamMember -> teamMember.foundItems().size())
-                        .sum();
-            } else {
-                totalItems = forceItemPlayer.foundItems().size();
-            }
-            return totalItems >= targetAmount;
+            progress.count++;
+            return progress.count >= targetAmount;
         }
 
-        // For CONSECUTIVE achievements, need to track manually
+        // CONSECUTIVE achievements — tracked on the (shared, in teams) progress tracker.
 
-        // Skip events
+        // Skip events break the streak
         if (foundEvent.isSkipped()) {
             if (requireConsecutive) {
                 progress.consecutiveCount = 0;
