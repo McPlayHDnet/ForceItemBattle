@@ -63,7 +63,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
         int jokersAmount = (gamePreset != null ? gamePreset.getJokers() : (Integer.parseInt(args[1])));
 
         if(this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-            if(plugin.getGamemanager().forceItemPlayerMap().size() < 1) {
+            if(plugin.getGamemanager().forceItemPlayerMap().size() < 4) {
                 Bukkit.broadcast(plugin.getGamemanager().getMiniMessage().deserialize("<red>There are not enough players online to enable teams"));
                 this.plugin.getSettings().setSettingEnabled(GameSetting.TEAM, false);
                 this.plugin.getTeamManager().clearAllTeams();
