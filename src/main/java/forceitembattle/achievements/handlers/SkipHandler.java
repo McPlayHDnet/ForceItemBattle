@@ -1,5 +1,6 @@
 package forceitembattle.achievements.handlers;
 
+import forceitembattle.ForceItemBattle;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.achievements.Trigger;
 import forceitembattle.util.ForceItemPlayer;
@@ -28,17 +29,19 @@ public class SkipHandler implements AchievementHandler<SkipProgress> {
             return false;
         }
 
-        // CRITICAL FIX: On first event, initialize the timestamp
-        // This handles the case where the first item is assigned at game start
+        ForceItemBattle fib = ForceItemBattle.getInstance();
+        int gameDuration = fib.getGamemanager().getGameDuration();
+        int secondsLeft = fib.getTimer().getTimeLeft();
+
+        // On the first event, anchor the received marker to the round start
+        // (the first item is assigned at game start, i.e. secondsLeft == gameDuration).
         if (progress.firstEvent) {
-            progress.itemReceivedTime = System.currentTimeMillis();
+            progress.itemReceivedSecondsLeft = gameDuration;
             progress.firstEvent = false;
 
-            // If this first event is a skip, we can't know how long the item was assigned
-            // So we don't trigger any time-based achievement on the very first skip
+            // Can't know how long the very first item was held if it opens with a skip.
             if (foundEvent.isSkipped() && withinSeconds > 0) {
-                // Update timestamp for next item and return false
-                progress.itemReceivedTime = System.currentTimeMillis();
+                progress.itemReceivedSecondsLeft = secondsLeft;
                 return false;
             }
         }
@@ -46,17 +49,13 @@ public class SkipHandler implements AchievementHandler<SkipProgress> {
         boolean result = false;
 
         if (foundEvent.isSkipped()) {
-            // Check time window for the item being skipped
             if (withinSeconds > 0) {
-                long timeSinceReceived = (System.currentTimeMillis() - progress.itemReceivedTime) / 1000;
+                long timeSinceReceived = progress.itemReceivedSecondsLeft - secondsLeft;
                 if (timeSinceReceived <= withinSeconds) {
                     progress.skipCount++;
                     result = progress.skipCount >= targetSkips;
-                } else {
-                    // Outside time window
-                    if (requireConsecutive) {
-                        progress.skipCount = 0;
-                    }
+                } else if (requireConsecutive) {
+                    progress.skipCount = 0;
                 }
             } else {
                 // No time constraint
@@ -64,15 +63,14 @@ public class SkipHandler implements AchievementHandler<SkipProgress> {
                 result = progress.skipCount >= targetSkips;
             }
         } else {
-            // Found (not skipped)
+            // Found (not skipped) breaks a consecutive-skip streak
             if (requireConsecutive) {
                 progress.skipCount = 0;
             }
         }
 
-        // Always update timestamp after finding or skipping
-        // because a new item is assigned immediately
-        progress.itemReceivedTime = System.currentTimeMillis();
+        // A new item is assigned immediately after finding or skipping.
+        progress.itemReceivedSecondsLeft = secondsLeft;
 
         return result;
     }

@@ -17,7 +17,7 @@ public class WheelOfFortuneHandler implements AchievementHandler<SimpleProgress>
         if (!(event instanceof WheelOfFortuneWinEvent win)) {
             return false;
         }
-        return win.getWonItem() == forceItemPlayer.currentMaterial();
+        return win.getWonItem() == forceItemPlayer.getCurrentMaterial();
     }
 
     @Override
