@@ -6,7 +6,7 @@ import forceitembattle.util.ForceItemPlayer;
 import org.bukkit.Material;
 import org.bukkit.event.Event;
 
-public class BackToBackAchievementHandler implements AchievementHandler<AchievementBackToBackAchievementProgress> {
+public class BackToBackAchievementHandler implements AchievementHandler<BackToBackAchievementProgress> {
 
     private final int targetAmount;
     private final boolean requireSameItem;
@@ -36,7 +36,7 @@ public class BackToBackAchievementHandler implements AchievementHandler<Achievem
     }
 
     @Override
-    public boolean check(Event event, AchievementBackToBackAchievementProgress progress, ForceItemPlayer forceItemPlayer) {
+    public boolean check(Event event, BackToBackAchievementProgress progress, ForceItemPlayer forceItemPlayer) {
         if (!(event instanceof FoundItemEvent foundEvent)) {
             return false;
         }
@@ -90,7 +90,7 @@ public class BackToBackAchievementHandler implements AchievementHandler<Achievem
     }
 
     @Override
-    public AchievementBackToBackAchievementProgress createProgress() {
-        return new AchievementBackToBackAchievementProgress();
+    public BackToBackAchievementProgress createProgress() {
+        return new BackToBackAchievementProgress();
     }
 }

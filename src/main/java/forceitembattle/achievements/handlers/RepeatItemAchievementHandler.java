@@ -15,7 +15,7 @@ import org.bukkit.event.Event;
  * tally is the shared team tracker: the team shares one assigned item, so this
  * counts the team's assignment sequence and is granted to both.
  */
-public class RepeatItemAchievementHandler implements AchievementHandler<AchievementItemFrequencyAchievementProgress> {
+public class RepeatItemAchievementHandler implements AchievementHandler<ItemFrequencyAchievementProgress> {
 
     private final int targetAmount;
 
@@ -32,7 +32,7 @@ public class RepeatItemAchievementHandler implements AchievementHandler<Achievem
     }
 
     @Override
-    public boolean check(Event event, AchievementItemFrequencyAchievementProgress progress, ForceItemPlayer forceItemPlayer) {
+    public boolean check(Event event, ItemFrequencyAchievementProgress progress, ForceItemPlayer forceItemPlayer) {
         if (!(event instanceof FoundItemEvent foundEvent)) {
             return false;
         }
@@ -42,7 +42,7 @@ public class RepeatItemAchievementHandler implements AchievementHandler<Achievem
     }
 
     @Override
-    public AchievementItemFrequencyAchievementProgress createProgress() {
-        return new AchievementItemFrequencyAchievementProgress();
+    public ItemFrequencyAchievementProgress createProgress() {
+        return new ItemFrequencyAchievementProgress();
     }
 }

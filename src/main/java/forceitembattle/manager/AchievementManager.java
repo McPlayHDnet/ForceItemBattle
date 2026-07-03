@@ -8,12 +8,12 @@ import forceitembattle.achievements.AchievementStorage;
 import forceitembattle.achievements.Achievements;
 import forceitembattle.achievements.Trigger;
 import forceitembattle.achievements.handlers.AchievementHandler;
-import forceitembattle.achievements.handlers.AchievementBackToBackAchievementProgress;
+import forceitembattle.achievements.handlers.BackToBackAchievementProgress;
 import forceitembattle.achievements.handlers.CollectionAchievementHandler;
-import forceitembattle.achievements.handlers.AchievementCollectionAchievementProgress;
+import forceitembattle.achievements.handlers.CollectionAchievementProgress;
 import forceitembattle.achievements.handlers.ConsecutiveStoneAchievementHandler;
-import forceitembattle.achievements.handlers.AchievementCounterAchievementProgress;
-import forceitembattle.achievements.handlers.AchievementItemFrequencyAchievementProgress;
+import forceitembattle.achievements.handlers.CounterAchievementProgress;
+import forceitembattle.achievements.handlers.ItemFrequencyAchievementProgress;
 import forceitembattle.achievements.handlers.AchievementProgressTracker;
 import forceitembattle.achievements.handlers.SimpleAchievementProgress;
 import forceitembattle.achievements.handlers.SkipAchievementProgress;
@@ -308,7 +308,7 @@ public class AchievementManager {
             return "not started";
         }
 
-        if (tracker instanceof AchievementCollectionAchievementProgress<?> collection) {
+        if (tracker instanceof CollectionAchievementProgress<?> collection) {
             AchievementHandler<?> handler = achievement.getHandler();
             if (handler instanceof CollectionAchievementHandler<?> collectionAchievementHandler) {
                 Set<?> required = collectionAchievementHandler.getRequiredItems();
@@ -319,10 +319,10 @@ public class AchievementManager {
             }
             return collection.collected.size() + " collected: " + collection.collected;
         }
-        if (tracker instanceof AchievementCounterAchievementProgress counter) {
+        if (tracker instanceof CounterAchievementProgress counter) {
             return "count=" + counter.count + ", consecutive=" + counter.consecutiveCount;
         }
-        if (tracker instanceof AchievementItemFrequencyAchievementProgress frequency) {
+        if (tracker instanceof ItemFrequencyAchievementProgress frequency) {
             int highest = frequency.counts.values().stream().mapToInt(Integer::intValue).max().orElse(0);
             return "highest same-item count=" + highest;
         }
@@ -332,7 +332,7 @@ public class AchievementManager {
         if (tracker instanceof SkipAchievementProgress skip) {
             return "skips=" + skip.skipCount;
         }
-        if (tracker instanceof AchievementBackToBackAchievementProgress backToBack) {
+        if (tracker instanceof BackToBackAchievementProgress backToBack) {
             return "backToBack=" + backToBack.b2bCount;
         }
         if (tracker instanceof ConsecutiveStoneAchievementHandler.AchievementProgress stone) {

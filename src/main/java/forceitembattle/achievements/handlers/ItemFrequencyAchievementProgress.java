@@ -8,6 +8,6 @@ import java.util.Map;
 /**
  * Tracks how many times each item type has been assigned this round.
  */
-public class AchievementItemFrequencyAchievementProgress implements AchievementProgressTracker {
+public class ItemFrequencyAchievementProgress implements AchievementProgressTracker {
     public final Map<Material, Integer> counts = new HashMap<>();
 }

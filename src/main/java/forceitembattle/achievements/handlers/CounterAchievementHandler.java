@@ -7,7 +7,7 @@ import forceitembattle.util.ForceItemPlayer;
 import org.bukkit.Material;
 import org.bukkit.event.Event;
 
-public class CounterAchievementHandler implements AchievementHandler<AchievementCounterAchievementProgress> {
+public class CounterAchievementHandler implements AchievementHandler<CounterAchievementProgress> {
 
     private final int targetAmount;
     private final boolean requireConsecutive;
@@ -25,7 +25,7 @@ public class CounterAchievementHandler implements AchievementHandler<Achievement
     }
 
     @Override
-    public boolean check(Event event, AchievementCounterAchievementProgress progress, ForceItemPlayer forceItemPlayer) {
+    public boolean check(Event event, CounterAchievementProgress progress, ForceItemPlayer forceItemPlayer) {
         if (!(event instanceof FoundItemEvent foundEvent)) {
             return false;
         }
@@ -76,7 +76,7 @@ public class CounterAchievementHandler implements AchievementHandler<Achievement
     }
 
     @Override
-    public AchievementCounterAchievementProgress createProgress() {
-        return new AchievementCounterAchievementProgress();
+    public CounterAchievementProgress createProgress() {
+        return new CounterAchievementProgress();
     }
 }

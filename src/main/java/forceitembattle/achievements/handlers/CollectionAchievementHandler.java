@@ -13,10 +13,10 @@ import org.bukkit.event.player.PlayerMoveEvent;
 
 import java.util.Set;
 
-public class CollectionAchievementHandler<T> implements AchievementHandler<AchievementCollectionAchievementProgress<T>> {
+public class CollectionAchievementHandler<T> implements AchievementHandler<CollectionAchievementProgress<T>> {
 
     public interface ItemExtractor<T> {
-        T extract(Event event, ForceItemPlayer player, AchievementCollectionAchievementProgress<T> progress);
+        T extract(Event event, ForceItemPlayer player, CollectionAchievementProgress<T> progress);
     }
 
     private final Trigger trigger;
@@ -40,7 +40,7 @@ public class CollectionAchievementHandler<T> implements AchievementHandler<Achie
     }
 
     @Override
-    public boolean check(Event event, AchievementCollectionAchievementProgress<T> progress, ForceItemPlayer forceItemPlayer) {
+    public boolean check(Event event, CollectionAchievementProgress<T> progress, ForceItemPlayer forceItemPlayer) {
         T item = extractor.extract(event, forceItemPlayer, progress);
         if (item != null) {
             progress.collected.add(item);
@@ -50,8 +50,8 @@ public class CollectionAchievementHandler<T> implements AchievementHandler<Achie
     }
 
     @Override
-    public AchievementCollectionAchievementProgress<T> createProgress() {
-        return new AchievementCollectionAchievementProgress<>();
+    public CollectionAchievementProgress<T> createProgress() {
+        return new CollectionAchievementProgress<>();
     }
 
     // Factory methods
@@ -63,8 +63,8 @@ public class CollectionAchievementHandler<T> implements AchievementHandler<Achie
                 int y = moveEvent.getTo().getBlockY();
                 int z = moveEvent.getTo().getBlockZ();
 
-                AchievementCollectionAchievementProgress.LastCheckedPosition current =
-                        new AchievementCollectionAchievementProgress.LastCheckedPosition(x, y, z);
+                CollectionAchievementProgress.LastCheckedPosition current =
+                        new CollectionAchievementProgress.LastCheckedPosition(x, y, z);
 
                 if (current.equals(progress.lastPosition)) {
                     return null; // Same block, no need to check
@@ -91,8 +91,8 @@ public class CollectionAchievementHandler<T> implements AchievementHandler<Achie
                 int y = moveEvent.getTo().getBlockY();
                 int z = moveEvent.getTo().getBlockZ();
 
-                AchievementCollectionAchievementProgress.LastCheckedPosition current =
-                        new AchievementCollectionAchievementProgress.LastCheckedPosition(x, y, z);
+                CollectionAchievementProgress.LastCheckedPosition current =
+                        new CollectionAchievementProgress.LastCheckedPosition(x, y, z);
 
                 if (current.equals(progress.lastPosition)) {
                     return null; // Same block, no need to check
