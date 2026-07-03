@@ -1,7 +1,10 @@
 package forceitembattle.stats;
 
+import de.threeseconds.openapi.fibservice.client.api.FibAchievementControllerApi;
 import de.threeseconds.openapi.fibservice.client.api.FibStatisticsControllerApi;
+import de.threeseconds.openapi.fibservice.client.model.FibAchievementUnlockRequestDto;
 import de.threeseconds.openapi.fibservice.client.model.FibLeaderboardEntryDto;
+import de.threeseconds.openapi.fibservice.client.model.FibPlayerAchievementsDto;
 import de.threeseconds.openapi.fibservice.client.model.FibPlayerCombinedTeamStatsDto;
 import de.threeseconds.openapi.fibservice.client.model.FibRaritiesUpdateRequestDto;
 import de.threeseconds.openapi.fibservice.client.model.FibSoloStatisticsDto;
@@ -25,6 +28,7 @@ public class FIBServiceHelper {
     private static final String DEFAULT_BASE_URL = "http://127.0.0.7:29708";
 
     private final FibStatisticsControllerApi api;
+    private final FibAchievementControllerApi achievementApi;
     private final ForceItemBattle plugin;
 
     public FIBServiceHelper(ForceItemBattle plugin) {
@@ -36,6 +40,7 @@ public class FIBServiceHelper {
         ApiClient client = new ApiClient();
         client.setBasePath(baseUrl);
         this.api = new FibStatisticsControllerApi(client);
+        this.achievementApi = new FibAchievementControllerApi(client);
     }
 
     public FibSoloStatisticsDto getSoloStatistics(UUID playerUuid) throws ApiException {
@@ -170,6 +175,28 @@ public class FIBServiceHelper {
         runAsync(() -> api.getSoloLeaderboard(category, limit), onSuccess, onError);
     }
 
+    // ==================== ACHIEVEMENTS ====================
+
+    public FibPlayerAchievementsDto getPlayerAchievements(UUID playerUuid) throws ApiException {
+        return achievementApi.getPlayerAchievements(playerUuid);
+    }
+
+    public void getPlayerAchievementsAsync(UUID playerUuid, Consumer<FibPlayerAchievementsDto> onSuccess, Consumer<ApiException> onError) {
+        runAsync(() -> achievementApi.getPlayerAchievements(playerUuid), onSuccess, onError);
+    }
+
+    public void unlockAchievementAsync(UUID playerUuid, String achievementId, FibAchievementUnlockRequestDto request) {
+        runAsync(() -> achievementApi.unlockAchievement(playerUuid, achievementId, request), result -> {}, this::logError);
+    }
+
+    public void removeAchievementAsync(UUID playerUuid, String achievementId) {
+        runAsync(() -> { achievementApi.removeAchievement(playerUuid, achievementId); return null; }, result -> {}, this::logError);
+    }
+
+    public void resetPlayerAchievementsAsync(UUID playerUuid) {
+        runAsync(() -> { achievementApi.resetPlayerAchievements(playerUuid); return null; }, result -> {}, this::logError);
+    }
+
     public static FibSoloStatisticsUpdateRequestDto soloUpdate() {
         return new FibSoloStatisticsUpdateRequestDto();
     }
@@ -184,6 +211,10 @@ public class FIBServiceHelper {
 
     public static FibRaritiesUpdateRequestDto raritiesUpdate() {
         return new FibRaritiesUpdateRequestDto();
+    }
+
+    public static FibAchievementUnlockRequestDto achievementUnlock() {
+        return new FibAchievementUnlockRequestDto();
     }
 
     @FunctionalInterface

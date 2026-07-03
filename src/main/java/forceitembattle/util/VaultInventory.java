@@ -1,6 +1,7 @@
 package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.event.WheelOfFortuneWinEvent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
@@ -56,6 +57,8 @@ public class VaultInventory extends InventoryBuilder {
                         this.cancel();
 
                         Material wonMaterial = Objects.requireNonNull(getInventory().getItem(22)).getType();
+                        Bukkit.getPluginManager().callEvent(new WheelOfFortuneWinEvent(getPlayer(), wonMaterial));
+
                         Component subTitle = plugin.getGamemanager().getMiniMessage().deserialize("<gold>" + plugin.getGamemanager().getMaterialName(wonMaterial));
 
                         Title.Times times = Title.Times.times(Duration.ofMillis(600), Duration.ofMillis(2000), Duration.ofMillis(600));

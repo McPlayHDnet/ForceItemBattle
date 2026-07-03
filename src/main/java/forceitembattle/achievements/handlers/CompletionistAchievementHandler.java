@@ -1,0 +1,38 @@
+package forceitembattle.achievements.handlers;
+
+import forceitembattle.ForceItemBattle;
+import forceitembattle.event.PlayerGrantAchievementEvent;
+import forceitembattle.achievements.Achievements;
+import forceitembattle.achievements.Trigger;
+import forceitembattle.util.ForceItemPlayer;
+import org.bukkit.event.Event;
+
+/**
+ * Handler for the Completionist++ achievement.
+ * Triggers when a player has earned all other achievements.
+ */
+public class CompletionistAchievementHandler implements AchievementHandler<SimpleAchievementProgress> {
+
+    @Override
+    public Trigger getTrigger() {
+        return Trigger.ACHIEVEMENT;
+    }
+
+    @Override
+    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer) {
+        if (!(event instanceof PlayerGrantAchievementEvent)) {
+            return false;
+        }
+
+        var storage = ForceItemBattle.getInstance().getAchievementManager().getAchievementStorage();
+        int completed = storage.getPlayerAchievements(forceItemPlayer.player().getUniqueId()).size();
+
+        // -1 because we don't count Completionist itself
+        return completed >= (Achievements.values().length - 1);
+    }
+
+    @Override
+    public SimpleAchievementProgress createProgress() {
+        return new SimpleAchievementProgress();
+    }
+}

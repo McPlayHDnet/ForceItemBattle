@@ -4,7 +4,7 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.settings.achievements.AchievementInventory;
+import forceitembattle.achievements.AchievementInventory;
 import forceitembattle.stats.FIBServiceHelper;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.ItemBuilder;
@@ -20,6 +20,7 @@ import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -31,7 +32,7 @@ public class ClickableItemsListener implements Listener {
 
     private final ForceItemBattle plugin;
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH) // ADDED PRIORITY
     public void onAfterGame(PlayerInteractEvent e) {
         Player player = e.getPlayer();
         if (!this.plugin.getGamemanager().isEndGame()) {
@@ -45,8 +46,12 @@ public class ClickableItemsListener implements Listener {
 
         if (e.getItem().getType() == Material.LIME_DYE) {
             if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+                e.setCancelled(true); // ADDED: Cancel event to prevent double-firing
                 player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
-                new AchievementInventory(this.plugin, forceItemPlayer.player().getName()).open(player);
+                // ADDED: Use scheduler to avoid race conditions
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    new AchievementInventory(this.plugin, forceItemPlayer.player().getName(), forceItemPlayer.player().getUniqueId()).open(player);
+                });
                 return;
             }
             return;
@@ -54,8 +59,11 @@ public class ClickableItemsListener implements Listener {
 
         if (e.getItem().getType() == Material.COMPASS) {
             if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
-                new TeleporterInventory(this.plugin).open(player);
+                e.setCancelled(true); // ADDED
                 player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    new TeleporterInventory(this.plugin).open(player);
+                });
                 return;
             }
             return;
@@ -242,7 +250,7 @@ public class ClickableItemsListener implements Listener {
         Bukkit.getPluginManager().callEvent(foundItemEvent);
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH)
     public void onPreGame(PlayerInteractEvent e) {
         Player player = e.getPlayer();
         if (!this.plugin.getGamemanager().isPreGame()) {
@@ -259,8 +267,12 @@ public class ClickableItemsListener implements Listener {
 
         if (e.getItem().getType() == Material.LIME_DYE) {
             if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+                e.setCancelled(true); // ADDED: Cancel event
                 player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
-                new AchievementInventory(this.plugin, player.getName()).open(player);
+                // ADDED: Use scheduler
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    new AchievementInventory(this.plugin, forceItemPlayer.player().getName(), forceItemPlayer.player().getUniqueId()).open(player);
+                });
                 return;
             }
             return;
@@ -272,7 +284,6 @@ public class ClickableItemsListener implements Listener {
                 player.playSound(player.getLocation(), Sound.BLOCK_PISTON_CONTRACT, 1, 1);
                 forceItemPlayer.setSpectator(true);
                 player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_aqua>You will <green>spectate <dark_aqua>this round now."));
-                player.getInventory().setItem(8, new ItemBuilder(Material.ENDER_EYE).setDisplayName("<dark_gray>» <gray>Play game").getItemStack());
                 return;
             }
             return;

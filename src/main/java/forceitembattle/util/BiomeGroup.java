@@ -31,9 +31,8 @@ public enum BiomeGroup {
     ICE_SPIKES(Biome.ICE_SPIKES),
     SAVANNA(Biome.SAVANNA, Biome.SAVANNA_PLATEAU, Biome.WINDSWEPT_SAVANNA),
     BADLANDS(Biome.BADLANDS, Biome.WOODED_BADLANDS, Biome.ERODED_BADLANDS),
-    DEEP_DARK(Biome.DEEP_DARK),
-    DRIPSTONE_CAVES(Biome.DRIPSTONE_CAVES),
-    LUSH_CAVES(Biome.LUSH_CAVES);
+    DESERT(Biome.DESERT),
+    PALE(Biome.PALE_GARDEN);
 
     private final List<Biome> biomes;
 

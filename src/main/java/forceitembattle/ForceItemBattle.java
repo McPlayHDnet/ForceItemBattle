@@ -164,7 +164,6 @@ public final class ForceItemBattle extends JavaPlugin {
         this.tradingManager = new TradingManager(this);
         this.commandsManager = new CommandsManager(this);
         this.achievementManager = new AchievementManager(this);
-        this.achievementListener = new AchievementListener(this);
         this.locatorManager = new LocatorManager();
         this.protectionManager = new ProtectionManager(this);
         this.wanderingTraderTimer = new WanderingTraderTimer();
