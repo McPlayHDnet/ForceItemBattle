@@ -7,13 +7,13 @@ import forceitembattle.util.ForceItemPlayer;
 import org.bukkit.Material;
 import org.bukkit.event.Event;
 
-public class CounterHandler implements AchievementHandler<CounterProgress> {
+public class CounterAchievementHandler implements AchievementHandler<AchievementCounterAchievementProgress> {
 
     private final int targetAmount;
     private final boolean requireConsecutive;
     private final String dimension;
 
-    public CounterHandler(int targetAmount, boolean requireConsecutive, String dimension) {
+    public CounterAchievementHandler(int targetAmount, boolean requireConsecutive, String dimension) {
         this.targetAmount = targetAmount;
         this.requireConsecutive = requireConsecutive;
         this.dimension = dimension;
@@ -25,7 +25,7 @@ public class CounterHandler implements AchievementHandler<CounterProgress> {
     }
 
     @Override
-    public boolean check(Event event, CounterProgress progress, ForceItemPlayer forceItemPlayer) {
+    public boolean check(Event event, AchievementCounterAchievementProgress progress, ForceItemPlayer forceItemPlayer) {
         if (!(event instanceof FoundItemEvent foundEvent)) {
             return false;
         }
@@ -76,7 +76,7 @@ public class CounterHandler implements AchievementHandler<CounterProgress> {
     }
 
     @Override
-    public CounterProgress createProgress() {
-        return new CounterProgress();
+    public AchievementCounterAchievementProgress createProgress() {
+        return new AchievementCounterAchievementProgress();
     }
 }

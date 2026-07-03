@@ -11,7 +11,7 @@ import org.bukkit.event.Event;
  * Handler for the Completionist++ achievement.
  * Triggers when a player has earned all other achievements.
  */
-public class CompletionistHandler implements AchievementHandler<SimpleProgress> {
+public class CompletionistAchievementHandler implements AchievementHandler<SimpleAchievementProgress> {
 
     @Override
     public Trigger getTrigger() {
@@ -19,7 +19,7 @@ public class CompletionistHandler implements AchievementHandler<SimpleProgress> 
     }
 
     @Override
-    public boolean check(Event event, SimpleProgress progress, ForceItemPlayer forceItemPlayer) {
+    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer) {
         if (!(event instanceof PlayerGrantAchievementEvent)) {
             return false;
         }
@@ -32,7 +32,7 @@ public class CompletionistHandler implements AchievementHandler<SimpleProgress> 
     }
 
     @Override
-    public SimpleProgress createProgress() {
-        return new SimpleProgress();
+    public SimpleAchievementProgress createProgress() {
+        return new SimpleAchievementProgress();
     }
 }

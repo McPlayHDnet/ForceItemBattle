@@ -5,7 +5,7 @@ import forceitembattle.achievements.Trigger;
 import forceitembattle.util.ForceItemPlayer;
 import org.bukkit.event.Event;
 
-public class NoBackToBackHandler implements AchievementHandler<SimpleProgress> {
+public class NoBackToBackAchievementHandler implements AchievementHandler<SimpleAchievementProgress> {
 
     @Override
     public Trigger getTrigger() {
@@ -13,7 +13,7 @@ public class NoBackToBackHandler implements AchievementHandler<SimpleProgress> {
     }
 
     @Override
-    public boolean check(Event event, SimpleProgress progress, ForceItemPlayer forceItemPlayer) {
+    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer) {
         if (event instanceof FoundItemEvent foundEvent && foundEvent.isBackToBack()) {
             progress.count++;
         }
@@ -21,7 +21,7 @@ public class NoBackToBackHandler implements AchievementHandler<SimpleProgress> {
     }
 
     @Override
-    public SimpleProgress createProgress() {
-        return new SimpleProgress();
+    public SimpleAchievementProgress createProgress() {
+        return new SimpleAchievementProgress();
     }
 }

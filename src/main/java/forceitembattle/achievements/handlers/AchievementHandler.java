@@ -8,7 +8,7 @@ import org.bukkit.event.Event;
  * Each handler is responsible for one type of achievement logic
  * AND declares which trigger it responds to
  */
-public interface AchievementHandler<P extends ProgressTracker> {
+public interface AchievementHandler<P extends AchievementProgressTracker> {
 
     /**
      * Which trigger does this handler respond to?

@@ -16,12 +16,12 @@ import java.util.Locale;
 /**
  * Handler for eating-based achievements
  */
-public class EatingHandler implements AchievementHandler<SimpleProgress> {
+public class EatingAchievementHandler implements AchievementHandler<SimpleAchievementProgress> {
 
     private final int targetAmount;
     private final CustomItem requiredItem;
 
-    public EatingHandler(int targetAmount, CustomItem requiredItem) {
+    public EatingAchievementHandler(int targetAmount, CustomItem requiredItem) {
         if (targetAmount < 1) {
             throw new IllegalArgumentException("targetAmount must be at least 1");
         }
@@ -35,7 +35,7 @@ public class EatingHandler implements AchievementHandler<SimpleProgress> {
     }
 
     @Override
-    public boolean check(Event event, SimpleProgress progress, ForceItemPlayer forceItemPlayer) {
+    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer) {
         if (!(event instanceof PlayerItemConsumeEvent consumeEvent)) {
             return false;
         }
@@ -107,7 +107,7 @@ public class EatingHandler implements AchievementHandler<SimpleProgress> {
     }
 
     @Override
-    public SimpleProgress createProgress() {
-        return new SimpleProgress();
+    public SimpleAchievementProgress createProgress() {
+        return new SimpleAchievementProgress();
     }
 }

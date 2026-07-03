@@ -7,15 +7,15 @@ import forceitembattle.util.MaterialCategory;
 import org.bukkit.Material;
 import org.bukkit.event.Event;
 
-public class ConsecutiveStoneHandler implements AchievementHandler<ConsecutiveStoneHandler.Progress> {
+public class ConsecutiveStoneAchievementHandler implements AchievementHandler<ConsecutiveStoneAchievementHandler.AchievementProgress> {
 
     private final int targetAmount;
 
-    public ConsecutiveStoneHandler(int targetAmount) {
+    public ConsecutiveStoneAchievementHandler(int targetAmount) {
         this.targetAmount = targetAmount;
     }
 
-    public static class Progress implements ProgressTracker {
+    public static class AchievementProgress implements AchievementProgressTracker {
         public int consecutiveCount = 0;
     }
 
@@ -25,7 +25,7 @@ public class ConsecutiveStoneHandler implements AchievementHandler<ConsecutiveSt
     }
 
     @Override
-    public boolean check(Event event, Progress progress, ForceItemPlayer forceItemPlayer) {
+    public boolean check(Event event, AchievementProgress progress, ForceItemPlayer forceItemPlayer) {
         if (!(event instanceof FoundItemEvent foundEvent)) {
             return false;
         }
@@ -47,7 +47,7 @@ public class ConsecutiveStoneHandler implements AchievementHandler<ConsecutiveSt
     }
 
     @Override
-    public Progress createProgress() {
-        return new Progress();
+    public AchievementProgress createProgress() {
+        return new AchievementProgress();
     }
 }

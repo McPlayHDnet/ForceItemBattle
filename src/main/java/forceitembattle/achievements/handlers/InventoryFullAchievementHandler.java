@@ -14,7 +14,7 @@ import org.bukkit.inventory.ItemStack;
 /**
  * Handler for full inventory achievement
  */
-public class InventoryFullHandler implements AchievementHandler<SimpleProgress> {
+public class InventoryFullAchievementHandler implements AchievementHandler<SimpleAchievementProgress> {
 
     @Override
     public Trigger getTrigger() {
@@ -22,7 +22,7 @@ public class InventoryFullHandler implements AchievementHandler<SimpleProgress> 
     }
 
     @Override
-    public boolean check(Event event, SimpleProgress progress, ForceItemPlayer forceItemPlayer) {
+    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer) {
         if (!(event instanceof FoundItemEvent)) {
             return false;
         }
@@ -55,7 +55,7 @@ public class InventoryFullHandler implements AchievementHandler<SimpleProgress> 
     }
 
     @Override
-    public SimpleProgress createProgress() {
-        return new SimpleProgress();
+    public SimpleAchievementProgress createProgress() {
+        return new SimpleAchievementProgress();
     }
 }

@@ -12,11 +12,11 @@ import org.bukkit.inventory.ItemStack;
 /**
  * Handler for beehive harvesting achievements
  */
-public class BeehiveHandler implements AchievementHandler<SimpleProgress> {
+public class BeehiveAchievementHandler implements AchievementHandler<SimpleAchievementProgress> {
 
     private final int targetAmount;
 
-    public BeehiveHandler(int targetAmount) {
+    public BeehiveAchievementHandler(int targetAmount) {
         if (targetAmount < 1) {
             throw new IllegalArgumentException("targetAmount must be at least 1");
         }
@@ -29,7 +29,7 @@ public class BeehiveHandler implements AchievementHandler<SimpleProgress> {
     }
 
     @Override
-    public boolean check(Event event, SimpleProgress progress, ForceItemPlayer forceItemPlayer) {
+    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer) {
         if (!(event instanceof PlayerInteractEvent interactEvent)) {
             return false;
         }
@@ -65,7 +65,7 @@ public class BeehiveHandler implements AchievementHandler<SimpleProgress> {
     }
 
     @Override
-    public SimpleProgress createProgress() {
-        return new SimpleProgress();
+    public SimpleAchievementProgress createProgress() {
+        return new SimpleAchievementProgress();
     }
 }

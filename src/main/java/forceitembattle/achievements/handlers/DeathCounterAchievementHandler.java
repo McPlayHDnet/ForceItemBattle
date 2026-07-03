@@ -8,11 +8,11 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 /**
  * Handler for death-counter achievements (Chicot - no deaths)
  */
-public class DeathCounterHandler implements AchievementHandler<SimpleProgress> {
+public class DeathCounterAchievementHandler implements AchievementHandler<SimpleAchievementProgress> {
 
     private final int maxDeaths;
 
-    public DeathCounterHandler(int maxDeaths) {
+    public DeathCounterAchievementHandler(int maxDeaths) {
         if (maxDeaths < 0) {
             throw new IllegalArgumentException("maxDeaths cannot be negative");
         }
@@ -25,7 +25,7 @@ public class DeathCounterHandler implements AchievementHandler<SimpleProgress> {
     }
 
     @Override
-    public boolean check(Event event, SimpleProgress progress, ForceItemPlayer forceItemPlayer) {
+    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer) {
         if (event instanceof PlayerDeathEvent) {
             progress.deathCount++;
         }
@@ -34,7 +34,7 @@ public class DeathCounterHandler implements AchievementHandler<SimpleProgress> {
     }
 
     @Override
-    public SimpleProgress createProgress() {
-        return new SimpleProgress();
+    public SimpleAchievementProgress createProgress() {
+        return new SimpleAchievementProgress();
     }
 }

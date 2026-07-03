@@ -8,16 +8,16 @@ import forceitembattle.achievements.AchievementStorage;
 import forceitembattle.achievements.Achievements;
 import forceitembattle.achievements.Trigger;
 import forceitembattle.achievements.handlers.AchievementHandler;
-import forceitembattle.achievements.handlers.BackToBackProgress;
-import forceitembattle.achievements.handlers.CollectionHandler;
-import forceitembattle.achievements.handlers.CollectionProgress;
-import forceitembattle.achievements.handlers.ConsecutiveStoneHandler;
-import forceitembattle.achievements.handlers.CounterProgress;
-import forceitembattle.achievements.handlers.ItemFrequencyProgress;
-import forceitembattle.achievements.handlers.ProgressTracker;
-import forceitembattle.achievements.handlers.SimpleProgress;
-import forceitembattle.achievements.handlers.SkipProgress;
-import forceitembattle.achievements.handlers.TimeProgress;
+import forceitembattle.achievements.handlers.AchievementBackToBackAchievementProgress;
+import forceitembattle.achievements.handlers.CollectionAchievementHandler;
+import forceitembattle.achievements.handlers.AchievementCollectionAchievementProgress;
+import forceitembattle.achievements.handlers.ConsecutiveStoneAchievementHandler;
+import forceitembattle.achievements.handlers.AchievementCounterAchievementProgress;
+import forceitembattle.achievements.handlers.AchievementItemFrequencyAchievementProgress;
+import forceitembattle.achievements.handlers.AchievementProgressTracker;
+import forceitembattle.achievements.handlers.SimpleAchievementProgress;
+import forceitembattle.achievements.handlers.SkipAchievementProgress;
+import forceitembattle.achievements.handlers.TimeAchievementProgress;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.Team;
 import org.bukkit.Bukkit;
@@ -29,8 +29,8 @@ import java.util.*;
 public class AchievementManager {
 
     private final ForceItemBattle plugin;
-    private final Map<UUID, Map<Achievements, ProgressTracker>> playerProgress = new HashMap<>();
-    private final Map<Team, Map<Achievements, ProgressTracker>> teamProgress = new HashMap<>();
+    private final Map<UUID, Map<Achievements, AchievementProgressTracker>> playerProgress = new HashMap<>();
+    private final Map<Team, Map<Achievements, AchievementProgressTracker>> teamProgress = new HashMap<>();
     private final AchievementStorage storage;
 
     // OPTIMIZATION: Pre-built map of achievements by trigger
@@ -74,10 +74,10 @@ public class AchievementManager {
 
         // Initialize progress
         playerProgress.putIfAbsent(uuid, new HashMap<>());
-        Map<Achievements, ProgressTracker> progress = playerProgress.get(uuid);
+        Map<Achievements, AchievementProgressTracker> progress = playerProgress.get(uuid);
 
         // Handle team progress
-        Map<Achievements, ProgressTracker> teamProgressMap = null;
+        Map<Achievements, AchievementProgressTracker> teamProgressMap = null;
         Team team = null;
         if (plugin.getSettings().isSettingEnabled(GameSetting.TEAM) && forceItemPlayer.currentTeam() != null) {
             team = forceItemPlayer.currentTeam();
@@ -110,14 +110,14 @@ public class AchievementManager {
             }
 
             // Get or create progress
-            Map<Achievements, ProgressTracker> progressMap = useTeamProgress ? teamProgressMap : progress;
+            Map<Achievements, AchievementProgressTracker> progressMap = useTeamProgress ? teamProgressMap : progress;
             progressMap.putIfAbsent(achievement, handler.createProgress());
-            ProgressTracker tracker = progressMap.get(achievement);
+            AchievementProgressTracker tracker = progressMap.get(achievement);
 
             // Type-safe check
             @SuppressWarnings("unchecked")
-            AchievementHandler<ProgressTracker> typedHandler =
-                    (AchievementHandler<ProgressTracker>) handler;
+            AchievementHandler<AchievementProgressTracker> typedHandler =
+                    (AchievementHandler<AchievementProgressTracker>) handler;
 
             // Check if completed
             if (typedHandler.check(event, tracker, forceItemPlayer)) {
@@ -205,9 +205,9 @@ public class AchievementManager {
             // CHICOT — finish with no deaths.
             if (!storage.hasAchievement(uuid, Achievements.CHICOT)) {
                 playerProgress.putIfAbsent(uuid, new HashMap<>());
-                Map<Achievements, ProgressTracker> progress = playerProgress.get(uuid);
+                Map<Achievements, AchievementProgressTracker> progress = playerProgress.get(uuid);
                 progress.putIfAbsent(Achievements.CHICOT, Achievements.CHICOT.getHandler().createProgress());
-                if (progress.get(Achievements.CHICOT) instanceof SimpleProgress simpleProgress
+                if (progress.get(Achievements.CHICOT) instanceof SimpleAchievementProgress simpleProgress
                         && simpleProgress.deathCount == 0) {
                     // writeUnlock persists with the right mode/teammate and fires the
                     // event only if the player is online (so Completionist can chain).
@@ -249,7 +249,7 @@ public class AchievementManager {
      * it never fired.
      */
     private boolean hadOccurrence(UUID uuid, Achievements achievement) {
-        return getProgress(uuid, achievement) instanceof SimpleProgress simpleProgress
+        return getProgress(uuid, achievement) instanceof SimpleAchievementProgress simpleProgress
                 && simpleProgress.count > 0;
     }
 
@@ -282,14 +282,14 @@ public class AchievementManager {
      * or null if none exists yet. Checks the player's own progress and, for
      * team-shared achievements, the team's progress.
      */
-    public ProgressTracker getProgress(UUID uuid, Achievements achievement) {
-        Map<Achievements, ProgressTracker> playerMap = playerProgress.get(uuid);
+    public AchievementProgressTracker getProgress(UUID uuid, Achievements achievement) {
+        Map<Achievements, AchievementProgressTracker> playerMap = playerProgress.get(uuid);
         if (playerMap != null && playerMap.get(achievement) != null) {
             return playerMap.get(achievement);
         }
         ForceItemPlayer fip = plugin.getGamemanager().getForceItemPlayer(uuid);
         if (fip != null && fip.currentTeam() != null) {
-            Map<Achievements, ProgressTracker> teamMap = teamProgress.get(fip.currentTeam());
+            Map<Achievements, AchievementProgressTracker> teamMap = teamProgress.get(fip.currentTeam());
             if (teamMap != null) {
                 return teamMap.get(achievement);
             }
@@ -303,15 +303,15 @@ public class AchievementManager {
      * in-memory and per-round, so this only reflects the current game.
      */
     public String describeProgress(UUID uuid, Achievements achievement) {
-        ProgressTracker tracker = getProgress(uuid, achievement);
+        AchievementProgressTracker tracker = getProgress(uuid, achievement);
         if (tracker == null) {
             return "not started";
         }
 
-        if (tracker instanceof CollectionProgress<?> collection) {
+        if (tracker instanceof AchievementCollectionAchievementProgress<?> collection) {
             AchievementHandler<?> handler = achievement.getHandler();
-            if (handler instanceof CollectionHandler<?> collectionHandler) {
-                Set<?> required = collectionHandler.getRequiredItems();
+            if (handler instanceof CollectionAchievementHandler<?> collectionAchievementHandler) {
+                Set<?> required = collectionAchievementHandler.getRequiredItems();
                 Set<Object> missing = new HashSet<>(required);
                 missing.removeAll(collection.collected);
                 String base = collection.collected.size() + "/" + required.size() + " collected";
@@ -319,26 +319,26 @@ public class AchievementManager {
             }
             return collection.collected.size() + " collected: " + collection.collected;
         }
-        if (tracker instanceof CounterProgress counter) {
+        if (tracker instanceof AchievementCounterAchievementProgress counter) {
             return "count=" + counter.count + ", consecutive=" + counter.consecutiveCount;
         }
-        if (tracker instanceof ItemFrequencyProgress frequency) {
+        if (tracker instanceof AchievementItemFrequencyAchievementProgress frequency) {
             int highest = frequency.counts.values().stream().mapToInt(Integer::intValue).max().orElse(0);
             return "highest same-item count=" + highest;
         }
-        if (tracker instanceof TimeProgress time) {
+        if (tracker instanceof TimeAchievementProgress time) {
             return "count=" + time.count + ", hasSkipped=" + time.hasSkipped;
         }
-        if (tracker instanceof SkipProgress skip) {
+        if (tracker instanceof SkipAchievementProgress skip) {
             return "skips=" + skip.skipCount;
         }
-        if (tracker instanceof BackToBackProgress backToBack) {
+        if (tracker instanceof AchievementBackToBackAchievementProgress backToBack) {
             return "backToBack=" + backToBack.b2bCount;
         }
-        if (tracker instanceof ConsecutiveStoneHandler.Progress stone) {
+        if (tracker instanceof ConsecutiveStoneAchievementHandler.AchievementProgress stone) {
             return "consecutiveStone=" + stone.consecutiveCount;
         }
-        if (tracker instanceof SimpleProgress simple) {
+        if (tracker instanceof SimpleAchievementProgress simple) {
             return "count=" + simple.count + (simple.deathCount != 0 ? ", deaths=" + simple.deathCount : "");
         }
         return "in progress";

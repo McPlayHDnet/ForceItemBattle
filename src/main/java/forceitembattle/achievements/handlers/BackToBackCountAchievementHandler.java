@@ -5,11 +5,11 @@ import forceitembattle.achievements.Trigger;
 import forceitembattle.util.ForceItemPlayer;
 import org.bukkit.event.Event;
 
-public class BackToBackCountHandler implements AchievementHandler<SimpleProgress> {
+public class BackToBackCountAchievementHandler implements AchievementHandler<SimpleAchievementProgress> {
 
     private final int targetAmount;
 
-    public BackToBackCountHandler(int targetAmount) {
+    public BackToBackCountAchievementHandler(int targetAmount) {
         if (targetAmount < 1) {
             throw new IllegalArgumentException("targetAmount must be at least 1");
         }
@@ -22,7 +22,7 @@ public class BackToBackCountHandler implements AchievementHandler<SimpleProgress
     }
 
     @Override
-    public boolean check(Event event, SimpleProgress progress, ForceItemPlayer forceItemPlayer) {
+    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer) {
         if (event instanceof FoundItemEvent foundEvent && foundEvent.isBackToBack()) {
             progress.count++;
             return progress.count >= targetAmount;
@@ -31,7 +31,7 @@ public class BackToBackCountHandler implements AchievementHandler<SimpleProgress
     }
 
     @Override
-    public SimpleProgress createProgress() {
-        return new SimpleProgress();
+    public SimpleAchievementProgress createProgress() {
+        return new SimpleAchievementProgress();
     }
 }

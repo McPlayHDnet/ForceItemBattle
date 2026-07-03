@@ -1,15 +1,15 @@
 package forceitembattle.achievements.handlers;
 
 import forceitembattle.achievements.Trigger;
-import forceitembattle.event.AntimatterTeleporterUseEvent;
+import forceitembattle.event.WheelOfFortuneWinEvent;
 import forceitembattle.util.ForceItemPlayer;
 import org.bukkit.event.Event;
 
-public class AntimatterTeleporterUsesHandler implements AchievementHandler<SimpleProgress> {
+public class WheelOfFortuneUsesAchievementHandler implements AchievementHandler<SimpleAchievementProgress> {
 
     private final int targetAmount;
 
-    public AntimatterTeleporterUsesHandler(int targetAmount) {
+    public WheelOfFortuneUsesAchievementHandler(int targetAmount) {
         if (targetAmount < 1) {
             throw new IllegalArgumentException("targetAmount must be at least 1");
         }
@@ -18,12 +18,12 @@ public class AntimatterTeleporterUsesHandler implements AchievementHandler<Simpl
 
     @Override
     public Trigger getTrigger() {
-        return Trigger.ANTIMATTER_TELEPORTER;
+        return Trigger.WHEEL_OF_FORTUNE;
     }
 
     @Override
-    public boolean check(Event event, SimpleProgress progress, ForceItemPlayer forceItemPlayer) {
-        if (!(event instanceof AntimatterTeleporterUseEvent teleporterEvent) || !teleporterEvent.isNewTeleporter()) {
+    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer) {
+        if (!(event instanceof WheelOfFortuneWinEvent)) {
             return false;
         }
         progress.count++;
@@ -31,7 +31,7 @@ public class AntimatterTeleporterUsesHandler implements AchievementHandler<Simpl
     }
 
     @Override
-    public SimpleProgress createProgress() {
-        return new SimpleProgress();
+    public SimpleAchievementProgress createProgress() {
+        return new SimpleAchievementProgress();
     }
 }

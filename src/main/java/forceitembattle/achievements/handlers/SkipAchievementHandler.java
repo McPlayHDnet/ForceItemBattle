@@ -6,13 +6,13 @@ import forceitembattle.achievements.Trigger;
 import forceitembattle.util.ForceItemPlayer;
 import org.bukkit.event.Event;
 
-public class SkipHandler implements AchievementHandler<SkipProgress> {
+public class SkipAchievementHandler implements AchievementHandler<SkipAchievementProgress> {
 
     private final int targetSkips;
     private final boolean requireConsecutive;
     private final long withinSeconds;
 
-    public SkipHandler(int targetSkips, boolean requireConsecutive, long withinSeconds) {
+    public SkipAchievementHandler(int targetSkips, boolean requireConsecutive, long withinSeconds) {
         this.targetSkips = targetSkips;
         this.requireConsecutive = requireConsecutive;
         this.withinSeconds = withinSeconds;
@@ -24,7 +24,7 @@ public class SkipHandler implements AchievementHandler<SkipProgress> {
     }
 
     @Override
-    public boolean check(Event event, SkipProgress progress, ForceItemPlayer forceItemPlayer) {
+    public boolean check(Event event, SkipAchievementProgress progress, ForceItemPlayer forceItemPlayer) {
         if (!(event instanceof FoundItemEvent foundEvent)) {
             return false;
         }
@@ -76,7 +76,7 @@ public class SkipHandler implements AchievementHandler<SkipProgress> {
     }
 
     @Override
-    public SkipProgress createProgress() {
-        return new SkipProgress();
+    public SkipAchievementProgress createProgress() {
+        return new SkipAchievementProgress();
     }
 }

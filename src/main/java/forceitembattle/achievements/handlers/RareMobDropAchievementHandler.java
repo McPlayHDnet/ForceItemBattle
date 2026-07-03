@@ -9,11 +9,11 @@ import org.bukkit.event.Event;
 /**
  * Handler for rare mob drop achievements (Trident, Wither Skeleton Skull)
  */
-public class RareMobDropHandler implements AchievementHandler<SimpleProgress> {
+public class RareMobDropAchievementHandler implements AchievementHandler<SimpleAchievementProgress> {
 
     private final int targetAmount;
 
-    public RareMobDropHandler(int targetAmount) {
+    public RareMobDropAchievementHandler(int targetAmount) {
         if (targetAmount < 1) {
             throw new IllegalArgumentException("targetAmount must be at least 1");
         }
@@ -26,7 +26,7 @@ public class RareMobDropHandler implements AchievementHandler<SimpleProgress> {
     }
 
     @Override
-    public boolean check(Event event, SimpleProgress progress, ForceItemPlayer forceItemPlayer) {
+    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer) {
         if (!(event instanceof FoundItemEvent foundEvent)) {
             return false;
         }
@@ -44,8 +44,8 @@ public class RareMobDropHandler implements AchievementHandler<SimpleProgress> {
     }
 
     @Override
-    public SimpleProgress createProgress() {
-        return new SimpleProgress();
+    public SimpleAchievementProgress createProgress() {
+        return new SimpleAchievementProgress();
     }
 
     @Override

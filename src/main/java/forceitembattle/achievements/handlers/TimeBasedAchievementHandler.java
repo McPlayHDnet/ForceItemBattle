@@ -6,7 +6,7 @@ import forceitembattle.achievements.Trigger;
 import forceitembattle.util.ForceItemPlayer;
 import org.bukkit.event.Event;
 
-public class TimeBasedHandler implements AchievementHandler<TimeProgress> {
+public class TimeBasedAchievementHandler implements AchievementHandler<TimeAchievementProgress> {
 
     private final int targetAmount;
     private final long withinSeconds;
@@ -17,9 +17,9 @@ public class TimeBasedHandler implements AchievementHandler<TimeProgress> {
     private final boolean firstPlayer;
     private final boolean playerBased;
 
-    public TimeBasedHandler(int targetAmount, long withinSeconds, long timeFrameSeconds,
-                            long skipAfterSeconds, int closeCallSeconds, boolean noSkip,
-                            boolean firstPlayer, boolean playerBased) {
+    public TimeBasedAchievementHandler(int targetAmount, long withinSeconds, long timeFrameSeconds,
+                                       long skipAfterSeconds, int closeCallSeconds, boolean noSkip,
+                                       boolean firstPlayer, boolean playerBased) {
 
         // VALIDATION: Only one time constraint should be set
         int constraintCount = 0;
@@ -66,7 +66,7 @@ public class TimeBasedHandler implements AchievementHandler<TimeProgress> {
     }
 
     @Override
-    public boolean check(Event event, TimeProgress progress, ForceItemPlayer forceItemPlayer) {
+    public boolean check(Event event, TimeAchievementProgress progress, ForceItemPlayer forceItemPlayer) {
         if (!(event instanceof FoundItemEvent foundEvent)) {
             return false;
         }
@@ -175,8 +175,8 @@ public class TimeBasedHandler implements AchievementHandler<TimeProgress> {
     }
 
     @Override
-    public TimeProgress createProgress() {
-        return new TimeProgress();
+    public TimeAchievementProgress createProgress() {
+        return new TimeAchievementProgress();
     }
 
     @Override

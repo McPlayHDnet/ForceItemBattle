@@ -5,7 +5,7 @@ import forceitembattle.util.ForceItemPlayer;
 import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 
-public class NoOverworldExitHandler implements AchievementHandler<SimpleProgress> {
+public class NoOverworldExitAchievementHandler implements AchievementHandler<SimpleAchievementProgress> {
 
     private static final String OVERWORLD = "world";
 
@@ -15,7 +15,7 @@ public class NoOverworldExitHandler implements AchievementHandler<SimpleProgress
     }
 
     @Override
-    public boolean check(Event event, SimpleProgress progress, ForceItemPlayer forceItemPlayer) {
+    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer) {
         if (event instanceof PlayerChangedWorldEvent worldEvent
                 && !worldEvent.getPlayer().getWorld().getName().equals(OVERWORLD)) {
             progress.count++; // entered the nether/end = left the overworld
@@ -24,8 +24,8 @@ public class NoOverworldExitHandler implements AchievementHandler<SimpleProgress
     }
 
     @Override
-    public SimpleProgress createProgress() {
-        return new SimpleProgress();
+    public SimpleAchievementProgress createProgress() {
+        return new SimpleAchievementProgress();
     }
 
     @Override

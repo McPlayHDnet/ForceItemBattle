@@ -9,11 +9,11 @@ import org.bukkit.event.Event;
 /**
  * Handler for trading-based achievements
  */
-public class TradingHandler implements AchievementHandler<SimpleProgress> {
+public class TradingAchievementHandler implements AchievementHandler<SimpleAchievementProgress> {
 
     private final int targetAmount;
 
-    public TradingHandler(int targetAmount) {
+    public TradingAchievementHandler(int targetAmount) {
         if (targetAmount < 1) {
             throw new IllegalArgumentException("targetAmount must be at least 1");
         }
@@ -26,7 +26,7 @@ public class TradingHandler implements AchievementHandler<SimpleProgress> {
     }
 
     @Override
-    public boolean check(Event event, SimpleProgress progress, ForceItemPlayer forceItemPlayer) {
+    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer) {
         if (!(event instanceof PlayerTradeEvent tradeEvent)) {
             return false;
         }
@@ -39,7 +39,7 @@ public class TradingHandler implements AchievementHandler<SimpleProgress> {
     }
 
     @Override
-    public SimpleProgress createProgress() {
-        return new SimpleProgress();
+    public SimpleAchievementProgress createProgress() {
+        return new SimpleAchievementProgress();
     }
 }

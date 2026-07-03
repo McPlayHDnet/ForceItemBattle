@@ -1,6 +1,6 @@
 package forceitembattle.achievements.handlers;
 
-public class TimeProgress implements ProgressTracker {
+public class TimeAchievementProgress implements AchievementProgressTracker {
     public int count = 0;
     public int lastItemSecondsLeft = -1;
     public int itemReceivedSecondsLeft = -1;

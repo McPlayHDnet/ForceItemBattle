@@ -13,17 +13,17 @@ import org.bukkit.event.player.PlayerMoveEvent;
 
 import java.util.Set;
 
-public class CollectionHandler<T> implements AchievementHandler<CollectionProgress<T>> {
+public class CollectionAchievementHandler<T> implements AchievementHandler<AchievementCollectionAchievementProgress<T>> {
 
     public interface ItemExtractor<T> {
-        T extract(Event event, ForceItemPlayer player, CollectionProgress<T> progress);
+        T extract(Event event, ForceItemPlayer player, AchievementCollectionAchievementProgress<T> progress);
     }
 
     private final Trigger trigger;
     private final Set<T> requiredItems;
     private final ItemExtractor<T> extractor;
 
-    public CollectionHandler(Trigger trigger, Set<T> requiredItems, ItemExtractor<T> extractor) {
+    public CollectionAchievementHandler(Trigger trigger, Set<T> requiredItems, ItemExtractor<T> extractor) {
         this.trigger = trigger;
         this.requiredItems = requiredItems;
         this.extractor = extractor;
@@ -40,7 +40,7 @@ public class CollectionHandler<T> implements AchievementHandler<CollectionProgre
     }
 
     @Override
-    public boolean check(Event event, CollectionProgress<T> progress, ForceItemPlayer forceItemPlayer) {
+    public boolean check(Event event, AchievementCollectionAchievementProgress<T> progress, ForceItemPlayer forceItemPlayer) {
         T item = extractor.extract(event, forceItemPlayer, progress);
         if (item != null) {
             progress.collected.add(item);
@@ -50,21 +50,21 @@ public class CollectionHandler<T> implements AchievementHandler<CollectionProgre
     }
 
     @Override
-    public CollectionProgress<T> createProgress() {
-        return new CollectionProgress<>();
+    public AchievementCollectionAchievementProgress<T> createProgress() {
+        return new AchievementCollectionAchievementProgress<>();
     }
 
     // Factory methods
-    public static CollectionHandler<BiomeGroup> biomeHandler(Set<BiomeGroup> requiredBiomes) {
-        return new CollectionHandler<>(Trigger.VISIT, requiredBiomes, (event, player, progress) -> {
+    public static CollectionAchievementHandler<BiomeGroup> biomeHandler(Set<BiomeGroup> requiredBiomes) {
+        return new CollectionAchievementHandler<>(Trigger.VISIT, requiredBiomes, (event, player, progress) -> {
             if (event instanceof PlayerMoveEvent moveEvent) {
                 // OPTIMIZATION: Only check when player moves to a new block
                 int x = moveEvent.getTo().getBlockX();
                 int y = moveEvent.getTo().getBlockY();
                 int z = moveEvent.getTo().getBlockZ();
 
-                CollectionProgress.LastCheckedPosition current =
-                        new CollectionProgress.LastCheckedPosition(x, y, z);
+                AchievementCollectionAchievementProgress.LastCheckedPosition current =
+                        new AchievementCollectionAchievementProgress.LastCheckedPosition(x, y, z);
 
                 if (current.equals(progress.lastPosition)) {
                     return null; // Same block, no need to check
@@ -84,15 +84,15 @@ public class CollectionHandler<T> implements AchievementHandler<CollectionProgre
         });
     }
 
-    public static CollectionHandler<Biome> caveBiomeHandler(Set<Biome> requiredBiomes) {
-        return new CollectionHandler<>(Trigger.VISIT, requiredBiomes, (event, player, progress) -> {
+    public static CollectionAchievementHandler<Biome> caveBiomeHandler(Set<Biome> requiredBiomes) {
+        return new CollectionAchievementHandler<>(Trigger.VISIT, requiredBiomes, (event, player, progress) -> {
             if (event instanceof PlayerMoveEvent moveEvent) {
                 int x = moveEvent.getTo().getBlockX();
                 int y = moveEvent.getTo().getBlockY();
                 int z = moveEvent.getTo().getBlockZ();
 
-                CollectionProgress.LastCheckedPosition current =
-                        new CollectionProgress.LastCheckedPosition(x, y, z);
+                AchievementCollectionAchievementProgress.LastCheckedPosition current =
+                        new AchievementCollectionAchievementProgress.LastCheckedPosition(x, y, z);
 
                 if (current.equals(progress.lastPosition)) {
                     return null; // Same block, no need to check
@@ -109,8 +109,8 @@ public class CollectionHandler<T> implements AchievementHandler<CollectionProgre
         });
     }
 
-    public static CollectionHandler<String> dimensionHandler(Set<String> requiredDimensions) {
-        return new CollectionHandler<>(Trigger.VISIT, requiredDimensions, (event, player, progress) -> {
+    public static CollectionAchievementHandler<String> dimensionHandler(Set<String> requiredDimensions) {
+        return new CollectionAchievementHandler<>(Trigger.VISIT, requiredDimensions, (event, player, progress) -> {
             if (event instanceof PlayerChangedWorldEvent worldEvent) {
                 return worldEvent.getPlayer().getWorld().getName();
             }
@@ -118,8 +118,8 @@ public class CollectionHandler<T> implements AchievementHandler<CollectionProgre
         });
     }
 
-    public static CollectionHandler<String> woodTypesHandler() {
-        return new CollectionHandler<>(Trigger.OBTAIN_ITEM, MaterialCategory.getAllWoodCategories(), (event, player, progress) -> {
+    public static CollectionAchievementHandler<String> woodTypesHandler() {
+        return new CollectionAchievementHandler<>(Trigger.OBTAIN_ITEM, MaterialCategory.getAllWoodCategories(), (event, player, progress) -> {
             if (event instanceof FoundItemEvent foundEvent) {
                 if (!foundEvent.isSkipped()) {
                     Material item = foundEvent.getFoundItem().getType();
