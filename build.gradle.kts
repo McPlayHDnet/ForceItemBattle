@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "forceitembattle"
-version = "4.1.0"
+version = "4.2.0"
 description = "ForceItemBattle for McPlayHD.net"
 
 java {
@@ -24,13 +24,11 @@ repositories {
         url = uri("https://repo.codemc.io/repository/maven-public/")
     }
     maven {
-        // TODO: deploy FIBService to public-releases, change uri later and remove credentials object
         /**
          * url = uri("https://maven.mcplayhd.net/public-releases")
          */
         name = "mcplayhd"
-        url = uri("https://maven.mcplayhd.net/releases")
-        credentials(PasswordCredentials::class)
+        url = uri("https://maven.mcplayhd.net/public-releases")
     }
 }
 
