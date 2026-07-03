@@ -5,11 +5,13 @@ import forceitembattle.util.CustomItem;
 import forceitembattle.util.ForceItemPlayer;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.event.Event;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.util.Locale;
 
@@ -111,6 +113,17 @@ public class LootHandler implements AchievementHandler<SimpleProgress> {
 
         if (customItem.getMaterial() != null) {
             if (item.getType() != customItem.getMaterial()) {
+                return false;
+            }
+        }
+
+        if (customItem.getCustomDataKey() != null) {
+            NamespacedKey key = NamespacedKey.fromString(customItem.getCustomDataKey());
+            if (key == null) {
+                return false;
+            }
+            String value = meta.getPersistentDataContainer().get(key, PersistentDataType.STRING);
+            if (value == null || !value.equals(customItem.getCustomDataValue())) {
                 return false;
             }
         }

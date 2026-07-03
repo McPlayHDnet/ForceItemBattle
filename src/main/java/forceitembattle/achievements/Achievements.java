@@ -167,11 +167,11 @@ public enum Achievements {
             new WheelOfFortuneUsesHandler(15)),
 
     // LOOT achievements
-    WHEEL_OF_FORTUNE("Wheel of Fortune", "Find a Legendary item in a loot chest",
-            new LootHandler(1, new CustomItem(null, "[LEGENDARY]"), false)),
+    LEGENDARY("Legendary", "Find a Legendary item in the Antimatter Depths",
+            new LootHandler(1, CustomItem.customData("fib:fib_item", "legendary_template"), false)),
 
     WILL_IT_BREAK("Will it break?", "Find Cavendish in a loot chest",
-            new LootHandler(1, new CustomItem(Material.ENCHANTED_GOLDEN_APPLE, 1, "Cavendish"), false)),
+            new LootHandler(1, new CustomItem(Material.ENCHANTED_GOLDEN_APPLE, "cavendish", null), false)),
 
     BELIEVER("Believer", "Find your currently needed item in a loot chest",
             new LootHandler(1, null, true)),

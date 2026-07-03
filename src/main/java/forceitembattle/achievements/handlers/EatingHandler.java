@@ -4,10 +4,12 @@ import forceitembattle.achievements.Trigger;
 import forceitembattle.util.CustomItem;
 import forceitembattle.util.ForceItemPlayer;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import org.bukkit.NamespacedKey;
 import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.util.Locale;
 
@@ -86,6 +88,17 @@ public class EatingHandler implements AchievementHandler<SimpleProgress> {
 
         if (requiredItem.getMaterial() != null) {
             if (item.getType() != requiredItem.getMaterial()) {
+                return false;
+            }
+        }
+
+        if (requiredItem.getCustomDataKey() != null) {
+            NamespacedKey key = NamespacedKey.fromString(requiredItem.getCustomDataKey());
+            if (key == null) {
+                return false;
+            }
+            String value = meta.getPersistentDataContainer().get(key, PersistentDataType.STRING);
+            if (value == null || !value.equals(requiredItem.getCustomDataValue())) {
                 return false;
             }
         }
