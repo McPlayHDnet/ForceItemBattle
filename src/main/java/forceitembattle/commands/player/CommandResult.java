@@ -1,11 +1,11 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.FinishInventory;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.Team;
-import forceitembattle.ForceItemBattle;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -19,7 +19,7 @@ public class CommandResult extends CustomCommand {
     public int place;
 
     public CommandResult(ForceItemBattle plugin) {
-        super(plugin,"result");
+        super(plugin, "result");
         setDescription("Show the next player's result");
 
         this.place = -1;
@@ -34,7 +34,7 @@ public class CommandResult extends CustomCommand {
         if (args.length == 1) {
             UUID uuid = null;
             Team team = null;
-            if(!this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+            if (!this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
                 try {
                     uuid = UUID.fromString(args[0]);
                 } catch (IllegalArgumentException e) {
@@ -65,7 +65,7 @@ public class CommandResult extends CustomCommand {
     }
 
     private void showNextPlayer(Player player) {
-        if(!this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
             if (this.plugin.getGamemanager().forceItemPlayerMap().isEmpty() || this.place == 0) {
                 player.sendMessage("No more players left.");
                 return;

@@ -1,15 +1,10 @@
 package forceitembattle.commands.player;
 
-import de.threeseconds.openapi.fibservice.client.model.FibItemCountDto;
-import de.threeseconds.openapi.fibservice.client.model.FibPlayerCombinedTeamStatsDto;
-import de.threeseconds.openapi.fibservice.client.model.FibRaritiesDto;
-import de.threeseconds.openapi.fibservice.client.model.FibSoloStatisticsDto;
-import de.threeseconds.openapi.fibservice.client.model.FibTeamMemberStatsDto;
-import de.threeseconds.openapi.fibservice.client.model.FibTeamStatisticsDto;
+import de.threeseconds.openapi.fibservice.client.model.*;
+import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.stats.FIBServiceHelper;
-import forceitembattle.ForceItemBattle;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;

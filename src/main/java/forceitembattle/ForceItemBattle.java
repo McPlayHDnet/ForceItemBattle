@@ -1,47 +1,10 @@
 package forceitembattle;
 
 import forceitembattle.commands.CommandsManager;
-import forceitembattle.commands.admin.CommandForceTeam;
-import forceitembattle.commands.admin.CommandItems;
-import forceitembattle.commands.admin.CommandReset;
-import forceitembattle.commands.admin.CommandSettings;
-import forceitembattle.commands.admin.CommandSkip;
-import forceitembattle.commands.admin.CommandStart;
-import forceitembattle.commands.admin.CommandStopTimer;
-import forceitembattle.commands.player.CommandAchievement;
-import forceitembattle.commands.player.CommandBed;
-import forceitembattle.commands.player.CommandBp;
-import forceitembattle.commands.player.CommandFixSkips;
-import forceitembattle.commands.player.CommandHelp;
-import forceitembattle.commands.player.CommandInfo;
-import forceitembattle.commands.player.CommandInfoWiki;
-import forceitembattle.commands.player.CommandLeaderboard;
-import forceitembattle.commands.player.CommandPause;
-import forceitembattle.commands.player.CommandPing;
-import forceitembattle.commands.player.CommandPosition;
-import forceitembattle.commands.player.CommandResult;
-import forceitembattle.commands.player.CommandResume;
-import forceitembattle.commands.player.CommandShout;
-import forceitembattle.commands.player.CommandSpawn;
-import forceitembattle.commands.player.CommandSpectate;
-import forceitembattle.commands.player.CommandStats;
-import forceitembattle.commands.player.CommandTeams;
-import forceitembattle.commands.player.CommandVote;
-import forceitembattle.commands.player.CommandVoteSkip;
-import forceitembattle.commands.player.CommandAskTrade;
+import forceitembattle.commands.admin.*;
+import forceitembattle.commands.player.*;
 import forceitembattle.listener.*;
-import forceitembattle.manager.AchievementManager;
-import forceitembattle.manager.Gamemanager;
-import forceitembattle.manager.ItemDifficultiesManager;
-import forceitembattle.manager.LocatorManager;
-import forceitembattle.manager.Manager;
-import forceitembattle.manager.PositionManager;
-import forceitembattle.manager.ProtectionManager;
-import forceitembattle.manager.RecipeManager;
-import forceitembattle.manager.ScoreboardManager;
-import forceitembattle.manager.TeamsManager;
-import forceitembattle.manager.TradingManager;
-import forceitembattle.manager.VoteSkipManager;
+import forceitembattle.manager.*;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.stats.FIBServiceHelper;
@@ -49,12 +12,7 @@ import forceitembattle.util.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.io.FileUtils;
-import org.bukkit.Bukkit;
-import org.bukkit.Chunk;
-import org.bukkit.GameRules;
-import org.bukkit.Location;
-import org.bukkit.World;
-import org.bukkit.WorldBorder;
+import org.bukkit.*;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -64,11 +22,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public final class ForceItemBattle extends JavaPlugin {
 
+    private final List<Manager> managers = new ArrayList<>();
     @Getter
     private Gamemanager gamemanager;
     @Getter
@@ -111,10 +70,8 @@ public final class ForceItemBattle extends JavaPlugin {
     @Getter
     @Setter
     private Location spawnLocation;
-
     @Getter
     private GameSettings settings;
-
 
     @Override
     public void onLoad() {
@@ -124,8 +81,6 @@ public final class ForceItemBattle extends JavaPlugin {
 
         saveConfig();
     }
-
-    private final List<Manager> managers = new ArrayList<>();
 
     private <T extends Manager> T register(T manager) {
         this.managers.add(manager);
@@ -139,7 +94,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.gamemanager = register(new Gamemanager(this));
         this.timer = register(new Timer(this));
         this.backpack = register(new Backpack(this));
-        this.itemDifficultiesManager= register(new ItemDifficultiesManager(this));
+        this.itemDifficultiesManager = register(new ItemDifficultiesManager(this));
         this.recipeManager = register(new RecipeManager(this));
         this.positionManager = register(new PositionManager(this));
         this.teamManager = register(new TeamsManager(this));
@@ -205,7 +160,7 @@ public final class ForceItemBattle extends JavaPlugin {
     }
 
     private void copyDatapack(String datapackName) {
-        File world = new File(Bukkit.getWorldContainer() , "world");
+        File world = new File(Bukkit.getWorldContainer(), "world");
 
         try {
             // Create Path objects for source and destination directories

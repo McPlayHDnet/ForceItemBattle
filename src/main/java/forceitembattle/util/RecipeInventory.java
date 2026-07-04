@@ -16,14 +16,15 @@ import java.util.Map;
 
 public class RecipeInventory extends InventoryBuilder {
 
-    private static final int RESULT_SLOT = 25;
-    private static final int STATION_SLOT = 23;
-    private static final int WORKBENCH_FIRST_ITEM_SLOT = 10;
-    private static final int SMITHING_FIRST_ITEM_SLOT = 19;
-    private static final int OTHER_FIRST_ITEM_SLOT = 20;
     public static final int NEXT_RECIPE_ITEM_SLOT = 8;
     public static final int PREVIOUS_RECIPE_ITEM_SLOT = 0;
-
+    public static final Map<Material, CustomMaterial> CUSTOM_MATERIALS = Map.of(
+            Material.KNOWLEDGE_BOOK, new CustomMaterial("antimatter_locator", "Antimatter Locator", "<dark_gray>» <dark_purple>Antimatter Locator"),
+            Material.WITHER_ROSE, new CustomMaterial("trial_locator", "Trial Locator", "<dark_gray>» <gold>Trial Locator")
+    );
+    public static final Map<String, Material> ID_TO_MATERIAL = new HashMap<>();
+    private static final int RESULT_SLOT = 25;
+    private static final int STATION_SLOT = 23;
     /**
      * Slots that contain recipe items, the station and result items.
      */
@@ -33,21 +34,9 @@ public class RecipeInventory extends InventoryBuilder {
             28, 29, 30,
             STATION_SLOT, RESULT_SLOT
     );
-
-    private static String materialName(Material type) {
-        CustomMaterial customMaterial = CUSTOM_MATERIALS.get(type);
-        if (customMaterial != null) {
-            return customMaterial.containerName();
-        }
-        return WordUtils.capitalize(type.name().replace("_", " ").toLowerCase());
-    }
-
-    public static final Map<Material, CustomMaterial> CUSTOM_MATERIALS = Map.of(
-            Material.KNOWLEDGE_BOOK, new CustomMaterial("antimatter_locator", "Antimatter Locator", "<dark_gray>» <dark_purple>Antimatter Locator"),
-            Material.WITHER_ROSE, new CustomMaterial("trial_locator", "Trial Locator", "<dark_gray>» <gold>Trial Locator")
-    );
-
-    public static final Map<String, Material> ID_TO_MATERIAL = new HashMap<>();
+    private static final int WORKBENCH_FIRST_ITEM_SLOT = 10;
+    private static final int SMITHING_FIRST_ITEM_SLOT = 19;
+    private static final int OTHER_FIRST_ITEM_SLOT = 20;
 
     static {
         CUSTOM_MATERIALS.forEach((material, customMaterial) -> ID_TO_MATERIAL.put(customMaterial.id(), material));
@@ -260,6 +249,49 @@ public class RecipeInventory extends InventoryBuilder {
         });
     }
 
+    private static String materialName(Material type) {
+        CustomMaterial customMaterial = CUSTOM_MATERIALS.get(type);
+        if (customMaterial != null) {
+            return customMaterial.containerName();
+        }
+        return WordUtils.capitalize(type.name().replace("_", " ").toLowerCase());
+    }
+
+    public static ItemStack getStationItem(Recipe recipe) {
+        if (recipe instanceof ToolRecipe toolRecipe) {
+            return toolRecipe.getStationDisplay();
+
+        } else if (recipe instanceof ShapedRecipe) {
+            return new ItemStack(Material.CRAFTING_TABLE);
+
+        } else if (recipe instanceof ShapelessRecipe) {
+            return new ItemStack(Material.CRAFTING_TABLE);
+
+        } else if (recipe instanceof FurnaceRecipe) {
+            return new ItemStack(Material.FURNACE);
+
+        } else if (recipe instanceof SmithingRecipe) {
+            return new ItemStack(Material.SMITHING_TABLE);
+
+        } else if (recipe instanceof SmokingRecipe) {
+            return new ItemStack(Material.SMOKER);
+
+        } else if (recipe instanceof BlastingRecipe) {
+            return new ItemStack(Material.BLAST_FURNACE);
+
+        } else if (recipe instanceof CampfireRecipe) {
+            return new ItemStack(Material.CAMPFIRE);
+
+        } else if (recipe instanceof StonecuttingRecipe) {
+            return new ItemStack(Material.STONECUTTER);
+
+        } else if (recipe instanceof MerchantRecipe) {
+            return new ItemStack(Material.VILLAGER_SPAWN_EGG);
+        } else {
+            return null;
+        }
+    }
+
     private ItemStack choiceWithLore(RecipeChoice.MaterialChoice materialChoice, RecipeViewer recipeViewer) {
         List<String> lore = new ArrayList<>();
         ItemBuilder itemBuilder = new ItemBuilder(materialChoice.getChoices().get(0));
@@ -312,41 +344,6 @@ public class RecipeInventory extends InventoryBuilder {
         itemBuilder.setLore(lore);
 
         return itemBuilder.getItemStack();
-    }
-
-    public static ItemStack getStationItem(Recipe recipe) {
-        if (recipe instanceof ToolRecipe toolRecipe) {
-            return toolRecipe.getStationDisplay();
-
-        } else if (recipe instanceof ShapedRecipe) {
-            return new ItemStack(Material.CRAFTING_TABLE);
-
-        } else if (recipe instanceof ShapelessRecipe) {
-            return new ItemStack(Material.CRAFTING_TABLE);
-
-        } else if (recipe instanceof FurnaceRecipe) {
-            return new ItemStack(Material.FURNACE);
-
-        } else if (recipe instanceof SmithingRecipe) {
-            return new ItemStack(Material.SMITHING_TABLE);
-
-        } else if (recipe instanceof SmokingRecipe) {
-            return new ItemStack(Material.SMOKER);
-
-        } else if (recipe instanceof BlastingRecipe) {
-            return new ItemStack(Material.BLAST_FURNACE);
-
-        } else if (recipe instanceof CampfireRecipe) {
-            return new ItemStack(Material.CAMPFIRE);
-
-        } else if (recipe instanceof StonecuttingRecipe) {
-            return new ItemStack(Material.STONECUTTER);
-
-        } else if (recipe instanceof MerchantRecipe) {
-            return new ItemStack(Material.VILLAGER_SPAWN_EGG);
-        } else {
-            return null;
-        }
     }
 
     private int convertItemIndexToInventorySlot(int firstItemSlot, int itemIndex) {

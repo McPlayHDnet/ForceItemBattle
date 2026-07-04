@@ -1,11 +1,11 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.Scheduler;
-import forceitembattle.ForceItemBattle;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
@@ -18,12 +18,12 @@ import java.util.List;
 
 public class CommandPosition extends CustomCommand implements CustomTabCompleter {
 
+    private static final String prefix = "<dark_gray>» <gold>Position <dark_gray>┃ ";
+
     public CommandPosition(ForceItemBattle plugin) {
         super(plugin, "pos");
         setDescription("Add or show saved positions for structures");
     }
-
-    private static final String prefix = "<dark_gray>» <gold>Position <dark_gray>┃ ";
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
@@ -42,7 +42,7 @@ public class CommandPosition extends CustomCommand implements CustomTabCompleter
         }
 
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-        if(forceItemPlayer.isSpectator()) return;
+        if (forceItemPlayer.isSpectator()) return;
 
         if (args.length < 1 || args[0].equalsIgnoreCase("list")) {
             Scheduler.runAsync(() -> sendAllPositions(player)); // Async because Location#distance takes some time.

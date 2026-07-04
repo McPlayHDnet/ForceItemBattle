@@ -6,7 +6,6 @@ import forceitembattle.settings.GameSettings;
 import forceitembattle.util.InvSettings;
 import forceitembattle.util.InventoryBuilder;
 import forceitembattle.util.ItemBuilder;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.inventory.ItemFlag;
@@ -21,7 +20,7 @@ public class InvSettingsPresets extends InventoryBuilder {
     public static HashMap<UUID, GamePreset> namingPhase = new HashMap<>();
 
     public InvSettingsPresets(ForceItemBattle forceItemBattle, GamePreset gamePreset, GameSettings gameSettings) {
-        super(9*5, forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <dark_aqua>Settings <dark_gray>● <gray>Presets"));
+        super(9 * 5, forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <dark_aqua>Settings <dark_gray>● <gray>Presets"));
 
         /* BORDER */
         this.setItems(0, 8, new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE).setDisplayName("<aqua>").addItemFlags(ItemFlag.values()).getItemStack());
@@ -54,7 +53,7 @@ public class InvSettingsPresets extends InventoryBuilder {
 
             /* Settings-Preset */
             lore.add("");
-            for(GameSetting defaultGameSettings : GameSetting.values()) {
+            for (GameSetting defaultGameSettings : GameSetting.values()) {
                 lore.add("  <dark_gray>● <gray>" + defaultGameSettings.displayName() + " <dark_gray>» " + (gamePreset.getGameSettings().contains(defaultGameSettings) ? "<dark_green>✔" : "<dark_red>✘"));
             }
             lore.add("");
@@ -74,7 +73,7 @@ public class InvSettingsPresets extends InventoryBuilder {
                     .setDisplayName("<dark_gray>● <green>Joker <dark_gray>» <dark_aqua>" + gamePreset.getJokers())
                     .getItemStack(), event -> {
 
-                if(gamePreset.getJokers() == 64 || gamePreset.getJokers() == 0) {
+                if (gamePreset.getJokers() == 64 || gamePreset.getJokers() == 0) {
                     this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);
                     this.getPlayer().sendMessage(forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>You reached the end of possible jokers."));
                     return;

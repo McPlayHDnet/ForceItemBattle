@@ -249,7 +249,7 @@ public enum FakeRecipe {
                 ))
                 .apply(recipe -> recipe.setStationDisplay(new ItemStack(Material.HONEYCOMB)))
                 .build("fib:waxed", new ItemStack(item.getType()));
-        }
+    }
     ),
 
     OXIDIZED(item -> item.getType().name().startsWith("EXPOSED_") ||
@@ -278,7 +278,7 @@ public enum FakeRecipe {
                 ))
                 .apply(recipe -> recipe.setStationDisplay(new ItemStack(Material.CLOCK)))
                 .build("fib:oxidized", new ItemStack(item.getType()));
-        }
+    }
     ),
 
     ;
@@ -297,15 +297,6 @@ public enum FakeRecipe {
         this.recipeSupplier = recipeSupplier;
     }
 
-    public Recipe getRecipe(ItemStack targetItem, ForceItemBattle plugin) {
-        try {
-            return recipeSupplier.apply(targetItem);
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.WARNING, "Failed to create recipe for " + targetItem, e);
-            return null;
-        }
-    }
-
     @Nullable
     public static FakeRecipe forItem(ItemStack item, ForceItemBattle plugin) {
         for (FakeRecipe recipe : CACHE) {
@@ -317,5 +308,14 @@ public enum FakeRecipe {
             }
         }
         return null;
+    }
+
+    public Recipe getRecipe(ItemStack targetItem, ForceItemBattle plugin) {
+        try {
+            return recipeSupplier.apply(targetItem);
+        } catch (Exception e) {
+            plugin.getLogger().log(Level.WARNING, "Failed to create recipe for " + targetItem, e);
+            return null;
+        }
     }
 }

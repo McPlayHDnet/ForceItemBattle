@@ -1,12 +1,13 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.GameState;
-import forceitembattle.ForceItemBattle;
 import org.bukkit.Bukkit;
 import org.bukkit.GameRules;
 import org.bukkit.entity.Player;
+
 public class CommandPause extends CustomCommand {
 
     public CommandPause(ForceItemBattle plugin) {

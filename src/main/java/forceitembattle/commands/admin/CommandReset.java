@@ -1,7 +1,7 @@
 package forceitembattle.commands.admin;
 
-import forceitembattle.commands.CustomCommand;
 import forceitembattle.ForceItemBattle;
+import forceitembattle.commands.CustomCommand;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -15,7 +15,7 @@ public class CommandReset extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if(player.isOp()) {
+        if (player.isOp()) {
             Bukkit.getOnlinePlayers().forEach(onlinePlayer -> onlinePlayer.kick(this.plugin.getGamemanager().getMiniMessage().deserialize(
                     "<dark_gray>» <gold><b>ForceItemBattle</b> <dark_gray>«" +
                             "\n" +

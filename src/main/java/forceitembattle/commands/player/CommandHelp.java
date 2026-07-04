@@ -1,7 +1,7 @@
 package forceitembattle.commands.player;
 
-import forceitembattle.commands.CustomCommand;
 import forceitembattle.ForceItemBattle;
+import forceitembattle.commands.CustomCommand;
 import org.bukkit.entity.Player;
 
 public class CommandHelp extends CustomCommand {
@@ -31,7 +31,7 @@ public class CommandHelp extends CustomCommand {
 
             String description = "";
             if (command.getDescription() != null) {
-                description = " <dark_gray>- <gray>"+ command.getDescription();
+                description = " <dark_gray>- <gray>" + command.getDescription();
             }
 
             msg(player, "<dark_gray>- <white>/" + usage + description);

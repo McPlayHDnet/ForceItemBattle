@@ -1,22 +1,36 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
-
 import forceitembattle.util.CustomMaterial;
 import forceitembattle.util.DescriptionItem;
 import forceitembattle.util.ForceItemPlayer;
-import forceitembattle.ForceItemBattle;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static forceitembattle.util.RecipeInventory.CUSTOM_MATERIALS;
 import static forceitembattle.util.RecipeInventory.ID_TO_MATERIAL;
 
 public class CommandInfo extends CustomCommand implements CustomTabCompleter {
+
+    private static final List<String> MATERIALS = Arrays.stream(Material.values())
+            .map(material -> {
+                CustomMaterial customMaterial = CUSTOM_MATERIALS.get(material);
+                if (customMaterial != null) {
+                    return customMaterial.id();
+                } else {
+                    return material.name().toLowerCase();
+                }
+            })
+            .sorted()
+            .toList();
 
     public CommandInfo(ForceItemBattle plugin) {
         super(plugin, "info");
@@ -39,7 +53,7 @@ public class CommandInfo extends CustomCommand implements CustomTabCompleter {
         } else if (this.plugin.getGamemanager().isMidGame()) {
             if (this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
                 ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-                if(forceItemPlayer.isSpectator()) {
+                if (forceItemPlayer.isSpectator()) {
                     player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>You are not playing, type /info [item] to get information about an item"));
                     return;
                 }
@@ -76,18 +90,6 @@ public class CommandInfo extends CustomCommand implements CustomTabCompleter {
 
         return material;
     }
-
-    private static final List<String> MATERIALS = Arrays.stream(Material.values())
-            .map(material -> {
-                CustomMaterial customMaterial = CUSTOM_MATERIALS.get(material);
-                if (customMaterial != null) {
-                    return customMaterial.id();
-                } else {
-                    return material.name().toLowerCase();
-                }
-            })
-            .sorted()
-            .toList();
 
     @Override
     public List<String> onTabComplete(Player player, String label, String[] args) {

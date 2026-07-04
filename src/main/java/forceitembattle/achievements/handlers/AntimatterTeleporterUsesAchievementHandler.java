@@ -23,7 +23,7 @@ public class AntimatterTeleporterUsesAchievementHandler implements AchievementHa
     }
 
     @Override
-    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin ) {
+    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin) {
         if (!(event instanceof AntimatterTeleporterUseEvent teleporterEvent) || !teleporterEvent.isNewTeleporter()) {
             return false;
         }

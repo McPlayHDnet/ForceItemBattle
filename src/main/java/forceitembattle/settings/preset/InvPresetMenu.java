@@ -15,7 +15,7 @@ import java.util.List;
 public class InvPresetMenu extends InventoryBuilder {
 
     public InvPresetMenu(ForceItemBattle forceItemBattle, GameSettings gameSettings) {
-        super(9*5, forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <dark_aqua>Settings <dark_gray>● <gray>Presets"));
+        super(9 * 5, forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <dark_aqua>Settings <dark_gray>● <gray>Presets"));
 
         /* BORDER */
         this.setItems(0, 8, new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE).setDisplayName("<aqua>").addItemFlags(ItemFlag.values()).getItemStack());
@@ -39,8 +39,8 @@ public class InvPresetMenu extends InventoryBuilder {
                 lore.add("  <dark_gray>● <gray>Joker <dark_gray>» <green>" + preset.getJokers());
                 lore.add("  <dark_gray>● <gray>Backpack size <dark_gray>» <green>" + preset.getBackpackRows() * 9 + " slots");
                 lore.add("");
-                for(GameSetting gameSetting : GameSetting.values()) {
-                    if(!(gameSetting.defaultValue() instanceof Integer)) {
+                for (GameSetting gameSetting : GameSetting.values()) {
+                    if (!(gameSetting.defaultValue() instanceof Integer)) {
                         lore.add("  <dark_gray>● <gray>" + gameSetting.displayName() + " <dark_gray>» " + (gameSettings.isSettingEnabledInPreset(preset, gameSetting) ? "<dark_green>✔" : "<dark_red>✘"));
                     }
                 }

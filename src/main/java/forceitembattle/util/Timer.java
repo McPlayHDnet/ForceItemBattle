@@ -23,15 +23,14 @@ import java.util.UUID;
 public class Timer implements Manager {
 
     private final ForceItemBattle forceItemBattle;
+    @Getter
+    private final Map<UUID, BossBar> bossBar = new HashMap<>();
     /**
      * Time left until the game end (seconds).
      */
     @Setter
     @Getter
     private int timeLeft;
-    @Getter
-    private final Map<UUID, BossBar> bossBar = new HashMap<>();
-
     private BukkitTask timerTask;
 
     public Timer(ForceItemBattle forceItemBattle) {
@@ -69,9 +68,9 @@ public class Timer implements Manager {
         int hours = inputSeconds / 60 / 60;
 
         String time = "";
-        if(hours != 0) time += hours + "h ";
-        if(minutes != 0) time += minutes + "m ";
-        if(seconds != 0) time += seconds + "s";
+        if (hours != 0) time += hours + "h ";
+        if (minutes != 0) time += minutes + "m ";
+        if (seconds != 0) time += seconds + "s";
 
         return time;
     }
@@ -80,7 +79,7 @@ public class Timer implements Manager {
         for (Player player : Bukkit.getOnlinePlayers()) {
 
             if (!this.forceItemBattle.getGamemanager().isMidGame()) {
-                if(this.forceItemBattle.getGamemanager().isPausedGame()) {
+                if (this.forceItemBattle.getGamemanager().isPausedGame()) {
                     Title.Times times = Title.Times.times(Duration.ofMillis(0), Duration.ofMillis(1000), Duration.ofMillis(500));
                     Title timeLeftTitle = Title.title(Component.empty(), forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>Game is paused!"), times);
                     player.showTitle(timeLeftTitle);
@@ -93,7 +92,7 @@ public class Timer implements Manager {
             if (this.forceItemBattle.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
                 ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
 
-                if(!forceItemPlayer.isSpectator()) {
+                if (!forceItemPlayer.isSpectator()) {
                     Material material = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial();
 
                     boolean teamMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM);
@@ -206,7 +205,7 @@ public class Timer implements Manager {
                     default:
                         break;
                 }
-                if (getTimeLeft()<=0) {
+                if (getTimeLeft() <= 0) {
                     Title.Times times = Title.Times.times(Duration.ofMillis(1000), Duration.ofMillis(1000), Duration.ofMillis(1000));
                     Title gameDoneTitle = Title.title(Component.empty(), forceItemBattle.getGamemanager().getMiniMessage().deserialize("<white>» <gold>Force Item Battle is over! <white>«"), times);
                     Bukkit.getOnlinePlayers().forEach(player -> {

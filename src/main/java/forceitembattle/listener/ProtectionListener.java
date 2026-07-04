@@ -31,6 +31,8 @@ public class ProtectionListener implements Listener {
     private final List<CreatureSpawnEvent.SpawnReason> blockedSpawnReasons = List.of(
             CreatureSpawnEvent.SpawnReason.BUILD_WITHER
     );
+    // store all notify messages to prevent spam
+    private final List<String> sentMessages = new ArrayList<>();
 
     @EventHandler
     public void onBlockEntitySpawn(CreatureSpawnEvent e) {
@@ -194,6 +196,8 @@ public class ProtectionListener implements Listener {
         }
     }
 
+    // utils
+
     @EventHandler
     public void onBurn(BlockBurnEvent e) {
         if (this.plugin.getGamemanager().isMidGame()) {
@@ -202,11 +206,6 @@ public class ProtectionListener implements Listener {
             }
         }
     }
-
-    // utils
-
-    // store all notify messages to prevent spam
-    private final List<String> sentMessages = new ArrayList<>();
 
     private void notify(String msg) {
         if (sentMessages.contains(msg)) {

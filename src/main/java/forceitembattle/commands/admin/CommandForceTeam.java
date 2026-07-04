@@ -1,9 +1,9 @@
 package forceitembattle.commands.admin;
 
+import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.ForceItemPlayer;
-import forceitembattle.ForceItemBattle;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -21,13 +21,13 @@ public class CommandForceTeam extends CustomCommand {
             return;
         }
 
-        if(!this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
             player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>Teams are not enabled!"));
             return;
         }
 
 
-        if(!this.plugin.getGamemanager().isPreGame()) {
+        if (!this.plugin.getGamemanager().isPreGame()) {
             player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>The game already started"));
             return;
         }

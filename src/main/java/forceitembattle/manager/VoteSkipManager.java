@@ -18,18 +18,15 @@ import java.util.UUID;
 public class VoteSkipManager implements Manager {
 
     private final ForceItemBattle plugin;
-
-    @Getter
-    private boolean voteInProgress = false;
-
     private final Set<UUID> yesVotes = new HashSet<>();
     private final Set<UUID> noVotes = new HashSet<>();
+    private final MiniMessage miniMessage = Text.mm();
+    private final Random random = new Random();
+    @Getter
+    private boolean voteInProgress = false;
     private BukkitTask voteTask;
     private Material votedMaterial;
     private ForceItemPlayer initiator;
-
-    private final MiniMessage miniMessage = Text.mm();
-    private final Random random = new Random();
 
     public VoteSkipManager(ForceItemBattle plugin) {
         this.plugin = plugin;

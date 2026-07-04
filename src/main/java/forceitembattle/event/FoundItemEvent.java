@@ -26,12 +26,12 @@ public class FoundItemEvent extends Event {
         this.previousItemWasSkipped = false;
     }
 
-    @Override
-    public @NotNull HandlerList getHandlers() {
+    public static HandlerList getHandlerList() {
         return HANDLER_LIST;
     }
 
-    public static HandlerList getHandlerList() {
+    @Override
+    public @NotNull HandlerList getHandlers() {
         return HANDLER_LIST;
     }
 }

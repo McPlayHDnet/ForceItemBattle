@@ -76,22 +76,22 @@ public class TeamsManager implements Manager {
 
     public void invite(ForceItemPlayer player, ForceItemPlayer target) {
         Team team = new Team(this.teams.size() + 1, null, 0, 0, player);
-        if(player.currentTeam() != null) team = player.currentTeam();
+        if (player.currentTeam() != null) team = player.currentTeam();
         else player.setCurrentTeam(team);
 
-        if(player == target) {
+        if (player == target) {
             player.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>You cannot interact with yourself :("));
             return;
         }
-        if(this.isTeamFull(team)) {
+        if (this.isTeamFull(team)) {
             player.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>Your team is already full"));
             return;
         }
-        if(this.alreadyInTeam(team, target)) {
+        if (this.alreadyInTeam(team, target)) {
             player.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>" + target.player().getName() + " <red>is already in a team"));
             return;
         }
-        if(this.alreadyInvited(target)) {
+        if (this.alreadyInvited(target)) {
             player.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>" + target.player().getName() + " <red>already got invited"));
             return;
         }
@@ -110,17 +110,17 @@ public class TeamsManager implements Manager {
     }
 
     public void accept(ForceItemPlayer player, ForceItemPlayer target) {
-        if(!this.alreadyInvited(player)) {
+        if (!this.alreadyInvited(player)) {
             player.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>You have no invite from <yellow>" + target.player().getName()));
             return;
         }
-        if(player == target) {
+        if (player == target) {
             player.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>You cannot interact with yourself :("));
             return;
         }
         Team teamInvite = this.pendingInvite.get(player);
-        if(teamInvite != null) {
-            if(this.isTeamFull(teamInvite)) {
+        if (teamInvite != null) {
+            if (this.isTeamFull(teamInvite)) {
                 player.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>This team is already full"));
                 return;
             }
@@ -145,21 +145,23 @@ public class TeamsManager implements Manager {
         this.teams.add(team);
         this.forceItemBattle.getScoreboardManager().updateAllPlayers();
         //first.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>[" + team.getTeamDisplay() + "] <white>" + first.player().getName()));
-        if (second != null) second.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>[" + team.getTeamDisplay() + "] <white>" + second.player().getName()));
+        if (second != null)
+            second.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>[" + team.getTeamDisplay() + "] <white>" + second.player().getName()));
 
         String message = "<dark_aqua>You are now in team <green>" + name + " <dark_aqua>with <yellow>";
 
         first.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(message + ((second != null) ? second.player().getName() : "yourself")));
-        if (second != null) second.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(message + first.player().getName()));
+        if (second != null)
+            second.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(message + first.player().getName()));
 
     }
 
     public void decline(ForceItemPlayer player, ForceItemPlayer target) {
-        if(!this.alreadyInvited(player)) {
+        if (!this.alreadyInvited(player)) {
             player.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>You have no invite from <yellow>" + target.player().getName()));
             return;
         }
-        if(player == target) {
+        if (player == target) {
             player.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>You cannot interact with yourself :("));
             return;
         }
@@ -169,14 +171,14 @@ public class TeamsManager implements Manager {
     }
 
     public void leave(ForceItemPlayer player) {
-        if(player.currentTeam() == null) {
+        if (player.currentTeam() == null) {
             player.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>You are not in a team"));
             return;
         }
         this.removeFromTeam(player.currentTeam(), player);
         player.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_aqua>You <red>left <dark_aqua>the team"));
         //player.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(player.player().getName()));
-        if(this.getTeams().contains(player.currentTeam())) {
+        if (this.getTeams().contains(player.currentTeam())) {
             player.currentTeam().getPlayers().forEach(teamPlayers -> {
                 teamPlayers.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<yellow>" + player.player().getName() + " <dark_aqua>left your team"));
             });
@@ -185,7 +187,7 @@ public class TeamsManager implements Manager {
     }
 
     public void showTeamList(ForceItemPlayer player) {
-        if(player.currentTeam() == null) {
+        if (player.currentTeam() == null) {
             player.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>You are not in a team"));
             return;
         }
@@ -199,7 +201,7 @@ public class TeamsManager implements Manager {
 
     public void clearAllTeams() {
         this.forceItemBattle.getGamemanager().forceItemPlayerMap().values().forEach(players -> {
-            if(players.currentTeam() != null) {
+            if (players.currentTeam() != null) {
                 players.setCurrentTeam(null);
                 players.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(players.player().getName()));
             }
@@ -209,9 +211,9 @@ public class TeamsManager implements Manager {
     }
 
     private void disbandTeam(Team team) {
-        if(team.getPlayers().isEmpty()) {
+        if (team.getPlayers().isEmpty()) {
             this.pendingInvite.forEach((pendingInvitees, inviteesTeam) -> {
-                if(inviteesTeam == team) {
+                if (inviteesTeam == team) {
                     pendingInvitees.player().sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>The invite expired, the team got disbanded"));
                     this.pendingInvite.remove(pendingInvitees);
                     pendingInvitees.player().playerListName(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize(pendingInvitees.player().getName()));

@@ -8,8 +8,6 @@ import forceitembattle.util.*;
 import lombok.Getter;
 import lombok.Setter;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
-import net.kyori.adventure.text.minimessage.tag.standard.StandardTags;
 import org.apache.commons.lang3.text.WordUtils;
 import org.bukkit.*;
 import org.bukkit.entity.Entity;
@@ -26,24 +24,20 @@ import static forceitembattle.util.RecipeInventory.CUSTOM_MATERIALS;
 
 public class Gamemanager implements Manager {
 
+    public static final NamespacedKey BACKPACK_KEY = new NamespacedKey("fib", "backpack");
+    private static final Material JOKER_MATERIAL = Material.BARRIER;
     private final ForceItemBattle forceItemBattle;
-
     private final Map<UUID, ForceItemPlayer> forceItemPlayerMap;
-
     public Map<UUID, Map<Integer, Map<Integer, ItemStack>>> savedInventory = new HashMap<>();
     public Map<Team, Map<Integer, Map<Integer, ItemStack>>> savedInventoryTeam = new HashMap<>();
-
     @Setter
     @Getter
     public GameState currentGameState;
     @Setter
     private GamePreset currentGamePreset;
-
-
     @Getter
     @Setter
     private long gameStartTime;
-
     /**
      * Total game duration (seconds).
      */
@@ -57,6 +51,76 @@ public class Gamemanager implements Manager {
         this.currentGamePreset = null;
 
         this.forceItemPlayerMap = new HashMap<>();
+    }
+
+    private static <T> Map<T, Integer> calculatePlaces(List<T> entities, ToIntFunction<T> score) {
+        List<T> sorted = entities.stream()
+                .sorted(Comparator.comparingInt(score).reversed())
+                .toList();
+
+        Map<T, Integer> placesMap = new LinkedHashMap<>();
+
+        int place = 0;
+        Integer previousScore = null;
+        for (T entity : sorted) {
+            int currentScore = score.applyAsInt(entity);
+            if (previousScore == null || currentScore != previousScore) {
+                place++;
+            }
+            placesMap.put(entity, place);
+            previousScore = currentScore;
+        }
+        return placesMap;
+    }
+
+    public static Material getJokerMaterial() {
+        return JOKER_MATERIAL;
+    }
+
+    public static ItemStack getJokers(int amount) {
+        return new ItemBuilder(JOKER_MATERIAL)
+                .setAmount(amount)
+                .setDisplayName("<dark_gray>» <dark_purple>Joker")
+                .getItemStack();
+    }
+
+    public static ItemStack createBackpack(ForceItemPlayer forceItemPlayer, boolean isTeamMode) {
+        Material bundle = Material.BUNDLE;
+        if (isTeamMode) {
+            bundle = Material.getMaterial(forceItemPlayer.currentTeam().getColor().name() + "_BUNDLE");
+        }
+
+        ItemStack itemStack = new ItemBuilder(bundle)
+                .setDisplayName("<dark_gray>» <yellow>Backpack")
+                .getItemStack();
+
+        ItemMeta itemMeta = itemStack.getItemMeta();
+        itemMeta.getPersistentDataContainer().set(BACKPACK_KEY, PersistentDataType.BOOLEAN, Boolean.TRUE);
+        itemStack.setItemMeta(itemMeta);
+
+        return itemStack;
+    }
+
+    private static boolean isJoker(Material material) {
+        // TODO change to also use NBT maybe
+        return material == JOKER_MATERIAL;
+    }
+
+    public static boolean isJoker(ItemStack itemStack) {
+        return isJoker(itemStack.getType());
+    }
+
+    public static boolean isBackpack(ItemStack itemStack) {
+        if (!itemStack.getType().name().contains("BUNDLE")) {
+            return false;
+        }
+
+        ItemMeta itemMeta = itemStack.getItemMeta();
+        if (!itemMeta.getPersistentDataContainer().has(BACKPACK_KEY)) {
+            return false;
+        }
+
+        return Boolean.TRUE.equals(itemStack.getItemMeta().getPersistentDataContainer().get(BACKPACK_KEY, PersistentDataType.BOOLEAN));
     }
 
     public MiniMessage getMiniMessage() {
@@ -91,7 +155,7 @@ public class Gamemanager implements Manager {
     public String formatMaterialName(String material) {
         String materialName = WordUtils.capitalizeFully(material.replace("_", " "));
         String[] wordsToIgnore = {"and", "with", "of", "on", "a", "the"};
-        for(String word : wordsToIgnore) {
+        for (String word : wordsToIgnore) {
             materialName = materialName.replace(WordUtils.capitalize(word), word.toLowerCase());
         }
         return materialName.replace(" ", "_");
@@ -155,9 +219,10 @@ public class Gamemanager implements Manager {
         Material nextMaterial = runMode ? this.generateSeededMaterial() : this.generateMaterial();
 
         ForceItemPlayer gamePlayer = getForceItemPlayer(player.getUniqueId());
-        if(teamMode) {
+        if (teamMode) {
             forceItemPlayerMap().values().forEach(p -> {
-                if (!adminCommand) gamePlayer.currentTeam().setRemainingJokers(gamePlayer.currentTeam().getRemainingJokers() - 1);
+                if (!adminCommand)
+                    gamePlayer.currentTeam().setRemainingJokers(gamePlayer.currentTeam().getRemainingJokers() - 1);
                 p.currentTeam().setCurrentMaterial(currentMaterial);
                 p.currentTeam().setNextMaterial(nextMaterial);
             });
@@ -250,7 +315,7 @@ public class Gamemanager implements Manager {
 
     public String placeColor(int place) {
         String placeColor;
-        switch(place) {
+        switch (place) {
             case 3 -> placeColor = "<red>";
             case 2 -> placeColor = "<gray>";
             case 1 -> placeColor = "<gold>";
@@ -262,16 +327,15 @@ public class Gamemanager implements Manager {
     public int calculateDistance(Player player) {
         int distance = 0;
 
-        for(Statistic statistics : Statistic.values()) {
+        for (Statistic statistics : Statistic.values()) {
             //check and get every statistic that has CM (distance based)
-            if(statistics.name().contains("CM")) {
+            if (statistics.name().contains("CM")) {
                 distance += player.getStatistic(statistics);
             }
         }
 
-        return (int)Math.round((double) distance / 100);
+        return (int) Math.round((double) distance / 100);
     }
-
 
     public Map<UUID, ForceItemPlayer> sortByValue(Map<UUID, ForceItemPlayer> unsortMap, final boolean order) {
         Comparator<Map.Entry<UUID, ForceItemPlayer>> comparator =
@@ -292,27 +356,6 @@ public class Gamemanager implements Manager {
     public Map<Team, Integer> calculatePlaces(List<Team> teams) {
         return calculatePlaces(teams, Team::getCurrentScore);
     }
-
-    private static <T> Map<T, Integer> calculatePlaces(List<T> entities, ToIntFunction<T> score) {
-        List<T> sorted = entities.stream()
-                .sorted(Comparator.comparingInt(score).reversed())
-                .toList();
-
-        Map<T, Integer> placesMap = new LinkedHashMap<>();
-
-        int place = 0;
-        Integer previousScore = null;
-        for (T entity : sorted) {
-            int currentScore = score.applyAsInt(entity);
-            if (previousScore == null || currentScore != previousScore) {
-                place++;
-            }
-            placesMap.put(entity, place);
-            previousScore = currentScore;
-        }
-        return placesMap;
-    }
-
 
     public boolean forceItemPlayerExist(UUID uuid) {
         return this.forceItemPlayerMap.get(uuid) != null;
@@ -344,59 +387,5 @@ public class Gamemanager implements Manager {
 
     public GamePreset currentGamePreset() {
         return currentGamePreset;
-    }
-
-    private static final Material JOKER_MATERIAL = Material.BARRIER;
-
-    public static Material getJokerMaterial() {
-        return JOKER_MATERIAL;
-    }
-
-    public static final NamespacedKey BACKPACK_KEY = new NamespacedKey("fib", "backpack");
-
-    public static ItemStack getJokers(int amount) {
-        return new ItemBuilder(JOKER_MATERIAL)
-                .setAmount(amount)
-                .setDisplayName("<dark_gray>» <dark_purple>Joker")
-                .getItemStack();
-    }
-
-    public static ItemStack createBackpack(ForceItemPlayer forceItemPlayer, boolean isTeamMode) {
-        Material bundle = Material.BUNDLE;
-        if (isTeamMode) {
-            bundle = Material.getMaterial(forceItemPlayer.currentTeam().getColor().name() + "_BUNDLE");
-        }
-
-        ItemStack itemStack = new ItemBuilder(bundle)
-                .setDisplayName("<dark_gray>» <yellow>Backpack")
-                .getItemStack();
-
-        ItemMeta itemMeta = itemStack.getItemMeta();
-        itemMeta.getPersistentDataContainer().set(BACKPACK_KEY, PersistentDataType.BOOLEAN, Boolean.TRUE);
-        itemStack.setItemMeta(itemMeta);
-
-        return itemStack;
-    }
-
-    private static boolean isJoker(Material material) {
-        // TODO change to also use NBT maybe
-        return material == JOKER_MATERIAL;
-    }
-
-    public static boolean isJoker(ItemStack itemStack) {
-        return isJoker(itemStack.getType());
-    }
-
-    public static boolean isBackpack(ItemStack itemStack) {
-        if (!itemStack.getType().name().contains("BUNDLE")) {
-            return false;
-        }
-
-        ItemMeta itemMeta = itemStack.getItemMeta();
-        if (!itemMeta.getPersistentDataContainer().has(BACKPACK_KEY)) {
-            return false;
-        }
-
-        return Boolean.TRUE.equals(itemStack.getItemMeta().getPersistentDataContainer().get(BACKPACK_KEY, PersistentDataType.BOOLEAN));
     }
 }

@@ -33,6 +33,54 @@ public class FoundItemListener implements Listener {
 
     public final ForceItemBattle plugin;
 
+    public static boolean hasItemInInventory(Inventory inventory, Material targetMaterial) {
+        if (inventory == null) {
+            return false;
+        }
+
+        for (ItemStack item : inventory.getContents()) {
+            if (containsMaterial(item, targetMaterial)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean containsMaterial(ItemStack item, Material targetMaterial) {
+        if (item == null || Gamemanager.isBackpack(item) || Gamemanager.isJoker(item)) {
+            return false;
+        }
+
+        if (item.getType() == targetMaterial) {
+            return true;
+        }
+
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) {
+            return false;
+        }
+
+        if (meta instanceof BlockStateMeta blockStateMeta
+                && blockStateMeta.getBlockState() instanceof ShulkerBox shulkerBox) {
+            for (ItemStack shulkerItem : shulkerBox.getInventory().getContents()) {
+                if (containsMaterial(shulkerItem, targetMaterial)) {
+                    return true;
+                }
+            }
+        }
+
+        if (meta instanceof BundleMeta bundleMeta && bundleMeta.hasItems()) {
+            for (ItemStack bundleItem : bundleMeta.getItems()) {
+                if (containsMaterial(bundleItem, targetMaterial)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     /* Custom Found-Item Event */
     @EventHandler
     public void onFoundItem(FoundItemEvent event) {
@@ -547,54 +595,6 @@ public class FoundItemListener implements Listener {
 
             uniqueMaterials.add(item.getType());
         }
-    }
-
-    public static boolean hasItemInInventory(Inventory inventory, Material targetMaterial) {
-        if (inventory == null) {
-            return false;
-        }
-
-        for (ItemStack item : inventory.getContents()) {
-            if (containsMaterial(item, targetMaterial)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private static boolean containsMaterial(ItemStack item, Material targetMaterial) {
-        if (item == null || Gamemanager.isBackpack(item) || Gamemanager.isJoker(item)) {
-            return false;
-        }
-
-        if (item.getType() == targetMaterial) {
-            return true;
-        }
-
-        ItemMeta meta = item.getItemMeta();
-        if (meta == null) {
-            return false;
-        }
-
-        if (meta instanceof BlockStateMeta blockStateMeta
-                && blockStateMeta.getBlockState() instanceof ShulkerBox shulkerBox) {
-            for (ItemStack shulkerItem : shulkerBox.getInventory().getContents()) {
-                if (containsMaterial(shulkerItem, targetMaterial)) {
-                    return true;
-                }
-            }
-        }
-
-        if (meta instanceof BundleMeta bundleMeta && bundleMeta.hasItems()) {
-            for (ItemStack bundleItem : bundleMeta.getItems()) {
-                if (containsMaterial(bundleItem, targetMaterial)) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
     }
 
     private record GameContext(boolean teamGame, boolean runMode, boolean eventDisabled,

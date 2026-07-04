@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
-public class RecipeBuilder <T extends Recipe>{
+public class RecipeBuilder<T extends Recipe> {
 
     private final BiFunction<NamespacedKey, ItemStack, T> recipeConstructor;
     private final List<Consumer<T>> operations = new ArrayList<>();

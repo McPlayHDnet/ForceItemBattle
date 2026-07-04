@@ -1,10 +1,10 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.ForceItemPlayer;
-import forceitembattle.ForceItemBattle;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;

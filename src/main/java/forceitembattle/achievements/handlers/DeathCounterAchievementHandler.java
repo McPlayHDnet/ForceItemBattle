@@ -26,7 +26,7 @@ public class DeathCounterAchievementHandler implements AchievementHandler<Simple
     }
 
     @Override
-    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin ) {
+    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin) {
         if (event instanceof PlayerDeathEvent) {
             progress.deathCount++;
         }

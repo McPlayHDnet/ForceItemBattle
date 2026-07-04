@@ -10,7 +10,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 public class RecipeListener implements Listener {
 
     private final ForceItemBattle forceItemBattle;
-    
+
     @EventHandler
     public void onDisconnect(PlayerQuitEvent event) {
         if (this.forceItemBattle.getRecipeManager().isShowingRecipe(event.getPlayer())) {

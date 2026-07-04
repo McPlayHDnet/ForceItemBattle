@@ -1,5 +1,6 @@
 package forceitembattle.commands.admin;
 
+import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.manager.Gamemanager;
@@ -7,8 +8,9 @@ import forceitembattle.manager.ItemDifficultiesManager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.preset.GamePreset;
 import forceitembattle.stats.FIBServiceHelper;
-import forceitembattle.ForceItemBattle;
-import forceitembattle.util.*;
+import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.util.GameState;
+import forceitembattle.util.Team;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
 import org.bukkit.*;
@@ -33,9 +35,9 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if(player.isOp()) {
+        if (player.isOp()) {
             if (args.length == 1) {
-                if(this.plugin.getSettings().getGamePreset(args[0]) == null) {
+                if (this.plugin.getSettings().getGamePreset(args[0]) == null) {
                     player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<yellow>" + args[0] + " <red>does not exist in presets."));
                     return;
                 }
@@ -63,8 +65,8 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
         int durationSeconds = durationMinutes * 60;
         int jokersAmount = (gamePreset != null ? gamePreset.getJokers() : (Integer.parseInt(args[1])));
 
-        if(this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-            if(plugin.getGamemanager().forceItemPlayerMap().size() < 4) {
+        if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+            if (plugin.getGamemanager().forceItemPlayerMap().size() < 4) {
                 Bukkit.broadcast(plugin.getGamemanager().getMiniMessage().deserialize("<red>There are not enough players online to enable teams"));
                 this.plugin.getSettings().setSettingEnabled(GameSetting.TEAM, false);
                 this.plugin.getTeamManager().clearAllTeams();
@@ -87,6 +89,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
         new BukkitRunnable() {
 
             int seconds = 11;
+
             @Override
             public void run() {
                 seconds--;
@@ -144,7 +147,8 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
                 String subTitle = "";
 
                 switch (seconds) {
-                    case 8 -> subTitle = "<white>» <gold>" + (plugin.getTimer().getTimeLeft() / 60) + " minutes <white>«";
+                    case 8 ->
+                            subTitle = "<white>» <gold>" + (plugin.getTimer().getTimeLeft() / 60) + " minutes <white>«";
                     case 6 -> subTitle = "<white>» <gold>" + jokersAmount + " Jokers <white>«";
                     case 5 -> subTitle = "<white>» <gold>/info & /infowiki <white>«";
                     case 4 -> subTitle = "<white>» <gold>/spawn & /bed <white>«";
@@ -182,7 +186,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
         Bukkit.getOnlinePlayers().forEach(player -> {
             ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
 
-            if(forceItemPlayer.isSpectator()) {
+            if (forceItemPlayer.isSpectator()) {
                 player.setGameMode(GameMode.SPECTATOR);
                 player.getInventory().clear();
                 return;
@@ -194,7 +198,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
             player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● <gray>Duration <dark_gray>» <green>" + timeMinutes + " minutes"));
             player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● <gray>Jokers <dark_gray>» <green>" + jokersAmount));
             for (GameSetting gameSettings : GameSetting.values()) {
-                if(gameSettings.defaultValue() instanceof Integer) continue;
+                if (gameSettings.defaultValue() instanceof Integer) continue;
                 player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● <gray>" + gameSettings.displayName() + " <dark_gray>» <green>" + (this.plugin.getSettings().isSettingEnabled(gameSettings) ? "<dark_green>✔" : "<dark_red>✘")));
             }
             player.sendMessage(" ");
@@ -210,7 +214,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
             player.setSaturation(20);
             player.getInventory().clear();
 
-            if(this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+            if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
 
                 this.plugin.getTeamManager().getTeams().forEach(teams -> {
                     teams.setRemainingJokers(jokersAmount);
@@ -219,10 +223,10 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
                     int remainingJoker = jokersAmount % totalPlayers;
                     int jokerGiven = 0;
 
-                    for(ForceItemPlayer teamPlayer : teams.getPlayers()) {
+                    for (ForceItemPlayer teamPlayer : teams.getPlayers()) {
                         int playerJoker = jokerPerPlayer;
 
-                        if(remainingJoker > 0) {
+                        if (remainingJoker > 0) {
                             playerJoker++;
                             remainingJoker--;
                         }
@@ -231,14 +235,14 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
                         jokerGiven += playerJoker;
                     }
 
-                    while(jokerGiven < jokersAmount) {
-                        for(ForceItemPlayer teamPlayer : teams.getPlayers()) {
+                    while (jokerGiven < jokersAmount) {
+                        for (ForceItemPlayer teamPlayer : teams.getPlayers()) {
                             ItemStack itemStack = teamPlayer.player().getInventory().getItem(4);
-                            if(itemStack != null && itemStack.getType() == Gamemanager.getJokerMaterial()) {
+                            if (itemStack != null && itemStack.getType() == Gamemanager.getJokerMaterial()) {
                                 itemStack.setAmount(itemStack.getAmount() + 1);
                                 jokerGiven++;
 
-                                if(jokerGiven >= jokersAmount) {
+                                if (jokerGiven >= jokersAmount) {
                                     break;
                                 }
                             }
@@ -265,8 +269,8 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
             player.setGameMode(!forceItemPlayer.isSpectator() ? GameMode.SURVIVAL : GameMode.SPECTATOR);
             player.playSound(player, Sound.BLOCK_END_PORTAL_SPAWN, 1, 1);
 
-            if(this.plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK)) {
-                if(this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+            if (this.plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK)) {
+                if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
                     this.plugin.getBackpack().createTeamBackpack(forceItemPlayer.currentTeam(), forceItemPlayer);
                 } else {
                     this.plugin.getBackpack().createBackpack(forceItemPlayer);

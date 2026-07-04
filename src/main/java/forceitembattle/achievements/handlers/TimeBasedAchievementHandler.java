@@ -1,8 +1,8 @@
 package forceitembattle.achievements.handlers;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.event.FoundItemEvent;
 import forceitembattle.achievements.Trigger;
+import forceitembattle.event.FoundItemEvent;
 import forceitembattle.util.ForceItemPlayer;
 import org.bukkit.event.Event;
 

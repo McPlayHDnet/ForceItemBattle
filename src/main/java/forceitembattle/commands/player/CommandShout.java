@@ -1,7 +1,7 @@
 package forceitembattle.commands.player;
 
-import forceitembattle.commands.CustomCommand;
 import forceitembattle.ForceItemBattle;
+import forceitembattle.commands.CustomCommand;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -12,9 +12,13 @@ public class CommandShout extends CustomCommand {
 
     private static final Set<Player> shoutingPlayers = new HashSet<>();
 
-    public CommandShout(ForceItemBattle plugin ) {
-        super(plugin,"shout");
+    public CommandShout(ForceItemBattle plugin) {
+        super(plugin, "shout");
         setDescription("Send global message when team chat is enabled");
+    }
+
+    public static boolean isShouting(Player player) {
+        return shoutingPlayers.contains(player);
     }
 
     @Override
@@ -34,9 +38,5 @@ public class CommandShout extends CustomCommand {
         Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize(
                 "<gold>" + player.getName() + " <dark_gray>» <white>" + String.join(" ", args)
         ));
-    }
-
-    public static boolean isShouting(Player player) {
-        return shoutingPlayers.contains(player);
     }
 }

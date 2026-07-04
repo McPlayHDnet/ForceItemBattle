@@ -1,10 +1,10 @@
 package forceitembattle.commands.player;
 
-import forceitembattle.commands.CustomCommand;
-import forceitembattle.commands.CustomTabCompleter;
+import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.AchievementInventory;
 import forceitembattle.achievements.Achievements;
-import forceitembattle.ForceItemBattle;
+import forceitembattle.commands.CustomCommand;
+import forceitembattle.commands.CustomTabCompleter;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;

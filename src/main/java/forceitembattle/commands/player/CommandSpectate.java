@@ -1,7 +1,7 @@
 package forceitembattle.commands.player;
 
-import forceitembattle.commands.CustomCommand;
 import forceitembattle.ForceItemBattle;
+import forceitembattle.commands.CustomCommand;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 

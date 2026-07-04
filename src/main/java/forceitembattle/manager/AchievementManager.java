@@ -1,23 +1,13 @@
 package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.event.PlayerGrantAchievementEvent;
-import forceitembattle.settings.GameSetting;
 import forceitembattle.achievements.AchievementMode;
 import forceitembattle.achievements.AchievementStorage;
 import forceitembattle.achievements.Achievements;
 import forceitembattle.achievements.Trigger;
-import forceitembattle.achievements.handlers.AchievementHandler;
-import forceitembattle.achievements.handlers.BackToBackAchievementProgress;
-import forceitembattle.achievements.handlers.CollectionAchievementHandler;
-import forceitembattle.achievements.handlers.CollectionAchievementProgress;
-import forceitembattle.achievements.handlers.ConsecutiveStoneAchievementHandler;
-import forceitembattle.achievements.handlers.CounterAchievementProgress;
-import forceitembattle.achievements.handlers.ItemFrequencyAchievementProgress;
-import forceitembattle.achievements.handlers.AchievementProgressTracker;
-import forceitembattle.achievements.handlers.SimpleAchievementProgress;
-import forceitembattle.achievements.handlers.SkipAchievementProgress;
-import forceitembattle.achievements.handlers.TimeAchievementProgress;
+import forceitembattle.achievements.handlers.*;
+import forceitembattle.event.PlayerGrantAchievementEvent;
+import forceitembattle.settings.GameSetting;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.Team;
 import org.bukkit.Bukkit;

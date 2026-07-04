@@ -30,7 +30,7 @@ public class BeehiveAchievementHandler implements AchievementHandler<SimpleAchie
     }
 
     @Override
-    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin ) {
+    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin) {
         if (!(event instanceof PlayerInteractEvent interactEvent)) {
             return false;
         }

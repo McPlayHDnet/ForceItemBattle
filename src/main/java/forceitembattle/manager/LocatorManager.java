@@ -19,12 +19,10 @@ import java.util.Map;
 
 public class LocatorManager implements Manager {
 
+    private static final String prefix = "<dark_gray>» <dark_purple>Locator <dark_gray>┃ ";
     private final ForceItemBattle plugin;
-
     private final Map<String, Locator> locators;
     private final Map<String, Location> locatedStructures;
-
-    private static final String prefix = "<dark_gray>» <dark_purple>Locator <dark_gray>┃ ";
 
     public LocatorManager(ForceItemBattle plugin) {
         this.plugin = plugin;
@@ -41,18 +39,18 @@ public class LocatorManager implements Manager {
 
     public void locate(String structureId, ForceItemPlayer forceItemPlayer) {
         Locator locator = this.locators.get(structureId);
-        if(locator == null) {
+        if (locator == null) {
             return;
         }
 
-        if(!this.isInOverworld(forceItemPlayer.player())) {
+        if (!this.isInOverworld(forceItemPlayer.player())) {
             forceItemPlayer.player().sendMessage(Text.mm().deserialize(prefix + "<red>There is no <dark_aqua>" + locator.getStructureName() + " <red>in the " + this.getCurrentWorld(forceItemPlayer.player()) + "<red>."));
             return;
         }
 
         @Nullable Structure structureKey = RegistryAccess.registryAccess().getRegistry(RegistryKey.STRUCTURE).get(this.getNamespacedKey(locator.getStructureId()));
 
-        if(structureKey == null) {
+        if (structureKey == null) {
             forceItemPlayer.player().sendMessage(Text.mm().deserialize(prefix + "<dark_aqua>" + locator.getStructureId() + " <red>is not loaded or could not be found, Fire fix!"));
             return;
         }
@@ -64,17 +62,18 @@ public class LocatorManager implements Manager {
                 false
         );
 
-        if(structureSearchResult == null) {
+        if (structureSearchResult == null) {
             forceItemPlayer.player().sendMessage(Text.mm().deserialize(prefix + "<dark_aqua>" + locator.getStructureName() + " <red>could not be found."));
             return;
         }
 
         Location structureLocation = structureSearchResult.getLocation();
-        if(!this.isAlreadyRevealed(locator.getStructureId(), structureLocation)) {
+        if (!this.isAlreadyRevealed(locator.getStructureId(), structureLocation)) {
             this.destroyLocator(forceItemPlayer.player(), locator.getLocatorMaterial());
             forceItemPlayer.player().playSound(forceItemPlayer.player(), Sound.BLOCK_CONDUIT_AMBIENT_SHORT, 2, 1);
             new BukkitRunnable() {
                 final BossBar bar = BossBar.bossBar(Text.mm().deserialize(""), 1, BossBar.Color.WHITE, BossBar.Overlay.NOTCHED_6);
+
                 @Override
                 public void run() {
                     String bossBarTitle = "<gradient:#B314A8:#E775C3><b>" + locator.getStructureName() + " <reset><dark_gray>» " + locationToString(structureLocation) + distance(forceItemPlayer.player().getLocation(), structureLocation);
@@ -82,7 +81,7 @@ public class LocatorManager implements Manager {
                     forceItemPlayer.player().showBossBar(bar);
                     LocatorManager.this.plugin.getPositionManager().playParticleLine(forceItemPlayer.player(), structureSearchResult.getLocation(), Color.PURPLE);
 
-                    if(forceItemPlayer.player().getLocation().distance(structureLocation) <= 50) {
+                    if (forceItemPlayer.player().getLocation().distance(structureLocation) <= 50) {
                         forceItemPlayer.player().hideBossBar(bar);
                         cancel();
                     }
@@ -123,8 +122,8 @@ public class LocatorManager implements Manager {
     }
 
     private String getCurrentWorld(Player player) {
-        if(player.getWorld().getName().equals("world_nether")) return "<dark_red>nether";
-        else if(player.getWorld().getName().equals("world_the_end")) return "<dark_purple>end";
+        if (player.getWorld().getName().equals("world_nether")) return "<dark_red>nether";
+        else if (player.getWorld().getName().equals("world_the_end")) return "<dark_purple>end";
         return "overworld";
     }
 
@@ -138,7 +137,7 @@ public class LocatorManager implements Manager {
 
 
     private void destroyLocator(Player player, Material material) {
-        if(player.getInventory().getItemInMainHand().getType() != material) return;
+        if (player.getInventory().getItemInMainHand().getType() != material) return;
         player.getInventory().setItemInMainHand(null);
     }
 

@@ -60,12 +60,12 @@ public class ItemBuilder {
     }
 
     public ItemBuilder setGlowing(boolean state) {
-        if(state) this.setGlowing();
+        if (state) this.setGlowing();
         return this;
     }
 
     public ItemBuilder setLore(List<String> loreLines) {
-        if(loreLines == null) return this;
+        if (loreLines == null) return this;
         ItemMeta itemMeta = getItemStack().getItemMeta();
         List<Component> lore = new ArrayList<>();
         for (String line : loreLines) {
@@ -108,7 +108,7 @@ public class ItemBuilder {
     }
 
     public ItemBuilder setSkullTexture(PlayerTextures playerTextures) {
-        SkullMeta skullMeta = (SkullMeta)this.itemStack.getItemMeta();
+        SkullMeta skullMeta = (SkullMeta) this.itemStack.getItemMeta();
         PlayerProfile playerProfile = Bukkit.createProfile(UUID.randomUUID());
         playerProfile.setTextures(playerTextures);
         skullMeta.setPlayerProfile(playerProfile);
@@ -117,8 +117,8 @@ public class ItemBuilder {
     }
 
     public ItemBuilder setSkullTexture(String skinValue) {
-        if(skinValue != null) {
-            SkullMeta skullMeta = (SkullMeta)this.itemStack.getItemMeta();
+        if (skinValue != null) {
+            SkullMeta skullMeta = (SkullMeta) this.itemStack.getItemMeta();
             PlayerProfile playerProfile = Bukkit.createProfile(UUID.randomUUID());
             playerProfile.setProperty(new ProfileProperty("textures", skinValue));
             skullMeta.setPlayerProfile(playerProfile);
@@ -133,7 +133,7 @@ public class ItemBuilder {
     }
 
     public ItemBuilder setSkullMeta(SkullMeta skullMeta) {
-        this.itemStack.setItemMeta((ItemMeta)skullMeta);
+        this.itemStack.setItemMeta((ItemMeta) skullMeta);
         return this;
     }
 

@@ -1,9 +1,8 @@
 package forceitembattle.commands.admin;
 
+import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.util.ItemsInventory;
-import forceitembattle.ForceItemBattle;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
 public class CommandItems extends CustomCommand {
@@ -16,7 +15,7 @@ public class CommandItems extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if(player.isOp()) {
+        if (player.isOp()) {
             new ItemsInventory(this.plugin, player).open(player);
         }
     }

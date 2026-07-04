@@ -1,9 +1,9 @@
 package forceitembattle.achievements.handlers;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.event.PlayerGrantAchievementEvent;
 import forceitembattle.achievements.Achievements;
 import forceitembattle.achievements.Trigger;
+import forceitembattle.event.PlayerGrantAchievementEvent;
 import forceitembattle.util.ForceItemPlayer;
 import org.bukkit.event.Event;
 

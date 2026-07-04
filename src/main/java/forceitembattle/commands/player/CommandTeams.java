@@ -1,9 +1,9 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.ForceItemPlayer;
-import forceitembattle.ForceItemBattle;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -16,24 +16,24 @@ public class CommandTeams extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if(!this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
             player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>Teams are not enabled!"));
             return;
         }
 
 
-        if(!this.plugin.getGamemanager().isPreGame()) {
+        if (!this.plugin.getGamemanager().isPreGame()) {
             player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>The game already started"));
             return;
         }
 
         if (args.length == 1) {
-            if(args[0].equalsIgnoreCase("leave")) {
+            if (args[0].equalsIgnoreCase("leave")) {
                 ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
                 this.plugin.getTeamManager().leave(forceItemPlayer);
                 return;
             }
-            if(args[0].equalsIgnoreCase("list")) {
+            if (args[0].equalsIgnoreCase("list")) {
                 ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
                 this.plugin.getTeamManager().showTeamList(forceItemPlayer);
                 return;
@@ -43,8 +43,8 @@ public class CommandTeams extends CustomCommand {
         }
 
         if (args.length == 2) {
-            if(args[0].equalsIgnoreCase("invite")) {
-                if(Bukkit.getPlayer(args[1]) == null) {
+            if (args[0].equalsIgnoreCase("invite")) {
+                if (Bukkit.getPlayer(args[1]) == null) {
                     player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<yellow>" + args[1] + " <red>is not online"));
                     return;
                 }
@@ -54,8 +54,8 @@ public class CommandTeams extends CustomCommand {
                 return;
             }
 
-            if(args[0].equalsIgnoreCase("accept")) {
-                if(Bukkit.getPlayer(args[1]) == null) {
+            if (args[0].equalsIgnoreCase("accept")) {
+                if (Bukkit.getPlayer(args[1]) == null) {
                     player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<yellow>" + args[1] + " <red>is not online"));
                     return;
                 }
@@ -65,8 +65,8 @@ public class CommandTeams extends CustomCommand {
                 return;
             }
 
-            if(args[0].equalsIgnoreCase("decline")) {
-                if(Bukkit.getPlayer(args[1]) == null) {
+            if (args[0].equalsIgnoreCase("decline")) {
+                if (Bukkit.getPlayer(args[1]) == null) {
                     player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<yellow>" + args[1] + " <red>is not online"));
                     return;
                 }

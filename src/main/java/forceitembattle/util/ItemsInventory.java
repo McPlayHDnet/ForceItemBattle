@@ -15,7 +15,7 @@ public class ItemsInventory extends InventoryBuilder {
 
 
     public ItemsInventory(ForceItemBattle forceItemBattle, Player player) {
-        super(9*6, forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold>Items <gray>(" + forceItemBattle.getItemDifficultiesManager().getAllItems().size() + ") <dark_gray>● <gray>Settings"));
+        super(9 * 6, forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold>Items <gray>(" + forceItemBattle.getItemDifficultiesManager().getAllItems().size() + ") <dark_gray>● <gray>Settings"));
 
         HashMap<Integer, HashMap<Integer, ItemStack>> pages = new HashMap<>();
 
@@ -27,7 +27,7 @@ public class ItemsInventory extends InventoryBuilder {
 
 
         this.setItem(2, new ItemBuilder(Material.LIME_DYE).setDisplayName("<green>All items").setGlowing(currentFilter.get() == Material.LIME_DYE).addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
-            if(currentFilter.get() == Material.LIME_DYE) return;
+            if (currentFilter.get() == Material.LIME_DYE) return;
             currentFilter.set(Material.LIME_DYE);
             currentPage[0] = 0;
 
@@ -38,7 +38,7 @@ public class ItemsInventory extends InventoryBuilder {
         });
 
         this.setItem(3, new ItemBuilder(Material.ORANGE_DYE).setDisplayName("<gold>Included Items").setGlowing(currentFilter.get() == Material.ORANGE_DYE).addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
-            if(currentFilter.get() == Material.ORANGE_DYE) return;
+            if (currentFilter.get() == Material.ORANGE_DYE) return;
             currentFilter.set(Material.ORANGE_DYE);
             currentPage[0] = 0;
 
@@ -49,7 +49,7 @@ public class ItemsInventory extends InventoryBuilder {
         });
 
         this.setItem(4, new ItemBuilder(Material.RED_DYE).setDisplayName("<red>All non-craftable").setGlowing(currentFilter.get() == Material.RED_DYE).addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
-            if(currentFilter.get() == Material.RED_DYE) return;
+            if (currentFilter.get() == Material.RED_DYE) return;
             currentFilter.set(Material.RED_DYE);
             currentPage[0] = 0;
 
@@ -60,7 +60,7 @@ public class ItemsInventory extends InventoryBuilder {
         });
 
         this.setItem(5, new ItemBuilder(Material.LIGHT_BLUE_DYE).setDisplayName("<aqua>Included Items with description").setGlowing(currentFilter.get() == Material.LIGHT_BLUE_DYE).addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
-            if(currentFilter.get() == Material.LIGHT_BLUE_DYE) return;
+            if (currentFilter.get() == Material.LIGHT_BLUE_DYE) return;
             currentFilter.set(Material.LIGHT_BLUE_DYE);
             currentPage[0] = 0;
 
@@ -71,7 +71,7 @@ public class ItemsInventory extends InventoryBuilder {
         });
 
         this.setItem(6, new ItemBuilder(Material.GRAY_DYE).setDisplayName("<gray>Excluded Items").setGlowing(currentFilter.get() == Material.GRAY_DYE).addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
-            if(currentFilter.get() == Material.GRAY_DYE) return;
+            if (currentFilter.get() == Material.GRAY_DYE) return;
             currentFilter.set(Material.GRAY_DYE);
             currentPage[0] = 0;
 
@@ -83,7 +83,7 @@ public class ItemsInventory extends InventoryBuilder {
 
 
         this.setItem(0, new ItemBuilder(Material.RED_STAINED_GLASS_PANE).setDisplayName("<dark_red>« <red>Previous Page").addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
-            if(currentPage[0] != 0) {
+            if (currentPage[0] != 0) {
                 currentPage[0]--;
 
                 player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 1, 1);
@@ -93,7 +93,7 @@ public class ItemsInventory extends InventoryBuilder {
             } else player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
         });
         this.setItem(8, new ItemBuilder(Material.LIME_STAINED_GLASS_PANE).setDisplayName("<dark_green>» <green>Next Page").addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
-            if(currentPage[0] < (pages.size() - 1)) {
+            if (currentPage[0] < (pages.size() - 1)) {
                 currentPage[0]++;
 
                 player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 1, 1);
@@ -119,8 +119,8 @@ public class ItemsInventory extends InventoryBuilder {
         HashMap<Integer, ItemStack> itemStackHashMap = new HashMap<>();
         pages.clear();
         for (Material materials : Material.values()) {
-            if(materials.isItem() && !materials.isAir()) {
-                if(currentFilter == Material.LIME_DYE) {
+            if (materials.isItem() && !materials.isAir()) {
+                if (currentFilter == Material.LIME_DYE) {
                     if (!pages.containsKey(initialPages)) {
                         itemStackHashMap = new HashMap<>();
                         pages.put(initialPages, itemStackHashMap);
@@ -130,14 +130,14 @@ public class ItemsInventory extends InventoryBuilder {
 
                     startSlot++;
 
-                    if(startSlot == this.getInventory().getSize()) {
+                    if (startSlot == this.getInventory().getSize()) {
                         startSlot = 9;
                         initialPages++;
                     }
 
                     items++;
 
-                } else if(currentFilter == Material.ORANGE_DYE) {
+                } else if (currentFilter == Material.ORANGE_DYE) {
                     if (forceItemBattle.getItemDifficultiesManager().itemInList(materials)) {
                         if (!pages.containsKey(initialPages)) {
                             itemStackHashMap = new HashMap<>();
@@ -156,8 +156,8 @@ public class ItemsInventory extends InventoryBuilder {
                         items++;
                     }
 
-                } else if(currentFilter == Material.RED_DYE) {
-                    if(Bukkit.getRecipesFor(new ItemStack(materials)).isEmpty()) {
+                } else if (currentFilter == Material.RED_DYE) {
+                    if (Bukkit.getRecipesFor(new ItemStack(materials)).isEmpty()) {
                         if (!pages.containsKey(initialPages)) {
                             itemStackHashMap = new HashMap<>();
                             pages.put(initialPages, itemStackHashMap);
@@ -167,7 +167,7 @@ public class ItemsInventory extends InventoryBuilder {
 
                         startSlot++;
 
-                        if(startSlot == this.getInventory().getSize()) {
+                        if (startSlot == this.getInventory().getSize()) {
                             startSlot = 9;
                             initialPages++;
                         }
@@ -175,8 +175,8 @@ public class ItemsInventory extends InventoryBuilder {
                         items++;
                     }
 
-                } else if(currentFilter == Material.LIGHT_BLUE_DYE) {
-                    if(forceItemBattle.getItemDifficultiesManager().itemInAllLists(materials) && forceItemBattle.getItemDifficultiesManager().itemHasDescription(materials)) {
+                } else if (currentFilter == Material.LIGHT_BLUE_DYE) {
+                    if (forceItemBattle.getItemDifficultiesManager().itemInAllLists(materials) && forceItemBattle.getItemDifficultiesManager().itemHasDescription(materials)) {
                         if (!pages.containsKey(initialPages)) {
                             itemStackHashMap = new HashMap<>();
                             pages.put(initialPages, itemStackHashMap);
@@ -186,7 +186,7 @@ public class ItemsInventory extends InventoryBuilder {
 
                         startSlot++;
 
-                        if(startSlot == this.getInventory().getSize()) {
+                        if (startSlot == this.getInventory().getSize()) {
                             startSlot = 9;
                             initialPages++;
                         }
@@ -194,8 +194,8 @@ public class ItemsInventory extends InventoryBuilder {
                         items++;
                     }
 
-                } else if(currentFilter == Material.GRAY_DYE) {
-                    if(!forceItemBattle.getItemDifficultiesManager().itemInAllLists(materials)) {
+                } else if (currentFilter == Material.GRAY_DYE) {
+                    if (!forceItemBattle.getItemDifficultiesManager().itemInAllLists(materials)) {
                         if (!pages.containsKey(initialPages)) {
                             itemStackHashMap = new HashMap<>();
                             pages.put(initialPages, itemStackHashMap);
@@ -205,7 +205,7 @@ public class ItemsInventory extends InventoryBuilder {
 
                         startSlot++;
 
-                        if(startSlot == this.getInventory().getSize()) {
+                        if (startSlot == this.getInventory().getSize()) {
                             startSlot = 9;
                             initialPages++;
                         }

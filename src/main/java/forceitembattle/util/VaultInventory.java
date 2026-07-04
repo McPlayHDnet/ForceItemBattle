@@ -7,7 +7,6 @@ import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -16,7 +15,6 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Random;
 
 import static forceitembattle.util.RecipeInventory.CUSTOM_MATERIALS;
 
@@ -46,9 +44,9 @@ public class VaultInventory extends InventoryBuilder {
             Collections.shuffle(itemList);
 
             new BukkitRunnable() {
+                final int totalDuration = 315;
                 int ticks = 0;
                 int currentIndex = 0;
-                final int totalDuration = 315;
                 double accumulatedTime = 0;
 
                 @Override

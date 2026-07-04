@@ -16,6 +16,10 @@ public class AntimatterTeleporterUseEvent extends Event {
         this.newTeleporter = newTeleporter;
     }
 
+    public static HandlerList getHandlerList() {
+        return HANDLERS;
+    }
+
     public Player getPlayer() {
         return player;
     }
@@ -26,10 +30,6 @@ public class AntimatterTeleporterUseEvent extends Event {
 
     @Override
     public HandlerList getHandlers() {
-        return HANDLERS;
-    }
-
-    public static HandlerList getHandlerList() {
         return HANDLERS;
     }
 }

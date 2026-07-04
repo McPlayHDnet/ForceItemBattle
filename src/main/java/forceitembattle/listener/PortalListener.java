@@ -6,10 +6,7 @@ import forceitembattle.settings.GameSetting;
 import forceitembattle.stats.FIBServiceHelper;
 import forceitembattle.util.ForceItemPlayer;
 import lombok.RequiredArgsConstructor;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
@@ -17,7 +14,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.Sound;
 import org.bukkit.event.player.PlayerPortalEvent;
 import org.jetbrains.annotations.Nullable;
 
@@ -131,14 +127,6 @@ public class PortalListener implements Listener {
         return null;
     }
 
-    private record TeleporterLocation (Location portalLocation, Location destinationLocation) {
-
-        public boolean isClose(Location location) {
-            return portalLocation.distanceSquared(location) <= 625;
-        }
-    }
-
-
     @EventHandler
     public void onChangedWorld(PlayerChangedWorldEvent event) {
         if (!this.plugin.getGamemanager().isMidGame()) {
@@ -161,6 +149,13 @@ public class PortalListener implements Listener {
             playerEndLocations.put(player.getUniqueId(), newLocation);
 
             player.teleport(newLocation);
+        }
+    }
+
+    private record TeleporterLocation(Location portalLocation, Location destinationLocation) {
+
+        public boolean isClose(Location location) {
+            return portalLocation.distanceSquared(location) <= 625;
         }
     }
 }

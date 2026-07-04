@@ -36,7 +36,7 @@ public class EatingAchievementHandler implements AchievementHandler<SimpleAchiev
     }
 
     @Override
-    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin ) {
+    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin) {
         if (!(event instanceof PlayerItemConsumeEvent consumeEvent)) {
             return false;
         }

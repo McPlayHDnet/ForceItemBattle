@@ -69,9 +69,11 @@ public class InventoryBuilder implements InventoryHolder {
     protected void onClose(InventoryCloseEvent event) {
     }
 
-    protected void onDrag(InventoryDragEvent event) {}
+    protected void onDrag(InventoryDragEvent event) {
+    }
 
-    protected void onChat(AsyncPlayerChatEvent event) {}
+    protected void onChat(AsyncPlayerChatEvent event) {
+    }
 
     public void addItem(ItemStack item) {
         addItem(item, null);

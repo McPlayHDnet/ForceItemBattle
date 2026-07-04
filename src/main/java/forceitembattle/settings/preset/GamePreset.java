@@ -3,7 +3,6 @@ package forceitembattle.settings.preset;
 import forceitembattle.settings.GameSetting;
 import lombok.Getter;
 import lombok.Setter;
-import org.checkerframework.checker.units.qual.A;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,9 +22,9 @@ public class GamePreset {
         this.jokers = 3;
         this.backpackRows = 3;
         this.gameSettings = new ArrayList<>();
-        for(GameSetting gameSettings : GameSetting.values()) {
-            if(gameSettings.defaultValue() instanceof Boolean b) {
-                if(b) this.gameSettings.add(gameSettings);
+        for (GameSetting gameSettings : GameSetting.values()) {
+            if (gameSettings.defaultValue() instanceof Boolean b) {
+                if (b) this.gameSettings.add(gameSettings);
             }
         }
     }

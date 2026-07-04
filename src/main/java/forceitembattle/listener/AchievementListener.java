@@ -1,35 +1,29 @@
 package forceitembattle.listener;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.event.FoundItemEvent;
-import forceitembattle.event.AntimatterTeleporterUseEvent;
-import forceitembattle.event.PlayerGrantAchievementEvent;
-import forceitembattle.event.WheelOfFortuneWinEvent;
 import forceitembattle.achievements.Achievements;
 import forceitembattle.achievements.Trigger;
+import forceitembattle.event.AntimatterTeleporterUseEvent;
+import forceitembattle.event.FoundItemEvent;
+import forceitembattle.event.PlayerGrantAchievementEvent;
+import forceitembattle.event.WheelOfFortuneWinEvent;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.Text;
+import io.papermc.paper.advancement.AdvancementDisplay;
 import io.papermc.paper.event.player.PlayerTradeEvent;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
-import io.papermc.paper.advancement.AdvancementDisplay;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.player.PlayerAdvancementDoneEvent;
-import org.bukkit.event.player.PlayerChangedWorldEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerItemConsumeEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.*;
 
 import java.util.Objects;
 

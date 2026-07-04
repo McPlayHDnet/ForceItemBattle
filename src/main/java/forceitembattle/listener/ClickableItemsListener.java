@@ -1,23 +1,14 @@
 package forceitembattle.listener;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.achievements.AchievementInventory;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.achievements.AchievementInventory;
 import forceitembattle.stats.FIBServiceHelper;
-import forceitembattle.util.ForceItemPlayer;
-import forceitembattle.util.ItemBuilder;
-import forceitembattle.util.Locator;
-import forceitembattle.util.TeleporterInventory;
-import forceitembattle.util.VaultInventory;
+import forceitembattle.util.*;
 import lombok.RequiredArgsConstructor;
-import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.Sound;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -188,7 +179,7 @@ public class ClickableItemsListener implements Listener {
         }
 
         Locator locator = this.plugin.getLocatorManager().getLocatorByMaterial(e.getItem().getType());
-        if(locator != null) {
+        if (locator != null) {
             if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
                 e.setCancelled(true);
                 this.plugin.getLocatorManager().locate(locator.getStructureId(), forceItemPlayer);
@@ -266,7 +257,7 @@ public class ClickableItemsListener implements Listener {
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
 
         if (e.getItem().getType() == Material.LIME_DYE) {
-            if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+            if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
                 e.setCancelled(true); // ADDED: Cancel event
                 player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
                 // ADDED: Use scheduler
@@ -279,7 +270,7 @@ public class ClickableItemsListener implements Listener {
         }
 
         if (e.getItem().getType() == Material.ENDER_PEARL) {
-            if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+            if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
                 e.setCancelled(true);
                 player.playSound(player.getLocation(), Sound.BLOCK_PISTON_CONTRACT, 1, 1);
                 forceItemPlayer.setSpectator(true);
@@ -290,7 +281,7 @@ public class ClickableItemsListener implements Listener {
         }
 
         if (e.getItem().getType() == Material.ENDER_EYE) {
-            if(e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+            if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
                 e.setCancelled(true);
 
                 player.playSound(player.getLocation(), Sound.BLOCK_PISTON_CONTRACT, 1, 1);

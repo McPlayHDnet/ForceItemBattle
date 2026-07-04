@@ -54,9 +54,10 @@ public class PositionManager implements Manager {
 
         new BukkitRunnable() {
             int current = 0;
+
             @Override
             public void run() {
-                if(++current == 10) {
+                if (++current == 10) {
                     this.cancel();
                 }
                 ParticleUtils.drawLine(player, player.getLocation().add(0, 1.2, 0), target, Particle.DUST, new Particle.DustOptions(color, 1), 1, 0.5, 50);

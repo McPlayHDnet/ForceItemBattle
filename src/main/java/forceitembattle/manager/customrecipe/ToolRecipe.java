@@ -13,20 +13,15 @@ import java.util.List;
 
 public class ToolRecipe extends ShapelessRecipe {
 
+    private final List<String> interactionLore = new ArrayList<>();
+    private ItemStack stationDisplay;
+
     public ToolRecipe(NamespacedKey key, ItemStack result) {
         super(key, result);
     }
 
-    private final List<String> interactionLore = new ArrayList<>();
-
-    private ItemStack stationDisplay;
-
     public void addInteractionLore(String... lore) {
         interactionLore.addAll(List.of(lore));
-    }
-
-    public void setStationDisplay(ItemStack stationDisplay) {
-        this.stationDisplay = stationDisplay;
     }
 
     public ItemStack getStationDisplay() {
@@ -42,6 +37,10 @@ public class ToolRecipe extends ShapelessRecipe {
                 .setDisplayNameLegacy("&fHow to get item:")
                 .setLoreLegacy(getInteractionLore())
                 .getItemStack();
+    }
+
+    public void setStationDisplay(ItemStack stationDisplay) {
+        this.stationDisplay = stationDisplay;
     }
 
     public List<String> getInteractionLore() {

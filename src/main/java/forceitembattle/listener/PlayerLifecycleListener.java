@@ -79,7 +79,7 @@ public class PlayerLifecycleListener implements Listener {
     public void onPlayerQuit(PlayerQuitEvent playerQuitEvent) {
         playerQuitEvent.quitMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>« <yellow>" + playerQuitEvent.getPlayer().getName() + " <red>ragequit"));
 
-        if(this.plugin.getGamemanager().isPreGame() || this.plugin.getGamemanager().isEndGame()) {
+        if (this.plugin.getGamemanager().isPreGame() || this.plugin.getGamemanager().isEndGame()) {
             if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
                 ForceItemPlayer fibPlayer = this.plugin.getGamemanager().getForceItemPlayer(playerQuitEvent.getPlayer().getUniqueId());
                 if (fibPlayer != null && fibPlayer.currentTeam() != null) {
@@ -90,7 +90,7 @@ public class PlayerLifecycleListener implements Listener {
             this.plugin.getGamemanager().removePlayer(playerQuitEvent.getPlayer());
         }
 
-        if(this.plugin.getGamemanager().isMidGame()) {
+        if (this.plugin.getGamemanager().isMidGame()) {
             playerQuitEvent.getPlayer().getPassengers().forEach(Entity::remove);
         }
     }

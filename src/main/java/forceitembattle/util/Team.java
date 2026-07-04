@@ -6,23 +6,19 @@ import org.bukkit.DyeColor;
 import org.bukkit.Material;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 @Getter
 public class Team {
 
     private final int teamId;
+    private final List<ForceItemPlayer> players;
+    private final List<ForceItem> foundItems;
     @Setter
     @Nullable
     private String name;
     @Getter
     private DyeColor color;
-    private final List<ForceItemPlayer> players;
-    private final List<ForceItem> foundItems;
     @Setter
     private Material currentMaterial;
     @Setter
