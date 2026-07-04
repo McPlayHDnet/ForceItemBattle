@@ -347,8 +347,4 @@ public class AchievementManager implements Manager {
     public AchievementStorage getAchievementStorage() {
         return storage;
     }
-
-    public AchievementStorage getStorage() {
-        return storage;
-    }
 }

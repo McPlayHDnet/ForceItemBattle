@@ -6,7 +6,6 @@ import forceitembattle.manager.Gamemanager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.stats.FIBServiceHelper;
 import forceitembattle.util.*;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -53,7 +52,7 @@ public class FoundItemListener implements Listener {
             handleRegularFind(event, player, itemStack, forceItemPlayer, context);
         }
 
-        boolean shouldApplyScoreAndSound = !context.isRunMode() || !event.isSkipped();
+        boolean shouldApplyScoreAndSound = !context.runMode() || !event.isSkipped();
 
         if (shouldApplyScoreAndSound) {
             applyScoreAndSound(forceItemPlayer, itemStack, event, context);
@@ -89,9 +88,9 @@ public class FoundItemListener implements Listener {
     }
 
     private void broadcastMessage(Component message, ForceItemPlayer forceItemPlayer, GameContext context) {
-        if (context.isEventDisabled()) {
+        if (context.eventDisabled()) {
             Bukkit.broadcast(message);
-        } else if (context.isTeamGame()) {
+        } else if (context.teamGame()) {
             forceItemPlayer.currentTeam().getPlayers().forEach(p -> p.player().sendMessage(message));
         } else {
             forceItemPlayer.player().sendMessage(message);
@@ -99,7 +98,7 @@ public class FoundItemListener implements Listener {
     }
 
     private void updateBackToBackStats(ForceItemPlayer forceItemPlayer, Player player, GameContext context) {
-        if (!context.isStatsEnabled() || context.isRunMode()) {
+        if (!context.statsEnabled() || context.runMode()) {
             return;
         }
 
@@ -110,7 +109,7 @@ public class FoundItemListener implements Listener {
 
         FIBServiceHelper fibServiceHelper = plugin.getFibServiceHelper();
 
-        if (context.isTeamGame()) {
+        if (context.teamGame()) {
             forceItemPlayer.currentTeam().getPlayers().stream()
                     .filter(teammate -> !teammate.equals(forceItemPlayer))
                     .forEach(teammate -> {
@@ -138,7 +137,7 @@ public class FoundItemListener implements Listener {
             back2Back.setPercentage(probability.percentage());
             back2Back.setRarity(probability.formatted());
 
-            if (context.isStatsEnabled() && !context.isRunMode()) {
+            if (context.statsEnabled() && !context.runMode()) {
                 trackRarity(forceItemPlayer, probability.rarity(), context);
             }
         }
@@ -151,7 +150,7 @@ public class FoundItemListener implements Listener {
                 event.isSkipped()
         );
 
-        if (context.isTeamGame()) {
+        if (context.teamGame()) {
             Team team = forceItemPlayer.currentTeam();
             team.setCurrentScore(team.getCurrentScore() + 1);
             team.addFoundItemToList(forceItem);
@@ -170,22 +169,13 @@ public class FoundItemListener implements Listener {
         }
     }
 
-    private void trackRarity(ForceItemPlayer forceItemPlayer, String rarity, GameContext context) {
+    private void trackRarity(ForceItemPlayer forceItemPlayer, Rarity rarity, GameContext context) {
         FIBServiceHelper helper = plugin.getFibServiceHelper();
         Player player = forceItemPlayer.player();
 
-        var raritiesUpdate = switch (rarity) {
-            case "RARE" -> FIBServiceHelper.raritiesUpdate().rareAdd(1L);
-            case "EPIC" -> FIBServiceHelper.raritiesUpdate().epicAdd(1L);
-            case "LEGENDARY" -> FIBServiceHelper.raritiesUpdate().legendaryAdd(1L);
-            case "RNGESUS" -> FIBServiceHelper.raritiesUpdate().rngesusAdd(1L);
-            case "EXTRAORDINARY" -> FIBServiceHelper.raritiesUpdate().extraordinaryAdd(1L);
-            default -> null;
-        };
+        var raritiesUpdate = rarity.toRaritiesUpdate();
 
-        if (raritiesUpdate == null) return;
-
-        if (context.isTeamGame()) {
+        if (context.teamGame()) {
             forceItemPlayer.currentTeam().getPlayers().stream()
                     .filter(teammate -> !teammate.equals(forceItemPlayer))
                     .forEach(teammate -> helper.updateMemberStatisticsAsync(
@@ -201,7 +191,7 @@ public class FoundItemListener implements Listener {
     }
 
     private void updateMaterials(ForceItemPlayer forceItemPlayer, FoundItemEvent event, GameContext context) {
-        if (context.isRunMode()) {
+        if (context.runMode()) {
             updateSeededMaterials(forceItemPlayer, context);
         } else {
             updateRandomMaterials(forceItemPlayer, context);
@@ -212,7 +202,7 @@ public class FoundItemListener implements Listener {
         Material currentMaterial = plugin.getGamemanager().generateSeededMaterial();
         long now = System.currentTimeMillis();
 
-        if (context.isTeamGame()) {
+        if (context.teamGame()) {
             plugin.getGamemanager().forceItemPlayerMap().values().forEach(p -> {
                 Team team = p.currentTeam();
                 team.setPreviousMaterial(team.getCurrentMaterial());
@@ -234,7 +224,7 @@ public class FoundItemListener implements Listener {
         Material nextMaterial = plugin.getGamemanager().generateMaterial();
         long now = System.currentTimeMillis();
 
-        if (context.isTeamGame()) {
+        if (context.teamGame()) {
             Team team = forceItemPlayer.currentTeam();
             Material currentMaterial = team.getNextMaterial();
             team.setPreviousMaterial(team.getCurrentMaterial());
@@ -252,7 +242,7 @@ public class FoundItemListener implements Listener {
 
     private void updateStats(ForceItemPlayer forceItemPlayer, Player player,
                              GameContext context, boolean isBackToBack, Material foundMaterial, boolean isSkipped, long timeSpentMs) {
-        if (!context.isStatsEnabled() || context.isRunMode() || isBackToBack) {
+        if (!context.statsEnabled() || context.runMode() || isBackToBack) {
             return;
         }
 
@@ -265,7 +255,7 @@ public class FoundItemListener implements Listener {
             forceItemPlayer.setItemStreak(forceItemPlayer.itemStreak() + 1);
         }
 
-        if (context.isTeamGame()) {
+        if (context.teamGame()) {
             int teamStreak = forceItemPlayer.itemStreak();
             if (!isSkipped) {
                 fibServiceHelper.updateTeamStatisticsAsync(
@@ -309,11 +299,11 @@ public class FoundItemListener implements Listener {
     }
 
     private void handleBackToBackCheck(ForceItemPlayer forceItemPlayer, Player player, GameContext context) {
-        if (context.isRunMode()) {
+        if (context.runMode()) {
             return;
         }
 
-        Material currentMaterial = context.isTeamGame()
+        Material currentMaterial = context.teamGame()
                 ? forceItemPlayer.currentTeam().getCurrentMaterial()
                 : forceItemPlayer.getCurrentMaterial();
 
@@ -322,12 +312,12 @@ public class FoundItemListener implements Listener {
         if (result.hasBackToBack()) {
             forceItemPlayer.setBackToBackStreak(forceItemPlayer.backToBackStreak() + 1);
 
-            if (result.getTeammateWhoHasIt() != null) {
-                ForceItemPlayer teammate = result.getTeammateWhoHasIt();
+            if (result.teammateWhoHasIt() != null) {
+                ForceItemPlayer teammate = result.teammateWhoHasIt();
                 teammate.setBackToBackStreak(teammate.backToBackStreak() + 1);
             }
 
-            if (context.isTeamGame() && forceItemPlayer.currentTeam() != null) {
+            if (context.teamGame() && forceItemPlayer.currentTeam() != null) {
                 Team team = forceItemPlayer.currentTeam();
                 team.setBackToBackStreak(team.getBackToBackStreak() + 1);
             }
@@ -336,12 +326,12 @@ public class FoundItemListener implements Listener {
         } else {
             forceItemPlayer.setBackToBackStreak(0);
 
-            if (result.getTeammateWhoHasIt() != null) {
-                ForceItemPlayer teammate = result.getTeammateWhoHasIt();
+            if (result.teammateWhoHasIt() != null) {
+                ForceItemPlayer teammate = result.teammateWhoHasIt();
                 teammate.setBackToBackStreak(0);
             }
 
-            if (context.isTeamGame() && forceItemPlayer.currentTeam() != null) {
+            if (context.teamGame() && forceItemPlayer.currentTeam() != null) {
                 forceItemPlayer.currentTeam().setBackToBackStreak(0);
             }
         }
@@ -360,9 +350,9 @@ public class FoundItemListener implements Listener {
             String materialName = plugin.getGamemanager().getMaterialName(foundItem.getType());
 
             Component message;
-            if (result.getTeammateWhoHasIt() != null) {
+            if (result.teammateWhoHasIt() != null) {
                 // Teammate has the item
-                ForceItemPlayer teammate = result.getTeammateWhoHasIt();
+                ForceItemPlayer teammate = result.teammateWhoHasIt();
                 message = plugin.getGamemanager().getMiniMessage().deserialize(
                         String.format("<green>%s <gray>was lucky that <green>%s <gray>already owns <reset>%s <gold>%s <dark_gray>» <aqua>%s",
                                 player.getName(), teammate.player().getName(), unicode, materialName, probability.formatted())
@@ -375,7 +365,7 @@ public class FoundItemListener implements Listener {
                 );
             }
 
-            playRaritySound(player, probability.rarity());
+            probability.rarity().playSound(player);
 
             GameContext broadcastContext = new GameContext(
                     forceItemPlayer.currentTeam() != null,
@@ -432,18 +422,7 @@ public class FoundItemListener implements Listener {
         double probability = Math.pow(baseProbability, streak);
         double probabilityPercent = probability * 100;
 
-        String rarity;
-        if (prev != null && current == prev) {
-            rarity = "EXTRAORDINARY";
-        } else if (probability <= 0.001) {
-            rarity = "RNGESUS"; // ~0.1% or less
-        } else if (probability <= 0.01) {
-            rarity = "LEGENDARY";
-        } else if (probability <= 0.05) {
-            rarity = "EPIC";
-        } else {
-            rarity = "RARE";
-        }
+        Rarity rarity = Rarity.classify(probability, prev != null && current == prev);
 
         String formattedProbability;
         if (probabilityPercent >= 1) {
@@ -465,33 +444,13 @@ public class FoundItemListener implements Listener {
             formattedProbability = df.format(probabilityPercent) + "%";
         }
 
-        String rarityFormatted = switch (rarity) {
-            case "EXTRAORDINARY" -> "<gradient:#73FF00:#14C8FF><b>EXTRAORDINARY</b></gradient>";
-            case "RNGESUS" -> "<gradient:#E41EBC:#9A4992><b>RNGESUS</b></gradient>";
-            case "LEGENDARY" -> "<gold><b>LEGENDARY</b></gold>";
-            case "EPIC" -> "<dark_purple><b>EPIC</b></dark_purple>";
-            default -> "<blue><b>RARE</b></blue>";
-        };
-
-        String formatted = formattedProbability + " <dark_gray>(<reset>" + rarityFormatted + "<dark_gray>)";
+        String formatted = formattedProbability + " <dark_gray>(<reset>" + rarity.label() + "<dark_gray>)";
 
         return new BackToBackProbability(probabilityPercent, rarity, formatted);
     }
 
-    private void playRaritySound(Player player, String rarity) {
-        switch (rarity) {
-            case "EXTRAORDINARY" -> player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 0f);
-            case "RNGESUS" -> Bukkit.getOnlinePlayers().forEach(p ->
-                    p.playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_DEATH, 0.3f, 1f));
-            case "LEGENDARY" -> Bukkit.getOnlinePlayers().forEach(p ->
-                    p.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 0f));
-            case "EPIC" -> player.playSound(player.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1f, 1f);
-            case "RARE" -> player.playSound(player.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1f, 1.5f);
-        }
-    }
-
     private BackToBackResult checkForBackToBack(ForceItemPlayer player, Material targetMaterial, GameContext context) {
-        Material previousMaterial = context.isTeamGame()
+        Material previousMaterial = context.teamGame()
                 ? player.currentTeam().getPreviousMaterial()
                 : player.previousMaterial();
 
@@ -503,8 +462,8 @@ public class FoundItemListener implements Listener {
             return new BackToBackResult(true, null);
         }
 
-        if (context.isBackpackEnabled()) {
-            Inventory backpackInventory = context.isTeamGame()
+        if (context.backpackEnabled()) {
+            Inventory backpackInventory = context.teamGame()
                     ? plugin.getBackpack().getTeamBackpack(player.currentTeam())
                     : plugin.getBackpack().getPlayerBackpack(player.player());
 
@@ -513,7 +472,7 @@ public class FoundItemListener implements Listener {
             }
         }
 
-        if (context.isTeamGame() && player.currentTeam() != null) {
+        if (context.teamGame() && player.currentTeam() != null) {
             for (ForceItemPlayer teammate : player.currentTeam().getPlayers()) {
                 if (teammate.equals(player)) {
                     continue;
@@ -638,42 +597,10 @@ public class FoundItemListener implements Listener {
         return false;
     }
 
-    private static class GameContext {
-        private final boolean teamGame;
-        private final boolean runMode;
-        private final boolean eventDisabled;
-        private final boolean statsEnabled;
-        private final boolean backpackEnabled;
-
-        public GameContext(boolean teamGame, boolean runMode, boolean eventDisabled,
-                           boolean statsEnabled, boolean backpackEnabled) {
-            this.teamGame = teamGame;
-            this.runMode = runMode;
-            this.eventDisabled = eventDisabled;
-            this.statsEnabled = statsEnabled;
-            this.backpackEnabled = backpackEnabled;
-        }
-
-        public boolean isTeamGame() { return teamGame; }
-        public boolean isRunMode() { return runMode; }
-        public boolean isEventDisabled() { return eventDisabled; }
-        public boolean isStatsEnabled() { return statsEnabled; }
-        public boolean isBackpackEnabled() { return backpackEnabled; }
+    private record GameContext(boolean teamGame, boolean runMode, boolean eventDisabled,
+                               boolean statsEnabled, boolean backpackEnabled) {
     }
 
-    private static class BackToBackResult {
-        private final boolean hasBackToBack;
-        @Getter
-        private final ForceItemPlayer teammateWhoHasIt;
-
-        public BackToBackResult(boolean hasBackToBack, ForceItemPlayer teammateWhoHasIt) {
-            this.hasBackToBack = hasBackToBack;
-            this.teammateWhoHasIt = teammateWhoHasIt;
-        }
-
-        public boolean hasBackToBack() {
-            return hasBackToBack;
-        }
-
+    private record BackToBackResult(boolean hasBackToBack, ForceItemPlayer teammateWhoHasIt) {
     }
 }

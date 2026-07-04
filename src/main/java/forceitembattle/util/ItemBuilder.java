@@ -10,7 +10,6 @@ import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.profile.PlayerTextures;
@@ -32,13 +31,6 @@ public class ItemBuilder {
 
     public ItemBuilder(Material material) {
         this.itemStack = new ItemStack(material);
-    }
-
-    public ItemBuilder setDamage(int damage) {
-        if (!(this.itemStack.getItemMeta() instanceof Damageable))
-            return this;
-        ((Damageable)this.itemStack.getItemMeta()).setDamage(damage);
-        return this;
     }
 
     public ItemBuilder addItemFlag(ItemFlag itemFlag) {
@@ -96,13 +88,6 @@ public class ItemBuilder {
         }
 
         itemMeta.setLore(lore);
-        setItemMeta(itemMeta);
-        return this;
-    }
-
-    public ItemBuilder setCustomModelData(int customModelData) {
-        ItemMeta itemMeta = getItemStack().getItemMeta();
-        itemMeta.setCustomModelData(customModelData);
         setItemMeta(itemMeta);
         return this;
     }

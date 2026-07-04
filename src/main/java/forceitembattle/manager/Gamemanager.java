@@ -19,6 +19,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
 import java.util.*;
+import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 
 import static forceitembattle.util.RecipeInventory.CUSTOM_MATERIALS;
@@ -273,87 +274,45 @@ public class Gamemanager implements Manager {
 
 
     public Map<UUID, ForceItemPlayer> sortByValue(Map<UUID, ForceItemPlayer> unsortMap, final boolean order) {
-        List<Map.Entry<UUID, ForceItemPlayer>> list = new LinkedList<>(unsortMap.entrySet());
-
-        // Sorting the list based on values
-        list.sort((o1, o2) -> order ? o1.getValue().currentScore().compareTo(o2.getValue().currentScore()) == 0
-                ? o1.getKey().compareTo(o2.getKey())
-                : o1.getValue().currentScore().compareTo(o2.getValue().currentScore()) : o2.getValue().currentScore().compareTo(o1.getValue().currentScore()) == 0
-                ? o2.getKey().compareTo(o1.getKey())
-                : o2.getValue().currentScore().compareTo(o1.getValue().currentScore()));
-        return list.stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> b, LinkedHashMap::new));
-
+        Comparator<Map.Entry<UUID, ForceItemPlayer>> comparator =
+                Comparator.comparingInt((Map.Entry<UUID, ForceItemPlayer> e) -> e.getValue().currentScore())
+                        .thenComparing(Map.Entry::getKey);
+        if (!order) {
+            comparator = comparator.reversed();
+        }
+        return unsortMap.entrySet().stream()
+                .sorted(comparator)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> b, LinkedHashMap::new));
     }
 
     public Map<ForceItemPlayer, Integer> calculatePlaces(Map<UUID, ForceItemPlayer> playerMap) {
-        List<ForceItemPlayer> sortedPlayers = playerMap.values().stream()
-                .sorted(Comparator.comparingInt(ForceItemPlayer::currentScore).reversed())
-                .toList();
-
-        Map<ForceItemPlayer, Integer> placesMap = new LinkedHashMap<>();
-
-        int place = 1;
-        for(int i = 0; i < sortedPlayers.size(); i++) {
-            ForceItemPlayer currentPlayer = sortedPlayers.get(i);
-
-            if(i > 0 && currentPlayer.currentScore() == sortedPlayers.get(i - 1).currentScore()) {
-                placesMap.put(currentPlayer, placesMap.get(sortedPlayers.get(i - 1)));
-            } else {
-
-                placesMap.put(currentPlayer, place);
-                place++;
-            }
-        }
-        return placesMap;
+        return calculatePlaces(new ArrayList<>(playerMap.values()), ForceItemPlayer::currentScore);
     }
 
     public Map<Team, Integer> calculatePlaces(List<Team> teams) {
-        List<Team> sortedTeams = teams.stream()
-                .sorted(Comparator.comparingInt(Team::getCurrentScore).reversed())
+        return calculatePlaces(teams, Team::getCurrentScore);
+    }
+
+    private static <T> Map<T, Integer> calculatePlaces(List<T> entities, ToIntFunction<T> score) {
+        List<T> sorted = entities.stream()
+                .sorted(Comparator.comparingInt(score).reversed())
                 .toList();
 
-        Map<Team, Integer> placesMap = new LinkedHashMap<>();
+        Map<T, Integer> placesMap = new LinkedHashMap<>();
 
-        int place = 1;
-        for(int i = 0; i < sortedTeams.size(); i++) {
-            Team currentTeam = sortedTeams.get(i);
-
-            if(i > 0 && currentTeam.getCurrentScore() == sortedTeams.get(i - 1).getCurrentScore()) {
-                placesMap.put(currentTeam, placesMap.get(sortedTeams.get(i - 1)));
-            } else {
-
-                placesMap.put(currentTeam, place);
+        int place = 0;
+        Integer previousScore = null;
+        for (T entity : sorted) {
+            int currentScore = score.applyAsInt(entity);
+            if (previousScore == null || currentScore != previousScore) {
                 place++;
             }
+            placesMap.put(entity, place);
+            previousScore = currentScore;
         }
         return placesMap;
     }
 
-    public String colorCodeToName(String colorCode) {
-        String name = "";
-
-        switch(colorCode) {
-            case "&0" -> name = "<black>";
-            case "&1" -> name = "<dark_blue>";
-            case "&2" -> name = "<dark_green>";
-            case "&3" -> name = "<dark_aqua>";
-            case "&4" -> name = "<dark_red>";
-            case "&5" -> name = "<dark_purple>";
-            case "&6" -> name = "<gold>";
-            case "&7" -> name = "<gray>";
-            case "&8" -> name = "<dark_gray>";
-            case "&9" -> name = "<blue>";
-            case "&a" -> name = "<green>";
-            case "&b" -> name = "<aqua>";
-            case "&c" -> name = "<red>";
-            case "&d" -> name = "<pink>";
-            case "&e" -> name = "<yellow>";
-            case "&f" -> name = "<white>";
-            default -> name = colorCode;
-        }
-
-        return name;
-    }
 
     public boolean forceItemPlayerExist(UUID uuid) {
         return this.forceItemPlayerMap.get(uuid) != null;
