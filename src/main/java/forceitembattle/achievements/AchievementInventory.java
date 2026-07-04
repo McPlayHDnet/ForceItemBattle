@@ -1,5 +1,6 @@
 package forceitembattle.achievements;
 
+import forceitembattle.util.Text;
 import com.destroystokyo.paper.profile.PlayerProfile;
 import de.threeseconds.openapi.fibservice.client.model.FibAchievementDto;
 import de.threeseconds.openapi.fibservice.client.model.FibPlayerAchievementsDto;
@@ -30,7 +31,7 @@ public class AchievementInventory extends InventoryBuilder {
     private Map<String, List<FibAchievementDto>> unlocks = new HashMap<>();
 
     public AchievementInventory(ForceItemBattle plugin, String playerName, UUID playerUUID) {
-        super(9 * 6, plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <dark_aqua>Achievements <dark_gray>◆ <gray>" + playerName));
+        super(9 * 6, Text.of("<dark_gray>» <dark_aqua>Achievements <dark_gray>◆ <gray>" + playerName));
 
         this.plugin = plugin;
         this.currentPage = 0;

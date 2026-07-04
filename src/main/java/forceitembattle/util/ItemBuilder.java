@@ -69,7 +69,7 @@ public class ItemBuilder {
         ItemMeta itemMeta = getItemStack().getItemMeta();
         List<Component> lore = new ArrayList<>();
         for (String line : loreLines) {
-            lore.add(Text.mm().deserialize(line).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE));
+            lore.add(Text.of(line).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE));
         }
         itemMeta.lore(lore);
         setItemMeta(itemMeta);
@@ -95,7 +95,7 @@ public class ItemBuilder {
     public ItemBuilder setDisplayName(String displayName) {
         if (displayName == null) return this;
         ItemMeta itemMeta = getItemStack().getItemMeta();
-        itemMeta.displayName(Text.mm().deserialize(displayName).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE));
+        itemMeta.displayName(Text.of(displayName).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE));
         setItemMeta(itemMeta);
         return this;
     }

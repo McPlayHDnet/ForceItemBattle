@@ -44,14 +44,14 @@ public class LocatorManager implements Manager {
         }
 
         if (!this.isInOverworld(forceItemPlayer.player())) {
-            forceItemPlayer.player().sendMessage(Text.mm().deserialize(prefix + "<red>There is no <dark_aqua>" + locator.getStructureName() + " <red>in the " + this.getCurrentWorld(forceItemPlayer.player()) + "<red>."));
+            forceItemPlayer.player().sendMessage(Text.of(prefix + "<red>There is no <dark_aqua>" + locator.getStructureName() + " <red>in the " + this.getCurrentWorld(forceItemPlayer.player()) + "<red>."));
             return;
         }
 
         @Nullable Structure structureKey = RegistryAccess.registryAccess().getRegistry(RegistryKey.STRUCTURE).get(this.getNamespacedKey(locator.getStructureId()));
 
         if (structureKey == null) {
-            forceItemPlayer.player().sendMessage(Text.mm().deserialize(prefix + "<dark_aqua>" + locator.getStructureId() + " <red>is not loaded or could not be found, Fire fix!"));
+            forceItemPlayer.player().sendMessage(Text.of(prefix + "<dark_aqua>" + locator.getStructureId() + " <red>is not loaded or could not be found, Fire fix!"));
             return;
         }
 
@@ -63,7 +63,7 @@ public class LocatorManager implements Manager {
         );
 
         if (structureSearchResult == null) {
-            forceItemPlayer.player().sendMessage(Text.mm().deserialize(prefix + "<dark_aqua>" + locator.getStructureName() + " <red>could not be found."));
+            forceItemPlayer.player().sendMessage(Text.of(prefix + "<dark_aqua>" + locator.getStructureName() + " <red>could not be found."));
             return;
         }
 
@@ -72,12 +72,12 @@ public class LocatorManager implements Manager {
             this.destroyLocator(forceItemPlayer.player(), locator.getLocatorMaterial());
             forceItemPlayer.player().playSound(forceItemPlayer.player(), Sound.BLOCK_CONDUIT_AMBIENT_SHORT, 2, 1);
             new BukkitRunnable() {
-                final BossBar bar = BossBar.bossBar(Text.mm().deserialize(""), 1, BossBar.Color.WHITE, BossBar.Overlay.NOTCHED_6);
+                final BossBar bar = BossBar.bossBar(Text.of(""), 1, BossBar.Color.WHITE, BossBar.Overlay.NOTCHED_6);
 
                 @Override
                 public void run() {
                     String bossBarTitle = "<gradient:#B314A8:#E775C3><b>" + locator.getStructureName() + " <reset><dark_gray>» " + locationToString(structureLocation) + distance(forceItemPlayer.player().getLocation(), structureLocation);
-                    bar.name(Text.mm().deserialize(bossBarTitle));
+                    bar.name(Text.of(bossBarTitle));
                     forceItemPlayer.player().showBossBar(bar);
                     LocatorManager.this.plugin.getPositionManager().playParticleLine(forceItemPlayer.player(), structureSearchResult.getLocation(), Color.PURPLE);
 
@@ -90,7 +90,7 @@ public class LocatorManager implements Manager {
         }
 
         this.plugin.getPositionManager().playParticleLine(forceItemPlayer.player(), structureSearchResult.getLocation(), Color.PURPLE);
-        forceItemPlayer.player().sendMessage(Text.mm().deserialize(prefix + "<dark_aqua>" + locator.getStructureName() + " <gray>located at " + locationToString(structureLocation) + distance(forceItemPlayer.player().getLocation(), structureLocation)));
+        forceItemPlayer.player().sendMessage(Text.of(prefix + "<dark_aqua>" + locator.getStructureName() + " <gray>located at " + locationToString(structureLocation) + distance(forceItemPlayer.player().getLocation(), structureLocation)));
         this.locatedStructures.put(locator.getStructureId(), structureLocation);
     }
 

@@ -1,11 +1,11 @@
 package forceitembattle.manager;
 
+import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.util.ForceItemPlayer;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -38,7 +38,6 @@ public class ScoreboardManager implements Manager {
 
     public void updateForPlayer(Player viewer) {
         Gamemanager gameManager = plugin.getGamemanager();
-        MiniMessage mini = gameManager.getMiniMessage();
         GameSettings settings = plugin.getSettings();
         Scoreboard board = viewer.getScoreboard();
 
@@ -63,9 +62,9 @@ public class ScoreboardManager implements Manager {
             }
 
             if (settings.isSettingEnabled(GameSetting.TEAM) && fibPlayer.currentTeam() != null) {
-                team.prefix(mini.deserialize(fibPlayer.currentTeam().getTeamDisplay() + " "));
+                team.prefix(Text.of(fibPlayer.currentTeam().getTeamDisplay() + " "));
             } else {
-                team.prefix(mini.deserialize(""));
+                team.prefix(Text.of(""));
             }
 
             Material mat;
@@ -81,7 +80,7 @@ public class ScoreboardManager implements Manager {
                         .getItemDifficultiesManager()
                         .getUnicodeFromMaterial(true, mat);
 
-                team.suffix(mini.deserialize(
+                team.suffix(Text.of(
                         " <gray>[<gold>" + gameManager.getMaterialName(mat)
                                 + " <reset><shadow:black:0.4>" + itemIcon + "</shadow><gray>]"
                 ));

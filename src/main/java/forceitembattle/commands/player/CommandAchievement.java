@@ -1,5 +1,6 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.AchievementInventory;
 import forceitembattle.achievements.Achievements;
@@ -24,7 +25,7 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
         if (args.length == 0) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+            player.sendMessage(Text.of(
                     "<red>Usage: /achievements <list|grant|revoke|reset|progress> [player] [achievement]"));
             return;
         }
@@ -37,7 +38,7 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
             case "revoke" -> handleRevokeCommand(player, args);
             case "reset" -> handleResetCommand(player, args);
             case "progress" -> handleProgressCommand(player, args);
-            default -> player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+            default -> player.sendMessage(Text.of(
                     "<red>Unknown subcommand. Use: list, grant, revoke, reset, or progress"));
         }
     }
@@ -67,7 +68,7 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
 
     private void handleGrantCommand(Player player, String[] args) {
         if (args.length != 3) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+            player.sendMessage(Text.of(
                     "<red>Usage: /achievements grant <player> <achievement>"));
             return;
         }
@@ -79,20 +80,20 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
         try {
             achievement = Achievements.valueOf(achievementName);
         } catch (IllegalArgumentException e) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+            player.sendMessage(Text.of(
                     "<red>Achievement <yellow>" + achievementName + " <red>does not exist!"));
             return;
         }
 
         this.plugin.getAchievementManager().getAchievementStorage().addAchievement(target.getUniqueId(), achievement);
 
-        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+        player.sendMessage(Text.of(
                 "<green>Successfully granted <yellow>" + achievement.getTitle() + " <green>to <yellow>" + target.getName()));
     }
 
     private void handleRevokeCommand(Player player, String[] args) {
         if (args.length != 3) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+            player.sendMessage(Text.of(
                     "<red>Usage: /achievements revoke <player> <achievement>"));
             return;
         }
@@ -104,20 +105,20 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
         try {
             achievement = Achievements.valueOf(achievementName);
         } catch (IllegalArgumentException e) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+            player.sendMessage(Text.of(
                     "<red>Achievement <yellow>" + achievementName + " <red>does not exist!"));
             return;
         }
 
         this.plugin.getAchievementManager().getAchievementStorage().removeAchievement(target.getUniqueId(), achievement);
 
-        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+        player.sendMessage(Text.of(
                 "<green>Successfully revoked <yellow>" + achievement.getTitle() + " <green>from <yellow>" + target.getName()));
     }
 
     private void handleResetCommand(Player player, String[] args) {
         if (args.length != 2) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+            player.sendMessage(Text.of(
                     "<red>Usage: /achievements reset <player>"));
             return;
         }
@@ -126,7 +127,7 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
 
         this.plugin.getAchievementManager().getAchievementStorage().resetPlayerAchievements(target.getUniqueId());
 
-        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+        player.sendMessage(Text.of(
                 "<green>Successfully reset all achievements for <yellow>" + target.getName()));
     }
 
@@ -142,7 +143,7 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
         } else if (args.length == 3) {
             Player target = Bukkit.getPlayerExact(args[1]);
             if (target == null) {
-                player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+                player.sendMessage(Text.of(
                         "<red>Player must be online to inspect live progress."));
                 return;
             }
@@ -150,7 +151,7 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
             targetName = target.getName();
             achievementArg = args[2];
         } else {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+            player.sendMessage(Text.of(
                     "<red>Usage: /achievements progress [player] <achievement>"));
             return;
         }
@@ -159,7 +160,7 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
         try {
             achievement = Achievements.valueOf(achievementArg.toUpperCase());
         } catch (IllegalArgumentException e) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+            player.sendMessage(Text.of(
                     "<red>Achievement <yellow>" + achievementArg.toUpperCase() + " <red>does not exist!"));
             return;
         }
@@ -168,13 +169,13 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
         boolean unlocked = this.plugin.getAchievementManager()
                 .getAchievementStorage().hasAchievement(targetUUID, achievement);
 
-        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+        player.sendMessage(Text.of(
                 "<gray>===== <gold>" + achievement.getTitle() + " <gray>(" + targetName + ") ====="));
-        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+        player.sendMessage(Text.of(
                 "<gray>" + achievement.getDescription()));
-        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+        player.sendMessage(Text.of(
                 "<gray>Status: " + (unlocked ? "<green>Unlocked" : "<yellow>In progress")));
-        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+        player.sendMessage(Text.of(
                 "<gray>Progress: <white>" + progress));
     }
 

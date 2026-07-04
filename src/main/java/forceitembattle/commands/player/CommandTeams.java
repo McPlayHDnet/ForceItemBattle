@@ -1,5 +1,6 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.settings.GameSetting;
@@ -17,13 +18,13 @@ public class CommandTeams extends CustomCommand {
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
         if (!this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>Teams are not enabled!"));
+            player.sendMessage(Text.of("<red>Teams are not enabled!"));
             return;
         }
 
 
         if (!this.plugin.getGamemanager().isPreGame()) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>The game already started"));
+            player.sendMessage(Text.of("<red>The game already started"));
             return;
         }
 
@@ -45,7 +46,7 @@ public class CommandTeams extends CustomCommand {
         if (args.length == 2) {
             if (args[0].equalsIgnoreCase("invite")) {
                 if (Bukkit.getPlayer(args[1]) == null) {
-                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<yellow>" + args[1] + " <red>is not online"));
+                    player.sendMessage(Text.of("<yellow>" + args[1] + " <red>is not online"));
                     return;
                 }
                 ForceItemPlayer inviter = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
@@ -56,7 +57,7 @@ public class CommandTeams extends CustomCommand {
 
             if (args[0].equalsIgnoreCase("accept")) {
                 if (Bukkit.getPlayer(args[1]) == null) {
-                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<yellow>" + args[1] + " <red>is not online"));
+                    player.sendMessage(Text.of("<yellow>" + args[1] + " <red>is not online"));
                     return;
                 }
                 ForceItemPlayer inviter = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
@@ -67,7 +68,7 @@ public class CommandTeams extends CustomCommand {
 
             if (args[0].equalsIgnoreCase("decline")) {
                 if (Bukkit.getPlayer(args[1]) == null) {
-                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<yellow>" + args[1] + " <red>is not online"));
+                    player.sendMessage(Text.of("<yellow>" + args[1] + " <red>is not online"));
                     return;
                 }
                 ForceItemPlayer inviter = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
@@ -84,12 +85,12 @@ public class CommandTeams extends CustomCommand {
 
     private void sendHelpMessage(Player player) {
         player.sendMessage(" ");
-        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<gold><b>Teams</b> <gray>- <white>Help"));
-        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>- <white>/teams invite <player> <dark_gray>- <gray>Invite a player"));
-        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>- <white>/teams accept <player> <dark_gray>- <gray>Accept a team invite"));
-        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>- <white>/teams decline <player> <dark_gray>- <gray>Decline a team invite"));
-        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>- <white>/teams list <dark_gray>- <gray>Shows all team member"));
-        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>- <white>/teams leave <dark_gray>- <gray>Leave the team"));
+        player.sendMessage(Text.of("<gold><b>Teams</b> <gray>- <white>Help"));
+        player.sendMessage(Text.of("<dark_gray>- <white>/teams invite <player> <dark_gray>- <gray>Invite a player"));
+        player.sendMessage(Text.of("<dark_gray>- <white>/teams accept <player> <dark_gray>- <gray>Accept a team invite"));
+        player.sendMessage(Text.of("<dark_gray>- <white>/teams decline <player> <dark_gray>- <gray>Decline a team invite"));
+        player.sendMessage(Text.of("<dark_gray>- <white>/teams list <dark_gray>- <gray>Shows all team member"));
+        player.sendMessage(Text.of("<dark_gray>- <white>/teams leave <dark_gray>- <gray>Leave the team"));
         player.sendMessage(" ");
     }
 }

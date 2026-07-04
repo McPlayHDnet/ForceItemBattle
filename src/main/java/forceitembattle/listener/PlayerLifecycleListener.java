@@ -1,5 +1,6 @@
 package forceitembattle.listener;
 
+import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.settings.GameSetting;
@@ -41,13 +42,6 @@ public class PlayerLifecycleListener implements Listener {
                 player.setExp(0);
                 player.setGameMode(GameMode.SPECTATOR);
 
-                /** todo
-                 this.plugin.getGamemanager().giveSpectatorItems(player);
-
-                 this.plugin.getGamemanager().forceItemPlayerMap().values().forEach(gamePlayers -> {
-                 gamePlayers.player().hidePlayer(this.plugin, player);
-                 });
-                 **/
             } else {
                 forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
                 forceItemPlayer.setPlayer(player);
@@ -71,13 +65,13 @@ public class PlayerLifecycleListener implements Listener {
         plugin.getScoreboardManager().setupForPlayer(player);
         plugin.getScoreboardManager().updateAllPlayers();
 
-        player.sendPlayerListHeader(this.plugin.getGamemanager().getMiniMessage().deserialize("<!shadow>\n\n\n\ue000\ue003\ue001\ue003\ue002\n"));
-        event.joinMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<green>» <yellow>" + player.getName() + " <green>joined"));
+        player.sendPlayerListHeader(Text.of("<!shadow>\n\n\n\ue000\ue003\ue001\ue003\ue002\n"));
+        event.joinMessage(Text.of("<green>» <yellow>" + player.getName() + " <green>joined"));
     }
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent playerQuitEvent) {
-        playerQuitEvent.quitMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>« <yellow>" + playerQuitEvent.getPlayer().getName() + " <red>ragequit"));
+        playerQuitEvent.quitMessage(Text.of("<red>« <yellow>" + playerQuitEvent.getPlayer().getName() + " <red>ragequit"));
 
         if (this.plugin.getGamemanager().isPreGame() || this.plugin.getGamemanager().isEndGame()) {
             if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
@@ -102,7 +96,7 @@ public class PlayerLifecycleListener implements Listener {
         String plainDeathMessage = PlainTextComponentSerializer.plainText().serialize(Objects.requireNonNull(event.deathMessage()));
         String plainPlayerName = PlainTextComponentSerializer.plainText().serialize(player.name());
 
-        event.deathMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>[<red>\uD83D\uDC80<dark_gray>] " + plainDeathMessage.replace(plainPlayerName, "<gold>" + player.getName() + "<gray>")));
+        event.deathMessage(Text.of("<dark_gray>[<red>\uD83D\uDC80<dark_gray>] " + plainDeathMessage.replace(plainPlayerName, "<gold>" + player.getName() + "<gray>")));
         if (!event.getKeepInventory()) {
             event.getDrops().removeIf(Gamemanager::isJoker);
             event.getDrops().removeIf(Gamemanager::isBackpack);

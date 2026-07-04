@@ -1,5 +1,6 @@
 package forceitembattle.manager;
 
+import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.customrecipe.FakeRecipe;
 import forceitembattle.settings.GameSetting;
@@ -38,7 +39,7 @@ public class RecipeManager implements Manager {
         recipes.removeIf(recipe -> RecipeInventory.getStationItem(recipe) == null);
 
         if (recipes.isEmpty()) {
-            player.sendMessage(this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>There is no recipe for this item. Just find it lol"));
+            player.sendMessage(Text.of("<red>There is no recipe for this item. Just find it lol"));
             return;
         }
 

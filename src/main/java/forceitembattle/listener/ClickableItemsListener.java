@@ -1,5 +1,6 @@
 package forceitembattle.listener;
 
+import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.AchievementInventory;
 import forceitembattle.event.FoundItemEvent;
@@ -65,7 +66,7 @@ public class ClickableItemsListener implements Listener {
                 e.setCancelled(true);
                 if (player.getWorld().getName().equals("world")) {
                     player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
-                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>[<dark_red>✖<dark_gray>] <gray>You are already in the <green>overworld"));
+                    player.sendMessage(Text.of("<dark_gray>[<dark_red>✖<dark_gray>] <gray>You are already in the <green>overworld"));
                     return;
                 }
                 player.teleport(this.plugin.getSpawnLocation());
@@ -80,7 +81,7 @@ public class ClickableItemsListener implements Listener {
                 e.setCancelled(true);
                 if (player.getWorld().getName().equals("world_nether")) {
                     player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
-                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>[<dark_red>✖<dark_gray>] <gray>You are already in the <red>nether"));
+                    player.sendMessage(Text.of("<dark_gray>[<dark_red>✖<dark_gray>] <gray>You are already in the <red>nether"));
                     return;
                 }
                 player.teleport(new Location(Bukkit.getWorld("world_nether"), 0, 70, 0));
@@ -94,10 +95,10 @@ public class ClickableItemsListener implements Listener {
             if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
                 e.setCancelled(true);
                 if (player.getGameMode() == GameMode.SPECTATOR) {
-                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<gray>You are <red>no longer<gray> spectating."));
+                    player.sendMessage(Text.of("<gray>You are <red>no longer<gray> spectating."));
                     player.setGameMode(GameMode.CREATIVE);
                 } else {
-                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<gray>You are <green>now<gray> spectating. Use <dark_aqua>/spectate <gray>to toggle off."));
+                    player.sendMessage(Text.of("<gray>You are <green>now<gray> spectating. Use <dark_aqua>/spectate <gray>to toggle off."));
                     player.setGameMode(GameMode.SPECTATOR);
                 }
                 return;
@@ -110,7 +111,7 @@ public class ClickableItemsListener implements Listener {
                 e.setCancelled(true);
                 if (player.getWorld().getName().equals("world_the_end")) {
                     player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
-                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<gray>You are already in the <dark_purple>end"));
+                    player.sendMessage(Text.of("<gray>You are already in the <dark_purple>end"));
                     return;
                 }
                 World end = Bukkit.getWorld("world_the_end");
@@ -200,7 +201,7 @@ public class ClickableItemsListener implements Listener {
 
         int jokers = (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getRemainingJokers() : forceItemPlayer.remainingJokers());
         if (jokers <= 0) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>No more skips left."));
+            player.sendMessage(Text.of("<red>No more skips left."));
             player.getInventory().remove(Gamemanager.getJokerMaterial());
             return;
         }
@@ -274,7 +275,7 @@ public class ClickableItemsListener implements Listener {
                 e.setCancelled(true);
                 player.playSound(player.getLocation(), Sound.BLOCK_PISTON_CONTRACT, 1, 1);
                 forceItemPlayer.setSpectator(true);
-                player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_aqua>You will <green>spectate <dark_aqua>this round now."));
+                player.sendMessage(Text.of("<dark_aqua>You will <green>spectate <dark_aqua>this round now."));
                 return;
             }
             return;
@@ -286,7 +287,7 @@ public class ClickableItemsListener implements Listener {
 
                 player.playSound(player.getLocation(), Sound.BLOCK_PISTON_CONTRACT, 1, 1);
                 forceItemPlayer.setSpectator(false);
-                player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_aqua>You will <green>play <dark_aqua>this round now."));
+                player.sendMessage(Text.of("<dark_aqua>You will <green>play <dark_aqua>this round now."));
                 player.getInventory().setItem(8, new ItemBuilder(Material.ENDER_PEARL).setDisplayName("<dark_gray>» <gray>Spectate game").getItemStack());
                 return;
             }

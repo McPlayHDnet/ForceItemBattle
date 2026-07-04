@@ -15,7 +15,7 @@ public class ItemsInventory extends InventoryBuilder {
 
 
     public ItemsInventory(ForceItemBattle forceItemBattle, Player player) {
-        super(9 * 6, forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold>Items <gray>(" + forceItemBattle.getItemDifficultiesManager().getAllItems().size() + ") <dark_gray>● <gray>Settings"));
+        super(9 * 6, Text.of("<dark_gray>» <gold>Items <gray>(" + forceItemBattle.getItemDifficultiesManager().getAllItems().size() + ") <dark_gray>● <gray>Settings"));
 
         HashMap<Integer, HashMap<Integer, ItemStack>> pages = new HashMap<>();
 

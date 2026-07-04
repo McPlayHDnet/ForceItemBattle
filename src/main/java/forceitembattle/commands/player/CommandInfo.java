@@ -1,5 +1,6 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
@@ -45,7 +46,7 @@ public class CommandInfo extends CustomCommand implements CustomTabCompleter {
         if (args.length == 1) {
             Material material = this.matchMaterial(args[0]);
             if (material == null) {
-                player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>Invalid item name"));
+                player.sendMessage(Text.of("<red>Invalid item name"));
                 return;
             }
             item = new ItemStack(material);
@@ -54,17 +55,17 @@ public class CommandInfo extends CustomCommand implements CustomTabCompleter {
             if (this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
                 ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
                 if (forceItemPlayer.isSpectator()) {
-                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>You are not playing, type /info [item] to get information about an item"));
+                    player.sendMessage(Text.of("<red>You are not playing, type /info [item] to get information about an item"));
                     return;
                 }
                 item = new ItemStack(forceItemPlayer.getCurrentMaterial());
             } else {
-                player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>You are not playing, type /info [item] to get information about an item"));
+                player.sendMessage(Text.of("<red>You are not playing, type /info [item] to get information about an item"));
             }
         }
 
         if (item.getType() == Material.AIR) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>You need to hold an item in your hand!"));
+            player.sendMessage(Text.of("<red>You need to hold an item in your hand!"));
             return;
         }
 

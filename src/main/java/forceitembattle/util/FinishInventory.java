@@ -27,7 +27,7 @@ public class FinishInventory extends InventoryBuilder {
     private final Map<Integer, Map<Integer, ItemStack>> pages = new HashMap<>();
 
     public FinishInventory(ForceItemBattle forceItemBattle, @Nullable ForceItemPlayer targetPlayer, @Nullable Team targetTeam, Integer place, boolean firstTime) {
-        super(9 * 6, forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold>Items <dark_gray>● <gray>" + (firstTime ? "????????" : (targetTeam == null ? targetPlayer.player().getName() : "Team " + targetTeam.getTeamDisplay()))));
+        super(9 * 6, Text.of("<dark_gray>» <gold>Items <dark_gray>● <gray>" + (firstTime ? "????????" : (targetTeam == null ? targetPlayer.player().getName() : "Team " + targetTeam.getTeamDisplay()))));
 
         /* TOP-BORDER */
         this.setItems(0, 8, new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE).setDisplayName("<aqua>").addItemFlags(ItemFlag.values()).getItemStack());
@@ -130,8 +130,8 @@ public class FinishInventory extends InventoryBuilder {
                                 }, 1L);
 
                                 for (Player players : Bukkit.getOnlinePlayers()) {
-                                    Component mainTitle = forceItemBattle.getGamemanager().getMiniMessage().deserialize(placeColor + place + "<white>. " + teamDisplay);
-                                    Component subTitle = forceItemBattle.getGamemanager().getMiniMessage().deserialize("<gold>" + (placedItems + 1) + " Items found");
+                                    Component mainTitle = Text.of(placeColor + place + "<white>. " + teamDisplay);
+                                    Component subTitle = Text.of("<gold>" + (placedItems + 1) + " Items found");
 
                                     Title.Times times = Title.Times.times(Duration.ofMillis(750), Duration.ofMillis(1750), Duration.ofMillis(750));
                                     Title title = Title.title(mainTitle, subTitle, times);
@@ -139,7 +139,7 @@ public class FinishInventory extends InventoryBuilder {
                                     players.showTitle(title);
                                 }
 
-                                getPlayer().sendMessage(forceItemBattle.getGamemanager().getMiniMessage().deserialize(chatMessage));
+                                getPlayer().sendMessage(Text.of(chatMessage));
                             }
                         }.runTaskLater(forceItemBattle, 100L);
 

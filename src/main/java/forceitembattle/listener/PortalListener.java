@@ -1,5 +1,6 @@
 package forceitembattle.listener;
 
+import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.event.AntimatterTeleporterUseEvent;
 import forceitembattle.settings.GameSetting;
@@ -61,7 +62,7 @@ public class PortalListener implements Listener {
         }
 
         if (!this.plugin.getSettings().isSettingEnabled(GameSetting.HARD)) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>Travelling to other dimensions is disabled!"));
+            player.sendMessage(Text.of("<red>Travelling to other dimensions is disabled!"));
             player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
             playerPortalEvent.setCanCreatePortal(false);
             playerPortalEvent.setCancelled(true);

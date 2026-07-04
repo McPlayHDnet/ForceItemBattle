@@ -1,5 +1,6 @@
 package forceitembattle.listener;
 
+import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.player.CommandShout;
 import forceitembattle.settings.GameSetting;
@@ -42,7 +43,7 @@ public class ChatListener implements Listener {
 
         // Shout: always global.
         if (CommandShout.isShouting(player)) {
-            Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize(
+            Bukkit.broadcast(Text.of(
                     "<gold>" + player.getName() + " <dark_gray>» <white>" + message
             ));
             return;
@@ -53,7 +54,7 @@ public class ChatListener implements Listener {
                 || !this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM_CHAT)
                 || currentTeam == null) {
 
-            Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize(
+            Bukkit.broadcast(Text.of(
                     "<gold>" + player.getName() + " <dark_gray>» <white>" + message
             ));
             return;
@@ -66,7 +67,7 @@ public class ChatListener implements Listener {
         currentTeam.getPlayers().forEach(fibPlayer -> {
             Player p = fibPlayer.player();
             if (p != null && p.isOnline()) {
-                p.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(teamMessage));
+                p.sendMessage(Text.of(teamMessage));
             }
         });
     }

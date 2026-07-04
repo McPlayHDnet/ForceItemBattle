@@ -1,5 +1,6 @@
 package forceitembattle.settings.preset;
 
+import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
@@ -15,7 +16,7 @@ import java.util.List;
 public class InvPresetMenu extends InventoryBuilder {
 
     public InvPresetMenu(ForceItemBattle forceItemBattle, GameSettings gameSettings) {
-        super(9 * 5, forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <dark_aqua>Settings <dark_gray>● <gray>Presets"));
+        super(9 * 5, Text.of("<dark_gray>» <dark_aqua>Settings <dark_gray>● <gray>Presets"));
 
         /* BORDER */
         this.setItems(0, 8, new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE).setDisplayName("<aqua>").addItemFlags(ItemFlag.values()).getItemStack());

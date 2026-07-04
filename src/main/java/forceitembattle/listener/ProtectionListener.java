@@ -1,5 +1,6 @@
 package forceitembattle.listener;
 
+import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.util.ForceItemPlayer;
@@ -137,7 +138,7 @@ public class ProtectionListener implements Listener {
         if (this.plugin.getGamemanager().isMidGame()) {
             e.setCancelled(true);
             for (Player player : getPlayersNearby(e.getBlock().getLocation())) {
-                player.sendMessage(plugin.getGamemanager().getMiniMessage().deserialize(
+                player.sendMessage(Text.of(
                         "<red>Pistons are disabled."
                 ));
             }
@@ -215,7 +216,7 @@ public class ProtectionListener implements Listener {
 
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (player.isOp()) {
-                player.sendMessage(plugin.getGamemanager().getMiniMessage().deserialize(msg));
+                player.sendMessage(Text.of(msg));
             }
         }
     }

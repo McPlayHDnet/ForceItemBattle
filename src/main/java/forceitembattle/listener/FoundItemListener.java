@@ -1,5 +1,6 @@
 package forceitembattle.listener;
 
+import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.manager.Gamemanager;
@@ -126,7 +127,7 @@ public class FoundItemListener implements Listener {
         String unicode = plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType());
         String materialName = plugin.getGamemanager().getMaterialName(itemStack.getType());
 
-        Component message = plugin.getGamemanager().getMiniMessage().deserialize(
+        Component message = Text.of(
                 String.format("<green>%s <gray>%s <reset><shadow:black:0.4>%s</shadow> <gold>%s",
                         player.getName(), action, unicode, materialName)
         );
@@ -401,13 +402,13 @@ public class FoundItemListener implements Listener {
             if (result.teammateWhoHasIt() != null) {
                 // Teammate has the item
                 ForceItemPlayer teammate = result.teammateWhoHasIt();
-                message = plugin.getGamemanager().getMiniMessage().deserialize(
+                message = Text.of(
                         String.format("<green>%s <gray>was lucky that <green>%s <gray>already owns <reset>%s <gold>%s <dark_gray>» <aqua>%s",
                                 player.getName(), teammate.player().getName(), unicode, materialName, probability.formatted())
                 );
             } else {
                 // Player themselves has the item
-                message = plugin.getGamemanager().getMiniMessage().deserialize(
+                message = Text.of(
                         String.format("<green>%s <gray>was lucky to already own <reset>%s <gold>%s <dark_gray>» <aqua>%s",
                                 player.getName(), unicode, materialName, probability.formatted())
                 );

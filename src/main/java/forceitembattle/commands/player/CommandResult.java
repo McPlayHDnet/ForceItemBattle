@@ -1,5 +1,6 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.settings.GameSetting;
@@ -38,14 +39,14 @@ public class CommandResult extends CustomCommand {
                 try {
                     uuid = UUID.fromString(args[0]);
                 } catch (IllegalArgumentException e) {
-                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>Invalid UUID."));
+                    player.sendMessage(Text.of("<red>Invalid UUID."));
                     return;
                 }
             } else {
                 try {
                     team = this.plugin.getTeamManager().getTeams().get(Integer.parseInt(args[0].replace("#", "")) - 1);
                 } catch (IllegalArgumentException e) {
-                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>Invalid team."));
+                    player.sendMessage(Text.of("<red>Invalid team."));
                 }
             }
 

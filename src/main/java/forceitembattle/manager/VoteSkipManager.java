@@ -4,7 +4,6 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.Text;
 import lombok.Getter;
-import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -20,7 +19,6 @@ public class VoteSkipManager implements Manager {
     private final ForceItemBattle plugin;
     private final Set<UUID> yesVotes = new HashSet<>();
     private final Set<UUID> noVotes = new HashSet<>();
-    private final MiniMessage miniMessage = Text.mm();
     private final Random random = new Random();
     @Getter
     private boolean voteInProgress = false;
@@ -53,11 +51,11 @@ public class VoteSkipManager implements Manager {
 
         Bukkit.getOnlinePlayers().forEach(player -> {
             player.sendMessage(" ");
-            player.sendMessage(this.miniMessage.deserialize("<gray>A skip voting has been started by <green>" + initiator.getName() + "<gray>."));
-            player.sendMessage(this.miniMessage.deserialize("  <dark_gray>● <gray>Duration <dark_gray>» <gold>60 seconds"));
-            player.sendMessage(this.miniMessage.deserialize("  <dark_gray>● <gray>Item <dark_gray>» <reset>" + unicodeMaterial + " <gold>" + materialName));
+            player.sendMessage(Text.of("<gray>A skip voting has been started by <green>" + initiator.getName() + "<gray>."));
+            player.sendMessage(Text.of("  <dark_gray>● <gray>Duration <dark_gray>» <gold>60 seconds"));
+            player.sendMessage(Text.of("  <dark_gray>● <gray>Item <dark_gray>» <reset>" + unicodeMaterial + " <gold>" + materialName));
             player.sendMessage(" ");
-            player.sendMessage(this.miniMessage.deserialize("                  <dark_gray>[<green><b><click:run_command:'/vote yes'>YES</click></b><dark_gray>]          <dark_gray>[<red><b><click:run_command:'/vote no'>NO</click></b><dark_gray>]"));
+            player.sendMessage(Text.of("                  <dark_gray>[<green><b><click:run_command:'/vote yes'>YES</click></b><dark_gray>]          <dark_gray>[<red><b><click:run_command:'/vote no'>NO</click></b><dark_gray>]"));
             player.sendMessage(" ");
         });
 
@@ -67,16 +65,16 @@ public class VoteSkipManager implements Manager {
     public void castVote(Player player, boolean voteYes) {
         UUID uuid = player.getUniqueId();
         if (this.yesVotes.contains(uuid) || this.noVotes.contains(uuid)) {
-            player.sendMessage(this.miniMessage.deserialize("<red>You have already voted."));
+            player.sendMessage(Text.of("<red>You have already voted."));
             return;
         }
 
         if (voteYes) {
             this.yesVotes.add(uuid);
-            player.sendMessage(this.miniMessage.deserialize("<gray>You voted for <green><b>YES</b><gray>!"));
+            player.sendMessage(Text.of("<gray>You voted for <green><b>YES</b><gray>!"));
         } else {
             this.noVotes.add(uuid);
-            player.sendMessage(this.miniMessage.deserialize("<gray>You voted for <red><b>NO</b><gray>!"));
+            player.sendMessage(Text.of("<gray>You voted for <red><b>NO</b><gray>!"));
         }
 
         int totalPlayers = this.plugin.getGamemanager().forceItemPlayerMap().size();
@@ -110,14 +108,14 @@ public class VoteSkipManager implements Manager {
         boolean finalSkipItem = skipItem;
         Bukkit.getOnlinePlayers().forEach(player -> {
             player.sendMessage(" ");
-            player.sendMessage(this.miniMessage.deserialize("<gray>The skip voting has been ended."));
-            player.sendMessage(this.miniMessage.deserialize("  <dark_gray>● <green><b>YES</b> <dark_gray>» <gold>" + yes + " " + voteLabel));
-            player.sendMessage(this.miniMessage.deserialize("  <dark_gray>● <red><b>NO</b> <dark_gray>» <gold>" + no + " " + voteLabel));
+            player.sendMessage(Text.of("<gray>The skip voting has been ended."));
+            player.sendMessage(Text.of("  <dark_gray>● <green><b>YES</b> <dark_gray>» <gold>" + yes + " " + voteLabel));
+            player.sendMessage(Text.of("  <dark_gray>● <red><b>NO</b> <dark_gray>» <gold>" + no + " " + voteLabel));
             player.sendMessage(" ");
             if (isTie) {
-                player.sendMessage(this.miniMessage.deserialize("<gray>It was a tie! Choosing randomly..."));
+                player.sendMessage(Text.of("<gray>It was a tie! Choosing randomly..."));
             }
-            player.sendMessage(this.miniMessage.deserialize("<dark_gray>» <reset>" + unicodeMaterial + " <gold>" + materialName + " <gray>is " + (finalSkipItem ? "now" : "not") + " skipped."));
+            player.sendMessage(Text.of("<dark_gray>» <reset>" + unicodeMaterial + " <gold>" + materialName + " <gray>is " + (finalSkipItem ? "now" : "not") + " skipped."));
             player.sendMessage(" ");
         });
 

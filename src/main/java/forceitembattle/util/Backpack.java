@@ -47,7 +47,7 @@ public class Backpack implements Manager {
                 Bukkit.createInventory(
                         null,
                         this.forceItemBattle.getConfig().getInt("settings.backpackRows") * 9,
-                        this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold>Backpack <dark_gray>● <gray>Menu")));
+                        Text.of("<dark_gray>» <gold>Backpack <dark_gray>● <gray>Menu")));
         fibPlayer.player().getInventory().setItem(8, Gamemanager.createBackpack(fibPlayer, this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM)));
     }
 
@@ -56,7 +56,7 @@ public class Backpack implements Manager {
                 Bukkit.createInventory(
                         null,
                         this.forceItemBattle.getConfig().getInt("settings.backpackRows") * 9,
-                        this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold>Backpack <dark_gray>● <gray>Menu")));
+                        Text.of("<dark_gray>» <gold>Backpack <dark_gray>● <gray>Menu")));
         fibPlayer.player().getInventory().setItem(8, Gamemanager.createBackpack(fibPlayer, this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM)));
     }
 

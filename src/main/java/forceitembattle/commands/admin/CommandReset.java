@@ -1,5 +1,6 @@
 package forceitembattle.commands.admin;
 
+import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import org.bukkit.Bukkit;
@@ -16,7 +17,7 @@ public class CommandReset extends CustomCommand {
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
         if (player.isOp()) {
-            Bukkit.getOnlinePlayers().forEach(onlinePlayer -> onlinePlayer.kick(this.plugin.getGamemanager().getMiniMessage().deserialize(
+            Bukkit.getOnlinePlayers().forEach(onlinePlayer -> onlinePlayer.kick(Text.of(
                     "<dark_gray>» <gold><b>ForceItemBattle</b> <dark_gray>«" +
                             "\n" +
                             "<red>The world is being reset!" +

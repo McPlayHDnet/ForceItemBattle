@@ -102,7 +102,7 @@ public class WanderingTraderTimer implements Manager {
         this.plugin.getGamemanager().forceItemPlayerMap().values().forEach(players -> {
             this.canBuyWheel.put(players.player().getUniqueId(), Boolean.TRUE);
 
-            players.player().sendMessage(Text.mm().deserialize("<dark_gray>» <gold>Position <dark_gray>┃ <gray>The <green>Wandering Trader <gray>just spawned at <dark_aqua>" + (int) traderLocation.getX() + "<gray>, <dark_aqua>" + (int) traderLocation.getY() + "<gray>, <dark_aqua>" + (int) traderLocation.getZ() + this.distance(players.player().getLocation(), traderLocation)));
+            players.player().sendMessage(Text.of("<dark_gray>» <gold>Position <dark_gray>┃ <gray>The <green>Wandering Trader <gray>just spawned at <dark_aqua>" + (int) traderLocation.getX() + "<gray>, <dark_aqua>" + (int) traderLocation.getY() + "<gray>, <dark_aqua>" + (int) traderLocation.getZ() + this.distance(players.player().getLocation(), traderLocation)));
             this.plugin.getPositionManager().playParticleLine(players.player(), traderLocation, Color.LIME);
         });
 
@@ -117,8 +117,7 @@ public class WanderingTraderTimer implements Manager {
                     });
                     wanderingTrader.remove();
                     cancel();
-                    Bukkit.broadcast(Text.mm()
-                            .deserialize("<dark_gray>» <gold>Position <dark_gray>┃ <gray>The <green>Wandering Trader <gray>just despawned! :("));
+                    Bukkit.broadcast(Text.of("<dark_gray>» <gold>Position <dark_gray>┃ <gray>The <green>Wandering Trader <gray>just despawned! :("));
                     return;
                 }
 
@@ -126,7 +125,7 @@ public class WanderingTraderTimer implements Manager {
                     String footerText = "\n<green><b>Wandering Trader</b>\n"
                             + locationToString(traderLocation) + "\n"
                             + formatColoredTime(traderTimer) + "\n";
-                    Component footer = Text.mm().deserialize(footerText);
+                    Component footer = Text.of(footerText);
                     player.sendPlayerListFooter(footer);
                 });
 

@@ -1,5 +1,6 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.settings.GameSetting;
@@ -18,15 +19,15 @@ public class CommandPause extends CustomCommand {
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
         if (this.plugin.getSettings().isSettingEnabled(GameSetting.EVENT) && !player.isOp()) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>You don't have permission to use this command."));
+            player.sendMessage(Text.of("<red>You don't have permission to use this command."));
             return;
         }
 
         if (!this.plugin.getGamemanager().isMidGame()) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>The timer is already paused."));
+            player.sendMessage(Text.of("<red>The timer is already paused."));
             return;
         }
-        Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize("<gold>The game has been paused!"));
+        Bukkit.broadcast(Text.of("<gold>The game has been paused!"));
         Bukkit.getWorld("world").setGameRule(GameRules.ADVANCE_TIME, false);
         this.plugin.getGamemanager().setCurrentGameState(GameState.PAUSED_GAME);
     }

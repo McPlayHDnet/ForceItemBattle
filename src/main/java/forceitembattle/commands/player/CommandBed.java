@@ -1,5 +1,6 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import org.bukkit.entity.Entity;
@@ -18,7 +19,7 @@ public class CommandBed extends CustomCommand {
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
         if (player.getRespawnLocation() == null) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>You don't have a bed respawn point."));
+            player.sendMessage(Text.of("<red>You don't have a bed respawn point."));
             return;
         }
 

@@ -23,7 +23,7 @@ public class VaultInventory extends InventoryBuilder {
     private final ForceItemBattle plugin;
 
     public VaultInventory(ForceItemBattle plugin) {
-        super(9 * 5, plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <dark_green>Vault"));
+        super(9 * 5, Text.of("<dark_gray>» <dark_green>Vault"));
 
         this.plugin = plugin;
 
@@ -57,7 +57,7 @@ public class VaultInventory extends InventoryBuilder {
                         Material wonMaterial = Objects.requireNonNull(getInventory().getItem(22)).getType();
                         Bukkit.getPluginManager().callEvent(new WheelOfFortuneWinEvent(getPlayer(), wonMaterial));
 
-                        Component subTitle = plugin.getGamemanager().getMiniMessage().deserialize("<gold>" + plugin.getGamemanager().getMaterialName(wonMaterial));
+                        Component subTitle = Text.of("<gold>" + plugin.getGamemanager().getMaterialName(wonMaterial));
 
                         Title.Times times = Title.Times.times(Duration.ofMillis(600), Duration.ofMillis(2000), Duration.ofMillis(600));
                         Title title = Title.title(Component.empty(), subTitle, times);

@@ -1,5 +1,6 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import org.bukkit.GameMode;
@@ -15,12 +16,12 @@ public class CommandSpectate extends CustomCommand {
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
         if (this.plugin.getTimer().getTimeLeft() > 0) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>This command can only be used after the game end."));
+            player.sendMessage(Text.of("<red>This command can only be used after the game end."));
             return;
         }
 
         if (player.getGameMode() == GameMode.SPECTATOR) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<gray>You are <red>no longer<gray> spectating."));
+            player.sendMessage(Text.of("<gray>You are <red>no longer<gray> spectating."));
             player.setGameMode(GameMode.CREATIVE);
         }
     }

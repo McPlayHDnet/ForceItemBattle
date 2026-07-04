@@ -43,7 +43,7 @@ public class RecipeInventory extends InventoryBuilder {
     }
 
     public RecipeInventory(ForceItemBattle forceItemBattle, RecipeViewer recipeViewer, Player player) {
-        super(9 * 5, forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_gray>● <dark_aqua>" +
+        super(9 * 5, Text.of("<dark_gray>● <dark_aqua>" +
                 materialName(recipeViewer.itemStack().getType()) +
                 " <dark_gray>» <gray>" + (recipeViewer.currentRecipeIndex() + 1) + "<dark_gray>/<gray>" + recipeViewer.pages()
         ));
@@ -224,7 +224,7 @@ public class RecipeInventory extends InventoryBuilder {
                     return;
                 }
                 if (Bukkit.getRecipesFor(itemStack).isEmpty()) {
-                    player.sendMessage(forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>There is no recipe for this item. Just find it lol"));
+                    player.sendMessage(Text.of("<red>There is no recipe for this item. Just find it lol"));
                     return;
                 }
                 recipeViewer.setCurrentRecipeIndex(0);
@@ -237,7 +237,7 @@ public class RecipeInventory extends InventoryBuilder {
                 new RecipeInventory(forceItemBattle, recipeViewer, player).open(player);
 
             } else {
-                player.sendMessage(forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>Sneak click to show recipe for this item!"));
+                player.sendMessage(Text.of("<red>Sneak click to show recipe for this item!"));
             }
         });
 

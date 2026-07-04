@@ -35,7 +35,7 @@ public abstract class CustomCommand implements CommandExecutor {
         String usage = this.getUsage() == null ? "" : " " + this.getUsage();
         String description = this.getDescription() == null ? "uhhh I guess this is self explanatory?.." : this.getDescription();
 
-        player.sendMessage(Text.mm().deserialize("<dark_gray>» <white>/" + this.getName() + "<gray>" + usage + " <dark_gray>- <white>" + description));
+        player.sendMessage(Text.of("<dark_gray>» <white>/" + this.getName() + "<gray>" + usage + " <dark_gray>- <white>" + description));
     }
 
     @Override

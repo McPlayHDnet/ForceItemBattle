@@ -1,5 +1,6 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import org.bukkit.Bukkit;
@@ -26,16 +27,16 @@ public class CommandShout extends CustomCommand {
         if (args.length == 0) {
             if (shoutingPlayers.contains(player)) {
                 shoutingPlayers.remove(player);
-                player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<gray>Shout mode: <red>OFF"));
+                player.sendMessage(Text.of("<gray>Shout mode: <red>OFF"));
             } else {
                 shoutingPlayers.add(player);
-                player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<gray>Shout mode: <green>ON"));
+                player.sendMessage(Text.of("<gray>Shout mode: <green>ON"));
             }
             return;
         }
 
         // Just in case, if someone wants to one-time shout
-        Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize(
+        Bukkit.broadcast(Text.of(
                 "<gold>" + player.getName() + " <dark_gray>» <white>" + String.join(" ", args)
         ));
     }

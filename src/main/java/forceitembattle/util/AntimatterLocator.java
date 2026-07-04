@@ -26,14 +26,14 @@ public class AntimatterLocator implements Manager {
 
     public void locateAntimatter(ForceItemPlayer forceItemPlayer, ItemStack locator) {
         if (!this.isInOverworld(forceItemPlayer.player())) {
-            forceItemPlayer.player().sendMessage(Text.mm().deserialize(prefix + "<red>There is no <dark_aqua>Antimatter <red>in the " + this.getCurrentWorld(forceItemPlayer.player()) + "<red>."));
+            forceItemPlayer.player().sendMessage(Text.of(prefix + "<red>There is no <dark_aqua>Antimatter <red>in the " + this.getCurrentWorld(forceItemPlayer.player()) + "<red>."));
             return;
         }
 
         StructureSearchResult structureSearchResult = forceItemPlayer.player().getWorld().locateNearestStructure(forceItemPlayer.player().getLocation(), Objects.requireNonNull(Registry.STRUCTURE.get(Objects.requireNonNull(NamespacedKey.fromString("fib:antimatter_depths")))), 20, false);
 
         if (structureSearchResult == null) {
-            forceItemPlayer.player().sendMessage(Text.mm().deserialize(prefix + "<dark_aqua>Antimatter <red>could not be found."));
+            forceItemPlayer.player().sendMessage(Text.of(prefix + "<dark_aqua>Antimatter <red>could not be found."));
             return;
         }
 
@@ -42,12 +42,12 @@ public class AntimatterLocator implements Manager {
             this.destroyLocator(forceItemPlayer.player(), locator);
             forceItemPlayer.player().playSound(forceItemPlayer.player(), Sound.BLOCK_CONDUIT_AMBIENT_SHORT, 2, 1);
             new BukkitRunnable() {
-                final BossBar bar = BossBar.bossBar(Text.mm().deserialize(""), 1, BossBar.Color.WHITE, BossBar.Overlay.NOTCHED_6);
+                final BossBar bar = BossBar.bossBar(Text.of(""), 1, BossBar.Color.WHITE, BossBar.Overlay.NOTCHED_6);
 
                 @Override
                 public void run() {
                     String bossBarTitle = "<gradient:#B314A8:#E775C3><b>Antimatter <reset><dark_gray>» " + locationToString(structureLocation) + distance(forceItemPlayer.player().getLocation(), structureLocation);
-                    bar.name(Text.mm().deserialize(bossBarTitle));
+                    bar.name(Text.of(bossBarTitle));
                     forceItemPlayer.player().showBossBar(bar);
                     plugin.getPositionManager().playParticleLine(forceItemPlayer.player(), structureSearchResult.getLocation(), Color.PURPLE);
 
@@ -59,7 +59,7 @@ public class AntimatterLocator implements Manager {
             }.runTaskTimerAsynchronously(this.plugin, 0L, 300L);
         }
 
-        forceItemPlayer.player().sendMessage(Text.mm().deserialize(prefix + "<dark_aqua>Antimatter <gray>located at " + locationToString(structureLocation) + distance(forceItemPlayer.player().getLocation(), structureLocation)));
+        forceItemPlayer.player().sendMessage(Text.of(prefix + "<dark_aqua>Antimatter <gray>located at " + locationToString(structureLocation) + distance(forceItemPlayer.player().getLocation(), structureLocation)));
 
         this.locatedStructures.add(structureLocation);
     }

@@ -185,12 +185,6 @@ public class InventoryBuilder implements InventoryHolder {
                 || (i > size - 11 && i < size - 7) || i > size - 3).toArray();
     }
 
-    /* TODO:
-    public int[] animateBorder() {
-
-    }
-    */
-
     @Override
     public @Nonnull Inventory getInventory() {
         return this.inventory;

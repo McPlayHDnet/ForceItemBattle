@@ -1,5 +1,6 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import org.bukkit.entity.Entity;
@@ -18,7 +19,7 @@ public class CommandSpawn extends CustomCommand {
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
         if (this.plugin.getSpawnLocation() == null) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>The spawn location has not been set yet."));
+            player.sendMessage(Text.of("<red>The spawn location has not been set yet."));
             return;
         }
 

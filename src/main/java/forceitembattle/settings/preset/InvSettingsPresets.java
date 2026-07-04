@@ -1,5 +1,6 @@
 package forceitembattle.settings.preset;
 
+import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
@@ -20,7 +21,7 @@ public class InvSettingsPresets extends InventoryBuilder {
     public static HashMap<UUID, GamePreset> namingPhase = new HashMap<>();
 
     public InvSettingsPresets(ForceItemBattle forceItemBattle, GamePreset gamePreset, GameSettings gameSettings) {
-        super(9 * 5, forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <dark_aqua>Settings <dark_gray>● <gray>Presets"));
+        super(9 * 5, Text.of("<dark_gray>» <dark_aqua>Settings <dark_gray>● <gray>Presets"));
 
         /* BORDER */
         this.setItems(0, 8, new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE).setDisplayName("<aqua>").addItemFlags(ItemFlag.values()).getItemStack());
@@ -38,7 +39,7 @@ public class InvSettingsPresets extends InventoryBuilder {
                 getPlayer().playSound(getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
                 namingPhase.put(getPlayer().getUniqueId(), gamePreset);
                 getPlayer().closeInventory();
-                getPlayer().sendMessage(forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_aqua>Send your desired preset-name in chat"));
+                getPlayer().sendMessage(Text.of("<dark_aqua>Send your desired preset-name in chat"));
             });
 
             /* Timer-Preset */
@@ -75,7 +76,7 @@ public class InvSettingsPresets extends InventoryBuilder {
 
                 if (gamePreset.getJokers() == 64 || gamePreset.getJokers() == 0) {
                     this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);
-                    this.getPlayer().sendMessage(forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>You reached the end of possible jokers."));
+                    this.getPlayer().sendMessage(Text.of("<red>You reached the end of possible jokers."));
                     return;
 
                 }

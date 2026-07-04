@@ -22,7 +22,7 @@ public class TradeInventory extends InventoryBuilder {
             33, 34, 35};
 
     public TradeInventory(ForceItemBattle plugin, ForceItemPlayer player, ForceItemPlayer oppositePlayer) {
-        super(9 * 5, plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <dark_aqua>Trade <dark_gray>● <gray>Menu"));
+        super(9 * 5, Text.of("<dark_gray>» <dark_aqua>Trade <dark_gray>● <gray>Menu"));
 
         Map<ForceItemPlayer, List<ItemStack>> tradingItems = new HashMap<>();
 

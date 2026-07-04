@@ -129,7 +129,6 @@ public class Gamemanager implements Manager {
 
     public void addPlayer(Player player, ForceItemPlayer forceItemPlayer) {
         this.forceItemPlayerMap.put(player.getUniqueId(), forceItemPlayer);
-        //this.forceItemBattle.getStatsManager().createPlayerStats(forceItemPlayer);
     }
 
     public void removePlayer(Player player) {
@@ -234,7 +233,6 @@ public class Gamemanager implements Manager {
             });
         }
 
-        //this.forceItemBattle.getTimer().sendActionBar();
     }
 
     public void giveSpectatorItems(Player player) {
@@ -297,19 +295,6 @@ public class Gamemanager implements Manager {
                     }
                 }
             }
-
-            /*
-            Achievements achievement = Achievements.CHICOT;
-            if(playerStats.achievementsDone().contains(achievement.getTitle())) {
-                return;
-            }
-            PlayerProgress playerProgress = this.forceItemBattle.getAchievementManager().playerProgressMap.get(player.getUniqueId());
-            if(playerProgress.getProgress(achievement).getDeathCounter() == achievement.getCondition().getAmount()) {
-                PlayerGrantAchievementEvent grantAchievementEvent = new PlayerGrantAchievementEvent(player, achievement);
-                Bukkit.getPluginManager().callEvent(grantAchievementEvent);
-            }
-
-             */
         });
     }
 

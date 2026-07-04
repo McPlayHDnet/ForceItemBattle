@@ -1,5 +1,6 @@
 package forceitembattle.commands.admin;
 
+import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
@@ -38,7 +39,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
         if (player.isOp()) {
             if (args.length == 1) {
                 if (this.plugin.getSettings().getGamePreset(args[0]) == null) {
-                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<yellow>" + args[0] + " <red>does not exist in presets."));
+                    player.sendMessage(Text.of("<yellow>" + args[0] + " <red>does not exist in presets."));
                     return;
                 }
 
@@ -51,11 +52,11 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
                     this.performCommand(null, player, args);
 
                 } catch (NumberFormatException e) {
-                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>Usage: /start <time in min> <jokers>"));
-                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red><time> and <jokers> have to be numbers"));
+                    player.sendMessage(Text.of("<red>Usage: /start <time in min> <jokers>"));
+                    player.sendMessage(Text.of("<red><time> and <jokers> have to be numbers"));
                 }
             } else {
-                player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>Usage: /start <time in min> <jokers>"));
+                player.sendMessage(Text.of("<red>Usage: /start <time in min> <jokers>"));
             }
         }
     }
@@ -67,7 +68,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
 
         if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
             if (plugin.getGamemanager().forceItemPlayerMap().size() < 4) {
-                Bukkit.broadcast(plugin.getGamemanager().getMiniMessage().deserialize("<red>There are not enough players online to enable teams"));
+                Bukkit.broadcast(Text.of("<red>There are not enough players online to enable teams"));
                 this.plugin.getSettings().setSettingEnabled(GameSetting.TEAM, false);
                 this.plugin.getTeamManager().clearAllTeams();
             } else {
@@ -81,7 +82,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
 
         if (gamePreset == null) {
             if (Integer.parseInt(args[1]) > 522) {
-                player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>The maximum amount of jokers is 64."));
+                player.sendMessage(Text.of("<red>The maximum amount of jokers is 64."));
                 return;
             }
         }
@@ -112,7 +113,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
 
                 String subtitle = getSubtitle();
                 Title.Times times = Title.Times.times(Duration.ofMillis(0), Duration.ofMillis(1000), Duration.ofMillis(500));
-                Title startingTitle = Title.title(plugin.getGamemanager().getMiniMessage().deserialize("<green>" + seconds), plugin.getGamemanager().getMiniMessage().deserialize(subtitle), times);
+                Title startingTitle = Title.title(Text.of("<green>" + seconds), Text.of(subtitle), times);
                 Bukkit.getOnlinePlayers().forEach(
                         players -> players.showTitle(startingTitle)
                 );
@@ -132,8 +133,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
                     for (ForceItemPlayer teammate : forceItemPlayer.currentTeam().getPlayers()) {
                         if (teammate == forceItemPlayer) continue;
 
-                        Component subTitle = plugin.getGamemanager().getMiniMessage()
-                                .deserialize("<yellow>Team " + teammate.currentTeam().getTeamDisplay() + " <gray>| <green>" + forceItemPlayer.player().getName());
+                        Component subTitle = Text.of("<yellow>Team " + teammate.currentTeam().getTeamDisplay() + " <gray>| <green>" + forceItemPlayer.player().getName());
 
                         Title.Times times = Title.Times.times(Duration.ofMillis(600), Duration.ofMillis(2000), Duration.ofMillis(600));
                         Title title = Title.title(Component.empty(), subTitle, times);
@@ -193,21 +193,21 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
             }
 
             player.sendMessage(" ");
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold><b>Force Item Battle</b> <dark_gray>«"));
+            player.sendMessage(Text.of("<dark_gray>» <gold><b>Force Item Battle</b> <dark_gray>«"));
             player.sendMessage(" ");
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● <gray>Duration <dark_gray>» <green>" + timeMinutes + " minutes"));
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● <gray>Jokers <dark_gray>» <green>" + jokersAmount));
+            player.sendMessage(Text.of("  <dark_gray>● <gray>Duration <dark_gray>» <green>" + timeMinutes + " minutes"));
+            player.sendMessage(Text.of("  <dark_gray>● <gray>Jokers <dark_gray>» <green>" + jokersAmount));
             for (GameSetting gameSettings : GameSetting.values()) {
                 if (gameSettings.defaultValue() instanceof Integer) continue;
-                player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("  <dark_gray>● <gray>" + gameSettings.displayName() + " <dark_gray>» <green>" + (this.plugin.getSettings().isSettingEnabled(gameSettings) ? "<dark_green>✔" : "<dark_red>✘")));
+                player.sendMessage(Text.of("  <dark_gray>● <gray>" + gameSettings.displayName() + " <dark_gray>» <green>" + (this.plugin.getSettings().isSettingEnabled(gameSettings) ? "<dark_green>✔" : "<dark_red>✘")));
             }
             player.sendMessage(" ");
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(" <dark_gray>● <gray>Useful Commands:"));
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("  <dark_gray>» <gold>/info"));
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("  <dark_gray>» <gold>/infowiki"));
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("  <dark_gray>» <gold>/spawn"));
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("  <dark_gray>» <gold>/bed"));
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("  <dark_gray>» <gold>/pos"));
+            player.sendMessage(Text.of(" <dark_gray>● <gray>Useful Commands:"));
+            player.sendMessage(Text.of("  <dark_gray>» <gold>/info"));
+            player.sendMessage(Text.of("  <dark_gray>» <gold>/infowiki"));
+            player.sendMessage(Text.of("  <dark_gray>» <gold>/spawn"));
+            player.sendMessage(Text.of("  <dark_gray>» <gold>/bed"));
+            player.sendMessage(Text.of("  <dark_gray>» <gold>/pos"));
             player.sendMessage("");
 
             player.setHealth(20);

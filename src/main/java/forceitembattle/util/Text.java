@@ -1,5 +1,6 @@
 package forceitembattle.util;
 
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.kyori.adventure.text.minimessage.tag.standard.StandardTags;
@@ -24,10 +25,11 @@ public final class Text {
     private Text() {
     }
 
-    /**
-     * @return the shared, pre-configured MiniMessage serializer
-     */
     public static MiniMessage mm() {
         return MINI_MESSAGE;
+    }
+
+    public static Component of(String miniMessage) {
+        return MINI_MESSAGE.deserialize(miniMessage);
     }
 }

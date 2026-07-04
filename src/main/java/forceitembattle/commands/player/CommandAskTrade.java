@@ -1,5 +1,6 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.listener.FoundItemListener;
@@ -24,7 +25,7 @@ public class CommandAskTrade extends CustomCommand {
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
         if (this.plugin.getSettings().isSettingEnabled(GameSetting.EVENT) && !player.isOp()) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>You don't have permission to use this command."));
+            player.sendMessage(Text.of("<red>You don't have permission to use this command."));
             return;
         }
         if (!this.plugin.getGamemanager().isMidGame()) {
@@ -35,15 +36,15 @@ public class CommandAskTrade extends CustomCommand {
         Material currentMaterial = forceItemPlayer.getCurrentMaterial();
         String materialName = this.plugin.getGamemanager().getMaterialName(currentMaterial);
 
-        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(TradingManager.PREFIX + "<gray>You asked for <dark_aqua>" + materialName));
+        player.sendMessage(Text.of(TradingManager.PREFIX + "<gray>You asked for <dark_aqua>" + materialName));
 
         Bukkit.getOnlinePlayers().forEach(players -> {
             if (players == player) return;
-            players.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(TradingManager.PREFIX + "<yellow>" + player.getName() + " <gray>is looking for <dark_aqua>" + materialName + " <dark_gray>» <click:run_command:/trade " + player.getName() + "><dark_gray>[<aqua>Request a trade<dark_gray>]"));
+            players.sendMessage(Text.of(TradingManager.PREFIX + "<yellow>" + player.getName() + " <gray>is looking for <dark_aqua>" + materialName + " <dark_gray>» <click:run_command:/trade " + player.getName() + "><dark_gray>[<aqua>Request a trade<dark_gray>]"));
 
             if (FoundItemListener.hasItemInInventory(players.getInventory(), currentMaterial)) {
                 Title.Times times = Title.Times.times(Duration.ofMillis(500), Duration.ofMillis(4000), Duration.ofMillis(500));
-                Title pauseTitle = Title.title(Component.empty(), plugin.getGamemanager().getMiniMessage().deserialize("<dark_aqua>You have an item that <yellow>" + player.getName() + " <dark_aqua>wants"), times);
+                Title pauseTitle = Title.title(Component.empty(), Text.of("<dark_aqua>You have an item that <yellow>" + player.getName() + " <dark_aqua>wants"), times);
 
                 players.showTitle(pauseTitle);
 

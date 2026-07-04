@@ -1,5 +1,6 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import org.bukkit.entity.Player;
@@ -11,7 +12,7 @@ public class CommandHelp extends CustomCommand {
     }
 
     private void msg(Player player, String message) {
-        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(message));
+        player.sendMessage(Text.of(message));
     }
 
     @Override
