@@ -3,13 +3,14 @@ package forceitembattle.commands.admin;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.ForceItemBattle;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 public class CommandForceTeam extends CustomCommand {
 
-    public CommandForceTeam() {
-        super("forceteam");
+    public CommandForceTeam(ForceItemBattle plugin) {
+        super(plugin, "forceteam");
         setUsage("<name> <player1> (player2)");
         setDescription("Force create a team");
     }

@@ -2,9 +2,11 @@ package forceitembattle.commands.player;
 
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
+
 import forceitembattle.util.CustomMaterial;
 import forceitembattle.util.DescriptionItem;
 import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.ForceItemBattle;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -16,8 +18,8 @@ import static forceitembattle.util.RecipeInventory.ID_TO_MATERIAL;
 
 public class CommandInfo extends CustomCommand implements CustomTabCompleter {
 
-    public CommandInfo() {
-        super("info");
+    public CommandInfo(ForceItemBattle plugin) {
+        super(plugin, "info");
         setUsage("[item]");
         setDescription("Get information about an item");
     }

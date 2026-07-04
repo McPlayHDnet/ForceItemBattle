@@ -6,6 +6,7 @@ import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.stats.FIBServiceHelper;
 import forceitembattle.util.PlayerStat;
+import forceitembattle.ForceItemBattle;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -27,8 +28,8 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
             "highest_score", "total_items", "games_won", "back_to_back_streak", "blocks_travelled"
     );
 
-    public CommandLeaderboard() {
-        super("top");
+    public CommandLeaderboard(ForceItemBattle plugin) {
+        super(plugin, "top");
         setUsage("[stat]");
         setDescription("Show the stat leaderboards");
     }

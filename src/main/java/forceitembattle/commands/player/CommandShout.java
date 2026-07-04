@@ -1,6 +1,7 @@
 package forceitembattle.commands.player;
 
 import forceitembattle.commands.CustomCommand;
+import forceitembattle.ForceItemBattle;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -11,8 +12,8 @@ public class CommandShout extends CustomCommand {
 
     private static final Set<Player> shoutingPlayers = new HashSet<>();
 
-    public CommandShout() {
-        super("shout");
+    public CommandShout(ForceItemBattle plugin ) {
+        super(plugin,"shout");
         setDescription("Send global message when team chat is enabled");
     }
 

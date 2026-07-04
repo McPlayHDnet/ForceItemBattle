@@ -14,6 +14,7 @@ import de.threeseconds.openapi.fibservice.client.model.FibTeamMemberStatsUpdateR
 import de.threeseconds.openapi.fibservice.client.model.FibTeamStatisticsDto;
 import de.threeseconds.openapi.fibservice.client.model.FibTeamStatisticsUpdateRequestDto;
 import forceitembattle.ForceItemBattle;
+import forceitembattle.manager.Manager;
 import org.bukkit.Bukkit;
 import org.openapitools.client.ApiClient;
 import org.openapitools.client.ApiException;
@@ -23,10 +24,11 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 
-public class FIBServiceHelper {
+public class FIBServiceHelper implements Manager {
 
     private static final String DEFAULT_BASE_URL = "http://127.0.0.7:29708";
 
+    private final ApiClient apiClient;
     private final FibStatisticsControllerApi api;
     private final FibAchievementControllerApi achievementApi;
     private final ForceItemBattle plugin;
@@ -39,8 +41,18 @@ public class FIBServiceHelper {
         this.plugin = plugin;
         ApiClient client = new ApiClient();
         client.setBasePath(baseUrl);
+        this.apiClient = client;
         this.api = new FibStatisticsControllerApi(client);
         this.achievementApi = new FibAchievementControllerApi(client);
+    }
+
+    @Override
+    public void disable() {
+        // OkHttp keeps a connection pool (and dispatcher threads for any async
+        // calls); shut them down so nothing lingers across a reload.
+        var http = this.apiClient.getHttpClient();
+        http.dispatcher().executorService().shutdown();
+        http.connectionPool().evictAll();
     }
 
     public FibSoloStatisticsDto getSoloStatistics(UUID playerUuid) throws ApiException {

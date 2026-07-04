@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class TradingManager {
+public class TradingManager implements Manager {
 
     private final ForceItemBattle forceItemBattle;
 

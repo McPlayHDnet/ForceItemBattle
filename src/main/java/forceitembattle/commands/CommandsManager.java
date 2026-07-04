@@ -1,6 +1,7 @@
 package forceitembattle.commands;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.manager.Manager;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.command.PluginCommand;
@@ -11,7 +12,7 @@ import java.util.List;
 
 @Getter
 @RequiredArgsConstructor
-public class CommandsManager {
+public class CommandsManager implements Manager {
 
     private final ForceItemBattle plugin;
 
@@ -29,7 +30,7 @@ public class CommandsManager {
         }
 
         command.setExecutor(customCommand);
-        if (this instanceof TabCompleter tabCompleter) {
+        if (customCommand instanceof TabCompleter tabCompleter) {
             command.setTabCompleter(tabCompleter);
         }
 

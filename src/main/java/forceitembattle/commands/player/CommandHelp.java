@@ -1,13 +1,13 @@
 package forceitembattle.commands.player;
 
 import forceitembattle.commands.CustomCommand;
-import org.bukkit.ChatColor;
+import forceitembattle.ForceItemBattle;
 import org.bukkit.entity.Player;
 
 public class CommandHelp extends CustomCommand {
 
-    public CommandHelp() {
-        super("help");
+    public CommandHelp(ForceItemBattle plugin) {
+        super(plugin, "help");
     }
 
     private void msg(Player player, String message) {

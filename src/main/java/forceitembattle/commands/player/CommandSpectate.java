@@ -1,13 +1,14 @@
 package forceitembattle.commands.player;
 
 import forceitembattle.commands.CustomCommand;
+import forceitembattle.ForceItemBattle;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 
 public class CommandSpectate extends CustomCommand {
 
-    public CommandSpectate() {
-        super("spectate");
+    public CommandSpectate(ForceItemBattle plugin) {
+        super(plugin, "spectate");
         setDescription("Toggle gamemode spectator");
     }
 

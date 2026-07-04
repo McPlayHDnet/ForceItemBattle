@@ -5,20 +5,33 @@ import forceitembattle.event.FoundItemEvent;
 import forceitembattle.event.AntimatterTeleporterUseEvent;
 import forceitembattle.event.PlayerGrantAchievementEvent;
 import forceitembattle.event.WheelOfFortuneWinEvent;
+import forceitembattle.achievements.Achievements;
 import forceitembattle.achievements.Trigger;
+import forceitembattle.settings.GameSetting;
+import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.util.Text;
 import io.papermc.paper.event.player.PlayerTradeEvent;
 import lombok.RequiredArgsConstructor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import org.bukkit.Bukkit;
+import org.bukkit.Sound;
+import io.papermc.paper.advancement.AdvancementDisplay;
+import org.bukkit.advancement.Advancement;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerAdvancementDoneEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+
+import java.util.Objects;
 
 @RequiredArgsConstructor
 public class AchievementListener implements Listener {
@@ -103,6 +116,20 @@ public class AchievementListener implements Listener {
     @EventHandler
     public void onAchievementGrant(PlayerGrantAchievementEvent event) {
         Player player = event.getPlayer();
+        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        Achievements achievement = event.getAchievement();
+
+        // Announce the achievement to everyone (skipped for spectators).
+        if (!forceItemPlayer.isSpectator()) {
+            player.playSound(player, Sound.BLOCK_AMETHYST_BLOCK_RESONATE, 1, 1);
+            Bukkit.getOnlinePlayers().forEach(players -> {
+                players.sendMessage(Component.empty());
+                players.sendMessage(Text.mm().deserialize("<dark_gray>[<yellow>❋<dark_gray>] <gold>" + player.getName() + " <gray>has made the achievement <hover:show_text:'<dark_aqua>" + achievement.getTitle() + "<newline><gray>" + achievement.getDescription() + "'><dark_aqua>[" + achievement.getTitle() + "]</hover>"));
+                players.sendMessage(Component.empty());
+            });
+        }
+
+        // Process achievement-chain triggers (e.g. Completionist).
         this.plugin.getAchievementManager().handleEvent(player, event, Trigger.ACHIEVEMENT);
     }
 
@@ -114,5 +141,30 @@ public class AchievementListener implements Listener {
     @EventHandler
     public void onAntimatterTeleporterUse(AntimatterTeleporterUseEvent event) {
         this.plugin.getAchievementManager().handleEvent(event.getPlayer(), event, Trigger.ANTIMATTER_TELEPORTER);
+    }
+
+    @EventHandler
+    public void onAdvancementGrant(PlayerAdvancementDoneEvent event) {
+        if (this.plugin.getSettings().isSettingEnabled(GameSetting.EVENT)) {
+            event.message(null);
+            return;
+        }
+
+        Advancement advancement = event.getAdvancement();
+
+        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(event.getPlayer().getUniqueId());
+        if (forceItemPlayer.isSpectator()) return;
+
+        if (advancement.key().namespace().equals("fib")) {
+            String plainAdvancement = PlainTextComponentSerializer.plainText().serialize(advancement.displayName());
+            String plainAdvancementDescription = PlainTextComponentSerializer.plainText().serialize(Objects.requireNonNull(advancement.getDisplay()).description());
+
+            String advancementType = advancement.getDisplay().frame() == AdvancementDisplay.Frame.CHALLENGE ? "has completed the challenge" : "has made the advancement";
+            String advancementTypeColor = advancement.getDisplay().frame() == AdvancementDisplay.Frame.CHALLENGE ? "<dark_purple>" : "<green>";
+
+            event.message(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>[<yellow>⭐<dark_gray>] <gold>" + event.getPlayer().getName() + " <gray>" + advancementType + " <hover:show_text:'" + advancementTypeColor + plainAdvancement + "<newline>" + advancementTypeColor + plainAdvancementDescription + "'>" + advancementTypeColor + plainAdvancement + "</hover>"));
+        } else {
+            event.message(null);
+        }
     }
 }

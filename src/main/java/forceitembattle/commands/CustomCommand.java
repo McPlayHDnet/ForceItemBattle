@@ -1,6 +1,7 @@
 package forceitembattle.commands;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.util.Text;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.command.Command;
@@ -9,29 +10,32 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 /**
- * Command that is specified in plugin.yml
+ * Command that is specified in plugin.yml.
+ *
+ * <p>The owning plugin is injected via the constructor. Registration is no longer
+ * a constructor side effect — commands are registered explicitly through
+ * {@link CommandsManager#registerCommand(CustomCommand)} during bootstrap.
  */
 @Getter
 public abstract class CustomCommand implements CommandExecutor {
 
-    protected final ForceItemBattle plugin = ForceItemBattle.getInstance();
+    protected final ForceItemBattle plugin;
     private final String name;
     @Setter
     private String usage;
     @Setter
     private String description;
 
-    public CustomCommand(String name) {
+    public CustomCommand(ForceItemBattle plugin, String name) {
+        this.plugin = plugin;
         this.name = name;
-
-        plugin.getCommandsManager().registerCommand(this);
     }
 
     public void msgUsage(Player player) {
         String usage = this.getUsage() == null ? "" : " " + this.getUsage();
         String description = this.getDescription() == null ? "uhhh I guess this is self explanatory?.." : this.getDescription();
 
-        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <white>/" + this.getName() + "<gray>" + usage + " <dark_gray>- <white>" + description));
+        player.sendMessage(Text.mm().deserialize("<dark_gray>» <white>/" + this.getName() + "<gray>" + usage + " <dark_gray>- <white>" + description));
     }
 
     @Override

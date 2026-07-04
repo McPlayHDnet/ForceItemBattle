@@ -3,13 +3,14 @@ package forceitembattle.commands.player;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.ForceItemBattle;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 public class CommandTeams extends CustomCommand {
 
-    public CommandTeams() {
-        super("teams");
+    public CommandTeams(ForceItemBattle plugin) {
+        super(plugin, "teams");
         setDescription("Everything about teams");
     }
 

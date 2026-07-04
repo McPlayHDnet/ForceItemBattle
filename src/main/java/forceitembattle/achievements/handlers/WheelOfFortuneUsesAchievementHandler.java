@@ -1,5 +1,6 @@
 package forceitembattle.achievements.handlers;
 
+import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.Trigger;
 import forceitembattle.event.WheelOfFortuneWinEvent;
 import forceitembattle.util.ForceItemPlayer;
@@ -22,7 +23,7 @@ public class WheelOfFortuneUsesAchievementHandler implements AchievementHandler<
     }
 
     @Override
-    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer) {
+    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin ) {
         if (!(event instanceof WheelOfFortuneWinEvent)) {
             return false;
         }

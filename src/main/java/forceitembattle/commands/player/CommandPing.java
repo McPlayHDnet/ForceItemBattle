@@ -2,11 +2,12 @@ package forceitembattle.commands.player;
 
 import forceitembattle.commands.CustomCommand;
 import org.bukkit.entity.Player;
+import forceitembattle.ForceItemBattle;
 
 public class CommandPing extends CustomCommand {
 
-    public CommandPing() {
-        super("ping");
+    public CommandPing(ForceItemBattle plugin) {
+        super(plugin, "ping");
         setDescription("Check your ping");
     }
 

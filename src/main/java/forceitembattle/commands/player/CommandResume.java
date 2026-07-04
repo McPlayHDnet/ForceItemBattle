@@ -3,14 +3,15 @@ package forceitembattle.commands.player;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.GameState;
+import forceitembattle.ForceItemBattle;
 import org.bukkit.Bukkit;
 import org.bukkit.GameRules;
 import org.bukkit.entity.Player;
 
 public class CommandResume extends CustomCommand {
 
-    public CommandResume() {
-        super("resume");
+    public CommandResume(ForceItemBattle plugin) {
+        super(plugin, "resume");
         setDescription("Resume the game");
     }
 

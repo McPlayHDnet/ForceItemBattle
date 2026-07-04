@@ -2,12 +2,13 @@ package forceitembattle.commands.player;
 
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.settings.GameSetting;
+import forceitembattle.ForceItemBattle;
 import org.bukkit.entity.Player;
 
 public class CommandBp extends CustomCommand {
 
-    public CommandBp() {
-        super("bp");
+    public CommandBp(ForceItemBattle plugin) {
+        super(plugin, "bp");
         setDescription("Open your backpack");
     }
 

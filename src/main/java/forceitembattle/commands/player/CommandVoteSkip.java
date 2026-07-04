@@ -4,15 +4,16 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.util.Text;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.entity.Player;
 
 public class CommandVoteSkip extends CustomCommand {
 
-    private final MiniMessage miniMessage = ForceItemBattle.getInstance().getGamemanager().getMiniMessage();
+    private final MiniMessage miniMessage = Text.mm();
 
-    public CommandVoteSkip() {
-        super("voteskip");
+    public CommandVoteSkip(ForceItemBattle plugin) {
+        super(plugin, "voteskip");
         setDescription("Voting for a skip item");
     }
 
@@ -28,18 +29,18 @@ public class CommandVoteSkip extends CustomCommand {
             return;
         }
 
-        ForceItemPlayer forceItemPlayer = ForceItemBattle.getInstance().getGamemanager().getForceItemPlayer(player.getUniqueId());
+        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
 
         if (forceItemPlayer.remainingJokers() == 0 || (forceItemPlayer.currentTeam() != null && forceItemPlayer.currentTeam().getRemainingJokers() == 0)) {
             player.sendMessage(this.miniMessage.deserialize("<red>You dont have any jokers to vote!"));
             return;
         }
 
-        if (ForceItemBattle.getInstance().getVoteSkipManager().isVoteInProgress()) {
+        if (this.plugin.getVoteSkipManager().isVoteInProgress()) {
             player.sendMessage(this.miniMessage.deserialize("<red>A skip vote is currently in progress."));
             return;
         }
 
-        ForceItemBattle.getInstance().getVoteSkipManager().startVoting(player);
+        this.plugin.getVoteSkipManager().startVoting(player);
     }
 }

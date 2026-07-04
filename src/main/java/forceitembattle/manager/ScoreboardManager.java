@@ -15,7 +15,7 @@ import org.bukkit.scoreboard.Team;
 import java.util.Comparator;
 import java.util.List;
 
-public class ScoreboardManager {
+public class ScoreboardManager implements Manager {
 
     private final ForceItemBattle plugin;
 
@@ -77,7 +77,7 @@ public class ScoreboardManager {
             }
 
             if (mat != null) {
-                String itemIcon = ForceItemBattle.getInstance()
+                String itemIcon = this.plugin
                         .getItemDifficultiesManager()
                         .getUnicodeFromMaterial(true, mat);
 

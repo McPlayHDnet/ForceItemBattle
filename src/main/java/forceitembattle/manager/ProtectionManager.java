@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class ProtectionManager {
+public class ProtectionManager implements Manager {
 
     private final ForceItemBattle plugin;
 

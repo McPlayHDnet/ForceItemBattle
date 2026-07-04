@@ -9,6 +9,7 @@ import de.threeseconds.openapi.fibservice.client.model.FibTeamStatisticsDto;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.stats.FIBServiceHelper;
+import forceitembattle.ForceItemBattle;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -22,8 +23,8 @@ import java.util.UUID;
 
 public class CommandStats extends CustomCommand implements CustomTabCompleter {
 
-    public CommandStats() {
-        super("stats");
+    public CommandStats(ForceItemBattle plugin) {
+        super(plugin, "stats");
 
         setUsage("[player]");
         setDescription("Show stats");

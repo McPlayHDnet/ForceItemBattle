@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 import static forceitembattle.util.RecipeInventory.CUSTOM_MATERIALS;
 
-public class Gamemanager {
+public class Gamemanager implements Manager {
 
     private final ForceItemBattle forceItemBattle;
 
@@ -38,8 +38,6 @@ public class Gamemanager {
     @Setter
     private GamePreset currentGamePreset;
 
-    @Getter
-    private MiniMessage miniMessage;
 
     @Getter
     @Setter
@@ -58,22 +56,10 @@ public class Gamemanager {
         this.currentGamePreset = null;
 
         this.forceItemPlayerMap = new HashMap<>();
+    }
 
-        this.miniMessage = MiniMessage.builder()
-                .tags(TagResolver.builder()
-                        .resolver(StandardTags.color())
-                        .resolver(StandardTags.shadowColor())
-                        .resolver(StandardTags.gradient())
-                        .resolver(StandardTags.reset())
-                        .resolver(StandardTags.newline())
-                        .resolver(StandardTags.rainbow())
-                        .resolver(StandardTags.decorations())
-                        .resolver(StandardTags.clickEvent())
-                        .resolver(StandardTags.hoverEvent())
-                        .resolver(StandardTags.translatable())
-                        .build()
-                )
-                .build();
+    public MiniMessage getMiniMessage() {
+        return Text.mm();
     }
 
     public void addPlayer(Player player, ForceItemPlayer forceItemPlayer) {
@@ -196,7 +182,7 @@ public class Gamemanager {
 
     public void finishGame() {
         this.setCurrentGameState(GameState.END_GAME);
-        ForceItemBattle.getInstance().getAchievementManager().checkGameEndAchievements();
+        this.forceItemBattle.getAchievementManager().checkGameEndAchievements();
 
         Bukkit.getOnlinePlayers().forEach(player -> {
             ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
@@ -407,7 +393,7 @@ public class Gamemanager {
         return JOKER_MATERIAL;
     }
 
-    public static final NamespacedKey BACKPACK_KEY = new NamespacedKey(ForceItemBattle.getInstance(), "backpack");
+    public static final NamespacedKey BACKPACK_KEY = new NamespacedKey("fib", "backpack");
 
     public static ItemStack getJokers(int amount) {
         return new ItemBuilder(JOKER_MATERIAL)

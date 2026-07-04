@@ -1,6 +1,7 @@
 package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.manager.Manager;
 import forceitembattle.settings.GameSetting;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,13 +13,14 @@ import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class Timer {
+public class Timer implements Manager {
 
     private final ForceItemBattle forceItemBattle;
     /**
@@ -30,6 +32,8 @@ public class Timer {
     @Getter
     private final Map<UUID, BossBar> bossBar = new HashMap<>();
 
+    private BukkitTask timerTask;
+
     public Timer(ForceItemBattle forceItemBattle) {
         this.forceItemBattle = forceItemBattle;
         if (this.forceItemBattle.getConfig().contains("timer.time")) {
@@ -37,8 +41,26 @@ public class Timer {
         } else {
             this.timeLeft = 0;
         }
+    }
 
+    @Override
+    public void enable() {
         run();
+    }
+
+    @Override
+    public void disable() {
+        if (this.timerTask != null) {
+            this.timerTask.cancel();
+        }
+
+        this.forceItemBattle.reloadConfig();
+        if (this.forceItemBattle.getConfig().getBoolean("isReset")) {
+            this.forceItemBattle.getConfig().set("timer.time", 0);
+        } else {
+            this.save();
+        }
+        this.forceItemBattle.saveConfig();
     }
 
     public String formatSeconds(int inputSeconds) {
@@ -126,7 +148,7 @@ public class Timer {
     }
 
     private void run() {
-        new BukkitRunnable() {
+        this.timerTask = new BukkitRunnable() {
             @Override
             public void run() {
 
@@ -192,7 +214,7 @@ public class Timer {
                         player.showTitle(gameDoneTitle);
                     });
                     forceItemBattle.getGamemanager().finishGame();
-                    forceItemBattle.logToFile("<< Force Item Battle is over >>");
+                    FileLogger.log("<< Force Item Battle is over >>");
                     cancel();
                 }
             }

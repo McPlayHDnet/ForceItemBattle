@@ -1,5 +1,6 @@
 package forceitembattle.achievements.handlers;
 
+import forceitembattle.ForceItemBattle;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.achievements.Trigger;
 import forceitembattle.util.ForceItemPlayer;
@@ -22,7 +23,7 @@ public class BackToBackCountAchievementHandler implements AchievementHandler<Sim
     }
 
     @Override
-    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer) {
+    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin ) {
         if (event instanceof FoundItemEvent foundEvent && foundEvent.isBackToBack()) {
             progress.count++;
             return progress.count >= targetAmount;

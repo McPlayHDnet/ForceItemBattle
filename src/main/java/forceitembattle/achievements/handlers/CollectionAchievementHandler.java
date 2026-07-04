@@ -1,5 +1,6 @@
 package forceitembattle.achievements.handlers;
 
+import forceitembattle.ForceItemBattle;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.achievements.Trigger;
 import forceitembattle.util.BiomeGroup;
@@ -40,7 +41,7 @@ public class CollectionAchievementHandler<T> implements AchievementHandler<Colle
     }
 
     @Override
-    public boolean check(Event event, CollectionAchievementProgress<T> progress, ForceItemPlayer forceItemPlayer) {
+    public boolean check(Event event, CollectionAchievementProgress<T> progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin ) {
         T item = extractor.extract(event, forceItemPlayer, progress);
         if (item != null) {
             progress.collected.add(item);

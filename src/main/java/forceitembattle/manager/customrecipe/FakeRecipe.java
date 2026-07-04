@@ -297,21 +297,21 @@ public enum FakeRecipe {
         this.recipeSupplier = recipeSupplier;
     }
 
-    public Recipe getRecipe(ItemStack targetItem) {
+    public Recipe getRecipe(ItemStack targetItem, ForceItemBattle plugin) {
         try {
             return recipeSupplier.apply(targetItem);
         } catch (Exception e) {
-            ForceItemBattle.getInstance().getLogger().log(Level.WARNING, "Failed to create recipe for " + targetItem, e);
+            plugin.getLogger().log(Level.WARNING, "Failed to create recipe for " + targetItem, e);
             return null;
         }
     }
 
     @Nullable
-    public static FakeRecipe forItem(ItemStack item) {
+    public static FakeRecipe forItem(ItemStack item, ForceItemBattle plugin) {
         for (FakeRecipe recipe : CACHE) {
             if (recipe.itemMatcher.test(item)) {
                 boolean isRecipeHard = recipe.name().endsWith("_HARD");
-                if (isRecipeHard == ForceItemBattle.getInstance().getSettings().isSettingEnabled(GameSetting.HARDER_TRACKERS)) {
+                if (isRecipeHard == plugin.getSettings().isSettingEnabled(GameSetting.HARDER_TRACKERS)) {
                     return recipe;
                 }
             }

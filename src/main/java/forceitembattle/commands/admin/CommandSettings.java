@@ -2,12 +2,13 @@ package forceitembattle.commands.admin;
 
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.util.InvSettings;
+import forceitembattle.ForceItemBattle;
 import org.bukkit.entity.Player;
 
 public class CommandSettings extends CustomCommand {
 
-    public CommandSettings() {
-        super("settings");
+    public CommandSettings(ForceItemBattle plugin) {
+        super(plugin,"settings");
 
         setDescription("Manage settings");
     }

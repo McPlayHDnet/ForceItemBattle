@@ -2,6 +2,7 @@ package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.Gamemanager;
+import forceitembattle.manager.Manager;
 import forceitembattle.settings.GameSetting;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -11,7 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class Backpack {
+public class Backpack implements Manager {
 
     private final ForceItemBattle forceItemBattle;
     private final Map<UUID, Inventory> playerBackpack;

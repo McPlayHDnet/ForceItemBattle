@@ -2,7 +2,6 @@ package forceitembattle.util;
 
 import com.destroystokyo.paper.profile.PlayerProfile;
 import com.destroystokyo.paper.profile.ProfileProperty;
-import forceitembattle.ForceItemBattle;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -78,7 +77,7 @@ public class ItemBuilder {
         ItemMeta itemMeta = getItemStack().getItemMeta();
         List<Component> lore = new ArrayList<>();
         for (String line : loreLines) {
-            lore.add(ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize(line).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE));
+            lore.add(Text.mm().deserialize(line).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE));
         }
         itemMeta.lore(lore);
         setItemMeta(itemMeta);
@@ -111,7 +110,7 @@ public class ItemBuilder {
     public ItemBuilder setDisplayName(String displayName) {
         if (displayName == null) return this;
         ItemMeta itemMeta = getItemStack().getItemMeta();
-        itemMeta.displayName(ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize(displayName).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE));
+        itemMeta.displayName(Text.mm().deserialize(displayName).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE));
         setItemMeta(itemMeta);
         return this;
     }

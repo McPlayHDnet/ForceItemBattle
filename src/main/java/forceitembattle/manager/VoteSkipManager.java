@@ -2,6 +2,7 @@ package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.util.Text;
 import lombok.Getter;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
@@ -14,7 +15,9 @@ import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 
-public class VoteSkipManager {
+public class VoteSkipManager implements Manager {
+
+    private final ForceItemBattle plugin;
 
     @Getter
     private boolean voteInProgress = false;
@@ -25,19 +28,31 @@ public class VoteSkipManager {
     private Material votedMaterial;
     private ForceItemPlayer initiator;
 
-    private final MiniMessage miniMessage = ForceItemBattle.getInstance().getGamemanager().getMiniMessage();
+    private final MiniMessage miniMessage = Text.mm();
     private final Random random = new Random();
+
+    public VoteSkipManager(ForceItemBattle plugin) {
+        this.plugin = plugin;
+    }
+
+    @Override
+    public void disable() {
+        if (this.voteTask != null) {
+            this.voteTask.cancel();
+            this.voteTask = null;
+        }
+    }
 
     public void startVoting(Player initiator) {
         this.voteInProgress = true;
         this.yesVotes.clear();
         this.noVotes.clear();
         this.yesVotes.add(initiator.getUniqueId());
-        this.initiator = ForceItemBattle.getInstance().getGamemanager().getForceItemPlayer(initiator.getUniqueId());
+        this.initiator = this.plugin.getGamemanager().getForceItemPlayer(initiator.getUniqueId());
         this.votedMaterial = this.initiator.getCurrentMaterial();
 
-        String materialName = ForceItemBattle.getInstance().getGamemanager().getMaterialName(this.votedMaterial);
-        String unicodeMaterial = ForceItemBattle.getInstance().getItemDifficultiesManager().getUnicodeFromMaterial(true, this.votedMaterial);
+        String materialName = this.plugin.getGamemanager().getMaterialName(this.votedMaterial);
+        String unicodeMaterial = this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, this.votedMaterial);
 
         Bukkit.getOnlinePlayers().forEach(player -> {
             player.sendMessage(" ");
@@ -49,7 +64,7 @@ public class VoteSkipManager {
             player.sendMessage(" ");
         });
 
-        this.voteTask = Bukkit.getScheduler().runTaskLater(ForceItemBattle.getInstance(), this::endVoting, 20 * 60);
+        this.voteTask = Bukkit.getScheduler().runTaskLater(this.plugin, this::endVoting, 20 * 60);
     }
 
     public void castVote(Player player, boolean voteYes) {
@@ -67,7 +82,7 @@ public class VoteSkipManager {
             player.sendMessage(this.miniMessage.deserialize("<gray>You voted for <red><b>NO</b><gray>!"));
         }
 
-        int totalPlayers = ForceItemBattle.getInstance().getGamemanager().forceItemPlayerMap().size();
+        int totalPlayers = this.plugin.getGamemanager().forceItemPlayerMap().size();
         int totalVotes = this.yesVotes.size() + this.noVotes.size();
 
         if (totalVotes >= totalPlayers) {
@@ -83,8 +98,8 @@ public class VoteSkipManager {
         int no = this.noVotes.size();
         String voteLabel = (yes != 1 ? "votes" : "vote");
 
-        String materialName = ForceItemBattle.getInstance().getGamemanager().getMaterialName(this.votedMaterial);
-        String unicodeMaterial = ForceItemBattle.getInstance().getItemDifficultiesManager().getUnicodeFromMaterial(true, this.votedMaterial);
+        String materialName = this.plugin.getGamemanager().getMaterialName(this.votedMaterial);
+        String unicodeMaterial = this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, this.votedMaterial);
 
         boolean skipItem = false;
         boolean isTie = yes == no;
@@ -115,7 +130,7 @@ public class VoteSkipManager {
             this.initiator.currentTeam().setRemainingJokers(this.initiator.currentTeam().getRemainingJokers() - 1);
         }
         if (skipItem) {
-            ForceItemBattle.getInstance().getGamemanager().forceSkipItem(this.initiator.player(), false);
+            this.plugin.getGamemanager().forceSkipItem(this.initiator.player(), false);
         }
 
         this.votedMaterial = null;

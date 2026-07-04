@@ -1,13 +1,14 @@
 package forceitembattle.commands.admin;
 
 import forceitembattle.commands.CustomCommand;
+import forceitembattle.ForceItemBattle;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 public class CommandReset extends CustomCommand {
 
-    public CommandReset() {
-        super("reset");
+    public CommandReset(ForceItemBattle plugin) {
+        super(plugin, "reset");
 
         setDescription("Restart server with new seed");
     }

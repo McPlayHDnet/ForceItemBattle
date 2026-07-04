@@ -12,7 +12,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PositionManager {
+public class PositionManager implements Manager {
 
     private final ForceItemBattle plugin;
     private final Map<String, Location> positionsMap;

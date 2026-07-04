@@ -10,6 +10,9 @@ import lombok.Setter;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 
+import org.bukkit.configuration.ConfigurationSection;
+import java.util.List;
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -17,7 +20,7 @@ import java.lang.reflect.Type;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class ItemDifficultiesManager {
+public class ItemDifficultiesManager implements Manager {
 
     private final ForceItemBattle plugin;
 
@@ -68,14 +71,16 @@ public class ItemDifficultiesManager {
 
     public ItemDifficultiesManager(ForceItemBattle forceItemBattle) {
         this.plugin = forceItemBattle;
-
         this.FIXED_RANDOM_SEED = new Random().nextLong();
         this.FIXED_RANDOM = new Random(FIXED_RANDOM_SEED);
-
         this.descriptionItems = new HashMap<>();
+    }
 
+    @Override
+    public void enable() {
         registerAllItems();
         setupStates();
+        loadDescriptions();
     }
 
     public void setupStates() {
@@ -86,6 +91,21 @@ public class ItemDifficultiesManager {
         // Populate state item lists from registry
         for (State state : State.VALUES) {
             state.setItems(getItemsByState(state));
+        }
+    }
+
+    private void loadDescriptions() {
+        if (!this.plugin.getConfig().isConfigurationSection("descriptions")) {
+            return;
+        }
+        ConfigurationSection section = this.plugin.getConfig().getConfigurationSection("descriptions");
+        if (section == null) {
+            throw new NullPointerException("'descriptions' does not exist in the config.yml");
+        }
+        for (String key : section.getKeys(false)) {
+            List<String> descriptions = section.getStringList(key);
+            Material material = Material.valueOf(key.toUpperCase());
+            this.descriptionItems.put(material, new DescriptionItem(material, descriptions));
         }
     }
 

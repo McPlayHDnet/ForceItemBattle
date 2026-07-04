@@ -1,5 +1,6 @@
 package forceitembattle.achievements.handlers;
 
+import forceitembattle.ForceItemBattle;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.achievements.Trigger;
 import forceitembattle.util.ForceItemPlayer;
@@ -32,7 +33,7 @@ public class RepeatItemAchievementHandler implements AchievementHandler<ItemFreq
     }
 
     @Override
-    public boolean check(Event event, ItemFrequencyAchievementProgress progress, ForceItemPlayer forceItemPlayer) {
+    public boolean check(Event event, ItemFrequencyAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin ) {
         if (!(event instanceof FoundItemEvent foundEvent)) {
             return false;
         }

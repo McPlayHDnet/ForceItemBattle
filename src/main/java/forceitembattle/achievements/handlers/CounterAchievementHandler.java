@@ -25,7 +25,7 @@ public class CounterAchievementHandler implements AchievementHandler<CounterAchi
     }
 
     @Override
-    public boolean check(Event event, CounterAchievementProgress progress, ForceItemPlayer forceItemPlayer) {
+    public boolean check(Event event, CounterAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin) {
         if (!(event instanceof FoundItemEvent foundEvent)) {
             return false;
         }
@@ -48,7 +48,7 @@ public class CounterAchievementHandler implements AchievementHandler<CounterAchi
         Material itemType = foundEvent.getFoundItem().getType();
 
         // Check dimension if specified
-        if (dimension != null && !isItemFromDimension(itemType, dimension)) {
+        if (dimension != null && !isItemFromDimension(itemType, dimension, plugin)) {
             if (requireConsecutive) {
                 progress.consecutiveCount = 0;
             }
@@ -65,8 +65,8 @@ public class CounterAchievementHandler implements AchievementHandler<CounterAchi
         }
     }
 
-    private boolean isItemFromDimension(Material itemType, String dimension) {
-        var itemManager = ForceItemBattle.getInstance().getItemDifficultiesManager();
+    private boolean isItemFromDimension(Material itemType, String dimension, ForceItemBattle plugin) {
+        var itemManager = plugin.getItemDifficultiesManager();
         return switch (dimension) {
             case "world" -> itemManager.getOverworldItems().contains(itemType);
             case "world_nether" -> itemManager.getNetherItems().contains(itemType);

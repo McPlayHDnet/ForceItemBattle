@@ -1,6 +1,7 @@
 package forceitembattle.commands.player;
 
 import forceitembattle.commands.CustomCommand;
+import forceitembattle.ForceItemBattle;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
@@ -9,8 +10,8 @@ import java.util.List;
 
 public class CommandSpawn extends CustomCommand {
 
-    public CommandSpawn() {
-        super("spawn");
+    public CommandSpawn(ForceItemBattle plugin) {
+        super(plugin, "spawn");
         setDescription("Teleport to the spawn location");
     }
 

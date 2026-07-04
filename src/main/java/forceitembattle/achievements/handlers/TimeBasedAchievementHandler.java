@@ -66,12 +66,12 @@ public class TimeBasedAchievementHandler implements AchievementHandler<TimeAchie
     }
 
     @Override
-    public boolean check(Event event, TimeAchievementProgress progress, ForceItemPlayer forceItemPlayer) {
+    public boolean check(Event event, TimeAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin) {
         if (!(event instanceof FoundItemEvent foundEvent)) {
             return false;
         }
 
-        ForceItemBattle fib = ForceItemBattle.getInstance();
+        ForceItemBattle fib = plugin;
         // Pause-aware game clock: the Timer only counts down during MID_GAME, so
         // deriving elapsed/remaining from it (instead of wall time) stays correct
         // across /pause and /resume. Mirrors ItemDifficultiesManager's elapsed calc.

@@ -2,13 +2,14 @@ package forceitembattle.commands.admin;
 
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.util.ItemsInventory;
+import forceitembattle.ForceItemBattle;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
 public class CommandItems extends CustomCommand {
 
-    public CommandItems() {
-        super("items");
+    public CommandItems(ForceItemBattle plugin) {
+        super(plugin, "items");
 
         setDescription("Show all available items");
     }

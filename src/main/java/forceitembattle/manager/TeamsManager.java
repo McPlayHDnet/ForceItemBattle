@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-public class TeamsManager {
+public class TeamsManager implements Manager {
 
     private final ForceItemBattle forceItemBattle;
 

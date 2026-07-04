@@ -26,7 +26,7 @@ import org.bukkit.event.Event;
 
 import java.util.*;
 
-public class AchievementManager {
+public class AchievementManager implements Manager {
 
     private final ForceItemBattle plugin;
     private final Map<UUID, Map<Achievements, AchievementProgressTracker>> playerProgress = new HashMap<>();
@@ -120,7 +120,7 @@ public class AchievementManager {
                     (AchievementHandler<AchievementProgressTracker>) handler;
 
             // Check if completed
-            if (typedHandler.check(event, tracker, forceItemPlayer)) {
+            if (typedHandler.check(event, tracker, forceItemPlayer, plugin)) {
                 grantAchievement(player, achievement, useTeamProgress, forceItemPlayer);
             }
         }

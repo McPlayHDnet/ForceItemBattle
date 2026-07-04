@@ -2,6 +2,7 @@ package forceitembattle.commands.player;
 
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.ForceItemBattle;
 import org.apache.commons.lang3.text.WordUtils;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -9,8 +10,8 @@ import org.bukkit.inventory.ItemStack;
 
 public class CommandInfoWiki extends CustomCommand {
 
-    public CommandInfoWiki() {
-        super("infowiki");
+    public CommandInfoWiki(ForceItemBattle plugin) {
+        super(plugin, "infowiki");
         setDescription("Get wiki info link for your current item");
     }
 

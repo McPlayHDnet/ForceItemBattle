@@ -1,10 +1,11 @@
-package forceitembattle.commands.player.trade;
+package forceitembattle.commands.player;
 
 import forceitembattle.commands.CustomCommand;
-import forceitembattle.listener.Listeners;
+import forceitembattle.listener.FoundItemListener;
 import forceitembattle.manager.TradingManager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.ForceItemBattle;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
@@ -15,8 +16,8 @@ import java.time.Duration;
 
 public class CommandAskTrade extends CustomCommand {
 
-    public CommandAskTrade() {
-        super("asktrade");
+    public CommandAskTrade(ForceItemBattle plugin) {
+        super(plugin, "trade");
         setDescription("Ask if someone has an item you/your team needs");
     }
 
@@ -40,7 +41,7 @@ public class CommandAskTrade extends CustomCommand {
             if(players == player) return;
             players.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(TradingManager.PREFIX + "<yellow>" + player.getName() + " <gray>is looking for <dark_aqua>" + materialName + " <dark_gray>» <click:run_command:/trade " + player.getName() + "><dark_gray>[<aqua>Request a trade<dark_gray>]"));
 
-            if(Listeners.hasItemInInventory(players.getInventory(), currentMaterial)) {
+            if(FoundItemListener.hasItemInInventory(players.getInventory(), currentMaterial)) {
                 Title.Times times = Title.Times.times(Duration.ofMillis(500), Duration.ofMillis(4000), Duration.ofMillis(500));
                 Title pauseTitle = Title.title(Component.empty(), plugin.getGamemanager().getMiniMessage().deserialize("<dark_aqua>You have an item that <yellow>" + player.getName() + " <dark_aqua>wants"), times);
 

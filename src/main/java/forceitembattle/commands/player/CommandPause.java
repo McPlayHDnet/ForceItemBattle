@@ -3,13 +3,14 @@ package forceitembattle.commands.player;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.GameState;
+import forceitembattle.ForceItemBattle;
 import org.bukkit.Bukkit;
 import org.bukkit.GameRules;
 import org.bukkit.entity.Player;
 public class CommandPause extends CustomCommand {
 
-    public CommandPause() {
-        super("pause");
+    public CommandPause(ForceItemBattle plugin) {
+        super(plugin, "pause");
         setDescription("Pause the game");
     }
 

@@ -1,12 +1,13 @@
 package forceitembattle.commands.admin;
 
 import forceitembattle.commands.CustomCommand;
+import forceitembattle.ForceItemBattle;
 import org.bukkit.entity.Player;
 
 public class CommandStopTimer extends CustomCommand {
 
-    public CommandStopTimer() {
-        super("stoptimer");
+    public CommandStopTimer(ForceItemBattle plugin) {
+        super(plugin, "stoptimer");
 
         setDescription("Stop the timer and end the game");
     }

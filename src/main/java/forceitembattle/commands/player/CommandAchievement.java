@@ -4,6 +4,7 @@ import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.achievements.AchievementInventory;
 import forceitembattle.achievements.Achievements;
+import forceitembattle.ForceItemBattle;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -14,8 +15,8 @@ import java.util.UUID;
 
 public class CommandAchievement extends CustomCommand implements CustomTabCompleter {
 
-    public CommandAchievement() {
-        super("achievements");
+    public CommandAchievement(ForceItemBattle plugin) {
+        super(plugin, "achievements");
         setUsage("<list|grant|revoke|reset> [player] [achievement]");
         setDescription("Manage achievements");
     }

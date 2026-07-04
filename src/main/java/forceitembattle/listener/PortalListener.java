@@ -17,6 +17,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.Sound;
+import org.bukkit.event.player.PlayerPortalEvent;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -52,6 +54,21 @@ public class PortalListener implements Listener {
                     return;
                 }
             }
+        }
+    }
+
+    @EventHandler
+    public void onPortalEvent(PlayerPortalEvent playerPortalEvent) {
+        Player player = playerPortalEvent.getPlayer();
+        if (!this.plugin.getGamemanager().isMidGame()) {
+            return;
+        }
+
+        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.HARD)) {
+            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>Travelling to other dimensions is disabled!"));
+            player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
+            playerPortalEvent.setCanCreatePortal(false);
+            playerPortalEvent.setCancelled(true);
         }
     }
 

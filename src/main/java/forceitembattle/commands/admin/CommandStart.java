@@ -7,6 +7,7 @@ import forceitembattle.manager.ItemDifficultiesManager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.preset.GamePreset;
 import forceitembattle.stats.FIBServiceHelper;
+import forceitembattle.ForceItemBattle;
 import forceitembattle.util.*;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
@@ -24,8 +25,8 @@ import java.util.List;
 
 public class CommandStart extends CustomCommand implements CustomTabCompleter {
 
-    public CommandStart() {
-        super("start");
+    public CommandStart(ForceItemBattle plugin) {
+        super(plugin, "start");
         setUsage("<time in min> <jokers> or <preset>");
         setDescription("Start the game");
     }
@@ -157,7 +158,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
     }
 
     private void startGame(int timeMinutes, int jokersAmount) {
-        this.plugin.initRecipes();
+        this.plugin.getRecipeManager().initRecipes();
 
         this.plugin.getPositionManager().clearPositions();
         // Fixed 5 / 15 minutes switch times.

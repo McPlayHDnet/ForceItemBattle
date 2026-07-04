@@ -5,6 +5,7 @@ import forceitembattle.settings.GameSetting;
 import forceitembattle.util.FinishInventory;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.Team;
+import forceitembattle.ForceItemBattle;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -17,8 +18,8 @@ public class CommandResult extends CustomCommand {
 
     public int place;
 
-    public CommandResult() {
-        super("result");
+    public CommandResult(ForceItemBattle plugin) {
+        super(plugin,"result");
         setDescription("Show the next player's result");
 
         this.place = -1;

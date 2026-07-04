@@ -5,6 +5,7 @@ import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.Scheduler;
+import forceitembattle.ForceItemBattle;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
@@ -17,8 +18,8 @@ import java.util.List;
 
 public class CommandPosition extends CustomCommand implements CustomTabCompleter {
 
-    public CommandPosition() {
-        super("pos");
+    public CommandPosition(ForceItemBattle plugin) {
+        super(plugin, "pos");
         setDescription("Add or show saved positions for structures");
     }
 

@@ -1,13 +1,14 @@
 package forceitembattle.commands.admin;
 
 import forceitembattle.commands.CustomCommand;
+import forceitembattle.ForceItemBattle;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 public class CommandSkip extends CustomCommand {
 
-    public CommandSkip() {
-        super("skip");
+    public CommandSkip(ForceItemBattle plugin) {
+        super(plugin, "skip");
 
         setDescription("Skip current item for player");
     }

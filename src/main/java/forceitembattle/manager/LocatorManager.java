@@ -3,6 +3,7 @@ package forceitembattle.manager;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.Locator;
+import forceitembattle.util.Text;
 import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;
 import net.kyori.adventure.bossbar.BossBar;
@@ -13,19 +14,20 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.StructureSearchResult;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
-public class LocatorManager {
+public class LocatorManager implements Manager {
+
+    private final ForceItemBattle plugin;
 
     private final Map<String, Locator> locators;
     private final Map<String, Location> locatedStructures;
 
     private static final String prefix = "<dark_gray>» <dark_purple>Locator <dark_gray>┃ ";
 
-    public LocatorManager() {
+    public LocatorManager(ForceItemBattle plugin) {
+        this.plugin = plugin;
         this.locators = new HashMap<>();
         this.locatedStructures = new HashMap<>();
 
@@ -44,14 +46,14 @@ public class LocatorManager {
         }
 
         if(!this.isInOverworld(forceItemPlayer.player())) {
-            forceItemPlayer.player().sendMessage(ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize(prefix + "<red>There is no <dark_aqua>" + locator.getStructureName() + " <red>in the " + this.getCurrentWorld(forceItemPlayer.player()) + "<red>."));
+            forceItemPlayer.player().sendMessage(Text.mm().deserialize(prefix + "<red>There is no <dark_aqua>" + locator.getStructureName() + " <red>in the " + this.getCurrentWorld(forceItemPlayer.player()) + "<red>."));
             return;
         }
 
         @Nullable Structure structureKey = RegistryAccess.registryAccess().getRegistry(RegistryKey.STRUCTURE).get(this.getNamespacedKey(locator.getStructureId()));
 
         if(structureKey == null) {
-            forceItemPlayer.player().sendMessage(ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize(prefix + "<dark_aqua>" + locator.getStructureId() + " <red>is not loaded or could not be found, Fire fix!"));
+            forceItemPlayer.player().sendMessage(Text.mm().deserialize(prefix + "<dark_aqua>" + locator.getStructureId() + " <red>is not loaded or could not be found, Fire fix!"));
             return;
         }
 
@@ -63,7 +65,7 @@ public class LocatorManager {
         );
 
         if(structureSearchResult == null) {
-            forceItemPlayer.player().sendMessage(ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize(prefix + "<dark_aqua>" + locator.getStructureName() + " <red>could not be found."));
+            forceItemPlayer.player().sendMessage(Text.mm().deserialize(prefix + "<dark_aqua>" + locator.getStructureName() + " <red>could not be found."));
             return;
         }
 
@@ -72,24 +74,24 @@ public class LocatorManager {
             this.destroyLocator(forceItemPlayer.player(), locator.getLocatorMaterial());
             forceItemPlayer.player().playSound(forceItemPlayer.player(), Sound.BLOCK_CONDUIT_AMBIENT_SHORT, 2, 1);
             new BukkitRunnable() {
-                final BossBar bar = BossBar.bossBar(ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize(""), 1, BossBar.Color.WHITE, BossBar.Overlay.NOTCHED_6);
+                final BossBar bar = BossBar.bossBar(Text.mm().deserialize(""), 1, BossBar.Color.WHITE, BossBar.Overlay.NOTCHED_6);
                 @Override
                 public void run() {
                     String bossBarTitle = "<gradient:#B314A8:#E775C3><b>" + locator.getStructureName() + " <reset><dark_gray>» " + locationToString(structureLocation) + distance(forceItemPlayer.player().getLocation(), structureLocation);
-                    bar.name(ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize(bossBarTitle));
+                    bar.name(Text.mm().deserialize(bossBarTitle));
                     forceItemPlayer.player().showBossBar(bar);
-                    ForceItemBattle.getInstance().getPositionManager().playParticleLine(forceItemPlayer.player(), structureSearchResult.getLocation(), Color.PURPLE);
+                    LocatorManager.this.plugin.getPositionManager().playParticleLine(forceItemPlayer.player(), structureSearchResult.getLocation(), Color.PURPLE);
 
                     if(forceItemPlayer.player().getLocation().distance(structureLocation) <= 50) {
                         forceItemPlayer.player().hideBossBar(bar);
                         cancel();
                     }
                 }
-            }.runTaskTimerAsynchronously(ForceItemBattle.getInstance(), 0L, 300L);
+            }.runTaskTimerAsynchronously(this.plugin, 0L, 300L);
         }
 
-        ForceItemBattle.getInstance().getPositionManager().playParticleLine(forceItemPlayer.player(), structureSearchResult.getLocation(), Color.PURPLE);
-        forceItemPlayer.player().sendMessage(ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize(prefix + "<dark_aqua>" + locator.getStructureName() + " <gray>located at " + locationToString(structureLocation) + distance(forceItemPlayer.player().getLocation(), structureLocation)));
+        this.plugin.getPositionManager().playParticleLine(forceItemPlayer.player(), structureSearchResult.getLocation(), Color.PURPLE);
+        forceItemPlayer.player().sendMessage(Text.mm().deserialize(prefix + "<dark_aqua>" + locator.getStructureName() + " <gray>located at " + locationToString(structureLocation) + distance(forceItemPlayer.player().getLocation(), structureLocation)));
         this.locatedStructures.put(locator.getStructureId(), structureLocation);
     }
 

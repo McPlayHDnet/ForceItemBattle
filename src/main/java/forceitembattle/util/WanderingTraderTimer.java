@@ -1,6 +1,7 @@
 package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.manager.Manager;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.CustomModelData;
 import lombok.Getter;
@@ -17,6 +18,7 @@ import org.bukkit.entity.WanderingTrader;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.MerchantRecipe;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,23 +29,41 @@ import java.util.UUID;
 
 @Setter
 @Getter
-public class WanderingTraderTimer {
+public class WanderingTraderTimer implements Manager {
+
+    private final ForceItemBattle plugin;
 
     private int randomAfterStartSpawnTime, timer, traderTimer;
 
     private final Map<UUID, Boolean> canBuyWheel;
 
-    public WanderingTraderTimer() {
+    private BukkitTask spawnTimerTask;
+    private BukkitTask traderTask;
+
+    public WanderingTraderTimer(ForceItemBattle plugin) {
+        this.plugin = plugin;
         this.randomAfterStartSpawnTime = (new Random().nextInt(4) + 7) * 60; //random number between 7 and 10 -> [7, 10]
         this.timer = this.randomAfterStartSpawnTime;
         this.canBuyWheel = new HashMap<>();
+    }
+
+    @Override
+    public void disable() {
+        if (this.spawnTimerTask != null) {
+            this.spawnTimerTask.cancel();
+            this.spawnTimerTask = null;
+        }
+        if (this.traderTask != null) {
+            this.traderTask.cancel();
+            this.traderTask = null;
+        }
     }
 
     public void startTimer() {
         BukkitRunnable bukkitRunnable = new BukkitRunnable() {
             @Override
             public void run() {
-                if (!ForceItemBattle.getInstance().getGamemanager().isMidGame()) {
+                if (!plugin.getGamemanager().isMidGame()) {
                     return;
                 }
 
@@ -57,7 +77,7 @@ public class WanderingTraderTimer {
             }
         };
 
-        bukkitRunnable.runTaskTimer(ForceItemBattle.getInstance(), 0L, 20L);
+        this.spawnTimerTask = bukkitRunnable.runTaskTimer(this.plugin, 0L, 20L);
     }
 
     public void spawnWanderingTrader() {
@@ -91,16 +111,16 @@ public class WanderingTraderTimer {
 
         this.canBuyWheel.clear();
         Map<UUID, BossBar> playerBossBars = new HashMap<>();
-        ForceItemBattle.getInstance().getGamemanager().forceItemPlayerMap().values().forEach(players -> {
+        this.plugin.getGamemanager().forceItemPlayerMap().values().forEach(players -> {
             this.canBuyWheel.put(players.player().getUniqueId(), Boolean.TRUE);
 
-            players.player().sendMessage(ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold>Position <dark_gray>┃ <gray>The <green>Wandering Trader <gray>just spawned at <dark_aqua>" + (int) traderLocation.getX() + "<gray>, <dark_aqua>" + (int) traderLocation.getY() + "<gray>, <dark_aqua>" + (int) traderLocation.getZ() + this.distance(players.player().getLocation(), traderLocation)));
-            ForceItemBattle.getInstance().getPositionManager().playParticleLine(players.player(), traderLocation, Color.LIME);
+            players.player().sendMessage(Text.mm().deserialize("<dark_gray>» <gold>Position <dark_gray>┃ <gray>The <green>Wandering Trader <gray>just spawned at <dark_aqua>" + (int) traderLocation.getX() + "<gray>, <dark_aqua>" + (int) traderLocation.getY() + "<gray>, <dark_aqua>" + (int) traderLocation.getZ() + this.distance(players.player().getLocation(), traderLocation)));
+            this.plugin.getPositionManager().playParticleLine(players.player(), traderLocation, Color.LIME);
         });
 
         traderTimer = 5 * 60;
 
-        new BukkitRunnable() {
+        this.traderTask = new BukkitRunnable() {
             @Override
             public void run() {
                 if (traderTimer <= 0 || wanderingTrader.isDead()) {
@@ -109,7 +129,7 @@ public class WanderingTraderTimer {
                     });
                     wanderingTrader.remove();
                     cancel();
-                    Bukkit.broadcast(ForceItemBattle.getInstance().getGamemanager().getMiniMessage()
+                    Bukkit.broadcast(Text.mm()
                             .deserialize("<dark_gray>» <gold>Position <dark_gray>┃ <gray>The <green>Wandering Trader <gray>just despawned! :("));
                     return;
                 }
@@ -118,13 +138,13 @@ public class WanderingTraderTimer {
                     String footerText = "\n<green><b>Wandering Trader</b>\n"
                             + locationToString(traderLocation) + "\n"
                             + formatColoredTime(traderTimer) + "\n";
-                    Component footer = ForceItemBattle.getInstance().getGamemanager().getMiniMessage().deserialize(footerText);
+                    Component footer = Text.mm().deserialize(footerText);
                     player.sendPlayerListFooter(footer);
                 });
 
                 traderTimer--;
             }
-        }.runTaskTimer(ForceItemBattle.getInstance(), 0L, 20L);
+        }.runTaskTimer(this.plugin, 0L, 20L);
     }
 
     private String locationToString(Location location) {
