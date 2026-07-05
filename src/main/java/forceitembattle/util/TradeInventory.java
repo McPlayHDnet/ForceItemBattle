@@ -1,28 +1,27 @@
 package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 public class TradeInventory extends InventoryBuilder {
 
-    private final int[] PLAYER_SLOTS = { 9, 10, 11,
-                                        18, 19, 20,
-                                        27, 28, 29 };
+    private final int[] PLAYER_SLOTS = {9, 10, 11,
+            18, 19, 20,
+            27, 28, 29};
 
-    private final int[] OPPOSITE_SLOTS = { 15, 16, 17,
-                                          24, 25, 26,
-                                          33, 34, 35 };
+    private final int[] OPPOSITE_SLOTS = {15, 16, 17,
+            24, 25, 26,
+            33, 34, 35};
 
     public TradeInventory(ForceItemBattle plugin, ForceItemPlayer player, ForceItemPlayer oppositePlayer) {
-        super(9 * 5, plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <dark_aqua>Trade <dark_gray>● <gray>Menu"));
+        super(9 * 5, Text.of("<dark_gray>» <dark_aqua>Trade <dark_gray>● <gray>Menu"));
 
         Map<ForceItemPlayer, List<ItemStack>> tradingItems = new HashMap<>();
 
@@ -39,15 +38,15 @@ public class TradeInventory extends InventoryBuilder {
 
         this.addClickHandler(inventoryClickEvent -> {
             inventoryClickEvent.setCancelled(true);
-            if(inventoryClickEvent.getCurrentItem() == null) return;
+            if (inventoryClickEvent.getCurrentItem() == null) return;
 
-            if(inventoryClickEvent.getClickedInventory() == inventoryClickEvent.getView().getBottomInventory()) {
-                for(int slot : this.PLAYER_SLOTS) {
-                    if(this.getInventory().getItem(slot) == null) {
+            if (inventoryClickEvent.getClickedInventory() == inventoryClickEvent.getView().getBottomInventory()) {
+                for (int slot : this.PLAYER_SLOTS) {
+                    if (this.getInventory().getItem(slot) == null) {
                         this.setItem(slot, inventoryClickEvent.getCurrentItem());
 
                         List<ItemStack> itemStacks = new ArrayList<>();
-                        if(tradingItems.get(player) != null) itemStacks = tradingItems.get(player);
+                        if (tradingItems.get(player) != null) itemStacks = tradingItems.get(player);
 
                         itemStacks.add(inventoryClickEvent.getCurrentItem());
                         tradingItems.put(player, itemStacks);
@@ -57,12 +56,12 @@ public class TradeInventory extends InventoryBuilder {
 
                 }
 
-                for(int slot : this.OPPOSITE_SLOTS) {
-                    if(oppositePlayer.player().getOpenInventory().getItem(slot) == null) {
+                for (int slot : this.OPPOSITE_SLOTS) {
+                    if (oppositePlayer.player().getOpenInventory().getItem(slot) == null) {
                         oppositePlayer.player().getOpenInventory().setItem(slot, inventoryClickEvent.getCurrentItem());
 
                         List<ItemStack> itemStacks = new ArrayList<>();
-                        if(tradingItems.get(oppositePlayer) != null) itemStacks = tradingItems.get(oppositePlayer);
+                        if (tradingItems.get(oppositePlayer) != null) itemStacks = tradingItems.get(oppositePlayer);
 
                         itemStacks.add(inventoryClickEvent.getCurrentItem());
                         tradingItems.put(oppositePlayer, itemStacks);
@@ -75,8 +74,8 @@ public class TradeInventory extends InventoryBuilder {
     }
 
     private boolean isItemInsideSlots(int[] targetSlots, Inventory inventory) {
-        for(int slots : targetSlots) {
-            if(inventory.getItem(slots) != null) {
+        for (int slots : targetSlots) {
+            if (inventory.getItem(slots) != null) {
                 return true;
             }
             break;

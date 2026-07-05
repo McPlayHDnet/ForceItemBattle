@@ -1,12 +1,11 @@
 package forceitembattle.commands;
 
+import java.util.Collections;
+import java.util.List;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
-
-import java.util.Collections;
-import java.util.List;
 
 public interface CustomTabCompleter extends TabCompleter {
 

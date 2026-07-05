@@ -1,8 +1,7 @@
 package forceitembattle.settings;
 
-import org.bukkit.Material;
-
 import java.util.List;
+import org.bukkit.Material;
 
 public enum GameSetting {
 
@@ -46,7 +45,7 @@ public enum GameSetting {
     GameSetting(String displayName, List<String> descriptionLore, String configPath, Object defaultValue, Material defaultMaterial) {
         this.displayName = displayName;
         this.descriptionLore = descriptionLore;
-        this.configPath = "settings." +configPath;
+        this.configPath = "settings." + configPath;
         this.defaultValue = defaultValue;
         this.defaultMaterial = defaultMaterial;
     }
@@ -54,15 +53,19 @@ public enum GameSetting {
     public String displayName() {
         return displayName;
     }
+
     public List<String> descriptionLore() {
         return descriptionLore;
     }
+
     public String configPath() {
         return configPath;
     }
+
     public Object defaultValue() {
         return defaultValue;
     }
+
     public Material defaultMaterial() {
         return defaultMaterial;
     }

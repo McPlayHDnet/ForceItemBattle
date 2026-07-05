@@ -1,57 +1,27 @@
 package forceitembattle.achievements.handlers;
 
-import forceitembattle.event.FoundItemEvent;
+import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.Trigger;
+import forceitembattle.event.FoundItemEvent;
 import forceitembattle.util.BiomeGroup;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.MaterialCategory;
+import java.util.Set;
 import org.bukkit.Material;
 import org.bukkit.block.Biome;
 import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 
-import java.util.Set;
-
 public class CollectionAchievementHandler<T> implements AchievementHandler<CollectionAchievementProgress<T>> {
-
-    public interface ItemExtractor<T> {
-        T extract(Event event, ForceItemPlayer player, CollectionAchievementProgress<T> progress);
-    }
 
     private final Trigger trigger;
     private final Set<T> requiredItems;
     private final ItemExtractor<T> extractor;
-
     public CollectionAchievementHandler(Trigger trigger, Set<T> requiredItems, ItemExtractor<T> extractor) {
         this.trigger = trigger;
         this.requiredItems = requiredItems;
         this.extractor = extractor;
-    }
-
-    @Override
-    public Trigger getTrigger() {
-        return trigger;
-    }
-
-    /** The set this achievement needs fully collected (used by progress inspection). */
-    public Set<T> getRequiredItems() {
-        return requiredItems;
-    }
-
-    @Override
-    public boolean check(Event event, CollectionAchievementProgress<T> progress, ForceItemPlayer forceItemPlayer) {
-        T item = extractor.extract(event, forceItemPlayer, progress);
-        if (item != null) {
-            progress.collected.add(item);
-            return progress.collected.containsAll(requiredItems);
-        }
-        return false;
-    }
-
-    @Override
-    public CollectionAchievementProgress<T> createProgress() {
-        return new CollectionAchievementProgress<>();
     }
 
     // Factory methods
@@ -128,5 +98,36 @@ public class CollectionAchievementHandler<T> implements AchievementHandler<Colle
             }
             return null;
         });
+    }
+
+    @Override
+    public Trigger getTrigger() {
+        return trigger;
+    }
+
+    /**
+     * The set this achievement needs fully collected (used by progress inspection).
+     */
+    public Set<T> getRequiredItems() {
+        return requiredItems;
+    }
+
+    @Override
+    public boolean check(Event event, CollectionAchievementProgress<T> progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin) {
+        T item = extractor.extract(event, forceItemPlayer, progress);
+        if (item != null) {
+            progress.collected.add(item);
+            return progress.collected.containsAll(requiredItems);
+        }
+        return false;
+    }
+
+    @Override
+    public CollectionAchievementProgress<T> createProgress() {
+        return new CollectionAchievementProgress<>();
+    }
+
+    public interface ItemExtractor<T> {
+        T extract(Event event, ForceItemPlayer player, CollectionAchievementProgress<T> progress);
     }
 }

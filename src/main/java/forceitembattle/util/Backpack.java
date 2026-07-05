@@ -2,16 +2,16 @@ package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.Gamemanager;
+import forceitembattle.manager.Manager;
 import forceitembattle.settings.GameSetting;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
-public class Backpack {
+public class Backpack implements Manager {
 
     private final ForceItemBattle forceItemBattle;
     private final Map<UUID, Inventory> playerBackpack;
@@ -46,7 +46,7 @@ public class Backpack {
                 Bukkit.createInventory(
                         null,
                         this.forceItemBattle.getConfig().getInt("settings.backpackRows") * 9,
-                        this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold>Backpack <dark_gray>● <gray>Menu")));
+                        Text.of("<dark_gray>» <gold>Backpack <dark_gray>● <gray>Menu")));
         fibPlayer.player().getInventory().setItem(8, Gamemanager.createBackpack(fibPlayer, this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM)));
     }
 
@@ -55,7 +55,7 @@ public class Backpack {
                 Bukkit.createInventory(
                         null,
                         this.forceItemBattle.getConfig().getInt("settings.backpackRows") * 9,
-                        this.forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <gold>Backpack <dark_gray>● <gray>Menu")));
+                        Text.of("<dark_gray>» <gold>Backpack <dark_gray>● <gray>Menu")));
         fibPlayer.player().getInventory().setItem(8, Gamemanager.createBackpack(fibPlayer, this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM)));
     }
 

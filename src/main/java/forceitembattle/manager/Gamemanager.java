@@ -4,47 +4,56 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.preset.GamePreset;
 import forceitembattle.stats.FIBServiceHelper;
-import forceitembattle.util.*;
+import forceitembattle.util.CustomMaterial;
+import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.util.GameState;
+import forceitembattle.util.ItemBuilder;
+import forceitembattle.util.Team;
+import forceitembattle.util.Text;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.function.ToIntFunction;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
-import net.kyori.adventure.text.minimessage.tag.standard.StandardTags;
 import org.apache.commons.lang3.text.WordUtils;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Statistic;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
-import java.util.*;
-import java.util.stream.Collectors;
 
 import static forceitembattle.util.RecipeInventory.CUSTOM_MATERIALS;
 
-public class Gamemanager {
+public class Gamemanager implements Manager {
 
+    public static final NamespacedKey BACKPACK_KEY = new NamespacedKey("fib", "backpack");
+    private static final Material JOKER_MATERIAL = Material.BARRIER;
     private final ForceItemBattle forceItemBattle;
-
     private final Map<UUID, ForceItemPlayer> forceItemPlayerMap;
-
     public Map<UUID, Map<Integer, Map<Integer, ItemStack>>> savedInventory = new HashMap<>();
     public Map<Team, Map<Integer, Map<Integer, ItemStack>>> savedInventoryTeam = new HashMap<>();
-
     @Setter
     @Getter
     public GameState currentGameState;
     @Setter
     private GamePreset currentGamePreset;
-
-    @Getter
-    private MiniMessage miniMessage;
-
     @Getter
     @Setter
     private long gameStartTime;
-
     /**
      * Total game duration (seconds).
      */
@@ -58,27 +67,84 @@ public class Gamemanager {
         this.currentGamePreset = null;
 
         this.forceItemPlayerMap = new HashMap<>();
+    }
 
-        this.miniMessage = MiniMessage.builder()
-                .tags(TagResolver.builder()
-                        .resolver(StandardTags.color())
-                        .resolver(StandardTags.shadowColor())
-                        .resolver(StandardTags.gradient())
-                        .resolver(StandardTags.reset())
-                        .resolver(StandardTags.newline())
-                        .resolver(StandardTags.rainbow())
-                        .resolver(StandardTags.decorations())
-                        .resolver(StandardTags.clickEvent())
-                        .resolver(StandardTags.hoverEvent())
-                        .resolver(StandardTags.translatable())
-                        .build()
-                )
-                .build();
+    private static <T> Map<T, Integer> calculatePlaces(List<T> entities, ToIntFunction<T> score) {
+        List<T> sorted = entities.stream()
+                .sorted(Comparator.comparingInt(score).reversed())
+                .toList();
+
+        Map<T, Integer> placesMap = new LinkedHashMap<>();
+
+        int place = 0;
+        Integer previousScore = null;
+        for (T entity : sorted) {
+            int currentScore = score.applyAsInt(entity);
+            if (previousScore == null || currentScore != previousScore) {
+                place++;
+            }
+            placesMap.put(entity, place);
+            previousScore = currentScore;
+        }
+        return placesMap;
+    }
+
+    public static Material getJokerMaterial() {
+        return JOKER_MATERIAL;
+    }
+
+    public static ItemStack getJokers(int amount) {
+        return new ItemBuilder(JOKER_MATERIAL)
+                .setAmount(amount)
+                .setDisplayName("<dark_gray>» <dark_purple>Joker")
+                .getItemStack();
+    }
+
+    public static ItemStack createBackpack(ForceItemPlayer forceItemPlayer, boolean isTeamMode) {
+        Material bundle = Material.BUNDLE;
+        if (isTeamMode) {
+            bundle = Material.getMaterial(forceItemPlayer.currentTeam().getColor().name() + "_BUNDLE");
+        }
+
+        ItemStack itemStack = new ItemBuilder(bundle)
+                .setDisplayName("<dark_gray>» <yellow>Backpack")
+                .getItemStack();
+
+        ItemMeta itemMeta = itemStack.getItemMeta();
+        itemMeta.getPersistentDataContainer().set(BACKPACK_KEY, PersistentDataType.BOOLEAN, Boolean.TRUE);
+        itemStack.setItemMeta(itemMeta);
+
+        return itemStack;
+    }
+
+    private static boolean isJoker(Material material) {
+        // TODO change to also use NBT maybe
+        return material == JOKER_MATERIAL;
+    }
+
+    public static boolean isJoker(ItemStack itemStack) {
+        return isJoker(itemStack.getType());
+    }
+
+    public static boolean isBackpack(ItemStack itemStack) {
+        if (!itemStack.getType().name().contains("BUNDLE")) {
+            return false;
+        }
+
+        ItemMeta itemMeta = itemStack.getItemMeta();
+        if (!itemMeta.getPersistentDataContainer().has(BACKPACK_KEY)) {
+            return false;
+        }
+
+        return Boolean.TRUE.equals(itemStack.getItemMeta().getPersistentDataContainer().get(BACKPACK_KEY, PersistentDataType.BOOLEAN));
+    }
+
+    public MiniMessage getMiniMessage() {
+        return Text.mm();
     }
 
     public void addPlayer(Player player, ForceItemPlayer forceItemPlayer) {
         this.forceItemPlayerMap.put(player.getUniqueId(), forceItemPlayer);
-        //this.forceItemBattle.getStatsManager().createPlayerStats(forceItemPlayer);
     }
 
     public void removePlayer(Player player) {
@@ -104,7 +170,7 @@ public class Gamemanager {
     public String formatMaterialName(String material) {
         String materialName = WordUtils.capitalizeFully(material.replace("_", " "));
         String[] wordsToIgnore = {"and", "with", "of", "on", "a", "the"};
-        for(String word : wordsToIgnore) {
+        for (String word : wordsToIgnore) {
             materialName = materialName.replace(WordUtils.capitalize(word), word.toLowerCase());
         }
         return materialName.replace(" ", "_");
@@ -168,9 +234,10 @@ public class Gamemanager {
         Material nextMaterial = runMode ? this.generateSeededMaterial() : this.generateMaterial();
 
         ForceItemPlayer gamePlayer = getForceItemPlayer(player.getUniqueId());
-        if(teamMode) {
+        if (teamMode) {
             forceItemPlayerMap().values().forEach(p -> {
-                if (!adminCommand) gamePlayer.currentTeam().setRemainingJokers(gamePlayer.currentTeam().getRemainingJokers() - 1);
+                if (!adminCommand)
+                    gamePlayer.currentTeam().setRemainingJokers(gamePlayer.currentTeam().getRemainingJokers() - 1);
                 p.currentTeam().setCurrentMaterial(currentMaterial);
                 p.currentTeam().setNextMaterial(nextMaterial);
             });
@@ -182,7 +249,6 @@ public class Gamemanager {
             });
         }
 
-        //this.forceItemBattle.getTimer().sendActionBar();
     }
 
     public void giveSpectatorItems(Player player) {
@@ -196,7 +262,16 @@ public class Gamemanager {
 
     public void finishGame() {
         this.setCurrentGameState(GameState.END_GAME);
-        ForceItemBattle.getInstance().getAchievementManager().checkGameEndAchievements();
+        this.forceItemBattle.getAchievementManager().checkGameEndAchievements();
+
+        boolean statsEnabled = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.STATS);
+        Map<ForceItemPlayer, Integer> placesMap = statsEnabled
+                ? this.calculatePlaces(this.sortByValue(this.forceItemPlayerMap(), false))
+                : null;
+        Map<Team, Integer> teamPlaces = (statsEnabled
+                && this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM))
+                ? this.calculatePlaces(this.forceItemBattle.getTeamManager().getTeams())
+                : null;
 
         Bukkit.getOnlinePlayers().forEach(player -> {
             ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
@@ -216,54 +291,60 @@ public class Gamemanager {
                 player.sendMessage(ChatColor.RED + "Use /result to see the results from every player");
             }
 
-            if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.STATS)) {
+            if (statsEnabled) {
                 FIBServiceHelper helper = this.forceItemBattle.getFibServiceHelper();
-                Map<UUID, ForceItemPlayer> sortedMapDesc = this.sortByValue(this.forceItemPlayerMap(), false);
-                Map<ForceItemPlayer, Integer> placesMap = this.calculatePlaces(sortedMapDesc);
+                long distance = (long) this.calculateDistance(forceItemPlayer.player());
 
-                var soloUpdate = FIBServiceHelper.soloUpdate()
-                        .blocksTravelledAdd((long) this.calculateDistance(forceItemPlayer.player()))
-                        .highestScore((long) forceItemPlayer.currentScore());
+                if (forceItemPlayer.currentTeam() == null) {
+                    // ---- Solo game: everything on solo stats ----
+                    var soloUpdate = FIBServiceHelper.soloUpdate()
+                            .blocksTravelledAdd(distance)
+                            .highestScore((long) forceItemPlayer.currentScore());
 
-                if (placesMap.get(forceItemPlayer) == 1) {
-                    soloUpdate.gamesWonAdd(1);
-                }
+                    if (placesMap.get(forceItemPlayer) == 1) {
+                        soloUpdate.gamesWonAdd(1);
+                    }
 
-                helper.updateSoloStatisticsAsync(player.getUniqueId(), soloUpdate);
-
-                if (forceItemPlayer.currentTeam() != null) {
+                    helper.updateSoloStatisticsAsync(player.getUniqueId(), soloUpdate);
+                } else {
+                    // ---- Team game: keep everything on team/member stats, never solo ----
                     Team currentTeam = forceItemPlayer.currentTeam();
+                    boolean teamWon = teamPlaces != null && Integer.valueOf(1).equals(teamPlaces.get(currentTeam));
+
                     for (ForceItemPlayer teamPlayer : currentTeam.getPlayers()) {
                         if (!teamPlayer.equals(forceItemPlayer)) {
-                            helper.updateTeamStatisticsAsync(
+                            UUID teammateUuid = teamPlayer.player().getUniqueId();
+
+                            // This player's own travel → their own member contribution.
+                            helper.updateMemberStatisticsAsync(
                                     player.getUniqueId(),
-                                    teamPlayer.player().getUniqueId(),
-                                    FIBServiceHelper.teamUpdate().highestScore((long) forceItemPlayer.currentScore())
+                                    teammateUuid,
+                                    player.getUniqueId(),
+                                    FIBServiceHelper.memberUpdate().blocksTravelledAdd(distance)
                             );
+
+                            // Shared team stats. highestScore is a max-set (safe from both
+                            // sides); gamesWon must count once, so only the lower-UUID side sends.
+                            var teamUpdate = FIBServiceHelper.teamUpdate()
+                                    .highestScore((long) currentTeam.getCurrentScore());
+                            boolean lowerSide = player.getUniqueId().toString()
+                                    .compareTo(teammateUuid.toString()) < 0;
+                            if (lowerSide && teamWon) {
+                                teamUpdate.gamesWonAdd(1);
+                            }
+
+                            helper.updateTeamStatisticsAsync(player.getUniqueId(), teammateUuid, teamUpdate);
                             break;
                         }
                     }
                 }
             }
-
-            /*
-            Achievements achievement = Achievements.CHICOT;
-            if(playerStats.achievementsDone().contains(achievement.getTitle())) {
-                return;
-            }
-            PlayerProgress playerProgress = this.forceItemBattle.getAchievementManager().playerProgressMap.get(player.getUniqueId());
-            if(playerProgress.getProgress(achievement).getDeathCounter() == achievement.getCondition().getAmount()) {
-                PlayerGrantAchievementEvent grantAchievementEvent = new PlayerGrantAchievementEvent(player, achievement);
-                Bukkit.getPluginManager().callEvent(grantAchievementEvent);
-            }
-
-             */
         });
     }
 
     public String placeColor(int place) {
         String placeColor;
-        switch(place) {
+        switch (place) {
             case 3 -> placeColor = "<red>";
             case 2 -> placeColor = "<gray>";
             case 1 -> placeColor = "<gold>";
@@ -275,98 +356,34 @@ public class Gamemanager {
     public int calculateDistance(Player player) {
         int distance = 0;
 
-        for(Statistic statistics : Statistic.values()) {
+        for (Statistic statistics : Statistic.values()) {
             //check and get every statistic that has CM (distance based)
-            if(statistics.name().contains("CM")) {
+            if (statistics.name().contains("CM")) {
                 distance += player.getStatistic(statistics);
             }
         }
 
-        return (int)Math.round((double) distance / 100);
+        return (int) Math.round((double) distance / 100);
     }
 
-
     public Map<UUID, ForceItemPlayer> sortByValue(Map<UUID, ForceItemPlayer> unsortMap, final boolean order) {
-        List<Map.Entry<UUID, ForceItemPlayer>> list = new LinkedList<>(unsortMap.entrySet());
-
-        // Sorting the list based on values
-        list.sort((o1, o2) -> order ? o1.getValue().currentScore().compareTo(o2.getValue().currentScore()) == 0
-                ? o1.getKey().compareTo(o2.getKey())
-                : o1.getValue().currentScore().compareTo(o2.getValue().currentScore()) : o2.getValue().currentScore().compareTo(o1.getValue().currentScore()) == 0
-                ? o2.getKey().compareTo(o1.getKey())
-                : o2.getValue().currentScore().compareTo(o1.getValue().currentScore()));
-        return list.stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> b, LinkedHashMap::new));
-
+        Comparator<Map.Entry<UUID, ForceItemPlayer>> comparator =
+                Comparator.comparingInt((Map.Entry<UUID, ForceItemPlayer> e) -> e.getValue().currentScore())
+                        .thenComparing(Map.Entry::getKey);
+        if (!order) {
+            comparator = comparator.reversed();
+        }
+        return unsortMap.entrySet().stream()
+                .sorted(comparator)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> b, LinkedHashMap::new));
     }
 
     public Map<ForceItemPlayer, Integer> calculatePlaces(Map<UUID, ForceItemPlayer> playerMap) {
-        List<ForceItemPlayer> sortedPlayers = playerMap.values().stream()
-                .sorted(Comparator.comparingInt(ForceItemPlayer::currentScore).reversed())
-                .toList();
-
-        Map<ForceItemPlayer, Integer> placesMap = new LinkedHashMap<>();
-
-        int place = 1;
-        for(int i = 0; i < sortedPlayers.size(); i++) {
-            ForceItemPlayer currentPlayer = sortedPlayers.get(i);
-
-            if(i > 0 && currentPlayer.currentScore() == sortedPlayers.get(i - 1).currentScore()) {
-                placesMap.put(currentPlayer, placesMap.get(sortedPlayers.get(i - 1)));
-            } else {
-
-                placesMap.put(currentPlayer, place);
-                place++;
-            }
-        }
-        return placesMap;
+        return calculatePlaces(new ArrayList<>(playerMap.values()), ForceItemPlayer::currentScore);
     }
 
     public Map<Team, Integer> calculatePlaces(List<Team> teams) {
-        List<Team> sortedTeams = teams.stream()
-                .sorted(Comparator.comparingInt(Team::getCurrentScore).reversed())
-                .toList();
-
-        Map<Team, Integer> placesMap = new LinkedHashMap<>();
-
-        int place = 1;
-        for(int i = 0; i < sortedTeams.size(); i++) {
-            Team currentTeam = sortedTeams.get(i);
-
-            if(i > 0 && currentTeam.getCurrentScore() == sortedTeams.get(i - 1).getCurrentScore()) {
-                placesMap.put(currentTeam, placesMap.get(sortedTeams.get(i - 1)));
-            } else {
-
-                placesMap.put(currentTeam, place);
-                place++;
-            }
-        }
-        return placesMap;
-    }
-
-    public String colorCodeToName(String colorCode) {
-        String name = "";
-
-        switch(colorCode) {
-            case "&0" -> name = "<black>";
-            case "&1" -> name = "<dark_blue>";
-            case "&2" -> name = "<dark_green>";
-            case "&3" -> name = "<dark_aqua>";
-            case "&4" -> name = "<dark_red>";
-            case "&5" -> name = "<dark_purple>";
-            case "&6" -> name = "<gold>";
-            case "&7" -> name = "<gray>";
-            case "&8" -> name = "<dark_gray>";
-            case "&9" -> name = "<blue>";
-            case "&a" -> name = "<green>";
-            case "&b" -> name = "<aqua>";
-            case "&c" -> name = "<red>";
-            case "&d" -> name = "<pink>";
-            case "&e" -> name = "<yellow>";
-            case "&f" -> name = "<white>";
-            default -> name = colorCode;
-        }
-
-        return name;
+        return calculatePlaces(teams, Team::getCurrentScore);
     }
 
     public boolean forceItemPlayerExist(UUID uuid) {
@@ -399,59 +416,5 @@ public class Gamemanager {
 
     public GamePreset currentGamePreset() {
         return currentGamePreset;
-    }
-
-    private static final Material JOKER_MATERIAL = Material.BARRIER;
-
-    public static Material getJokerMaterial() {
-        return JOKER_MATERIAL;
-    }
-
-    public static final NamespacedKey BACKPACK_KEY = new NamespacedKey(ForceItemBattle.getInstance(), "backpack");
-
-    public static ItemStack getJokers(int amount) {
-        return new ItemBuilder(JOKER_MATERIAL)
-                .setAmount(amount)
-                .setDisplayName("<dark_gray>» <dark_purple>Joker")
-                .getItemStack();
-    }
-
-    public static ItemStack createBackpack(ForceItemPlayer forceItemPlayer, boolean isTeamMode) {
-        Material bundle = Material.BUNDLE;
-        if (isTeamMode) {
-            bundle = Material.getMaterial(forceItemPlayer.currentTeam().getColor().name() + "_BUNDLE");
-        }
-
-        ItemStack itemStack = new ItemBuilder(bundle)
-                .setDisplayName("<dark_gray>» <yellow>Backpack")
-                .getItemStack();
-
-        ItemMeta itemMeta = itemStack.getItemMeta();
-        itemMeta.getPersistentDataContainer().set(BACKPACK_KEY, PersistentDataType.BOOLEAN, Boolean.TRUE);
-        itemStack.setItemMeta(itemMeta);
-
-        return itemStack;
-    }
-
-    private static boolean isJoker(Material material) {
-        // TODO change to also use NBT maybe
-        return material == JOKER_MATERIAL;
-    }
-
-    public static boolean isJoker(ItemStack itemStack) {
-        return isJoker(itemStack.getType());
-    }
-
-    public static boolean isBackpack(ItemStack itemStack) {
-        if (!itemStack.getType().name().contains("BUNDLE")) {
-            return false;
-        }
-
-        ItemMeta itemMeta = itemStack.getItemMeta();
-        if (!itemMeta.getPersistentDataContainer().has(BACKPACK_KEY)) {
-            return false;
-        }
-
-        return Boolean.TRUE.equals(itemStack.getItemMeta().getPersistentDataContainer().get(BACKPACK_KEY, PersistentDataType.BOOLEAN));
     }
 }

@@ -1,38 +1,39 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.Scheduler;
+import forceitembattle.util.Text;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 public class CommandPosition extends CustomCommand implements CustomTabCompleter {
 
-    public CommandPosition() {
-        super("pos");
+    private static final String prefix = "<dark_gray>» <gold>Position <dark_gray>┃ ";
+
+    public CommandPosition(ForceItemBattle plugin) {
+        super(plugin, "pos");
         setDescription("Add or show saved positions for structures");
     }
-
-    private static final String prefix = "<dark_gray>» <gold>Position <dark_gray>┃ ";
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
         if (this.plugin.getSettings().isSettingEnabled(GameSetting.EVENT) && !player.isOp()) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>You don't have permission to use this command."));
+            player.sendMessage(Text.of("<red>You don't have permission to use this command."));
             return;
         }
 
         if (!this.plugin.getSettings().isSettingEnabled(GameSetting.POSITIONS)) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>Positions are disabled in this round!"));
+            player.sendMessage(Text.of("<red>Positions are disabled in this round!"));
             return;
         }
 
@@ -41,7 +42,7 @@ public class CommandPosition extends CustomCommand implements CustomTabCompleter
         }
 
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-        if(forceItemPlayer.isSpectator()) return;
+        if (forceItemPlayer.isSpectator()) return;
 
         if (args.length < 1 || args[0].equalsIgnoreCase("list")) {
             Scheduler.runAsync(() -> sendAllPositions(player)); // Async because Location#distance takes some time.
@@ -69,14 +70,14 @@ public class CommandPosition extends CustomCommand implements CustomTabCompleter
     private void addNewPosition(Player player, String positionName) {
         Location playerLocation = player.getLocation();
         this.plugin.getPositionManager().createPosition(positionName, playerLocation);
-        Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize(
+        Bukkit.broadcast(Text.of(
                 prefix + "<green>" + player.getName() + " <gray>added location of <dark_aqua>" + positionName + " <gray>at " + locationToString(playerLocation) + " <gray>in the " + getWorldName(playerLocation.getWorld())
         ));
     }
 
     private void showPosition(Player player, String positionName) {
         Location positionLocation = this.plugin.getPositionManager().getPosition(positionName);
-        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+        player.sendMessage(Text.of(
                 prefix + "<dark_aqua>" + positionName + " <gray>located at " + locationToString(positionLocation) + distance(player.getLocation(), positionLocation)
         ));
         this.plugin.getPositionManager().playParticleLine(player, positionLocation, Color.LIME);
@@ -84,35 +85,35 @@ public class CommandPosition extends CustomCommand implements CustomTabCompleter
 
     private void sendAllPositions(Player player) {
         if (this.plugin.getPositionManager().getAllPositions().isEmpty()) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(prefix + "<gray>Nobody added any locations yet."));
+            player.sendMessage(Text.of(prefix + "<gray>Nobody added any locations yet."));
             return;
         }
 
-        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(prefix + "<white>All saved locations"));
+        player.sendMessage(Text.of(prefix + "<white>All saved locations"));
         this.plugin.getPositionManager().getAllPositions().forEach((name, location) -> {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <dark_aqua>" + name + " <gray>located at " + locationToString(location) + distance(player.getLocation(), location)));
+            player.sendMessage(Text.of("<dark_gray>» <dark_aqua>" + name + " <gray>located at " + locationToString(location) + distance(player.getLocation(), location)));
         });
     }
 
     private void removePosition(Player player, String locationName) {
         if (!player.hasPermission("forceitembattle.position.remove")) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(prefix + "<red>You do not have permission to use this."));
+            player.sendMessage(Text.of(prefix + "<red>You do not have permission to use this."));
             return;
         }
 
         if (locationName.equalsIgnoreCase("all")) {
             this.plugin.getPositionManager().clearPositions();
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(prefix + "<gray>All locations have been removed."));
+            player.sendMessage(Text.of(prefix + "<gray>All locations have been removed."));
             return;
         }
 
         if (!this.plugin.getPositionManager().positionExist(locationName)) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(prefix + "<red>Position <white>" + locationName + " <red>does not exist."));
+            player.sendMessage(Text.of(prefix + "<red>Position <white>" + locationName + " <red>does not exist."));
             return;
         }
 
         this.plugin.getPositionManager().removePosition(locationName);
-        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(prefix + "<gray>Position <dark_aqua>" + locationName + " <gray>has been removed."));
+        player.sendMessage(Text.of(prefix + "<gray>Position <dark_aqua>" + locationName + " <gray>has been removed."));
     }
 
     // Utility stuff

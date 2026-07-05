@@ -2,28 +2,42 @@ package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.customrecipe.ToolRecipe;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.apache.commons.lang3.text.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.*;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import org.bukkit.inventory.BlastingRecipe;
+import org.bukkit.inventory.CampfireRecipe;
+import org.bukkit.inventory.CookingRecipe;
+import org.bukkit.inventory.FurnaceRecipe;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.MerchantRecipe;
+import org.bukkit.inventory.Recipe;
+import org.bukkit.inventory.RecipeChoice;
+import org.bukkit.inventory.ShapedRecipe;
+import org.bukkit.inventory.ShapelessRecipe;
+import org.bukkit.inventory.SmithingRecipe;
+import org.bukkit.inventory.SmithingTransformRecipe;
+import org.bukkit.inventory.SmithingTrimRecipe;
+import org.bukkit.inventory.SmokingRecipe;
+import org.bukkit.inventory.StonecuttingRecipe;
 
 public class RecipeInventory extends InventoryBuilder {
 
-    private static final int RESULT_SLOT = 25;
-    private static final int STATION_SLOT = 23;
-    private static final int WORKBENCH_FIRST_ITEM_SLOT = 10;
-    private static final int SMITHING_FIRST_ITEM_SLOT = 19;
-    private static final int OTHER_FIRST_ITEM_SLOT = 20;
     public static final int NEXT_RECIPE_ITEM_SLOT = 8;
     public static final int PREVIOUS_RECIPE_ITEM_SLOT = 0;
-
+    public static final Map<Material, CustomMaterial> CUSTOM_MATERIALS = Map.of(
+            Material.KNOWLEDGE_BOOK, new CustomMaterial("antimatter_locator", "Antimatter Locator", "<dark_gray>» <dark_purple>Antimatter Locator"),
+            Material.WITHER_ROSE, new CustomMaterial("trial_locator", "Trial Locator", "<dark_gray>» <gold>Trial Locator")
+    );
+    public static final Map<String, Material> ID_TO_MATERIAL = new HashMap<>();
+    private static final int RESULT_SLOT = 25;
+    private static final int STATION_SLOT = 23;
     /**
      * Slots that contain recipe items, the station and result items.
      */
@@ -33,28 +47,16 @@ public class RecipeInventory extends InventoryBuilder {
             28, 29, 30,
             STATION_SLOT, RESULT_SLOT
     );
-
-    private static String materialName(Material type) {
-        CustomMaterial customMaterial = CUSTOM_MATERIALS.get(type);
-        if (customMaterial != null) {
-            return customMaterial.containerName();
-        }
-        return WordUtils.capitalize(type.name().replace("_", " ").toLowerCase());
-    }
-
-    public static final Map<Material, CustomMaterial> CUSTOM_MATERIALS = Map.of(
-            Material.KNOWLEDGE_BOOK, new CustomMaterial("antimatter_locator", "Antimatter Locator", "<dark_gray>» <dark_purple>Antimatter Locator"),
-            Material.WITHER_ROSE, new CustomMaterial("trial_locator", "Trial Locator", "<dark_gray>» <gold>Trial Locator")
-    );
-
-    public static final Map<String, Material> ID_TO_MATERIAL = new HashMap<>();
+    private static final int WORKBENCH_FIRST_ITEM_SLOT = 10;
+    private static final int SMITHING_FIRST_ITEM_SLOT = 19;
+    private static final int OTHER_FIRST_ITEM_SLOT = 20;
 
     static {
         CUSTOM_MATERIALS.forEach((material, customMaterial) -> ID_TO_MATERIAL.put(customMaterial.id(), material));
     }
 
     public RecipeInventory(ForceItemBattle forceItemBattle, RecipeViewer recipeViewer, Player player) {
-        super(9 * 5, forceItemBattle.getGamemanager().getMiniMessage().deserialize("<dark_gray>● <dark_aqua>" +
+        super(9 * 5, Text.of("<dark_gray>● <dark_aqua>" +
                 materialName(recipeViewer.itemStack().getType()) +
                 " <dark_gray>» <gray>" + (recipeViewer.currentRecipeIndex() + 1) + "<dark_gray>/<gray>" + recipeViewer.pages()
         ));
@@ -235,7 +237,7 @@ public class RecipeInventory extends InventoryBuilder {
                     return;
                 }
                 if (Bukkit.getRecipesFor(itemStack).isEmpty()) {
-                    player.sendMessage(forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>There is no recipe for this item. Just find it lol"));
+                    player.sendMessage(Text.of("<red>There is no recipe for this item. Just find it lol"));
                     return;
                 }
                 recipeViewer.setCurrentRecipeIndex(0);
@@ -248,7 +250,7 @@ public class RecipeInventory extends InventoryBuilder {
                 new RecipeInventory(forceItemBattle, recipeViewer, player).open(player);
 
             } else {
-                player.sendMessage(forceItemBattle.getGamemanager().getMiniMessage().deserialize("<red>Sneak click to show recipe for this item!"));
+                player.sendMessage(Text.of("<red>Sneak click to show recipe for this item!"));
             }
         });
 
@@ -258,6 +260,49 @@ public class RecipeInventory extends InventoryBuilder {
                 forceItemBattle.getRecipeManager().handleRecipeClose(player);
             }
         });
+    }
+
+    private static String materialName(Material type) {
+        CustomMaterial customMaterial = CUSTOM_MATERIALS.get(type);
+        if (customMaterial != null) {
+            return customMaterial.containerName();
+        }
+        return WordUtils.capitalize(type.name().replace("_", " ").toLowerCase());
+    }
+
+    public static ItemStack getStationItem(Recipe recipe) {
+        if (recipe instanceof ToolRecipe toolRecipe) {
+            return toolRecipe.getStationDisplay();
+
+        } else if (recipe instanceof ShapedRecipe) {
+            return new ItemStack(Material.CRAFTING_TABLE);
+
+        } else if (recipe instanceof ShapelessRecipe) {
+            return new ItemStack(Material.CRAFTING_TABLE);
+
+        } else if (recipe instanceof FurnaceRecipe) {
+            return new ItemStack(Material.FURNACE);
+
+        } else if (recipe instanceof SmithingRecipe) {
+            return new ItemStack(Material.SMITHING_TABLE);
+
+        } else if (recipe instanceof SmokingRecipe) {
+            return new ItemStack(Material.SMOKER);
+
+        } else if (recipe instanceof BlastingRecipe) {
+            return new ItemStack(Material.BLAST_FURNACE);
+
+        } else if (recipe instanceof CampfireRecipe) {
+            return new ItemStack(Material.CAMPFIRE);
+
+        } else if (recipe instanceof StonecuttingRecipe) {
+            return new ItemStack(Material.STONECUTTER);
+
+        } else if (recipe instanceof MerchantRecipe) {
+            return new ItemStack(Material.VILLAGER_SPAWN_EGG);
+        } else {
+            return null;
+        }
     }
 
     private ItemStack choiceWithLore(RecipeChoice.MaterialChoice materialChoice, RecipeViewer recipeViewer) {
@@ -312,41 +357,6 @@ public class RecipeInventory extends InventoryBuilder {
         itemBuilder.setLore(lore);
 
         return itemBuilder.getItemStack();
-    }
-
-    public static ItemStack getStationItem(Recipe recipe) {
-        if (recipe instanceof ToolRecipe toolRecipe) {
-            return toolRecipe.getStationDisplay();
-
-        } else if (recipe instanceof ShapedRecipe) {
-            return new ItemStack(Material.CRAFTING_TABLE);
-
-        } else if (recipe instanceof ShapelessRecipe) {
-            return new ItemStack(Material.CRAFTING_TABLE);
-
-        } else if (recipe instanceof FurnaceRecipe) {
-            return new ItemStack(Material.FURNACE);
-
-        } else if (recipe instanceof SmithingRecipe) {
-            return new ItemStack(Material.SMITHING_TABLE);
-
-        } else if (recipe instanceof SmokingRecipe) {
-            return new ItemStack(Material.SMOKER);
-
-        } else if (recipe instanceof BlastingRecipe) {
-            return new ItemStack(Material.BLAST_FURNACE);
-
-        } else if (recipe instanceof CampfireRecipe) {
-            return new ItemStack(Material.CAMPFIRE);
-
-        } else if (recipe instanceof StonecuttingRecipe) {
-            return new ItemStack(Material.STONECUTTER);
-
-        } else if (recipe instanceof MerchantRecipe) {
-            return new ItemStack(Material.VILLAGER_SPAWN_EGG);
-        } else {
-            return null;
-        }
     }
 
     private int convertItemIndexToInventorySlot(int firstItemSlot, int itemIndex) {

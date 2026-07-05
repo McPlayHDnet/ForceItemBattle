@@ -1,7 +1,9 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.util.Text;
 import org.apache.commons.lang3.text.WordUtils;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -9,37 +11,38 @@ import org.bukkit.inventory.ItemStack;
 
 public class CommandInfoWiki extends CustomCommand {
 
-    public CommandInfoWiki() {
-        super("infowiki");
+    public CommandInfoWiki(ForceItemBattle plugin) {
+        super(plugin, "infowiki");
         setDescription("Get wiki info link for your current item");
     }
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        ItemStack item = player.getInventory().getItemInMainHand();;
+        ItemStack item = player.getInventory().getItemInMainHand();
+        ;
 
         if (this.plugin.getGamemanager().isMidGame()) {
             if (this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
                 ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-                if(forceItemPlayer.isSpectator()) {
-                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>You are not playing."));
+                if (forceItemPlayer.isSpectator()) {
+                    player.sendMessage(Text.of("<red>You are not playing."));
                     return;
                 }
                 item = new ItemStack(forceItemPlayer.getCurrentMaterial());
             } else {
-                player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>You are not playing."));
+                player.sendMessage(Text.of("<red>You are not playing."));
                 return;
             }
         }
 
         if (item.getType() == Material.AIR) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>You need to hold an item in your hand!"));
+            player.sendMessage(Text.of("<red>You need to hold an item in your hand!"));
             return;
         }
 
-        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(
+        player.sendMessage(Text.of(
                 "<gray>Check out the minecraft wiki for <green>" + WordUtils.capitalizeFully(item.getType().name().toLowerCase().replace("_", " ")
-                    + " <click:open_url:https://minecraft.wiki/" + this.plugin.getGamemanager().formatMaterialName(item.getType().name().toLowerCase()) + "><white>[<aqua>Click here<white>]"))
+                        + " <click:open_url:https://minecraft.wiki/" + this.plugin.getGamemanager().formatMaterialName(item.getType().name().toLowerCase()) + "><white>[<aqua>Click here<white>]"))
         );
 
     }

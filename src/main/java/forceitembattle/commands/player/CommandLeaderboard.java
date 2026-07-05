@@ -1,23 +1,17 @@
 package forceitembattle.commands.player;
 
 import de.threeseconds.openapi.fibservice.client.model.FibLeaderboardEntryDto;
-import de.threeseconds.openapi.fibservice.client.model.FibSoloStatisticsDto;
+import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.stats.FIBServiceHelper;
-import forceitembattle.util.PlayerStat;
-import net.kyori.adventure.text.minimessage.MiniMessage;
+import forceitembattle.util.Text;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 public class CommandLeaderboard extends CustomCommand implements CustomTabCompleter {
 
@@ -27,21 +21,20 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
             "highest_score", "total_items", "games_won", "back_to_back_streak", "blocks_travelled"
     );
 
-    public CommandLeaderboard() {
-        super("top");
+    public CommandLeaderboard(ForceItemBattle plugin) {
+        super(plugin, "top");
         setUsage("[stat]");
         setDescription("Show the stat leaderboards");
     }
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        MiniMessage mm = this.plugin.getGamemanager().getMiniMessage();
         FIBServiceHelper helper = this.plugin.getFibServiceHelper();
 
         String category = args.length >= 1 ? args[0].toLowerCase() : "highest_score";
 
         if (!CATEGORIES.contains(category)) {
-            player.sendMessage(mm.deserialize("<yellow>" + args[0] + " <red>does not exist in leaderboard"));
+            player.sendMessage(Text.of("<yellow>" + args[0] + " <red>does not exist in leaderboard"));
             return;
         }
 
@@ -49,11 +42,11 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
             String displayName = formatCategoryName(category);
 
             player.sendMessage(" ");
-            player.sendMessage(mm.deserialize("<dark_gray>» <gold><b>Leaderboard</b> <dark_gray>● <green>" + displayName + " <dark_gray>«"));
+            player.sendMessage(Text.of("<dark_gray>» <gold><b>Leaderboard</b> <dark_gray>● <green>" + displayName + " <dark_gray>«"));
             player.sendMessage(" ");
 
             if (entries.isEmpty()) {
-                player.sendMessage(mm.deserialize("  <gray>No entries yet."));
+                player.sendMessage(Text.of("  <gray>No entries yet."));
             } else {
                 for (FibLeaderboardEntryDto entry : entries) {
                     int rank = entry.getRank();
@@ -65,14 +58,14 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
                     };
                     String name = resolvePlayerName(entry.getPlayerUuid());
                     String suffix = category.equals("blocks_travelled") ? " blocks" : "";
-                    player.sendMessage(mm.deserialize("  <dark_gray>● " + color + rank + "<white>. <green>"
+                    player.sendMessage(Text.of("  <dark_gray>● " + color + rank + "<white>. <green>"
                             + name + " <dark_gray>» <dark_aqua>" + entry.getValue() + suffix));
                 }
             }
 
             player.sendMessage(" ");
         }, error -> {
-            player.sendMessage(mm.deserialize("<red>Could not load leaderboard."));
+            player.sendMessage(Text.of("<red>Could not load leaderboard."));
         });
     }
 

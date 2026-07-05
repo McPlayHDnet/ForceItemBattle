@@ -1,13 +1,34 @@
 package forceitembattle.achievements;
 
-import forceitembattle.achievements.handlers.*;
+import forceitembattle.achievements.handlers.AchievementHandler;
+import forceitembattle.achievements.handlers.AntimatterTeleporterUsesAchievementHandler;
+import forceitembattle.achievements.handlers.BackToBackAchievementHandler;
+import forceitembattle.achievements.handlers.BackToBackCountAchievementHandler;
+import forceitembattle.achievements.handlers.BeehiveAchievementHandler;
+import forceitembattle.achievements.handlers.CollectionAchievementHandler;
+import forceitembattle.achievements.handlers.CompletionistAchievementHandler;
+import forceitembattle.achievements.handlers.ConsecutiveStoneAchievementHandler;
+import forceitembattle.achievements.handlers.CounterAchievementHandler;
+import forceitembattle.achievements.handlers.DeathCounterAchievementHandler;
+import forceitembattle.achievements.handlers.EatingAchievementHandler;
+import forceitembattle.achievements.handlers.InventoryFullAchievementHandler;
+import forceitembattle.achievements.handlers.LootAchievementHandler;
+import forceitembattle.achievements.handlers.NoAntimatterAchievementHandler;
+import forceitembattle.achievements.handlers.NoBackToBackAchievementHandler;
+import forceitembattle.achievements.handlers.NoOverworldExitAchievementHandler;
+import forceitembattle.achievements.handlers.RareMobDropAchievementHandler;
+import forceitembattle.achievements.handlers.RepeatItemAchievementHandler;
+import forceitembattle.achievements.handlers.SkipAchievementHandler;
+import forceitembattle.achievements.handlers.TimeBasedAchievementHandler;
+import forceitembattle.achievements.handlers.TradingAchievementHandler;
+import forceitembattle.achievements.handlers.WheelOfFortuneAchievementHandler;
+import forceitembattle.achievements.handlers.WheelOfFortuneUsesAchievementHandler;
 import forceitembattle.util.BiomeGroup;
 import forceitembattle.util.CustomItem;
-import lombok.Getter;
-import org.bukkit.block.Biome;
-import org.bukkit.Material;
-
 import java.util.Set;
+import lombok.Getter;
+import org.bukkit.Material;
+import org.bukkit.block.Biome;
 
 @Getter
 public enum Achievements {

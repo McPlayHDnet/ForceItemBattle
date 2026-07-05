@@ -2,13 +2,11 @@ package forceitembattle.settings;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.preset.GamePreset;
+import java.util.Map;
+import java.util.concurrent.ConcurrentSkipListMap;
 import org.bukkit.Bukkit;
 import org.bukkit.GameRules;
 import org.bukkit.configuration.ConfigurationSection;
-import org.checkerframework.checker.units.qual.A;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentSkipListMap;
 
 public class GameSettings {
 
@@ -29,11 +27,11 @@ public class GameSettings {
         this.plugin.getConfig().addDefault("standard.countdown", 30);
         this.plugin.getConfig().addDefault("standard.jokers", 3);
 
-        if(!this.plugin.getConfig().isConfigurationSection("presets")) {
+        if (!this.plugin.getConfig().isConfigurationSection("presets")) {
             this.plugin.getConfig().createSection("presets");
         }
 
-        if(this.plugin.getConfig().isConfigurationSection("presets")) {
+        if (this.plugin.getConfig().isConfigurationSection("presets")) {
             this.plugin.getConfig().getConfigurationSection("presets").getKeys(false).forEach(keys -> {
                 ConfigurationSection configurationSection = this.plugin.getConfig().getConfigurationSection("presets").getConfigurationSection(keys);
                 GamePreset gamePreset = new GamePreset();
@@ -43,8 +41,8 @@ public class GameSettings {
                 gamePreset.setBackpackRows(configurationSection.getInt("backpackRows"));
 
                 configurationSection.getConfigurationSection("settings").getKeys(false).forEach(settingKeys -> {
-                    for(GameSetting gameSetting : GameSetting.values()) {
-                        if(gameSetting.configPath().equals(settingKeys)) {
+                    for (GameSetting gameSetting : GameSetting.values()) {
+                        if (gameSetting.configPath().equals(settingKeys)) {
                             gamePreset.getGameSettings().add(gameSetting);
                         }
                     }
@@ -61,17 +59,17 @@ public class GameSettings {
     }
 
     public boolean isSettingEnabled(GameSetting gameSetting) {
-        if(this.plugin.getGamemanager().currentGamePreset() != null) {
+        if (this.plugin.getGamemanager().currentGamePreset() != null) {
             return this.isSettingEnabledInPreset(this.plugin.getGamemanager().currentGamePreset(), gameSetting);
         }
         return this.plugin.getConfig().getBoolean(gameSetting.configPath());
     }
 
     public void setSettingEnabled(GameSetting gameSetting, boolean enabled) {
-        if(gameSetting == GameSetting.KEEP_INVENTORY)
+        if (gameSetting == GameSetting.KEEP_INVENTORY)
             Bukkit.getWorlds().forEach(worlds -> worlds.setGameRule(GameRules.KEEP_INVENTORY, enabled));
 
-        if(gameSetting == GameSetting.FASTER_RANDOM_TICK)
+        if (gameSetting == GameSetting.FASTER_RANDOM_TICK)
             // 3 is the default random tick speed. 40 is much faster version
             Bukkit.getWorlds().forEach(worlds -> worlds.setGameRule(GameRules.RANDOM_TICK_SPEED, enabled ? 40 : 3));
 
@@ -81,13 +79,13 @@ public class GameSettings {
     }
 
     public void setSettingValue(GameSetting gameSetting, Integer value) {
-        if(gameSetting.defaultValue() instanceof Integer) {
+        if (gameSetting.defaultValue() instanceof Integer) {
             this.plugin.getConfig().set(gameSetting.configPath(), value);
         }
     }
 
     public int getSettingValue(GameSetting gameSetting) {
-        if(this.plugin.getGamemanager().currentGamePreset() != null) {
+        if (this.plugin.getGamemanager().currentGamePreset() != null) {
             return this.getSettingValueInPreset(this.plugin.getGamemanager().currentGamePreset(), gameSetting);
         }
         return this.plugin.getConfig().getInt(gameSetting.configPath());
@@ -100,14 +98,14 @@ public class GameSettings {
     public void addGamePreset(GamePreset gamePreset) {
         ConfigurationSection configurationSection = this.plugin.getConfig().getConfigurationSection("presets");
 
-        if(configurationSection != null) {
+        if (configurationSection != null) {
             ConfigurationSection presetSection = configurationSection.createSection(gamePreset.getPresetName());
 
             presetSection.set("countdown", gamePreset.getCountdown());
             presetSection.set("jokers", gamePreset.getJokers());
             presetSection.set("backpackRows", gamePreset.getBackpackRows());
 
-            for(GameSetting gameSetting : GameSetting.values()) {
+            for (GameSetting gameSetting : GameSetting.values()) {
                 presetSection.set(gameSetting.configPath(), gamePreset.getGameSettings().contains(gameSetting));
             }
         }

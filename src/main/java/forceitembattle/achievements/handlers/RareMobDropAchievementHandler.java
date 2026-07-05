@@ -1,7 +1,8 @@
 package forceitembattle.achievements.handlers;
 
-import forceitembattle.event.FoundItemEvent;
+import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.Trigger;
+import forceitembattle.event.FoundItemEvent;
 import forceitembattle.util.ForceItemPlayer;
 import org.bukkit.Material;
 import org.bukkit.event.Event;
@@ -26,7 +27,7 @@ public class RareMobDropAchievementHandler implements AchievementHandler<SimpleA
     }
 
     @Override
-    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer) {
+    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin) {
         if (!(event instanceof FoundItemEvent foundEvent)) {
             return false;
         }

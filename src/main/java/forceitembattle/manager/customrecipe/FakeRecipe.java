@@ -3,13 +3,16 @@ package forceitembattle.manager.customrecipe;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.ItemBuilder;
-import org.bukkit.Material;
-import org.bukkit.inventory.*;
-
-import javax.annotation.Nullable;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.logging.Level;
+import javax.annotation.Nullable;
+import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.Recipe;
+import org.bukkit.inventory.RecipeChoice;
+import org.bukkit.inventory.ShapedRecipe;
+import org.bukkit.inventory.ShapelessRecipe;
 
 public enum FakeRecipe {
 
@@ -249,7 +252,7 @@ public enum FakeRecipe {
                 ))
                 .apply(recipe -> recipe.setStationDisplay(new ItemStack(Material.HONEYCOMB)))
                 .build("fib:waxed", new ItemStack(item.getType()));
-        }
+    }
     ),
 
     OXIDIZED(item -> item.getType().name().startsWith("EXPOSED_") ||
@@ -278,7 +281,7 @@ public enum FakeRecipe {
                 ))
                 .apply(recipe -> recipe.setStationDisplay(new ItemStack(Material.CLOCK)))
                 .build("fib:oxidized", new ItemStack(item.getType()));
-        }
+    }
     ),
 
     ;
@@ -297,25 +300,25 @@ public enum FakeRecipe {
         this.recipeSupplier = recipeSupplier;
     }
 
-    public Recipe getRecipe(ItemStack targetItem) {
-        try {
-            return recipeSupplier.apply(targetItem);
-        } catch (Exception e) {
-            ForceItemBattle.getInstance().getLogger().log(Level.WARNING, "Failed to create recipe for " + targetItem, e);
-            return null;
-        }
-    }
-
     @Nullable
-    public static FakeRecipe forItem(ItemStack item) {
+    public static FakeRecipe forItem(ItemStack item, ForceItemBattle plugin) {
         for (FakeRecipe recipe : CACHE) {
             if (recipe.itemMatcher.test(item)) {
                 boolean isRecipeHard = recipe.name().endsWith("_HARD");
-                if (isRecipeHard == ForceItemBattle.getInstance().getSettings().isSettingEnabled(GameSetting.HARDER_TRACKERS)) {
+                if (isRecipeHard == plugin.getSettings().isSettingEnabled(GameSetting.HARDER_TRACKERS)) {
                     return recipe;
                 }
             }
         }
         return null;
+    }
+
+    public Recipe getRecipe(ItemStack targetItem, ForceItemBattle plugin) {
+        try {
+            return recipeSupplier.apply(targetItem);
+        } catch (Exception e) {
+            plugin.getLogger().log(Level.WARNING, "Failed to create recipe for " + targetItem, e);
+            return null;
+        }
     }
 }

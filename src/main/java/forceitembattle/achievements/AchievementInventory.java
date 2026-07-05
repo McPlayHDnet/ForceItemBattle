@@ -1,16 +1,12 @@
 package forceitembattle.achievements;
 
+import com.destroystokyo.paper.profile.PlayerProfile;
 import de.threeseconds.openapi.fibservice.client.model.FibAchievementDto;
 import de.threeseconds.openapi.fibservice.client.model.FibPlayerAchievementsDto;
-import com.destroystokyo.paper.profile.PlayerProfile;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.util.InventoryBuilder;
 import forceitembattle.util.ItemBuilder;
-import org.bukkit.Bukkit;
-import org.bukkit.Material;
-import org.bukkit.Sound;
-import org.bukkit.inventory.ItemFlag;
-
+import forceitembattle.util.Text;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -21,24 +17,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.Sound;
+import org.bukkit.inventory.ItemFlag;
 
 public class AchievementInventory extends InventoryBuilder {
 
     private static final DateTimeFormatter WHEN_FORMAT = DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm");
 
     private final ForceItemBattle plugin;
-    private int currentPage;
     private final UUID playerUUID;
-
-    // achievementId -> its unlock records (SOLO/TEAM), fetched from the service for display.
-    private Map<String, List<FibAchievementDto>> unlocks = new HashMap<>();
-
     // Resolved teammate names (from local cache or Mojang), so each UUID is looked up once.
     private final Map<UUID, String> nameCache = new HashMap<>();
     private final Set<UUID> nameLookupsInFlight = new HashSet<>();
+    private int currentPage;
+    // achievementId -> its unlock records (SOLO/TEAM), fetched from the service for display.
+    private Map<String, List<FibAchievementDto>> unlocks = new HashMap<>();
 
     public AchievementInventory(ForceItemBattle plugin, String playerName, UUID playerUUID) {
-        super(9 * 6, plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <dark_aqua>Achievements <dark_gray>◆ <gray>" + playerName));
+        super(9 * 6, Text.of("<dark_gray>» <dark_aqua>Achievements <dark_gray>◆ <gray>" + playerName));
 
         this.plugin = plugin;
         this.currentPage = 0;
@@ -79,14 +77,14 @@ public class AchievementInventory extends InventoryBuilder {
 
     private String getPageButton(int slot, int currentPage, int objectsPerPage) {
         String headValue = "";
-        if(slot == 45) {
-            if(currentPage == 0) {
+        if (slot == 45) {
+            if (currentPage == 0) {
                 headValue = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZjZkYWI3MjcxZjRmZjA0ZDU0NDAyMTkwNjdhMTA5YjVjMGMxZDFlMDFlYzYwMmMwMDIwNDc2ZjdlYjYxMjE4MCJ9fX0=";
             } else {
                 headValue = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYmQ2OWUwNmU1ZGFkZmQ4NGU1ZjNkMWMyMTA2M2YyNTUzYjJmYTk0NWVlMWQ0ZDcxNTJmZGM1NDI1YmMxMmE5In19fQ==";
             }
-        } else if(slot == 53) {
-            if(currentPage == this.totalPages(objectsPerPage) - 1) {
+        } else if (slot == 53) {
+            if (currentPage == this.totalPages(objectsPerPage) - 1) {
                 headValue = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOGFhMTg3ZmVkZTg4ZGUwMDJjYmQ5MzA1NzVlYjdiYTQ4ZDNiMWEwNmQ5NjFiZGM1MzU4MDA3NTBhZjc2NDkyNiJ9fX0=";
             } else {
                 headValue = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMTliZjMyOTJlMTI2YTEwNWI1NGViYTcxM2FhMWIxNTJkNTQxYTFkODkzODgyOWM1NjM2NGQxNzhlZDIyYmYifX19";
@@ -113,13 +111,13 @@ public class AchievementInventory extends InventoryBuilder {
         int endIndex = Math.min(startIndex + itemsPerPage - 1, achievementSize - 1);
 
         // Page buttons
-        if(achievementSize > itemsPerPage) {
+        if (achievementSize > itemsPerPage) {
             this.setItem(45, new ItemBuilder(Material.PLAYER_HEAD)
                             .setSkullTexture(this.getPageButton(45, this.currentPage, itemsPerPage))
                             .setDisplayName("<dark_red>« <red>Previous page")
                             .getItemStack(),
                     inventoryClickEvent -> {
-                        if(this.currentPage > 0) {
+                        if (this.currentPage > 0) {
                             this.getPlayer().playSound(this.getPlayer(), Sound.ITEM_BOOK_PAGE_TURN, 1, 1);
                             this.currentPage--;
                             this.updateInventory(); // Re-render the inventory
@@ -134,7 +132,7 @@ public class AchievementInventory extends InventoryBuilder {
                             .setDisplayName("<dark_green>» <green>Next page")
                             .getItemStack(),
                     inventoryClickEvent -> {
-                        if(this.currentPage < this.totalPages(itemsPerPage) - 1) {
+                        if (this.currentPage < this.totalPages(itemsPerPage) - 1) {
                             this.getPlayer().playSound(this.getPlayer(), Sound.ITEM_BOOK_PAGE_TURN, 1, 1);
                             this.currentPage++;
                             this.updateInventory(); // Re-render the inventory
@@ -146,7 +144,7 @@ public class AchievementInventory extends InventoryBuilder {
         }
 
         // Display achievements for current page
-        for(int i = startIndex; i <= endIndex; i++) {
+        for (int i = startIndex; i <= endIndex; i++) {
             int slotIndex = i - startIndex + 9;
             Achievements achievement = Achievements.values()[i];
 

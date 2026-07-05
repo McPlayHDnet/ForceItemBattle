@@ -3,6 +3,9 @@ package forceitembattle.listener;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.util.Text;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -14,14 +17,16 @@ import org.bukkit.block.Container;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.*;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockBurnEvent;
+import org.bukkit.event.block.BlockExplodeEvent;
+import org.bukkit.event.block.BlockFromToEvent;
+import org.bukkit.event.block.BlockPistonExtendEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @RequiredArgsConstructor
 public class ProtectionListener implements Listener {
@@ -31,6 +36,8 @@ public class ProtectionListener implements Listener {
     private final List<CreatureSpawnEvent.SpawnReason> blockedSpawnReasons = List.of(
             CreatureSpawnEvent.SpawnReason.BUILD_WITHER
     );
+    // store all notify messages to prevent spam
+    private final List<String> sentMessages = new ArrayList<>();
 
     @EventHandler
     public void onBlockEntitySpawn(CreatureSpawnEvent e) {
@@ -135,7 +142,7 @@ public class ProtectionListener implements Listener {
         if (this.plugin.getGamemanager().isMidGame()) {
             e.setCancelled(true);
             for (Player player : getPlayersNearby(e.getBlock().getLocation())) {
-                player.sendMessage(plugin.getGamemanager().getMiniMessage().deserialize(
+                player.sendMessage(Text.of(
                         "<red>Pistons are disabled."
                 ));
             }
@@ -194,6 +201,8 @@ public class ProtectionListener implements Listener {
         }
     }
 
+    // utils
+
     @EventHandler
     public void onBurn(BlockBurnEvent e) {
         if (this.plugin.getGamemanager().isMidGame()) {
@@ -203,11 +212,6 @@ public class ProtectionListener implements Listener {
         }
     }
 
-    // utils
-
-    // store all notify messages to prevent spam
-    private final List<String> sentMessages = new ArrayList<>();
-
     private void notify(String msg) {
         if (sentMessages.contains(msg)) {
             return;
@@ -216,7 +220,7 @@ public class ProtectionListener implements Listener {
 
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (player.isOp()) {
-                player.sendMessage(plugin.getGamemanager().getMiniMessage().deserialize(msg));
+                player.sendMessage(Text.of(msg));
             }
         }
     }

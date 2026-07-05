@@ -1,17 +1,18 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
-import org.bukkit.ChatColor;
+import forceitembattle.util.Text;
 import org.bukkit.entity.Player;
 
 public class CommandHelp extends CustomCommand {
 
-    public CommandHelp() {
-        super("help");
+    public CommandHelp(ForceItemBattle plugin) {
+        super(plugin, "help");
     }
 
     private void msg(Player player, String message) {
-        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize(message));
+        player.sendMessage(Text.of(message));
     }
 
     @Override
@@ -31,7 +32,7 @@ public class CommandHelp extends CustomCommand {
 
             String description = "";
             if (command.getDescription() != null) {
-                description = " <dark_gray>- <gray>"+ command.getDescription();
+                description = " <dark_gray>- <gray>" + command.getDescription();
             }
 
             msg(player, "<dark_gray>- <white>/" + usage + description);

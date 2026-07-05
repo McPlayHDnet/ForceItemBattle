@@ -1,5 +1,6 @@
 package forceitembattle.achievements.handlers;
 
+import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.Trigger;
 import forceitembattle.util.ForceItemPlayer;
 import io.papermc.paper.event.player.PlayerTradeEvent;
@@ -26,7 +27,7 @@ public class TradingAchievementHandler implements AchievementHandler<SimpleAchie
     }
 
     @Override
-    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer) {
+    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin) {
         if (!(event instanceof PlayerTradeEvent tradeEvent)) {
             return false;
         }

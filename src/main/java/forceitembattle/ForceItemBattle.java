@@ -9,6 +9,7 @@ import forceitembattle.commands.admin.CommandSkip;
 import forceitembattle.commands.admin.CommandStart;
 import forceitembattle.commands.admin.CommandStopTimer;
 import forceitembattle.commands.player.CommandAchievement;
+import forceitembattle.commands.player.CommandAskTrade;
 import forceitembattle.commands.player.CommandBed;
 import forceitembattle.commands.player.CommandBp;
 import forceitembattle.commands.player.CommandFixSkips;
@@ -28,21 +29,26 @@ import forceitembattle.commands.player.CommandStats;
 import forceitembattle.commands.player.CommandTeams;
 import forceitembattle.commands.player.CommandVote;
 import forceitembattle.commands.player.CommandVoteSkip;
-import forceitembattle.commands.player.trade.CommandAskTrade;
-import forceitembattle.commands.player.trade.CommandTrade;
 import forceitembattle.listener.AchievementListener;
+import forceitembattle.listener.ChatListener;
 import forceitembattle.listener.ClickableItemsListener;
+import forceitembattle.listener.FoundItemListener;
+import forceitembattle.listener.GameRulesListener;
+import forceitembattle.listener.GuiListener;
 import forceitembattle.listener.ItemsListener;
-import forceitembattle.listener.Listeners;
+import forceitembattle.listener.PlayerLifecycleListener;
 import forceitembattle.listener.PortalListener;
+import forceitembattle.listener.PreGameLockListener;
 import forceitembattle.listener.ProtectionListener;
 import forceitembattle.listener.PvPListener;
 import forceitembattle.listener.RecipeListener;
 import forceitembattle.listener.SettingsListener;
+import forceitembattle.listener.TradeListener;
 import forceitembattle.manager.AchievementManager;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.ItemDifficultiesManager;
 import forceitembattle.manager.LocatorManager;
+import forceitembattle.manager.Manager;
 import forceitembattle.manager.PositionManager;
 import forceitembattle.manager.ProtectionManager;
 import forceitembattle.manager.RecipeManager;
@@ -55,10 +61,18 @@ import forceitembattle.settings.GameSettings;
 import forceitembattle.stats.FIBServiceHelper;
 import forceitembattle.util.AntimatterLocator;
 import forceitembattle.util.Backpack;
-import forceitembattle.util.DescriptionItem;
-import forceitembattle.util.ItemBuilder;
+import forceitembattle.util.FileLogger;
+import forceitembattle.util.Scheduler;
 import forceitembattle.util.Timer;
 import forceitembattle.util.WanderingTraderTimer;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.io.FileUtils;
@@ -66,33 +80,14 @@ import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.GameRules;
 import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.WorldBorder;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.event.Listener;
-import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.plugin.java.JavaPlugin;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.List;
-import java.util.Set;
 
 public final class ForceItemBattle extends JavaPlugin {
 
-    @Getter
-    private static ForceItemBattle instance;
-
+    private final List<Manager> managers = new ArrayList<>();
     @Getter
     private Gamemanager gamemanager;
     @Getter
@@ -135,13 +130,8 @@ public final class ForceItemBattle extends JavaPlugin {
     @Getter
     @Setter
     private Location spawnLocation;
-
     @Getter
     private GameSettings settings;
-
-    public ForceItemBattle() {
-        instance = this;
-    }
 
     @Override
     public void onLoad() {
@@ -152,25 +142,34 @@ public final class ForceItemBattle extends JavaPlugin {
         saveConfig();
     }
 
+    private <T extends Manager> T register(T manager) {
+        this.managers.add(manager);
+        return manager;
+    }
+
     @Override
     public void onEnable() {
-        this.gamemanager = new Gamemanager(this);
-        this.timer = new Timer(this);
-        this.backpack = new Backpack(this);
-        this.itemDifficultiesManager = new ItemDifficultiesManager(this);
-        this.recipeManager = new RecipeManager(this);
-        this.positionManager = new PositionManager(this);
-        this.teamManager = new TeamsManager(this);
-        this.tradingManager = new TradingManager(this);
-        this.commandsManager = new CommandsManager(this);
-        this.achievementManager = new AchievementManager(this);
-        this.locatorManager = new LocatorManager();
-        this.protectionManager = new ProtectionManager(this);
-        this.wanderingTraderTimer = new WanderingTraderTimer();
-        this.antimatterLocator = new AntimatterLocator();
-        this.voteSkipManager = new VoteSkipManager();
-        this.scoreboardManager = new ScoreboardManager(this);
-        this.fibServiceHelper = new FIBServiceHelper(this);
+        Scheduler.init(this);
+        FileLogger.init(getDataFolder());
+        this.gamemanager = register(new Gamemanager(this));
+        this.timer = register(new Timer(this));
+        this.backpack = register(new Backpack(this));
+        this.itemDifficultiesManager = register(new ItemDifficultiesManager(this));
+        this.recipeManager = register(new RecipeManager(this));
+        this.positionManager = register(new PositionManager(this));
+        this.teamManager = register(new TeamsManager(this));
+        this.tradingManager = register(new TradingManager(this));
+        this.commandsManager = register(new CommandsManager(this));
+        this.achievementManager = register(new AchievementManager(this));
+        this.locatorManager = register(new LocatorManager(this));
+        this.protectionManager = register(new ProtectionManager(this));
+        this.wanderingTraderTimer = register(new WanderingTraderTimer(this));
+        this.antimatterLocator = register(new AntimatterLocator(this));
+        this.voteSkipManager = register(new VoteSkipManager(this));
+        this.scoreboardManager = register(new ScoreboardManager(this));
+        this.fibServiceHelper = register(new FIBServiceHelper(this));
+
+        this.managers.forEach(Manager::enable);
 
         this.initListeners();
         this.initCommands();
@@ -205,22 +204,6 @@ public final class ForceItemBattle extends JavaPlugin {
 
             forceloadChunksAround(world.getSpawnLocation(), 2);
         }), 0L);
-
-        if(this.getConfig().isConfigurationSection("descriptions")) {
-            ConfigurationSection configurationSection = this.getConfig().getConfigurationSection("descriptions");
-            Set<String> materialKeys;
-            if (configurationSection != null) {
-                materialKeys = configurationSection.getKeys(false);
-
-                materialKeys.forEach(keys -> {
-                    List<String> descriptions = configurationSection.getStringList(keys);
-                    keys = keys.toUpperCase();
-                    getItemDifficultiesManager().getDescriptionItems().put(Material.valueOf(keys), new DescriptionItem(Material.valueOf(keys), descriptions));
-                });
-            } else {
-                throw new NullPointerException("'descriptions' does not exist in the config.yml");
-            }
-        }
     }
 
     public void forceloadChunksAround(Location center, int radiusChunks) {
@@ -237,7 +220,7 @@ public final class ForceItemBattle extends JavaPlugin {
     }
 
     private void copyDatapack(String datapackName) {
-        File world = new File(Bukkit.getWorldContainer() , "world");
+        File world = new File(Bukkit.getWorldContainer(), "world");
 
         try {
             // Create Path objects for source and destination directories
@@ -284,7 +267,7 @@ public final class ForceItemBattle extends JavaPlugin {
 
     private void initListeners() {
         registerListeners(
-                new Listeners(this),
+                new FoundItemListener(this),
                 new SettingsListener(this),
                 new RecipeListener(this),
                 new PvPListener(this),
@@ -292,65 +275,15 @@ public final class ForceItemBattle extends JavaPlugin {
                 new ClickableItemsListener(this),
                 new ItemsListener(this),
                 new PortalListener(this),
-                new AchievementListener(this)
+                new AchievementListener(this),
+                new PreGameLockListener(this),
+                new ChatListener(this),
+                new PlayerLifecycleListener(this),
+                new TradeListener(this),
+                new GameRulesListener(this),
+                new GuiListener(this)
         );
 
-    }
-
-    public void initRecipes() {
-        final boolean easyRecipes = !this.settings.isSettingEnabled(GameSetting.HARDER_TRACKERS);
-
-        NamespacedKey antimatterKey = new NamespacedKey("fib", "antimatter_locator");
-        ShapedRecipe antimatterRecipe = new ShapedRecipe(antimatterKey, new ItemBuilder(Material.KNOWLEDGE_BOOK).setDisplayName("<dark_gray>» <dark_purple>Antimatter Locator").getItemStack());
-        if (easyRecipes) {
-            antimatterRecipe.shape(
-                    " N ",
-                    "GQG",
-                    " N "
-            );
-            antimatterRecipe.setIngredient('N', Material.NETHER_BRICK);
-            antimatterRecipe.setIngredient('G', Material.GLOWSTONE_DUST);
-            antimatterRecipe.setIngredient('Q', Material.QUARTZ);
-        } else {
-            antimatterRecipe.shape(
-                    "BGB",
-                    "QEQ",
-                    "BGB"
-            );
-            antimatterRecipe.setIngredient('B', Material.NETHER_BRICK);
-            antimatterRecipe.setIngredient('E', Material.ENDER_EYE);
-            antimatterRecipe.setIngredient('G', Material.GLOWSTONE_DUST);
-            antimatterRecipe.setIngredient('Q', Material.QUARTZ);
-        }
-
-        NamespacedKey chambersKey = new NamespacedKey("fib", "chambers_locator");
-        ShapedRecipe chambersRecipe = new ShapedRecipe(chambersKey, new ItemBuilder(Material.WITHER_ROSE).setDisplayName("<dark_gray>» <gold>Trial Locator").getItemStack());
-        if (easyRecipes) {
-            chambersRecipe.shape(
-                    "BGB",
-                    "GCG",
-                    "AAA"
-            );
-            chambersRecipe.setIngredient('B', Material.CUT_COPPER);
-            chambersRecipe.setIngredient('G', Material.GLASS);
-            chambersRecipe.setIngredient('C', Material.COMPASS);
-            chambersRecipe.setIngredient('A', Material.GOLD_INGOT);
-        } else {
-            chambersRecipe.shape(
-                    "OKO",
-                    "GCI",
-                    "ODO"
-            );
-            chambersRecipe.setIngredient('O', Material.OBSIDIAN);
-            chambersRecipe.setIngredient('C', Material.COMPASS);
-            chambersRecipe.setIngredient('K', Material.COPPER_INGOT);
-            chambersRecipe.setIngredient('I', Material.IRON_INGOT);
-            chambersRecipe.setIngredient('G', Material.GOLD_INGOT);
-            chambersRecipe.setIngredient('D', Material.DIAMOND);
-        }
-
-        Bukkit.addRecipe(antimatterRecipe);
-        Bukkit.addRecipe(chambersRecipe);
     }
 
     public void registerListeners(Listener... listeners) {
@@ -360,74 +293,42 @@ public final class ForceItemBattle extends JavaPlugin {
     }
 
     private void initCommands() {
-        new CommandStart();
-        new CommandSettings();
-        new CommandSkip();
-        new CommandReset();
-        new CommandBp();
-        new CommandResult();
-        new CommandInfo();
-        new CommandItems();
-        new CommandStopTimer();
-        new CommandInfoWiki();
-        new CommandSpawn();
-        new CommandBed();
-        new CommandPause();
-        new CommandResume();
-        new CommandStats();
-        new CommandLeaderboard();
-        new CommandPosition();
-        new CommandPing();
-        new CommandHelp();
-        new CommandTeams();
-        new CommandAskTrade();
-        new CommandTrade();
-        new CommandFixSkips();
-        new CommandAchievement();
-        new CommandSpectate();
-        new CommandShout();
-        new CommandForceTeam();
-        new CommandVote();
-        new CommandVoteSkip();
+        CommandsManager commands = this.commandsManager;
+
+        commands.registerCommand(new CommandStart(this));
+        commands.registerCommand(new CommandSettings(this));
+        commands.registerCommand(new CommandSkip(this));
+        commands.registerCommand(new CommandReset(this));
+        commands.registerCommand(new CommandBp(this));
+        commands.registerCommand(new CommandResult(this));
+        commands.registerCommand(new CommandInfo(this));
+        commands.registerCommand(new CommandItems(this));
+        commands.registerCommand(new CommandStopTimer(this));
+        commands.registerCommand(new CommandInfoWiki(this));
+        commands.registerCommand(new CommandSpawn(this));
+        commands.registerCommand(new CommandBed(this));
+        commands.registerCommand(new CommandPause(this));
+        commands.registerCommand(new CommandResume(this));
+        commands.registerCommand(new CommandStats(this));
+        commands.registerCommand(new CommandLeaderboard(this));
+        commands.registerCommand(new CommandPosition(this));
+        commands.registerCommand(new CommandPing(this));
+        commands.registerCommand(new CommandHelp(this));
+        commands.registerCommand(new CommandTeams(this));
+        commands.registerCommand(new CommandAskTrade(this));
+        commands.registerCommand(new CommandFixSkips(this));
+        commands.registerCommand(new CommandAchievement(this));
+        commands.registerCommand(new CommandSpectate(this));
+        commands.registerCommand(new CommandShout(this));
+        commands.registerCommand(new CommandForceTeam(this));
+        commands.registerCommand(new CommandVote(this));
+        commands.registerCommand(new CommandVoteSkip(this));
     }
 
     @Override
     public void onDisable() {
-        reloadConfig();
-        if (getConfig().getBoolean("isReset")) {
-            getConfig().set("timer.time", 0);
-        } else {
-            timer.save();
-        }
-        saveConfig();
-    }
-
-    public void logToFile(String message) {
-        try {
-            File dataFolder = getDataFolder();
-            if(!dataFolder.exists()) {
-                dataFolder.mkdir();
-            }
-
-            File saveTo = new File(getDataFolder(), "logs_plugin.txt");
-            if (!saveTo.exists()) {
-                saveTo.createNewFile();
-            }
-
-            FileWriter fw = new FileWriter(saveTo, true);
-            PrintWriter pw = new PrintWriter(fw);
-
-            pw.println("[" + getTime() + "] | " + message);
-            pw.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+        for (int i = this.managers.size() - 1; i >= 0; i--) {
+            this.managers.get(i).disable();
         }
     }
-
-    public String getTime(){
-        Calendar cal = Calendar.getInstance();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        return sdf.format(cal.getTime());
-    }
-
 }

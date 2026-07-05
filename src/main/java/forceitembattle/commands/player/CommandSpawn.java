@@ -1,23 +1,24 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
+import forceitembattle.util.Text;
+import java.util.ArrayList;
+import java.util.List;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class CommandSpawn extends CustomCommand {
 
-    public CommandSpawn() {
-        super("spawn");
+    public CommandSpawn(ForceItemBattle plugin) {
+        super(plugin, "spawn");
         setDescription("Teleport to the spawn location");
     }
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
         if (this.plugin.getSpawnLocation() == null) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>The spawn location has not been set yet."));
+            player.sendMessage(Text.of("<red>The spawn location has not been set yet."));
             return;
         }
 

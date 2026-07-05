@@ -1,24 +1,25 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.FinishInventory;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.Team;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
-
+import forceitembattle.util.Text;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 
 public class CommandResult extends CustomCommand {
 
     public int place;
 
-    public CommandResult() {
-        super("result");
+    public CommandResult(ForceItemBattle plugin) {
+        super(plugin, "result");
         setDescription("Show the next player's result");
 
         this.place = -1;
@@ -33,18 +34,18 @@ public class CommandResult extends CustomCommand {
         if (args.length == 1) {
             UUID uuid = null;
             Team team = null;
-            if(!this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+            if (!this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
                 try {
                     uuid = UUID.fromString(args[0]);
                 } catch (IllegalArgumentException e) {
-                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>Invalid UUID."));
+                    player.sendMessage(Text.of("<red>Invalid UUID."));
                     return;
                 }
             } else {
                 try {
                     team = this.plugin.getTeamManager().getTeams().get(Integer.parseInt(args[0].replace("#", "")) - 1);
                 } catch (IllegalArgumentException e) {
-                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>Invalid team."));
+                    player.sendMessage(Text.of("<red>Invalid team."));
                 }
             }
 
@@ -64,7 +65,7 @@ public class CommandResult extends CustomCommand {
     }
 
     private void showNextPlayer(Player player) {
-        if(!this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
             if (this.plugin.getGamemanager().forceItemPlayerMap().isEmpty() || this.place == 0) {
                 player.sendMessage("No more players left.");
                 return;

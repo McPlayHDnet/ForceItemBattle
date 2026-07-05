@@ -1,23 +1,25 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.util.Text;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 public class CommandFixSkips extends CustomCommand {
-    public CommandFixSkips() {
-        super("fixskips");
+    public CommandFixSkips(ForceItemBattle plugin) {
+        super(plugin, "fixskips");
         setDescription("Fix skips");
     }
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
         if (!this.plugin.getGamemanager().isMidGame()) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>You can only use this during the game."));
+            player.sendMessage(Text.of("<red>You can only use this during the game."));
             return;
         }
 
@@ -29,7 +31,7 @@ public class CommandFixSkips extends CustomCommand {
         int remainingJokers = usingTeams ? forceItemPlayer.currentTeam().getRemainingJokers() : forceItemPlayer.remainingJokers();
         if (remainingJokers == 0) {
             if (!silent) {
-                player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>You don't have any jokers left."));
+                player.sendMessage(Text.of("<red>You don't have any jokers left."));
             }
             return;
         }
@@ -53,7 +55,7 @@ public class CommandFixSkips extends CustomCommand {
             player.getInventory().addItem(jokers);
         }
         if (!silent) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<yellow>Removed all duplicate jokers and gave you <white>" + jokers.getAmount() + "<yellow> jokers."));
+            player.sendMessage(Text.of("<yellow>Removed all duplicate jokers and gave you <white>" + jokers.getAmount() + "<yellow> jokers."));
         }
     }
 }

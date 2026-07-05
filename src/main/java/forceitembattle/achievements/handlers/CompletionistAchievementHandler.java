@@ -1,9 +1,9 @@
 package forceitembattle.achievements.handlers;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.event.PlayerGrantAchievementEvent;
 import forceitembattle.achievements.Achievements;
 import forceitembattle.achievements.Trigger;
+import forceitembattle.event.PlayerGrantAchievementEvent;
 import forceitembattle.util.ForceItemPlayer;
 import org.bukkit.event.Event;
 
@@ -19,12 +19,12 @@ public class CompletionistAchievementHandler implements AchievementHandler<Simpl
     }
 
     @Override
-    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer) {
+    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin) {
         if (!(event instanceof PlayerGrantAchievementEvent)) {
             return false;
         }
 
-        var storage = ForceItemBattle.getInstance().getAchievementManager().getAchievementStorage();
+        var storage = plugin.getAchievementManager().getAchievementStorage();
         int completed = storage.getPlayerAchievements(forceItemPlayer.player().getUniqueId()).size();
 
         // -1 because we don't count Completionist itself

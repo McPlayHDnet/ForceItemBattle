@@ -2,6 +2,8 @@ package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.util.ParticleUtils;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.NonNull;
 import org.bukkit.Color;
 import org.bukkit.Location;
@@ -9,10 +11,7 @@ import org.bukkit.Particle;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.HashMap;
-import java.util.Map;
-
-public class PositionManager {
+public class PositionManager implements Manager {
 
     private final ForceItemBattle plugin;
     private final Map<String, Location> positionsMap;
@@ -54,9 +53,10 @@ public class PositionManager {
 
         new BukkitRunnable() {
             int current = 0;
+
             @Override
             public void run() {
-                if(++current == 10) {
+                if (++current == 10) {
                     this.cancel();
                 }
                 ParticleUtils.drawLine(player, player.getLocation().add(0, 1.2, 0), target, Particle.DUST, new Particle.DustOptions(color, 1), 1, 0.5, 50);

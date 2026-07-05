@@ -5,77 +5,52 @@ import com.google.gson.Gson;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.DescriptionItem;
-import lombok.Getter;
-import lombok.Setter;
-import org.bukkit.ChatColor;
-import org.bukkit.Material;
-
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.Getter;
+import lombok.Setter;
+import org.bukkit.ChatColor;
+import org.bukkit.Material;
+import org.bukkit.configuration.ConfigurationSection;
 
-public class ItemDifficultiesManager {
+public class ItemDifficultiesManager implements Manager {
 
     private final ForceItemBattle plugin;
-
-    /**
-     * Tags that describe item properties/requirements.
-     * An item can have multiple tags.
-     */
-    public enum ItemTag {
-        /** Item requires nether access to obtain */
-        NETHER,
-        /** Item requires end access to obtain */
-        END,
-        /** Item is extremely hard/unrealistic to obtain in 45 minutes */
-        EXTREME
-    }
-
-    /**
-     * Defines an item with its game state (when it unlocks) and tags (requirements/properties).
-     */
-    public record ItemDefinition(Material material, State state, Set<ItemTag> tags) {
-        public ItemDefinition(Material material, State state, ItemTag... tags) {
-            this(material, state, tags.length == 0 ? Set.of() : EnumSet.copyOf(Arrays.asList(tags)));
-        }
-
-        public boolean hasTag(ItemTag tag) {
-            return tags.contains(tag);
-        }
-
-        public boolean hasAnyTag(ItemTag... checkTags) {
-            for (ItemTag tag : checkTags) {
-                if (tags.contains(tag)) return true;
-            }
-            return false;
-        }
-    }
-
     @Getter
     private final Map<Material, ItemDefinition> itemRegistry = new HashMap<>();
-
+    private final Random FIXED_RANDOM;
+    private final long FIXED_RANDOM_SEED;
     @Getter
     private HashMap<Material, DescriptionItem> descriptionItems;
 
     private Map<Material, String> smallIconUnicodes;
     private Map<Material, String> bigIconUnicodes;
 
-    private final Random FIXED_RANDOM;
-    private final long FIXED_RANDOM_SEED;
-
     public ItemDifficultiesManager(ForceItemBattle forceItemBattle) {
         this.plugin = forceItemBattle;
-
         this.FIXED_RANDOM_SEED = new Random().nextLong();
         this.FIXED_RANDOM = new Random(FIXED_RANDOM_SEED);
-
         this.descriptionItems = new HashMap<>();
+    }
 
+    @Override
+    public void enable() {
         registerAllItems();
         setupStates();
+        loadDescriptions();
     }
 
     public void setupStates() {
@@ -86,6 +61,21 @@ public class ItemDifficultiesManager {
         // Populate state item lists from registry
         for (State state : State.VALUES) {
             state.setItems(getItemsByState(state));
+        }
+    }
+
+    private void loadDescriptions() {
+        if (!this.plugin.getConfig().isConfigurationSection("descriptions")) {
+            return;
+        }
+        ConfigurationSection section = this.plugin.getConfig().getConfigurationSection("descriptions");
+        if (section == null) {
+            throw new NullPointerException("'descriptions' does not exist in the config.yml");
+        }
+        for (String key : section.getKeys(false)) {
+            List<String> descriptions = section.getStringList(key);
+            Material material = Material.valueOf(key.toUpperCase());
+            this.descriptionItems.put(material, new DescriptionItem(material, descriptions));
         }
     }
 
@@ -167,8 +157,6 @@ public class ItemDifficultiesManager {
         return items;
     }
 
-    // ==================== ITEM GENERATION ====================
-
     public Material generateRandomMaterial() {
         List<Material> items = new ArrayList<>(getAvailableItems());
         filterDisabledItems(items);
@@ -190,6 +178,8 @@ public class ItemDifficultiesManager {
 
         return items.get(FIXED_RANDOM.nextInt(items.size()));
     }
+
+    // ==================== ITEM GENERATION ====================
 
     /**
      * Filter out items based on game settings.
@@ -231,8 +221,6 @@ public class ItemDifficultiesManager {
         return itemRegistry.containsKey(material);
     }
 
-    // ==================== DESCRIPTIONS ====================
-
     public boolean isItemInDescriptionList(Material material) {
         return this.descriptionItems.containsKey(material);
     }
@@ -240,6 +228,8 @@ public class ItemDifficultiesManager {
     public boolean itemHasDescription(Material material) {
         return this.descriptionItems.get(material) != null;
     }
+
+    // ==================== DESCRIPTIONS ====================
 
     public List<String> getDescriptionItemLines(Material material) {
         if (!isItemInDescriptionList(material)) {
@@ -256,8 +246,6 @@ public class ItemDifficultiesManager {
                 .map(line -> ChatColor.translateAlternateColorCodes('&', line))
                 .toList();
     }
-
-    // ==================== UNICODE ICONS ====================
 
     public String getUnicodeFromMaterial(boolean smallIcon, Material material) {
         return this.getItemUnicodes(smallIcon).getOrDefault(material, "NULL");
@@ -277,6 +265,8 @@ public class ItemDifficultiesManager {
         return bigIconUnicodes;
     }
 
+    // ==================== UNICODE ICONS ====================
+
     private Map<Material, String> readItemUnicodes(boolean smallIcon) {
         Map<Material, String> itemsUnicode = new HashMap<>();
         File file = new File(this.plugin.getDataFolder(), "unicodeItems.json");
@@ -288,7 +278,8 @@ public class ItemDifficultiesManager {
 
         try (FileReader fileReader = new FileReader(file)) {
             Gson gson = new Gson();
-            Type mapType = new TypeToken<Map<String, String>[]>(){}.getType();
+            Type mapType = new TypeToken<Map<String, String>[]>() {
+            }.getType();
             Map<String, String>[] items = gson.fromJson(fileReader, mapType);
 
             if (items == null) {
@@ -320,8 +311,6 @@ public class ItemDifficultiesManager {
 
         return itemsUnicode;
     }
-
-    // ==================== ITEM LIST ====================
 
     /**
      * Register a single item with its state and optional tags.
@@ -1702,6 +1691,27 @@ public class ItemDifficultiesManager {
         register(Material.YELLOW_WOOL, State.EARLY);
     }
 
+    // ==================== ITEM LIST ====================
+
+    /**
+     * Tags that describe item properties/requirements.
+     * An item can have multiple tags.
+     */
+    public enum ItemTag {
+        /**
+         * Item requires nether access to obtain
+         */
+        NETHER,
+        /**
+         * Item requires end access to obtain
+         */
+        END,
+        /**
+         * Item is extremely hard/unrealistic to obtain in 45 minutes
+         */
+        EXTREME
+    }
+
     @Getter
     public enum State {
         EARLY,
@@ -1715,5 +1725,25 @@ public class ItemDifficultiesManager {
 
         @Setter
         private double unlockedAtPercentage;
+    }
+
+    /**
+     * Defines an item with its game state (when it unlocks) and tags (requirements/properties).
+     */
+    public record ItemDefinition(Material material, State state, Set<ItemTag> tags) {
+        public ItemDefinition(Material material, State state, ItemTag... tags) {
+            this(material, state, tags.length == 0 ? Set.of() : EnumSet.copyOf(Arrays.asList(tags)));
+        }
+
+        public boolean hasTag(ItemTag tag) {
+            return tags.contains(tag);
+        }
+
+        public boolean hasAnyTag(ItemTag... checkTags) {
+            for (ItemTag tag : checkTags) {
+                if (tags.contains(tag)) return true;
+            }
+            return false;
+        }
     }
 }

@@ -1,32 +1,39 @@
 package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.event.PlayerGrantAchievementEvent;
-import forceitembattle.settings.GameSetting;
 import forceitembattle.achievements.AchievementMode;
 import forceitembattle.achievements.AchievementStorage;
 import forceitembattle.achievements.Achievements;
 import forceitembattle.achievements.Trigger;
 import forceitembattle.achievements.handlers.AchievementHandler;
+import forceitembattle.achievements.handlers.AchievementProgressTracker;
 import forceitembattle.achievements.handlers.BackToBackAchievementProgress;
 import forceitembattle.achievements.handlers.CollectionAchievementHandler;
 import forceitembattle.achievements.handlers.CollectionAchievementProgress;
 import forceitembattle.achievements.handlers.ConsecutiveStoneAchievementHandler;
 import forceitembattle.achievements.handlers.CounterAchievementProgress;
 import forceitembattle.achievements.handlers.ItemFrequencyAchievementProgress;
-import forceitembattle.achievements.handlers.AchievementProgressTracker;
 import forceitembattle.achievements.handlers.SimpleAchievementProgress;
 import forceitembattle.achievements.handlers.SkipAchievementProgress;
 import forceitembattle.achievements.handlers.TimeAchievementProgress;
+import forceitembattle.event.PlayerGrantAchievementEvent;
+import forceitembattle.settings.GameSetting;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.Team;
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 
-import java.util.*;
-
-public class AchievementManager {
+public class AchievementManager implements Manager {
 
     private final ForceItemBattle plugin;
     private final Map<UUID, Map<Achievements, AchievementProgressTracker>> playerProgress = new HashMap<>();
@@ -120,7 +127,7 @@ public class AchievementManager {
                     (AchievementHandler<AchievementProgressTracker>) handler;
 
             // Check if completed
-            if (typedHandler.check(event, tracker, forceItemPlayer)) {
+            if (typedHandler.check(event, tracker, forceItemPlayer, plugin)) {
                 grantAchievement(player, achievement, useTeamProgress, forceItemPlayer);
             }
         }
@@ -345,10 +352,6 @@ public class AchievementManager {
     }
 
     public AchievementStorage getAchievementStorage() {
-        return storage;
-    }
-
-    public AchievementStorage getStorage() {
         return storage;
     }
 }

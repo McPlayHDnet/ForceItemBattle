@@ -1,8 +1,8 @@
 package forceitembattle.achievements.handlers;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.event.FoundItemEvent;
 import forceitembattle.achievements.Trigger;
+import forceitembattle.event.FoundItemEvent;
 import forceitembattle.util.ForceItemPlayer;
 import org.bukkit.event.Event;
 
@@ -24,12 +24,12 @@ public class SkipAchievementHandler implements AchievementHandler<SkipAchievemen
     }
 
     @Override
-    public boolean check(Event event, SkipAchievementProgress progress, ForceItemPlayer forceItemPlayer) {
+    public boolean check(Event event, SkipAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin) {
         if (!(event instanceof FoundItemEvent foundEvent)) {
             return false;
         }
 
-        ForceItemBattle fib = ForceItemBattle.getInstance();
+        ForceItemBattle fib = plugin;
         int gameDuration = fib.getGamemanager().getGameDuration();
         int secondsLeft = fib.getTimer().getTimeLeft();
 

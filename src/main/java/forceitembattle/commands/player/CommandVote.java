@@ -4,61 +4,60 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.settings.GameSetting;
-import net.kyori.adventure.text.minimessage.MiniMessage;
+import forceitembattle.util.Text;
+import java.util.Arrays;
+import java.util.List;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-import java.util.Arrays;
-import java.util.List;
-
 public class CommandVote extends CustomCommand implements CustomTabCompleter {
 
-    private final MiniMessage miniMessage = ForceItemBattle.getInstance().getGamemanager().getMiniMessage();
 
-    public CommandVote() {
-        super("vote");
+    public CommandVote(ForceItemBattle plugin) {
+        super(plugin, "vote");
         setDescription("Voting for a skip item");
     }
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
         if (!this.plugin.getGamemanager().isMidGame()) {
-            player.sendMessage(this.miniMessage.deserialize("<red>You can only use this mid-game!"));
+            player.sendMessage(Text.of("<red>You can only use this mid-game!"));
             return;
         }
 
         if (!this.plugin.getSettings().isSettingEnabled(GameSetting.RUN)) {
-            player.sendMessage(this.miniMessage.deserialize("<red>You can only use vote when the battle `RUN` mode is enabled!"));
+            player.sendMessage(Text.of("<red>You can only use vote when the battle `RUN` mode is enabled!"));
             return;
         }
 
         if (args.length == 0) {
-            player.sendMessage(this.miniMessage.deserialize("<gray>Usage: <yellow>/vote <green>yes</green>|<red>no</red>"));
+            player.sendMessage(Text.of("<gray>Usage: <yellow>/vote <green>yes</green>|<red>no</red>"));
             return;
         }
 
-        if (!ForceItemBattle.getInstance().getVoteSkipManager().isVoteInProgress()) {
-            player.sendMessage(this.miniMessage.deserialize("<red>No skip vote is currently in progress."));
+        if (!this.plugin.getVoteSkipManager().isVoteInProgress()) {
+            player.sendMessage(Text.of("<red>No skip vote is currently in progress."));
             return;
         }
 
         String action = args[0].toLowerCase();
         switch (action) {
-            case "yes" -> ForceItemBattle.getInstance().getVoteSkipManager().castVote(player, true);
-            case "no"  -> ForceItemBattle.getInstance().getVoteSkipManager().castVote(player, false);
+            case "yes" -> this.plugin.getVoteSkipManager().castVote(player, true);
+            case "no" -> this.plugin.getVoteSkipManager().castVote(player, false);
             case "cancel" -> {
                 if (!player.isOp()) {
-                    player.sendMessage(this.miniMessage.deserialize("<red>You must be an operator to cancel a vote."));
+                    player.sendMessage(Text.of("<red>You must be an operator to cancel a vote."));
                     return;
                 }
 
-                ForceItemBattle.getInstance().getVoteSkipManager().cancelVote();
-                player.sendMessage(this.miniMessage.deserialize("<gray>You cancelled the vote."));
+                this.plugin.getVoteSkipManager().cancelVote();
+                player.sendMessage(Text.of("<gray>You cancelled the vote."));
                 Bukkit.getOnlinePlayers().forEach(p ->
-                        p.sendMessage(this.miniMessage.deserialize("<red><b>The vote has been cancelled by an operator!</b>"))
+                        p.sendMessage(Text.of("<red><b>The vote has been cancelled by an operator!</b>"))
                 );
             }
-            default -> player.sendMessage(this.miniMessage.deserialize("<red>Invalid vote option. Use <yellow>/vote yes</yellow> or <yellow>/vote no</yellow>."));
+            default ->
+                    player.sendMessage(Text.of("<red>Invalid vote option. Use <yellow>/vote yes</yellow> or <yellow>/vote no</yellow>."));
         }
 
     }

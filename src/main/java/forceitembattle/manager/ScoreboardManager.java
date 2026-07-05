@@ -4,18 +4,17 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.util.Text;
+import java.util.Comparator;
+import java.util.List;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
-import java.util.Comparator;
-import java.util.List;
-
-public class ScoreboardManager {
+public class ScoreboardManager implements Manager {
 
     private final ForceItemBattle plugin;
 
@@ -38,7 +37,6 @@ public class ScoreboardManager {
 
     public void updateForPlayer(Player viewer) {
         Gamemanager gameManager = plugin.getGamemanager();
-        MiniMessage mini = gameManager.getMiniMessage();
         GameSettings settings = plugin.getSettings();
         Scoreboard board = viewer.getScoreboard();
 
@@ -63,9 +61,9 @@ public class ScoreboardManager {
             }
 
             if (settings.isSettingEnabled(GameSetting.TEAM) && fibPlayer.currentTeam() != null) {
-                team.prefix(mini.deserialize(fibPlayer.currentTeam().getTeamDisplay() + " "));
+                team.prefix(Text.of(fibPlayer.currentTeam().getTeamDisplay() + " "));
             } else {
-                team.prefix(mini.deserialize(""));
+                team.prefix(Text.of(""));
             }
 
             Material mat;
@@ -77,11 +75,11 @@ public class ScoreboardManager {
             }
 
             if (mat != null) {
-                String itemIcon = ForceItemBattle.getInstance()
+                String itemIcon = this.plugin
                         .getItemDifficultiesManager()
                         .getUnicodeFromMaterial(true, mat);
 
-                team.suffix(mini.deserialize(
+                team.suffix(Text.of(
                         " <gray>[<gold>" + gameManager.getMaterialName(mat)
                                 + " <reset><shadow:black:0.4>" + itemIcon + "</shadow><gray>]"
                 ));

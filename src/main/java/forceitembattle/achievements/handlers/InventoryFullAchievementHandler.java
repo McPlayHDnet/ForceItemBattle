@@ -1,9 +1,9 @@
 package forceitembattle.achievements.handlers;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.achievements.Trigger;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.achievements.Trigger;
 import forceitembattle.util.ForceItemPlayer;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -22,7 +22,7 @@ public class InventoryFullAchievementHandler implements AchievementHandler<Simpl
     }
 
     @Override
-    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer) {
+    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin) {
         if (!(event instanceof FoundItemEvent)) {
             return false;
         }
@@ -39,7 +39,7 @@ public class InventoryFullAchievementHandler implements AchievementHandler<Simpl
         }
 
         // Also check backpack if enabled
-        var fib = ForceItemBattle.getInstance();
+        ForceItemBattle fib = plugin;
         if (fib.getSettings().isSettingEnabled(GameSetting.BACKPACK)) {
             Inventory backpack = fib.getBackpack().getBackpackForPlayer(player);
             if (backpack != null) {

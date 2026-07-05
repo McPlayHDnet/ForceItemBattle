@@ -1,7 +1,8 @@
 package forceitembattle.achievements.handlers;
 
-import forceitembattle.event.FoundItemEvent;
+import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.Trigger;
+import forceitembattle.event.FoundItemEvent;
 import forceitembattle.util.ForceItemPlayer;
 import org.bukkit.Material;
 import org.bukkit.event.Event;
@@ -36,7 +37,7 @@ public class BackToBackAchievementHandler implements AchievementHandler<BackToBa
     }
 
     @Override
-    public boolean check(Event event, BackToBackAchievementProgress progress, ForceItemPlayer forceItemPlayer) {
+    public boolean check(Event event, BackToBackAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin) {
         if (!(event instanceof FoundItemEvent foundEvent)) {
             return false;
         }

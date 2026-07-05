@@ -1,8 +1,7 @@
 package forceitembattle.util;
 
-import org.bukkit.Material;
-
 import java.util.Set;
+import org.bukkit.Material;
 
 /**
  * Utility class for categorizing materials by type.

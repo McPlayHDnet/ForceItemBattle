@@ -1,15 +1,14 @@
 package forceitembattle.manager.customrecipe;
 
-import org.bukkit.NamespacedKey;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.Recipe;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import org.bukkit.NamespacedKey;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.Recipe;
 
-public class RecipeBuilder <T extends Recipe>{
+public class RecipeBuilder<T extends Recipe> {
 
     private final BiFunction<NamespacedKey, ItemStack, T> recipeConstructor;
     private final List<Consumer<T>> operations = new ArrayList<>();

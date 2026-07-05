@@ -1,23 +1,24 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
+import forceitembattle.util.Text;
+import java.util.ArrayList;
+import java.util.List;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class CommandBed extends CustomCommand {
 
-    public CommandBed() {
-        super("bed");
+    public CommandBed(ForceItemBattle plugin) {
+        super(plugin, "bed");
         setDescription("Teleport to your bed location");
     }
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
         if (player.getRespawnLocation() == null) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>You don't have a bed respawn point."));
+            player.sendMessage(Text.of("<red>You don't have a bed respawn point."));
             return;
         }
 

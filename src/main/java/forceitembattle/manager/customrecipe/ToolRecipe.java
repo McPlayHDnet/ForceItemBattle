@@ -1,6 +1,8 @@
 package forceitembattle.manager.customrecipe;
 
 import forceitembattle.util.ItemBuilder;
+import java.util.ArrayList;
+import java.util.List;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
@@ -8,25 +10,17 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ShapelessRecipe;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class ToolRecipe extends ShapelessRecipe {
+
+    private final List<String> interactionLore = new ArrayList<>();
+    private ItemStack stationDisplay;
 
     public ToolRecipe(NamespacedKey key, ItemStack result) {
         super(key, result);
     }
 
-    private final List<String> interactionLore = new ArrayList<>();
-
-    private ItemStack stationDisplay;
-
     public void addInteractionLore(String... lore) {
         interactionLore.addAll(List.of(lore));
-    }
-
-    public void setStationDisplay(ItemStack stationDisplay) {
-        this.stationDisplay = stationDisplay;
     }
 
     public ItemStack getStationDisplay() {
@@ -42,6 +36,10 @@ public class ToolRecipe extends ShapelessRecipe {
                 .setDisplayNameLegacy("&fHow to get item:")
                 .setLoreLegacy(getInteractionLore())
                 .getItemStack();
+    }
+
+    public void setStationDisplay(ItemStack stationDisplay) {
+        this.stationDisplay = stationDisplay;
     }
 
     public List<String> getInteractionLore() {

@@ -2,21 +2,19 @@ package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.event.WheelOfFortuneWinEvent;
+import java.time.Duration;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.time.Duration;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Random;
 
 import static forceitembattle.util.RecipeInventory.CUSTOM_MATERIALS;
 
@@ -25,7 +23,7 @@ public class VaultInventory extends InventoryBuilder {
     private final ForceItemBattle plugin;
 
     public VaultInventory(ForceItemBattle plugin) {
-        super(9 * 5, plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>» <dark_green>Vault"));
+        super(9 * 5, Text.of("<dark_gray>» <dark_green>Vault"));
 
         this.plugin = plugin;
 
@@ -46,9 +44,9 @@ public class VaultInventory extends InventoryBuilder {
             Collections.shuffle(itemList);
 
             new BukkitRunnable() {
+                final int totalDuration = 315;
                 int ticks = 0;
                 int currentIndex = 0;
-                final int totalDuration = 315;
                 double accumulatedTime = 0;
 
                 @Override
@@ -59,7 +57,7 @@ public class VaultInventory extends InventoryBuilder {
                         Material wonMaterial = Objects.requireNonNull(getInventory().getItem(22)).getType();
                         Bukkit.getPluginManager().callEvent(new WheelOfFortuneWinEvent(getPlayer(), wonMaterial));
 
-                        Component subTitle = plugin.getGamemanager().getMiniMessage().deserialize("<gold>" + plugin.getGamemanager().getMaterialName(wonMaterial));
+                        Component subTitle = Text.of("<gold>" + plugin.getGamemanager().getMaterialName(wonMaterial));
 
                         Title.Times times = Title.Times.times(Duration.ofMillis(600), Duration.ofMillis(2000), Duration.ofMillis(600));
                         Title title = Title.title(Component.empty(), subTitle, times);

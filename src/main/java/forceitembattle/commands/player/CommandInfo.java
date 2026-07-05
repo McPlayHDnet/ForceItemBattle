@@ -1,23 +1,40 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.util.CustomMaterial;
 import forceitembattle.util.DescriptionItem;
 import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.util.Text;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.*;
 
 import static forceitembattle.util.RecipeInventory.CUSTOM_MATERIALS;
 import static forceitembattle.util.RecipeInventory.ID_TO_MATERIAL;
 
 public class CommandInfo extends CustomCommand implements CustomTabCompleter {
 
-    public CommandInfo() {
-        super("info");
+    private static final List<String> MATERIALS = Arrays.stream(Material.values())
+            .map(material -> {
+                CustomMaterial customMaterial = CUSTOM_MATERIALS.get(material);
+                if (customMaterial != null) {
+                    return customMaterial.id();
+                } else {
+                    return material.name().toLowerCase();
+                }
+            })
+            .sorted()
+            .toList();
+
+    public CommandInfo(ForceItemBattle plugin) {
+        super(plugin, "info");
         setUsage("[item]");
         setDescription("Get information about an item");
     }
@@ -29,7 +46,7 @@ public class CommandInfo extends CustomCommand implements CustomTabCompleter {
         if (args.length == 1) {
             Material material = this.matchMaterial(args[0]);
             if (material == null) {
-                player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>Invalid item name"));
+                player.sendMessage(Text.of("<red>Invalid item name"));
                 return;
             }
             item = new ItemStack(material);
@@ -37,18 +54,18 @@ public class CommandInfo extends CustomCommand implements CustomTabCompleter {
         } else if (this.plugin.getGamemanager().isMidGame()) {
             if (this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
                 ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-                if(forceItemPlayer.isSpectator()) {
-                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>You are not playing, type /info [item] to get information about an item"));
+                if (forceItemPlayer.isSpectator()) {
+                    player.sendMessage(Text.of("<red>You are not playing, type /info [item] to get information about an item"));
                     return;
                 }
                 item = new ItemStack(forceItemPlayer.getCurrentMaterial());
             } else {
-                player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>You are not playing, type /info [item] to get information about an item"));
+                player.sendMessage(Text.of("<red>You are not playing, type /info [item] to get information about an item"));
             }
         }
 
         if (item.getType() == Material.AIR) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>You need to hold an item in your hand!"));
+            player.sendMessage(Text.of("<red>You need to hold an item in your hand!"));
             return;
         }
 
@@ -74,18 +91,6 @@ public class CommandInfo extends CustomCommand implements CustomTabCompleter {
 
         return material;
     }
-
-    private static final List<String> MATERIALS = Arrays.stream(Material.values())
-            .map(material -> {
-                CustomMaterial customMaterial = CUSTOM_MATERIALS.get(material);
-                if (customMaterial != null) {
-                    return customMaterial.id();
-                } else {
-                    return material.name().toLowerCase();
-                }
-            })
-            .sorted()
-            .toList();
 
     @Override
     public List<String> onTabComplete(Player player, String label, String[] args) {

@@ -3,54 +3,39 @@ package forceitembattle.util;
 import forceitembattle.ForceItemBattle;
 import org.bukkit.Bukkit;
 
-public class Scheduler {
+public final class Scheduler {
+
+    private static ForceItemBattle plugin;
+
+    private Scheduler() {
+    }
+
+    public static void init(ForceItemBattle plugin) {
+        Scheduler.plugin = plugin;
+    }
 
     public static void runAsync(Runnable runnable) {
-        Bukkit.getScheduler().runTaskAsynchronously(
-                ForceItemBattle.getInstance(),
-                runnable
-        );
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, runnable);
     }
 
     public static void runSync(Runnable runnable) {
-        Bukkit.getScheduler().runTask(
-                ForceItemBattle.getInstance(),
-                runnable
-        );
+        Bukkit.getScheduler().runTask(plugin, runnable);
     }
 
     public static void runLaterAsync(Runnable runnable, long delay) {
-        Bukkit.getScheduler().runTaskLaterAsynchronously(
-                ForceItemBattle.getInstance(),
-                runnable,
-                delay
-        );
+        Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, runnable, delay);
     }
 
     public static void runLaterSync(Runnable runnable, long delay) {
-        Bukkit.getScheduler().runTaskLater(
-                ForceItemBattle.getInstance(),
-                runnable,
-                delay
-        );
+        Bukkit.getScheduler().runTaskLater(plugin, runnable, delay);
     }
 
     public static void runTimerAsync(Runnable runnable, long delay, long period) {
-        Bukkit.getScheduler().runTaskTimerAsynchronously(
-                ForceItemBattle.getInstance(),
-                runnable,
-                delay,
-                period
-        );
+        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, runnable, delay, period);
     }
 
     public static void runTimerSync(Runnable runnable, long delay, long period) {
-        Bukkit.getScheduler().runTaskTimer(
-                ForceItemBattle.getInstance(),
-                runnable,
-                delay,
-                period
-        );
+        Bukkit.getScheduler().runTaskTimer(plugin, runnable, delay, period);
     }
 
 }

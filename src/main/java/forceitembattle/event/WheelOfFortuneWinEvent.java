@@ -17,21 +17,23 @@ public class WheelOfFortuneWinEvent extends Event {
         this.wonItem = wonItem;
     }
 
+    public static HandlerList getHandlerList() {
+        return HANDLERS;
+    }
+
     public Player getPlayer() {
         return player;
     }
 
-    /** The item the wheel landed on. */
+    /**
+     * The item the wheel landed on.
+     */
     public Material getWonItem() {
         return wonItem;
     }
 
     @Override
     public HandlerList getHandlers() {
-        return HANDLERS;
-    }
-
-    public static HandlerList getHandlerList() {
         return HANDLERS;
     }
 }

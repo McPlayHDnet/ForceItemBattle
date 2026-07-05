@@ -22,7 +22,7 @@ public class TeleporterInventory extends InventoryBuilder {
         this.addUpdateHandler(() -> {
             int slot = 9;
             for (Player players : Bukkit.getOnlinePlayers()) {
-                if(players == this.getPlayer()) continue;
+                if (players == this.getPlayer()) continue;
                 this.setItem(slot, new ItemBuilder(Material.PLAYER_HEAD).setDisplayName("<dark_gray>» <gold>" + players.getName()).setSkullTexture(players.getPlayerProfile().getTextures()).getItemStack(), inventoryClickEvent -> {
                     Player player = (Player) inventoryClickEvent.getWhoClicked();
                     player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>[<dark_green>✔<dark_gray>] <gray>You teleported to <gold>" + players.getName()));

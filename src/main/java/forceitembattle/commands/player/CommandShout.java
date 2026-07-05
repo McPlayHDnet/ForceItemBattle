@@ -1,19 +1,24 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
-
+import forceitembattle.util.Text;
 import java.util.HashSet;
 import java.util.Set;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 
 public class CommandShout extends CustomCommand {
 
     private static final Set<Player> shoutingPlayers = new HashSet<>();
 
-    public CommandShout() {
-        super("shout");
+    public CommandShout(ForceItemBattle plugin) {
+        super(plugin, "shout");
         setDescription("Send global message when team chat is enabled");
+    }
+
+    public static boolean isShouting(Player player) {
+        return shoutingPlayers.contains(player);
     }
 
     @Override
@@ -21,21 +26,17 @@ public class CommandShout extends CustomCommand {
         if (args.length == 0) {
             if (shoutingPlayers.contains(player)) {
                 shoutingPlayers.remove(player);
-                player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<gray>Shout mode: <red>OFF"));
+                player.sendMessage(Text.of("<gray>Shout mode: <red>OFF"));
             } else {
                 shoutingPlayers.add(player);
-                player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<gray>Shout mode: <green>ON"));
+                player.sendMessage(Text.of("<gray>Shout mode: <green>ON"));
             }
             return;
         }
 
         // Just in case, if someone wants to one-time shout
-        Bukkit.broadcast(this.plugin.getGamemanager().getMiniMessage().deserialize(
+        Bukkit.broadcast(Text.of(
                 "<gold>" + player.getName() + " <dark_gray>» <white>" + String.join(" ", args)
         ));
-    }
-
-    public static boolean isShouting(Player player) {
-        return shoutingPlayers.contains(player);
     }
 }

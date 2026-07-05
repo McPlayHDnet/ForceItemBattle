@@ -1,13 +1,12 @@
 package forceitembattle.util;
 
-import lombok.Setter;
-import org.bukkit.Material;
-import org.bukkit.entity.Player;
-
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nullable;
+import lombok.Setter;
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
 
 public class ForceItemPlayer {
 

@@ -1,9 +1,8 @@
 package forceitembattle.util;
 
+import java.util.List;
 import lombok.Getter;
 import org.bukkit.block.Biome;
-
-import java.util.List;
 
 @Getter
 public enum BiomeGroup {

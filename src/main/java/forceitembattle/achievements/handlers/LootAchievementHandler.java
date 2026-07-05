@@ -1,8 +1,10 @@
 package forceitembattle.achievements.handlers;
 
+import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.Trigger;
 import forceitembattle.util.CustomItem;
 import forceitembattle.util.ForceItemPlayer;
+import java.util.Locale;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -12,8 +14,6 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
-
-import java.util.Locale;
 
 /**
  * Handler for loot-based achievements
@@ -39,7 +39,7 @@ public class LootAchievementHandler implements AchievementHandler<SimpleAchievem
     }
 
     @Override
-    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer) {
+    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin) {
         if (!(event instanceof org.bukkit.event.inventory.InventoryOpenEvent openEvent)) {
             return false;
         }

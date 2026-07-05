@@ -5,10 +5,19 @@ import forceitembattle.event.AntimatterTeleporterUseEvent;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.stats.FIBServiceHelper;
 import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.util.Text;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.ArmorStand;
@@ -17,9 +26,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerPortalEvent;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.*;
 
 @RequiredArgsConstructor
 public class PortalListener implements Listener {
@@ -52,6 +60,21 @@ public class PortalListener implements Listener {
                     return;
                 }
             }
+        }
+    }
+
+    @EventHandler
+    public void onPortalEvent(PlayerPortalEvent playerPortalEvent) {
+        Player player = playerPortalEvent.getPlayer();
+        if (!this.plugin.getGamemanager().isMidGame()) {
+            return;
+        }
+
+        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.HARD)) {
+            player.sendMessage(Text.of("<red>Travelling to other dimensions is disabled!"));
+            player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
+            playerPortalEvent.setCanCreatePortal(false);
+            playerPortalEvent.setCancelled(true);
         }
     }
 
@@ -114,14 +137,6 @@ public class PortalListener implements Listener {
         return null;
     }
 
-    private record TeleporterLocation (Location portalLocation, Location destinationLocation) {
-
-        public boolean isClose(Location location) {
-            return portalLocation.distanceSquared(location) <= 625;
-        }
-    }
-
-
     @EventHandler
     public void onChangedWorld(PlayerChangedWorldEvent event) {
         if (!this.plugin.getGamemanager().isMidGame()) {
@@ -144,6 +159,13 @@ public class PortalListener implements Listener {
             playerEndLocations.put(player.getUniqueId(), newLocation);
 
             player.teleport(newLocation);
+        }
+    }
+
+    private record TeleporterLocation(Location portalLocation, Location destinationLocation) {
+
+        public boolean isClose(Location location) {
+            return portalLocation.distanceSquared(location) <= 625;
         }
     }
 }

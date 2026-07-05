@@ -1,38 +1,40 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.util.Text;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 public class CommandTeams extends CustomCommand {
 
-    public CommandTeams() {
-        super("teams");
+    public CommandTeams(ForceItemBattle plugin) {
+        super(plugin, "teams");
         setDescription("Everything about teams");
     }
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if(!this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>Teams are not enabled!"));
+        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+            player.sendMessage(Text.of("<red>Teams are not enabled!"));
             return;
         }
 
 
-        if(!this.plugin.getGamemanager().isPreGame()) {
-            player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<red>The game already started"));
+        if (!this.plugin.getGamemanager().isPreGame()) {
+            player.sendMessage(Text.of("<red>The game already started"));
             return;
         }
 
         if (args.length == 1) {
-            if(args[0].equalsIgnoreCase("leave")) {
+            if (args[0].equalsIgnoreCase("leave")) {
                 ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
                 this.plugin.getTeamManager().leave(forceItemPlayer);
                 return;
             }
-            if(args[0].equalsIgnoreCase("list")) {
+            if (args[0].equalsIgnoreCase("list")) {
                 ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
                 this.plugin.getTeamManager().showTeamList(forceItemPlayer);
                 return;
@@ -42,9 +44,9 @@ public class CommandTeams extends CustomCommand {
         }
 
         if (args.length == 2) {
-            if(args[0].equalsIgnoreCase("invite")) {
-                if(Bukkit.getPlayer(args[1]) == null) {
-                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<yellow>" + args[1] + " <red>is not online"));
+            if (args[0].equalsIgnoreCase("invite")) {
+                if (Bukkit.getPlayer(args[1]) == null) {
+                    player.sendMessage(Text.of("<yellow>" + args[1] + " <red>is not online"));
                     return;
                 }
                 ForceItemPlayer inviter = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
@@ -53,9 +55,9 @@ public class CommandTeams extends CustomCommand {
                 return;
             }
 
-            if(args[0].equalsIgnoreCase("accept")) {
-                if(Bukkit.getPlayer(args[1]) == null) {
-                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<yellow>" + args[1] + " <red>is not online"));
+            if (args[0].equalsIgnoreCase("accept")) {
+                if (Bukkit.getPlayer(args[1]) == null) {
+                    player.sendMessage(Text.of("<yellow>" + args[1] + " <red>is not online"));
                     return;
                 }
                 ForceItemPlayer inviter = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
@@ -64,9 +66,9 @@ public class CommandTeams extends CustomCommand {
                 return;
             }
 
-            if(args[0].equalsIgnoreCase("decline")) {
-                if(Bukkit.getPlayer(args[1]) == null) {
-                    player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<yellow>" + args[1] + " <red>is not online"));
+            if (args[0].equalsIgnoreCase("decline")) {
+                if (Bukkit.getPlayer(args[1]) == null) {
+                    player.sendMessage(Text.of("<yellow>" + args[1] + " <red>is not online"));
                     return;
                 }
                 ForceItemPlayer inviter = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
@@ -83,12 +85,12 @@ public class CommandTeams extends CustomCommand {
 
     private void sendHelpMessage(Player player) {
         player.sendMessage(" ");
-        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<gold><b>Teams</b> <gray>- <white>Help"));
-        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>- <white>/teams invite <player> <dark_gray>- <gray>Invite a player"));
-        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>- <white>/teams accept <player> <dark_gray>- <gray>Accept a team invite"));
-        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>- <white>/teams decline <player> <dark_gray>- <gray>Decline a team invite"));
-        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>- <white>/teams list <dark_gray>- <gray>Shows all team member"));
-        player.sendMessage(this.plugin.getGamemanager().getMiniMessage().deserialize("<dark_gray>- <white>/teams leave <dark_gray>- <gray>Leave the team"));
+        player.sendMessage(Text.of("<gold><b>Teams</b> <gray>- <white>Help"));
+        player.sendMessage(Text.of("<dark_gray>- <white>/teams invite <player> <dark_gray>- <gray>Invite a player"));
+        player.sendMessage(Text.of("<dark_gray>- <white>/teams accept <player> <dark_gray>- <gray>Accept a team invite"));
+        player.sendMessage(Text.of("<dark_gray>- <white>/teams decline <player> <dark_gray>- <gray>Decline a team invite"));
+        player.sendMessage(Text.of("<dark_gray>- <white>/teams list <dark_gray>- <gray>Shows all team member"));
+        player.sendMessage(Text.of("<dark_gray>- <white>/teams leave <dark_gray>- <gray>Leave the team"));
         player.sendMessage(" ");
     }
 }
