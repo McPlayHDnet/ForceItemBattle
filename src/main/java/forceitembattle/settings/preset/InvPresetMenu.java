@@ -1,17 +1,16 @@
 package forceitembattle.settings.preset;
 
-import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.util.InventoryBuilder;
 import forceitembattle.util.ItemBuilder;
+import forceitembattle.util.Text;
+import java.util.ArrayList;
+import java.util.List;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.inventory.ItemFlag;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class InvPresetMenu extends InventoryBuilder {
 

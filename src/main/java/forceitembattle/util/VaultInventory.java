@@ -2,6 +2,10 @@ package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.event.WheelOfFortuneWinEvent;
+import java.time.Duration;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
@@ -11,10 +15,6 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.time.Duration;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
 
 import static forceitembattle.util.RecipeInventory.CUSTOM_MATERIALS;
 

@@ -1,8 +1,8 @@
 package forceitembattle.commands.player;
 
-import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
+import forceitembattle.util.Text;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 

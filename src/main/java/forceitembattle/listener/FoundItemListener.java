@@ -1,12 +1,22 @@
 package forceitembattle.listener;
 
-import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.stats.FIBServiceHelper;
-import forceitembattle.util.*;
+import forceitembattle.util.BackToBack;
+import forceitembattle.util.BackToBackProbability;
+import forceitembattle.util.ForceItem;
+import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.util.Rarity;
+import forceitembattle.util.Team;
+import forceitembattle.util.Text;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -22,12 +32,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.BundleMeta;
 import org.bukkit.inventory.meta.ItemMeta;
-
-import java.math.RoundingMode;
-import java.text.DecimalFormat;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 @RequiredArgsConstructor
 public class FoundItemListener implements Listener {
@@ -117,7 +121,7 @@ public class FoundItemListener implements Listener {
         }
 
         updateMaterials(forceItemPlayer, event, context);
-        updateStats(forceItemPlayer, player, context, event.isBackToBack(), event.getFoundItem().getType(), event.isSkipped(), timeSpentMs);
+        updateStats(forceItemPlayer, player, context, event.getFoundItem().getType(), event.isSkipped(), timeSpentMs);
         this.plugin.getScoreboardManager().updateAllPlayers();
         handleBackToBackCheck(forceItemPlayer, player, context);
     }
@@ -133,7 +137,6 @@ public class FoundItemListener implements Listener {
         );
 
         broadcastMessage(message, forceItemPlayer, context);
-        updateBackToBackStats(forceItemPlayer, player, context);
     }
 
     private void broadcastMessage(Component message, ForceItemPlayer forceItemPlayer, GameContext context) {
@@ -151,28 +154,32 @@ public class FoundItemListener implements Listener {
             return;
         }
 
-        int backToBacks = forceItemPlayer.backToBackStreak();
-        if (backToBacks == 0) {
-            return;
-        }
-
         FIBServiceHelper fibServiceHelper = plugin.getFibServiceHelper();
 
         if (context.teamGame()) {
-            forceItemPlayer.currentTeam().getPlayers().stream()
-                    .filter(teammate -> !teammate.equals(forceItemPlayer))
-                    .forEach(teammate -> {
-                        fibServiceHelper.updateMemberStatisticsAsync(
-                                player.getUniqueId(),
-                                teammate.player().getUniqueId(),
-                                player.getUniqueId(),
-                                FIBServiceHelper.memberUpdate().highestB2BStreak(backToBacks)
-                        );
-                    });
+            Team team = forceItemPlayer.currentTeam();
+            if (team == null) {
+                return;
+            }
+            ForceItemPlayer teammate = team.getPlayers().stream()
+                    .filter(t -> !t.equals(forceItemPlayer))
+                    .findFirst()
+                    .orElse(null);
+            if (teammate == null) {
+                return;
+            }
+            // The b2b streak is a shared team stat — record the shared peak for BOTH members.
+            int teamStreak = team.getBackToBackStreak();
+            fibServiceHelper.updateMemberStatisticsAsync(
+                    player.getUniqueId(), teammate.player().getUniqueId(), player.getUniqueId(),
+                    FIBServiceHelper.memberUpdate().highestB2BStreak(teamStreak));
+            fibServiceHelper.updateMemberStatisticsAsync(
+                    player.getUniqueId(), teammate.player().getUniqueId(), teammate.player().getUniqueId(),
+                    FIBServiceHelper.memberUpdate().highestB2BStreak(teamStreak));
         } else {
             fibServiceHelper.updateSoloStatisticsAsync(
                     player.getUniqueId(),
-                    FIBServiceHelper.soloUpdate().highestB2BStreak(backToBacks)
+                    FIBServiceHelper.soloUpdate().highestB2BStreak(forceItemPlayer.backToBackStreak())
             );
         }
     }
@@ -290,14 +297,15 @@ public class FoundItemListener implements Listener {
     }
 
     private void updateStats(ForceItemPlayer forceItemPlayer, Player player,
-                             GameContext context, boolean isBackToBack, Material foundMaterial, boolean isSkipped, long timeSpentMs) {
-        if (!context.statsEnabled() || context.runMode() || isBackToBack) {
+                             GameContext context, Material foundMaterial, boolean isSkipped, long timeSpentMs) {
+        if (!context.statsEnabled() || context.runMode()) {
             return;
         }
 
         FIBServiceHelper fibServiceHelper = plugin.getFibServiceHelper();
         String itemName = foundMaterial.name();
 
+        // Item streak counts every obtained item, back-to-backs included; only a skip breaks it.
         if (isSkipped) {
             forceItemPlayer.setItemStreak(0);
         } else {
@@ -305,8 +313,8 @@ public class FoundItemListener implements Listener {
         }
 
         if (context.teamGame()) {
-            int teamStreak = forceItemPlayer.itemStreak();
             if (!isSkipped) {
+                int teamStreak = forceItemPlayer.itemStreak();
                 fibServiceHelper.updateTeamStatisticsAsync(
                         player.getUniqueId(),
                         forceItemPlayer.currentTeam().getPlayers().stream()
@@ -370,6 +378,11 @@ public class FoundItemListener implements Listener {
                 Team team = forceItemPlayer.currentTeam();
                 team.setBackToBackStreak(team.getBackToBackStreak() + 1);
             }
+
+            // Report the running streak the instant it grows; the service keeps the max,
+            // so each chain's peak is captured. (Must come after the team-streak bump above —
+            // the reporter now reads the shared team streak in team games.)
+            updateBackToBackStats(forceItemPlayer, player, context);
 
             triggerBackToBackEvent(forceItemPlayer, player, result, context);
         } else {

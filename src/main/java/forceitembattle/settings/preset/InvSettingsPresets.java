@@ -1,20 +1,19 @@
 package forceitembattle.settings.preset;
 
-import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.util.InvSettings;
 import forceitembattle.util.InventoryBuilder;
 import forceitembattle.util.ItemBuilder;
-import org.bukkit.Material;
-import org.bukkit.Sound;
-import org.bukkit.inventory.ItemFlag;
-
+import forceitembattle.util.Text;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import org.bukkit.Material;
+import org.bukkit.Sound;
+import org.bukkit.inventory.ItemFlag;
 
 public class InvSettingsPresets extends InventoryBuilder {
 

@@ -1,9 +1,9 @@
 package forceitembattle.commands.player;
 
-import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.settings.GameSetting;
+import forceitembattle.util.Text;
 import org.bukkit.entity.Player;
 
 public class CommandBp extends CustomCommand {

@@ -1,13 +1,12 @@
 package forceitembattle.commands.player;
 
-import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
-
+import forceitembattle.util.Text;
 import java.util.HashSet;
 import java.util.Set;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 
 public class CommandShout extends CustomCommand {
 

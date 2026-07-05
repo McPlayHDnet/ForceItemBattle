@@ -1,10 +1,9 @@
 package forceitembattle.util;
 
+import java.util.List;
 import lombok.Getter;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-
-import java.util.List;
 
 public class Trading {
 

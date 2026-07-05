@@ -1,19 +1,18 @@
 package forceitembattle.commands.player;
 
-import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.FinishInventory;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.Team;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
-
+import forceitembattle.util.Text;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 
 public class CommandResult extends CustomCommand {
 

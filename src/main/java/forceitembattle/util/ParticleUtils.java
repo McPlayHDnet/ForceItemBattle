@@ -1,16 +1,19 @@
 package forceitembattle.util;
 
+import java.util.Objects;
+import java.util.function.BiConsumer;
+import javax.annotation.Nullable;
 import lombok.NonNull;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.Effect;
+import org.bukkit.Location;
+import org.bukkit.Particle;
+import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
-
-import javax.annotation.Nullable;
-import java.util.Objects;
-import java.util.function.BiConsumer;
 
 public class ParticleUtils {
 

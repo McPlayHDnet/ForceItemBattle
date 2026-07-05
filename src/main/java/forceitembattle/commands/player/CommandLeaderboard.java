@@ -1,18 +1,17 @@
 package forceitembattle.commands.player;
 
-import forceitembattle.util.Text;
 import de.threeseconds.openapi.fibservice.client.model.FibLeaderboardEntryDto;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.stats.FIBServiceHelper;
-import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
-import org.bukkit.entity.Player;
-
+import forceitembattle.util.Text;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.entity.Player;
 
 public class CommandLeaderboard extends CustomCommand implements CustomTabCompleter {
 

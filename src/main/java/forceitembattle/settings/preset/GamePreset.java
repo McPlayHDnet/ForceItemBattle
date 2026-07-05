@@ -1,12 +1,11 @@
 package forceitembattle.settings.preset;
 
 import forceitembattle.settings.GameSetting;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import lombok.Getter;
+import lombok.Setter;
 
 @Setter
 @Getter

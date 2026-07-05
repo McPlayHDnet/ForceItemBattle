@@ -2,13 +2,12 @@ package forceitembattle.commands;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.Manager;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabCompleter;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 @RequiredArgsConstructor

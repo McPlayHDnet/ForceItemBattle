@@ -1,11 +1,11 @@
 package forceitembattle.util;
 
-import java.util.Objects;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.preset.GamePreset;
 import forceitembattle.settings.preset.InvPresetMenu;
 import forceitembattle.settings.preset.InvSettingsPresets;
+import java.util.Objects;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;

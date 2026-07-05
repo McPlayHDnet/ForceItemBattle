@@ -1,11 +1,10 @@
 package forceitembattle.util;
 
+import java.util.List;
+import java.util.UUID;
 import lombok.Setter;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
-
-import java.util.List;
-import java.util.UUID;
 
 public class RecipeViewer {
 

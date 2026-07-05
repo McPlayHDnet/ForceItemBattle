@@ -1,12 +1,15 @@
 package forceitembattle.util;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.DyeColor;
 import org.bukkit.Material;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.*;
 
 @Getter
 public class Team {

@@ -2,15 +2,14 @@ package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.util.ParticleUtils;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.NonNull;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class PositionManager implements Manager {
 

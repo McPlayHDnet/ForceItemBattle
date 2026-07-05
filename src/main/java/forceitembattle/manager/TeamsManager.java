@@ -1,18 +1,17 @@
 package forceitembattle.manager;
 
-import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.Team;
-import lombok.Getter;
-
-import javax.annotation.Nullable;
+import forceitembattle.util.Text;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+import lombok.Getter;
 
 public class TeamsManager implements Manager {
 

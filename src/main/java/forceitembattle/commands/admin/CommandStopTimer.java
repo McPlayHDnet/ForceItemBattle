@@ -1,8 +1,8 @@
 package forceitembattle.commands.admin;
 
-import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
+import forceitembattle.util.Text;
 import org.bukkit.entity.Player;
 
 public class CommandStopTimer extends CustomCommand {

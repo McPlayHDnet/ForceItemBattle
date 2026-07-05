@@ -1,11 +1,10 @@
 package forceitembattle.util;
 
 import de.threeseconds.openapi.fibservice.client.model.FibRaritiesUpdateRequestDto;
+import java.util.function.UnaryOperator;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
-
-import java.util.function.UnaryOperator;
 
 public enum Rarity {
 

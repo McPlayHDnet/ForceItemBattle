@@ -3,16 +3,15 @@ package forceitembattle.manager;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.Text;
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
-
-import java.util.HashSet;
-import java.util.Random;
-import java.util.Set;
-import java.util.UUID;
 
 public class VoteSkipManager implements Manager {
 

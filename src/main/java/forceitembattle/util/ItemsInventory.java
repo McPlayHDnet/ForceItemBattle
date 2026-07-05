@@ -1,15 +1,14 @@
 package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
+import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicReference;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
-
-import java.util.HashMap;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class ItemsInventory extends InventoryBuilder {
 

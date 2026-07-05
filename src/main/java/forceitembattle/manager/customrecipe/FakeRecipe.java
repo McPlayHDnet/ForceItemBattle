@@ -3,13 +3,16 @@ package forceitembattle.manager.customrecipe;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.ItemBuilder;
-import org.bukkit.Material;
-import org.bukkit.inventory.*;
-
-import javax.annotation.Nullable;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.logging.Level;
+import javax.annotation.Nullable;
+import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.Recipe;
+import org.bukkit.inventory.RecipeChoice;
+import org.bukkit.inventory.ShapedRecipe;
+import org.bukkit.inventory.ShapelessRecipe;
 
 public enum FakeRecipe {
 

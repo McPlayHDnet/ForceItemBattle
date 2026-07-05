@@ -4,21 +4,37 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.preset.GamePreset;
 import forceitembattle.stats.FIBServiceHelper;
-import forceitembattle.util.*;
+import forceitembattle.util.CustomMaterial;
+import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.util.GameState;
+import forceitembattle.util.ItemBuilder;
+import forceitembattle.util.Team;
+import forceitembattle.util.Text;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.function.ToIntFunction;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.apache.commons.lang3.text.WordUtils;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Statistic;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
-import java.util.*;
-import java.util.function.ToIntFunction;
-import java.util.stream.Collectors;
 
 import static forceitembattle.util.RecipeInventory.CUSTOM_MATERIALS;
 
@@ -252,6 +268,10 @@ public class Gamemanager implements Manager {
         Map<ForceItemPlayer, Integer> placesMap = statsEnabled
                 ? this.calculatePlaces(this.sortByValue(this.forceItemPlayerMap(), false))
                 : null;
+        Map<Team, Integer> teamPlaces = (statsEnabled
+                && this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM))
+                ? this.calculatePlaces(this.forceItemBattle.getTeamManager().getTeams())
+                : null;
 
         Bukkit.getOnlinePlayers().forEach(player -> {
             ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
@@ -273,26 +293,47 @@ public class Gamemanager implements Manager {
 
             if (statsEnabled) {
                 FIBServiceHelper helper = this.forceItemBattle.getFibServiceHelper();
+                long distance = (long) this.calculateDistance(forceItemPlayer.player());
 
-                var soloUpdate = FIBServiceHelper.soloUpdate()
-                        .blocksTravelledAdd((long) this.calculateDistance(forceItemPlayer.player()))
-                        .highestScore((long) forceItemPlayer.currentScore());
+                if (forceItemPlayer.currentTeam() == null) {
+                    // ---- Solo game: everything on solo stats ----
+                    var soloUpdate = FIBServiceHelper.soloUpdate()
+                            .blocksTravelledAdd(distance)
+                            .highestScore((long) forceItemPlayer.currentScore());
 
-                if (placesMap.get(forceItemPlayer) == 1) {
-                    soloUpdate.gamesWonAdd(1);
-                }
+                    if (placesMap.get(forceItemPlayer) == 1) {
+                        soloUpdate.gamesWonAdd(1);
+                    }
 
-                helper.updateSoloStatisticsAsync(player.getUniqueId(), soloUpdate);
-
-                if (forceItemPlayer.currentTeam() != null) {
+                    helper.updateSoloStatisticsAsync(player.getUniqueId(), soloUpdate);
+                } else {
+                    // ---- Team game: keep everything on team/member stats, never solo ----
                     Team currentTeam = forceItemPlayer.currentTeam();
+                    boolean teamWon = teamPlaces != null && Integer.valueOf(1).equals(teamPlaces.get(currentTeam));
+
                     for (ForceItemPlayer teamPlayer : currentTeam.getPlayers()) {
                         if (!teamPlayer.equals(forceItemPlayer)) {
-                            helper.updateTeamStatisticsAsync(
+                            UUID teammateUuid = teamPlayer.player().getUniqueId();
+
+                            // This player's own travel → their own member contribution.
+                            helper.updateMemberStatisticsAsync(
                                     player.getUniqueId(),
-                                    teamPlayer.player().getUniqueId(),
-                                    FIBServiceHelper.teamUpdate().highestScore((long) forceItemPlayer.currentScore())
+                                    teammateUuid,
+                                    player.getUniqueId(),
+                                    FIBServiceHelper.memberUpdate().blocksTravelledAdd(distance)
                             );
+
+                            // Shared team stats. highestScore is a max-set (safe from both
+                            // sides); gamesWon must count once, so only the lower-UUID side sends.
+                            var teamUpdate = FIBServiceHelper.teamUpdate()
+                                    .highestScore((long) currentTeam.getCurrentScore());
+                            boolean lowerSide = player.getUniqueId().toString()
+                                    .compareTo(teammateUuid.toString()) < 0;
+                            if (lowerSide && teamWon) {
+                                teamUpdate.gamesWonAdd(1);
+                            }
+
+                            helper.updateTeamStatisticsAsync(player.getUniqueId(), teammateUuid, teamUpdate);
                             break;
                         }
                     }

@@ -1,15 +1,14 @@
 package forceitembattle.manager.customrecipe;
 
 import forceitembattle.util.ItemBuilder;
+import java.util.ArrayList;
+import java.util.List;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ShapelessRecipe;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class ToolRecipe extends ShapelessRecipe {
 

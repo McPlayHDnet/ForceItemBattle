@@ -1,8 +1,7 @@
 package forceitembattle.settings;
 
-import org.bukkit.Material;
-
 import java.util.List;
+import org.bukkit.Material;
 
 public enum GameSetting {
 

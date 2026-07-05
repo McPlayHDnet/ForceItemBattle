@@ -1,13 +1,12 @@
 package forceitembattle.commands.player;
 
-import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
-
+import forceitembattle.util.Text;
 import java.util.ArrayList;
 import java.util.List;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 
 public class CommandBed extends CustomCommand {
 

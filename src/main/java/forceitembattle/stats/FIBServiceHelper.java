@@ -2,17 +2,26 @@ package forceitembattle.stats;
 
 import de.threeseconds.openapi.fibservice.client.api.FibAchievementControllerApi;
 import de.threeseconds.openapi.fibservice.client.api.FibStatisticsControllerApi;
-import de.threeseconds.openapi.fibservice.client.model.*;
+import de.threeseconds.openapi.fibservice.client.model.FibAchievementUnlockRequestDto;
+import de.threeseconds.openapi.fibservice.client.model.FibLeaderboardEntryDto;
+import de.threeseconds.openapi.fibservice.client.model.FibPlayerAchievementsDto;
+import de.threeseconds.openapi.fibservice.client.model.FibPlayerCombinedTeamStatsDto;
+import de.threeseconds.openapi.fibservice.client.model.FibRaritiesUpdateRequestDto;
+import de.threeseconds.openapi.fibservice.client.model.FibSoloStatisticsDto;
+import de.threeseconds.openapi.fibservice.client.model.FibSoloStatisticsUpdateRequestDto;
+import de.threeseconds.openapi.fibservice.client.model.FibTeamMemberStatsDto;
+import de.threeseconds.openapi.fibservice.client.model.FibTeamMemberStatsUpdateRequestDto;
+import de.threeseconds.openapi.fibservice.client.model.FibTeamStatisticsDto;
+import de.threeseconds.openapi.fibservice.client.model.FibTeamStatisticsUpdateRequestDto;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.Manager;
-import org.bukkit.Bukkit;
-import org.openapitools.client.ApiClient;
-import org.openapitools.client.ApiException;
-
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.logging.Level;
+import org.bukkit.Bukkit;
+import org.openapitools.client.ApiClient;
+import org.openapitools.client.ApiException;
 
 public class FIBServiceHelper implements Manager {
 

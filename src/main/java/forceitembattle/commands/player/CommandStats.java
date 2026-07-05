@@ -1,20 +1,24 @@
 package forceitembattle.commands.player;
 
-import forceitembattle.util.Text;
-import de.threeseconds.openapi.fibservice.client.model.*;
+import de.threeseconds.openapi.fibservice.client.model.FibItemCountDto;
+import de.threeseconds.openapi.fibservice.client.model.FibPlayerCombinedTeamStatsDto;
+import de.threeseconds.openapi.fibservice.client.model.FibRaritiesDto;
+import de.threeseconds.openapi.fibservice.client.model.FibSoloStatisticsDto;
+import de.threeseconds.openapi.fibservice.client.model.FibTeamMemberStatsDto;
+import de.threeseconds.openapi.fibservice.client.model.FibTeamStatisticsDto;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.stats.FIBServiceHelper;
-import org.bukkit.Bukkit;
-import org.bukkit.Material;
-import org.bukkit.OfflinePlayer;
-import org.bukkit.entity.Player;
-
+import forceitembattle.util.Text;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.entity.Player;
 
 public class CommandStats extends CustomCommand implements CustomTabCompleter {
 

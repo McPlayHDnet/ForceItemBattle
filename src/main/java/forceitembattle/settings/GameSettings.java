@@ -2,12 +2,11 @@ package forceitembattle.settings;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.preset.GamePreset;
+import java.util.Map;
+import java.util.concurrent.ConcurrentSkipListMap;
 import org.bukkit.Bukkit;
 import org.bukkit.GameRules;
 import org.bukkit.configuration.ConfigurationSection;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentSkipListMap;
 
 public class GameSettings {
 

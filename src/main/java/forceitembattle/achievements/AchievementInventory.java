@@ -1,21 +1,26 @@
 package forceitembattle.achievements;
 
-import forceitembattle.util.Text;
 import com.destroystokyo.paper.profile.PlayerProfile;
 import de.threeseconds.openapi.fibservice.client.model.FibAchievementDto;
 import de.threeseconds.openapi.fibservice.client.model.FibPlayerAchievementsDto;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.util.InventoryBuilder;
 import forceitembattle.util.ItemBuilder;
+import forceitembattle.util.Text;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.inventory.ItemFlag;
-
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
 
 public class AchievementInventory extends InventoryBuilder {
 

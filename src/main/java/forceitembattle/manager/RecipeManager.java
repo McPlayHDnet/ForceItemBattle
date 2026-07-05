@@ -1,12 +1,16 @@
 package forceitembattle.manager;
 
-import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.customrecipe.FakeRecipe;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.ItemBuilder;
 import forceitembattle.util.RecipeInventory;
 import forceitembattle.util.RecipeViewer;
+import forceitembattle.util.Text;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -14,11 +18,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.ShapedRecipe;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
 
 public class RecipeManager implements Manager {
 

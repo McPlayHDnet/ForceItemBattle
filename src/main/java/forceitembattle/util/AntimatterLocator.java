@@ -2,16 +2,19 @@ package forceitembattle.util;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.Manager;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import net.kyori.adventure.bossbar.BossBar;
-import org.bukkit.*;
+import org.bukkit.Color;
+import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.StructureSearchResult;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 
 public class AntimatterLocator implements Manager {
 

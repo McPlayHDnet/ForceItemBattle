@@ -1,15 +1,26 @@
 package forceitembattle.listener;
 
-import java.util.Objects;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.AchievementInventory;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.stats.FIBServiceHelper;
-import forceitembattle.util.*;
+import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.util.ItemBuilder;
+import forceitembattle.util.Locator;
+import forceitembattle.util.TeleporterInventory;
+import forceitembattle.util.Text;
+import forceitembattle.util.VaultInventory;
+import java.util.Objects;
+import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.Sound;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -18,8 +29,6 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
-
-import java.util.function.Supplier;
 
 @RequiredArgsConstructor
 public class ClickableItemsListener implements Listener {

@@ -1,19 +1,18 @@
 package forceitembattle.commands.player;
 
-import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.listener.FoundItemListener;
 import forceitembattle.manager.TradingManager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.util.Text;
+import java.time.Duration;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
-
-import java.time.Duration;
 
 public class CommandAskTrade extends CustomCommand {
 

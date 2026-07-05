@@ -5,11 +5,10 @@ import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.Text;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
-
 import java.util.Arrays;
 import java.util.List;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 
 public class CommandVote extends CustomCommand implements CustomTabCompleter {
 

@@ -1,7 +1,5 @@
 package forceitembattle.commands.admin;
 
-import java.util.Objects;
-import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
@@ -13,19 +11,27 @@ import forceitembattle.stats.FIBServiceHelper;
 import forceitembattle.util.ForceItemPlayer;
 import forceitembattle.util.GameState;
 import forceitembattle.util.Team;
+import forceitembattle.util.Text;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
+import org.bukkit.GameRules;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.Sound;
+import org.bukkit.Statistic;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
-
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
 
 public class CommandStart extends CustomCommand implements CustomTabCompleter {
 
@@ -237,11 +243,16 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
 
                     for (ForceItemPlayer teamPlayer : currentTeam.getPlayers()) {
                         if (!teamPlayer.equals(forceItemPlayer)) {
-                            helper.updateTeamStatisticsAsync(
-                                    player.getUniqueId(),
-                                    teamPlayer.player().getUniqueId(),
-                                    FIBServiceHelper.teamUpdate().gamesPlayedAdd(1)
-                            );
+                            // Both teammates write the same normalized team row, so only the
+                            // lower-UUID side sends gamesPlayed — otherwise every game counts twice.
+                            if (player.getUniqueId().toString()
+                                    .compareTo(teamPlayer.player().getUniqueId().toString()) < 0) {
+                                helper.updateTeamStatisticsAsync(
+                                        player.getUniqueId(),
+                                        teamPlayer.player().getUniqueId(),
+                                        FIBServiceHelper.teamUpdate().gamesPlayedAdd(1)
+                                );
+                            }
                             break;
                         }
                     }

@@ -1,20 +1,20 @@
 package forceitembattle.commands.player;
 
-import forceitembattle.util.Text;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.util.CustomMaterial;
 import forceitembattle.util.DescriptionItem;
 import forceitembattle.util.ForceItemPlayer;
-import org.bukkit.Material;
-import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-
+import forceitembattle.util.Text;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+
 
 import static forceitembattle.util.RecipeInventory.CUSTOM_MATERIALS;
 import static forceitembattle.util.RecipeInventory.ID_TO_MATERIAL;

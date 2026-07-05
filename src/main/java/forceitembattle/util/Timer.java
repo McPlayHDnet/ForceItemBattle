@@ -3,6 +3,10 @@ package forceitembattle.util;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.Manager;
 import forceitembattle.settings.GameSetting;
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
 import net.kyori.adventure.bossbar.BossBar;
@@ -14,11 +18,6 @@ import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
-
-import java.time.Duration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
 
 public class Timer implements Manager {
 
