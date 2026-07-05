@@ -1,5 +1,6 @@
 package forceitembattle.util;
 
+import java.util.Objects;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.preset.GamePreset;
@@ -163,7 +164,7 @@ public class InvSettings extends InventoryBuilder {
                 }
             }
 
-            assert itemBuilder != null;
+            Objects.requireNonNull(itemBuilder);
             this.setItem(slotIndex + 9, itemBuilder.getItemStack(), inventoryClickEvent -> {
                 if (inventoryClickEvent.getCurrentItem() == null) return;
 

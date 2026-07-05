@@ -1,6 +1,6 @@
 package forceitembattle.listener;
 
-import forceitembattle.util.Text;
+import java.util.Objects;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.AchievementInventory;
 import forceitembattle.event.FoundItemEvent;
@@ -19,12 +19,18 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.function.Supplier;
+
 @RequiredArgsConstructor
 public class ClickableItemsListener implements Listener {
 
     private final ForceItemBattle plugin;
 
-    @EventHandler(priority = EventPriority.HIGH) // ADDED PRIORITY
+    private static boolean isRightClick(Action action) {
+        return action == Action.RIGHT_CLICK_BLOCK || action == Action.RIGHT_CLICK_AIR;
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
     public void onAfterGame(PlayerInteractEvent e) {
         Player player = e.getPlayer();
         if (!this.plugin.getGamemanager().isEndGame()) {
@@ -33,66 +39,31 @@ public class ClickableItemsListener implements Listener {
         if (e.getItem() == null) {
             return;
         }
+        if (!isRightClick(e.getAction())) {
+            return;
+        }
 
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
 
-        if (e.getItem().getType() == Material.LIME_DYE) {
-            if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
-                e.setCancelled(true); // ADDED: Cancel event to prevent double-firing
-                player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
-                // ADDED: Use scheduler to avoid race conditions
-                Bukkit.getScheduler().runTask(plugin, () -> {
-                    new AchievementInventory(this.plugin, forceItemPlayer.player().getName(), forceItemPlayer.player().getUniqueId()).open(player);
-                });
-                return;
-            }
-            return;
-        }
-
-        if (e.getItem().getType() == Material.COMPASS) {
-            if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
-                e.setCancelled(true); // ADDED
-                player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
-                Bukkit.getScheduler().runTask(plugin, () -> {
-                    new TeleporterInventory(this.plugin).open(player);
-                });
-                return;
-            }
-            return;
-        }
-
-        if (e.getItem().getType() == Material.GRASS_BLOCK) {
-            if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+        switch (e.getItem().getType()) {
+            case LIME_DYE -> {
                 e.setCancelled(true);
-                if (player.getWorld().getName().equals("world")) {
-                    player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
-                    player.sendMessage(Text.of("<dark_gray>[<dark_red>✖<dark_gray>] <gray>You are already in the <green>overworld"));
-                    return;
-                }
-                player.teleport(this.plugin.getSpawnLocation());
-                player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
-                return;
+                player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
+                Bukkit.getScheduler().runTask(plugin, () ->
+                        new AchievementInventory(this.plugin, forceItemPlayer.player().getName(), forceItemPlayer.player().getUniqueId()).open(player));
             }
-            return;
-        }
-
-        if (e.getItem().getType() == Material.NETHERRACK) {
-            if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+            case COMPASS -> {
                 e.setCancelled(true);
-                if (player.getWorld().getName().equals("world_nether")) {
-                    player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
-                    player.sendMessage(Text.of("<dark_gray>[<dark_red>✖<dark_gray>] <gray>You are already in the <red>nether"));
-                    return;
-                }
-                player.teleport(new Location(Bukkit.getWorld("world_nether"), 0, 70, 0));
-                player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
-                return;
+                player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
+                Bukkit.getScheduler().runTask(plugin, () -> new TeleporterInventory(this.plugin).open(player));
             }
-            return;
-        }
-
-        if (e.getItem().getType() == Material.SPYGLASS) {
-            if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+            case GRASS_BLOCK -> teleportToDimension(e, player, "world",
+                    "<dark_gray>[<dark_red>✖<dark_gray>] <gray>You are already in the <green>overworld",
+                    this.plugin::getSpawnLocation);
+            case NETHERRACK -> teleportToDimension(e, player, "world_nether",
+                    "<dark_gray>[<dark_red>✖<dark_gray>] <gray>You are already in the <red>nether",
+                    () -> new Location(Bukkit.getWorld("world_nether"), 0, 70, 0));
+            case SPYGLASS -> {
                 e.setCancelled(true);
                 if (player.getGameMode() == GameMode.SPECTATOR) {
                     player.sendMessage(Text.of("<gray>You are <red>no longer<gray> spectating."));
@@ -101,30 +72,28 @@ public class ClickableItemsListener implements Listener {
                     player.sendMessage(Text.of("<gray>You are <green>now<gray> spectating. Use <dark_aqua>/spectate <gray>to toggle off."));
                     player.setGameMode(GameMode.SPECTATOR);
                 }
-                return;
             }
+            case ENDER_EYE -> teleportToDimension(e, player, "world_the_end",
+                    "<gray>You are already in the <dark_purple>end",
+                    () -> {
+                        World end = Objects.requireNonNull(Bukkit.getWorld("world_the_end"));
+                        Location location = new Location(end, 0, 0, 0);
+                        location.setY(end.getHighestBlockYAt(location) + 1);
+                        return location;
+                    });
+        }
+    }
+
+    private void teleportToDimension(PlayerInteractEvent e, Player player, String worldName,
+                                     String alreadyThereMessage, Supplier<Location> destination) {
+        e.setCancelled(true);
+        if (player.getWorld().getName().equals(worldName)) {
+            player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
+            player.sendMessage(Text.of(alreadyThereMessage));
             return;
         }
-
-        if (e.getItem().getType() == Material.ENDER_EYE) {
-            if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
-                e.setCancelled(true);
-                if (player.getWorld().getName().equals("world_the_end")) {
-                    player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
-                    player.sendMessage(Text.of("<gray>You are already in the <dark_purple>end"));
-                    return;
-                }
-                World end = Bukkit.getWorld("world_the_end");
-                Location location = new Location(end, 0, 0, 0);
-                assert end != null;
-                location.setY(end.getHighestBlockYAt(location) + 1);
-
-                player.teleport(location);
-                player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
-                return;
-            }
-            return;
-        }
+        player.teleport(destination.get());
+        player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
     }
 
     @EventHandler
@@ -143,7 +112,7 @@ public class ClickableItemsListener implements Listener {
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
 
         if (Gamemanager.isBackpack(e.getItem())) {
-            if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+            if (isRightClick(e.getAction())) {
                 if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
                     this.plugin.getBackpack().openTeamBackpack(forceItemPlayer.currentTeam(), player);
                 } else {
@@ -154,7 +123,7 @@ public class ClickableItemsListener implements Listener {
         }
 
         if (e.getItem().getType() == Material.NETHER_STAR) {
-            if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+            if (isRightClick(e.getAction())) {
                 if (!e.getItem().getItemMeta().hasCustomModelDataComponent()) return;
                 if (e.getItem().getItemMeta().getCustomModelDataComponent().getStrings().getFirst().equals("wheel")) { // wheel of fortune
                     new VaultInventory(this.plugin).open(player);
@@ -181,7 +150,7 @@ public class ClickableItemsListener implements Listener {
 
         Locator locator = this.plugin.getLocatorManager().getLocatorByMaterial(e.getItem().getType());
         if (locator != null) {
-            if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+            if (isRightClick(e.getAction())) {
                 e.setCancelled(true);
                 this.plugin.getLocatorManager().locate(locator.getStructureId(), forceItemPlayer);
                 return;
@@ -192,7 +161,7 @@ public class ClickableItemsListener implements Listener {
             return;
         }
 
-        if (e.getAction() != Action.RIGHT_CLICK_BLOCK && e.getAction() != Action.RIGHT_CLICK_AIR) {
+        if (!isRightClick(e.getAction())) {
             return;
         }
         if (e.getClickedBlock() != null && e.getClickedBlock().getState() instanceof InventoryHolder) {
@@ -211,9 +180,11 @@ public class ClickableItemsListener implements Listener {
         int foundSlot = e.getPlayer()
                 .getInventory()
                 .first(Gamemanager.getJokerMaterial());
+        if (foundSlot == -1) {
+            return;
+        }
 
         ItemStack stack = player.getInventory().getItem(foundSlot);
-        assert stack != null;
         if (stack.getAmount() > 1) {
             stack.setAmount((this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? stack.getAmount() - 1 : jokers));
         } else {
@@ -254,42 +225,31 @@ public class ClickableItemsListener implements Listener {
         if (e.getItem() == null) {
             return;
         }
-
-        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-
-        if (e.getItem().getType() == Material.LIME_DYE) {
-            if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
-                e.setCancelled(true); // ADDED: Cancel event
-                player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
-                // ADDED: Use scheduler
-                Bukkit.getScheduler().runTask(plugin, () -> {
-                    new AchievementInventory(this.plugin, forceItemPlayer.player().getName(), forceItemPlayer.player().getUniqueId()).open(player);
-                });
-                return;
-            }
+        if (!isRightClick(e.getAction())) {
             return;
         }
 
-        if (e.getItem().getType() == Material.ENDER_PEARL) {
-            if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+
+        switch (e.getItem().getType()) {
+            case LIME_DYE -> {
+                e.setCancelled(true);
+                player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
+                Bukkit.getScheduler().runTask(plugin, () ->
+                        new AchievementInventory(this.plugin, forceItemPlayer.player().getName(), forceItemPlayer.player().getUniqueId()).open(player));
+            }
+            case ENDER_PEARL -> {
                 e.setCancelled(true);
                 player.playSound(player.getLocation(), Sound.BLOCK_PISTON_CONTRACT, 1, 1);
                 forceItemPlayer.setSpectator(true);
                 player.sendMessage(Text.of("<dark_aqua>You will <green>spectate <dark_aqua>this round now."));
-                return;
             }
-            return;
-        }
-
-        if (e.getItem().getType() == Material.ENDER_EYE) {
-            if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.RIGHT_CLICK_AIR) {
+            case ENDER_EYE -> {
                 e.setCancelled(true);
-
                 player.playSound(player.getLocation(), Sound.BLOCK_PISTON_CONTRACT, 1, 1);
                 forceItemPlayer.setSpectator(false);
                 player.sendMessage(Text.of("<dark_aqua>You will <green>play <dark_aqua>this round now."));
                 player.getInventory().setItem(8, new ItemBuilder(Material.ENDER_PEARL).setDisplayName("<dark_gray>» <gray>Spectate game").getItemStack());
-                return;
             }
         }
     }

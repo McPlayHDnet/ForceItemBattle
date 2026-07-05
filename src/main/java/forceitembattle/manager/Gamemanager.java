@@ -248,6 +248,11 @@ public class Gamemanager implements Manager {
         this.setCurrentGameState(GameState.END_GAME);
         this.forceItemBattle.getAchievementManager().checkGameEndAchievements();
 
+        boolean statsEnabled = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.STATS);
+        Map<ForceItemPlayer, Integer> placesMap = statsEnabled
+                ? this.calculatePlaces(this.sortByValue(this.forceItemPlayerMap(), false))
+                : null;
+
         Bukkit.getOnlinePlayers().forEach(player -> {
             ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
             player.setHealth(20);
@@ -266,10 +271,8 @@ public class Gamemanager implements Manager {
                 player.sendMessage(ChatColor.RED + "Use /result to see the results from every player");
             }
 
-            if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.STATS)) {
+            if (statsEnabled) {
                 FIBServiceHelper helper = this.forceItemBattle.getFibServiceHelper();
-                Map<UUID, ForceItemPlayer> sortedMapDesc = this.sortByValue(this.forceItemPlayerMap(), false);
-                Map<ForceItemPlayer, Integer> placesMap = this.calculatePlaces(sortedMapDesc);
 
                 var soloUpdate = FIBServiceHelper.soloUpdate()
                         .blocksTravelledAdd((long) this.calculateDistance(forceItemPlayer.player()))
