@@ -1,7 +1,7 @@
 package forceitembattle.commands.player;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.achievements.AchievementInventory;
+import forceitembattle.gui.AchievementInventory;
 import forceitembattle.achievements.Achievements;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;

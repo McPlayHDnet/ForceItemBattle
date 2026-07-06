@@ -8,7 +8,7 @@ import forceitembattle.event.FoundItemEvent;
 import forceitembattle.event.PlayerGrantAchievementEvent;
 import forceitembattle.event.WheelOfFortuneWinEvent;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.util.Text;
 import io.papermc.paper.advancement.AdvancementDisplay;
 import io.papermc.paper.event.player.PlayerTradeEvent;

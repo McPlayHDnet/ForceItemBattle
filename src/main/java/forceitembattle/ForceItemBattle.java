@@ -59,13 +59,13 @@ import forceitembattle.manager.TradingManager;
 import forceitembattle.manager.VoteSkipManager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
-import forceitembattle.stats.FIBServiceHelper;
-import forceitembattle.util.AntimatterLocator;
-import forceitembattle.util.Backpack;
+import forceitembattle.service.FIBServiceHelper;
+import forceitembattle.manager.AntimatterLocatorManager;
+import forceitembattle.manager.BackpackManager;
 import forceitembattle.util.FileLogger;
 import forceitembattle.util.Scheduler;
-import forceitembattle.util.Timer;
-import forceitembattle.util.WanderingTraderTimer;
+import forceitembattle.manager.TimerManager;
+import forceitembattle.manager.WanderingTraderManager;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -92,9 +92,9 @@ public final class ForceItemBattle extends JavaPlugin {
     @Getter
     private Gamemanager gamemanager;
     @Getter
-    private Timer timer;
+    private TimerManager timerManager;
     @Getter
-    private Backpack backpack;
+    private BackpackManager backpackManager;
     @Getter
     private ItemDifficultiesManager itemDifficultiesManager;
     @Getter
@@ -102,7 +102,7 @@ public final class ForceItemBattle extends JavaPlugin {
     @Getter
     private PositionManager positionManager;
     @Getter
-    private WanderingTraderTimer wanderingTraderTimer;
+    private WanderingTraderManager wanderingTraderManager;
     @Getter
     @Setter
     private CommandsManager commandsManager;
@@ -113,7 +113,7 @@ public final class ForceItemBattle extends JavaPlugin {
     @Setter
     private TradingManager tradingManager;
     @Getter
-    private AntimatterLocator antimatterLocator;
+    private AntimatterLocatorManager antimatterLocatorManager;
     @Getter
     private AchievementManager achievementManager;
     @Getter
@@ -153,8 +153,8 @@ public final class ForceItemBattle extends JavaPlugin {
         Scheduler.init(this);
         FileLogger.init(getDataFolder());
         this.gamemanager = register(new Gamemanager(this));
-        this.timer = register(new Timer(this));
-        this.backpack = register(new Backpack(this));
+        this.timerManager = register(new TimerManager(this));
+        this.backpackManager = register(new BackpackManager(this));
         this.itemDifficultiesManager = register(new ItemDifficultiesManager(this));
         this.recipeManager = register(new RecipeManager(this));
         this.positionManager = register(new PositionManager(this));
@@ -164,8 +164,8 @@ public final class ForceItemBattle extends JavaPlugin {
         this.achievementManager = register(new AchievementManager(this));
         this.locatorManager = register(new LocatorManager(this));
         this.protectionManager = register(new ProtectionManager(this));
-        this.wanderingTraderTimer = register(new WanderingTraderTimer(this));
-        this.antimatterLocator = register(new AntimatterLocator(this));
+        this.wanderingTraderManager = register(new WanderingTraderManager(this));
+        this.antimatterLocatorManager = register(new AntimatterLocatorManager(this));
         this.voteSkipManager = register(new VoteSkipManager(this));
         this.scoreboardManager = register(new ScoreboardManager(this));
         this.fibServiceHelper = register(new FIBServiceHelper(this));

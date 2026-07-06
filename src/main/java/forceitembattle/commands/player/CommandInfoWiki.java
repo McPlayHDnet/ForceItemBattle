@@ -2,7 +2,7 @@ package forceitembattle.commands.player;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
-import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.util.Text;
 import org.apache.commons.lang3.text.WordUtils;
 import org.bukkit.Material;

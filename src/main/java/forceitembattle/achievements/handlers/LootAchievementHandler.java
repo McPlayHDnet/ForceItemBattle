@@ -2,8 +2,9 @@ package forceitembattle.achievements.handlers;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.Trigger;
-import forceitembattle.util.CustomItem;
-import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.achievements.progress.SimpleAchievementProgress;
+import forceitembattle.model.CustomItem;
+import forceitembattle.model.ForceItemPlayer;
 import java.util.Locale;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Material;

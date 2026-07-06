@@ -21,7 +21,7 @@ public class CommandStopTimer extends CustomCommand {
                 return;
             }
 
-            this.plugin.getTimer().setTimeLeft(1);
+            this.plugin.getTimerManager().setTimeLeft(1);
         }
 
     }

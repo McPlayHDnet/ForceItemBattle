@@ -2,8 +2,9 @@ package forceitembattle.achievements.handlers;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.Trigger;
+import forceitembattle.achievements.progress.SimpleAchievementProgress;
 import forceitembattle.event.WheelOfFortuneWinEvent;
-import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.model.ForceItemPlayer;
 import org.bukkit.event.Event;
 
 public class WheelOfFortuneAchievementHandler implements AchievementHandler<SimpleAchievementProgress> {

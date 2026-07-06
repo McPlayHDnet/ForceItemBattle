@@ -9,7 +9,7 @@ import de.threeseconds.openapi.fibservice.client.model.FibTeamStatisticsDto;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
-import forceitembattle.stats.FIBServiceHelper;
+import forceitembattle.service.FIBServiceHelper;
 import forceitembattle.util.Text;
 import java.text.DecimalFormat;
 import java.util.ArrayList;

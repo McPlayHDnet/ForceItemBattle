@@ -2,8 +2,9 @@ package forceitembattle.achievements.handlers;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.Trigger;
+import forceitembattle.achievements.progress.SkipAchievementProgress;
 import forceitembattle.event.FoundItemEvent;
-import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.model.ForceItemPlayer;
 import org.bukkit.event.Event;
 
 public class SkipAchievementHandler implements AchievementHandler<SkipAchievementProgress> {
@@ -31,7 +32,7 @@ public class SkipAchievementHandler implements AchievementHandler<SkipAchievemen
 
         ForceItemBattle fib = plugin;
         int gameDuration = fib.getGamemanager().getGameDuration();
-        int secondsLeft = fib.getTimer().getTimeLeft();
+        int secondsLeft = fib.getTimerManager().getTimeLeft();
 
         // On the first event, anchor the received marker to the round start
         // (the first item is assigned at game start, i.e. secondsLeft == gameDuration).

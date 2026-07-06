@@ -5,7 +5,7 @@ import forceitembattle.commands.CustomCommand;
 import forceitembattle.listener.FoundItemListener;
 import forceitembattle.manager.TradingManager;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.util.Text;
 import java.time.Duration;
 import net.kyori.adventure.text.Component;

@@ -3,12 +3,12 @@ package forceitembattle.manager;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.preset.GamePreset;
-import forceitembattle.stats.FIBServiceHelper;
-import forceitembattle.util.CustomMaterial;
-import forceitembattle.util.ForceItemPlayer;
-import forceitembattle.util.GameState;
-import forceitembattle.util.ItemBuilder;
-import forceitembattle.util.Team;
+import forceitembattle.service.FIBServiceHelper;
+import forceitembattle.model.CustomMaterial;
+import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.GameState;
+import forceitembattle.gui.ItemBuilder;
+import forceitembattle.model.Team;
 import forceitembattle.util.Text;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -36,7 +36,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
 
-import static forceitembattle.util.RecipeInventory.CUSTOM_MATERIALS;
+import static forceitembattle.gui.RecipeInventory.CUSTOM_MATERIALS;
 
 public class Gamemanager implements Manager {
 

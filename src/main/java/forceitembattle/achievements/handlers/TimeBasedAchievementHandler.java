@@ -2,8 +2,9 @@ package forceitembattle.achievements.handlers;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.Trigger;
+import forceitembattle.achievements.progress.TimeAchievementProgress;
 import forceitembattle.event.FoundItemEvent;
-import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.model.ForceItemPlayer;
 import org.bukkit.event.Event;
 
 public class TimeBasedAchievementHandler implements AchievementHandler<TimeAchievementProgress> {
@@ -76,7 +77,7 @@ public class TimeBasedAchievementHandler implements AchievementHandler<TimeAchie
         // deriving elapsed/remaining from it (instead of wall time) stays correct
         // across /pause and /resume. Mirrors ItemDifficultiesManager's elapsed calc.
         int gameDuration = fib.getGamemanager().getGameDuration();   // total round seconds
-        int secondsLeft = fib.getTimer().getTimeLeft();              // seconds remaining
+        int secondsLeft = fib.getTimerManager().getTimeLeft();              // seconds remaining
         long elapsedGameTime = gameDuration - secondsLeft;           // seconds since round start
 
         // Anchor per-item markers to the round start on first use. The first item

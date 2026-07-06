@@ -4,7 +4,7 @@ import de.threeseconds.openapi.fibservice.client.model.FibAchievementDto;
 import de.threeseconds.openapi.fibservice.client.model.FibAchievementUnlockRequestDto;
 import de.threeseconds.openapi.fibservice.client.model.FibPlayerAchievementsDto;
 import forceitembattle.ForceItemBattle;
-import forceitembattle.stats.FIBServiceHelper;
+import forceitembattle.service.FIBServiceHelper;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;

@@ -1,8 +1,8 @@
 package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.util.ForceItemPlayer;
-import forceitembattle.util.Locator;
+import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.Locator;
 import forceitembattle.util.Text;
 import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;

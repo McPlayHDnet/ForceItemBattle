@@ -33,6 +33,13 @@ public enum GameSetting {
             ""
     ), "eventModifiers", false, Material.CAKE),
     HARDER_TRACKERS("Harder trackers", List.of("", "<gray>Make tracker recipes harder<gray>.", ""), "hardTrackers", false, Material.KNOWLEDGE_BOOK),
+    QUICKIE("Quickie", List.of(
+            "",
+            "<gray>Restrict which <dark_aqua>item pools <gray>are used.",
+            "<gray>Cycle: <dark_aqua>Disabled <gray>→ <dark_aqua>Early <gray>→ <dark_aqua>Early + Mid<gray>.",
+            "<dark_gray><i>Left-click: next • Right-click: previous</i>",
+            ""
+    ), "quickie", 0, Material.FEATHER),
 
     ;
 

@@ -15,7 +15,7 @@ public class CommandSpectate extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (this.plugin.getTimer().getTimeLeft() > 0) {
+        if (this.plugin.getTimerManager().getTimeLeft() > 0) {
             player.sendMessage(Text.of("<red>This command can only be used after the game end."));
             return;
         }

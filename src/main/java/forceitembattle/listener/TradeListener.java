@@ -20,9 +20,9 @@ public class TradeListener implements Listener {
         if (playerTradeEvent.getVillager() instanceof WanderingTrader wanderingTrader) {
             if (playerTradeEvent.getTrade().getResult().getType() != Material.NETHER_STAR) return;
 
-            Boolean canBuy = this.plugin.getWanderingTraderTimer().getCanBuyWheel().get(player.getUniqueId());
+            Boolean canBuy = this.plugin.getWanderingTraderManager().getCanBuyWheel().get(player.getUniqueId());
             if (canBuy == null || canBuy) {
-                this.plugin.getWanderingTraderTimer().getCanBuyWheel().put(player.getUniqueId(), Boolean.FALSE);
+                this.plugin.getWanderingTraderManager().getCanBuyWheel().put(player.getUniqueId(), Boolean.FALSE);
                 player.closeInventory();
             } else {
                 playerTradeEvent.setCancelled(true);

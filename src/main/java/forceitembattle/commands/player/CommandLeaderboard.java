@@ -4,7 +4,7 @@ import de.threeseconds.openapi.fibservice.client.model.FibLeaderboardEntryDto;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
-import forceitembattle.stats.FIBServiceHelper;
+import forceitembattle.service.FIBServiceHelper;
 import forceitembattle.util.Text;
 import java.util.ArrayList;
 import java.util.List;

@@ -3,7 +3,7 @@ package forceitembattle.commands.player;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.util.GameState;
+import forceitembattle.model.GameState;
 import forceitembattle.util.Text;
 import org.bukkit.Bukkit;
 import org.bukkit.GameRules;

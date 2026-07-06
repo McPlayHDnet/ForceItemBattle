@@ -3,9 +3,9 @@ package forceitembattle.commands.player;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.util.FinishInventory;
-import forceitembattle.util.ForceItemPlayer;
-import forceitembattle.util.Team;
+import forceitembattle.gui.FinishInventory;
+import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.Team;
 import forceitembattle.util.Text;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -27,7 +27,7 @@ public class CommandResult extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (this.plugin.getTimer().getTimeLeft() > 0) {
+        if (this.plugin.getTimerManager().getTimeLeft() > 0) {
             return;
         }
 

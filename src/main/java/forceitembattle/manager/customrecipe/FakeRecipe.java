@@ -2,7 +2,7 @@ package forceitembattle.manager.customrecipe;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.util.ItemBuilder;
+import forceitembattle.gui.ItemBuilder;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.logging.Level;

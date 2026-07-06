@@ -2,8 +2,9 @@ package forceitembattle.achievements.handlers;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.Trigger;
+import forceitembattle.achievements.progress.SimpleAchievementProgress;
 import forceitembattle.event.AntimatterTeleporterUseEvent;
-import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.model.ForceItemPlayer;
 import org.bukkit.event.Event;
 
 public class AntimatterTeleporterUsesAchievementHandler implements AchievementHandler<SimpleAchievementProgress> {

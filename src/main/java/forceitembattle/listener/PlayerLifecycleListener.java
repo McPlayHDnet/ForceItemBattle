@@ -3,9 +3,9 @@ package forceitembattle.listener;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.stats.FIBServiceHelper;
-import forceitembattle.util.ForceItemPlayer;
-import forceitembattle.util.ItemBuilder;
+import forceitembattle.service.FIBServiceHelper;
+import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.gui.ItemBuilder;
 import forceitembattle.util.Text;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +44,7 @@ public class PlayerLifecycleListener implements Listener {
             } else {
                 forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
                 forceItemPlayer.setPlayer(player);
-                player.showBossBar(this.plugin.getTimer().getBossBar().get(event.getPlayer().getUniqueId()));
+                player.showBossBar(this.plugin.getTimerManager().getBossBar().get(event.getPlayer().getUniqueId()));
             }
         } else {
 

@@ -2,7 +2,7 @@ package forceitembattle.listener;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.Gamemanager;
-import forceitembattle.util.InventoryBuilder;
+import forceitembattle.gui.InventoryBuilder;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;

@@ -2,10 +2,11 @@ package forceitembattle.achievements.handlers;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.Trigger;
+import forceitembattle.achievements.progress.CollectionAchievementProgress;
 import forceitembattle.event.FoundItemEvent;
-import forceitembattle.util.BiomeGroup;
-import forceitembattle.util.ForceItemPlayer;
-import forceitembattle.util.MaterialCategory;
+import forceitembattle.model.BiomeGroup;
+import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.MaterialCategory;
 import java.util.Set;
 import org.bukkit.Material;
 import org.bukkit.block.Biome;

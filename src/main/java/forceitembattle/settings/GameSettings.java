@@ -95,6 +95,15 @@ public class GameSettings {
         return this.plugin.getConfig().getInt("presets." + gamePreset.getPresetName() + "." + gameSetting.configPath());
     }
 
+    public QuickieMode getQuickieMode() {
+        return QuickieMode.fromOrdinal(this.getSettingValue(GameSetting.QUICKIE));
+    }
+
+    public void setQuickieMode(QuickieMode quickieMode) {
+        this.plugin.getConfig().set(GameSetting.QUICKIE.configPath(), quickieMode.ordinal());
+        this.plugin.saveConfig();
+    }
+
     public void addGamePreset(GamePreset gamePreset) {
         ConfigurationSection configurationSection = this.plugin.getConfig().getConfigurationSection("presets");
 

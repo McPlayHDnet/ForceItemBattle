@@ -1,17 +1,17 @@
 package forceitembattle.listener;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.achievements.AchievementInventory;
+import forceitembattle.gui.AchievementInventory;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.stats.FIBServiceHelper;
-import forceitembattle.util.ForceItemPlayer;
-import forceitembattle.util.ItemBuilder;
-import forceitembattle.util.Locator;
-import forceitembattle.util.TeleporterInventory;
+import forceitembattle.service.FIBServiceHelper;
+import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.gui.ItemBuilder;
+import forceitembattle.model.Locator;
+import forceitembattle.gui.TeleporterInventory;
 import forceitembattle.util.Text;
-import forceitembattle.util.VaultInventory;
+import forceitembattle.gui.VaultInventory;
 import java.util.Objects;
 import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
@@ -123,9 +123,9 @@ public class ClickableItemsListener implements Listener {
         if (Gamemanager.isBackpack(e.getItem())) {
             if (isRightClick(e.getAction())) {
                 if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-                    this.plugin.getBackpack().openTeamBackpack(forceItemPlayer.currentTeam(), player);
+                    this.plugin.getBackpackManager().openTeamBackpack(forceItemPlayer.currentTeam(), player);
                 } else {
-                    this.plugin.getBackpack().openPlayerBackpack(player);
+                    this.plugin.getBackpackManager().openPlayerBackpack(player);
                 }
                 return;
             }
@@ -207,7 +207,7 @@ public class ClickableItemsListener implements Listener {
         if (!player.getInventory().contains(mat)) {
             player.getWorld().dropItemNaturally(player.getLocation(), new ItemStack(mat));
         }
-        this.plugin.getTimer().sendActionBar();
+        this.plugin.getTimerManager().sendActionBar();
 
         if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
             forceItemPlayer.currentTeam().setRemainingJokers(jokers);

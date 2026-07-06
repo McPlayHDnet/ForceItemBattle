@@ -2,7 +2,7 @@ package forceitembattle.commands.admin;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
-import forceitembattle.util.InvSettings;
+import forceitembattle.gui.InvSettings;
 import org.bukkit.entity.Player;
 
 public class CommandSettings extends CustomCommand {

@@ -2,7 +2,8 @@ package forceitembattle.achievements.handlers;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.Trigger;
-import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.achievements.progress.SimpleAchievementProgress;
+import forceitembattle.model.ForceItemPlayer;
 import io.papermc.paper.event.player.PlayerTradeEvent;
 import org.bukkit.entity.WanderingTrader;
 import org.bukkit.event.Event;
