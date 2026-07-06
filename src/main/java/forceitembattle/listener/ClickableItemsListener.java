@@ -252,6 +252,7 @@ public class ClickableItemsListener implements Listener {
                 player.playSound(player.getLocation(), Sound.BLOCK_PISTON_CONTRACT, 1, 1);
                 forceItemPlayer.setSpectator(true);
                 player.sendMessage(Text.of("<dark_aqua>You will <green>spectate <dark_aqua>this round now."));
+                player.getInventory().setItem(8, new ItemBuilder(Material.ENDER_EYE).setDisplayName("<dark_gray>» <gray>Play game").getItemStack());
             }
             case ENDER_EYE -> {
                 e.setCancelled(true);

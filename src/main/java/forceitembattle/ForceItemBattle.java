@@ -44,6 +44,7 @@ import forceitembattle.listener.PvPListener;
 import forceitembattle.listener.RecipeListener;
 import forceitembattle.listener.SettingsListener;
 import forceitembattle.listener.TradeListener;
+import forceitembattle.listener.VillagerTradeListener;
 import forceitembattle.manager.AchievementManager;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.ItemDifficultiesManager;
@@ -280,6 +281,7 @@ public final class ForceItemBattle extends JavaPlugin {
                 new ChatListener(this),
                 new PlayerLifecycleListener(this),
                 new TradeListener(this),
+                new VillagerTradeListener(this),
                 new GameRulesListener(this),
                 new GuiListener(this)
         );

@@ -11,5 +11,10 @@ public class Locator {
     private String structureId;
     private String structureName;
     private Material locatorMaterial;
+    private Type type;
 
+    public enum Type {
+        STRUCTURE,
+        BIOME
+    }
 }
