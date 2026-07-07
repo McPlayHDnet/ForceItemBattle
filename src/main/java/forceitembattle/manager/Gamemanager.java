@@ -2,7 +2,7 @@ package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.settings.preset.GamePreset;
+import forceitembattle.settings.GamePreset;
 import forceitembattle.service.FIBServiceHelper;
 import forceitembattle.model.CustomMaterial;
 import forceitembattle.model.ForceItemPlayer;
@@ -159,6 +159,16 @@ public class Gamemanager implements Manager {
         return this.forceItemBattle.getItemDifficultiesManager().generateSeededRandomMaterial();
     }
 
+    private MaterialPair nextMaterials(boolean runMode) {
+        if (runMode) {
+            return new MaterialPair(this.generateSeededMaterial(), this.generateSeededMaterial());
+        }
+        return new MaterialPair(this.generateMaterial(), this.generateMaterial());
+    }
+
+    private record MaterialPair(Material current, Material next) {
+    }
+
     public String getMaterialName(Material material) {
         CustomMaterial customMaterial = CUSTOM_MATERIALS.get(material);
         if (customMaterial != null) {
@@ -176,50 +186,38 @@ public class Gamemanager implements Manager {
         return materialName.replace(" ", "_");
     }
 
-    public void initializeMats() {
+    public void initializeMaterials() {
         boolean runMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.RUN);
         boolean teamMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM);
         long now = System.currentTimeMillis();
 
-        Material globalCurrent = null;
-        Material globalNext = null;
-
-        if (runMode) {
-            globalCurrent = this.generateSeededMaterial();
-            globalNext = this.generateSeededMaterial();
-        }
+        // In run mode everyone shares one seeded pair; otherwise each player gets their own.
+        MaterialPair shared = runMode ? this.nextMaterials(true) : null;
 
         if (teamMode) {
-            Material finalGlobalCurrent = globalCurrent;
-            Material finalGlobalNext = globalNext;
             this.forceItemPlayerMap.forEach((uuid, forceItemPlayer) -> {
                 if (forceItemPlayer.isSpectator()) return;
 
-                Material current = runMode ? finalGlobalCurrent : this.generateMaterial();
-                Material next = runMode ? finalGlobalNext : this.generateMaterial();
+                MaterialPair pair = runMode ? shared : this.nextMaterials(false);
 
                 forceItemPlayer.currentTeam().setCurrentScore(0);
-                forceItemPlayer.currentTeam().setCurrentMaterial(current);
-                forceItemPlayer.currentTeam().setNextMaterial(next);
+                forceItemPlayer.currentTeam().setCurrentMaterial(pair.current());
+                forceItemPlayer.currentTeam().setNextMaterial(pair.next());
                 forceItemPlayer.currentTeam().setLastItemAssignedAt(now);
             });
         } else {
-            Material finalGlobalCurrent1 = globalCurrent;
-            Material finalGlobalNext1 = globalNext;
             Bukkit.getOnlinePlayers().forEach(player -> {
                 ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
                 if (forceItemPlayer.isSpectator()) return;
 
-                Material current = runMode ? finalGlobalCurrent1 : this.generateMaterial();
-                Material next = runMode ? finalGlobalNext1 : this.generateMaterial();
+                MaterialPair pair = runMode ? shared : this.nextMaterials(false);
 
                 forceItemPlayer.setCurrentScore(0);
-                forceItemPlayer.setCurrentMaterial(current);
-                forceItemPlayer.setNextMaterial(next);
+                forceItemPlayer.setCurrentMaterial(pair.current());
+                forceItemPlayer.setNextMaterial(pair.next());
                 forceItemPlayer.setLastItemAssignedAt(now);
             });
         }
-
     }
 
     public void forceSkipItem(Player player, boolean adminCommand) {
@@ -230,22 +228,21 @@ public class Gamemanager implements Manager {
         boolean runMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.RUN);
         boolean teamMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM);
 
-        Material currentMaterial = runMode ? this.generateSeededMaterial() : this.generateMaterial();
-        Material nextMaterial = runMode ? this.generateSeededMaterial() : this.generateMaterial();
+        MaterialPair pair = this.nextMaterials(runMode);
 
         ForceItemPlayer gamePlayer = getForceItemPlayer(player.getUniqueId());
         if (teamMode) {
             forceItemPlayerMap().values().forEach(p -> {
                 if (!adminCommand)
                     gamePlayer.currentTeam().setRemainingJokers(gamePlayer.currentTeam().getRemainingJokers() - 1);
-                p.currentTeam().setCurrentMaterial(currentMaterial);
-                p.currentTeam().setNextMaterial(nextMaterial);
+                p.currentTeam().setCurrentMaterial(pair.current());
+                p.currentTeam().setNextMaterial(pair.next());
             });
         } else {
             forceItemPlayerMap().values().forEach(p -> {
                 if (!adminCommand) gamePlayer.setRemainingJokers(gamePlayer.remainingJokers() - 1);
-                p.setCurrentMaterial(currentMaterial);
-                p.setNextMaterial(nextMaterial);
+                p.setCurrentMaterial(pair.current());
+                p.setNextMaterial(pair.next());
             });
         }
 

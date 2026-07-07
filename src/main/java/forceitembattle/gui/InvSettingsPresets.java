@@ -3,7 +3,7 @@ package forceitembattle.gui;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
-import forceitembattle.settings.preset.GamePreset;
+import forceitembattle.settings.GamePreset;
 import forceitembattle.util.Text;
 import java.util.ArrayList;
 import java.util.HashMap;

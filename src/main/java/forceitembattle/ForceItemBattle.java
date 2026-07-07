@@ -17,6 +17,7 @@ import forceitembattle.commands.player.CommandHelp;
 import forceitembattle.commands.player.CommandInfo;
 import forceitembattle.commands.player.CommandInfoWiki;
 import forceitembattle.commands.player.CommandLeaderboard;
+import forceitembattle.commands.player.CommandFixLocate;
 import forceitembattle.commands.player.CommandPause;
 import forceitembattle.commands.player.CommandPing;
 import forceitembattle.commands.player.CommandPosition;
@@ -325,6 +326,7 @@ public final class ForceItemBattle extends JavaPlugin {
         commands.registerCommand(new CommandForceTeam(this));
         commands.registerCommand(new CommandVote(this));
         commands.registerCommand(new CommandVoteSkip(this));
+        commands.registerCommand(new CommandFixLocate(this));
     }
 
     @Override

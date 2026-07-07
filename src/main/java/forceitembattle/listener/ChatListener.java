@@ -3,7 +3,7 @@ package forceitembattle.listener;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.player.CommandShout;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.settings.preset.GamePreset;
+import forceitembattle.settings.GamePreset;
 import forceitembattle.gui.InvSettingsPresets;
 import forceitembattle.model.Team;
 import forceitembattle.util.Text;

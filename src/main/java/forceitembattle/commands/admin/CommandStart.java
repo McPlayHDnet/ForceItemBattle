@@ -6,7 +6,7 @@ import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.ItemDifficultiesManager;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.settings.preset.GamePreset;
+import forceitembattle.settings.GamePreset;
 import forceitembattle.service.FIBServiceHelper;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameState;
@@ -90,7 +90,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
 
         this.plugin.getTimerManager().setTimeLeft(durationSeconds);
         this.plugin.getGamemanager().setGameDuration(durationSeconds);
-        this.plugin.getGamemanager().initializeMats();
+        this.plugin.getGamemanager().initializeMaterials();
 
         new BukkitRunnable() {
 

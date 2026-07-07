@@ -1,6 +1,5 @@
-package forceitembattle.settings.preset;
+package forceitembattle.settings;
 
-import forceitembattle.settings.GameSetting;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;

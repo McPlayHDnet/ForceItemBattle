@@ -117,60 +117,52 @@ public class ClickableItemsListener implements Listener {
         if (e.getItem() == null) {
             return;
         }
+        if (!isRightClick(e.getAction())) {
+            return;
+        }
 
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
 
         if (Gamemanager.isBackpack(e.getItem())) {
-            if (isRightClick(e.getAction())) {
-                if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-                    this.plugin.getBackpackManager().openTeamBackpack(forceItemPlayer.currentTeam(), player);
-                } else {
-                    this.plugin.getBackpackManager().openPlayerBackpack(player);
-                }
-                return;
+            if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+                this.plugin.getBackpackManager().openTeamBackpack(forceItemPlayer.currentTeam(), player);
+            } else {
+                this.plugin.getBackpackManager().openPlayerBackpack(player);
             }
+            return;
         }
 
         if (e.getItem().getType() == Material.NETHER_STAR) {
-            if (isRightClick(e.getAction())) {
-                if (!e.getItem().getItemMeta().hasCustomModelDataComponent()) return;
-                if (e.getItem().getItemMeta().getCustomModelDataComponent().getStrings().getFirst().equals("wheel")) { // wheel of fortune
-                    new VaultInventory(this.plugin).open(player);
-                    player.getInventory().getItemInMainHand().setAmount(player.getInventory().getItemInMainHand().getAmount() - 1);
+            if (!e.getItem().getItemMeta().hasCustomModelDataComponent()) return;
+            if (e.getItem().getItemMeta().getCustomModelDataComponent().getStrings().getFirst().equals("wheel")) { // wheel of fortune
+                new VaultInventory(this.plugin).open(player);
+                player.getInventory().getItemInMainHand().setAmount(player.getInventory().getItemInMainHand().getAmount() - 1);
 
-                    if (this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
-                        FIBServiceHelper helper = this.plugin.getFibServiceHelper();
-                        if (forceItemPlayer.currentTeam() != null) {
-                            forceItemPlayer.currentTeam().getPlayers().stream()
-                                    .filter(t -> !t.equals(forceItemPlayer))
-                                    .forEach(t -> helper.updateMemberStatisticsAsync(
-                                            player.getUniqueId(), t.player().getUniqueId(), player.getUniqueId(),
-                                            FIBServiceHelper.memberUpdate().wheelOfFortuneUsesAdd(1L)));
-                        } else {
-                            helper.updateSoloStatisticsAsync(player.getUniqueId(),
-                                    FIBServiceHelper.soloUpdate().wheelOfFortuneUsesAdd(1L));
-                        }
+                if (this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
+                    FIBServiceHelper helper = this.plugin.getFibServiceHelper();
+                    if (forceItemPlayer.currentTeam() != null) {
+                        forceItemPlayer.currentTeam().getPlayers().stream()
+                                .filter(t -> !t.equals(forceItemPlayer))
+                                .forEach(t -> helper.updateMemberStatisticsAsync(
+                                        player.getUniqueId(), t.player().getUniqueId(), player.getUniqueId(),
+                                        FIBServiceHelper.memberUpdate().wheelOfFortuneUsesAdd(1L)));
+                    } else {
+                        helper.updateSoloStatisticsAsync(player.getUniqueId(),
+                                FIBServiceHelper.soloUpdate().wheelOfFortuneUsesAdd(1L));
                     }
                 }
-
-                return;
             }
+            return;
         }
 
         Locator locator = this.plugin.getLocatorManager().getLocatorByMaterial(e.getItem().getType());
         if (locator != null) {
-            if (isRightClick(e.getAction())) {
-                e.setCancelled(true);
-                this.plugin.getLocatorManager().locate(locator.getStructureId(), forceItemPlayer);
-                return;
-            }
-        }
-
-        if (!Gamemanager.isJoker(e.getItem())) {
+            e.setCancelled(true);
+            this.plugin.getLocatorManager().locate(locator.getStructureId(), forceItemPlayer);
             return;
         }
 
-        if (!isRightClick(e.getAction())) {
+        if (!Gamemanager.isJoker(e.getItem())) {
             return;
         }
         if (e.getClickedBlock() != null && e.getClickedBlock().getState() instanceof InventoryHolder) {

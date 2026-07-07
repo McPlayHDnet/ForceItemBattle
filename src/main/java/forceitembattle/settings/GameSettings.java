@@ -1,7 +1,6 @@
 package forceitembattle.settings;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.settings.preset.GamePreset;
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
 import org.bukkit.Bukkit;
