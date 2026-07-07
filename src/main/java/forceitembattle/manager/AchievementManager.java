@@ -74,6 +74,10 @@ public class AchievementManager implements Manager {
             return;
         }
 
+        if (!plugin.getSettings().isSettingEnabled(GameSetting.ACHIEVEMENTS)) {
+            return;
+        }
+
         ForceItemPlayer forceItemPlayer = plugin.getGamemanager().getForceItemPlayer(uuid);
         if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
             return;
@@ -197,6 +201,10 @@ public class AchievementManager implements Manager {
             return;
         }
 
+        if (!plugin.getSettings().isSettingEnabled(GameSetting.ACHIEVEMENTS)) {
+            return;
+        }
+        
         boolean teamGameEnabled = plugin.getSettings().isSettingEnabled(GameSetting.TEAM);
 
         // Check all players
