@@ -124,16 +124,29 @@ public class TimeBasedAchievementHandler implements AchievementHandler<TimeAchie
             if (foundEvent.isBackToBack()) {
                 return false; // B2B doesn't count as "first item"
             }
-            if (!progress.firstItemCollected) {
-                boolean isFirstGlobally = fib.getGamemanager().forceItemPlayerMap().values().stream()
+            if (progress.firstItemCollected) {
+                return false;
+            }
+
+            boolean isFirstGlobally;
+            if (forceItemPlayer.currentTeam() != null) {
+                var ownTeam = forceItemPlayer.currentTeam();
+                isFirstGlobally = fib.getTeamManager().getTeams().stream().allMatch(team -> {
+                    long collected = team.getFoundItems().stream()
+                            .filter(item -> !item.usedSkip())
+                            .count();
+                    return team.equals(ownTeam) ? collected <= 1 : collected == 0;
+                });
+            } else {
+                isFirstGlobally = fib.getGamemanager().forceItemPlayerMap().values().stream()
                         .filter(p -> !p.isSpectator())
                         .allMatch(p -> p.foundItems().isEmpty() ||
                                 p.player().getUniqueId().equals(forceItemPlayer.player().getUniqueId()));
+            }
 
-                if (isFirstGlobally) {
-                    progress.firstItemCollected = true;
-                    return true;
-                }
+            if (isFirstGlobally) {
+                progress.firstItemCollected = true;
+                return true;
             }
             return false;
         }
