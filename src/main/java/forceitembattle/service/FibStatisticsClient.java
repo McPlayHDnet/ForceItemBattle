@@ -1,89 +1,46 @@
 package forceitembattle.service;
 
-import de.threeseconds.openapi.fibservice.client.api.FibAchievementControllerApi;
 import de.threeseconds.openapi.fibservice.client.api.FibStatisticsControllerApi;
-import de.threeseconds.openapi.fibservice.client.model.FibAchievementUnlockRequestDto;
 import de.threeseconds.openapi.fibservice.client.model.FibLeaderboardEntryDto;
-import de.threeseconds.openapi.fibservice.client.model.FibPlayerAchievementsDto;
 import de.threeseconds.openapi.fibservice.client.model.FibPlayerCombinedTeamStatsDto;
-import de.threeseconds.openapi.fibservice.client.model.FibRaritiesUpdateRequestDto;
 import de.threeseconds.openapi.fibservice.client.model.FibSoloStatisticsDto;
 import de.threeseconds.openapi.fibservice.client.model.FibSoloStatisticsUpdateRequestDto;
 import de.threeseconds.openapi.fibservice.client.model.FibTeamMemberStatsDto;
 import de.threeseconds.openapi.fibservice.client.model.FibTeamMemberStatsUpdateRequestDto;
 import de.threeseconds.openapi.fibservice.client.model.FibTeamStatisticsDto;
 import de.threeseconds.openapi.fibservice.client.model.FibTeamStatisticsUpdateRequestDto;
-import forceitembattle.ForceItemBattle;
-import forceitembattle.manager.Manager;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
-import java.util.logging.Level;
-import org.bukkit.Bukkit;
-import org.openapitools.client.ApiClient;
 import org.openapitools.client.ApiException;
 
-public class FIBServiceHelper implements Manager {
+/**
+ * Statistics domain of FIBService: solo, team, member, combined, and leaderboard.
+ * Wraps {@link FibStatisticsControllerApi} and shares transport/async plumbing via
+ * the {@link ApiExecutor} handed in by the owning {@link FIBServiceClient}.
+ */
+public class FibStatisticsClient {
 
-    private static final String DEFAULT_BASE_URL = "http://127.0.0.7:29708";
-
-    private final ApiClient apiClient;
     private final FibStatisticsControllerApi api;
-    private final FibAchievementControllerApi achievementApi;
-    private final ForceItemBattle plugin;
+    private final ApiExecutor executor;
 
-    public FIBServiceHelper(ForceItemBattle plugin) {
-        this(plugin, DEFAULT_BASE_URL);
+    FibStatisticsClient(FibStatisticsControllerApi api, ApiExecutor executor) {
+        this.api = api;
+        this.executor = executor;
     }
 
-    public FIBServiceHelper(ForceItemBattle plugin, String baseUrl) {
-        this.plugin = plugin;
-        ApiClient client = new ApiClient();
-        client.setBasePath(baseUrl);
-        this.apiClient = client;
-        this.api = new FibStatisticsControllerApi(client);
-        this.achievementApi = new FibAchievementControllerApi(client);
-    }
-
-    public static FibSoloStatisticsUpdateRequestDto soloUpdate() {
-        return new FibSoloStatisticsUpdateRequestDto();
-    }
-
-    public static FibTeamStatisticsUpdateRequestDto teamUpdate() {
-        return new FibTeamStatisticsUpdateRequestDto();
-    }
-
-    public static FibTeamMemberStatsUpdateRequestDto memberUpdate() {
-        return new FibTeamMemberStatsUpdateRequestDto();
-    }
-
-    public static FibRaritiesUpdateRequestDto raritiesUpdate() {
-        return new FibRaritiesUpdateRequestDto();
-    }
-
-    public static FibAchievementUnlockRequestDto achievementUnlock() {
-        return new FibAchievementUnlockRequestDto();
-    }
-
-    @Override
-    public void disable() {
-        // OkHttp keeps a connection pool (and dispatcher threads for any async
-        // calls); shut them down so nothing lingers across a reload.
-        var http = this.apiClient.getHttpClient();
-        http.dispatcher().executorService().shutdown();
-        http.connectionPool().evictAll();
-    }
+    // ==================== SOLO ====================
 
     public FibSoloStatisticsDto getSoloStatistics(UUID playerUuid) throws ApiException {
         return api.getSoloStatistics(playerUuid);
     }
 
     public void getSoloStatisticsAsync(UUID playerUuid, Consumer<FibSoloStatisticsDto> onSuccess) {
-        getSoloStatisticsAsync(playerUuid, onSuccess, this::logError);
+        getSoloStatisticsAsync(playerUuid, onSuccess, executor::logError);
     }
 
     public void getSoloStatisticsAsync(UUID playerUuid, Consumer<FibSoloStatisticsDto> onSuccess, Consumer<ApiException> onError) {
-        runAsync(() -> api.getSoloStatistics(playerUuid), onSuccess, onError);
+        executor.runAsync(() -> api.getSoloStatistics(playerUuid), onSuccess, onError);
     }
 
     public FibSoloStatisticsDto updateSoloStatistics(UUID playerUuid, FibSoloStatisticsUpdateRequestDto request) throws ApiException {
@@ -92,11 +49,11 @@ public class FIBServiceHelper implements Manager {
 
     public void updateSoloStatisticsAsync(UUID playerUuid, FibSoloStatisticsUpdateRequestDto request) {
         updateSoloStatisticsAsync(playerUuid, request, result -> {
-        }, this::logError);
+        }, executor::logError);
     }
 
     public void updateSoloStatisticsAsync(UUID playerUuid, FibSoloStatisticsUpdateRequestDto request, Consumer<FibSoloStatisticsDto> onSuccess, Consumer<ApiException> onError) {
-        runAsync(() -> api.updateSoloStatistics(playerUuid, request), onSuccess, onError);
+        executor.runAsync(() -> api.updateSoloStatistics(playerUuid, request), onSuccess, onError);
     }
 
     public void deleteSoloStatistics(UUID playerUuid) throws ApiException {
@@ -104,23 +61,32 @@ public class FIBServiceHelper implements Manager {
     }
 
     public void deleteSoloStatisticsAsync(UUID playerUuid) {
-        runAsync(() -> {
+        executor.runAsync(() -> {
             api.deleteSoloStatistics(playerUuid);
             return null;
         }, result -> {
-        }, this::logError);
+        }, executor::logError);
     }
+
+    public void deleteSoloStatisticsAsync(UUID playerUuid, Runnable onSuccess, Consumer<ApiException> onError) {
+        executor.runAsync(() -> {
+            api.deleteSoloStatistics(playerUuid);
+            return null;
+        }, result -> onSuccess.run(), onError);
+    }
+
+    // ==================== TEAM (shared) ====================
 
     public FibTeamStatisticsDto getTeamStatistics(UUID playerUuid, UUID teammateUuid) throws ApiException {
         return api.getTeamStatistics(playerUuid, teammateUuid);
     }
 
     public void getTeamStatisticsAsync(UUID playerUuid, UUID teammateUuid, Consumer<FibTeamStatisticsDto> onSuccess) {
-        getTeamStatisticsAsync(playerUuid, teammateUuid, onSuccess, this::logError);
+        getTeamStatisticsAsync(playerUuid, teammateUuid, onSuccess, executor::logError);
     }
 
     public void getTeamStatisticsAsync(UUID playerUuid, UUID teammateUuid, Consumer<FibTeamStatisticsDto> onSuccess, Consumer<ApiException> onError) {
-        runAsync(() -> api.getTeamStatistics(playerUuid, teammateUuid), onSuccess, onError);
+        executor.runAsync(() -> api.getTeamStatistics(playerUuid, teammateUuid), onSuccess, onError);
     }
 
     public List<FibTeamStatisticsDto> getAllTeamStatisticsForPlayer(UUID playerUuid) throws ApiException {
@@ -128,7 +94,7 @@ public class FIBServiceHelper implements Manager {
     }
 
     public void getAllTeamStatisticsForPlayerAsync(UUID playerUuid, Consumer<List<FibTeamStatisticsDto>> onSuccess) {
-        runAsync(() -> api.getAllTeamStatisticsForPlayer(playerUuid), onSuccess, this::logError);
+        executor.runAsync(() -> api.getAllTeamStatisticsForPlayer(playerUuid), onSuccess, executor::logError);
     }
 
     public List<UUID> getTeammatesForPlayer(UUID playerUuid) throws ApiException {
@@ -136,7 +102,7 @@ public class FIBServiceHelper implements Manager {
     }
 
     public void getTeammatesForPlayerAsync(UUID playerUuid, Consumer<List<UUID>> onSuccess) {
-        runAsync(() -> api.getTeammatesForPlayer(playerUuid), onSuccess, this::logError);
+        executor.runAsync(() -> api.getTeammatesForPlayer(playerUuid), onSuccess, executor::logError);
     }
 
     public FibTeamStatisticsDto updateTeamStatistics(UUID playerUuid, UUID teammateUuid, FibTeamStatisticsUpdateRequestDto request) throws ApiException {
@@ -145,11 +111,11 @@ public class FIBServiceHelper implements Manager {
 
     public void updateTeamStatisticsAsync(UUID playerUuid, UUID teammateUuid, FibTeamStatisticsUpdateRequestDto request) {
         updateTeamStatisticsAsync(playerUuid, teammateUuid, request, result -> {
-        }, this::logError);
+        }, executor::logError);
     }
 
     public void updateTeamStatisticsAsync(UUID playerUuid, UUID teammateUuid, FibTeamStatisticsUpdateRequestDto request, Consumer<FibTeamStatisticsDto> onSuccess, Consumer<ApiException> onError) {
-        runAsync(() -> api.updateTeamStatistics(playerUuid, teammateUuid, request), onSuccess, onError);
+        executor.runAsync(() -> api.updateTeamStatistics(playerUuid, teammateUuid, request), onSuccess, onError);
     }
 
     public void deleteTeamStatistics(UUID playerUuid, UUID teammateUuid) throws ApiException {
@@ -157,11 +123,11 @@ public class FIBServiceHelper implements Manager {
     }
 
     public void deleteTeamStatisticsAsync(UUID playerUuid, UUID teammateUuid) {
-        runAsync(() -> {
+        executor.runAsync(() -> {
             api.deleteTeamStatistics(playerUuid, teammateUuid);
             return null;
         }, result -> {
-        }, this::logError);
+        }, executor::logError);
     }
 
     public void deleteAllTeamStatisticsForPlayer(UUID playerUuid) throws ApiException {
@@ -169,19 +135,28 @@ public class FIBServiceHelper implements Manager {
     }
 
     public void deleteAllTeamStatisticsForPlayerAsync(UUID playerUuid) {
-        runAsync(() -> {
+        executor.runAsync(() -> {
             api.deleteAllTeamStatisticsForPlayer(playerUuid);
             return null;
         }, result -> {
-        }, this::logError);
+        }, executor::logError);
     }
+
+    public void deleteAllTeamStatisticsForPlayerAsync(UUID playerUuid, Runnable onSuccess, Consumer<ApiException> onError) {
+        executor.runAsync(() -> {
+            api.deleteAllTeamStatisticsForPlayer(playerUuid);
+            return null;
+        }, result -> onSuccess.run(), onError);
+    }
+
+    // ==================== MEMBER ====================
 
     public FibTeamMemberStatsDto getMemberStatistics(UUID playerUuid, UUID teammateUuid, UUID memberUuid) throws ApiException {
         return api.getMemberStatistics(playerUuid, teammateUuid, memberUuid);
     }
 
     public void getMemberStatisticsAsync(UUID playerUuid, UUID teammateUuid, UUID memberUuid, Consumer<FibTeamMemberStatsDto> onSuccess) {
-        runAsync(() -> api.getMemberStatistics(playerUuid, teammateUuid, memberUuid), onSuccess, this::logError);
+        executor.runAsync(() -> api.getMemberStatistics(playerUuid, teammateUuid, memberUuid), onSuccess, executor::logError);
     }
 
     public FibTeamMemberStatsDto updateMemberStatistics(UUID playerUuid, UUID teammateUuid, UUID memberUuid, FibTeamMemberStatsUpdateRequestDto request) throws ApiException {
@@ -190,85 +165,38 @@ public class FIBServiceHelper implements Manager {
 
     public void updateMemberStatisticsAsync(UUID playerUuid, UUID teammateUuid, UUID memberUuid, FibTeamMemberStatsUpdateRequestDto request) {
         updateMemberStatisticsAsync(playerUuid, teammateUuid, memberUuid, request, result -> {
-        }, this::logError);
+        }, executor::logError);
     }
 
     public void updateMemberStatisticsAsync(UUID playerUuid, UUID teammateUuid, UUID memberUuid, FibTeamMemberStatsUpdateRequestDto request, Consumer<FibTeamMemberStatsDto> onSuccess, Consumer<ApiException> onError) {
-        runAsync(() -> api.updateMemberStatistics(playerUuid, teammateUuid, memberUuid, request), onSuccess, onError);
+        executor.runAsync(() -> api.updateMemberStatistics(playerUuid, teammateUuid, memberUuid, request), onSuccess, onError);
     }
+
+    // ==================== COMBINED ====================
 
     public FibPlayerCombinedTeamStatsDto getPlayerCombinedTeamStats(UUID playerUuid) throws ApiException {
         return api.getPlayerCombinedTeamStats(playerUuid);
     }
 
-    // ==================== ACHIEVEMENTS ====================
-
     public void getPlayerCombinedTeamStatsAsync(UUID playerUuid, Consumer<FibPlayerCombinedTeamStatsDto> onSuccess) {
-        getPlayerCombinedTeamStatsAsync(playerUuid, onSuccess, this::logError);
+        getPlayerCombinedTeamStatsAsync(playerUuid, onSuccess, executor::logError);
     }
 
     public void getPlayerCombinedTeamStatsAsync(UUID playerUuid, Consumer<FibPlayerCombinedTeamStatsDto> onSuccess, Consumer<ApiException> onError) {
-        runAsync(() -> api.getPlayerCombinedTeamStats(playerUuid), onSuccess, onError);
+        executor.runAsync(() -> api.getPlayerCombinedTeamStats(playerUuid), onSuccess, onError);
     }
+
+    // ==================== LEADERBOARD ====================
 
     public List<FibLeaderboardEntryDto> getSoloLeaderboard(String category, int limit) throws ApiException {
         return api.getSoloLeaderboard(category, limit);
     }
 
     public void getSoloLeaderboardAsync(String category, int limit, Consumer<List<FibLeaderboardEntryDto>> onSuccess) {
-        getSoloLeaderboardAsync(category, limit, onSuccess, this::logError);
+        getSoloLeaderboardAsync(category, limit, onSuccess, executor::logError);
     }
 
     public void getSoloLeaderboardAsync(String category, int limit, Consumer<List<FibLeaderboardEntryDto>> onSuccess, Consumer<ApiException> onError) {
-        runAsync(() -> api.getSoloLeaderboard(category, limit), onSuccess, onError);
-    }
-
-    public FibPlayerAchievementsDto getPlayerAchievements(UUID playerUuid) throws ApiException {
-        return achievementApi.getPlayerAchievements(playerUuid);
-    }
-
-    public void getPlayerAchievementsAsync(UUID playerUuid, Consumer<FibPlayerAchievementsDto> onSuccess, Consumer<ApiException> onError) {
-        runAsync(() -> achievementApi.getPlayerAchievements(playerUuid), onSuccess, onError);
-    }
-
-    public void unlockAchievementAsync(UUID playerUuid, String achievementId, FibAchievementUnlockRequestDto request) {
-        runAsync(() -> achievementApi.unlockAchievement(playerUuid, achievementId, request), result -> {
-        }, this::logError);
-    }
-
-    public void removeAchievementAsync(UUID playerUuid, String achievementId) {
-        runAsync(() -> {
-            achievementApi.removeAchievement(playerUuid, achievementId);
-            return null;
-        }, result -> {
-        }, this::logError);
-    }
-
-    public void resetPlayerAchievementsAsync(UUID playerUuid) {
-        runAsync(() -> {
-            achievementApi.resetPlayerAchievements(playerUuid);
-            return null;
-        }, result -> {
-        }, this::logError);
-    }
-
-    private <T> void runAsync(ApiCall<T> apiCall, Consumer<T> onSuccess, Consumer<ApiException> onError) {
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            try {
-                T result = apiCall.execute();
-                Bukkit.getScheduler().runTask(plugin, () -> onSuccess.accept(result));
-            } catch (ApiException e) {
-                Bukkit.getScheduler().runTask(plugin, () -> onError.accept(e));
-            }
-        });
-    }
-
-    private void logError(ApiException e) {
-        plugin.getLogger().log(Level.SEVERE, "[FIBService] API call failed (HTTP " + e.getCode() + "): " + e.getMessage(), e);
-    }
-
-    @FunctionalInterface
-    private interface ApiCall<T> {
-        T execute() throws ApiException;
+        executor.runAsync(() -> api.getSoloLeaderboard(category, limit), onSuccess, onError);
     }
 }

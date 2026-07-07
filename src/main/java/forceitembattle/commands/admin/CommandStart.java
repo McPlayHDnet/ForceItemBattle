@@ -7,7 +7,8 @@ import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.ItemDifficultiesManager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GamePreset;
-import forceitembattle.service.FIBServiceHelper;
+import forceitembattle.service.FIBServiceClient;
+import forceitembattle.service.FibStatisticsClient;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameState;
 import forceitembattle.model.Team;
@@ -233,9 +234,9 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
 
 
             if (this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
-                FIBServiceHelper helper = this.plugin.getFibServiceHelper();
+                FibStatisticsClient helper = this.plugin.getFibService().statistics();
                 if (!this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-                    helper.updateSoloStatisticsAsync(player.getUniqueId(), FIBServiceHelper.soloUpdate().gamesPlayedAdd(1));
+                    helper.updateSoloStatisticsAsync(player.getUniqueId(), FIBServiceClient.soloUpdate().gamesPlayedAdd(1));
                     return;
                 }
                 if (forceItemPlayer.currentTeam() != null) {
@@ -250,7 +251,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
                                 helper.updateTeamStatisticsAsync(
                                         player.getUniqueId(),
                                         teamPlayer.player().getUniqueId(),
-                                        FIBServiceHelper.teamUpdate().gamesPlayedAdd(1)
+                                        FIBServiceClient.teamUpdate().gamesPlayedAdd(1)
                                 );
                             }
                             break;

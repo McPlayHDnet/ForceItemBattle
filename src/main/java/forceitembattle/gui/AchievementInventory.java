@@ -45,7 +45,7 @@ public class AchievementInventory extends InventoryBuilder {
 
         // Pull the full unlock records (mode + teammate + unlockedAt) from the
         // service — the local cache only holds ids — and refresh once they arrive.
-        this.plugin.getFibServiceHelper().getPlayerAchievementsAsync(playerUUID,
+        this.plugin.getFibService().achievements().getPlayerAchievementsAsync(playerUUID,
                 dto -> {
                     this.unlocks = indexByAchievementId(dto);
                     this.updateInventory();

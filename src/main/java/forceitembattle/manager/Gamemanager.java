@@ -3,7 +3,8 @@ package forceitembattle.manager;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GamePreset;
-import forceitembattle.service.FIBServiceHelper;
+import forceitembattle.service.FIBServiceClient;
+import forceitembattle.service.FibStatisticsClient;
 import forceitembattle.model.CustomMaterial;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameState;
@@ -289,12 +290,12 @@ public class Gamemanager implements Manager {
             }
 
             if (statsEnabled) {
-                FIBServiceHelper helper = this.forceItemBattle.getFibServiceHelper();
+                FibStatisticsClient helper = this.forceItemBattle.getFibService().statistics();
                 long distance = (long) this.calculateDistance(forceItemPlayer.player());
 
                 if (forceItemPlayer.currentTeam() == null) {
                     // ---- Solo game: everything on solo stats ----
-                    var soloUpdate = FIBServiceHelper.soloUpdate()
+                    var soloUpdate = FIBServiceClient.soloUpdate()
                             .blocksTravelledAdd(distance)
                             .highestScore((long) forceItemPlayer.currentScore());
 
@@ -317,12 +318,12 @@ public class Gamemanager implements Manager {
                                     player.getUniqueId(),
                                     teammateUuid,
                                     player.getUniqueId(),
-                                    FIBServiceHelper.memberUpdate().blocksTravelledAdd(distance)
+                                    FIBServiceClient.memberUpdate().blocksTravelledAdd(distance)
                             );
 
                             // Shared team stats. highestScore is a max-set (safe from both
                             // sides); gamesWon must count once, so only the lower-UUID side sends.
-                            var teamUpdate = FIBServiceHelper.teamUpdate()
+                            var teamUpdate = FIBServiceClient.teamUpdate()
                                     .highestScore((long) currentTeam.getCurrentScore());
                             boolean lowerSide = player.getUniqueId().toString()
                                     .compareTo(teammateUuid.toString()) < 0;

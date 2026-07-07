@@ -5,7 +5,8 @@ import forceitembattle.gui.AchievementInventory;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.service.FIBServiceHelper;
+import forceitembattle.service.FIBServiceClient;
+import forceitembattle.service.FibStatisticsClient;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.gui.ItemBuilder;
 import forceitembattle.model.Locator;
@@ -139,16 +140,16 @@ public class ClickableItemsListener implements Listener {
                 player.getInventory().getItemInMainHand().setAmount(player.getInventory().getItemInMainHand().getAmount() - 1);
 
                 if (this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
-                    FIBServiceHelper helper = this.plugin.getFibServiceHelper();
+                    FibStatisticsClient helper = this.plugin.getFibService().statistics();
                     if (forceItemPlayer.currentTeam() != null) {
                         forceItemPlayer.currentTeam().getPlayers().stream()
                                 .filter(t -> !t.equals(forceItemPlayer))
                                 .forEach(t -> helper.updateMemberStatisticsAsync(
                                         player.getUniqueId(), t.player().getUniqueId(), player.getUniqueId(),
-                                        FIBServiceHelper.memberUpdate().wheelOfFortuneUsesAdd(1L)));
+                                        FIBServiceClient.memberUpdate().wheelOfFortuneUsesAdd(1L)));
                     } else {
                         helper.updateSoloStatisticsAsync(player.getUniqueId(),
-                                FIBServiceHelper.soloUpdate().wheelOfFortuneUsesAdd(1L));
+                                FIBServiceClient.soloUpdate().wheelOfFortuneUsesAdd(1L));
                     }
                 }
             }

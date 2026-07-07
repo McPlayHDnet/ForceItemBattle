@@ -4,7 +4,8 @@ import de.threeseconds.openapi.fibservice.client.model.FibAchievementDto;
 import de.threeseconds.openapi.fibservice.client.model.FibAchievementUnlockRequestDto;
 import de.threeseconds.openapi.fibservice.client.model.FibPlayerAchievementsDto;
 import forceitembattle.ForceItemBattle;
-import forceitembattle.service.FIBServiceHelper;
+import forceitembattle.service.FIBServiceClient;
+import forceitembattle.service.FibAchievementClient;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,8 +25,8 @@ public class AchievementStorage {
         this.plugin = plugin;
     }
 
-    private FIBServiceHelper helper() {
-        return plugin.getFibServiceHelper();
+    private FibAchievementClient achievementClient() {
+        return plugin.getFibService().achievements();
     }
 
     // ==================== LOADING ====================
@@ -47,7 +48,7 @@ public class AchievementStorage {
             return;
         }
 
-        helper().getPlayerAchievementsAsync(playerUUID,
+        achievementClient().getPlayerAchievementsAsync(playerUUID,
                 dto -> {
                     cache.computeIfAbsent(playerUUID, key -> ConcurrentHashMap.newKeySet()).addAll(extractIds(dto));
                     loaded.add(playerUUID);
@@ -119,11 +120,11 @@ public class AchievementStorage {
     public void addAchievement(UUID playerUUID, Achievements achievement, AchievementMode mode, UUID teammateUuid) {
         cache.computeIfAbsent(playerUUID, key -> ConcurrentHashMap.newKeySet()).add(achievement.name());
 
-        FibAchievementUnlockRequestDto request = FIBServiceHelper.achievementUnlock()
+        FibAchievementUnlockRequestDto request = FIBServiceClient.achievementUnlock()
                 .mode(mode == AchievementMode.TEAM ? FibAchievementUnlockRequestDto.ModeEnum.TEAM : FibAchievementUnlockRequestDto.ModeEnum.SOLO)
                 .teammateUuid(mode == AchievementMode.TEAM ? teammateUuid : null);
 
-        helper().unlockAchievementAsync(playerUUID, achievement.name(), request);
+        achievementClient().unlockAchievementAsync(playerUUID, achievement.name(), request);
     }
 
     public void removeAchievement(UUID playerUUID, Achievements achievement) {
@@ -131,12 +132,12 @@ public class AchievementStorage {
         if (achievements != null) {
             achievements.remove(achievement.name());
         }
-        helper().removeAchievementAsync(playerUUID, achievement.name());
+        achievementClient().removeAchievementAsync(playerUUID, achievement.name());
     }
 
     public void resetPlayerAchievements(UUID playerUUID) {
         cache.remove(playerUUID);
         loaded.remove(playerUUID);
-        helper().resetPlayerAchievementsAsync(playerUUID);
+        achievementClient().resetPlayerAchievementsAsync(playerUUID);
     }
 }

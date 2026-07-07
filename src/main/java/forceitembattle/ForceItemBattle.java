@@ -58,9 +58,9 @@ import forceitembattle.manager.ScoreboardManager;
 import forceitembattle.manager.TeamsManager;
 import forceitembattle.manager.TradingManager;
 import forceitembattle.manager.VoteSkipManager;
+import forceitembattle.service.FIBServiceClient;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
-import forceitembattle.service.FIBServiceHelper;
 import forceitembattle.manager.AntimatterLocatorManager;
 import forceitembattle.manager.BackpackManager;
 import forceitembattle.util.FileLogger;
@@ -128,7 +128,7 @@ public final class ForceItemBattle extends JavaPlugin {
     @Getter
     private ScoreboardManager scoreboardManager;
     @Getter
-    private FIBServiceHelper fibServiceHelper;
+    private FIBServiceClient fibService;
     @Getter
     @Setter
     private Location spawnLocation;
@@ -169,7 +169,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.antimatterLocatorManager = register(new AntimatterLocatorManager(this));
         this.voteSkipManager = register(new VoteSkipManager(this));
         this.scoreboardManager = register(new ScoreboardManager(this));
-        this.fibServiceHelper = register(new FIBServiceHelper(this));
+        this.fibService = register(new FIBServiceClient(this));
 
         this.managers.forEach(Manager::enable);
 

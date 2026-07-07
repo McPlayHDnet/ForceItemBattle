@@ -3,7 +3,8 @@ package forceitembattle.listener;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.service.FIBServiceHelper;
+import forceitembattle.service.FIBServiceClient;
+import forceitembattle.service.FibStatisticsClient;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.gui.ItemBuilder;
 import forceitembattle.util.Text;
@@ -102,7 +103,7 @@ public class PlayerLifecycleListener implements Listener {
         }
 
         if (this.plugin.getGamemanager().isMidGame() && this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
-            FIBServiceHelper helper = plugin.getFibServiceHelper();
+            FibStatisticsClient helper = plugin.getFibService().statistics();
             if (gamePlayer != null && gamePlayer.currentTeam() != null) {
                 gamePlayer.currentTeam().getPlayers().stream()
                         .filter(teammate -> !teammate.equals(gamePlayer))
@@ -110,11 +111,11 @@ public class PlayerLifecycleListener implements Listener {
                                 player.getUniqueId(),
                                 teammate.player().getUniqueId(),
                                 player.getUniqueId(),
-                                FIBServiceHelper.memberUpdate().deathsAdd(1L)
+                                FIBServiceClient.memberUpdate().deathsAdd(1L)
                         ));
             } else {
                 helper.updateSoloStatisticsAsync(player.getUniqueId(),
-                        FIBServiceHelper.soloUpdate().deathsAdd(1L));
+                        FIBServiceClient.soloUpdate().deathsAdd(1L));
             }
         }
 

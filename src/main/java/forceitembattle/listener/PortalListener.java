@@ -3,7 +3,8 @@ package forceitembattle.listener;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.event.AntimatterTeleporterUseEvent;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.service.FIBServiceHelper;
+import forceitembattle.service.FIBServiceClient;
+import forceitembattle.service.FibStatisticsClient;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.util.Text;
 import java.util.ArrayList;
@@ -80,17 +81,17 @@ public class PortalListener implements Listener {
 
     private void teleportPlayerRandomly(Player player) {
         if (this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
-            FIBServiceHelper helper = this.plugin.getFibServiceHelper();
+            FibStatisticsClient helper = this.plugin.getFibService().statistics();
             ForceItemPlayer fip = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
             if (fip != null && fip.currentTeam() != null) {
                 fip.currentTeam().getPlayers().stream()
                         .filter(t -> !t.equals(fip))
                         .forEach(t -> helper.updateMemberStatisticsAsync(
                                 player.getUniqueId(), t.player().getUniqueId(), player.getUniqueId(),
-                                FIBServiceHelper.memberUpdate().enteredAntimatterTeleporterAdd(1L)));
+                                FIBServiceClient.memberUpdate().enteredAntimatterTeleporterAdd(1L)));
             } else {
                 helper.updateSoloStatisticsAsync(player.getUniqueId(),
-                        FIBServiceHelper.soloUpdate().enteredAntimatterTeleporterAdd(1L));
+                        FIBServiceClient.soloUpdate().enteredAntimatterTeleporterAdd(1L));
             }
         }
 

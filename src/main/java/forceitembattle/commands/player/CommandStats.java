@@ -9,11 +9,13 @@ import de.threeseconds.openapi.fibservice.client.model.FibTeamStatisticsDto;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
-import forceitembattle.service.FIBServiceHelper;
+import forceitembattle.service.FibStatisticsClient;
 import forceitembattle.util.Text;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -21,6 +23,14 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
 public class CommandStats extends CustomCommand implements CustomTabCompleter {
+
+    private static final long RESET_CONFIRM_TIMEOUT_MS = 30_000L;
+
+    // Staged resets awaiting "/stats reset confirm", keyed by the admin who requested it.
+    private final Map<UUID, PendingReset> pendingResets = new HashMap<>();
+
+    private record PendingReset(String scope, UUID targetUuid, String targetName, long createdAt) {
+    }
 
     public CommandStats(ForceItemBattle plugin) {
         super(plugin, "stats");
@@ -40,12 +50,13 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
             case "solo" -> handleSolo(player, args);
             case "team" -> handleTeam(player, args);
             case "duo" -> handleDuo(player, args);
+            case "reset" -> handleReset(player, args);
             default -> sendUsage(player);
         }
     }
 
     private void handleSolo(Player player, String[] args) {
-        FIBServiceHelper helper = this.plugin.getFibServiceHelper();
+        FibStatisticsClient helper = this.plugin.getFibService().statistics();
 
         if (args.length == 1) {
             helper.getSoloStatisticsAsync(player.getUniqueId(),
@@ -66,7 +77,7 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
     }
 
     private void handleTeam(Player player, String[] args) {
-        FIBServiceHelper helper = this.plugin.getFibServiceHelper();
+        FibStatisticsClient helper = this.plugin.getFibService().statistics();
 
         if (args.length == 1) {
             helper.getPlayerCombinedTeamStatsAsync(player.getUniqueId(),
@@ -87,7 +98,7 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
     }
 
     private void handleDuo(Player player, String[] args) {
-        FIBServiceHelper helper = this.plugin.getFibServiceHelper();
+        FibStatisticsClient helper = this.plugin.getFibService().statistics();
 
         if (args.length < 2) {
             player.sendMessage(Text.of("<red>Usage: /stats duo <teammate> <dark_gray>or <red>/stats duo <player1> <player2>"));
@@ -125,6 +136,68 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
         helper.getTeamStatisticsAsync(player1Uuid, player2Uuid,
                 stats -> sendDuoMessage(player, player1Name, player2Name, stats),
                 error -> player.sendMessage(Text.of("<yellow>" + player1Name + " <red>and <yellow>" + player2Name + " <red>have no duo stats yet")));
+    }
+
+    private void handleReset(Player player, String[] args) {
+        if (!player.isOp()) {
+            player.sendMessage(Text.of("<red>You don't have permission to do that."));
+            return;
+        }
+
+        if (args.length >= 2 && args[1].equalsIgnoreCase("confirm")) {
+            confirmReset(player);
+            return;
+        }
+
+        if (args.length < 3) {
+            player.sendMessage(Text.of("<red>Usage: /stats reset <solo|team> <player>"));
+            return;
+        }
+
+        String scope = args[1].toLowerCase();
+        if (!scope.equals("solo") && !scope.equals("team")) {
+            player.sendMessage(Text.of("<red>Usage: /stats reset <solo|team> <player>"));
+            return;
+        }
+
+        String targetName = args[2];
+        UUID targetUuid = resolvePlayer(targetName);
+        if (targetUuid == null) {
+            player.sendMessage(Text.of("<yellow>" + targetName + " <red>was not found"));
+            return;
+        }
+
+        this.pendingResets.put(player.getUniqueId(),
+                new PendingReset(scope, targetUuid, targetName, System.currentTimeMillis()));
+
+        player.sendMessage(Text.of("<red>You are about to reset <yellow>" + targetName + "<red>'s " + scope + " stats."));
+        player.sendMessage(Text.of("<gray>This cannot be undone. Type <yellow>/stats reset confirm <gray>to proceed."));
+    }
+
+    private void confirmReset(Player player) {
+        PendingReset pending = this.pendingResets.remove(player.getUniqueId());
+        if (pending == null) {
+            player.sendMessage(Text.of("<red>You have no pending reset to confirm."));
+            return;
+        }
+        if (System.currentTimeMillis() - pending.createdAt() > RESET_CONFIRM_TIMEOUT_MS) {
+            player.sendMessage(Text.of("<red>Your pending reset expired. Run the command again."));
+            return;
+        }
+
+        FibStatisticsClient helper = this.plugin.getFibService().statistics();
+        String targetName = pending.targetName();
+        UUID targetUuid = pending.targetUuid();
+
+        if (pending.scope().equals("solo")) {
+            helper.deleteSoloStatisticsAsync(targetUuid,
+                    () -> player.sendMessage(Text.of("<dark_aqua>Reset <green>" + targetName + "<dark_aqua>'s solo stats")),
+                    error -> player.sendMessage(Text.of("<red>Could not reset <yellow>" + targetName + "<red>'s solo stats")));
+        } else {
+            helper.deleteAllTeamStatisticsForPlayerAsync(targetUuid,
+                    () -> player.sendMessage(Text.of("<dark_aqua>Reset <green>" + targetName + "<dark_aqua>'s team stats")),
+                    error -> player.sendMessage(Text.of("<red>Could not reset <yellow>" + targetName + "<red>'s team stats")));
+        }
     }
 
     private void sendSoloMessage(Player player, String targetName, FibSoloStatisticsDto stats) {
@@ -284,6 +357,10 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
         player.sendMessage(Text.of("  <dark_gray>● <yellow>/stats team <player> <dark_gray>» <gray>Overall team stats of a player"));
         player.sendMessage(Text.of("  <dark_gray>● <yellow>/stats duo <teammate> <dark_gray>» <gray>Your stats with a teammate"));
         player.sendMessage(Text.of("  <dark_gray>● <yellow>/stats duo <p1> <p2> <dark_gray>» <gray>Duo stats between two players"));
+        if (player.isOp()) {
+            player.sendMessage(Text.of("  <dark_gray>● <red>/stats reset solo <player> <dark_gray>» <gray>Reset a player's solo stats"));
+            player.sendMessage(Text.of("  <dark_gray>● <red>/stats reset team <player> <dark_gray>» <gray>Reset a player's team stats"));
+        }
         player.sendMessage(" ");
     }
 
@@ -310,11 +387,25 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
             completions.add("solo");
             completions.add("team");
             completions.add("duo");
-        } else if (args.length == 2) {
-            for (Player p : Bukkit.getOnlinePlayers()) {
-                completions.add(p.getName());
+            if (player.isOp()) {
+                completions.add("reset");
             }
-        } else if (args.length == 3 && args[0].equalsIgnoreCase("duo")) {
+        } else if (args.length == 2) {
+            if (args[0].equalsIgnoreCase("reset")) {
+                if (player.isOp()) {
+                    completions.add("solo");
+                    completions.add("team");
+                    completions.add("confirm");
+                }
+            } else {
+                for (Player p : Bukkit.getOnlinePlayers()) {
+                    completions.add(p.getName());
+                }
+            }
+        } else if (args.length == 3
+                && (args[0].equalsIgnoreCase("duo")
+                || (args[0].equalsIgnoreCase("reset") && player.isOp()
+                && (args[1].equalsIgnoreCase("solo") || args[1].equalsIgnoreCase("team"))))) {
             for (Player p : Bukkit.getOnlinePlayers()) {
                 completions.add(p.getName());
             }
