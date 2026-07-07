@@ -151,9 +151,14 @@ public class AchievementManager implements Manager {
         if (isTeamAchievement && team != null) {
             for (ForceItemPlayer teamMember : team.getPlayers()) {
                 UUID memberUuid = teamMember.player().getUniqueId();
-                if (!memberUuid.equals(player.getUniqueId())) {
-                    writeUnlock(memberUuid, teamMember.player(), achievement, team, teamGame);
+                if (memberUuid.equals(player.getUniqueId())) {
+                    continue;
                 }
+                // Don't re-grant (and therefore re-announce) to a teammate who already has it.
+                if (storage.hasAchievement(memberUuid, achievement)) {
+                    continue;
+                }
+                writeUnlock(memberUuid, teamMember.player(), achievement, team, teamGame);
             }
         }
     }
@@ -204,7 +209,7 @@ public class AchievementManager implements Manager {
         if (!plugin.getSettings().isSettingEnabled(GameSetting.ACHIEVEMENTS)) {
             return;
         }
-        
+
         boolean teamGameEnabled = plugin.getSettings().isSettingEnabled(GameSetting.TEAM);
 
         // Check all players
