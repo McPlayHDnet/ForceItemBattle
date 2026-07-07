@@ -143,6 +143,13 @@ public class AchievementListener implements Listener {
     }
 
     @EventHandler
+    public void onLootGenerate(org.bukkit.event.world.LootGenerateEvent event) {
+        if (event.getEntity() instanceof Player player) {
+            this.plugin.getAchievementManager().handleEvent(player, event, Trigger.LOOT);
+        }
+    }
+
+    @EventHandler
     public void onAdvancementGrant(PlayerAdvancementDoneEvent event) {
         if (this.plugin.getSettings().isSettingEnabled(GameSetting.EVENT)) {
             event.message(null);

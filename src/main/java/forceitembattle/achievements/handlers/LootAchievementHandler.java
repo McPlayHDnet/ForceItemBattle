@@ -41,28 +41,30 @@ public class LootAchievementHandler implements AchievementHandler<SimpleAchievem
 
     @Override
     public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin) {
-        if (!(event instanceof org.bukkit.event.inventory.InventoryOpenEvent openEvent)) {
-            return false;
-        }
-
-        // InventoryType.CHEST covers both single and double chests. (Checking
-        // `getHolder() instanceof Chest` missed double chests, whose holder is a
-        // DoubleChest, not a Chest.)
-        if (openEvent.getInventory().getType() != InventoryType.CHEST) {
-            return false;
-        }
-
-        Inventory chest = openEvent.getInventory();
-
         if (neededItem) {
+            if (!(event instanceof org.bukkit.event.world.LootGenerateEvent lootEvent)) {
+                return false;
+            }
             Material needed = forceItemPlayer.getCurrentMaterial();
-            for (ItemStack item : chest.getContents()) {
+            for (ItemStack item : lootEvent.getLoot()) {
                 if (item != null && item.getType() == needed) {
                     return true;
                 }
             }
             return false;
         }
+
+        // Custom-item loot achievements (LEGENDARY, WILL_IT_BREAK) keep the chest-open path.
+        if (!(event instanceof org.bukkit.event.inventory.InventoryOpenEvent openEvent)) {
+            return false;
+        }
+
+        // InventoryType.CHEST covers both single and double chests.
+        if (openEvent.getInventory().getType() != InventoryType.CHEST) {
+            return false;
+        }
+
+        Inventory chest = openEvent.getInventory();
 
         if (customItem != null) {
             for (ItemStack item : chest.getContents()) {
