@@ -107,11 +107,11 @@ public class AchievementManager implements Manager {
                     teamProgressMap != null;
 
             // Skip if already has achievement
-            if (storage.hasAchievement(uuid, achievement)) {
+            if (storage.hasAchievement(uuid, achievement) && !useTeamProgress) {
                 continue;
             }
 
-            // For team achievements, skip if all have it
+            // For team achievements, once every teammate has it there's nothing left to do.
             if (useTeamProgress && team != null) {
                 boolean allHaveIt = team.getPlayers().stream()
                         .allMatch(p -> storage.hasAchievement(p.player().getUniqueId(), achievement));
@@ -143,7 +143,9 @@ public class AchievementManager implements Manager {
         boolean teamGame = plugin.getSettings().isSettingEnabled(GameSetting.TEAM) && team != null;
 
         // Grant to the triggering player.
-        writeUnlock(player.getUniqueId(), player, achievement, team, teamGame);
+        if (!storage.hasAchievement(player.getUniqueId(), achievement)) {
+            writeUnlock(player.getUniqueId(), player, achievement, team, teamGame);
+        }
 
         // Team-eligible achievements are also granted to the rest of the team.
         // (Which achievements are team-eligible vs player-only is decided by the
