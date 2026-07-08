@@ -1,27 +1,29 @@
 package forceitembattle.service;
 
 import forceitembattle.ForceItemBattle;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import org.bukkit.Bukkit;
 import org.openapitools.client.ApiException;
 
-/**
- * Shared async plumbing for the FIBService sub-clients. Runs a blocking API call
- * off the main thread and delivers the result (or error) back on the main thread,
- * so callbacks are always Bukkit-safe. Held by composition rather than inheritance
- * so each sub-client stays independent.
- */
 class ApiExecutor {
 
     private final ForceItemBattle plugin;
+    
+    private final ExecutorService worker = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "FIBService-Worker");
+        t.setDaemon(true);
+        return t;
+    });
 
     ApiExecutor(ForceItemBattle plugin) {
         this.plugin = plugin;
     }
 
     <T> void runAsync(ApiCall<T> apiCall, Consumer<T> onSuccess, Consumer<ApiException> onError) {
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+        worker.execute(() -> {
             try {
                 T result = apiCall.execute();
                 Bukkit.getScheduler().runTask(plugin, () -> onSuccess.accept(result));
@@ -29,6 +31,10 @@ class ApiExecutor {
                 Bukkit.getScheduler().runTask(plugin, () -> onError.accept(e));
             }
         });
+    }
+
+    void shutdown() {
+        worker.shutdown();
     }
 
     void logError(ApiException e) {

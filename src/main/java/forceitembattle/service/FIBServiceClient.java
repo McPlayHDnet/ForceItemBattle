@@ -15,6 +15,7 @@ public class FIBServiceClient implements Manager {
     private static final String DEFAULT_BASE_URL = "http://127.0.0.7:29708";
 
     private final ApiClient apiClient;
+    private final ApiExecutor executor;
     private final FibStatisticsClient statistics;
     private final FibAchievementClient achievements;
 
@@ -27,7 +28,7 @@ public class FIBServiceClient implements Manager {
         client.setBasePath(baseUrl);
         this.apiClient = client;
 
-        ApiExecutor executor = new ApiExecutor(plugin);
+        this.executor = new ApiExecutor(plugin);
         this.statistics = new FibStatisticsClient(new FibStatisticsControllerApi(client), executor);
         this.achievements = new FibAchievementClient(new FibAchievementControllerApi(client), executor);
     }
@@ -60,6 +61,7 @@ public class FIBServiceClient implements Manager {
     public void disable() {
         // OkHttp keeps a connection pool (and dispatcher threads for any async
         // calls); shut them down so nothing lingers across a reload.
+        this.executor.shutdown();
         var http = this.apiClient.getHttpClient();
         http.dispatcher().executorService().shutdown();
         http.connectionPool().evictAll();
