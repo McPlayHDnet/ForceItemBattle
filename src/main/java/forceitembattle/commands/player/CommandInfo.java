@@ -3,9 +3,9 @@ package forceitembattle.commands.player;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
-import forceitembattle.util.CustomMaterial;
-import forceitembattle.util.DescriptionItem;
-import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.model.CustomMaterial;
+import forceitembattle.model.DescriptionItem;
+import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.util.Text;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,8 +16,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 
-import static forceitembattle.util.RecipeInventory.CUSTOM_MATERIALS;
-import static forceitembattle.util.RecipeInventory.ID_TO_MATERIAL;
+import static forceitembattle.gui.RecipeInventory.CUSTOM_MATERIALS;
+import static forceitembattle.gui.RecipeInventory.ID_TO_MATERIAL;
 
 public class CommandInfo extends CustomCommand implements CustomTabCompleter {
 

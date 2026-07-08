@@ -6,20 +6,20 @@ import forceitembattle.achievements.AchievementStorage;
 import forceitembattle.achievements.Achievements;
 import forceitembattle.achievements.Trigger;
 import forceitembattle.achievements.handlers.AchievementHandler;
-import forceitembattle.achievements.handlers.AchievementProgressTracker;
-import forceitembattle.achievements.handlers.BackToBackAchievementProgress;
+import forceitembattle.achievements.progress.AchievementProgressTracker;
+import forceitembattle.achievements.progress.BackToBackAchievementProgress;
 import forceitembattle.achievements.handlers.CollectionAchievementHandler;
-import forceitembattle.achievements.handlers.CollectionAchievementProgress;
+import forceitembattle.achievements.progress.CollectionAchievementProgress;
 import forceitembattle.achievements.handlers.ConsecutiveStoneAchievementHandler;
-import forceitembattle.achievements.handlers.CounterAchievementProgress;
-import forceitembattle.achievements.handlers.ItemFrequencyAchievementProgress;
-import forceitembattle.achievements.handlers.SimpleAchievementProgress;
-import forceitembattle.achievements.handlers.SkipAchievementProgress;
-import forceitembattle.achievements.handlers.TimeAchievementProgress;
+import forceitembattle.achievements.progress.CounterAchievementProgress;
+import forceitembattle.achievements.progress.ItemFrequencyAchievementProgress;
+import forceitembattle.achievements.progress.SimpleAchievementProgress;
+import forceitembattle.achievements.progress.SkipAchievementProgress;
+import forceitembattle.achievements.progress.TimeAchievementProgress;
 import forceitembattle.event.PlayerGrantAchievementEvent;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.util.ForceItemPlayer;
-import forceitembattle.util.Team;
+import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.Team;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -74,6 +74,10 @@ public class AchievementManager implements Manager {
             return;
         }
 
+        if (!plugin.getSettings().isSettingEnabled(GameSetting.ACHIEVEMENTS)) {
+            return;
+        }
+
         ForceItemPlayer forceItemPlayer = plugin.getGamemanager().getForceItemPlayer(uuid);
         if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
             return;
@@ -103,11 +107,11 @@ public class AchievementManager implements Manager {
                     teamProgressMap != null;
 
             // Skip if already has achievement
-            if (storage.hasAchievement(uuid, achievement)) {
+            if (storage.hasAchievement(uuid, achievement) && !useTeamProgress) {
                 continue;
             }
 
-            // For team achievements, skip if all have it
+            // For team achievements, once every teammate has it there's nothing left to do.
             if (useTeamProgress && team != null) {
                 boolean allHaveIt = team.getPlayers().stream()
                         .allMatch(p -> storage.hasAchievement(p.player().getUniqueId(), achievement));
@@ -139,7 +143,9 @@ public class AchievementManager implements Manager {
         boolean teamGame = plugin.getSettings().isSettingEnabled(GameSetting.TEAM) && team != null;
 
         // Grant to the triggering player.
-        writeUnlock(player.getUniqueId(), player, achievement, team, teamGame);
+        if (!storage.hasAchievement(player.getUniqueId(), achievement)) {
+            writeUnlock(player.getUniqueId(), player, achievement, team, teamGame);
+        }
 
         // Team-eligible achievements are also granted to the rest of the team.
         // (Which achievements are team-eligible vs player-only is decided by the
@@ -147,9 +153,14 @@ public class AchievementManager implements Manager {
         if (isTeamAchievement && team != null) {
             for (ForceItemPlayer teamMember : team.getPlayers()) {
                 UUID memberUuid = teamMember.player().getUniqueId();
-                if (!memberUuid.equals(player.getUniqueId())) {
-                    writeUnlock(memberUuid, teamMember.player(), achievement, team, teamGame);
+                if (memberUuid.equals(player.getUniqueId())) {
+                    continue;
                 }
+                // Don't re-grant (and therefore re-announce) to a teammate who already has it.
+                if (storage.hasAchievement(memberUuid, achievement)) {
+                    continue;
+                }
+                writeUnlock(memberUuid, teamMember.player(), achievement, team, teamGame);
             }
         }
     }
@@ -194,6 +205,10 @@ public class AchievementManager implements Manager {
      */
     public void checkGameEndAchievements() {
         if (!plugin.getGamemanager().isEndGame()) {
+            return;
+        }
+
+        if (!plugin.getSettings().isSettingEnabled(GameSetting.ACHIEVEMENTS)) {
             return;
         }
 

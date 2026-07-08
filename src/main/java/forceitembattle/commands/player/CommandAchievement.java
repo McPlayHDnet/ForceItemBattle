@@ -1,7 +1,7 @@
 package forceitembattle.commands.player;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.achievements.AchievementInventory;
+import forceitembattle.gui.AchievementInventory;
 import forceitembattle.achievements.Achievements;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
@@ -33,13 +33,21 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
 
         switch (subCommand) {
             case "list" -> handleListCommand(player, args);
-            case "grant" -> handleGrantCommand(player, args);
-            case "revoke" -> handleRevokeCommand(player, args);
-            case "reset" -> handleResetCommand(player, args);
+            case "grant" -> requireOp(player, () -> handleGrantCommand(player, args));
+            case "revoke" -> requireOp(player, () -> handleRevokeCommand(player, args));
+            case "reset" -> requireOp(player, () -> handleResetCommand(player, args));
             case "progress" -> handleProgressCommand(player, args);
             default -> player.sendMessage(Text.of(
                     "<red>Unknown subcommand. Use: list, grant, revoke, reset, or progress"));
         }
+    }
+
+    private void requireOp(Player player, Runnable action) {
+        if (!player.isOp()) {
+            player.sendMessage(Text.of("<red>You don't have permission to do that."));
+            return;
+        }
+        action.run();
     }
 
     private void handleListCommand(Player player, String[] args) {

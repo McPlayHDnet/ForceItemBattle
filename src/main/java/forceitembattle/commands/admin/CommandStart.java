@@ -6,11 +6,12 @@ import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.ItemDifficultiesManager;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.settings.preset.GamePreset;
-import forceitembattle.stats.FIBServiceHelper;
-import forceitembattle.util.ForceItemPlayer;
-import forceitembattle.util.GameState;
-import forceitembattle.util.Team;
+import forceitembattle.settings.GamePreset;
+import forceitembattle.service.FIBServiceClient;
+import forceitembattle.service.FibStatisticsClient;
+import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.GameState;
+import forceitembattle.model.Team;
 import forceitembattle.util.Text;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -88,9 +89,9 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
             }
         }
 
-        this.plugin.getTimer().setTimeLeft(durationSeconds);
+        this.plugin.getTimerManager().setTimeLeft(durationSeconds);
         this.plugin.getGamemanager().setGameDuration(durationSeconds);
-        this.plugin.getGamemanager().initializeMats();
+        this.plugin.getGamemanager().initializeMaterials();
 
         new BukkitRunnable() {
 
@@ -153,7 +154,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
 
                 switch (seconds) {
                     case 8 ->
-                            subTitle = "<white>» <gold>" + (plugin.getTimer().getTimeLeft() / 60) + " minutes <white>«";
+                            subTitle = "<white>» <gold>" + (plugin.getTimerManager().getTimeLeft() / 60) + " minutes <white>«";
                     case 6 -> subTitle = "<white>» <gold>" + jokersAmount + " Jokers <white>«";
                     case 5 -> subTitle = "<white>» <gold>/info & /infowiki <white>«";
                     case 4 -> subTitle = "<white>» <gold>/spawn & /bed <white>«";
@@ -224,18 +225,18 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
 
             if (this.plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK)) {
                 if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-                    this.plugin.getBackpack().createTeamBackpack(forceItemPlayer.currentTeam(), forceItemPlayer);
+                    this.plugin.getBackpackManager().createTeamBackpack(forceItemPlayer.currentTeam(), forceItemPlayer);
                 } else {
-                    this.plugin.getBackpack().createBackpack(forceItemPlayer);
+                    this.plugin.getBackpackManager().createBackpack(forceItemPlayer);
                 }
 
             }
 
 
             if (this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
-                FIBServiceHelper helper = this.plugin.getFibServiceHelper();
+                FibStatisticsClient helper = this.plugin.getFibService().statistics();
                 if (!this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-                    helper.updateSoloStatisticsAsync(player.getUniqueId(), FIBServiceHelper.soloUpdate().gamesPlayedAdd(1));
+                    helper.updateSoloStatisticsAsync(player.getUniqueId(), FIBServiceClient.soloUpdate().gamesPlayedAdd(1));
                     return;
                 }
                 if (forceItemPlayer.currentTeam() != null) {
@@ -250,7 +251,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
                                 helper.updateTeamStatisticsAsync(
                                         player.getUniqueId(),
                                         teamPlayer.player().getUniqueId(),
-                                        FIBServiceHelper.teamUpdate().gamesPlayedAdd(1)
+                                        FIBServiceClient.teamUpdate().gamesPlayedAdd(1)
                                 );
                             }
                             break;
@@ -264,7 +265,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
             distributeTeamJokers(jokersAmount);
         }
 
-        this.plugin.getWanderingTraderTimer().startTimer();
+        this.plugin.getWanderingTraderManager().startTimer();
         this.plugin.getGamemanager().setGameStartTime(System.currentTimeMillis());
         Bukkit.getWorld("world").setTime(0);
         this.plugin.getAchievementManager().resetProgress();

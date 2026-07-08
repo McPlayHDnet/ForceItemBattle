@@ -1,7 +1,6 @@
 package forceitembattle.settings;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.settings.preset.GamePreset;
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
 import org.bukkit.Bukkit;
@@ -93,6 +92,15 @@ public class GameSettings {
 
     public int getSettingValueInPreset(GamePreset gamePreset, GameSetting gameSetting) {
         return this.plugin.getConfig().getInt("presets." + gamePreset.getPresetName() + "." + gameSetting.configPath());
+    }
+
+    public QuickieMode getQuickieMode() {
+        return QuickieMode.fromOrdinal(this.getSettingValue(GameSetting.QUICKIE));
+    }
+
+    public void setQuickieMode(QuickieMode quickieMode) {
+        this.plugin.getConfig().set(GameSetting.QUICKIE.configPath(), quickieMode.ordinal());
+        this.plugin.saveConfig();
     }
 
     public void addGamePreset(GamePreset gamePreset) {

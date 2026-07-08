@@ -2,9 +2,10 @@ package forceitembattle.achievements.handlers;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.Trigger;
+import forceitembattle.achievements.progress.AchievementProgressTracker;
 import forceitembattle.event.FoundItemEvent;
-import forceitembattle.util.ForceItemPlayer;
-import forceitembattle.util.MaterialCategory;
+import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.MaterialCategory;
 import org.bukkit.Material;
 import org.bukkit.event.Event;
 

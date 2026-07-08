@@ -4,7 +4,7 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.util.Text;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -37,7 +37,7 @@ public class CommandFixSkips extends CustomCommand {
         }
 
         ItemStack jokers = Gamemanager.getJokers(remainingJokers);
-        Inventory backpack = this.plugin.getBackpack().getBackpackForPlayer(player);
+        Inventory backpack = this.plugin.getBackpackManager().getBackpackForPlayer(player);
 
         backpack.remove(Gamemanager.getJokerMaterial());
         if (usingTeams) {

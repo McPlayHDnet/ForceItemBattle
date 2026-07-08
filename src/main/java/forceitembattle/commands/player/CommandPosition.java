@@ -4,7 +4,7 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.util.Scheduler;
 import forceitembattle.util.Text;
 import java.util.ArrayList;

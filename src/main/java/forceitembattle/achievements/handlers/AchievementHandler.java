@@ -2,7 +2,8 @@ package forceitembattle.achievements.handlers;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.Trigger;
-import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.achievements.progress.AchievementProgressTracker;
+import forceitembattle.model.ForceItemPlayer;
 import org.bukkit.event.Event;
 
 /**

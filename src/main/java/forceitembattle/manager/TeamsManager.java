@@ -1,8 +1,8 @@
 package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.util.ForceItemPlayer;
-import forceitembattle.util.Team;
+import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.Team;
 import forceitembattle.util.Text;
 import java.util.ArrayList;
 import java.util.Collections;

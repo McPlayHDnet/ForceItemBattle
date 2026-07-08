@@ -4,7 +4,8 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.util.DescriptionItem;
+import forceitembattle.settings.QuickieMode;
+import forceitembattle.model.DescriptionItem;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -141,13 +142,18 @@ public class ItemDifficultiesManager implements Manager {
      * Get items available based on elapsed game time.
      */
     public List<Material> getAvailableItems() {
-        int timeLeft = this.plugin.getTimer().getTimeLeft();
+        int timeLeft = this.plugin.getTimerManager().getTimeLeft();
         int totalDuration = this.plugin.getGamemanager().getGameDuration();
         List<Material> items = new ArrayList<>();
 
         int elapsedTime = (totalDuration - timeLeft) / 60;
 
+        QuickieMode quickieMode = this.plugin.getSettings().getQuickieMode();
+
         for (State state : State.VALUES) {
+            if (!quickieAllows(quickieMode, state)) {
+                continue;
+            }
             int unlockTime = (int) Math.round((totalDuration * (state.getUnlockedAtPercentage() / 100)) / 60);
             if (elapsedTime >= unlockTime) {
                 items.addAll(state.getItems());
@@ -155,6 +161,14 @@ public class ItemDifficultiesManager implements Manager {
         }
 
         return items;
+    }
+
+    private boolean quickieAllows(QuickieMode quickieMode, State state) {
+        return switch (quickieMode) {
+            case DISABLED -> true;
+            case EARLY -> state == State.EARLY;
+            case EARLY_MID -> state == State.EARLY || state == State.MID;
+        };
     }
 
     public Material generateRandomMaterial() {

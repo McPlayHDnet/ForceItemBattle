@@ -2,7 +2,7 @@ package forceitembattle.listener;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.Gamemanager;
-import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.util.Text;
 import java.util.ArrayList;
 import java.util.List;

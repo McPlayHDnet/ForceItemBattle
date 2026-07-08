@@ -23,11 +23,12 @@ import forceitembattle.achievements.handlers.TimeBasedAchievementHandler;
 import forceitembattle.achievements.handlers.TradingAchievementHandler;
 import forceitembattle.achievements.handlers.WheelOfFortuneAchievementHandler;
 import forceitembattle.achievements.handlers.WheelOfFortuneUsesAchievementHandler;
-import forceitembattle.util.BiomeGroup;
-import forceitembattle.util.CustomItem;
+import forceitembattle.model.BiomeGroup;
+import forceitembattle.model.CustomItem;
 import java.util.Set;
 import lombok.Getter;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.block.Biome;
 
 @Getter
@@ -189,13 +190,22 @@ public enum Achievements {
 
     // LOOT achievements
     LEGENDARY("Legendary", "Find a Legendary item in the Antimatter Depths",
-            new LootAchievementHandler(1, CustomItem.customData("fib:fib_item", "legendary_template"), false)),
+            new LootAchievementHandler(1,
+                    NamespacedKey.fromString("fib:antimatter_depths_legendary"),
+                    CustomItem.customData("fib:fib_item", "legendary_template"), false)),
 
-    WILL_IT_BREAK("Will it break?", "Find Cavendish in a loot chest",
-            new LootAchievementHandler(1, new CustomItem(Material.ENCHANTED_GOLDEN_APPLE, "cavendish", null), false)),
+    FIFTEEN_MULT("+15 Mult", "Find Gros Michel inside the Antimatter Depths",
+            new LootAchievementHandler(1,
+                    NamespacedKey.fromString("fib:antimatter_depths_treasure"),
+                    new CustomItem(Material.GOLDEN_APPLE, "gros_michel", null), false)),
+
+    WILL_IT_BREAK("Will it break?", "Find Cavendish inside the Antimatter Depths",
+            new LootAchievementHandler(1,
+                    NamespacedKey.fromString("fib:antimatter_depths_treasure"),
+                    new CustomItem(Material.ENCHANTED_GOLDEN_APPLE, "cavendish", null), false)),
 
     BELIEVER("Believer", "Find your currently needed item in a loot chest",
-            new LootAchievementHandler(1, null, true)),
+            new LootAchievementHandler(1, null, null, true)),
 
     // META achievement
     COMPLETIONIST("Completionist++", "Complete all achievements",

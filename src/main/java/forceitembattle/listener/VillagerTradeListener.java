@@ -1,7 +1,7 @@
 package forceitembattle.listener;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.util.ItemBuilder;
+import forceitembattle.gui.ItemBuilder;
 import forceitembattle.util.Scheduler;
 import java.util.ArrayList;
 import java.util.List;

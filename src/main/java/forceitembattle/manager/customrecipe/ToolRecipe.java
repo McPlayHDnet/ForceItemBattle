@@ -1,6 +1,6 @@
 package forceitembattle.manager.customrecipe;
 
-import forceitembattle.util.ItemBuilder;
+import forceitembattle.gui.ItemBuilder;
 import java.util.ArrayList;
 import java.util.List;
 import org.bukkit.Material;

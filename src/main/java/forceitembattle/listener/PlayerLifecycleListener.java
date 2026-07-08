@@ -3,9 +3,10 @@ package forceitembattle.listener;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.stats.FIBServiceHelper;
-import forceitembattle.util.ForceItemPlayer;
-import forceitembattle.util.ItemBuilder;
+import forceitembattle.service.FIBServiceClient;
+import forceitembattle.service.FibStatisticsClient;
+import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.gui.ItemBuilder;
 import forceitembattle.util.Text;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +45,7 @@ public class PlayerLifecycleListener implements Listener {
             } else {
                 forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
                 forceItemPlayer.setPlayer(player);
-                player.showBossBar(this.plugin.getTimer().getBossBar().get(event.getPlayer().getUniqueId()));
+                player.showBossBar(this.plugin.getTimerManager().getBossBar().get(event.getPlayer().getUniqueId()));
             }
         } else {
 
@@ -102,7 +103,7 @@ public class PlayerLifecycleListener implements Listener {
         }
 
         if (this.plugin.getGamemanager().isMidGame() && this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
-            FIBServiceHelper helper = plugin.getFibServiceHelper();
+            FibStatisticsClient helper = plugin.getFibService().statistics();
             if (gamePlayer != null && gamePlayer.currentTeam() != null) {
                 gamePlayer.currentTeam().getPlayers().stream()
                         .filter(teammate -> !teammate.equals(gamePlayer))
@@ -110,11 +111,11 @@ public class PlayerLifecycleListener implements Listener {
                                 player.getUniqueId(),
                                 teammate.player().getUniqueId(),
                                 player.getUniqueId(),
-                                FIBServiceHelper.memberUpdate().deathsAdd(1L)
+                                FIBServiceClient.memberUpdate().deathsAdd(1L)
                         ));
             } else {
                 helper.updateSoloStatisticsAsync(player.getUniqueId(),
-                        FIBServiceHelper.soloUpdate().deathsAdd(1L));
+                        FIBServiceClient.soloUpdate().deathsAdd(1L));
             }
         }
 

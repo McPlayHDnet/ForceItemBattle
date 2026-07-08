@@ -4,7 +4,7 @@ import de.threeseconds.openapi.fibservice.client.model.FibLeaderboardEntryDto;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
-import forceitembattle.stats.FIBServiceHelper;
+import forceitembattle.service.FibStatisticsClient;
 import forceitembattle.util.Text;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +29,7 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        FIBServiceHelper helper = this.plugin.getFibServiceHelper();
+        FibStatisticsClient helper = this.plugin.getFibService().statistics();
 
         String category = args.length >= 1 ? args[0].toLowerCase() : "highest_score";
 

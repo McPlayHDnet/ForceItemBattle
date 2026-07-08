@@ -21,7 +21,7 @@ public class CommandBp extends CustomCommand {
         }
 
         if (this.plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK)) {
-            this.plugin.getBackpack().openPlayerBackpack(player);
+            this.plugin.getBackpackManager().openPlayerBackpack(player);
         } else {
             player.sendMessage(Text.of("<red>Backpacks are disabled in this round!"));
         }

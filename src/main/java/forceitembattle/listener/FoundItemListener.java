@@ -4,13 +4,14 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.stats.FIBServiceHelper;
-import forceitembattle.util.BackToBack;
-import forceitembattle.util.BackToBackProbability;
-import forceitembattle.util.ForceItem;
-import forceitembattle.util.ForceItemPlayer;
-import forceitembattle.util.Rarity;
-import forceitembattle.util.Team;
+import forceitembattle.service.FIBServiceClient;
+import forceitembattle.service.FibStatisticsClient;
+import forceitembattle.model.BackToBack;
+import forceitembattle.model.BackToBackProbability;
+import forceitembattle.model.ForceItem;
+import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.Rarity;
+import forceitembattle.model.Team;
 import forceitembattle.util.Text;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
@@ -154,7 +155,7 @@ public class FoundItemListener implements Listener {
             return;
         }
 
-        FIBServiceHelper fibServiceHelper = plugin.getFibServiceHelper();
+        FibStatisticsClient fibServiceHelper = plugin.getFibService().statistics();
 
         if (context.teamGame()) {
             Team team = forceItemPlayer.currentTeam();
@@ -172,14 +173,14 @@ public class FoundItemListener implements Listener {
             int teamStreak = team.getBackToBackStreak();
             fibServiceHelper.updateMemberStatisticsAsync(
                     player.getUniqueId(), teammate.player().getUniqueId(), player.getUniqueId(),
-                    FIBServiceHelper.memberUpdate().highestB2BStreak(teamStreak));
+                    FIBServiceClient.memberUpdate().highestB2BStreak(teamStreak));
             fibServiceHelper.updateMemberStatisticsAsync(
                     player.getUniqueId(), teammate.player().getUniqueId(), teammate.player().getUniqueId(),
-                    FIBServiceHelper.memberUpdate().highestB2BStreak(teamStreak));
+                    FIBServiceClient.memberUpdate().highestB2BStreak(teamStreak));
         } else {
             fibServiceHelper.updateSoloStatisticsAsync(
                     player.getUniqueId(),
-                    FIBServiceHelper.soloUpdate().highestB2BStreak(forceItemPlayer.backToBackStreak())
+                    FIBServiceClient.soloUpdate().highestB2BStreak(forceItemPlayer.backToBackStreak())
             );
         }
     }
@@ -200,7 +201,7 @@ public class FoundItemListener implements Listener {
 
         ForceItem forceItem = new ForceItem(
                 itemStack.getType(),
-                plugin.getTimer().formatSeconds(plugin.getTimer().getTimeLeft()),
+                plugin.getTimerManager().formatSeconds(plugin.getTimerManager().getTimeLeft()),
                 System.currentTimeMillis(),
                 back2Back,
                 event.isSkipped()
@@ -226,7 +227,7 @@ public class FoundItemListener implements Listener {
     }
 
     private void trackRarity(ForceItemPlayer forceItemPlayer, Rarity rarity, GameContext context) {
-        FIBServiceHelper helper = plugin.getFibServiceHelper();
+        FibStatisticsClient helper = plugin.getFibService().statistics();
         Player player = forceItemPlayer.player();
 
         var raritiesUpdate = rarity.toRaritiesUpdate();
@@ -238,11 +239,11 @@ public class FoundItemListener implements Listener {
                             player.getUniqueId(),
                             teammate.player().getUniqueId(),
                             player.getUniqueId(),
-                            FIBServiceHelper.memberUpdate().raritiesAdd(raritiesUpdate)
+                            FIBServiceClient.memberUpdate().raritiesAdd(raritiesUpdate)
                     ));
         } else {
             helper.updateSoloStatisticsAsync(player.getUniqueId(),
-                    FIBServiceHelper.soloUpdate().raritiesAdd(raritiesUpdate));
+                    FIBServiceClient.soloUpdate().raritiesAdd(raritiesUpdate));
         }
     }
 
@@ -302,7 +303,7 @@ public class FoundItemListener implements Listener {
             return;
         }
 
-        FIBServiceHelper fibServiceHelper = plugin.getFibServiceHelper();
+        FibStatisticsClient fibServiceHelper = plugin.getFibService().statistics();
         String itemName = foundMaterial.name();
 
         // Item streak counts every obtained item, back-to-backs included; only a skip breaks it.
@@ -320,7 +321,7 @@ public class FoundItemListener implements Listener {
                         forceItemPlayer.currentTeam().getPlayers().stream()
                                 .filter(t -> !t.equals(forceItemPlayer)).findFirst()
                                 .map(t -> t.player().getUniqueId()).orElse(player.getUniqueId()),
-                        FIBServiceHelper.teamUpdate().longestItemStreak(teamStreak)
+                        FIBServiceClient.teamUpdate().longestItemStreak(teamStreak)
                 );
             }
 
@@ -328,7 +329,7 @@ public class FoundItemListener implements Listener {
             forceItemPlayer.currentTeam().getPlayers().stream()
                     .filter(teammate -> !teammate.equals(forceItemPlayer))
                     .forEach(teammate -> {
-                        var memberUpdate = FIBServiceHelper.memberUpdate()
+                        var memberUpdate = FIBServiceClient.memberUpdate()
                                 .totalItemsFoundAdd(1L)
                                 .itemCountsAdd(Map.of(itemName, 1L));
                         if (finalTimeSpentMs > 0) {
@@ -342,7 +343,7 @@ public class FoundItemListener implements Listener {
                         );
                     });
         } else {
-            var soloUpdate = FIBServiceHelper.soloUpdate()
+            var soloUpdate = FIBServiceClient.soloUpdate()
                     .totalItemsFoundAdd(1L)
                     .itemCountsAdd(Map.of(itemName, 1L));
             if (!isSkipped) {
@@ -459,7 +460,7 @@ public class FoundItemListener implements Listener {
             }
 
             if (isBackpackEnabled) {
-                Inventory teamBackpack = plugin.getBackpack().getTeamBackpack(team);
+                Inventory teamBackpack = plugin.getBackpackManager().getTeamBackpack(team);
                 collectUniqueMaterials(teamBackpack, uniqueMaterials);
             }
 
@@ -468,7 +469,7 @@ public class FoundItemListener implements Listener {
             collectUniqueMaterials(player.getInventory(), uniqueMaterials);
 
             if (isBackpackEnabled) {
-                Inventory backpack = plugin.getBackpack().getPlayerBackpack(player);
+                Inventory backpack = plugin.getBackpackManager().getPlayerBackpack(player);
                 collectUniqueMaterials(backpack, uniqueMaterials);
             }
         }
@@ -526,8 +527,8 @@ public class FoundItemListener implements Listener {
 
         if (context.backpackEnabled()) {
             Inventory backpackInventory = context.teamGame()
-                    ? plugin.getBackpack().getTeamBackpack(player.currentTeam())
-                    : plugin.getBackpack().getPlayerBackpack(player.player());
+                    ? plugin.getBackpackManager().getTeamBackpack(player.currentTeam())
+                    : plugin.getBackpackManager().getPlayerBackpack(player.player());
 
             if (hasItemInInventory(backpackInventory, targetMaterial)) {
                 return new BackToBackResult(true, null);

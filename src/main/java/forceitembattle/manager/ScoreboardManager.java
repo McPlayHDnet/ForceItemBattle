@@ -3,7 +3,7 @@ package forceitembattle.manager;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
-import forceitembattle.util.ForceItemPlayer;
+import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.util.Text;
 import java.util.Comparator;
 import java.util.List;
@@ -45,7 +45,7 @@ public class ScoreboardManager implements Manager {
         List<ForceItemPlayer> fibPlayers = gameManager.forceItemPlayerMap().values()
                 .stream()
                 .sorted(Comparator.comparingInt(p -> {
-                    forceitembattle.util.Team team = p.currentTeam();
+                    forceitembattle.model.Team team = p.currentTeam();
                     return team != null ? team.getTeamId() : Integer.MAX_VALUE;
                 }))
                 .toList();
