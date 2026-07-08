@@ -24,10 +24,6 @@ public class InventoryFullAchievementHandler implements AchievementHandler<Simpl
 
     @Override
     public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin) {
-        if (!(event instanceof FoundItemEvent)) {
-            return false;
-        }
-
         Player player = forceItemPlayer.player();
         Inventory inv = player.getInventory();
 

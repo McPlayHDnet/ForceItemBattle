@@ -11,6 +11,7 @@ import forceitembattle.settings.GameSetting;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.util.Text;
 import io.papermc.paper.advancement.AdvancementDisplay;
+import io.papermc.paper.event.player.PlayerInventorySlotChangeEvent;
 import io.papermc.paper.event.player.PlayerTradeEvent;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
@@ -19,11 +20,14 @@ import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.advancement.Advancement;
+import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerAdvancementDoneEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -31,6 +35,7 @@ import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.Inventory;
 
 @RequiredArgsConstructor
 public class AchievementListener implements Listener {
@@ -147,6 +152,34 @@ public class AchievementListener implements Listener {
         if (event.getEntity() instanceof Player player) {
             this.plugin.getAchievementManager().handleEvent(player, event, Trigger.LOOT);
         }
+    }
+
+    @EventHandler
+    public void onInventorySlotChange(PlayerInventorySlotChangeEvent event) {
+        this.plugin.getAchievementManager().handleEvent(event.getPlayer(), event, Trigger.INVENTORY_FULL);
+    }
+
+    @EventHandler
+    public void onBackpackClick(InventoryClickEvent event) {
+        recheckBackpackFull(event.getWhoClicked(), event.getView().getTopInventory(), event);
+    }
+
+    @EventHandler
+    public void onBackpackDrag(InventoryDragEvent event) {
+        recheckBackpackFull(event.getWhoClicked(), event.getView().getTopInventory(), event);
+    }
+
+    private void recheckBackpackFull(HumanEntity who, Inventory top, org.bukkit.event.Event event) {
+        if (!(who instanceof Player player)) {
+            return;
+        }
+        // Reference-equality against the stored backpack instance; ignore other GUIs.
+        if (top != this.plugin.getBackpackManager().getBackpackForPlayer(player)) {
+            return;
+        }
+        // Click/drag fire before the slot settles, so re-check on the next tick.
+        Bukkit.getScheduler().runTask(this.plugin, () ->
+                this.plugin.getAchievementManager().handleEvent(player, event, Trigger.INVENTORY_FULL));
     }
 
     @EventHandler
