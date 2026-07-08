@@ -5,11 +5,14 @@ import forceitembattle.achievements.Trigger;
 import forceitembattle.achievements.progress.SimpleAchievementProgress;
 import forceitembattle.model.CustomItem;
 import forceitembattle.model.ForceItemPlayer;
+import java.util.List;
 import java.util.Locale;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.event.Event;
+import org.bukkit.event.world.LootGenerateEvent;
+import org.bukkit.NamespacedKey;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -22,14 +25,17 @@ import org.bukkit.persistence.PersistentDataType;
 public class LootAchievementHandler implements AchievementHandler<SimpleAchievementProgress> {
 
     private final int targetAmount;
-    private final CustomItem customItem;
-    private final boolean neededItem;
+    private final NamespacedKey lootTableKey; // null = any loot table
+    private final CustomItem customItem;      // null = don't require a specific item
+    private final boolean neededItem;         // true = match the player's current needed material
 
-    public LootAchievementHandler(int targetAmount, CustomItem customItem, boolean neededItem) {
+    public LootAchievementHandler(int targetAmount, NamespacedKey lootTableKey,
+                                  CustomItem customItem, boolean neededItem) {
         if (targetAmount < 1) {
             throw new IllegalArgumentException("targetAmount must be at least 1");
         }
         this.targetAmount = targetAmount;
+        this.lootTableKey = lootTableKey;
         this.customItem = customItem;
         this.neededItem = neededItem;
     }
@@ -41,12 +47,23 @@ public class LootAchievementHandler implements AchievementHandler<SimpleAchievem
 
     @Override
     public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin) {
-        if (neededItem) {
-            if (!(event instanceof org.bukkit.event.world.LootGenerateEvent lootEvent)) {
+        if (!(event instanceof LootGenerateEvent lootEvent)) {
+            return false;
+        }
+
+        // Table-bound achievements only count their own table.
+        if (lootTableKey != null) {
+            if (lootEvent.getLootTable() == null
+                    || !lootTableKey.equals(lootEvent.getLootTable().getKey())) {
                 return false;
             }
+        }
+
+        List<ItemStack> loot = lootEvent.getLoot();
+
+        if (neededItem) {
             Material needed = forceItemPlayer.getCurrentMaterial();
-            for (ItemStack item : lootEvent.getLoot()) {
+            for (ItemStack item : loot) {
                 if (item != null && item.getType() == needed) {
                     return true;
                 }
@@ -54,25 +71,20 @@ public class LootAchievementHandler implements AchievementHandler<SimpleAchievem
             return false;
         }
 
-        // Custom-item loot achievements (LEGENDARY, WILL_IT_BREAK) keep the chest-open path.
-        if (!(event instanceof org.bukkit.event.inventory.InventoryOpenEvent openEvent)) {
-            return false;
-        }
-
-        // InventoryType.CHEST covers both single and double chests.
-        if (openEvent.getInventory().getType() != InventoryType.CHEST) {
-            return false;
-        }
-
-        Inventory chest = openEvent.getInventory();
-
         if (customItem != null) {
-            for (ItemStack item : chest.getContents()) {
+            for (ItemStack item : loot) {
                 if (item != null && item.getType() != Material.AIR && matchesCustomItem(item)) {
                     progress.count++;
                     return progress.count >= targetAmount;
                 }
             }
+            return false;
+        }
+
+        // No item filter: rolling the bound table is enough.
+        if (lootTableKey != null) {
+            progress.count++;
+            return progress.count >= targetAmount;
         }
 
         return false;
