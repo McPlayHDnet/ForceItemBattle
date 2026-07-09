@@ -203,7 +203,10 @@ public class AchievementListener implements Listener {
         Advancement advancement = event.getAdvancement();
 
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(event.getPlayer().getUniqueId());
-        if (forceItemPlayer.isSpectator()) return;
+        if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
+            event.message(null);
+            return;
+        }
 
         if (advancement.key().namespace().equals("fib")) {
             String plainAdvancement = PlainTextComponentSerializer.plainText().serialize(advancement.displayName());

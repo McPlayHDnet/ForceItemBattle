@@ -62,6 +62,16 @@ public class Gamemanager implements Manager {
     @Setter
     private int gameDuration;
 
+    /**
+     * True from the moment {@code /start} begins its countdown until the game
+     * actually flips to MID_GAME. During this window teams and force items have
+     * already been assigned, so anyone joining must be treated as a spectator
+     * rather than a half-initialized participant.
+     */
+    @Getter
+    @Setter
+    private boolean starting;
+
     public Gamemanager(ForceItemBattle forceItemBattle) {
         this.forceItemBattle = forceItemBattle;
         this.currentGameState = GameState.PRE_GAME;
@@ -272,70 +282,75 @@ public class Gamemanager implements Manager {
                 : null;
 
         Bukkit.getOnlinePlayers().forEach(player -> {
-            ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
-            player.setHealth(20);
-            player.setSaturation(20);
-            player.getInventory().clear();
-            player.setLevel(0);
-            player.setExp(0);
-            player.teleport(Bukkit.getWorld("world").getSpawnLocation());
-            player.setGameMode(GameMode.CREATIVE);
-            player.getPassengers().forEach(Entity::remove);
-            player.setPlayerListName(player.getName());
+            try {
+                ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
+                player.setHealth(20);
+                player.setSaturation(20);
+                player.getInventory().clear();
+                player.setLevel(0);
+                player.setExp(0);
+                player.teleport(Bukkit.getWorld("world").getSpawnLocation());
+                player.setGameMode(GameMode.CREATIVE);
+                player.getPassengers().forEach(Entity::remove);
+                player.setPlayerListName(player.getName());
 
-            this.giveSpectatorItems(player);
+                this.giveSpectatorItems(player);
 
-            if (player.isOp()) {
-                player.sendMessage(ChatColor.RED + "Use /result to see the results from every player");
-            }
+                if (player.isOp()) {
+                    player.sendMessage(ChatColor.RED + "Use /result to see the results from every player");
+                }
 
-            if (statsEnabled) {
-                FibStatisticsClient helper = this.forceItemBattle.getFibService().statistics();
-                long distance = (long) this.calculateDistance(forceItemPlayer.player());
+                if (statsEnabled && forceItemPlayer != null && !forceItemPlayer.isSpectator()) {
+                    FibStatisticsClient helper = this.forceItemBattle.getFibService().statistics();
+                    long distance = (long) this.calculateDistance(forceItemPlayer.player());
 
-                if (forceItemPlayer.currentTeam() == null) {
-                    // ---- Solo game: everything on solo stats ----
-                    var soloUpdate = FIBServiceClient.soloUpdate()
-                            .blocksTravelledAdd(distance)
-                            .highestScore((long) forceItemPlayer.currentScore());
+                    if (forceItemPlayer.currentTeam() == null) {
+                        // ---- Solo game: everything on solo stats ----
+                        var soloUpdate = FIBServiceClient.soloUpdate()
+                                .blocksTravelledAdd(distance)
+                                .highestScore((long) forceItemPlayer.currentScore());
 
-                    if (placesMap.get(forceItemPlayer) == 1) {
-                        soloUpdate.gamesWonAdd(1);
-                    }
+                        if (placesMap.get(forceItemPlayer) == 1) {
+                            soloUpdate.gamesWonAdd(1);
+                        }
 
-                    helper.updateSoloStatisticsAsync(player.getUniqueId(), soloUpdate);
-                } else {
-                    // ---- Team game: keep everything on team/member stats, never solo ----
-                    Team currentTeam = forceItemPlayer.currentTeam();
-                    boolean teamWon = teamPlaces != null && Integer.valueOf(1).equals(teamPlaces.get(currentTeam));
+                        helper.updateSoloStatisticsAsync(player.getUniqueId(), soloUpdate);
+                    } else {
+                        // ---- Team game: keep everything on team/member stats, never solo ----
+                        Team currentTeam = forceItemPlayer.currentTeam();
+                        boolean teamWon = teamPlaces != null && Integer.valueOf(1).equals(teamPlaces.get(currentTeam));
 
-                    for (ForceItemPlayer teamPlayer : currentTeam.getPlayers()) {
-                        if (!teamPlayer.equals(forceItemPlayer)) {
-                            UUID teammateUuid = teamPlayer.player().getUniqueId();
+                        for (ForceItemPlayer teamPlayer : currentTeam.getPlayers()) {
+                            if (!teamPlayer.equals(forceItemPlayer)) {
+                                UUID teammateUuid = teamPlayer.player().getUniqueId();
 
-                            // This player's own travel → their own member contribution.
-                            helper.updateMemberStatisticsAsync(
-                                    player.getUniqueId(),
-                                    teammateUuid,
-                                    player.getUniqueId(),
-                                    FIBServiceClient.memberUpdate().blocksTravelledAdd(distance)
-                            );
+                                // This player's own travel → their own member contribution.
+                                helper.updateMemberStatisticsAsync(
+                                        player.getUniqueId(),
+                                        teammateUuid,
+                                        player.getUniqueId(),
+                                        FIBServiceClient.memberUpdate().blocksTravelledAdd(distance)
+                                );
 
-                            // Shared team stats. highestScore is a max-set (safe from both
-                            // sides); gamesWon must count once, so only the lower-UUID side sends.
-                            var teamUpdate = FIBServiceClient.teamUpdate()
-                                    .highestScore((long) currentTeam.getCurrentScore());
-                            boolean lowerSide = player.getUniqueId().toString()
-                                    .compareTo(teammateUuid.toString()) < 0;
-                            if (lowerSide && teamWon) {
-                                teamUpdate.gamesWonAdd(1);
+                                // Shared team stats. highestScore is a max-set (safe from both
+                                // sides); gamesWon must count once, so only the lower-UUID side sends.
+                                var teamUpdate = FIBServiceClient.teamUpdate()
+                                        .highestScore((long) currentTeam.getCurrentScore());
+                                boolean lowerSide = player.getUniqueId().toString()
+                                        .compareTo(teammateUuid.toString()) < 0;
+                                if (lowerSide && teamWon) {
+                                    teamUpdate.gamesWonAdd(1);
+                                }
+
+                                helper.updateTeamStatisticsAsync(player.getUniqueId(), teammateUuid, teamUpdate);
+                                break;
                             }
-
-                            helper.updateTeamStatisticsAsync(player.getUniqueId(), teammateUuid, teamUpdate);
-                            break;
                         }
                     }
                 }
+            } catch (Exception exception) {
+                this.forceItemBattle.getLogger().warning(
+                        "Failed to finish round for " + player.getName() + ": " + exception.getMessage());
             }
         });
     }

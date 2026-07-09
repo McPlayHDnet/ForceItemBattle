@@ -53,14 +53,12 @@ public class ClickableItemsListener implements Listener {
             return;
         }
 
-        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-
         switch (e.getItem().getType()) {
             case LIME_DYE -> {
                 e.setCancelled(true);
                 player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
                 Bukkit.getScheduler().runTask(plugin, () ->
-                        new AchievementInventory(this.plugin, forceItemPlayer.player().getName(), forceItemPlayer.player().getUniqueId()).open(player));
+                        new AchievementInventory(this.plugin, player.getName(), player.getUniqueId()).open(player));
             }
             case COMPASS -> {
                 e.setCancelled(true);

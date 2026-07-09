@@ -47,6 +47,14 @@ public class PlayerLifecycleListener implements Listener {
                 forceItemPlayer.setPlayer(player);
                 player.showBossBar(this.plugin.getTimerManager().getBossBar().get(event.getPlayer().getUniqueId()));
             }
+        } else if (this.plugin.getGamemanager().isStarting()) {
+            forceItemPlayer.setSpectator(true);
+            this.plugin.getGamemanager().addPlayer(player, forceItemPlayer);
+
+            player.getInventory().clear();
+            player.setLevel(0);
+            player.setExp(0);
+            player.setGameMode(GameMode.SPECTATOR);
         } else {
 
             this.plugin.getGamemanager().addPlayer(player, forceItemPlayer);
