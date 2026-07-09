@@ -25,6 +25,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
@@ -145,6 +146,16 @@ public class AchievementListener implements Listener {
     @EventHandler
     public void onAntimatterTeleporterUse(AntimatterTeleporterUseEvent event) {
         this.plugin.getAchievementManager().handleEvent(event.getPlayer(), event, Trigger.ANTIMATTER_TELEPORTER);
+    }
+
+    @EventHandler
+    public void onEntityDeath(EntityDeathEvent event) {
+        // Credit the player who killed the mob (null when it died to the
+        // environment or another mob — no one to award in that case).
+        Player killer = event.getEntity().getKiller();
+        if (killer != null) {
+            this.plugin.getAchievementManager().handleEvent(killer, event, Trigger.MOB_DEATH);
+        }
     }
 
     @EventHandler

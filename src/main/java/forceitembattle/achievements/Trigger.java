@@ -6,6 +6,7 @@ import lombok.Getter;
 public enum Trigger {
     OBTAIN_ITEM(true),
     OBTAIN_ITEM_IN_TIME(true),
+    MOB_DEATH(false),
     BACK_TO_BACK(true),
     VISIT(false),
     SKIP_ITEM(true),
