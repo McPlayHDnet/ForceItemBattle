@@ -169,6 +169,7 @@ public class ClickableItemsListener implements Listener {
         if (e.getClickedBlock() != null && e.getClickedBlock().getState() instanceof InventoryHolder) {
             return;
         }
+        e.setCancelled(true);
 
         int jokers = (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getRemainingJokers() : forceItemPlayer.remainingJokers());
         if (jokers <= 0) {
