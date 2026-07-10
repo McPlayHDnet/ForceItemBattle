@@ -271,6 +271,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
         this.plugin.getGamemanager().setGameStartTime(System.currentTimeMillis());
         Bukkit.getWorld("world").setTime(0);
         this.plugin.getAchievementManager().resetProgress();
+        this.plugin.getItemDifficultiesManager().resetUnlockAnnouncements();
         this.plugin.getGamemanager().setCurrentGameState(GameState.MID_GAME);
         this.plugin.getGamemanager().setStarting(false);
         this.plugin.getScoreboardManager().updateAllPlayers();
