@@ -11,8 +11,10 @@ import forceitembattle.model.GameState;
 import forceitembattle.gui.ItemBuilder;
 import forceitembattle.model.Team;
 import forceitembattle.util.Text;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -71,6 +73,15 @@ public class Gamemanager implements Manager {
     @Getter
     @Setter
     private boolean starting;
+
+    /**
+     * Dev/testing override queue. When non-empty, {@link #generateMaterial()} and
+     * {@link #generateSeededMaterial()} return the queued materials in order before
+     * falling back to random generation. Populated by the /forceitem command and
+     * cleared at the start of every game.
+     */
+    @Getter
+    private final Deque<Material> forcedItemQueue = new ArrayDeque<>();
 
     public Gamemanager(ForceItemBattle forceItemBattle) {
         this.forceItemBattle = forceItemBattle;
@@ -163,10 +174,18 @@ public class Gamemanager implements Manager {
     }
 
     public Material generateMaterial() {
+        Material forced = this.forcedItemQueue.poll();
+        if (forced != null) {
+            return forced;
+        }
         return this.forceItemBattle.getItemDifficultiesManager().generateRandomMaterial();
     }
 
     public Material generateSeededMaterial() {
+        Material forced = this.forcedItemQueue.poll();
+        if (forced != null) {
+            return forced;
+        }
         return this.forceItemBattle.getItemDifficultiesManager().generateSeededRandomMaterial();
     }
 
@@ -198,6 +217,7 @@ public class Gamemanager implements Manager {
     }
 
     public void initializeMaterials() {
+        this.forcedItemQueue.clear();
         boolean runMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.RUN);
         boolean teamMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM);
         long now = System.currentTimeMillis();
@@ -299,7 +319,7 @@ public class Gamemanager implements Manager {
                 if (player.isOp()) {
                     player.sendMessage(ChatColor.RED + "Use /result to see the results from every player");
                 }
-
+                
                 if (statsEnabled && forceItemPlayer != null && !forceItemPlayer.isSpectator()) {
                     FibStatisticsClient helper = this.forceItemBattle.getFibService().statistics();
                     long distance = (long) this.calculateDistance(forceItemPlayer.player());

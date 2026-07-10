@@ -1,6 +1,7 @@
 package forceitembattle;
 
 import forceitembattle.commands.CommandsManager;
+import forceitembattle.commands.admin.CommandForceItem;
 import forceitembattle.commands.admin.CommandForceTeam;
 import forceitembattle.commands.admin.CommandItems;
 import forceitembattle.commands.admin.CommandReset;
@@ -327,6 +328,7 @@ public final class ForceItemBattle extends JavaPlugin {
         commands.registerCommand(new CommandVote(this));
         commands.registerCommand(new CommandVoteSkip(this));
         commands.registerCommand(new CommandFixLocate(this));
+        commands.registerCommand(new CommandForceItem(this));
     }
 
     @Override
