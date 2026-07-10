@@ -214,6 +214,69 @@ public class ItemDifficultiesManager implements Manager {
         };
     }
 
+    /**
+     * Item pools currently active this tick: permitted by the current quickie mode
+     * and unlocked by elapsed time. Returned in unlock order (EARLY → LATE).
+     */
+    public List<State> getActiveStates() {
+        int elapsedTime = elapsedMinutes();
+        QuickieMode quickieMode = this.plugin.getSettings().getQuickieMode();
+
+        List<State> active = new ArrayList<>();
+        for (State state : State.VALUES) {
+            if (!quickieAllows(quickieMode, state)) {
+                continue;
+            }
+            if (elapsedTime >= unlockMinutes(state)) {
+                active.add(state);
+            }
+        }
+        return active;
+    }
+
+    /**
+     * The next pool scheduled to unlock, or {@code null} when none remain — all
+     * permitted pools are already active (e.g. capped by the current quickie mode).
+     */
+    public State getNextState() {
+        int elapsedTime = elapsedMinutes();
+        QuickieMode quickieMode = this.plugin.getSettings().getQuickieMode();
+
+        for (State state : State.VALUES) {
+            if (!quickieAllows(quickieMode, state)) {
+                continue;
+            }
+            if (unlockMinutes(state) > elapsedTime) {
+                return state;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Seconds until the next pool unlocks, or {@code -1} when none remain. Reaches 0
+     * on the same tick {@link #pollNewlyUnlockedStates()} announces that pool.
+     */
+    public int secondsUntilNextPool() {
+        State next = getNextState();
+        if (next == null) {
+            return -1;
+        }
+        int elapsedSeconds = this.plugin.getGamemanager().getGameDuration() - this.plugin.getTimerManager().getTimeLeft();
+        return Math.max(0, unlockMinutes(next) * 60 - elapsedSeconds);
+    }
+
+    private int elapsedMinutes() {
+        int timeLeft = this.plugin.getTimerManager().getTimeLeft();
+        int totalDuration = this.plugin.getGamemanager().getGameDuration();
+        return (totalDuration - timeLeft) / 60;
+    }
+
+    private int unlockMinutes(State state) {
+        int totalDuration = this.plugin.getGamemanager().getGameDuration();
+        return (int) Math.round((totalDuration * (state.getUnlockedAtPercentage() / 100)) / 60);
+    }
+
     public Material generateRandomMaterial() {
         List<Material> items = new ArrayList<>(getAvailableItems());
         filterDisabledItems(items);

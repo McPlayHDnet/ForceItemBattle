@@ -154,6 +154,7 @@ public class TimerManager implements Manager {
 
                 sendActionBar();
                 if (!forceItemBattle.getGamemanager().isMidGame()) {
+                    forceItemBattle.getTabListManager().clearFooter();
                     return;
                 }
                 setTimeLeft(getTimeLeft() - 1);
@@ -166,6 +167,10 @@ public class TimerManager implements Manager {
                         players.playSound(players.getLocation(), Sound.BLOCK_NOTE_BLOCK_CHIME, 1, 1.4f);
                     });
                 }
+
+                // Refresh the tab footer after the pool poll so its pool countdown
+                // flips to "active" on the same tick the unlock message is sent.
+                forceItemBattle.getTabListManager().update();
 
                 switch (getTimeLeft()) {
                     case 300: {
@@ -222,6 +227,7 @@ public class TimerManager implements Manager {
                         player.playSound(player, Sound.BLOCK_END_PORTAL_SPAWN, 1, 1);
                         player.showTitle(gameDoneTitle);
                     });
+                    forceItemBattle.getTabListManager().clearFooter();
                     forceItemBattle.getGamemanager().finishGame();
                     FileLogger.log("<< Force Item Battle is over >>");
                     cancel();

@@ -56,6 +56,7 @@ import forceitembattle.manager.PositionManager;
 import forceitembattle.manager.ProtectionManager;
 import forceitembattle.manager.RecipeManager;
 import forceitembattle.manager.ScoreboardManager;
+import forceitembattle.manager.TabListManager;
 import forceitembattle.manager.TeamsManager;
 import forceitembattle.manager.TradingManager;
 import forceitembattle.manager.VoteSkipManager;
@@ -105,6 +106,8 @@ public final class ForceItemBattle extends JavaPlugin {
     private PositionManager positionManager;
     @Getter
     private WanderingTraderManager wanderingTraderManager;
+    @Getter
+    private TabListManager tabListManager;
     @Getter
     @Setter
     private CommandsManager commandsManager;
@@ -167,6 +170,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.locatorManager = register(new LocatorManager(this));
         this.protectionManager = register(new ProtectionManager(this));
         this.wanderingTraderManager = register(new WanderingTraderManager(this));
+        this.tabListManager = register(new TabListManager(this));
         this.antimatterLocatorManager = register(new AntimatterLocatorManager(this));
         this.voteSkipManager = register(new VoteSkipManager(this));
         this.scoreboardManager = register(new ScoreboardManager(this));

@@ -169,7 +169,7 @@ public class ClickableItemsListener implements Listener {
         }
         e.setCancelled(true);
 
-        int jokers = (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getRemainingJokers() : forceItemPlayer.remainingJokers());
+        int jokers = forceItemPlayer.getRemainingJokers();
         if (jokers <= 0) {
             player.sendMessage(Text.of("<red>No more skips left."));
             player.getInventory().remove(Gamemanager.getJokerMaterial());

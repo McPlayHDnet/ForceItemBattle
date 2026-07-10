@@ -100,6 +100,13 @@ public class ForceItemPlayer {
     public int remainingJokers() {
         return remainingJokers;
     }
+    
+    public int getRemainingJokers() {
+        if (currentTeam != null) {
+            return currentTeam.getRemainingJokers();
+        }
+        return remainingJokers;
+    }
 
     public Integer currentScore() {
         return currentScore;

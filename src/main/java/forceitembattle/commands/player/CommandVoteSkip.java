@@ -29,7 +29,7 @@ public class CommandVoteSkip extends CustomCommand {
 
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
 
-        if (forceItemPlayer.remainingJokers() == 0 || (forceItemPlayer.currentTeam() != null && forceItemPlayer.currentTeam().getRemainingJokers() == 0)) {
+        if (forceItemPlayer.getRemainingJokers() == 0) {
             player.sendMessage(Text.of("<red>You dont have any jokers to vote!"));
             return;
         }
