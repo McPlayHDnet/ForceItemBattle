@@ -20,7 +20,7 @@ public class BackToBackAchievementHandler implements AchievementHandler<BackToBa
             throw new IllegalArgumentException("targetAmount must be at least 1, got: " + targetAmount);
         }
 
-        // VALIDATION: Can't have both requireSameItem and requireSkippedThenGot
+        // VALIDATION: the preceding item is either skipped or normally obtained, not both
         if (requireSameItem && requireSkippedThenGot) {
             throw new IllegalArgumentException(
                     "Cannot have both requireSameItem and requireSkippedThenGot - they are mutually exclusive"
@@ -45,49 +45,37 @@ public class BackToBackAchievementHandler implements AchievementHandler<BackToBa
 
         Material currentItem = foundEvent.getFoundItem().getType();
 
-        // Track skipped items
+        // Snapshot the previous event, then record this one for the next call. Doing this
+        // up front means the one-event lookback holds no matter which branch we take.
+        Material previousItem = progress.previousItem;
+        boolean previousWasSkip = progress.previousWasSkip;
+        progress.previousItem = currentItem;
+        progress.previousWasSkip = foundEvent.isSkipped();
+
+        // A skip is never itself an achievement-granting find; it only breaks the streak
+        // and becomes the "previous item" for the next event.
         if (foundEvent.isSkipped()) {
-            progress.lastSkippedItem = currentItem;
-            // CRITICAL FIX: Reset b2b streak when player skips
             progress.b2bCount = 0;
-            progress.lastItemType = null;
             return false;
         }
 
-        // ACCIDENTAL GENIUS - skip then get same item via b2b
-        if (requireSkippedThenGot) {
-            if (foundEvent.isBackToBack() &&
-                    foundEvent.isPreviousItemWasSkipped() &&
-                    progress.lastSkippedItem != null &&
-                    progress.lastSkippedItem == currentItem) {
-                return true;
+        // DEJA_VU / ACCIDENTAL_GENIUS: a back-to-back on the same material as the item
+        // obtained immediately before, obtained the required way.
+        if (requireSameItem || requireSkippedThenGot) {
+            if (!foundEvent.isBackToBack() || previousItem == null || previousItem != currentItem) {
+                return false;
             }
-            return false;
+            return previousWasSkip == requireSkippedThenGot;
         }
 
-        // For all other b2b achievements: must be a b2b event
+        // Streak counters: a non-b2b item breaks the run.
         if (!foundEvent.isBackToBack()) {
-            // Reset streak when getting a non-b2b item
             progress.b2bCount = 0;
-            progress.lastItemType = currentItem;
             return false;
         }
 
-        // It's a B2B event - increment the streak
+        // targetAmount=1 → BACK_TO_BACK, 2 → DOUBLE_TROUBLE, 3 → OH_BABY_A_TRIPLE, ...
         progress.b2bCount++;
-
-        // DÉJÀ VU - same item b2b
-        if (requireSameItem) {
-            boolean matches = progress.lastItemType == currentItem;
-            progress.lastItemType = currentItem;
-            return matches && progress.b2bCount >= targetAmount;
-        }
-
-        // Regular b2b counter - check if streak matches target
-        // targetAmount=1 → BACK_TO_BACK (1 b2b)
-        // targetAmount=2 → DOUBLE_TROUBLE (2 b2b in a row)
-        // targetAmount=3 → OH_BABY_A_TRIPLE (3 b2b in a row)
-        progress.lastItemType = currentItem;
         return progress.b2bCount >= targetAmount;
     }
 

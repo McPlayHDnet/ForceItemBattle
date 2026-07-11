@@ -18,6 +18,7 @@ import forceitembattle.achievements.handlers.NoBackToBackAchievementHandler;
 import forceitembattle.achievements.handlers.NoOverworldExitAchievementHandler;
 import forceitembattle.achievements.handlers.RareMobDropAchievementHandler;
 import forceitembattle.achievements.handlers.RepeatItemAchievementHandler;
+import forceitembattle.achievements.handlers.SameItemBackToBackAchievementHandler;
 import forceitembattle.achievements.handlers.SkipAchievementHandler;
 import forceitembattle.achievements.handlers.TimeBasedAchievementHandler;
 import forceitembattle.achievements.handlers.TradingAchievementHandler;
@@ -124,8 +125,11 @@ public enum Achievements {
     FOUR_LEAF_CLOVER("Four-leaf Clover", "Get 4 back-to-back items in a row",
             new BackToBackAchievementHandler(4, false, false)),
 
-    DEJA_VU("Déjà Vu", "Get the same item type twice in a row as back-to-back",
+    DEJA_VU("Déjà Vu", "Obtain an item, then instantly get it again as back-to-back",
             new BackToBackAchievementHandler(1, true, false)),
+
+    GROUNDHOG_DAY("Groundhog Day", "Get the same item as back-to-back twice in a row",
+            new SameItemBackToBackAchievementHandler(2)),
 
     ACCIDENTAL_GENIUS("Accidental Genius", "Skip an item, then get it again as back-to-back",
             new BackToBackAchievementHandler(1, false, true)),
