@@ -1,8 +1,10 @@
 package forceitembattle.service;
 
 import de.threeseconds.openapi.fibservice.client.api.FibAchievementControllerApi;
+import de.threeseconds.openapi.fibservice.client.model.FibAchievementLeaderboardEntryDto;
 import de.threeseconds.openapi.fibservice.client.model.FibAchievementUnlockRequestDto;
 import de.threeseconds.openapi.fibservice.client.model.FibPlayerAchievementsDto;
+import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 import org.openapitools.client.ApiException;
@@ -49,5 +51,19 @@ public class FibAchievementClient {
             return null;
         }, result -> {
         }, executor::logError);
+    }
+
+    // ==================== LEADERBOARD ====================
+
+    public List<FibAchievementLeaderboardEntryDto> getAchievementLeaderboard(int limit) throws ApiException {
+        return achievementApi.getAchievementLeaderboard(limit);
+    }
+
+    public void getAchievementLeaderboardAsync(int limit, Consumer<List<FibAchievementLeaderboardEntryDto>> onSuccess) {
+        getAchievementLeaderboardAsync(limit, onSuccess, executor::logError);
+    }
+
+    public void getAchievementLeaderboardAsync(int limit, Consumer<List<FibAchievementLeaderboardEntryDto>> onSuccess, Consumer<ApiException> onError) {
+        executor.runAsync(() -> achievementApi.getAchievementLeaderboard(limit), onSuccess, onError);
     }
 }

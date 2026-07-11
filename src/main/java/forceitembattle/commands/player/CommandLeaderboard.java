@@ -1,5 +1,6 @@
 package forceitembattle.commands.player;
 
+import de.threeseconds.openapi.fibservice.client.model.FibAchievementLeaderboardEntryDto;
 import de.threeseconds.openapi.fibservice.client.model.FibLeaderboardEntryDto;
 import de.threeseconds.openapi.fibservice.client.model.FibTeamLeaderboardEntryDto;
 import forceitembattle.ForceItemBattle;
@@ -22,7 +23,11 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
 
     // Scope selectors that mirror the /stats views: solo, duo (a team pair), teams
     // (a player's combined across-all-teams stats).
-    private static final List<String> SCOPES = List.of("solo", "duo", "teams");
+    private static final List<String> SCOPES = List.of("solo", "duo", "teams", "achievements");
+
+    // The achievement board ranks players by unlocked-achievement count, so it takes no
+    // category and shows a short podium rather than the usual ten rows.
+    private static final int ACHIEVEMENT_TOP_LIMIT = 3;
 
     private static final List<String> CATEGORIES = List.of(
             "highest_score", "total_items", "games_won", "back_to_back_streak", "blocks_travelled"
@@ -30,7 +35,7 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
 
     public CommandLeaderboard(ForceItemBattle plugin) {
         super(plugin, "top");
-        setUsage("[solo|duo|teams] [stat]");
+        setUsage("[solo|duo|teams|achievements] [stat]");
         setDescription("Show the stat leaderboards");
     }
 
@@ -42,7 +47,13 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
         // falls back to the solo leaderboard, so a bare "/top" still works.
         String scope = args.length >= 1 ? args[0].toLowerCase() : "solo";
         if (!SCOPES.contains(scope)) {
-            player.sendMessage(Text.of("<yellow>" + args[0] + " <red>is not a valid scope. Use <white>solo<red>, <white>duo <red>or <white>teams<red>."));
+            player.sendMessage(Text.of("<yellow>" + args[0] + " <red>is not a valid scope. Use <white>solo<red>, <white>duo<red>, <white>teams <red>or <white>achievements<red>."));
+            return;
+        }
+
+        // "achievements" ranks by achievement count and takes no category argument.
+        if (scope.equals("achievements")) {
+            showAchievementLeaderboard(player);
             return;
         }
 
@@ -66,7 +77,7 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
                 sendEmpty(player);
             } else {
                 for (FibLeaderboardEntryDto entry : entries) {
-                    sendRow(player, entry.getRank(), resolvePlayerName(entry.getPlayerUuid()), entry.getValue(), category);
+                    sendRow(player, entry.getRank(), resolvePlayerName(entry.getPlayerUuid()), entry.getValue(), suffixFor(category));
                 }
             }
             player.sendMessage(" ");
@@ -80,7 +91,7 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
                 sendEmpty(player);
             } else {
                 for (FibLeaderboardEntryDto entry : entries) {
-                    sendRow(player, entry.getRank(), resolvePlayerName(entry.getPlayerUuid()), entry.getValue(), category);
+                    sendRow(player, entry.getRank(), resolvePlayerName(entry.getPlayerUuid()), entry.getValue(), suffixFor(category));
                 }
             }
             player.sendMessage(" ");
@@ -96,9 +107,29 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
                 for (FibTeamLeaderboardEntryDto entry : entries) {
                     String names = resolvePlayerName(entry.getPlayer1Uuid())
                             + " <dark_gray>& <green>" + resolvePlayerName(entry.getPlayer2Uuid());
-                    sendRow(player, entry.getRank(), names, entry.getValue(), category);
+                    sendRow(player, entry.getRank(), names, entry.getValue(), suffixFor(category));
                 }
             }
+            player.sendMessage(" ");
+        }, error -> sendError(player));
+    }
+
+    private void showAchievementLeaderboard(Player player) {
+        this.plugin.getFibService().achievements().getAchievementLeaderboardAsync(ACHIEVEMENT_TOP_LIMIT, entries -> {
+            player.sendMessage(" ");
+            player.sendMessage(Text.of("<dark_gray>» <gold><b>Leaderboard</b> <dark_gray>● <green>Achievements <dark_gray>«"));
+            player.sendMessage(" ");
+
+            if (entries.isEmpty()) {
+                sendEmpty(player);
+            } else {
+                for (FibAchievementLeaderboardEntryDto entry : entries) {
+                    int count = entry.getCount();
+                    sendRow(player, entry.getRank(), resolvePlayerName(entry.getPlayerUuid()), count,
+                            count == 1 ? " achievement" : " achievements");
+                }
+            }
+
             player.sendMessage(" ");
         }, error -> sendError(player));
     }
@@ -110,16 +141,19 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
         player.sendMessage(" ");
     }
 
-    private void sendRow(Player player, int rank, String name, long value, String category) {
+    private void sendRow(Player player, int rank, String name, long value, String suffix) {
         String color = switch (rank) {
             case 1 -> "<gold>";
             case 2 -> "<gray>";
             case 3 -> "<dark_gray>";
             default -> "<white>";
         };
-        String suffix = category.equals("blocks_travelled") ? " blocks" : "";
         player.sendMessage(Text.of("  <dark_gray>● " + color + rank + "<white>. <green>"
                 + name + " <dark_gray>» <dark_aqua>" + value + suffix));
+    }
+
+    private String suffixFor(String category) {
+        return category.equals("blocks_travelled") ? " blocks" : "";
     }
 
     private void sendEmpty(Player player) {
@@ -155,7 +189,9 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
         if (args.length == 1) {
             return new ArrayList<>(SCOPES);
         }
-        if (args.length == 2 && SCOPES.contains(args[0].toLowerCase())) {
+        // "achievements" takes no category, so offer nothing for its second argument.
+        if (args.length == 2 && SCOPES.contains(args[0].toLowerCase())
+                && !args[0].equalsIgnoreCase("achievements")) {
             return new ArrayList<>(CATEGORIES);
         }
         return new ArrayList<>();
