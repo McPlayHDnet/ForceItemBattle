@@ -8,10 +8,14 @@ import org.bukkit.Material;
 @AllArgsConstructor
 public class Locator {
 
-    private String structureId;
-    private String structureName;
-    private Material locatorMaterial;
-    private Type type;
+    private final String structureId;
+    private final String structureName;
+    private final CustomMaterials locatorItem;
+    private final Type type;
+
+    public Material getLocatorMaterial() {
+        return this.locatorItem.getMaterial();
+    }
 
     public enum Type {
         STRUCTURE,

@@ -3,7 +3,7 @@ package forceitembattle.commands.player;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
-import forceitembattle.model.CustomMaterial;
+import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.DescriptionItem;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.util.Text;
@@ -15,21 +15,10 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-
-import static forceitembattle.gui.RecipeInventory.CUSTOM_MATERIALS;
-import static forceitembattle.gui.RecipeInventory.ID_TO_MATERIAL;
-
 public class CommandInfo extends CustomCommand implements CustomTabCompleter {
 
     private static final List<String> MATERIALS = Arrays.stream(Material.values())
-            .map(material -> {
-                CustomMaterial customMaterial = CUSTOM_MATERIALS.get(material);
-                if (customMaterial != null) {
-                    return customMaterial.id();
-                } else {
-                    return material.name().toLowerCase();
-                }
-            })
+            .map(CustomMaterials::idOf)
             .sorted()
             .toList();
 
@@ -83,13 +72,11 @@ public class CommandInfo extends CustomCommand implements CustomTabCompleter {
     }
 
     private Material matchMaterial(String input) {
-        Material material = ID_TO_MATERIAL.get(input.toLowerCase());
-
-        if (material == null) {
-            material = Material.matchMaterial(input.toLowerCase());
+        CustomMaterials customMaterial = CustomMaterials.byId(input);
+        if (customMaterial != null) {
+            return customMaterial.getMaterial();
         }
-
-        return material;
+        return Material.matchMaterial(input.toLowerCase());
     }
 
     @Override

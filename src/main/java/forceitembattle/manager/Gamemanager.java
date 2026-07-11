@@ -1,11 +1,11 @@
 package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.model.CustomMaterials;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GamePreset;
 import forceitembattle.service.FIBServiceClient;
 import forceitembattle.service.FibStatisticsClient;
-import forceitembattle.model.CustomMaterial;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameState;
 import forceitembattle.gui.ItemBuilder;
@@ -37,9 +37,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
-
-
-import static forceitembattle.gui.RecipeInventory.CUSTOM_MATERIALS;
 
 public class Gamemanager implements Manager {
 
@@ -200,11 +197,7 @@ public class Gamemanager implements Manager {
     }
 
     public String getMaterialName(Material material) {
-        CustomMaterial customMaterial = CUSTOM_MATERIALS.get(material);
-        if (customMaterial != null) {
-            return customMaterial.containerName();
-        }
-        return WordUtils.capitalizeFully(material.name().replace("_", " "));
+        return CustomMaterials.nameOf(material);
     }
 
     public String formatMaterialName(String material) {

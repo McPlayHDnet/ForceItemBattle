@@ -2,6 +2,7 @@ package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.customrecipe.FakeRecipe;
+import forceitembattle.model.CustomMaterials;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.gui.ItemBuilder;
 import forceitembattle.gui.RecipeInventory;
@@ -57,7 +58,7 @@ public class RecipeManager implements Manager {
         final boolean easyRecipes = !this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.HARDER_TRACKERS);
 
         NamespacedKey antimatterKey = new NamespacedKey("fib", "antimatter_locator");
-        ShapedRecipe antimatterRecipe = new ShapedRecipe(antimatterKey, new ItemBuilder(Material.KNOWLEDGE_BOOK).setDisplayName("<dark_gray>» <dark_purple>Antimatter Locator").getItemStack());
+        ShapedRecipe antimatterRecipe = new ShapedRecipe(antimatterKey, CustomMaterials.ANTIMATTER_LOCATOR.itemStack());
         if (easyRecipes) {
             antimatterRecipe.shape(" N ", "GQG", " N ");
             antimatterRecipe.setIngredient('N', Material.NETHER_BRICK);
@@ -72,7 +73,7 @@ public class RecipeManager implements Manager {
         }
 
         NamespacedKey chambersKey = new NamespacedKey("fib", "chambers_locator");
-        ShapedRecipe chambersRecipe = new ShapedRecipe(chambersKey, new ItemBuilder(Material.WITHER_ROSE).setDisplayName("<dark_gray>» <gold>Trial Locator").getItemStack());
+        ShapedRecipe chambersRecipe = new ShapedRecipe(chambersKey, CustomMaterials.TRIAL_LOCATOR.itemStack());
         if (easyRecipes) {
             chambersRecipe.shape("BGB", "GCG", "AAA");
             chambersRecipe.setIngredient('B', Material.CUT_COPPER);

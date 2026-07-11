@@ -1,7 +1,7 @@
 package forceitembattle.listener;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.gui.ItemBuilder;
+import forceitembattle.model.CustomMaterials;
 import forceitembattle.util.Scheduler;
 import java.util.ArrayList;
 import java.util.List;
@@ -64,10 +64,7 @@ public class VillagerTradeListener implements Listener {
     }
 
     private MerchantRecipe buildCustomTrade() {
-        ItemStack result = new ItemBuilder(Material.MUSIC_DISC_CHIRP)
-                .setAmount(1)
-                .setDisplayName("<yellow>Sulfur Tracker")
-                .getItemStack();
+        ItemStack result = CustomMaterials.SULFUR_LOCATOR.itemStack();
 
         MerchantRecipe recipe = new MerchantRecipe(result, 12); // maxUses
         recipe.addIngredient(new ItemStack(Material.EMERALD, 6));

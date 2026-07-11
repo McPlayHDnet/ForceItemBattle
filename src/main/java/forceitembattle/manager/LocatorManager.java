@@ -1,6 +1,7 @@
 package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.Locator;
 import forceitembattle.util.Text;
@@ -41,9 +42,9 @@ public class LocatorManager implements Manager {
         this.locatedStructures = new HashMap<>();
         this.activeLocators = new HashMap<>();
 
-        this.addLocator(new Locator("fib:antimatter_depths", "Antimatter", Material.KNOWLEDGE_BOOK, Locator.Type.STRUCTURE));
-        this.addLocator(new Locator("trial_chambers", "Trial Chambers", Material.WITHER_ROSE, Locator.Type.STRUCTURE));
-        this.addLocator(new Locator("sulfur_caves", "Sulfur Cave", Material.MUSIC_DISC_CHIRP, Locator.Type.BIOME));
+        this.addLocator(new Locator("fib:antimatter_depths", "Antimatter", CustomMaterials.ANTIMATTER_LOCATOR, Locator.Type.STRUCTURE));
+        this.addLocator(new Locator("trial_chambers", "Trial Chambers", CustomMaterials.TRIAL_LOCATOR, Locator.Type.STRUCTURE));
+        this.addLocator(new Locator("sulfur_caves", "Sulfur Cave", CustomMaterials.SULFUR_LOCATOR, Locator.Type.BIOME));
     }
 
     @Override
