@@ -7,6 +7,7 @@ import de.threeseconds.openapi.fibservice.client.model.FibSoloStatisticsDto;
 import de.threeseconds.openapi.fibservice.client.model.FibSoloStatisticsUpdateRequestDto;
 import de.threeseconds.openapi.fibservice.client.model.FibTeamMemberStatsDto;
 import de.threeseconds.openapi.fibservice.client.model.FibTeamMemberStatsUpdateRequestDto;
+import de.threeseconds.openapi.fibservice.client.model.FibTeamLeaderboardEntryDto;
 import de.threeseconds.openapi.fibservice.client.model.FibTeamStatisticsDto;
 import de.threeseconds.openapi.fibservice.client.model.FibTeamStatisticsUpdateRequestDto;
 import java.util.List;
@@ -198,5 +199,29 @@ public class FibStatisticsClient {
 
     public void getSoloLeaderboardAsync(String category, int limit, Consumer<List<FibLeaderboardEntryDto>> onSuccess, Consumer<ApiException> onError) {
         executor.runAsync(() -> api.getSoloLeaderboard(category, limit), onSuccess, onError);
+    }
+
+    public List<FibTeamLeaderboardEntryDto> getTeamLeaderboard(String category, int limit) throws ApiException {
+        return api.getTeamLeaderboard(category, limit);
+    }
+
+    public void getTeamLeaderboardAsync(String category, int limit, Consumer<List<FibTeamLeaderboardEntryDto>> onSuccess) {
+        getTeamLeaderboardAsync(category, limit, onSuccess, executor::logError);
+    }
+
+    public void getTeamLeaderboardAsync(String category, int limit, Consumer<List<FibTeamLeaderboardEntryDto>> onSuccess, Consumer<ApiException> onError) {
+        executor.runAsync(() -> api.getTeamLeaderboard(category, limit), onSuccess, onError);
+    }
+
+    public List<FibLeaderboardEntryDto> getCombinedTeamLeaderboard(String category, int limit) throws ApiException {
+        return api.getCombinedTeamLeaderboard(category, limit);
+    }
+
+    public void getCombinedTeamLeaderboardAsync(String category, int limit, Consumer<List<FibLeaderboardEntryDto>> onSuccess) {
+        getCombinedTeamLeaderboardAsync(category, limit, onSuccess, executor::logError);
+    }
+
+    public void getCombinedTeamLeaderboardAsync(String category, int limit, Consumer<List<FibLeaderboardEntryDto>> onSuccess, Consumer<ApiException> onError) {
+        executor.runAsync(() -> api.getCombinedTeamLeaderboard(category, limit), onSuccess, onError);
     }
 }
