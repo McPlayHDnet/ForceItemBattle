@@ -2,6 +2,7 @@ package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.model.CustomMaterials;
+import forceitembattle.model.Dimension;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GamePreset;
 import forceitembattle.service.FIBServiceClient;
@@ -302,7 +303,7 @@ public class Gamemanager implements Manager {
                 player.getInventory().clear();
                 player.setLevel(0);
                 player.setExp(0);
-                player.teleport(Bukkit.getWorld("world").getSpawnLocation());
+                player.teleport(Dimension.OVERWORLD.world().getSpawnLocation());
                 player.setGameMode(GameMode.CREATIVE);
                 player.getPassengers().forEach(Entity::remove);
                 player.setPlayerListName(player.getName());

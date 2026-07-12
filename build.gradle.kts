@@ -30,7 +30,8 @@ repositories {
          * credentials(PasswordCredentials::class)
          */
         name = "mcplayhd"
-        url = uri("https://maven.mcplayhd.net/public-releases")
+        url = uri("https://maven.mcplayhd.net/releases")
+        credentials(PasswordCredentials::class)
     }
 }
 

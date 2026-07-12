@@ -2,6 +2,7 @@ package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.model.CustomMaterials;
+import forceitembattle.model.Dimension;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.Locator;
 import forceitembattle.util.BiomeSearch;
@@ -69,8 +70,9 @@ public class LocatorManager implements Manager {
 
         Player player = forceItemPlayer.player();
 
-        if (!this.isInOverworld(player)) {
-            player.sendMessage(Text.of(prefix + "<red>There is no <dark_aqua>" + locator.getStructureName() + " <red>in the " + this.getCurrentWorld(player) + "<red>."));
+        if (!Dimension.isOverworld(player)) {
+            player.sendMessage(Text.of(prefix + "<red>There is no <dark_aqua>" + locator.getStructureName()
+                    + " <red>in the " + Dimension.of(player).coloredName() + "<red>."));
             return;
         }
 
@@ -265,16 +267,6 @@ public class LocatorManager implements Manager {
         }
 
         return " <green>(" + (int) playerLocation.distance(destination) + " blocks away)";
-    }
-
-    private String getCurrentWorld(Player player) {
-        if (player.getWorld().getName().equals("world_nether")) return "<dark_red>nether";
-        else if (player.getWorld().getName().equals("world_the_end")) return "<dark_purple>end";
-        return "overworld";
-    }
-
-    private boolean isInOverworld(Player player) {
-        return player.getWorld().getName().equals("world");
     }
 
     private boolean isAlreadyRevealed(String structureId, Location location) {

@@ -65,7 +65,6 @@ import forceitembattle.manager.VoteSkipManager;
 import forceitembattle.service.FIBServiceClient;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
-import forceitembattle.manager.AntimatterLocatorManager;
 import forceitembattle.manager.BackpackManager;
 import forceitembattle.util.FileLogger;
 import forceitembattle.util.Scheduler;
@@ -122,8 +121,6 @@ public final class ForceItemBattle extends JavaPlugin {
     @Setter
     private TradingManager tradingManager;
     @Getter
-    private AntimatterLocatorManager antimatterLocatorManager;
-    @Getter
     private AchievementManager achievementManager;
     @Getter
     private AchievementListener achievementListener;
@@ -176,7 +173,6 @@ public final class ForceItemBattle extends JavaPlugin {
         this.protectionManager = register(new ProtectionManager(this));
         this.wanderingTraderManager = register(new WanderingTraderManager(this));
         this.tabListManager = register(new TabListManager(this));
-        this.antimatterLocatorManager = register(new AntimatterLocatorManager(this));
         this.voteSkipManager = register(new VoteSkipManager(this));
         this.scoreboardManager = register(new ScoreboardManager(this));
         this.fibService = register(new FIBServiceClient(this));

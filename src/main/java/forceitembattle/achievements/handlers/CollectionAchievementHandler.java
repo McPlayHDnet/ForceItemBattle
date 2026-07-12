@@ -5,6 +5,7 @@ import forceitembattle.achievements.Trigger;
 import forceitembattle.achievements.progress.CollectionAchievementProgress;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.model.BiomeGroup;
+import forceitembattle.model.Dimension;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.MaterialCategory;
 import java.util.Set;
@@ -80,10 +81,10 @@ public class CollectionAchievementHandler<T> implements AchievementHandler<Colle
         });
     }
 
-    public static CollectionAchievementHandler<String> dimensionHandler(Set<String> requiredDimensions) {
+    public static CollectionAchievementHandler<Dimension> dimensionHandler(Set<Dimension> requiredDimensions) {
         return new CollectionAchievementHandler<>(Trigger.VISIT, requiredDimensions, (event, player, progress) -> {
             if (event instanceof PlayerChangedWorldEvent worldEvent) {
-                return worldEvent.getPlayer().getWorld().getName();
+                return Dimension.of(worldEvent.getPlayer());
             }
             return null;
         });

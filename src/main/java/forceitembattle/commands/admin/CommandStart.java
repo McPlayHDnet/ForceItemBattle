@@ -5,6 +5,7 @@ import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.ItemDifficultiesManager;
+import forceitembattle.model.Dimension;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GamePreset;
 import forceitembattle.service.FIBServiceClient;
@@ -183,7 +184,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
             this.plugin.getItemDifficultiesManager().setupStates();
         }
 
-        World world = Objects.requireNonNull(Bukkit.getWorld("world"));
+        World world = Objects.requireNonNull(Dimension.OVERWORLD.world());
         Location spawnLocation = world.getSpawnLocation();
         setupSpawnLocation(spawnLocation);
 
@@ -269,7 +270,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
 
         this.plugin.getWanderingTraderManager().startTimer();
         this.plugin.getGamemanager().setGameStartTime(System.currentTimeMillis());
-        Bukkit.getWorld("world").setTime(0);
+        Dimension.OVERWORLD.world().setTime(0);
         this.plugin.getAchievementManager().resetProgress();
         this.plugin.getItemDifficultiesManager().resetUnlockAnnouncements();
         this.plugin.getGamemanager().setCurrentGameState(GameState.MID_GAME);

@@ -3,6 +3,7 @@ package forceitembattle.manager;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import forceitembattle.ForceItemBattle;
+import forceitembattle.model.Dimension;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.QuickieMode;
 import forceitembattle.model.DescriptionItem;
@@ -123,6 +124,14 @@ public class ItemDifficultiesManager implements Manager {
                 .filter(def -> def.state() == state)
                 .map(ItemDefinition::material)
                 .toList();
+    }
+
+    public Set<Material> getItemsIn(Dimension dimension) {
+        return switch (dimension) {
+            case OVERWORLD -> getOverworldItems();
+            case NETHER -> Set.copyOf(getNetherItems());
+            case END -> Set.copyOf(getEndItems());
+        };
     }
 
     /**

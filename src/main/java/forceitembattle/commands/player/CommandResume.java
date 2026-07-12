@@ -2,6 +2,7 @@ package forceitembattle.commands.player;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
+import forceitembattle.model.Dimension;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.model.GameState;
 import forceitembattle.util.Text;
@@ -29,7 +30,7 @@ public class CommandResume extends CustomCommand {
         }
 
         Bukkit.broadcast(Text.of("<gold>The timer has been resumed!"));
-        Bukkit.getWorld("world").setGameRule(GameRules.ADVANCE_TIME, true);
+        Dimension.OVERWORLD.world().setGameRule(GameRules.ADVANCE_TIME, true);
         this.plugin.getGamemanager().setCurrentGameState(GameState.MID_GAME);
     }
 }

@@ -4,7 +4,9 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.Trigger;
 import forceitembattle.achievements.progress.CounterAchievementProgress;
 import forceitembattle.event.FoundItemEvent;
+import forceitembattle.model.Dimension;
 import forceitembattle.model.ForceItemPlayer;
+import javax.annotation.Nullable;
 import org.bukkit.Material;
 import org.bukkit.event.Event;
 
@@ -12,9 +14,10 @@ public class CounterAchievementHandler implements AchievementHandler<CounterAchi
 
     private final int targetAmount;
     private final boolean requireConsecutive;
-    private final String dimension;
+    @Nullable
+    private final Dimension dimension;
 
-    public CounterAchievementHandler(int targetAmount, boolean requireConsecutive, String dimension) {
+    public CounterAchievementHandler(int targetAmount, boolean requireConsecutive, @Nullable Dimension dimension) {
         this.targetAmount = targetAmount;
         this.requireConsecutive = requireConsecutive;
         this.dimension = dimension;
@@ -49,7 +52,7 @@ public class CounterAchievementHandler implements AchievementHandler<CounterAchi
         Material itemType = foundEvent.getFoundItem().getType();
 
         // Check dimension if specified
-        if (dimension != null && !isItemFromDimension(itemType, dimension, plugin)) {
+        if (dimension != null && !plugin.getItemDifficultiesManager().getItemsIn(dimension).contains(itemType)) {
             if (requireConsecutive) {
                 progress.consecutiveCount = 0;
             }
@@ -66,15 +69,6 @@ public class CounterAchievementHandler implements AchievementHandler<CounterAchi
         }
     }
 
-    private boolean isItemFromDimension(Material itemType, String dimension, ForceItemBattle plugin) {
-        var itemManager = plugin.getItemDifficultiesManager();
-        return switch (dimension) {
-            case "world" -> itemManager.getOverworldItems().contains(itemType);
-            case "world_nether" -> itemManager.getNetherItems().contains(itemType);
-            case "world_the_end" -> itemManager.getEndItems().contains(itemType);
-            default -> false;
-        };
-    }
 
     @Override
     public CounterAchievementProgress createProgress() {

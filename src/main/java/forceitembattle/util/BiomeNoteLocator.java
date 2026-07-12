@@ -9,8 +9,6 @@ import org.jetbrains.annotations.Nullable;
 
 public final class BiomeNoteLocator {
 
-    public static final int SEARCH_RADIUS = 6400;
-
     private static final String[] DIRECTIONS = {
             "south", "south-east", "east", "north-east",
             "north", "north-west", "west", "south-west"
@@ -45,9 +43,5 @@ public final class BiomeNoteLocator {
         double dz = target.getZ() - origin.getZ();
         double distance = Math.sqrt(dx * dx + dz * dz);
         return (int) (Math.round(distance / 100.0D) * 100L);
-    }
-
-    public static boolean isOverworld(World world) {
-        return world.getEnvironment() == World.Environment.NORMAL;
     }
 }

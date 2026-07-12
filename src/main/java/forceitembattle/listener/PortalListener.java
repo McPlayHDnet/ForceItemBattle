@@ -2,6 +2,7 @@ package forceitembattle.listener;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.event.AntimatterTeleporterUseEvent;
+import forceitembattle.model.Dimension;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.service.FIBServiceClient;
 import forceitembattle.service.FibStatisticsClient;
@@ -145,7 +146,7 @@ public class PortalListener implements Listener {
         }
         Player player = event.getPlayer();
 
-        if (player.getWorld().getName().equals("world_the_end")) {
+        if (Dimension.of(player) == Dimension.END) {
             if (this.playerEndLocations.containsKey(player.getUniqueId())) {
                 player.teleport(this.playerEndLocations.get(player.getUniqueId()));
                 return;

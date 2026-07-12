@@ -2,6 +2,7 @@ package forceitembattle.commands.player;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
+import forceitembattle.model.Dimension;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.model.GameState;
 import forceitembattle.util.Text;
@@ -28,7 +29,7 @@ public class CommandPause extends CustomCommand {
             return;
         }
         Bukkit.broadcast(Text.of("<gold>The game has been paused!"));
-        Bukkit.getWorld("world").setGameRule(GameRules.ADVANCE_TIME, false);
+        Dimension.OVERWORLD.world().setGameRule(GameRules.ADVANCE_TIME, false);
         this.plugin.getGamemanager().setCurrentGameState(GameState.PAUSED_GAME);
     }
 }

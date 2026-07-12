@@ -26,6 +26,8 @@ import forceitembattle.achievements.handlers.WheelOfFortuneAchievementHandler;
 import forceitembattle.achievements.handlers.WheelOfFortuneUsesAchievementHandler;
 import forceitembattle.model.BiomeGroup;
 import forceitembattle.model.CustomItem;
+import forceitembattle.model.Dimension;
+import java.util.EnumSet;
 import java.util.Set;
 import lombok.Getter;
 import org.bukkit.Material;
@@ -52,16 +54,16 @@ public enum Achievements {
             new CounterAchievementHandler(85, false, null)),
 
     ONE_DIMENSION_WONDER("One Dimension Wonder", "Collect 10 overworld items in a row",
-            new CounterAchievementHandler(10, true, "world")),
+            new CounterAchievementHandler(10, true, Dimension.OVERWORLD)),
 
     NEVER_LEFT_HOME("Never Left Home", "Collect 20 overworld items in a row",
-            new CounterAchievementHandler(20, true, "world")),
+            new CounterAchievementHandler(20, true, Dimension.OVERWORLD)),
 
     INFINITE_FIRE("Infinite Fire", "Collect 5 nether items in a row",
-            new CounterAchievementHandler(5, true, "world_nether")),
+            new CounterAchievementHandler(5, true, Dimension.NETHER)),
 
     ITS_SO_EMPTY("It's so empty", "Collect 3 end items in a row",
-            new CounterAchievementHandler(3, true, "world_the_end")),
+            new CounterAchievementHandler(3, true, Dimension.END)),
 
     WAIT_WOOD("Wait Wood?", "Collect at least one item from each wood type in one round",
             CollectionAchievementHandler.woodTypesHandler()),
@@ -155,7 +157,7 @@ public enum Achievements {
                     Biome.DEEP_DARK, Biome.DRIPSTONE_CAVES, Biome.LUSH_CAVES, Biome.SULFUR_CAVES))),
 
     ALWAYS_ON_THE_GO("Always On The Go", "Visit all three dimensions in one round",
-            CollectionAchievementHandler.dimensionHandler(Set.of("world", "world_nether", "world_the_end"))),
+            CollectionAchievementHandler.dimensionHandler(EnumSet.allOf(Dimension.class))),
 
     PALE_PLEASE("Pale Please", "Use 10 different antimatter teleporters in one game",
             new AntimatterTeleporterUsesAchievementHandler(10)),

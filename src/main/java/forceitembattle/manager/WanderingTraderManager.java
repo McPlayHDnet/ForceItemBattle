@@ -2,6 +2,7 @@ package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.gui.ItemBuilder;
+import forceitembattle.model.Dimension;
 import forceitembattle.util.Text;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.CustomModelData;
@@ -79,7 +80,7 @@ public class WanderingTraderManager implements Manager {
     }
 
     public void spawnWanderingTrader() {
-        World world = Bukkit.getWorld("world");
+        World world = Dimension.OVERWORLD.world();
         if (world == null) return;
 
         Location traderLocation = this.getRandomLocationWithinSpawnChunks(world.getSpawnLocation(), 5);
@@ -141,29 +142,11 @@ public class WanderingTraderManager implements Manager {
         }
 
         if (!playerLocation.getWorld().equals(destination.getWorld())) {
-            return " <gray>in the " + getWorldName(destination.getWorld());
+            return " <gray>in the " + Dimension.of(destination.getWorld()).coloredName();
         }
 
 
         return " <green>(" + (int) playerLocation.distance(destination) + " blocks away)";
-    }
-
-    private String getWorldName(World world) {
-        if (world == null) {
-            return "<dark_gray>unknown";
-        }
-
-        String worldName = world.getName();
-
-        if (worldName.contains("nether")) {
-            return "<red>nether";
-        }
-
-        if (worldName.contains("end")) {
-            return "<yellow>end";
-        }
-
-        return "<green>overworld";
     }
 
     private Location getRandomLocationWithinSpawnChunks(Location location, int chunkRadius) {

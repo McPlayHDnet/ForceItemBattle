@@ -3,6 +3,7 @@ package forceitembattle.achievements.handlers;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.Trigger;
 import forceitembattle.achievements.progress.SimpleAchievementProgress;
+import forceitembattle.model.Dimension;
 import forceitembattle.model.ForceItemPlayer;
 import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
@@ -18,8 +19,7 @@ public class NoOverworldExitAchievementHandler implements AchievementHandler<Sim
 
     @Override
     public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin) {
-        if (event instanceof PlayerChangedWorldEvent worldEvent
-                && !worldEvent.getPlayer().getWorld().getName().equals(OVERWORLD)) {
+        if (event instanceof PlayerChangedWorldEvent worldEvent && !Dimension.isOverworld(worldEvent.getPlayer())) {
             progress.count++; // entered the nether/end = left the overworld
         }
         return false; // evaluated at game end

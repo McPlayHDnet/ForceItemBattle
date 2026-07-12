@@ -3,6 +3,7 @@ package forceitembattle.commands.player;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
+import forceitembattle.model.Dimension;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.util.Scheduler;
@@ -71,7 +72,9 @@ public class CommandPosition extends CustomCommand implements CustomTabCompleter
         Location playerLocation = player.getLocation();
         this.plugin.getPositionManager().createPosition(positionName, playerLocation);
         Bukkit.broadcast(Text.of(
-                prefix + "<green>" + player.getName() + " <gray>added location of <dark_aqua>" + positionName + " <gray>at " + locationToString(playerLocation) + " <gray>in the " + getWorldName(playerLocation.getWorld())
+                prefix + "<green>" + player.getName() + " <gray>added location of <dark_aqua>" + positionName
+                        + " <gray>at " + locationToString(playerLocation)
+                        + " <gray>in the " + Dimension.of(playerLocation.getWorld()).coloredName()
         ));
     }
 
@@ -132,29 +135,10 @@ public class CommandPosition extends CustomCommand implements CustomTabCompleter
         }
 
         if (!playerLocation.getWorld().equals(destination.getWorld())) {
-            return " <gray>in the " + getWorldName(destination.getWorld());
+            return " <gray>in the " + Dimension.of(destination.getWorld()).coloredName();
         }
 
 
         return " <green>(" + (int) playerLocation.distance(destination) + " blocks away)";
     }
-
-    private String getWorldName(World world) {
-        if (world == null) {
-            return "<dark_gray>unknown";
-        }
-
-        String worldName = world.getName();
-
-        if (worldName.contains("nether")) {
-            return "<red>nether";
-        }
-
-        if (worldName.contains("end")) {
-            return "<yellow>end";
-        }
-
-        return "<green>overworld";
-    }
-
 }

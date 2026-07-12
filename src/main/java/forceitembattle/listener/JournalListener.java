@@ -1,6 +1,7 @@
 package forceitembattle.listener;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.model.Dimension;
 import forceitembattle.util.BiomeNoteLocator;
 import forceitembattle.model.BiomeNote;
 import forceitembattle.model.CustomMaterials;
@@ -67,7 +68,7 @@ public class JournalListener implements Listener {
     }
 
     private void readNote(Player player, ItemStack noteStack, BiomeNote note) {
-        if (!BiomeNoteLocator.isOverworld(player.getWorld())) {
+        if (!Dimension.isOverworld(player)) {
             player.sendMessage(Text.of("<red>These maps only chart Overworld biomes. Use it in the Overworld."));
             return;
         }
