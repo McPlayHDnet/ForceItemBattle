@@ -1,8 +1,10 @@
 package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.Locator;
+import forceitembattle.util.BiomeSearch;
 import forceitembattle.util.Text;
 import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;
@@ -20,7 +22,6 @@ import org.bukkit.block.Biome;
 import org.bukkit.entity.Player;
 import org.bukkit.generator.structure.Structure;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.BiomeSearchResult;
 import org.bukkit.util.StructureSearchResult;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +29,6 @@ public class LocatorManager implements Manager {
 
     private static final String prefix = "<dark_gray>» <dark_purple>Locator <dark_gray>┃ ";
     private static final int STRUCTURE_SEARCH_RADIUS = 20;  // chunks
-    private static final int BIOME_SEARCH_RADIUS = 6400;    // blocks, matches vanilla /locate biome
 
     private final ForceItemBattle plugin;
     private final Map<String, Locator> locators;
@@ -41,9 +41,9 @@ public class LocatorManager implements Manager {
         this.locatedStructures = new HashMap<>();
         this.activeLocators = new HashMap<>();
 
-        this.addLocator(new Locator("fib:antimatter_depths", "Antimatter", Material.KNOWLEDGE_BOOK, Locator.Type.STRUCTURE));
-        this.addLocator(new Locator("trial_chambers", "Trial Chambers", Material.WITHER_ROSE, Locator.Type.STRUCTURE));
-        this.addLocator(new Locator("sulfur_caves", "Sulfur Cave", Material.MUSIC_DISC_CHIRP, Locator.Type.BIOME));
+        this.addLocator(new Locator("fib:antimatter_depths", "Antimatter", CustomMaterials.ANTIMATTER_LOCATOR, Locator.Type.STRUCTURE));
+        this.addLocator(new Locator("trial_chambers", "Trial Chambers", CustomMaterials.TRIAL_LOCATOR, Locator.Type.STRUCTURE));
+        this.addLocator(new Locator("sulfur_caves", "Sulfur Cave", CustomMaterials.SULFUR_LOCATOR, Locator.Type.BIOME));
     }
 
     @Override
@@ -114,27 +114,21 @@ public class LocatorManager implements Manager {
 
     @Nullable
     private Location locateBiome(Locator locator, Player player) {
-        @Nullable Biome biome = RegistryAccess.registryAccess()
-                .getRegistry(RegistryKey.BIOME)
-                .get(this.getNamespacedKey(locator.getStructureId()));
+        Biome biome = BiomeSearch.resolve(this.getNamespacedKey(locator.getStructureId()));
 
         if (biome == null) {
             player.sendMessage(Text.of(prefix + "<dark_aqua>" + locator.getStructureId() + " <red>is not loaded or could not be found, Fire fix!"));
             return null;
         }
 
-        BiomeSearchResult result = player.getWorld().locateNearestBiome(
-                player.getLocation(),
-                BIOME_SEARCH_RADIUS,
-                biome
-        );
+        Location targetLocation = BiomeSearch.nearest(player.getLocation(), biome);
 
-        if (result == null) {
+        if (targetLocation == null) {
             player.sendMessage(Text.of(prefix + "<dark_aqua>" + locator.getStructureName() + " <red>could not be found nearby."));
             return null;
         }
 
-        return result.getLocation();
+        return targetLocation;
     }
 
     private void reveal(Locator locator, Player player, Location targetLocation) {

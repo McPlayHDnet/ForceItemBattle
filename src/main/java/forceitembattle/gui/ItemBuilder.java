@@ -12,11 +12,14 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.inventory.meta.components.CustomModelDataComponent;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.profile.PlayerTextures;
 
 @Getter
@@ -144,6 +147,30 @@ public class ItemBuilder {
 
     public ItemBuilder setAmount(int amount) {
         this.itemStack.setAmount(amount);
+        return this;
+    }
+
+    public ItemBuilder setItemName(String itemName) {
+        if (itemName == null) return this;
+        ItemMeta itemMeta = getItemStack().getItemMeta();
+        itemMeta.itemName(Text.of(itemName).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE));
+        setItemMeta(itemMeta);
+        return this;
+    }
+
+    public ItemBuilder setCustomModelDataStrings(List<String> strings) {
+        ItemMeta itemMeta = getItemStack().getItemMeta();
+        CustomModelDataComponent component = itemMeta.getCustomModelDataComponent();
+        component.setStrings(strings);
+        itemMeta.setCustomModelDataComponent(component);
+        setItemMeta(itemMeta);
+        return this;
+    }
+
+    public <P, C> ItemBuilder setPersistentData(NamespacedKey key, PersistentDataType<P, C> type, C value) {
+        ItemMeta itemMeta = getItemStack().getItemMeta();
+        itemMeta.getPersistentDataContainer().set(key, type, value);
+        setItemMeta(itemMeta);
         return this;
     }
 }

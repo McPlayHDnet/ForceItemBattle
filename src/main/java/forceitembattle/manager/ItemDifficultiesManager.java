@@ -40,6 +40,10 @@ public class ItemDifficultiesManager implements Manager {
     private Map<Material, String> smallIconUnicodes;
     private Map<Material, String> bigIconUnicodes;
 
+    // Item pools (states) already announced as unlocked this game, so each pool is
+    // only reported once. Cleared per game via resetUnlockAnnouncements().
+    private final Set<State> announcedUnlockedStates = EnumSet.noneOf(State.class);
+
     public ItemDifficultiesManager(ForceItemBattle forceItemBattle) {
         this.plugin = forceItemBattle;
         this.FIXED_RANDOM_SEED = new Random().nextLong();
@@ -163,12 +167,114 @@ public class ItemDifficultiesManager implements Manager {
         return items;
     }
 
+    /**
+     * Returns the item pools (states) that have just become available this tick —
+     * unlocked by elapsed time and permitted by the current quickie mode — and
+     * haven't been announced yet. Each returned state is marked announced, so a
+     * pool is only ever reported once per game. EARLY is the baseline start pool
+     * and is never announced.
+     */
+    public List<State> pollNewlyUnlockedStates() {
+        int timeLeft = this.plugin.getTimerManager().getTimeLeft();
+        int totalDuration = this.plugin.getGamemanager().getGameDuration();
+        int elapsedTime = (totalDuration - timeLeft) / 60;
+
+        QuickieMode quickieMode = this.plugin.getSettings().getQuickieMode();
+
+        List<State> newlyUnlocked = new ArrayList<>();
+        for (State state : State.VALUES) {
+            if (state == State.EARLY) {
+                announcedUnlockedStates.add(state); // baseline pool, never announced
+                continue;
+            }
+            if (!quickieAllows(quickieMode, state)) {
+                continue;
+            }
+            int unlockTime = (int) Math.round((totalDuration * (state.getUnlockedAtPercentage() / 100)) / 60);
+            if (elapsedTime >= unlockTime && announcedUnlockedStates.add(state)) {
+                newlyUnlocked.add(state);
+            }
+        }
+        return newlyUnlocked;
+    }
+
+    /**
+     * Clears the per-game record of which pools have been announced, so unlocks
+     * are announced again next round. Call at the start of each game.
+     */
+    public void resetUnlockAnnouncements() {
+        announcedUnlockedStates.clear();
+    }
+
     private boolean quickieAllows(QuickieMode quickieMode, State state) {
         return switch (quickieMode) {
             case DISABLED -> true;
             case EARLY -> state == State.EARLY;
             case EARLY_MID -> state == State.EARLY || state == State.MID;
         };
+    }
+
+    /**
+     * Item pools currently active this tick: permitted by the current quickie mode
+     * and unlocked by elapsed time. Returned in unlock order (EARLY → LATE).
+     */
+    public List<State> getActiveStates() {
+        int elapsedTime = elapsedMinutes();
+        QuickieMode quickieMode = this.plugin.getSettings().getQuickieMode();
+
+        List<State> active = new ArrayList<>();
+        for (State state : State.VALUES) {
+            if (!quickieAllows(quickieMode, state)) {
+                continue;
+            }
+            if (elapsedTime >= unlockMinutes(state)) {
+                active.add(state);
+            }
+        }
+        return active;
+    }
+
+    /**
+     * The next pool scheduled to unlock, or {@code null} when none remain — all
+     * permitted pools are already active (e.g. capped by the current quickie mode).
+     */
+    public State getNextState() {
+        int elapsedTime = elapsedMinutes();
+        QuickieMode quickieMode = this.plugin.getSettings().getQuickieMode();
+
+        for (State state : State.VALUES) {
+            if (!quickieAllows(quickieMode, state)) {
+                continue;
+            }
+            if (unlockMinutes(state) > elapsedTime) {
+                return state;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Seconds until the next pool unlocks, or {@code -1} when none remain. Reaches 0
+     * on the same tick {@link #pollNewlyUnlockedStates()} announces that pool.
+     */
+    public int secondsUntilNextPool() {
+        State next = getNextState();
+        if (next == null) {
+            return -1;
+        }
+        int elapsedSeconds = this.plugin.getGamemanager().getGameDuration() - this.plugin.getTimerManager().getTimeLeft();
+        return Math.max(0, unlockMinutes(next) * 60 - elapsedSeconds);
+    }
+
+    private int elapsedMinutes() {
+        int timeLeft = this.plugin.getTimerManager().getTimeLeft();
+        int totalDuration = this.plugin.getGamemanager().getGameDuration();
+        return (totalDuration - timeLeft) / 60;
+    }
+
+    private int unlockMinutes(State state) {
+        int totalDuration = this.plugin.getGamemanager().getGameDuration();
+        return (int) Math.round((totalDuration * (state.getUnlockedAtPercentage() / 100)) / 60);
     }
 
     public Material generateRandomMaterial() {
@@ -1729,17 +1835,25 @@ public class ItemDifficultiesManager implements Manager {
 
     @Getter
     public enum State {
-        EARLY,
-        MID,
-        LATE;
+        EARLY("Early", "green"),
+        MID("Mid", "yellow"),
+        LATE("Late", "red");
 
         static final State[] VALUES = values();
+
+        private final String displayName;
+        private final String color;
 
         @Setter
         private List<Material> items = new ArrayList<>();
 
         @Setter
         private double unlockedAtPercentage;
+
+        State(String displayName, String color) {
+            this.displayName = displayName;
+            this.color = color;
+        }
     }
 
     /**

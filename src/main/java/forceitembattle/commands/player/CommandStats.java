@@ -222,6 +222,8 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
         player.sendMessage(Text.of("  <dark_gray>● <gray>Longest item streak <dark_gray>» <dark_aqua>" + stats.getLongestItemStreak()));
         player.sendMessage(Text.of("  <dark_gray>● <gray>Wheel of Fortune uses <dark_gray>» <dark_aqua>" + stats.getWheelOfFortuneUses()));
         player.sendMessage(Text.of("  <dark_gray>● <gray>Antimatter teleports <dark_gray>» <dark_aqua>" + stats.getEnteredAntimatterTeleporter()));
+        player.sendMessage(Text.of("  <dark_gray>● <gray>Avg. items / game <dark_gray>» <dark_aqua>" + df.format(gamesPlayed != 0 ? (double) stats.getTotalItemsFound() / gamesPlayed : 0)));
+        player.sendMessage(Text.of("  <dark_gray>● <gray>Avg. back-to-backs / game <dark_gray>» <dark_aqua>" + df.format(gamesPlayed != 0 ? (double) totalRarities(stats.getRarities()) / gamesPlayed : 0)));
         player.sendMessage(Text.of("  <dark_gray>● <gray>Avg. time per item <dark_gray>» <dark_aqua>" + formatTime(stats.getTotalItemsFound() > 0 ? stats.getTotalTimeSpentOnItems() / stats.getTotalItemsFound() : 0)));
         player.sendMessage(" ");
     }
@@ -249,6 +251,8 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
         player.sendMessage(Text.of("  <dark_gray>● <gray>Longest item streak <dark_gray>» <dark_aqua>" + stats.getLongestTeamItemStreak()));
         player.sendMessage(Text.of("  <dark_gray>● <gray>Wheel of Fortune uses <dark_gray>» <dark_aqua>" + stats.getWheelOfFortuneUses()));
         player.sendMessage(Text.of("  <dark_gray>● <gray>Antimatter teleports <dark_gray>» <dark_aqua>" + stats.getEnteredAntimatterTeleporter()));
+        player.sendMessage(Text.of("  <dark_gray>● <gray>Avg. items / game <dark_gray>» <dark_aqua>" + df.format(gamesPlayed != 0 ? (double) stats.getTotalItemsFound() / gamesPlayed : 0)));
+        player.sendMessage(Text.of("  <dark_gray>● <gray>Avg. back-to-backs / game <dark_gray>» <dark_aqua>" + df.format(gamesPlayed != 0 ? (double) totalRarities(stats.getRarities()) / gamesPlayed : 0)));
         player.sendMessage(Text.of("  <dark_gray>● <gray>Avg. time per item <dark_gray>» <dark_aqua>" + formatTime(stats.getTotalItemsFound() > 0 ? stats.getTotalTimeSpentOnItems() / stats.getTotalItemsFound() : 0)));
         player.sendMessage(" ");
     }
@@ -275,6 +279,8 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
         player.sendMessage(Text.of("  <dark_gray>● <gray>Longest item streak <dark_gray>» <dark_aqua>" + stats.getLongestItemStreak()));
         player.sendMessage(Text.of("  <dark_gray>● <gray>Wheel of Fortune uses <dark_gray>» <dark_aqua>" + stats.getWheelOfFortuneUses()));
         player.sendMessage(Text.of("  <dark_gray>● <gray>Antimatter teleports <dark_gray>» <dark_aqua>" + stats.getEnteredAntimatterTeleporter()));
+        player.sendMessage(Text.of("  <dark_gray>● <gray>Avg. items / game <dark_gray>» <dark_aqua>" + df.format(gamesPlayed != 0 ? (double) stats.getTotalItemsFound() / gamesPlayed : 0)));
+        player.sendMessage(Text.of("  <dark_gray>● <gray>Avg. back-to-backs / game <dark_gray>» <dark_aqua>" + df.format(gamesPlayed != 0 ? (double) totalRarities(stats.getRarities()) / gamesPlayed : 0)));
         player.sendMessage(Text.of("  <dark_gray>● <gray>Avg. time per item <dark_gray>» <dark_aqua>" + formatTime(stats.getTotalItemsFound() > 0 ? stats.getTotalTimeSpentOnItems() / stats.getTotalItemsFound() : 0)));
         player.sendMessage(" ");
 
@@ -307,8 +313,7 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
         if (rarities == null) {
             return;
         }
-        long total = rarities.getRare() + rarities.getEpic() + rarities.getLegendary()
-                + rarities.getRngesus() + rarities.getExtraordinary();
+        long total = totalRarities(rarities);
         if (total == 0) {
             return;
         }
@@ -323,6 +328,14 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
             player.sendMessage(Text.of("    <dark_gray>» <gradient:#E41EBC:#9A4992>RNGesus</gradient> <dark_gray>× <dark_aqua>" + rarities.getRngesus()));
         if (rarities.getExtraordinary() > 0)
             player.sendMessage(Text.of("    <dark_gray>» <gradient:#73FF00:#14C8FF>Extraordinary</gradient> <dark_gray>× <dark_aqua>" + rarities.getExtraordinary()));
+    }
+
+    private long totalRarities(FibRaritiesDto rarities) {
+        if (rarities == null) {
+            return 0;
+        }
+        return rarities.getRare() + rarities.getEpic() + rarities.getLegendary()
+                + rarities.getRngesus() + rarities.getExtraordinary();
     }
 
     private UUID resolvePlayer(String name) {

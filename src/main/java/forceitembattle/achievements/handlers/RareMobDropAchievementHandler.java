@@ -3,14 +3,12 @@ package forceitembattle.achievements.handlers;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.Trigger;
 import forceitembattle.achievements.progress.SimpleAchievementProgress;
-import forceitembattle.event.FoundItemEvent;
 import forceitembattle.model.ForceItemPlayer;
 import org.bukkit.Material;
+import org.bukkit.entity.EntityType;
 import org.bukkit.event.Event;
+import org.bukkit.event.entity.EntityDeathEvent;
 
-/**
- * Handler for rare mob drop achievements (Trident, Wither Skeleton Skull)
- */
 public class RareMobDropAchievementHandler implements AchievementHandler<SimpleAchievementProgress> {
 
     private final int targetAmount;
@@ -24,25 +22,34 @@ public class RareMobDropAchievementHandler implements AchievementHandler<SimpleA
 
     @Override
     public Trigger getTrigger() {
-        return Trigger.OBTAIN_ITEM;
+        return Trigger.MOB_DEATH;
     }
 
     @Override
     public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin) {
-        if (!(event instanceof FoundItemEvent foundEvent)) {
+        if (!(event instanceof EntityDeathEvent deathEvent)) {
             return false;
         }
 
-        if (foundEvent.isSkipped()) {
+        EntityType type = deathEvent.getEntityType();
+        Material rareDrop;
+        if (type == EntityType.WITHER_SKELETON) {
+            rareDrop = Material.WITHER_SKELETON_SKULL;
+        } else if (type == EntityType.DROWNED) {
+            rareDrop = Material.TRIDENT;
+        } else {
             return false;
         }
 
-        Material itemType = foundEvent.getFoundItem().getType();
-        if (itemType == Material.TRIDENT || itemType == Material.WITHER_SKELETON_SKULL) {
-            progress.count++;
-            return progress.count >= targetAmount;
+        // The mob must have actually rolled the rare drop this death.
+        boolean dropped = deathEvent.getDrops().stream()
+                .anyMatch(stack -> stack.getType() == rareDrop);
+        if (!dropped) {
+            return false;
         }
-        return false;
+
+        progress.count++;
+        return progress.count >= targetAmount;
     }
 
     @Override

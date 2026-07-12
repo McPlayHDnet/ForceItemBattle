@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "forceitembattle"
-version = "4.3.1"
+version = "26.7.1" // year.month.update
 description = "ForceItemBattle for McPlayHD.net"
 
 java {
@@ -26,6 +26,8 @@ repositories {
     maven {
         /**
          * url = uri("https://maven.mcplayhd.net/public-releases")
+         * url = uri("https://maven.mcplayhd.net/releases")
+         * credentials(PasswordCredentials::class)
          */
         name = "mcplayhd"
         url = uri("https://maven.mcplayhd.net/public-releases")
@@ -35,7 +37,7 @@ repositories {
 dependencies {
     paperweight.paperDevBundle("26.2.build.+")
     implementation("org.apache.commons:commons-text:1.13.1")
-    implementation("de.threeseconds:FIBServiceClient:0.0.5")
+    implementation("de.threeseconds:FIBServiceClient:0.0.7")
     // paperweight.foliaDevBundle("1.20.4-R0.1-SNAPSHOT")
     // paperweight.devBundle("com.example.paperfork", "1.20.4-R0.1-SNAPSHOT")
 }
@@ -109,4 +111,5 @@ bukkitPluginYaml {
     commands.register("vote")
     commands.register("voteskip")
     commands.register("fixlocate")
+    commands.register("forceitem")
 }

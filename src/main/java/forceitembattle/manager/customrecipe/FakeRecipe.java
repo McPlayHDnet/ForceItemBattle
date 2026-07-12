@@ -1,8 +1,8 @@
 package forceitembattle.manager.customrecipe;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.model.CustomMaterials;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.gui.ItemBuilder;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.logging.Level;
@@ -22,7 +22,7 @@ public enum FakeRecipe {
                     .apply(shapedRecipe -> shapedRecipe.setIngredient('N', Material.NETHER_BRICK))
                     .apply(shapedRecipe -> shapedRecipe.setIngredient('G', Material.GLOWSTONE_DUST))
                     .apply(shapedRecipe -> shapedRecipe.setIngredient('Q', Material.QUARTZ))
-                    .build("fib:antimatter_locator", new ItemBuilder(Material.KNOWLEDGE_BOOK).setDisplayName("<dark_gray>» <dark_purple>Antimatter Locator").getItemStack())
+                    .build("fib:antimatter_locator", CustomMaterials.ANTIMATTER_LOCATOR.itemStack())
     ),
 
     END_STRUCTURE_HARD(Material.KNOWLEDGE_BOOK, item ->
@@ -32,7 +32,7 @@ public enum FakeRecipe {
                     .apply(shapedRecipe -> shapedRecipe.setIngredient('E', Material.ENDER_EYE))
                     .apply(shapedRecipe -> shapedRecipe.setIngredient('G', Material.GLOWSTONE_DUST))
                     .apply(shapedRecipe -> shapedRecipe.setIngredient('Q', Material.QUARTZ))
-                    .build("fib:antimatter_locator", new ItemBuilder(Material.KNOWLEDGE_BOOK).setDisplayName("<dark_gray>» <dark_purple>Antimatter Locator").getItemStack())
+                    .build("fib:antimatter_locator", CustomMaterials.ANTIMATTER_LOCATOR.itemStack())
     ),
 
     CHAMBER_STRUCTURE(Material.WITHER_ROSE, item ->
@@ -42,7 +42,7 @@ public enum FakeRecipe {
                     .apply(shapedRecipe -> shapedRecipe.setIngredient('G', Material.GLASS))
                     .apply(shapedRecipe -> shapedRecipe.setIngredient('C', Material.COMPASS))
                     .apply(shapedRecipe -> shapedRecipe.setIngredient('A', Material.GOLD_INGOT))
-                    .build("fib:chambers_locator", new ItemBuilder(Material.WITHER_ROSE).setDisplayName("<dark_gray>» <gold>Trial Locator").getItemStack())
+                    .build("fib:chambers_locator", CustomMaterials.TRIAL_LOCATOR.itemStack())
     ),
 
     CHAMBER_STRUCTURE_HARD(Material.WITHER_ROSE, item ->
@@ -54,7 +54,7 @@ public enum FakeRecipe {
                     .apply(shapedRecipe -> shapedRecipe.setIngredient('I', Material.IRON_INGOT))
                     .apply(shapedRecipe -> shapedRecipe.setIngredient('G', Material.GOLD_INGOT))
                     .apply(shapedRecipe -> shapedRecipe.setIngredient('D', Material.DIAMOND))
-                    .build("fib:chambers_locator", new ItemBuilder(Material.WITHER_ROSE).setDisplayName("<dark_gray>» <gold>Trial Locator").getItemStack())
+                    .build("fib:chambers_locator", CustomMaterials.TRIAL_LOCATOR.itemStack())
     ),
 
     SUSPICIOUS_STEW(Material.SUSPICIOUS_STEW, item ->

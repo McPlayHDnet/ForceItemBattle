@@ -4,6 +4,7 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.gui.AchievementInventory;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.manager.Gamemanager;
+import forceitembattle.model.CustomMaterials;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.service.FIBServiceClient;
 import forceitembattle.service.FibStatisticsClient;
@@ -53,14 +54,12 @@ public class ClickableItemsListener implements Listener {
             return;
         }
 
-        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-
         switch (e.getItem().getType()) {
             case LIME_DYE -> {
                 e.setCancelled(true);
                 player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
                 Bukkit.getScheduler().runTask(plugin, () ->
-                        new AchievementInventory(this.plugin, forceItemPlayer.player().getName(), forceItemPlayer.player().getUniqueId()).open(player));
+                        new AchievementInventory(this.plugin, player.getName(), player.getUniqueId()).open(player));
             }
             case COMPASS -> {
                 e.setCancelled(true);
@@ -169,8 +168,9 @@ public class ClickableItemsListener implements Listener {
         if (e.getClickedBlock() != null && e.getClickedBlock().getState() instanceof InventoryHolder) {
             return;
         }
+        e.setCancelled(true);
 
-        int jokers = (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getRemainingJokers() : forceItemPlayer.remainingJokers());
+        int jokers = forceItemPlayer.getRemainingJokers();
         if (jokers <= 0) {
             player.sendMessage(Text.of("<red>No more skips left."));
             player.getInventory().remove(Gamemanager.getJokerMaterial());
@@ -196,9 +196,9 @@ public class ClickableItemsListener implements Listener {
 
         player.getInventory().setItem(foundSlot, stack);
 
-        player.getInventory().addItem(new ItemStack(mat));
+        player.getInventory().addItem(CustomMaterials.itemStackOf(mat));
         if (!player.getInventory().contains(mat)) {
-            player.getWorld().dropItemNaturally(player.getLocation(), new ItemStack(mat));
+            player.getWorld().dropItemNaturally(player.getLocation(), CustomMaterials.itemStackOf(mat));
         }
         this.plugin.getTimerManager().sendActionBar();
 

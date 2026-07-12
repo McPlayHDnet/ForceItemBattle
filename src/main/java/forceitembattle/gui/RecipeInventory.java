@@ -2,13 +2,10 @@ package forceitembattle.gui;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.customrecipe.ToolRecipe;
-import forceitembattle.model.CustomMaterial;
+import forceitembattle.model.CustomMaterials;
 import forceitembattle.util.Text;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import org.apache.commons.lang3.text.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -33,11 +30,6 @@ public class RecipeInventory extends InventoryBuilder {
 
     public static final int NEXT_RECIPE_ITEM_SLOT = 8;
     public static final int PREVIOUS_RECIPE_ITEM_SLOT = 0;
-    public static final Map<Material, CustomMaterial> CUSTOM_MATERIALS = Map.of(
-            Material.KNOWLEDGE_BOOK, new CustomMaterial("antimatter_locator", "Antimatter Locator", "<dark_gray>» <dark_purple>Antimatter Locator"),
-            Material.WITHER_ROSE, new CustomMaterial("trial_locator", "Trial Locator", "<dark_gray>» <gold>Trial Locator")
-    );
-    public static final Map<String, Material> ID_TO_MATERIAL = new HashMap<>();
     private static final int RESULT_SLOT = 25;
     private static final int STATION_SLOT = 23;
     /**
@@ -52,10 +44,6 @@ public class RecipeInventory extends InventoryBuilder {
     private static final int WORKBENCH_FIRST_ITEM_SLOT = 10;
     private static final int SMITHING_FIRST_ITEM_SLOT = 19;
     private static final int OTHER_FIRST_ITEM_SLOT = 20;
-
-    static {
-        CUSTOM_MATERIALS.forEach((material, customMaterial) -> ID_TO_MATERIAL.put(customMaterial.id(), material));
-    }
 
     public RecipeInventory(ForceItemBattle forceItemBattle, RecipeViewer recipeViewer, Player player) {
         super(9 * 5, Text.of("<dark_gray>● <dark_aqua>" +
@@ -265,11 +253,7 @@ public class RecipeInventory extends InventoryBuilder {
     }
 
     private static String materialName(Material type) {
-        CustomMaterial customMaterial = CUSTOM_MATERIALS.get(type);
-        if (customMaterial != null) {
-            return customMaterial.containerName();
-        }
-        return WordUtils.capitalize(type.name().replace("_", " ").toLowerCase());
+        return CustomMaterials.nameOf(type);
     }
 
     public static ItemStack getStationItem(Recipe recipe) {

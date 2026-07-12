@@ -25,6 +25,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
@@ -148,6 +149,16 @@ public class AchievementListener implements Listener {
     }
 
     @EventHandler
+    public void onEntityDeath(EntityDeathEvent event) {
+        // Credit the player who killed the mob (null when it died to the
+        // environment or another mob — no one to award in that case).
+        Player killer = event.getEntity().getKiller();
+        if (killer != null) {
+            this.plugin.getAchievementManager().handleEvent(killer, event, Trigger.MOB_DEATH);
+        }
+    }
+
+    @EventHandler
     public void onLootGenerate(org.bukkit.event.world.LootGenerateEvent event) {
         if (event.getEntity() instanceof Player player) {
             this.plugin.getAchievementManager().handleEvent(player, event, Trigger.LOOT);
@@ -192,7 +203,10 @@ public class AchievementListener implements Listener {
         Advancement advancement = event.getAdvancement();
 
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(event.getPlayer().getUniqueId());
-        if (forceItemPlayer.isSpectator()) return;
+        if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
+            event.message(null);
+            return;
+        }
 
         if (advancement.key().namespace().equals("fib")) {
             String plainAdvancement = PlainTextComponentSerializer.plainText().serialize(advancement.displayName());

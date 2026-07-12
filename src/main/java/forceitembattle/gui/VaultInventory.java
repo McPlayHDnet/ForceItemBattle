@@ -2,6 +2,7 @@ package forceitembattle.gui;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.event.WheelOfFortuneWinEvent;
+import forceitembattle.model.CustomMaterials;
 import forceitembattle.util.Text;
 import java.time.Duration;
 import java.util.Collections;
@@ -15,9 +16,6 @@ import org.bukkit.Sound;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
-
-
-import static forceitembattle.gui.RecipeInventory.CUSTOM_MATERIALS;
 
 public class VaultInventory extends InventoryBuilder {
 
@@ -63,7 +61,7 @@ public class VaultInventory extends InventoryBuilder {
                         Title.Times times = Title.Times.times(Duration.ofMillis(600), Duration.ofMillis(2000), Duration.ofMillis(600));
                         Title title = Title.title(Component.empty(), subTitle, times);
 
-                        ItemStack itemStack = new ItemBuilder(wonMaterial).setDisplayName(CUSTOM_MATERIALS.get(wonMaterial) != null ? CUSTOM_MATERIALS.get(wonMaterial).displayName() : null).getItemStack();
+                        ItemStack itemStack = CustomMaterials.itemStackOf(wonMaterial);
 
                         getPlayer().showTitle(title);
                         getPlayer().playSound(getPlayer(), Sound.BLOCK_NOTE_BLOCK_PLING, 1, 1);
@@ -88,7 +86,7 @@ public class VaultInventory extends InventoryBuilder {
 
                         for (int i = 0; i < 9; i++) {
                             int itemIndex = (currentIndex + i) % itemList.size();
-                            setItem(18 + i, new ItemBuilder(itemList.get(itemIndex)).setDisplayName(CUSTOM_MATERIALS.get(itemList.get(itemIndex)) != null ? CUSTOM_MATERIALS.get(itemList.get(itemIndex)).displayName() : null).getItemStack());
+                            setItem(18 + i, CustomMaterials.itemStackOf(itemList.get(itemIndex)));
                         }
 
                         currentIndex = (currentIndex + 1) % itemList.size();

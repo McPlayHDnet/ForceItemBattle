@@ -1,6 +1,7 @@
 package forceitembattle;
 
 import forceitembattle.commands.CommandsManager;
+import forceitembattle.commands.admin.CommandForceItem;
 import forceitembattle.commands.admin.CommandForceTeam;
 import forceitembattle.commands.admin.CommandItems;
 import forceitembattle.commands.admin.CommandReset;
@@ -37,6 +38,7 @@ import forceitembattle.listener.FoundItemListener;
 import forceitembattle.listener.GameRulesListener;
 import forceitembattle.listener.GuiListener;
 import forceitembattle.listener.ItemsListener;
+import forceitembattle.listener.JournalListener;
 import forceitembattle.listener.PlayerLifecycleListener;
 import forceitembattle.listener.PortalListener;
 import forceitembattle.listener.PreGameLockListener;
@@ -47,6 +49,7 @@ import forceitembattle.listener.SettingsListener;
 import forceitembattle.listener.TradeListener;
 import forceitembattle.listener.VillagerTradeListener;
 import forceitembattle.manager.AchievementManager;
+import forceitembattle.manager.CustomItemManager;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.ItemDifficultiesManager;
 import forceitembattle.manager.LocatorManager;
@@ -55,6 +58,7 @@ import forceitembattle.manager.PositionManager;
 import forceitembattle.manager.ProtectionManager;
 import forceitembattle.manager.RecipeManager;
 import forceitembattle.manager.ScoreboardManager;
+import forceitembattle.manager.TabListManager;
 import forceitembattle.manager.TeamsManager;
 import forceitembattle.manager.TradingManager;
 import forceitembattle.manager.VoteSkipManager;
@@ -99,11 +103,15 @@ public final class ForceItemBattle extends JavaPlugin {
     @Getter
     private ItemDifficultiesManager itemDifficultiesManager;
     @Getter
+    private CustomItemManager customItemManager;
+    @Getter
     private RecipeManager recipeManager;
     @Getter
     private PositionManager positionManager;
     @Getter
     private WanderingTraderManager wanderingTraderManager;
+    @Getter
+    private TabListManager tabListManager;
     @Getter
     @Setter
     private CommandsManager commandsManager;
@@ -156,6 +164,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.gamemanager = register(new Gamemanager(this));
         this.timerManager = register(new TimerManager(this));
         this.backpackManager = register(new BackpackManager(this));
+        this.customItemManager = register(new CustomItemManager(this));
         this.itemDifficultiesManager = register(new ItemDifficultiesManager(this));
         this.recipeManager = register(new RecipeManager(this));
         this.positionManager = register(new PositionManager(this));
@@ -166,6 +175,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.locatorManager = register(new LocatorManager(this));
         this.protectionManager = register(new ProtectionManager(this));
         this.wanderingTraderManager = register(new WanderingTraderManager(this));
+        this.tabListManager = register(new TabListManager(this));
         this.antimatterLocatorManager = register(new AntimatterLocatorManager(this));
         this.voteSkipManager = register(new VoteSkipManager(this));
         this.scoreboardManager = register(new ScoreboardManager(this));
@@ -284,7 +294,8 @@ public final class ForceItemBattle extends JavaPlugin {
                 new TradeListener(this),
                 new VillagerTradeListener(this),
                 new GameRulesListener(this),
-                new GuiListener(this)
+                new GuiListener(this),
+                new JournalListener(this)
         );
 
     }
@@ -327,6 +338,7 @@ public final class ForceItemBattle extends JavaPlugin {
         commands.registerCommand(new CommandVote(this));
         commands.registerCommand(new CommandVoteSkip(this));
         commands.registerCommand(new CommandFixLocate(this));
+        commands.registerCommand(new CommandForceItem(this));
     }
 
     @Override

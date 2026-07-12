@@ -11,10 +11,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import lombok.Getter;
 import lombok.Setter;
-import net.kyori.adventure.bossbar.BossBar;
-import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
@@ -36,10 +35,12 @@ public class WanderingTraderManager implements Manager {
     private int randomAfterStartSpawnTime, timer, traderTimer;
     private BukkitTask spawnTimerTask;
     private BukkitTask traderTask;
+    private Location traderLocation;
+    private boolean traderActive;
 
     public WanderingTraderManager(ForceItemBattle plugin) {
         this.plugin = plugin;
-        this.randomAfterStartSpawnTime = (new Random().nextInt(4) + 7) * 60; //random number between 7 and 10 -> [7, 10]
+        this.randomAfterStartSpawnTime = ThreadLocalRandom.current().nextInt(7, 11) * 60; //random number between 7 and 10 -> [7, 10]
         this.timer = this.randomAfterStartSpawnTime;
         this.canBuyWheel = new HashMap<>();
     }
@@ -107,7 +108,6 @@ public class WanderingTraderManager implements Manager {
         wanderingTrader.setRecipes(merchantRecipes);
 
         this.canBuyWheel.clear();
-        Map<UUID, BossBar> playerBossBars = new HashMap<>();
         this.plugin.getGamemanager().forceItemPlayerMap().values().forEach(players -> {
             this.canBuyWheel.put(players.player().getUniqueId(), Boolean.TRUE);
 
@@ -115,40 +115,24 @@ public class WanderingTraderManager implements Manager {
             this.plugin.getPositionManager().playParticleLine(players.player(), traderLocation, Color.LIME);
         });
 
-        traderTimer = 5 * 60;
+        this.traderLocation = traderLocation;
+        this.traderTimer = 5 * 60;
+        this.traderActive = true;
 
         this.traderTask = new BukkitRunnable() {
             @Override
             public void run() {
                 if (traderTimer <= 0 || wanderingTrader.isDead()) {
-                    Bukkit.getOnlinePlayers().forEach(player -> {
-                        player.sendPlayerListFooter(Component.empty());
-                    });
+                    traderActive = false;
                     wanderingTrader.remove();
                     cancel();
                     Bukkit.broadcast(Text.of("<dark_gray>» <gold>Position <dark_gray>┃ <gray>The <green>Wandering Trader <gray>just despawned! :("));
                     return;
                 }
 
-                Bukkit.getOnlinePlayers().forEach(player -> {
-                    String footerText = "\n<green><b>Wandering Trader</b>\n"
-                            + locationToString(traderLocation) + "\n"
-                            + formatColoredTime(traderTimer) + "\n";
-                    Component footer = Text.of(footerText);
-                    player.sendPlayerListFooter(footer);
-                });
-
                 traderTimer--;
             }
         }.runTaskTimer(this.plugin, 0L, 20L);
-    }
-
-    private String locationToString(Location location) {
-        if (location.getWorld() == null) {
-            return "<red>unknown location";
-        }
-
-        return "<dark_aqua>" + location.getBlockX() + "<gray>, <dark_aqua>" + location.getBlockY() + "<gray>, <dark_aqua>" + location.getBlockZ();
     }
 
     private String distance(Location playerLocation, Location destination) {
@@ -180,29 +164,6 @@ public class WanderingTraderManager implements Manager {
         }
 
         return "<green>overworld";
-    }
-
-    private String formatColoredTime(int remainingSeconds) {
-        remainingSeconds = Math.max(remainingSeconds, 0);
-
-        int minutes = remainingSeconds / 60;
-        int seconds = remainingSeconds % 60;
-
-        String timeString = String.format("%02d:%02d", minutes, seconds);
-
-        String colorTag;
-
-        if (remainingSeconds <= 10) {
-            colorTag = "<dark_red>";
-        } else if (remainingSeconds <= 30) {
-            colorTag = "<red>";
-        } else if (remainingSeconds <= 120) {
-            colorTag = "<gold>";
-        } else {
-            colorTag = "<green>";
-        }
-
-        return colorTag + timeString;
     }
 
     private Location getRandomLocationWithinSpawnChunks(Location location, int chunkRadius) {

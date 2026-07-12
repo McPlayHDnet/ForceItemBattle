@@ -93,6 +93,8 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
         this.plugin.getGamemanager().setGameDuration(durationSeconds);
         this.plugin.getGamemanager().initializeMaterials();
 
+        this.plugin.getGamemanager().setStarting(true);
+
         new BukkitRunnable() {
 
             int seconds = 11;
@@ -132,7 +134,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
 
                 Bukkit.getOnlinePlayers().forEach(player -> {
                     ForceItemPlayer forceItemPlayer = plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-                    if (forceItemPlayer.isSpectator()) {
+                    if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
                         return;
                     }
 
@@ -191,7 +193,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
         Bukkit.getOnlinePlayers().forEach(player -> {
             ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
 
-            if (forceItemPlayer.isSpectator()) {
+            if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
                 player.setGameMode(GameMode.SPECTATOR);
                 player.getInventory().clear();
                 return;
@@ -269,7 +271,9 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
         this.plugin.getGamemanager().setGameStartTime(System.currentTimeMillis());
         Bukkit.getWorld("world").setTime(0);
         this.plugin.getAchievementManager().resetProgress();
+        this.plugin.getItemDifficultiesManager().resetUnlockAnnouncements();
         this.plugin.getGamemanager().setCurrentGameState(GameState.MID_GAME);
+        this.plugin.getGamemanager().setStarting(false);
         this.plugin.getScoreboardManager().updateAllPlayers();
     }
 
