@@ -9,6 +9,7 @@ import de.threeseconds.openapi.fibservice.client.model.FibTeamStatisticsDto;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
+import forceitembattle.model.Rarity;
 import forceitembattle.service.FibStatisticsClient;
 import forceitembattle.util.Text;
 import java.text.DecimalFormat;
@@ -223,7 +224,7 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
         player.sendMessage(Text.of("  <dark_gray>● <gray>Wheel of Fortune uses <dark_gray>» <dark_aqua>" + stats.getWheelOfFortuneUses()));
         player.sendMessage(Text.of("  <dark_gray>● <gray>Antimatter teleports <dark_gray>» <dark_aqua>" + stats.getEnteredAntimatterTeleporter()));
         player.sendMessage(Text.of("  <dark_gray>● <gray>Avg. items / game <dark_gray>» <dark_aqua>" + df.format(gamesPlayed != 0 ? (double) stats.getTotalItemsFound() / gamesPlayed : 0)));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Avg. back-to-backs / game <dark_gray>» <dark_aqua>" + df.format(gamesPlayed != 0 ? (double) totalRarities(stats.getRarities()) / gamesPlayed : 0)));
+        player.sendMessage(Text.of("  <dark_gray>● <gray>Avg. back-to-backs / game <dark_gray>» <dark_aqua>" + df.format(gamesPlayed != 0 ? (double) Rarity.total(stats.getRarities()) / gamesPlayed : 0)));
         player.sendMessage(Text.of("  <dark_gray>● <gray>Avg. time per item <dark_gray>» <dark_aqua>" + formatTime(stats.getTotalItemsFound() > 0 ? stats.getTotalTimeSpentOnItems() / stats.getTotalItemsFound() : 0)));
         player.sendMessage(" ");
     }
@@ -252,7 +253,7 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
         player.sendMessage(Text.of("  <dark_gray>● <gray>Wheel of Fortune uses <dark_gray>» <dark_aqua>" + stats.getWheelOfFortuneUses()));
         player.sendMessage(Text.of("  <dark_gray>● <gray>Antimatter teleports <dark_gray>» <dark_aqua>" + stats.getEnteredAntimatterTeleporter()));
         player.sendMessage(Text.of("  <dark_gray>● <gray>Avg. items / game <dark_gray>» <dark_aqua>" + df.format(gamesPlayed != 0 ? (double) stats.getTotalItemsFound() / gamesPlayed : 0)));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Avg. back-to-backs / game <dark_gray>» <dark_aqua>" + df.format(gamesPlayed != 0 ? (double) totalRarities(stats.getRarities()) / gamesPlayed : 0)));
+        player.sendMessage(Text.of("  <dark_gray>● <gray>Avg. back-to-backs / game <dark_gray>» <dark_aqua>" + df.format(gamesPlayed != 0 ? (double) Rarity.total(stats.getRarities()) / gamesPlayed : 0)));
         player.sendMessage(Text.of("  <dark_gray>● <gray>Avg. time per item <dark_gray>» <dark_aqua>" + formatTime(stats.getTotalItemsFound() > 0 ? stats.getTotalTimeSpentOnItems() / stats.getTotalItemsFound() : 0)));
         player.sendMessage(" ");
     }
@@ -280,7 +281,7 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
         player.sendMessage(Text.of("  <dark_gray>● <gray>Wheel of Fortune uses <dark_gray>» <dark_aqua>" + stats.getWheelOfFortuneUses()));
         player.sendMessage(Text.of("  <dark_gray>● <gray>Antimatter teleports <dark_gray>» <dark_aqua>" + stats.getEnteredAntimatterTeleporter()));
         player.sendMessage(Text.of("  <dark_gray>● <gray>Avg. items / game <dark_gray>» <dark_aqua>" + df.format(gamesPlayed != 0 ? (double) stats.getTotalItemsFound() / gamesPlayed : 0)));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Avg. back-to-backs / game <dark_gray>» <dark_aqua>" + df.format(gamesPlayed != 0 ? (double) totalRarities(stats.getRarities()) / gamesPlayed : 0)));
+        player.sendMessage(Text.of("  <dark_gray>● <gray>Avg. back-to-backs / game <dark_gray>» <dark_aqua>" + df.format(gamesPlayed != 0 ? (double) Rarity.total(stats.getRarities()) / gamesPlayed : 0)));
         player.sendMessage(Text.of("  <dark_gray>● <gray>Avg. time per item <dark_gray>» <dark_aqua>" + formatTime(stats.getTotalItemsFound() > 0 ? stats.getTotalTimeSpentOnItems() / stats.getTotalItemsFound() : 0)));
         player.sendMessage(" ");
 
@@ -310,32 +311,17 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
     }
 
     private void sendRarities(Player player, FibRaritiesDto rarities) {
-        if (rarities == null) {
+        if (Rarity.total(rarities) == 0) {
             return;
         }
-        long total = totalRarities(rarities);
-        if (total == 0) {
-            return;
-        }
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Rarities <dark_gray>»"));
-        if (rarities.getRare() > 0)
-            player.sendMessage(Text.of("    <dark_gray>» <blue>Rare <dark_gray>× <dark_aqua>" + rarities.getRare()));
-        if (rarities.getEpic() > 0)
-            player.sendMessage(Text.of("    <dark_gray>» <dark_purple>Epic <dark_gray>× <dark_aqua>" + rarities.getEpic()));
-        if (rarities.getLegendary() > 0)
-            player.sendMessage(Text.of("    <dark_gray>» <gold>Legendary <dark_gray>× <dark_aqua>" + rarities.getLegendary()));
-        if (rarities.getRngesus() > 0)
-            player.sendMessage(Text.of("    <dark_gray>» <gradient:#E41EBC:#9A4992>RNGesus</gradient> <dark_gray>× <dark_aqua>" + rarities.getRngesus()));
-        if (rarities.getExtraordinary() > 0)
-            player.sendMessage(Text.of("    <dark_gray>» <gradient:#73FF00:#14C8FF>Extraordinary</gradient> <dark_gray>× <dark_aqua>" + rarities.getExtraordinary()));
-    }
 
-    private long totalRarities(FibRaritiesDto rarities) {
-        if (rarities == null) {
-            return 0;
+        player.sendMessage(Text.of("  <dark_gray>● <gray>Rarities <dark_gray>»"));
+        for (Rarity rarity : Rarity.values()) {
+            long count = rarity.count(rarities);
+            if (count > 0) {
+                player.sendMessage(Text.of("    <dark_gray>» " + rarity.displayName() + " <dark_gray>× <dark_aqua>" + count));
+            }
         }
-        return rarities.getRare() + rarities.getEpic() + rarities.getLegendary()
-                + rarities.getRngesus() + rarities.getExtraordinary();
     }
 
     private UUID resolvePlayer(String name) {
