@@ -48,6 +48,7 @@ import forceitembattle.listener.SettingsListener;
 import forceitembattle.listener.TradeListener;
 import forceitembattle.listener.VillagerTradeListener;
 import forceitembattle.manager.AchievementManager;
+import forceitembattle.manager.CustomItemManager;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.ItemDifficultiesManager;
 import forceitembattle.manager.LocatorManager;
@@ -100,6 +101,8 @@ public final class ForceItemBattle extends JavaPlugin {
     private BackpackManager backpackManager;
     @Getter
     private ItemDifficultiesManager itemDifficultiesManager;
+    @Getter
+    private CustomItemManager customItemManager;
     @Getter
     private RecipeManager recipeManager;
     @Getter
@@ -160,6 +163,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.gamemanager = register(new Gamemanager(this));
         this.timerManager = register(new TimerManager(this));
         this.backpackManager = register(new BackpackManager(this));
+        this.customItemManager = register(new CustomItemManager(this));
         this.itemDifficultiesManager = register(new ItemDifficultiesManager(this));
         this.recipeManager = register(new RecipeManager(this));
         this.positionManager = register(new PositionManager(this));

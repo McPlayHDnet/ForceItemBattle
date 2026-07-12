@@ -61,9 +61,7 @@ public class VaultInventory extends InventoryBuilder {
                         Title.Times times = Title.Times.times(Duration.ofMillis(600), Duration.ofMillis(2000), Duration.ofMillis(600));
                         Title title = Title.title(Component.empty(), subTitle, times);
 
-                        ItemStack itemStack = new ItemBuilder(wonMaterial)
-                                .setDisplayName(CustomMaterials.displayNameOf(wonMaterial))
-                                .getItemStack();
+                        ItemStack itemStack = CustomMaterials.itemStackOf(wonMaterial);
 
                         getPlayer().showTitle(title);
                         getPlayer().playSound(getPlayer(), Sound.BLOCK_NOTE_BLOCK_PLING, 1, 1);

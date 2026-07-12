@@ -4,6 +4,7 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.gui.AchievementInventory;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.manager.Gamemanager;
+import forceitembattle.model.CustomMaterials;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.service.FIBServiceClient;
 import forceitembattle.service.FibStatisticsClient;
@@ -195,9 +196,9 @@ public class ClickableItemsListener implements Listener {
 
         player.getInventory().setItem(foundSlot, stack);
 
-        player.getInventory().addItem(new ItemStack(mat));
+        player.getInventory().addItem(CustomMaterials.itemStackOf(mat));
         if (!player.getInventory().contains(mat)) {
-            player.getWorld().dropItemNaturally(player.getLocation(), new ItemStack(mat));
+            player.getWorld().dropItemNaturally(player.getLocation(), CustomMaterials.itemStackOf(mat));
         }
         this.plugin.getTimerManager().sendActionBar();
 
