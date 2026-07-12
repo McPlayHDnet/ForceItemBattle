@@ -23,7 +23,7 @@ public class ItemsInventory extends InventoryBuilder {
         AtomicReference<Material> currentFilter = new AtomicReference<>(Material.LIME_DYE);
 
         /* TOP-BORDER */
-        this.setItems(0, 8, new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE).setDisplayName("<gold>").addItemFlags(ItemFlag.values()).getItemStack());
+        this.setItems(0, 8, GuiItems.border());
 
 
         this.setItem(2, new ItemBuilder(Material.LIME_DYE).setDisplayName("<green>All items").setGlowing(currentFilter.get() == Material.LIME_DYE).addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
@@ -82,7 +82,7 @@ public class ItemsInventory extends InventoryBuilder {
         });
 
 
-        this.setItem(0, new ItemBuilder(Material.RED_STAINED_GLASS_PANE).setDisplayName("<dark_red>« <red>Previous Page").addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
+        this.setItem(0, GuiItems.previousPage(), inventoryClickEvent -> {
             if (currentPage[0] != 0) {
                 currentPage[0]--;
 
@@ -92,7 +92,7 @@ public class ItemsInventory extends InventoryBuilder {
 
             } else player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
         });
-        this.setItem(8, new ItemBuilder(Material.LIME_STAINED_GLASS_PANE).setDisplayName("<dark_green>» <green>Next Page").addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
+        this.setItem(8, GuiItems.nextPage(), inventoryClickEvent -> {
             if (currentPage[0] < (pages.size() - 1)) {
                 currentPage[0]++;
 

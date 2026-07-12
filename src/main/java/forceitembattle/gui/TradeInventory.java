@@ -27,7 +27,7 @@ public class TradeInventory extends InventoryBuilder {
 
         Map<ForceItemPlayer, List<ItemStack>> tradingItems = new HashMap<>();
 
-        this.setItems(0, getInventory().getSize() - 1, new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).setDisplayName("<gray>").addItemFlags(ItemFlag.values()).getItemStack());
+        this.setItems(0, getInventory().getSize() - 1, GuiItems.filler());
 
         this.setItem(1, new ItemBuilder(Material.PLAYER_HEAD).setSkullTexture(player.player().getPlayerProfile().getTextures()).setDisplayName("<green>You").getItemStack());
         this.setItem(7, new ItemBuilder(Material.PLAYER_HEAD).setSkullTexture(oppositePlayer.player().getPlayerProfile().getTextures()).setDisplayName("<red>" + oppositePlayer.player().getName()).getItemStack());

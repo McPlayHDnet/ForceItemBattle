@@ -97,8 +97,8 @@ public class AchievementInventory extends InventoryBuilder {
         this.getInventory().clear();
 
         // Top and bottom borders
-        this.setItems(0, 8, new ItemBuilder(Material.CYAN_STAINED_GLASS_PANE).setDisplayName(" ").addItemFlags(ItemFlag.values()).getItemStack());
-        this.setItems(45, 53, new ItemBuilder(Material.CYAN_STAINED_GLASS_PANE).setDisplayName(" ").addItemFlags(ItemFlag.values()).getItemStack());
+        this.setItems(0, 8, GuiItems.accentBorder());
+        this.setItems(45, 53, GuiItems.accentBorder());
 
         // Fallback completion source: the local id cache (covers a just-unlocked
         // achievement whose async service write hasn't landed yet).
