@@ -148,9 +148,7 @@ public class FinishInventory extends InventoryBuilder {
                             }
                         }.runTaskLater(forceItemBattle, 100L);
 
-                        if (targetTeam == null)
-                            forceItemBattle.getGamemanager().savedInventory.put(targetPlayer.player().getUniqueId(), pages);
-                        else forceItemBattle.getGamemanager().savedInventoryTeam.put(targetTeam, pages);
+                        forceItemBattle.getGamemanager().saveResultPages(targetPlayer, targetTeam, pages);
                         cancel();
                     }
 
@@ -159,9 +157,8 @@ public class FinishInventory extends InventoryBuilder {
         } else {
             //Open Inventory beginning from the first page
             this.addUpdateHandler(() -> {
-                Map<Integer, Map<Integer, ItemStack>> savedPages = targetTeam == null
-                        ? forceItemBattle.getGamemanager().savedInventory.get(targetPlayer.player().getUniqueId())
-                        : forceItemBattle.getGamemanager().savedInventoryTeam.get(targetTeam);
+                Map<Integer, Map<Integer, ItemStack>> savedPages =
+                        forceItemBattle.getGamemanager().getResultPages(targetPlayer, targetTeam);
 
                 renderPage(savedPages, currentPage);
             });

@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "forceitembattle"
-version = "26.7.1" // year.month.update
+version = "26.7.2" // year.month.update
 description = "ForceItemBattle for McPlayHD.net"
 
 java {
@@ -30,8 +30,7 @@ repositories {
          * credentials(PasswordCredentials::class)
          */
         name = "mcplayhd"
-        url = uri("https://maven.mcplayhd.net/releases")
-        credentials(PasswordCredentials::class)
+        url = uri("https://maven.mcplayhd.net/public-releases")
     }
 }
 

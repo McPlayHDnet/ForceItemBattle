@@ -57,7 +57,7 @@ public class FoundItemListener implements Listener {
             }
         }
 
-        updateMaterials(forceItemPlayer, context);
+        this.plugin.getGamemanager().advanceMaterials(forceItemPlayer, context);
         updateStats(forceItemPlayer, player, context, event.getFoundItem().getType(), event.isSkipped(), timeSpentMs);
         this.plugin.getScoreboardManager().updateAllPlayers();
         this.plugin.getBackToBackManager().handleAfterFind(forceItemPlayer, context);
@@ -135,56 +135,6 @@ public class FoundItemListener implements Listener {
         } else {
             statistics.updateSoloStatisticsAsync(player.getUniqueId(),
                     FIBServiceClient.soloUpdate().raritiesAdd(raritiesUpdate));
-        }
-    }
-
-    private void updateMaterials(ForceItemPlayer forceItemPlayer, GameContext context) {
-        if (context.runMode()) {
-            updateSeededMaterials(context);
-        } else {
-            updateRandomMaterials(forceItemPlayer, context);
-        }
-    }
-
-    private void updateSeededMaterials(GameContext context) {
-        Material currentMaterial = this.plugin.getGamemanager().generateSeededMaterial();
-        long now = System.currentTimeMillis();
-
-        if (context.teamGame()) {
-            this.plugin.getGamemanager().forceItemPlayerMap().values().forEach(p -> {
-                Team team = p.currentTeam();
-                team.setPreviousMaterial(team.getCurrentMaterial());
-                team.setCurrentMaterial(team.getNextMaterial());
-                team.setNextMaterial(currentMaterial);
-                team.setLastItemAssignedAt(now);
-            });
-        } else {
-            this.plugin.getGamemanager().forceItemPlayerMap().values().forEach(p -> {
-                p.setPreviousMaterial(p.currentMaterial());
-                p.setCurrentMaterial(p.getNextMaterial());
-                p.setNextMaterial(currentMaterial);
-                p.setLastItemAssignedAt(now);
-            });
-        }
-    }
-
-    private void updateRandomMaterials(ForceItemPlayer forceItemPlayer, GameContext context) {
-        Material nextMaterial = this.plugin.getGamemanager().generateMaterial();
-        long now = System.currentTimeMillis();
-
-        if (context.teamGame()) {
-            Team team = forceItemPlayer.currentTeam();
-            Material currentMaterial = team.getNextMaterial();
-            team.setPreviousMaterial(team.getCurrentMaterial());
-            team.setCurrentMaterial(currentMaterial);
-            team.setNextMaterial(nextMaterial);
-            team.setLastItemAssignedAt(now);
-        } else {
-            Material currentMaterial = forceItemPlayer.getNextMaterial();
-            forceItemPlayer.setPreviousMaterial(forceItemPlayer.currentMaterial());
-            forceItemPlayer.setCurrentMaterial(currentMaterial);
-            forceItemPlayer.setNextMaterial(nextMaterial);
-            forceItemPlayer.setLastItemAssignedAt(now);
         }
     }
 

@@ -3,6 +3,7 @@ package forceitembattle.manager;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.Dimension;
+import forceitembattle.model.GameContext;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GamePreset;
 import forceitembattle.service.FIBServiceClient;
@@ -23,6 +24,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.Setter;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -45,8 +47,9 @@ public class Gamemanager implements Manager {
     private static final Material JOKER_MATERIAL = Material.BARRIER;
     private final ForceItemBattle forceItemBattle;
     private final Map<UUID, ForceItemPlayer> forceItemPlayerMap;
-    public Map<UUID, Map<Integer, Map<Integer, ItemStack>>> savedInventory = new HashMap<>();
-    public Map<Team, Map<Integer, Map<Integer, ItemStack>>> savedInventoryTeam = new HashMap<>();
+    /** End-of-game result screens, keyed by player / by team. Paged: page → slot → stack. */
+    private final Map<UUID, Map<Integer, Map<Integer, ItemStack>>> savedInventory = new HashMap<>();
+    private final Map<Team, Map<Integer, Map<Integer, ItemStack>>> savedInventoryTeam = new HashMap<>();
     @Setter
     @Getter
     public GameState currentGameState;
@@ -243,6 +246,77 @@ public class Gamemanager implements Manager {
                 forceItemPlayer.setLastItemAssignedAt(now);
             });
         }
+    }
+
+    public void advanceMaterials(ForceItemPlayer forceItemPlayer, GameContext context) {
+        if (context.runMode()) {
+            advanceSeededMaterials(context);
+        } else {
+            advanceRandomMaterials(forceItemPlayer, context);
+        }
+    }
+
+    private void advanceSeededMaterials(GameContext context) {
+        Material nextMaterial = this.generateSeededMaterial();
+        long now = System.currentTimeMillis();
+
+        if (context.teamGame()) {
+            this.forceItemPlayerMap.values().forEach(player -> {
+                Team team = player.currentTeam();
+                team.setPreviousMaterial(team.getCurrentMaterial());
+                team.setCurrentMaterial(team.getNextMaterial());
+                team.setNextMaterial(nextMaterial);
+                team.setLastItemAssignedAt(now);
+            });
+        } else {
+            this.forceItemPlayerMap.values().forEach(player -> {
+                player.setPreviousMaterial(player.currentMaterial());
+                player.setCurrentMaterial(player.getNextMaterial());
+                player.setNextMaterial(nextMaterial);
+                player.setLastItemAssignedAt(now);
+            });
+        }
+    }
+
+    private void advanceRandomMaterials(ForceItemPlayer forceItemPlayer, GameContext context) {
+        Material nextMaterial = this.generateMaterial();
+        long now = System.currentTimeMillis();
+
+        if (context.teamGame()) {
+            Team team = forceItemPlayer.currentTeam();
+            team.setPreviousMaterial(team.getCurrentMaterial());
+            team.setCurrentMaterial(team.getNextMaterial());
+            team.setNextMaterial(nextMaterial);
+            team.setLastItemAssignedAt(now);
+        } else {
+            forceItemPlayer.setPreviousMaterial(forceItemPlayer.currentMaterial());
+            forceItemPlayer.setCurrentMaterial(forceItemPlayer.getNextMaterial());
+            forceItemPlayer.setNextMaterial(nextMaterial);
+            forceItemPlayer.setLastItemAssignedAt(now);
+        }
+    }
+
+    /** Stores the paged result screen for a finished player or team. */
+    public void saveResultPages(@Nullable ForceItemPlayer forceItemPlayer, @Nullable Team team,
+                                Map<Integer, Map<Integer, ItemStack>> pages) {
+        if (team != null) {
+            this.savedInventoryTeam.put(team, pages);
+        } else if (forceItemPlayer != null) {
+            this.savedInventory.put(forceItemPlayer.player().getUniqueId(), pages);
+        }
+    }
+
+    /** The stored result screen, or null if that player/team never finished a game. */
+    @Nullable
+    public Map<Integer, Map<Integer, ItemStack>> getResultPages(@Nullable ForceItemPlayer forceItemPlayer,
+                                                                @Nullable Team team) {
+        if (team != null) {
+            return this.savedInventoryTeam.get(team);
+        }
+        if (forceItemPlayer != null) {
+            return this.savedInventory.get(forceItemPlayer.player().getUniqueId());
+        }
+        return null;
     }
 
     public void forceSkipItem(Player player, boolean adminCommand) {
