@@ -38,6 +38,7 @@ import forceitembattle.listener.FoundItemListener;
 import forceitembattle.listener.GameRulesListener;
 import forceitembattle.listener.GuiListener;
 import forceitembattle.listener.ItemsListener;
+import forceitembattle.listener.JournalListener;
 import forceitembattle.listener.PlayerLifecycleListener;
 import forceitembattle.listener.PortalListener;
 import forceitembattle.listener.PreGameLockListener;
@@ -293,7 +294,8 @@ public final class ForceItemBattle extends JavaPlugin {
                 new TradeListener(this),
                 new VillagerTradeListener(this),
                 new GameRulesListener(this),
-                new GuiListener(this)
+                new GuiListener(this),
+                new JournalListener(this)
         );
 
     }

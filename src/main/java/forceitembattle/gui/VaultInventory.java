@@ -86,9 +86,7 @@ public class VaultInventory extends InventoryBuilder {
 
                         for (int i = 0; i < 9; i++) {
                             int itemIndex = (currentIndex + i) % itemList.size();
-                            setItem(18 + i, new ItemBuilder(itemList.get(itemIndex))
-                                    .setDisplayName(CustomMaterials.displayNameOf(itemList.get(itemIndex)))
-                                    .getItemStack());
+                            setItem(18 + i, CustomMaterials.itemStackOf(itemList.get(itemIndex)));
                         }
 
                         currentIndex = (currentIndex + 1) % itemList.size();

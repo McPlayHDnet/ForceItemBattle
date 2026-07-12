@@ -11,16 +11,19 @@ import org.apache.commons.lang3.text.WordUtils;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.Nullable;
 
 @Getter
 public enum CustomMaterials {
 
-    ANTIMATTER_LOCATOR(Material.KNOWLEDGE_BOOK, "antimatter_locator", "Antimatter Locator", "<dark_purple>", null),
-    TRIAL_LOCATOR(Material.WITHER_ROSE, "trial_locator", "Trial Locator", "<gold>", null),
-    SULFUR_LOCATOR(Material.MUSIC_DISC_CHIRP, "sulfur_locator", "Sulfur Locator", "<yellow>", null),
+    ANTIMATTER_LOCATOR(Material.KNOWLEDGE_BOOK, "antimatter_locator", "Antimatter Locator", "<dark_purple>", null, null),
+    TRIAL_LOCATOR(Material.WITHER_ROSE, "trial_locator", "Trial Locator", "<gold>", null, null),
+    SULFUR_LOCATOR(Material.MUSIC_DISC_CHIRP, "sulfur_locator", "Sulfur Locator", "<yellow>", null, null),
     WEATHERED_CAPTAINS_JOURNAL(Material.TORCHFLOWER, "journal_book", "Weathered Captain's Journal", null,
-            new NamespacedKey("fib", "items/weathered_captains_journal"));
+            new NamespacedKey("fib", "items/weathered_captains_journal"),
+            new NamespacedKey("fib", "journal"));
 
     private static final Map<Material, CustomMaterials> BY_MATERIAL = Arrays.stream(values())
             .collect(Collectors.toMap(CustomMaterials::getMaterial, Function.identity()));
@@ -32,7 +35,7 @@ public enum CustomMaterials {
     private final String itemName;
 
     /**
-     * MiniMessage colour used by {@link #displayName()}. Null when the datapack owns the name.
+     * MiniMessage colour used by {@link #displayName()}. Null when a loot table owns the name.
      */
     @Nullable
     private final String color;
@@ -44,23 +47,33 @@ public enum CustomMaterials {
     private final NamespacedKey itemLootTable;
 
     /**
-     * Resolved from {@link #itemLootTable} on enable. Never handed out directly — always cloned.
+     * PDC marker distinguishing the real item from a plain stack of the same material,
+     * or null when the material alone is enough.
+     */
+    @Nullable
+    private final NamespacedKey markerKey;
+
+    /**
+     * Resolved from {@link #itemLootTable} on enable by CustomItemManager.
+     * Never handed out directly — always cloned.
      */
     @Setter
     @Nullable
     private ItemStack prototype;
 
-    CustomMaterials(Material material, String id, String itemName, @Nullable String color, @Nullable NamespacedKey itemLootTable) {
+    CustomMaterials(Material material, String id, String itemName, @Nullable String color,
+                    @Nullable NamespacedKey itemLootTable, @Nullable NamespacedKey markerKey) {
         this.material = material;
         this.id = id;
         this.itemName = itemName;
         this.color = color;
         this.itemLootTable = itemLootTable;
+        this.markerKey = markerKey;
     }
 
     /**
      * MiniMessage name put on the ItemStack, e.g. {@code » Antimatter Locator}.
-     * Only meaningful for items the plugin names itself.
+     * Null for items whose name comes from their loot table.
      */
     @Nullable
     public String displayName() {
@@ -75,6 +88,21 @@ public enum CustomMaterials {
             return this.prototype.clone();
         }
         return new ItemBuilder(this.material).setDisplayName(this.displayName()).getItemStack();
+    }
+
+    /**
+     * Whether this stack is the real custom item. See the class doc on why this is
+     * material-only for some entries and marker-gated for others.
+     */
+    public boolean matches(@Nullable ItemStack itemStack) {
+        if (itemStack == null || itemStack.getType() != this.material) {
+            return false;
+        }
+        if (this.markerKey == null) {
+            return true;
+        }
+        ItemMeta itemMeta = itemStack.getItemMeta();
+        return itemMeta != null && itemMeta.getPersistentDataContainer().has(this.markerKey, PersistentDataType.BYTE);
     }
 
     /**
@@ -104,16 +132,6 @@ public enum CustomMaterials {
         return custom != null
                 ? custom.getItemName()
                 : WordUtils.capitalizeFully(material.name().replace("_", " "));
-    }
-
-    /**
-     * Coloured display name if the material is one of ours, null otherwise —
-     * {@code ItemBuilder#setDisplayName(null)} is a no-op, so the vanilla name survives.
-     */
-    @Nullable
-    public static String displayNameOf(Material material) {
-        CustomMaterials custom = byMaterial(material);
-        return custom != null ? custom.displayName() : null;
     }
 
     /**
