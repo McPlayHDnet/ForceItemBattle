@@ -180,7 +180,7 @@ public enum Achievements {
             new DeathCounterAchievementHandler(0)),
 
     CONNOISSEUR("Connoisseur", "Eat Cavendish",
-            new EatingAchievementHandler(1, new CustomItem(Material.ENCHANTED_GOLDEN_APPLE, "cavendish", null))),
+            new EatingAchievementHandler(1, CustomItem.ofModelData(Material.ENCHANTED_GOLDEN_APPLE, "cavendish"))),
 
     THANK_YOU("Thank you", "Trade with the wandering trader 10 times in one round",
             new TradingAchievementHandler(10)),
@@ -203,12 +203,12 @@ public enum Achievements {
     FIFTEEN_MULT("+15 Mult", "Find Gros Michel inside the Antimatter Depths",
             new LootAchievementHandler(1,
                     NamespacedKey.fromString("fib:antimatter_depths_treasure"),
-                    new CustomItem(Material.GOLDEN_APPLE, "gros_michel", null), false)),
+                    CustomItem.ofModelData(Material.GOLDEN_APPLE, "gros_michel"), false)),
 
     WILL_IT_BREAK("Will it break?", "Find Cavendish inside the Antimatter Depths",
             new LootAchievementHandler(1,
                     NamespacedKey.fromString("fib:antimatter_depths_treasure"),
-                    new CustomItem(Material.ENCHANTED_GOLDEN_APPLE, "cavendish", null), false)),
+                    CustomItem.ofModelData(Material.ENCHANTED_GOLDEN_APPLE, "cavendish"), false)),
 
     BELIEVER("Believer", "Find your currently needed item in a loot chest",
             new LootAchievementHandler(1, null, null, true)),
