@@ -3,6 +3,7 @@ package forceitembattle.commands.player;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.model.Locator;
+import forceitembattle.util.Prefix;
 import forceitembattle.util.Text;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,8 +14,6 @@ import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
 public class CommandFixLocate extends CustomCommand implements TabCompleter {
-
-    private static final String prefix = "<dark_gray>» <dark_purple>Locator <dark_gray>┃ ";
 
     public CommandFixLocate(ForceItemBattle plugin) {
         super(plugin, "fixlocate");
@@ -27,7 +26,7 @@ public class CommandFixLocate extends CustomCommand implements TabCompleter {
         Map<String, Locator> active = this.plugin.getLocatorManager().getActiveLocators(player);
 
         if (active.isEmpty()) {
-            player.sendMessage(Text.of(prefix + "<gray>You have no active locators."));
+            player.sendMessage(Text.of(Prefix.LOCATOR + "<gray>You have no active locators."));
             return;
         }
 
@@ -37,7 +36,7 @@ public class CommandFixLocate extends CustomCommand implements TabCompleter {
 
             if (query.equalsIgnoreCase("all")) {
                 int dismissed = this.plugin.getLocatorManager().dismissAll(player);
-                player.sendMessage(Text.of(prefix + "<gray>Dismissed <dark_aqua>" + dismissed + " <gray>locator" + (dismissed == 1 ? "" : "s") + "."));
+                player.sendMessage(Text.of(Prefix.LOCATOR + "<gray>Dismissed <dark_aqua>" + dismissed + " <gray>locator" + (dismissed == 1 ? "" : "s") + "."));
                 return;
             }
 
@@ -45,12 +44,12 @@ public class CommandFixLocate extends CustomCommand implements TabCompleter {
                 Locator locator = entry.getValue();
                 if (query.equalsIgnoreCase(entry.getKey()) || query.equalsIgnoreCase(locator.getStructureName())) {
                     this.plugin.getLocatorManager().dismiss(player, entry.getKey());
-                    player.sendMessage(Text.of(prefix + "<gray>Dismissed <dark_aqua>" + locator.getStructureName() + "<gray>."));
+                    player.sendMessage(Text.of(Prefix.LOCATOR + "<gray>Dismissed <dark_aqua>" + locator.getStructureName() + "<gray>."));
                     return;
                 }
             }
 
-            player.sendMessage(Text.of(prefix + "<red>You have no active <dark_aqua>" + query + " <red>locator."));
+            player.sendMessage(Text.of(Prefix.LOCATOR + "<red>You have no active <dark_aqua>" + query + " <red>locator."));
             this.sendPicker(player, active);
             return;
         }
@@ -59,7 +58,7 @@ public class CommandFixLocate extends CustomCommand implements TabCompleter {
         if (active.size() == 1) {
             Map.Entry<String, Locator> only = active.entrySet().iterator().next();
             this.plugin.getLocatorManager().dismiss(player, only.getKey());
-            player.sendMessage(Text.of(prefix + "<gray>Dismissed <dark_aqua>" + only.getValue().getStructureName() + "<gray>."));
+            player.sendMessage(Text.of(Prefix.LOCATOR + "<gray>Dismissed <dark_aqua>" + only.getValue().getStructureName() + "<gray>."));
             return;
         }
 
@@ -67,7 +66,7 @@ public class CommandFixLocate extends CustomCommand implements TabCompleter {
     }
 
     private void sendPicker(Player player, Map<String, Locator> active) {
-        player.sendMessage(Text.of(prefix + "<gray>You have <dark_aqua>" + active.size() + " <gray>active locators — pick which to dismiss:"));
+        player.sendMessage(Text.of(Prefix.LOCATOR + "<gray>You have <dark_aqua>" + active.size() + " <gray>active locators — pick which to dismiss:"));
 
         for (Map.Entry<String, Locator> entry : active.entrySet()) {
             Locator locator = entry.getValue();

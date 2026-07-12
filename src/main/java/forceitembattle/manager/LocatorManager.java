@@ -6,6 +6,8 @@ import forceitembattle.model.Dimension;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.Locator;
 import forceitembattle.util.BiomeSearch;
+import forceitembattle.util.LocationFormat;
+import forceitembattle.util.Prefix;
 import forceitembattle.util.Text;
 import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;
@@ -28,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 public class LocatorManager implements Manager {
 
-    private static final String prefix = "<dark_gray>» <dark_purple>Locator <dark_gray>┃ ";
     private static final int STRUCTURE_SEARCH_RADIUS = 20;  // chunks
 
     private final ForceItemBattle plugin;
@@ -71,7 +72,7 @@ public class LocatorManager implements Manager {
         Player player = forceItemPlayer.player();
 
         if (!Dimension.isOverworld(player)) {
-            player.sendMessage(Text.of(prefix + "<red>There is no <dark_aqua>" + locator.getStructureName()
+            player.sendMessage(Text.of(Prefix.LOCATOR + "<red>There is no <dark_aqua>" + locator.getStructureName()
                     + " <red>in the " + Dimension.of(player).coloredName() + "<red>."));
             return;
         }
@@ -95,7 +96,7 @@ public class LocatorManager implements Manager {
                 .get(this.getNamespacedKey(locator.getStructureId()));
 
         if (structure == null) {
-            player.sendMessage(Text.of(prefix + "<dark_aqua>" + locator.getStructureId() + " <red>is not loaded or could not be found, Fire fix!"));
+            player.sendMessage(Text.of(Prefix.LOCATOR + "<dark_aqua>" + locator.getStructureId() + " <red>is not loaded or could not be found, Fire fix!"));
             return null;
         }
 
@@ -107,7 +108,7 @@ public class LocatorManager implements Manager {
         );
 
         if (result == null) {
-            player.sendMessage(Text.of(prefix + "<dark_aqua>" + locator.getStructureName() + " <red>could not be found."));
+            player.sendMessage(Text.of(Prefix.LOCATOR + "<dark_aqua>" + locator.getStructureName() + " <red>could not be found."));
             return null;
         }
 
@@ -119,14 +120,14 @@ public class LocatorManager implements Manager {
         Biome biome = BiomeSearch.resolve(this.getNamespacedKey(locator.getStructureId()));
 
         if (biome == null) {
-            player.sendMessage(Text.of(prefix + "<dark_aqua>" + locator.getStructureId() + " <red>is not loaded or could not be found, Fire fix!"));
+            player.sendMessage(Text.of(Prefix.LOCATOR + "<dark_aqua>" + locator.getStructureId() + " <red>is not loaded or could not be found, Fire fix!"));
             return null;
         }
 
         Location targetLocation = BiomeSearch.nearest(player.getLocation(), biome);
 
         if (targetLocation == null) {
-            player.sendMessage(Text.of(prefix + "<dark_aqua>" + locator.getStructureName() + " <red>could not be found nearby."));
+            player.sendMessage(Text.of(Prefix.LOCATOR + "<dark_aqua>" + locator.getStructureName() + " <red>could not be found nearby."));
             return null;
         }
 
@@ -141,7 +142,9 @@ public class LocatorManager implements Manager {
         }
 
         this.plugin.getPositionManager().playParticleLine(player, targetLocation, Color.PURPLE);
-        player.sendMessage(Text.of(prefix + "<dark_aqua>" + locator.getStructureName() + " <gray>located at " + locationToString(targetLocation) + distance(player.getLocation(), targetLocation)));
+        player.sendMessage(Text.of(Prefix.LOCATOR + "<dark_aqua>" + locator.getStructureName() + " <gray>located at "
+                + LocationFormat.xz(targetLocation)
+                + LocationFormat.distance(player.getLocation(), targetLocation)));
         this.locatedStructures.put(locator.getStructureId(), targetLocation);
     }
 
@@ -156,7 +159,9 @@ public class LocatorManager implements Manager {
         BukkitRunnable task = new BukkitRunnable() {
             @Override
             public void run() {
-                String bossBarTitle = "<gradient:#B314A8:#E775C3><b>" + locator.getStructureName() + " <reset><dark_gray>» " + locationToString(targetLocation) + distance(player.getLocation(), targetLocation);
+                String bossBarTitle = "<gradient:#B314A8:#E775C3><b>" + locator.getStructureName() + " <reset><dark_gray>» "
+                        + LocationFormat.xz(targetLocation)
+                        + LocationFormat.distance(player.getLocation(), targetLocation);
                 bar.name(Text.of(bossBarTitle));
                 player.showBossBar(bar);
                 LocatorManager.this.plugin.getPositionManager().playParticleLine(player, targetLocation, Color.PURPLE);
@@ -250,23 +255,6 @@ public class LocatorManager implements Manager {
 
     private NamespacedKey getNamespacedKey(String structureId) {
         return structureId.contains("fib:") ? NamespacedKey.fromString(structureId) : NamespacedKey.minecraft(structureId);
-    }
-
-    private String locationToString(Location location) {
-        if (location.getWorld() == null) {
-            return "<red>unknown location";
-        }
-
-        return "<dark_aqua>" + location.getBlockX() + "<gray>, <dark_aqua>?<gray>, <dark_aqua>" + location.getBlockZ();
-    }
-
-    private String distance(Location playerLocation, Location destination) {
-        if (playerLocation.getWorld() == null || destination.getWorld() == null
-                || playerLocation.getWorld() != destination.getWorld()) {
-            return " <red>(unknown)";
-        }
-
-        return " <green>(" + (int) playerLocation.distance(destination) + " blocks away)";
     }
 
     private boolean isAlreadyRevealed(String structureId, Location location) {

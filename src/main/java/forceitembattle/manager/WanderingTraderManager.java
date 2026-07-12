@@ -3,6 +3,8 @@ package forceitembattle.manager;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.gui.ItemBuilder;
 import forceitembattle.model.Dimension;
+import forceitembattle.util.LocationFormat;
+import forceitembattle.util.Prefix;
 import forceitembattle.util.Text;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.CustomModelData;
@@ -112,7 +114,9 @@ public class WanderingTraderManager implements Manager {
         this.plugin.getGamemanager().forceItemPlayerMap().values().forEach(players -> {
             this.canBuyWheel.put(players.player().getUniqueId(), Boolean.TRUE);
 
-            players.player().sendMessage(Text.of("<dark_gray>» <gold>Position <dark_gray>┃ <gray>The <green>Wandering Trader <gray>just spawned at <dark_aqua>" + (int) traderLocation.getX() + "<gray>, <dark_aqua>" + (int) traderLocation.getY() + "<gray>, <dark_aqua>" + (int) traderLocation.getZ() + this.distance(players.player().getLocation(), traderLocation)));
+            players.player().sendMessage(Text.of(Prefix.POSITION + "<gray>The <green>Wandering Trader <gray>just spawned at "
+                    + LocationFormat.xyz(traderLocation)
+                    + LocationFormat.distance(players.player().getLocation(), traderLocation)));
             this.plugin.getPositionManager().playParticleLine(players.player(), traderLocation, Color.LIME);
         });
 
@@ -127,26 +131,13 @@ public class WanderingTraderManager implements Manager {
                     traderActive = false;
                     wanderingTrader.remove();
                     cancel();
-                    Bukkit.broadcast(Text.of("<dark_gray>» <gold>Position <dark_gray>┃ <gray>The <green>Wandering Trader <gray>just despawned! :("));
+                    Bukkit.broadcast(Text.of(Prefix.POSITION + "<gray>The <green>Wandering Trader <gray>just despawned! :("));
                     return;
                 }
 
                 traderTimer--;
             }
         }.runTaskTimer(this.plugin, 0L, 20L);
-    }
-
-    private String distance(Location playerLocation, Location destination) {
-        if (playerLocation.getWorld() == null || destination.getWorld() == null) {
-            return " <red>(unknown)";
-        }
-
-        if (!playerLocation.getWorld().equals(destination.getWorld())) {
-            return " <gray>in the " + Dimension.of(destination.getWorld()).coloredName();
-        }
-
-
-        return " <green>(" + (int) playerLocation.distance(destination) + " blocks away)";
     }
 
     private Location getRandomLocationWithinSpawnChunks(Location location, int chunkRadius) {
@@ -161,6 +152,5 @@ public class WanderingTraderManager implements Manager {
         double newY = world.getHighestBlockYAt((int) newX, (int) newZ);
 
         return new Location(world, newX, newY, newZ);
-
     }
 }

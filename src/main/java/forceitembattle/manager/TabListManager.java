@@ -3,11 +3,11 @@ package forceitembattle.manager;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.ItemDifficultiesManager.State;
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.util.LocationFormat;
 import forceitembattle.util.Text;
 import java.util.List;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 /**
@@ -100,15 +100,8 @@ public class TabListManager implements Manager {
             return "";
         }
         return "\n\n<green><b>Wandering Trader</b>\n"
-                + locationToString(trader.getTraderLocation()) + "\n"
+                + LocationFormat.xyz(trader.getTraderLocation()) + "\n"
                 + formatColoredTime(trader.getTraderTimer()) + "\n";
-    }
-
-    private String locationToString(Location location) {
-        if (location.getWorld() == null) {
-            return "<red>unknown location";
-        }
-        return "<dark_aqua>" + location.getBlockX() + "<gray>, <dark_aqua>" + location.getBlockY() + "<gray>, <dark_aqua>" + location.getBlockZ();
     }
 
     private String formatColoredTime(int remainingSeconds) {
