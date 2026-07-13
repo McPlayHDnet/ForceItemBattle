@@ -248,7 +248,7 @@ public enum Achievements {
     WHEEL_ADDICT("Wheel Addict", "Use the Wheel of Fortune 500 times",
             new GlobalRule(GlobalStat.WHEEL_OF_FORTUNE_USES, 500)),
 
-    GAMBA_GAMBA_GAMA("Gamba Gamba Gama", "Use the Wheel of Fortune 1000 times",
+    GAMBA_GAMBA_GAMA("Gamba Gamba Gamba", "Use the Wheel of Fortune 1000 times",
             new GlobalRule(GlobalStat.WHEEL_OF_FORTUNE_USES, 1000)),
 
     FREQUENT_FLYER("Frequent Flyer", "Use the Antimatter Teleporter 100 times",
@@ -289,8 +289,8 @@ public enum Achievements {
     STUFF_OF_LEGENDS("The Stuff of Legends", "Get 50 legendary back-to-backs",
             new GlobalRule(GlobalStat.LEGENDARY_BACK_TO_BACKS, 50)),
 
-    BLESSED_BY_RNGESUS("Blessed by RNGesus", "Get 10 RNGesus back-to-backs",
-            new GlobalRule(GlobalStat.RNGESUS_BACK_TO_BACKS, 10)),
+    BLESSED_BY_RNGESUS("Blessed by RNGesus", "Get 2 RNGesus back-to-backs",
+            new GlobalRule(GlobalStat.RNGESUS_BACK_TO_BACKS, 2)),
 
     FEELS_FAMILIAR("Feels Familiar", "Get 5 extraordinary back-to-backs",
             new GlobalRule(GlobalStat.EXTRAORDINARY_BACK_TO_BACKS, 5)),
