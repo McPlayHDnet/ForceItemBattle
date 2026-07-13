@@ -1,12 +1,13 @@
 package forceitembattle.achievements;
 
+import forceitembattle.achievements.global.GlobalRule;
+import forceitembattle.achievements.global.GlobalStat;
 import forceitembattle.achievements.handlers.AchievementHandler;
 import forceitembattle.achievements.handlers.AntimatterTeleporterUsesAchievementHandler;
 import forceitembattle.achievements.handlers.BackToBackAchievementHandler;
 import forceitembattle.achievements.handlers.BackToBackCountAchievementHandler;
 import forceitembattle.achievements.handlers.BeehiveAchievementHandler;
 import forceitembattle.achievements.handlers.CollectionAchievementHandler;
-import forceitembattle.achievements.handlers.CompletionistAchievementHandler;
 import forceitembattle.achievements.handlers.ConsecutiveStoneAchievementHandler;
 import forceitembattle.achievements.handlers.CounterAchievementHandler;
 import forceitembattle.achievements.handlers.DeathCounterAchievementHandler;
@@ -213,17 +214,83 @@ public enum Achievements {
     BELIEVER("Believer", "Find your currently needed item in a loot chest",
             new LootAchievementHandler(1, null, null, true)),
 
+    // GLOBAL achievements
+    FIRST_OF_MANY("First of Many", "Play 10 games",
+            new GlobalRule(GlobalStat.GAMES_PLAYED, 10)),
+
+    SEASONED_VETERAN("Seasoned Veteran", "Play 50 games",
+            new GlobalRule(GlobalStat.GAMES_PLAYED, 50)),
+
+    TASTE_OF_VICTORY("Taste of Victory", "Win 5 games",
+            new GlobalRule(GlobalStat.GAMES_WON, 5)),
+
+    HALL_OF_FAME("Hall of Fame", "Win 25 games",
+            new GlobalRule(GlobalStat.GAMES_WON, 25)),
+
+    STOCKPILE("Stockpile", "Collect 1000 items across all games",
+            new GlobalRule(GlobalStat.TOTAL_ITEMS, 1000)),
+
+    WAREHOUSE("Warehouse", "Collect 5000 items across all games",
+            new GlobalRule(GlobalStat.TOTAL_ITEMS, 5000)),
+
+    FORTUNE_FAVOURS("Fortune Favours", "Get 100 back-to-backs across all games",
+            new GlobalRule(GlobalStat.BACK_TO_BACKS, 100)),
+
+    PROBABILITY_BROKEN("Probability, Broken", "Get 250 back-to-backs across all games",
+            new GlobalRule(GlobalStat.BACK_TO_BACKS, 250)),
+
     // META achievement
-    COMPLETIONIST("Completionist++", "Complete all achievements",
-            new CompletionistAchievementHandler());
+    COMPLETIONIST("Completionist+", "Complete every round achievement",
+            new CompletionistRule(AchievementScope.ROUND)),
+
+    COMPLETIONIST_PLUS_PLUS("Completionist++", "Complete every round and global achievement",
+            new CompletionistRule(AchievementScope.ROUND, AchievementScope.GLOBAL));
 
     private final String title;
     private final String description;
+    private final AchievementScope scope;
+    /** ROUND only. */
     private final AchievementHandler<?> handler;
+    /** GLOBAL only. */
+    private final GlobalRule globalRule;
+    /** META only. */
+    private final CompletionistRule completionistRule;
 
     Achievements(String title, String description, AchievementHandler<?> handler) {
+        this(title, description, AchievementScope.ROUND, handler, null, null);
+    }
+
+    Achievements(String title, String description, GlobalRule globalRule) {
+        this(title, description, AchievementScope.GLOBAL, null, globalRule, null);
+    }
+
+    Achievements(String title, String description, CompletionistRule completionistRule) {
+        this(title, description, AchievementScope.META, null, null, completionistRule);
+    }
+
+    Achievements(String title, String description, AchievementScope scope, AchievementHandler<?> handler,
+                 GlobalRule globalRule, CompletionistRule completionistRule) {
+        int carriers = (handler != null ? 1 : 0) + (globalRule != null ? 1 : 0) + (completionistRule != null ? 1 : 0);
+        boolean matchesScope = switch (scope) {
+            case ROUND -> handler != null;
+            case GLOBAL -> globalRule != null;
+            case META -> completionistRule != null;
+        };
+        if (carriers != 1 || !matchesScope) {
+            throw new IllegalArgumentException(
+                    scope + " achievement '" + title + "' must carry exactly its own rule/handler");
+        }
+
         this.title = title;
         this.description = description;
+        this.scope = scope;
         this.handler = handler;
+        this.globalRule = globalRule;
+        this.completionistRule = completionistRule;
+    }
+
+    public boolean isGlobal() {
+        return scope == AchievementScope.GLOBAL;
     }
 }
+

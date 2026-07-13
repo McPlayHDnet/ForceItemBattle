@@ -441,6 +441,14 @@ public class Gamemanager implements Manager {
                         "Failed to finish round for " + player.getName() + ": " + exception.getMessage());
             }
         });
+        if (statsEnabled) {
+            for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+                ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(onlinePlayer.getUniqueId());
+                if (forceItemPlayer != null && !forceItemPlayer.isSpectator()) {
+                    this.forceItemBattle.getAchievementManager().evaluateGlobalAchievements(onlinePlayer);
+                }
+            }
+        }
     }
 
     public String placeColor(int place) {

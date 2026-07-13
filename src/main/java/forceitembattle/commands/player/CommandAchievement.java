@@ -1,7 +1,8 @@
 package forceitembattle.commands.player;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.gui.AchievementInventory;
+import forceitembattle.achievements.global.GlobalStat;
+import forceitembattle.gui.AchievementCategoryInventory;
 import forceitembattle.achievements.Achievements;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
@@ -37,6 +38,7 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
             case "revoke" -> requireOp(player, () -> handleRevokeCommand(player, args));
             case "reset" -> requireOp(player, () -> handleResetCommand(player, args));
             case "progress" -> handleProgressCommand(player, args);
+            case "global" -> handleGlobalCommand(player, args);
             default -> player.sendMessage(Text.of(
                     "<red>Unknown subcommand. Use: list, grant, revoke, reset, or progress"));
         }
@@ -69,7 +71,35 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
             if (!player.isOnline()) {
                 return;
             }
-            new AchievementInventory(this.plugin, name, targetUUID).open(player);
+            new AchievementCategoryInventory(this.plugin, name, targetUUID).open(player);
+        });
+    }
+
+    private void handleGlobalCommand(Player player, String[] args) {
+        UUID targetUuid;
+        String targetName;
+
+        if (args.length == 1) {
+            targetUuid = player.getUniqueId();
+            targetName = player.getName();
+        } else {
+            OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
+            targetUuid = target.getUniqueId();
+            targetName = target.getName() != null ? target.getName() : args[1];
+        }
+
+        this.plugin.getAchievementManager().getGlobalStatsLoader().load(targetUuid, stats -> {
+            if (!player.isOnline()) {
+                return;
+            }
+            player.sendMessage(" ");
+            player.sendMessage(Text.of("<dark_gray>» <gold><b>Global Stats</b> <dark_gray>● <green>" + targetName + " <dark_gray>«"));
+            player.sendMessage(" ");
+            for (GlobalStat stat : GlobalStat.values()) {
+                player.sendMessage(Text.of("  <dark_gray>● <gray>" + stat.getLabel()
+                        + " <dark_gray>» <dark_aqua>" + stats.get(stat)));
+            }
+            player.sendMessage(" ");
         });
     }
 

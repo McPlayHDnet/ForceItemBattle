@@ -2,8 +2,10 @@ package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.AchievementMode;
+import forceitembattle.achievements.AchievementScope;
 import forceitembattle.achievements.AchievementStorage;
 import forceitembattle.achievements.Achievements;
+import forceitembattle.achievements.global.GlobalStatsLoader;
 import forceitembattle.achievements.Trigger;
 import forceitembattle.achievements.handlers.AchievementHandler;
 import forceitembattle.achievements.progress.AchievementProgressTracker;
@@ -11,6 +13,7 @@ import forceitembattle.achievements.progress.BackToBackAchievementProgress;
 import forceitembattle.achievements.handlers.CollectionAchievementHandler;
 import forceitembattle.achievements.progress.CollectionAchievementProgress;
 import forceitembattle.achievements.handlers.ConsecutiveStoneAchievementHandler;
+import forceitembattle.achievements.progress.ConsecutiveStoneAchievementProgress;
 import forceitembattle.achievements.progress.CounterAchievementProgress;
 import forceitembattle.achievements.progress.ItemFrequencyAchievementProgress;
 import forceitembattle.achievements.progress.SimpleAchievementProgress;
@@ -29,6 +32,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -39,6 +43,8 @@ public class AchievementManager implements Manager {
     private final Map<UUID, Map<Achievements, AchievementProgressTracker>> playerProgress = new HashMap<>();
     private final Map<Team, Map<Achievements, AchievementProgressTracker>> teamProgress = new HashMap<>();
     private final AchievementStorage storage;
+    @Getter
+    private final GlobalStatsLoader globalStatsLoader;
 
     // OPTIMIZATION: Pre-built map of achievements by trigger
     private final Map<Trigger, List<Achievements>> achievementsByTrigger;
@@ -46,6 +52,7 @@ public class AchievementManager implements Manager {
     public AchievementManager(ForceItemBattle plugin) {
         this.plugin = plugin;
         this.storage = new AchievementStorage(plugin);
+        this.globalStatsLoader = new GlobalStatsLoader(plugin);
         this.achievementsByTrigger = buildTriggerMap();
     }
 
@@ -57,6 +64,11 @@ public class AchievementManager implements Manager {
         }
 
         for (Achievements achievement : Achievements.values()) {
+            // Only ROUND achievements are handler-driven. GLOBAL is evaluated against persisted
+            // stats; META is evaluated after every unlock. Neither has a trigger.
+            if (achievement.getScope() != AchievementScope.ROUND) {
+                continue;
+            }
             Trigger trigger = achievement.getHandler().getTrigger();
             map.get(trigger).add(achievement);
         }
@@ -145,6 +157,7 @@ public class AchievementManager implements Manager {
         // Grant to the triggering player.
         if (!storage.hasAchievement(player.getUniqueId(), achievement)) {
             writeUnlock(player.getUniqueId(), player, achievement, team, teamGame);
+            checkMetaTiers(player.getUniqueId(), player, team, teamGame);
         }
 
         // Team-eligible achievements are also granted to the rest of the team.
@@ -161,8 +174,82 @@ public class AchievementManager implements Manager {
                     continue;
                 }
                 writeUnlock(memberUuid, teamMember.player(), achievement, team, teamGame);
+                checkMetaTiers(memberUuid, teamMember.player(), team, teamGame);
             }
         }
+    }
+
+    /** Convenience for unlocks with no game context (e.g. a GLOBAL unlock at join). */
+    public void checkMetaTiers(UUID playerUuid, Player player) {
+        checkMetaTiers(playerUuid, player, null, false);
+    }
+
+    public void checkMetaTiers(UUID playerUuid, Player player, Team team, boolean teamGame) {
+        boolean grantedAny = true;
+
+        while (grantedAny) {
+            grantedAny = false;
+
+            for (Achievements achievement : Achievements.values()) {
+                if (achievement.getScope() != AchievementScope.META) {
+                    continue;
+                }
+                if (storage.hasAchievement(playerUuid, achievement)) {
+                    continue;
+                }
+                if (!achievement.getCompletionistRule().isMet(plugin, playerUuid)) {
+                    continue;
+                }
+
+                writeUnlock(playerUuid, player, achievement, team, teamGame);
+                grantedAny = true;
+            }
+        }
+    }
+
+    public void evaluateGlobalAchievements(Player player) {
+        if (!plugin.getSettings().isSettingEnabled(GameSetting.ACHIEVEMENTS)) {
+            return;
+        }
+
+        UUID uuid = player.getUniqueId();
+
+        // The cache is what de-dups unlocks; without it we'd re-grant (and re-announce) every time.
+        if (!storage.isLoaded(uuid)) {
+            return;
+        }
+
+        boolean anyOutstanding = false;
+        for (Achievements achievement : Achievements.values()) {
+            if (achievement.isGlobal() && !storage.hasAchievement(uuid, achievement)) {
+                anyOutstanding = true;
+                break;
+            }
+        }
+        if (!anyOutstanding) {
+            return;
+        }
+
+        globalStatsLoader.load(uuid, stats -> {
+            if (!player.isOnline()) {
+                return;
+            }
+
+            for (Achievements achievement : Achievements.values()) {
+                if (!achievement.isGlobal() || storage.hasAchievement(uuid, achievement)) {
+                    continue;
+                }
+                if (!stats.isMet(achievement.getGlobalRule())) {
+                    continue;
+                }
+                // Always recorded SOLO with no teammate. A GLOBAL stat spans both modes, so the
+                // mode of the unlock is meaningless — and recording it as TEAM at game-end but
+                // SOLO at join would make the same achievement's mode depend on where it fired.
+                writeUnlock(uuid, player, achievement, null, false);
+            }
+
+            checkMetaTiers(uuid, player);
+        });
     }
 
     /**
@@ -357,7 +444,7 @@ public class AchievementManager implements Manager {
         if (tracker instanceof BackToBackAchievementProgress backToBack) {
             return "backToBack=" + backToBack.b2bCount;
         }
-        if (tracker instanceof ConsecutiveStoneAchievementHandler.AchievementProgress stone) {
+        if (tracker instanceof ConsecutiveStoneAchievementProgress stone) {
             return "consecutiveStone=" + stone.consecutiveCount;
         }
         if (tracker instanceof SimpleAchievementProgress simple) {

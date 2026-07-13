@@ -2,14 +2,14 @@ package forceitembattle.achievements.handlers;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.Trigger;
-import forceitembattle.achievements.progress.AchievementProgressTracker;
+import forceitembattle.achievements.progress.ConsecutiveStoneAchievementProgress;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.MaterialCategory;
 import org.bukkit.Material;
 import org.bukkit.event.Event;
 
-public class ConsecutiveStoneAchievementHandler implements AchievementHandler<ConsecutiveStoneAchievementHandler.AchievementProgress> {
+public class ConsecutiveStoneAchievementHandler implements AchievementHandler<ConsecutiveStoneAchievementProgress> {
 
     private final int targetAmount;
 
@@ -23,7 +23,7 @@ public class ConsecutiveStoneAchievementHandler implements AchievementHandler<Co
     }
 
     @Override
-    public boolean check(Event event, AchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin) {
+    public boolean check(Event event, ConsecutiveStoneAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin) {
         if (!(event instanceof FoundItemEvent foundEvent)) {
             return false;
         }
@@ -45,11 +45,7 @@ public class ConsecutiveStoneAchievementHandler implements AchievementHandler<Co
     }
 
     @Override
-    public AchievementProgress createProgress() {
-        return new AchievementProgress();
-    }
-
-    public static class AchievementProgress implements AchievementProgressTracker {
-        public int consecutiveCount = 0;
+    public ConsecutiveStoneAchievementProgress createProgress() {
+        return new ConsecutiveStoneAchievementProgress();
     }
 }
