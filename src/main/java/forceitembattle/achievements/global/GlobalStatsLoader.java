@@ -1,5 +1,6 @@
 package forceitembattle.achievements.global;
 
+import de.threeseconds.openapi.fibservice.client.model.FibPlayerStatsDto;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.model.StatsView;
 import forceitembattle.service.FibStatisticsClient;
@@ -22,6 +23,8 @@ public class GlobalStatsLoader {
 
         AtomicReference<StatsView> solo = new AtomicReference<>();
         AtomicReference<StatsView> team = new AtomicReference<>();
+        AtomicReference<FibPlayerStatsDto> player = new AtomicReference<>();
+        AtomicBoolean playerDone = new AtomicBoolean();
         AtomicBoolean soloDone = new AtomicBoolean();
         AtomicBoolean teamDone = new AtomicBoolean();
         AtomicBoolean delivered = new AtomicBoolean();
@@ -33,7 +36,7 @@ public class GlobalStatsLoader {
             if (!delivered.compareAndSet(false, true)) {
                 return;
             }
-            GlobalStats stats = GlobalStats.of(solo.get(), team.get());
+            GlobalStats stats = GlobalStats.of(new GlobalStatSources(solo.get(), team.get(), player.get()));
             Bukkit.getScheduler().runTask(this.plugin, () -> onLoaded.accept(stats));
         };
 
@@ -56,6 +59,17 @@ public class GlobalStatsLoader {
                 },
                 error -> {
                     teamDone.set(true);
+                    maybeDeliver.run();
+                });
+
+        statistics.getPlayerStatsAsync(playerUuid,
+                stats -> {
+                    player.set(stats);
+                    playerDone.set(true);
+                    maybeDeliver.run();
+                },
+                error -> {
+                    playerDone.set(true);
                     maybeDeliver.run();
                 });
     }

@@ -69,7 +69,7 @@ public class AchievementCategoryInventory extends InventoryBuilder {
                             .setLore(lore)
                             .getItemStack(),
                     inventoryClickEvent -> {
-                        this.getPlayer().playSound(this.getPlayer(), Sound.UI_BUTTON_CLICK, 1, 1);
+                        this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
                         new AchievementInventory(this.plugin, this.playerName, this.playerUUID, scope)
                                 .open(this.getPlayer());
                     });

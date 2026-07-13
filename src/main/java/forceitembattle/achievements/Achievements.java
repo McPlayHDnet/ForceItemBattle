@@ -239,6 +239,62 @@ public enum Achievements {
     PROBABILITY_BROKEN("Probability, Broken", "Get 250 back-to-backs across all games",
             new GlobalRule(GlobalStat.BACK_TO_BACKS, 250)),
 
+    BACK_TO_BACK_TO_BACK_TO_BACK("Back to Back to Back to Back to Back", "Get 1000 back-to-backs across all games",
+            new GlobalRule(GlobalStat.BACK_TO_BACKS, 1000)),
+
+    WHEEL_ENTHUSIAST("Wheel Enthusiast", "Use the Wheel of Fortune 250 times",
+            new GlobalRule(GlobalStat.WHEEL_OF_FORTUNE_USES, 250)),
+
+    WHEEL_ADDICT("Wheel Addict", "Use the Wheel of Fortune 500 times",
+            new GlobalRule(GlobalStat.WHEEL_OF_FORTUNE_USES, 500)),
+
+    GAMBA_GAMBA_GAMA("Gamba Gamba Gama", "Use the Wheel of Fortune 1000 times",
+            new GlobalRule(GlobalStat.WHEEL_OF_FORTUNE_USES, 1000)),
+
+    FREQUENT_FLYER("Frequent Flyer", "Use the Antimatter Teleporter 100 times",
+            new GlobalRule(GlobalStat.ANTIMATTER_TELEPORTS, 100)),
+
+    QUANTUM_COMMUTER("Quantum Commuter", "Use the Antimatter Teleporter 250 times",
+            new GlobalRule(GlobalStat.ANTIMATTER_TELEPORTS, 250)),
+
+    LEARNING_EXPERIENCE("Learning Experience", "Die 50 times",
+            new GlobalRule(GlobalStat.DEATHS, 50)),
+
+    BETTER_LUCK_NEXT_TIME("Better Luck Next Time", "Die 250 times",
+            new GlobalRule(GlobalStat.DEATHS, 250)),
+
+    ARE_YOU_EVEN_TRYING("Are You Even Trying?", "Die 500 times",
+            new GlobalRule(GlobalStat.DEATHS, 500)),
+
+    GLOBETROTTER("Globetrotter", "Travel 50000 blocks",
+            new GlobalRule(GlobalStat.BLOCKS_TRAVELLED, 50_000)),
+
+    MARATHON_RUNNER("Marathon Runner", "Travel 250000 blocks",
+            new GlobalRule(GlobalStat.BLOCKS_TRAVELLED, 250_000)),
+
+    HAT_TRICK("Hat Trick", "Win 3 games in a row",
+            new GlobalRule(GlobalStat.HIGHEST_WIN_STREAK, 3)),
+
+    UNSTOPPABLE("Unstoppable", "Win 5 games in a row",
+            new GlobalRule(GlobalStat.HIGHEST_WIN_STREAK, 5)),
+
+    // Per-rarity back-to-backs. Deliberately kept alongside the total-count achievements
+    // rather than replacing them: the totals reward volume, these reward luck.
+    NOTHING_SPECIAL("Nothing Special", "Get 250 rare back-to-backs",
+            new GlobalRule(GlobalStat.RARE_BACK_TO_BACKS, 250)),
+
+    PURPLE_REIGN("Purple Reign", "Get 100 epic back-to-backs",
+            new GlobalRule(GlobalStat.EPIC_BACK_TO_BACKS, 100)),
+
+    STUFF_OF_LEGENDS("The Stuff of Legends", "Get 50 legendary back-to-backs",
+            new GlobalRule(GlobalStat.LEGENDARY_BACK_TO_BACKS, 50)),
+
+    BLESSED_BY_RNGESUS("Blessed by RNGesus", "Get 10 RNGesus back-to-backs",
+            new GlobalRule(GlobalStat.RNGESUS_BACK_TO_BACKS, 10)),
+
+    FEELS_FAMILIAR("Feels Familiar", "Get 5 extraordinary back-to-backs",
+            new GlobalRule(GlobalStat.EXTRAORDINARY_BACK_TO_BACKS, 5)),
+
     // META achievement
     COMPLETIONIST("Completionist+", "Complete every round achievement",
             new CompletionistRule(AchievementScope.ROUND)),

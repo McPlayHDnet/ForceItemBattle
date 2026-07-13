@@ -1,5 +1,6 @@
 package forceitembattle.manager;
 
+import de.threeseconds.openapi.fibservice.client.model.FibPlayerStatsUpdateRequestDto;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.Dimension;
@@ -387,27 +388,30 @@ public class Gamemanager implements Manager {
                 if (player.isOp()) {
                     player.sendMessage(ChatColor.RED + "Use /result to see the results from every player");
                 }
-                
+
                 if (statsEnabled && forceItemPlayer != null && !forceItemPlayer.isSpectator()) {
                     FibStatisticsClient helper = this.forceItemBattle.getFibService().statistics();
                     long distance = (long) this.calculateDistance(forceItemPlayer.player());
+                    Team currentTeam = forceItemPlayer.currentTeam();
 
-                    if (forceItemPlayer.currentTeam() == null) {
+                    // Hoisted: the solo branch, the team branch and the win-streak write all need it.
+                    boolean won = currentTeam == null
+                            ? Integer.valueOf(1).equals(placesMap.get(forceItemPlayer))
+                            : (teamPlaces != null && Integer.valueOf(1).equals(teamPlaces.get(currentTeam)));
+
+                    if (currentTeam == null) {
                         // ---- Solo game: everything on solo stats ----
                         var soloUpdate = FIBServiceClient.soloUpdate()
                                 .blocksTravelledAdd(distance)
                                 .highestScore((long) forceItemPlayer.currentScore());
 
-                        if (placesMap.get(forceItemPlayer) == 1) {
+                        if (won) {
                             soloUpdate.gamesWonAdd(1);
                         }
 
                         helper.updateSoloStatisticsAsync(player.getUniqueId(), soloUpdate);
                     } else {
                         // ---- Team game: keep everything on team/member stats, never solo ----
-                        Team currentTeam = forceItemPlayer.currentTeam();
-                        boolean teamWon = teamPlaces != null && Integer.valueOf(1).equals(teamPlaces.get(currentTeam));
-
                         for (ForceItemPlayer teamPlayer : currentTeam.getPlayers()) {
                             if (!teamPlayer.equals(forceItemPlayer)) {
                                 UUID teammateUuid = teamPlayer.player().getUniqueId();
@@ -426,7 +430,7 @@ public class Gamemanager implements Manager {
                                         .highestScore((long) currentTeam.getCurrentScore());
                                 boolean lowerSide = player.getUniqueId().toString()
                                         .compareTo(teammateUuid.toString()) < 0;
-                                if (lowerSide && teamWon) {
+                                if (lowerSide && won) {
                                     teamUpdate.gamesWonAdd(1);
                                 }
 
@@ -435,12 +439,24 @@ public class Gamemanager implements Manager {
                             }
                         }
                     }
+
+                    // Win streak. Player-scoped, so this is unlike every other write above:
+                    //   - losers report too — a LOSS is what resets the streak
+                    //   - no lower-UUID dedupe — both members of a winning team each own a streak,
+                    //     so both send their own WIN
+                    helper.recordGameOutcomeAsync(
+                            player.getUniqueId(),
+                            new FibPlayerStatsUpdateRequestDto()
+                                    .outcome(won
+                                            ? FibPlayerStatsUpdateRequestDto.OutcomeEnum.WIN
+                                            : FibPlayerStatsUpdateRequestDto.OutcomeEnum.LOSS));
                 }
             } catch (Exception exception) {
                 this.forceItemBattle.getLogger().warning(
                         "Failed to finish round for " + player.getName() + ": " + exception.getMessage());
             }
         });
+
         if (statsEnabled) {
             for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
                 ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(onlinePlayer.getUniqueId());

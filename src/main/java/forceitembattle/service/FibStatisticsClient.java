@@ -10,6 +10,8 @@ import de.threeseconds.openapi.fibservice.client.model.FibTeamMemberStatsUpdateR
 import de.threeseconds.openapi.fibservice.client.model.FibTeamLeaderboardEntryDto;
 import de.threeseconds.openapi.fibservice.client.model.FibTeamStatisticsDto;
 import de.threeseconds.openapi.fibservice.client.model.FibTeamStatisticsUpdateRequestDto;
+import de.threeseconds.openapi.fibservice.client.model.FibPlayerStatsDto;
+import de.threeseconds.openapi.fibservice.client.model.FibPlayerStatsUpdateRequestDto;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -223,5 +225,35 @@ public class FibStatisticsClient {
 
     public void getCombinedTeamLeaderboardAsync(String category, int limit, Consumer<List<FibLeaderboardEntryDto>> onSuccess, Consumer<ApiException> onError) {
         executor.runAsync(() -> api.getCombinedTeamLeaderboard(category, limit), onSuccess, onError);
+    }
+
+    // ==================== PLAYER (mode-independent) ====================
+
+    public FibPlayerStatsDto getPlayerStats(UUID playerUuid) throws ApiException {
+        return api.getPlayerStats(playerUuid);
+    }
+
+    public void getPlayerStatsAsync(UUID playerUuid, Consumer<FibPlayerStatsDto> onSuccess) {
+        getPlayerStatsAsync(playerUuid, onSuccess, executor::logError);
+    }
+
+    public void getPlayerStatsAsync(UUID playerUuid, Consumer<FibPlayerStatsDto> onSuccess, Consumer<ApiException> onError) {
+        executor.runAsync(() -> api.getPlayerStats(playerUuid), onSuccess, onError);
+    }
+
+    public void recordGameOutcomeAsync(UUID playerUuid, FibPlayerStatsUpdateRequestDto request) {
+        recordGameOutcomeAsync(playerUuid, request, result -> {
+        }, executor::logError);
+    }
+
+    public void recordGameOutcomeAsync(UUID playerUuid, FibPlayerStatsUpdateRequestDto request, Consumer<FibPlayerStatsDto> onSuccess, Consumer<ApiException> onError) {
+        executor.runAsync(() -> api.recordGameOutcome(playerUuid, request), onSuccess, onError);
+    }
+
+    public void deletePlayerStatsAsync(UUID playerUuid, Runnable onSuccess, Consumer<ApiException> onError) {
+        executor.runAsync(() -> {
+            api.deletePlayerStats(playerUuid);
+            return null;
+        }, result -> onSuccess.run(), onError);
     }
 }
