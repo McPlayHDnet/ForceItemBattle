@@ -7,7 +7,8 @@ public enum Prefix {
 
     LOCATOR("<dark_purple>", "Locator"),
     POSITION("<gold>", "Position"),
-    TRADE("<green>", "Trade");
+    TRADE("<green>", "Trade"),
+    RANDOM_EVENT("<light_purple>", "Event");
 
     private final String value;
 

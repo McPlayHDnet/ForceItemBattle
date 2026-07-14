@@ -61,6 +61,7 @@ public class FoundItemListener implements Listener {
         updateStats(forceItemPlayer, player, context, event.getFoundItem().getType(), event.isSkipped(), timeSpentMs);
         this.plugin.getScoreboardManager().updateAllPlayers();
         this.plugin.getBackToBackManager().handleAfterFind(forceItemPlayer, context);
+        this.plugin.getRandomEventManager().handleFoundItem(event, forceItemPlayer);
     }
 
     private void handleRegularFind(FoundItemEvent event, Player player, ItemStack itemStack, ForceItemPlayer forceItemPlayer, GameContext context) {

@@ -113,4 +113,5 @@ bukkitPluginYaml {
     commands.register("voteskip")
     commands.register("fixlocate")
     commands.register("forceitem")
+    commands.register("randomevent")
 }

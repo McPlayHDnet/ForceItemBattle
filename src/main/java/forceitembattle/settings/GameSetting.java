@@ -41,6 +41,12 @@ public enum GameSetting {
             "<dark_gray><i>Left-click: next • Right-click: previous</i>",
             ""
     ), "quickie", 0, Material.FEATHER),
+    RANDOM_EVENTS("Random events", List.of(
+            "",
+            "<gray>Toggle whether <dark_aqua>random events <gray>occur during the round.",
+            "<dark_gray><i>Roughly 3-4 per hour. Never in Run Battle.</i>",
+            ""
+    ), "randomEvents", true, Material.FIREWORK_ROCKET),
 
     ;
 

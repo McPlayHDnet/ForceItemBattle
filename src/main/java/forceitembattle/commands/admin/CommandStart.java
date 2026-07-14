@@ -81,7 +81,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
         }
 
         if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-            if (plugin.getGamemanager().forceItemPlayerMap().size() < 4) {
+            if (plugin.getGamemanager().forceItemPlayerMap().size() < 1) {
                 Bukkit.broadcast(Text.of("<red>There are not enough players online to enable teams"));
                 this.plugin.getSettings().setSettingEnabled(GameSetting.TEAM, false);
                 this.plugin.getTeamManager().clearAllTeams();
@@ -269,6 +269,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
         }
 
         this.plugin.getWanderingTraderManager().startTimer();
+        this.plugin.getRandomEventManager().startGame();
         this.plugin.getGamemanager().setGameStartTime(System.currentTimeMillis());
         Dimension.OVERWORLD.world().setTime(0);
         this.plugin.getAchievementManager().resetProgress();

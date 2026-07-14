@@ -4,6 +4,7 @@ import forceitembattle.commands.CommandsManager;
 import forceitembattle.commands.admin.CommandForceItem;
 import forceitembattle.commands.admin.CommandForceTeam;
 import forceitembattle.commands.admin.CommandItems;
+import forceitembattle.commands.admin.CommandRandomEvent;
 import forceitembattle.commands.admin.CommandReset;
 import forceitembattle.commands.admin.CommandSettings;
 import forceitembattle.commands.admin.CommandSkip;
@@ -57,6 +58,7 @@ import forceitembattle.manager.LocatorManager;
 import forceitembattle.manager.Manager;
 import forceitembattle.manager.PositionManager;
 import forceitembattle.manager.ProtectionManager;
+import forceitembattle.manager.RandomEventManager;
 import forceitembattle.manager.RecipeManager;
 import forceitembattle.manager.ScoreboardManager;
 import forceitembattle.manager.TabListManager;
@@ -112,6 +114,8 @@ public final class ForceItemBattle extends JavaPlugin {
     private PositionManager positionManager;
     @Getter
     private WanderingTraderManager wanderingTraderManager;
+    @Getter
+    private RandomEventManager randomEventManager;
     @Getter
     private TabListManager tabListManager;
     @Getter
@@ -176,6 +180,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.locatorManager = register(new LocatorManager(this));
         this.protectionManager = register(new ProtectionManager(this));
         this.wanderingTraderManager = register(new WanderingTraderManager(this));
+        this.randomEventManager = register(new RandomEventManager(this));
         this.tabListManager = register(new TabListManager(this));
         this.voteSkipManager = register(new VoteSkipManager(this));
         this.scoreboardManager = register(new ScoreboardManager(this));
@@ -339,6 +344,7 @@ public final class ForceItemBattle extends JavaPlugin {
         commands.registerCommand(new CommandVoteSkip(this));
         commands.registerCommand(new CommandFixLocate(this));
         commands.registerCommand(new CommandForceItem(this));
+        commands.registerCommand(new CommandRandomEvent(this));
     }
 
     @Override
