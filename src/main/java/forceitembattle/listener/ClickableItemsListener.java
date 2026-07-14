@@ -129,24 +129,21 @@ public class ClickableItemsListener implements Listener {
             return;
         }
 
-        if (e.getItem().getType() == Material.NETHER_STAR) {
-            if (!e.getItem().getItemMeta().hasCustomModelDataComponent()) return;
-            if (e.getItem().getItemMeta().getCustomModelDataComponent().getStrings().getFirst().equals("wheel")) { // wheel of fortune
-                new VaultInventory(this.plugin).open(player);
-                player.getInventory().getItemInMainHand().setAmount(player.getInventory().getItemInMainHand().getAmount() - 1);
+        if (CustomMaterials.WHEEL_OF_FORTUNE.matches(e.getItem())) {
+            new VaultInventory(this.plugin).open(player);
+            player.getInventory().getItemInMainHand().setAmount(player.getInventory().getItemInMainHand().getAmount() - 1);
 
-                if (this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
-                    FibStatisticsClient helper = this.plugin.getFibService().statistics();
-                    if (forceItemPlayer.currentTeam() != null) {
-                        forceItemPlayer.currentTeam().getPlayers().stream()
-                                .filter(t -> !t.equals(forceItemPlayer))
-                                .forEach(t -> helper.updateMemberStatisticsAsync(
-                                        player.getUniqueId(), t.player().getUniqueId(), player.getUniqueId(),
-                                        FIBServiceClient.memberUpdate().wheelOfFortuneUsesAdd(1L)));
-                    } else {
-                        helper.updateSoloStatisticsAsync(player.getUniqueId(),
-                                FIBServiceClient.soloUpdate().wheelOfFortuneUsesAdd(1L));
-                    }
+            if (this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
+                FibStatisticsClient helper = this.plugin.getFibService().statistics();
+                if (forceItemPlayer.currentTeam() != null) {
+                    forceItemPlayer.currentTeam().getPlayers().stream()
+                            .filter(t -> !t.equals(forceItemPlayer))
+                            .forEach(t -> helper.updateMemberStatisticsAsync(
+                                    player.getUniqueId(), t.player().getUniqueId(), player.getUniqueId(),
+                                    FIBServiceClient.memberUpdate().wheelOfFortuneUsesAdd(1L)));
+                } else {
+                    helper.updateSoloStatisticsAsync(player.getUniqueId(),
+                            FIBServiceClient.soloUpdate().wheelOfFortuneUsesAdd(1L));
                 }
             }
             return;

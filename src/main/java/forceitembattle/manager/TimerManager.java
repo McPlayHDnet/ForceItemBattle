@@ -164,7 +164,7 @@ public class TimerManager implements Manager {
                         forceItemBattle.getItemDifficultiesManager().pollNewlyUnlockedStates()) {
                     Bukkit.getOnlinePlayers().forEach(players -> {
                         players.sendMessage(Text.of("<shadow:black:0><sprite:items:item/clock_00> <gray>New item pool unlocked <dark_gray>» <" + unlockedPool.getColor() + ">" + unlockedPool.getDisplayName()));
-                        players.playSound(players.getLocation(), Sound.BLOCK_NOTE_BLOCK_CHIME, 1, 1.4f);
+                        players.playSound(players.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_RESONATE, 1, 0.8f);
                     });
                 }
 

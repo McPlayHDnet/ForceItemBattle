@@ -2,6 +2,7 @@ package forceitembattle.model;
 
 import forceitembattle.gui.ItemBuilder;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -18,12 +19,14 @@ import org.jetbrains.annotations.Nullable;
 @Getter
 public enum CustomMaterials {
 
-    ANTIMATTER_LOCATOR(Material.KNOWLEDGE_BOOK, "antimatter_locator", "Antimatter Locator", "<dark_purple>", null, null),
-    TRIAL_LOCATOR(Material.WITHER_ROSE, "trial_locator", "Trial Locator", "<gold>", null, null),
-    SULFUR_LOCATOR(Material.MUSIC_DISC_CHIRP, "sulfur_locator", "Sulfur Locator", "<yellow>", null, null),
+    ANTIMATTER_LOCATOR(Material.KNOWLEDGE_BOOK, "antimatter_locator", "Antimatter Locator", "<dark_purple>", null, null, null, null),
+    TRIAL_LOCATOR(Material.WITHER_ROSE, "trial_locator", "Trial Locator", "<gold>", null, null, null, null),
+    SULFUR_LOCATOR(Material.MUSIC_DISC_CHIRP, "sulfur_locator", "Sulfur Locator", "<yellow>", null, null, null, null),
     WEATHERED_CAPTAINS_JOURNAL(Material.TORCHFLOWER, "journal_book", "Weathered Captain's Journal", null,
             new NamespacedKey("fib", "items/weathered_captains_journal"),
-            new NamespacedKey("fib", "journal"));
+            new NamespacedKey("fib", "journal"), null, null),
+    WHEEL_OF_FORTUNE(Material.NETHER_STAR, "wheel_of_fortune", "Wheel of Fortune", null, null, null,
+            "wheel", "<yellow><b>Wheel of Fortune");
 
     private static final Map<Material, CustomMaterials> BY_MATERIAL = Arrays.stream(values())
             .collect(Collectors.toMap(CustomMaterials::getMaterial, Function.identity()));
@@ -40,6 +43,9 @@ public enum CustomMaterials {
     @Nullable
     private final String color;
 
+    @Nullable
+    private final String displayNameOverride;
+
     /**
      * Datapack loot table defining this item, or null when a plain rename is enough.
      */
@@ -54,6 +60,13 @@ public enum CustomMaterials {
     private final NamespacedKey markerKey;
 
     /**
+     * Custom-model-data string carried by this item, used both when building it and when
+     * matching it. Null when the material alone is enough.
+     */
+    @Nullable
+    private final String customModelDataString;
+
+    /**
      * Resolved from {@link #itemLootTable} on enable by CustomItemManager.
      * Never handed out directly — always cloned.
      */
@@ -62,13 +75,16 @@ public enum CustomMaterials {
     private ItemStack prototype;
 
     CustomMaterials(Material material, String id, String itemName, @Nullable String color,
-                    @Nullable NamespacedKey itemLootTable, @Nullable NamespacedKey markerKey) {
+                    @Nullable NamespacedKey itemLootTable, @Nullable NamespacedKey markerKey,
+                    @Nullable String customModelDataString, @Nullable String displayNameOverride) {
         this.material = material;
         this.id = id;
         this.itemName = itemName;
         this.color = color;
         this.itemLootTable = itemLootTable;
         this.markerKey = markerKey;
+        this.customModelDataString = customModelDataString;
+        this.displayNameOverride = displayNameOverride;
     }
 
     /**
@@ -77,6 +93,9 @@ public enum CustomMaterials {
      */
     @Nullable
     public String displayName() {
+        if (this.displayNameOverride != null) {
+            return this.displayNameOverride;
+        }
         return this.color != null ? "<dark_gray>» " + this.color + this.itemName : null;
     }
 
@@ -87,22 +106,52 @@ public enum CustomMaterials {
         if (this.prototype != null) {
             return this.prototype.clone();
         }
-        return new ItemBuilder(this.material).setDisplayName(this.displayName()).getItemStack();
+
+        ItemBuilder itemBuilder = new ItemBuilder(this.material).setDisplayName(this.displayName());
+        if (this.customModelDataString != null) {
+            itemBuilder.setCustomModelDataStrings(List.of(this.customModelDataString));
+        }
+        return itemBuilder.getItemStack();
     }
 
     /**
-     * Whether this stack is the real custom item. See the class doc on why this is
-     * material-only for some entries and marker-gated for others.
+     * A fresh stack of this custom item, {@code amount} of them.
+     */
+    public ItemStack itemStack(int amount) {
+        ItemStack itemStack = this.itemStack();
+        itemStack.setAmount(amount);
+        return itemStack;
+    }
+
+    /**
+     * Whether this stack is the real custom item. Some entries own their material outright and
+     * need no further check; others share it with a vanilla item and are told apart by a PDC
+     * marker or a custom-model-data string.
      */
     public boolean matches(@Nullable ItemStack itemStack) {
         if (itemStack == null || itemStack.getType() != this.material) {
             return false;
         }
-        if (this.markerKey == null) {
+        if (this.markerKey == null && this.customModelDataString == null) {
             return true;
         }
+
         ItemMeta itemMeta = itemStack.getItemMeta();
-        return itemMeta != null && itemMeta.getPersistentDataContainer().has(this.markerKey, PersistentDataType.BYTE);
+        if (itemMeta == null) {
+            return false;
+        }
+
+        if (this.markerKey != null
+                && !itemMeta.getPersistentDataContainer().has(this.markerKey, PersistentDataType.BYTE)) {
+            return false;
+        }
+
+        if (this.customModelDataString != null) {
+            return itemMeta.hasCustomModelDataComponent()
+                    && itemMeta.getCustomModelDataComponent().getStrings().contains(this.customModelDataString);
+        }
+
+        return true;
     }
 
     /**

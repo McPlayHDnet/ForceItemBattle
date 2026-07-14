@@ -1,13 +1,11 @@
 package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.gui.ItemBuilder;
+import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.Dimension;
 import forceitembattle.util.LocationFormat;
 import forceitembattle.util.Prefix;
 import forceitembattle.util.Text;
-import io.papermc.paper.datacomponent.DataComponentTypes;
-import io.papermc.paper.datacomponent.item.CustomModelData;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -129,12 +127,8 @@ public class WanderingTraderManager implements Manager {
             merchantReciper.setIngredients(ingredients);
             merchantReciper.setMaxUses(Integer.MAX_VALUE);
         });
-        ItemStack wheelOfFortune = new ItemBuilder(Material.NETHER_STAR).setDisplayName("<yellow><b>Wheel of Fortune").getItemStack();
-        wheelOfFortune.setData(DataComponentTypes.CUSTOM_MODEL_DATA, CustomModelData.customModelData()
-                .addString("wheel")
-                .build());
 
-        MerchantRecipe merchantRecipe = new MerchantRecipe(wheelOfFortune, Integer.MAX_VALUE);
+        MerchantRecipe merchantRecipe = new MerchantRecipe(CustomMaterials.WHEEL_OF_FORTUNE.itemStack(), Integer.MAX_VALUE);
         merchantRecipe.addIngredient(new ItemStack(Material.EMERALD, 1));
         merchantRecipes.add(merchantRecipe);
 
