@@ -12,6 +12,7 @@ import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.util.Text;
 import io.papermc.paper.advancement.AdvancementDisplay;
 import io.papermc.paper.event.player.PlayerInventorySlotChangeEvent;
+import io.papermc.paper.event.player.PlayerPurchaseEvent;
 import io.papermc.paper.event.player.PlayerTradeEvent;
 import java.util.Objects;
 import java.util.UUID;
@@ -116,7 +117,7 @@ public class AchievementListener implements Listener {
     }
 
     @EventHandler
-    public void onPlayerTrade(PlayerTradeEvent event) {
+    public void onPlayerTrade(PlayerPurchaseEvent event) {
         Player player = event.getPlayer();
         this.plugin.getAchievementManager().handleEvent(player, event, Trigger.TRADING);
     }

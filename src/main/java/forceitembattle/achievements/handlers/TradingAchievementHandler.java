@@ -4,8 +4,7 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.Trigger;
 import forceitembattle.achievements.progress.SimpleAchievementProgress;
 import forceitembattle.model.ForceItemPlayer;
-import io.papermc.paper.event.player.PlayerTradeEvent;
-import org.bukkit.entity.WanderingTrader;
+import io.papermc.paper.event.player.PlayerPurchaseEvent;
 import org.bukkit.event.Event;
 
 /**
@@ -29,15 +28,17 @@ public class TradingAchievementHandler implements AchievementHandler<SimpleAchie
 
     @Override
     public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin) {
-        if (!(event instanceof PlayerTradeEvent tradeEvent)) {
+        if (!(event instanceof PlayerPurchaseEvent purchaseEvent)) {
             return false;
         }
 
-        if (tradeEvent.getVillager() instanceof WanderingTrader) {
-            progress.count++;
-            return progress.count >= targetAmount;
+        if (!plugin.getWanderingTraderManager().getTradingPlayers()
+                .contains(purchaseEvent.getPlayer().getUniqueId())) {
+            return false;
         }
-        return false;
+
+        progress.count++;
+        return progress.count >= targetAmount;
     }
 
     @Override
