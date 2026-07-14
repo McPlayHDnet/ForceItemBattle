@@ -2,6 +2,7 @@ package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.ItemDifficultiesManager.State;
+import forceitembattle.model.ActiveTrader;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.util.LocationFormat;
 import forceitembattle.util.Text;
@@ -95,13 +96,15 @@ public class TabListManager implements Manager {
     }
 
     private String buildTraderBlock() {
-        WanderingTraderManager trader = this.plugin.getWanderingTraderManager();
-        if (!trader.isTraderActive() || trader.getTraderLocation() == null) {
-            return "";
+        StringBuilder block = new StringBuilder();
+
+        for (ActiveTrader trader : this.plugin.getWanderingTraderManager().activeTraders()) {
+            block.append("\n\n").append(trader.getKind().boldColoredName()).append("\n")
+                    .append(LocationFormat.xyz(trader.getLocation())).append("\n")
+                    .append(formatColoredTime(trader.getTimer())).append("\n");
         }
-        return "\n\n<green><b>Wandering Trader</b>\n"
-                + LocationFormat.xyz(trader.getTraderLocation()) + "\n"
-                + formatColoredTime(trader.getTraderTimer()) + "\n";
+
+        return block.toString();
     }
 
     private String formatColoredTime(int remainingSeconds) {

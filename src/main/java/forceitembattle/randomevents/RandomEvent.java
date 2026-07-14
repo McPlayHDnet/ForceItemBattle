@@ -11,11 +11,22 @@ public interface RandomEvent {
     void start();
 
     /**
+     * Whether the event is over the moment {@link #start()} returns. An instant event leaves
+     * nothing running that anyone can win, so it must not hold the single active-event slot —
+     * it would swallow every remaining slot in the round.
+     */
+    default boolean isInstant() {
+        return false;
+    }
+
+    /**
      * Routed from FoundItemListener for every find while this event is running.
      *
      * @return true when the event has concluded and should be cleared.
      */
-    boolean onFoundItem(FoundItemEvent foundItemEvent, ForceItemPlayer forceItemPlayer);
+    default boolean onFoundItem(FoundItemEvent foundItemEvent, ForceItemPlayer forceItemPlayer) {
+        return false;
+    }
 
     /**
      * The round ended (or the plugin shut down) with this event still running.

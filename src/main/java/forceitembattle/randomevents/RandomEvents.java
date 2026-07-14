@@ -3,26 +3,41 @@ package forceitembattle.randomevents;
 import forceitembattle.ForceItemBattle;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Every random event that can fire, and how to build one.
+ * Every random event that can fire, how likely it is, and how to build one.
  */
 @Getter
 public enum RandomEvents {
 
-    ITEM_HUNT("Item Hunt", "<gold>", ItemHunt::new);
+    ITEM_HUNT("Item Hunt", "<gold>", 10, false, ItemHunt::new),
+    SPECIAL_TRADER("Special Trader", "<light_purple>", 2, true, SpecialTrader::new);
 
     private final String displayName;
     private final String color;
+
+    /**
+     * Relative pick weight among the events still eligible this game. Only meaningful
+     * against the other weights — a 10 next to a 2 is picked five times as often.
+     */
+    private final int weight;
+
+    /**
+     * When true, this event can fire at most once per round.
+     */
+    private final boolean oncePerGame;
+
     private final Function<ForceItemBattle, RandomEvent> factory;
 
-    RandomEvents(String displayName, String color, Function<ForceItemBattle, RandomEvent> factory) {
+    RandomEvents(String displayName, String color, int weight, boolean oncePerGame,
+                 Function<ForceItemBattle, RandomEvent> factory) {
         this.displayName = displayName;
         this.color = color;
+        this.weight = weight;
+        this.oncePerGame = oncePerGame;
         this.factory = factory;
     }
 
@@ -39,11 +54,6 @@ public enum RandomEvents {
 
     public RandomEvent create(ForceItemBattle plugin) {
         return this.factory.apply(plugin);
-    }
-
-    public static RandomEvents random() {
-        RandomEvents[] values = values();
-        return values[ThreadLocalRandom.current().nextInt(values.length)];
     }
 
     @Nullable

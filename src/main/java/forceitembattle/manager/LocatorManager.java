@@ -13,8 +13,10 @@ import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import net.kyori.adventure.bossbar.BossBar;
 import org.bukkit.Color;
 import org.bukkit.Location;
@@ -251,6 +253,12 @@ public class LocatorManager implements Manager {
                 .filter(locator -> locator.getLocatorMaterial() == material)
                 .findFirst()
                 .orElse(null);
+    }
+
+    @Nullable
+    public Locator randomLocator() {
+        List<Locator> all = List.copyOf(this.locators.values());
+        return all.isEmpty() ? null : all.get(ThreadLocalRandom.current().nextInt(all.size()));
     }
 
     private NamespacedKey getNamespacedKey(String structureId) {

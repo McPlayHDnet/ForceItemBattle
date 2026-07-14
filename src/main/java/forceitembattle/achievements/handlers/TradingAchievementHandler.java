@@ -32,8 +32,7 @@ public class TradingAchievementHandler implements AchievementHandler<SimpleAchie
             return false;
         }
 
-        if (!plugin.getWanderingTraderManager().getTradingPlayers()
-                .contains(purchaseEvent.getPlayer().getUniqueId())) {
+        if (!plugin.getWanderingTraderManager().isTrading(purchaseEvent.getPlayer().getUniqueId())) {
             return false;
         }
 

@@ -7,7 +7,11 @@ import forceitembattle.randomevents.RandomEvent;
 import forceitembattle.randomevents.RandomEvents;
 import forceitembattle.settings.GameSetting;
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.Deque;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +38,9 @@ public class RandomEventManager implements Manager {
 
     /** Remaining fire times, as timeLeft values, in descending order. */
     private final Deque<Integer> schedule = new ArrayDeque<>();
+
+    /** Events already fired this round, for the once-per-game ones. */
+    private final Set<RandomEvents> fired = EnumSet.noneOf(RandomEvents.class);
 
     @Getter
     @Nullable
@@ -72,6 +79,7 @@ public class RandomEventManager implements Manager {
         this.activeEvent = null;
         this.activeType = null;
         this.schedule.clear();
+        this.fired.clear();
     }
 
     private void planSchedule(int gameDuration) {
@@ -106,7 +114,12 @@ public class RandomEventManager implements Manager {
             return;
         }
 
-        this.trigger(RandomEvents.random());
+        RandomEvents type = this.pickWeighted();
+        if (type == null) {
+            return; // everything eligible has already had its one shot
+        }
+
+        this.trigger(type);
     }
 
     /**
@@ -117,9 +130,20 @@ public class RandomEventManager implements Manager {
             return false;
         }
 
+        RandomEvent event = type.create(this.plugin);
+        this.fired.add(type);
+
         this.activeType = type;
-        this.activeEvent = type.create(this.plugin);
-        this.activeEvent.start();
+        this.activeEvent = event;
+        event.start();
+
+        // An instant event has already resolved inside start(); don't let it hold the slot,
+        // or it would swallow every remaining slot in the round.
+        if (event.isInstant()) {
+            this.activeType = null;
+            this.activeEvent = null;
+        }
+
         return true;
     }
 
@@ -132,6 +156,29 @@ public class RandomEventManager implements Manager {
             this.activeEvent = null;
             this.activeType = null;
         }
+    }
+
+    @Nullable
+    private RandomEvents pickWeighted() {
+        List<RandomEvents> eligible = Arrays.stream(RandomEvents.values())
+                .filter(type -> !type.isOncePerGame() || !this.fired.contains(type))
+                .filter(type -> type.getWeight() > 0)
+                .toList();
+
+        int totalWeight = eligible.stream().mapToInt(RandomEvents::getWeight).sum();
+        if (totalWeight <= 0) {
+            return null;
+        }
+
+        int roll = ThreadLocalRandom.current().nextInt(totalWeight);
+        for (RandomEvents type : eligible) {
+            roll -= type.getWeight();
+            if (roll < 0) {
+                return type;
+            }
+        }
+
+        return eligible.getLast(); // unreachable — the loop exhausts the weight
     }
 
     private long countParticipants() {
