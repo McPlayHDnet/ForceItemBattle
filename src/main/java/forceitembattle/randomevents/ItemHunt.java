@@ -17,7 +17,7 @@ import org.bukkit.inventory.ItemStack;
 public class ItemHunt implements RandomEvent {
 
     private static final int MIN_WHEELS = 1;
-    private static final int MAX_WHEELS = 5;
+    private static final int MAX_WHEELS = 3;
 
     private final ForceItemBattle plugin;
 
