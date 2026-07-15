@@ -2,7 +2,7 @@ package forceitembattle.commands.admin;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
-import forceitembattle.gui.InvSettings;
+import forceitembattle.gui.SettingsInventory;
 import org.bukkit.entity.Player;
 
 public class CommandSettings extends CustomCommand {
@@ -15,8 +15,7 @@ public class CommandSettings extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (player.isOp()) {
-            new InvSettings(this.plugin, null).open(player);
-        }
+        if (!requireOp(player)) return;
+        new SettingsInventory(this.plugin, null).open(player);
     }
 }

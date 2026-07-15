@@ -17,8 +17,7 @@ public enum Trigger {
     BEEHIVE_HARVEST(false),
     INVENTORY_FULL(false),
     WHEEL_OF_FORTUNE(false),
-    ANTIMATTER_TELEPORTER(false),
-    ACHIEVEMENT(false);
+    ANTIMATTER_TELEPORTER(false);
 
     private final boolean achieveableInTeams;
 

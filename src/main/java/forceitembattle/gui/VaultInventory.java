@@ -26,11 +26,11 @@ public class VaultInventory extends InventoryBuilder {
 
         this.plugin = plugin;
 
-        this.setItems(0, 8, new ItemBuilder(Material.CYAN_STAINED_GLASS_PANE).setDisplayName("<aqua>").addItemFlags(ItemFlag.values()).getItemStack());
-        this.setItems(this.getInventory().getSize() - 9, this.getInventory().getSize() - 1, new ItemBuilder(Material.CYAN_STAINED_GLASS_PANE).setDisplayName("<aqua>").addItemFlags(ItemFlag.values()).getItemStack());
+        this.setItems(0, 8, GuiItems.accentBorder());
+        this.setItems(this.getInventory().getSize() - 9, this.getInventory().getSize() - 1, GuiItems.accentBorder());
 
-        this.setItems(9, 17, new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).setDisplayName("<gray>").addItemFlags(ItemFlag.values()).getItemStack());
-        this.setItems(27, 35, new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).setDisplayName("<gray>").addItemFlags(ItemFlag.values()).getItemStack());
+        this.setItems(9, 17, GuiItems.filler());
+        this.setItems(27, 35, GuiItems.filler());
 
         this.setItem(13, new ItemBuilder(Material.PLAYER_HEAD)
                 .setSkullTexture("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOTQ3MmM5ZDYyOGJiMzIyMWVmMzZiNGNiZDBiOWYxNWVkZDU4ZTU4NjgxODUxNGQ3ZTgyM2Q1NWM0OGMifX19")

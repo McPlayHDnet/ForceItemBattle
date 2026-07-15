@@ -12,8 +12,10 @@ import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.util.Text;
 import io.papermc.paper.advancement.AdvancementDisplay;
 import io.papermc.paper.event.player.PlayerInventorySlotChangeEvent;
+import io.papermc.paper.event.player.PlayerPurchaseEvent;
 import io.papermc.paper.event.player.PlayerTradeEvent;
 import java.util.Objects;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
@@ -46,8 +48,10 @@ public class AchievementListener implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         // Warm the cache from the service ahead of any in-game achievement checks.
+        UUID joiningUuid = event.getPlayer().getUniqueId();
         this.plugin.getAchievementManager().getAchievementStorage()
-                .loadPlayer(event.getPlayer().getUniqueId());
+                .loadPlayer(joiningUuid, () -> this.plugin.getAchievementManager()
+                        .evaluateGlobalAchievements(event.getPlayer()));
     }
 
     @EventHandler
@@ -113,7 +117,7 @@ public class AchievementListener implements Listener {
     }
 
     @EventHandler
-    public void onPlayerTrade(PlayerTradeEvent event) {
+    public void onPlayerTrade(PlayerPurchaseEvent event) {
         Player player = event.getPlayer();
         this.plugin.getAchievementManager().handleEvent(player, event, Trigger.TRADING);
     }
@@ -125,7 +129,7 @@ public class AchievementListener implements Listener {
         Achievements achievement = event.getAchievement();
 
         // Announce the achievement to everyone (skipped for spectators).
-        if (!forceItemPlayer.isSpectator()) {
+        if (forceItemPlayer == null || !forceItemPlayer.isSpectator()) {
             player.playSound(player, Sound.BLOCK_AMETHYST_BLOCK_RESONATE, 1, 1);
             Bukkit.getOnlinePlayers().forEach(players -> {
                 players.sendMessage(Component.empty());
@@ -133,9 +137,6 @@ public class AchievementListener implements Listener {
                 players.sendMessage(Component.empty());
             });
         }
-
-        // Process achievement-chain triggers (e.g. Completionist).
-        this.plugin.getAchievementManager().handleEvent(player, event, Trigger.ACHIEVEMENT);
     }
 
     @EventHandler

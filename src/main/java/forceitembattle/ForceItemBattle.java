@@ -4,6 +4,7 @@ import forceitembattle.commands.CommandsManager;
 import forceitembattle.commands.admin.CommandForceItem;
 import forceitembattle.commands.admin.CommandForceTeam;
 import forceitembattle.commands.admin.CommandItems;
+import forceitembattle.commands.admin.CommandRandomEvent;
 import forceitembattle.commands.admin.CommandReset;
 import forceitembattle.commands.admin.CommandSettings;
 import forceitembattle.commands.admin.CommandSkip;
@@ -50,12 +51,14 @@ import forceitembattle.listener.TradeListener;
 import forceitembattle.listener.VillagerTradeListener;
 import forceitembattle.manager.AchievementManager;
 import forceitembattle.manager.CustomItemManager;
+import forceitembattle.manager.BackToBackManager;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.ItemDifficultiesManager;
 import forceitembattle.manager.LocatorManager;
 import forceitembattle.manager.Manager;
 import forceitembattle.manager.PositionManager;
 import forceitembattle.manager.ProtectionManager;
+import forceitembattle.manager.RandomEventManager;
 import forceitembattle.manager.RecipeManager;
 import forceitembattle.manager.ScoreboardManager;
 import forceitembattle.manager.TabListManager;
@@ -65,7 +68,6 @@ import forceitembattle.manager.VoteSkipManager;
 import forceitembattle.service.FIBServiceClient;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
-import forceitembattle.manager.AntimatterLocatorManager;
 import forceitembattle.manager.BackpackManager;
 import forceitembattle.util.FileLogger;
 import forceitembattle.util.Scheduler;
@@ -101,6 +103,8 @@ public final class ForceItemBattle extends JavaPlugin {
     @Getter
     private BackpackManager backpackManager;
     @Getter
+    private BackToBackManager backToBackManager;
+    @Getter
     private ItemDifficultiesManager itemDifficultiesManager;
     @Getter
     private CustomItemManager customItemManager;
@@ -110,6 +114,8 @@ public final class ForceItemBattle extends JavaPlugin {
     private PositionManager positionManager;
     @Getter
     private WanderingTraderManager wanderingTraderManager;
+    @Getter
+    private RandomEventManager randomEventManager;
     @Getter
     private TabListManager tabListManager;
     @Getter
@@ -121,8 +127,6 @@ public final class ForceItemBattle extends JavaPlugin {
     @Getter
     @Setter
     private TradingManager tradingManager;
-    @Getter
-    private AntimatterLocatorManager antimatterLocatorManager;
     @Getter
     private AchievementManager achievementManager;
     @Getter
@@ -164,6 +168,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.gamemanager = register(new Gamemanager(this));
         this.timerManager = register(new TimerManager(this));
         this.backpackManager = register(new BackpackManager(this));
+        this.backToBackManager = register(new BackToBackManager(this));
         this.customItemManager = register(new CustomItemManager(this));
         this.itemDifficultiesManager = register(new ItemDifficultiesManager(this));
         this.recipeManager = register(new RecipeManager(this));
@@ -175,8 +180,8 @@ public final class ForceItemBattle extends JavaPlugin {
         this.locatorManager = register(new LocatorManager(this));
         this.protectionManager = register(new ProtectionManager(this));
         this.wanderingTraderManager = register(new WanderingTraderManager(this));
+        this.randomEventManager = register(new RandomEventManager(this));
         this.tabListManager = register(new TabListManager(this));
-        this.antimatterLocatorManager = register(new AntimatterLocatorManager(this));
         this.voteSkipManager = register(new VoteSkipManager(this));
         this.scoreboardManager = register(new ScoreboardManager(this));
         this.fibService = register(new FIBServiceClient(this));
@@ -339,6 +344,7 @@ public final class ForceItemBattle extends JavaPlugin {
         commands.registerCommand(new CommandVoteSkip(this));
         commands.registerCommand(new CommandFixLocate(this));
         commands.registerCommand(new CommandForceItem(this));
+        commands.registerCommand(new CommandRandomEvent(this));
     }
 
     @Override

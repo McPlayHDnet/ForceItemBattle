@@ -16,15 +16,15 @@ public class CommandReset extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (player.isOp()) {
-            Bukkit.getOnlinePlayers().forEach(onlinePlayer -> onlinePlayer.kick(Text.of(
-                    "<dark_gray>» <gold><b>ForceItemBattle</b> <dark_gray>«" +
-                            "\n" +
-                            "<red>The world is being reset!" +
-                            "\n"
-            )));
+        if (!requireOp(player)) return;
 
-            this.plugin.scheduleReset();
-        }
+        Bukkit.getOnlinePlayers().forEach(onlinePlayer -> onlinePlayer.kick(Text.of(
+                "<dark_gray>» <gold><b>ForceItemBattle</b> <dark_gray>«" +
+                        "\n" +
+                        "<red>The world is being reset!" +
+                        "\n"
+        )));
+
+        this.plugin.scheduleReset();
     }
 }

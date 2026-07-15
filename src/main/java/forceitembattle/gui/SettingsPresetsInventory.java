@@ -11,18 +11,17 @@ import java.util.List;
 import java.util.UUID;
 import org.bukkit.Material;
 import org.bukkit.Sound;
-import org.bukkit.inventory.ItemFlag;
 
-public class InvSettingsPresets extends InventoryBuilder {
+public class SettingsPresetsInventory extends InventoryBuilder {
 
     public static HashMap<UUID, GamePreset> namingPhase = new HashMap<>();
 
-    public InvSettingsPresets(ForceItemBattle forceItemBattle, GamePreset gamePreset, GameSettings gameSettings) {
+    public SettingsPresetsInventory(ForceItemBattle forceItemBattle, GamePreset gamePreset, GameSettings gameSettings) {
         super(9 * 5, Text.of("<dark_gray>» <dark_aqua>Settings <dark_gray>● <gray>Presets"));
 
         /* BORDER */
-        this.setItems(0, 8, new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE).setDisplayName("<aqua>").addItemFlags(ItemFlag.values()).getItemStack());
-        this.setItems(36, 44, new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE).setDisplayName("<aqua>").addItemFlags(ItemFlag.values()).getItemStack());
+        this.setItems(0, 8, GuiItems.border());
+        this.setItems(36, 44, GuiItems.border());
 
         this.addUpdateHandler(() -> {
 
@@ -61,7 +60,7 @@ public class InvSettingsPresets extends InventoryBuilder {
                     .getItemStack(), event -> {
 
                 getPlayer().playSound(getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
-                new InvSettings(forceItemBattle, gamePreset).open(this.getPlayer());
+                new SettingsInventory(forceItemBattle, gamePreset).open(this.getPlayer());
             });
             lore.clear();
 
@@ -90,7 +89,7 @@ public class InvSettingsPresets extends InventoryBuilder {
 
                 getPlayer().playSound(getPlayer(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
                 gameSettings.addGamePreset(gamePreset);
-                new InvPresetMenu(forceItemBattle, gameSettings).open(getPlayer());
+                new PresetMenuInventory(forceItemBattle, gameSettings).open(getPlayer());
             });
         });
     }

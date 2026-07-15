@@ -1,10 +1,11 @@
 package forceitembattle.listener;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.gui.AchievementInventory;
+import forceitembattle.gui.AchievementCategoryInventory;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.model.CustomMaterials;
+import forceitembattle.model.Dimension;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.service.FIBServiceClient;
 import forceitembattle.service.FibStatisticsClient;
@@ -59,19 +60,16 @@ public class ClickableItemsListener implements Listener {
                 e.setCancelled(true);
                 player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
                 Bukkit.getScheduler().runTask(plugin, () ->
-                        new AchievementInventory(this.plugin, player.getName(), player.getUniqueId()).open(player));
+                        new AchievementCategoryInventory(this.plugin, player.getName(), player.getUniqueId()).open(player));
             }
             case COMPASS -> {
                 e.setCancelled(true);
                 player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
                 Bukkit.getScheduler().runTask(plugin, () -> new TeleporterInventory(this.plugin).open(player));
             }
-            case GRASS_BLOCK -> teleportToDimension(e, player, "world",
-                    "<dark_gray>[<dark_red>✖<dark_gray>] <gray>You are already in the <green>overworld",
-                    this.plugin::getSpawnLocation);
-            case NETHERRACK -> teleportToDimension(e, player, "world_nether",
-                    "<dark_gray>[<dark_red>✖<dark_gray>] <gray>You are already in the <red>nether",
-                    () -> new Location(Bukkit.getWorld("world_nether"), 0, 70, 0));
+            case GRASS_BLOCK -> teleportToDimension(e, player, Dimension.OVERWORLD, this.plugin::getSpawnLocation);
+            case NETHERRACK  -> teleportToDimension(e, player, Dimension.NETHER,
+                    () -> new Location(Dimension.NETHER.world(), 0, 70, 0));
             case SPYGLASS -> {
                 e.setCancelled(true);
                 if (player.getGameMode() == GameMode.SPECTATOR) {
@@ -82,23 +80,22 @@ public class ClickableItemsListener implements Listener {
                     player.setGameMode(GameMode.SPECTATOR);
                 }
             }
-            case ENDER_EYE -> teleportToDimension(e, player, "world_the_end",
-                    "<gray>You are already in the <dark_purple>end",
-                    () -> {
-                        World end = Objects.requireNonNull(Bukkit.getWorld("world_the_end"));
-                        Location location = new Location(end, 0, 0, 0);
-                        location.setY(end.getHighestBlockYAt(location) + 1);
-                        return location;
-                    });
+            case ENDER_EYE   -> teleportToDimension(e, player, Dimension.END, () -> {
+                World end = Objects.requireNonNull(Dimension.END.world());
+                Location location = new Location(end, 0, 0, 0);
+                location.setY(end.getHighestBlockYAt(location) + 1);
+                return location;
+            });
         }
     }
 
-    private void teleportToDimension(PlayerInteractEvent e, Player player, String worldName,
-                                     String alreadyThereMessage, Supplier<Location> destination) {
+    private void teleportToDimension(PlayerInteractEvent e, Player player, Dimension dimension,
+                                     Supplier<Location> destination) {
         e.setCancelled(true);
-        if (player.getWorld().getName().equals(worldName)) {
+        if (Dimension.of(player) == dimension) {
             player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
-            player.sendMessage(Text.of(alreadyThereMessage));
+            player.sendMessage(Text.of("<dark_gray>[<dark_red>✖<dark_gray>] <gray>You are already in the "
+                    + dimension.coloredName()));
             return;
         }
         player.teleport(destination.get());
@@ -132,24 +129,21 @@ public class ClickableItemsListener implements Listener {
             return;
         }
 
-        if (e.getItem().getType() == Material.NETHER_STAR) {
-            if (!e.getItem().getItemMeta().hasCustomModelDataComponent()) return;
-            if (e.getItem().getItemMeta().getCustomModelDataComponent().getStrings().getFirst().equals("wheel")) { // wheel of fortune
-                new VaultInventory(this.plugin).open(player);
-                player.getInventory().getItemInMainHand().setAmount(player.getInventory().getItemInMainHand().getAmount() - 1);
+        if (CustomMaterials.WHEEL_OF_FORTUNE.matches(e.getItem())) {
+            new VaultInventory(this.plugin).open(player);
+            player.getInventory().getItemInMainHand().setAmount(player.getInventory().getItemInMainHand().getAmount() - 1);
 
-                if (this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
-                    FibStatisticsClient helper = this.plugin.getFibService().statistics();
-                    if (forceItemPlayer.currentTeam() != null) {
-                        forceItemPlayer.currentTeam().getPlayers().stream()
-                                .filter(t -> !t.equals(forceItemPlayer))
-                                .forEach(t -> helper.updateMemberStatisticsAsync(
-                                        player.getUniqueId(), t.player().getUniqueId(), player.getUniqueId(),
-                                        FIBServiceClient.memberUpdate().wheelOfFortuneUsesAdd(1L)));
-                    } else {
-                        helper.updateSoloStatisticsAsync(player.getUniqueId(),
-                                FIBServiceClient.soloUpdate().wheelOfFortuneUsesAdd(1L));
-                    }
+            if (this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
+                FibStatisticsClient helper = this.plugin.getFibService().statistics();
+                if (forceItemPlayer.currentTeam() != null) {
+                    forceItemPlayer.currentTeam().getPlayers().stream()
+                            .filter(t -> !t.equals(forceItemPlayer))
+                            .forEach(t -> helper.updateMemberStatisticsAsync(
+                                    player.getUniqueId(), t.player().getUniqueId(), player.getUniqueId(),
+                                    FIBServiceClient.memberUpdate().wheelOfFortuneUsesAdd(1L)));
+                } else {
+                    helper.updateSoloStatisticsAsync(player.getUniqueId(),
+                            FIBServiceClient.soloUpdate().wheelOfFortuneUsesAdd(1L));
                 }
             }
             return;
@@ -238,7 +232,7 @@ public class ClickableItemsListener implements Listener {
                 e.setCancelled(true);
                 player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
                 Bukkit.getScheduler().runTask(plugin, () ->
-                        new AchievementInventory(this.plugin, forceItemPlayer.player().getName(), forceItemPlayer.player().getUniqueId()).open(player));
+                        new AchievementCategoryInventory(this.plugin, player.getName(), player.getUniqueId()).open(player));
             }
             case ENDER_PEARL -> {
                 e.setCancelled(true);

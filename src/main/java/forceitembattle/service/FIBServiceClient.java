@@ -29,7 +29,7 @@ public class FIBServiceClient implements Manager {
         this.apiClient = client;
 
         this.executor = new ApiExecutor(plugin);
-        this.statistics = new FibStatisticsClient(new FibStatisticsControllerApi(client), executor);
+        this.statistics = new FibStatisticsClient(new FibStatisticsControllerApi(client), executor, plugin);
         this.achievements = new FibAchievementClient(new FibAchievementControllerApi(client), executor);
     }
 

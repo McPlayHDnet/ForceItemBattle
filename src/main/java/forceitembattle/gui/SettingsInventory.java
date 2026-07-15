@@ -9,15 +9,14 @@ import java.util.Objects;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
-import org.bukkit.inventory.ItemFlag;
 
-public class InvSettings extends InventoryBuilder {
+public class SettingsInventory extends InventoryBuilder {
 
     private final ForceItemBattle plugin;
     private final GamePreset gamePreset;
     private int currentPage;
 
-    public InvSettings(ForceItemBattle plugin, GamePreset gamePreset) {
+    public SettingsInventory(ForceItemBattle plugin, GamePreset gamePreset) {
         super(9 * 4, Text.of("<dark_gray>» <dark_aqua>Settings <dark_gray>● <gray>Menu"));
 
         this.plugin = plugin;
@@ -51,7 +50,7 @@ public class InvSettings extends InventoryBuilder {
     }
 
     private void updateInventory() {
-        this.setItems(0, getInventory().getSize() - 1, new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).setDisplayName("<gray>").addItemFlags(ItemFlag.values()).getItemStack());
+        this.setItems(0, getInventory().getSize() - 1, GuiItems.filler());
 
         int itemsPerPage = 7;
         int startIndex = this.currentPage * itemsPerPage;
@@ -86,14 +85,14 @@ public class InvSettings extends InventoryBuilder {
         if (gamePreset != null) {
             this.setItem(8, new ItemBuilder(Material.LIME_STAINED_GLASS_PANE).setDisplayName("<dark_gray>» <green>Save settings").getItemStack(), inventoryClickEvent -> {
                 this.getPlayer().playSound(this.getPlayer(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
-                new InvSettingsPresets(plugin, gamePreset, plugin.getSettings()).open(this.getPlayer());
+                new SettingsPresetsInventory(plugin, gamePreset, plugin.getSettings()).open(this.getPlayer());
             });
 
         } else {
             if (this.getPlayer().isOp()) {
                 this.setItem(8, new ItemBuilder(Material.STRUCTURE_VOID).setDisplayName("<dark_gray>» <yellow>Manage presets").getItemStack(), inventoryClickEvent -> {
                     this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
-                    new InvPresetMenu(plugin, plugin.getSettings()).open(this.getPlayer());
+                    new PresetMenuInventory(plugin, plugin.getSettings()).open(this.getPlayer());
                 });
             }
 

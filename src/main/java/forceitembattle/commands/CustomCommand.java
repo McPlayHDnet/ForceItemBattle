@@ -55,4 +55,14 @@ public abstract class CustomCommand implements CommandExecutor {
         sender.sendMessage("This command can only be executed by a player");
     }
 
+    protected static final String NO_PERMISSION = "<red>You don't have permission to use this command.";
+
+    protected boolean requireOp(Player player) {
+        if (player.isOp()) {
+            return true;
+        }
+        player.sendMessage(Text.of(NO_PERMISSION));
+        return false;
+    }
+
 }

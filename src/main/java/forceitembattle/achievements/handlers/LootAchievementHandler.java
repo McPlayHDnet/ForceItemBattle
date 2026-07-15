@@ -6,18 +6,11 @@ import forceitembattle.achievements.progress.SimpleAchievementProgress;
 import forceitembattle.model.CustomItem;
 import forceitembattle.model.ForceItemPlayer;
 import java.util.List;
-import java.util.Locale;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.event.Event;
 import org.bukkit.event.world.LootGenerateEvent;
-import org.bukkit.NamespacedKey;
-import org.bukkit.event.inventory.InventoryType;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.persistence.PersistentDataType;
 
 /**
  * Handler for loot-based achievements
@@ -73,7 +66,7 @@ public class LootAchievementHandler implements AchievementHandler<SimpleAchievem
 
         if (customItem != null) {
             for (ItemStack item : loot) {
-                if (item != null && item.getType() != Material.AIR && matchesCustomItem(item)) {
+                if (customItem.matches(item)) {
                     progress.count++;
                     return progress.count >= targetAmount;
                 }
@@ -88,62 +81,6 @@ public class LootAchievementHandler implements AchievementHandler<SimpleAchievem
         }
 
         return false;
-    }
-
-    private boolean matchesCustomItem(ItemStack item) {
-        if (customItem == null) {
-            return false;
-        }
-
-        ItemMeta meta = item.getItemMeta();
-        if (meta == null) {
-            return false;
-        }
-
-        if (customItem.getCheckedName() != null) {
-            String displayName = PlainTextComponentSerializer.plainText().serialize(item.displayName());
-            if (!displayName.toLowerCase(Locale.ROOT).contains(customItem.getCheckedName().toLowerCase(Locale.ROOT))) {
-                return false;
-            }
-        }
-
-        if (customItem.getCustomModelDataString() != null) {
-            try {
-                var cmd = item.getData(io.papermc.paper.datacomponent.DataComponentTypes.CUSTOM_MODEL_DATA);
-                if (cmd == null) return false;
-                var strings = cmd.strings();
-                if (strings == null || !strings.contains(customItem.getCustomModelDataString())) {
-                    return false;
-                }
-            } catch (Exception e) {
-                return false;
-            }
-        }
-
-        if (customItem.getCustomModelData() > 0) {
-            if (!meta.hasCustomModelData() || meta.getCustomModelData() != customItem.getCustomModelData()) {
-                return false;
-            }
-        }
-
-        if (customItem.getMaterial() != null) {
-            if (item.getType() != customItem.getMaterial()) {
-                return false;
-            }
-        }
-
-        if (customItem.getCustomDataKey() != null) {
-            NamespacedKey key = NamespacedKey.fromString(customItem.getCustomDataKey());
-            if (key == null) {
-                return false;
-            }
-            String value = meta.getPersistentDataContainer().get(key, PersistentDataType.STRING);
-            if (value == null || !value.equals(customItem.getCustomDataValue())) {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     @Override

@@ -1,7 +1,10 @@
 package forceitembattle.manager;
 
+import de.threeseconds.openapi.fibservice.client.model.FibPlayerStatsUpdateRequestDto;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.model.CustomMaterials;
+import forceitembattle.model.Dimension;
+import forceitembattle.model.GameContext;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GamePreset;
 import forceitembattle.service.FIBServiceClient;
@@ -22,6 +25,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.Setter;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -44,8 +48,9 @@ public class Gamemanager implements Manager {
     private static final Material JOKER_MATERIAL = Material.BARRIER;
     private final ForceItemBattle forceItemBattle;
     private final Map<UUID, ForceItemPlayer> forceItemPlayerMap;
-    public Map<UUID, Map<Integer, Map<Integer, ItemStack>>> savedInventory = new HashMap<>();
-    public Map<Team, Map<Integer, Map<Integer, ItemStack>>> savedInventoryTeam = new HashMap<>();
+    /** End-of-game result screens, keyed by player / by team. Paged: page → slot → stack. */
+    private final Map<UUID, Map<Integer, Map<Integer, ItemStack>>> savedInventory = new HashMap<>();
+    private final Map<Team, Map<Integer, Map<Integer, ItemStack>>> savedInventoryTeam = new HashMap<>();
     @Setter
     @Getter
     public GameState currentGameState;
@@ -244,6 +249,77 @@ public class Gamemanager implements Manager {
         }
     }
 
+    public void advanceMaterials(ForceItemPlayer forceItemPlayer, GameContext context) {
+        if (context.runMode()) {
+            advanceSeededMaterials(context);
+        } else {
+            advanceRandomMaterials(forceItemPlayer, context);
+        }
+    }
+
+    private void advanceSeededMaterials(GameContext context) {
+        Material nextMaterial = this.generateSeededMaterial();
+        long now = System.currentTimeMillis();
+
+        if (context.teamGame()) {
+            this.forceItemPlayerMap.values().forEach(player -> {
+                Team team = player.currentTeam();
+                team.setPreviousMaterial(team.getCurrentMaterial());
+                team.setCurrentMaterial(team.getNextMaterial());
+                team.setNextMaterial(nextMaterial);
+                team.setLastItemAssignedAt(now);
+            });
+        } else {
+            this.forceItemPlayerMap.values().forEach(player -> {
+                player.setPreviousMaterial(player.currentMaterial());
+                player.setCurrentMaterial(player.getNextMaterial());
+                player.setNextMaterial(nextMaterial);
+                player.setLastItemAssignedAt(now);
+            });
+        }
+    }
+
+    private void advanceRandomMaterials(ForceItemPlayer forceItemPlayer, GameContext context) {
+        Material nextMaterial = this.generateMaterial();
+        long now = System.currentTimeMillis();
+
+        if (context.teamGame()) {
+            Team team = forceItemPlayer.currentTeam();
+            team.setPreviousMaterial(team.getCurrentMaterial());
+            team.setCurrentMaterial(team.getNextMaterial());
+            team.setNextMaterial(nextMaterial);
+            team.setLastItemAssignedAt(now);
+        } else {
+            forceItemPlayer.setPreviousMaterial(forceItemPlayer.currentMaterial());
+            forceItemPlayer.setCurrentMaterial(forceItemPlayer.getNextMaterial());
+            forceItemPlayer.setNextMaterial(nextMaterial);
+            forceItemPlayer.setLastItemAssignedAt(now);
+        }
+    }
+
+    /** Stores the paged result screen for a finished player or team. */
+    public void saveResultPages(@Nullable ForceItemPlayer forceItemPlayer, @Nullable Team team,
+                                Map<Integer, Map<Integer, ItemStack>> pages) {
+        if (team != null) {
+            this.savedInventoryTeam.put(team, pages);
+        } else if (forceItemPlayer != null) {
+            this.savedInventory.put(forceItemPlayer.player().getUniqueId(), pages);
+        }
+    }
+
+    /** The stored result screen, or null if that player/team never finished a game. */
+    @Nullable
+    public Map<Integer, Map<Integer, ItemStack>> getResultPages(@Nullable ForceItemPlayer forceItemPlayer,
+                                                                @Nullable Team team) {
+        if (team != null) {
+            return this.savedInventoryTeam.get(team);
+        }
+        if (forceItemPlayer != null) {
+            return this.savedInventory.get(forceItemPlayer.player().getUniqueId());
+        }
+        return null;
+    }
+
     public void forceSkipItem(Player player, boolean adminCommand) {
         if (!forceItemPlayerExist(player.getUniqueId())) {
             return;
@@ -302,7 +378,7 @@ public class Gamemanager implements Manager {
                 player.getInventory().clear();
                 player.setLevel(0);
                 player.setExp(0);
-                player.teleport(Bukkit.getWorld("world").getSpawnLocation());
+                player.teleport(Dimension.OVERWORLD.world().getSpawnLocation());
                 player.setGameMode(GameMode.CREATIVE);
                 player.getPassengers().forEach(Entity::remove);
                 player.setPlayerListName(player.getName());
@@ -312,27 +388,30 @@ public class Gamemanager implements Manager {
                 if (player.isOp()) {
                     player.sendMessage(ChatColor.RED + "Use /result to see the results from every player");
                 }
-                
+
                 if (statsEnabled && forceItemPlayer != null && !forceItemPlayer.isSpectator()) {
                     FibStatisticsClient helper = this.forceItemBattle.getFibService().statistics();
                     long distance = (long) this.calculateDistance(forceItemPlayer.player());
+                    Team currentTeam = forceItemPlayer.currentTeam();
 
-                    if (forceItemPlayer.currentTeam() == null) {
+                    // Hoisted: the solo branch, the team branch and the win-streak write all need it.
+                    boolean won = currentTeam == null
+                            ? Integer.valueOf(1).equals(placesMap.get(forceItemPlayer))
+                            : (teamPlaces != null && Integer.valueOf(1).equals(teamPlaces.get(currentTeam)));
+
+                    if (currentTeam == null) {
                         // ---- Solo game: everything on solo stats ----
                         var soloUpdate = FIBServiceClient.soloUpdate()
                                 .blocksTravelledAdd(distance)
                                 .highestScore((long) forceItemPlayer.currentScore());
 
-                        if (placesMap.get(forceItemPlayer) == 1) {
+                        if (won) {
                             soloUpdate.gamesWonAdd(1);
                         }
 
                         helper.updateSoloStatisticsAsync(player.getUniqueId(), soloUpdate);
                     } else {
                         // ---- Team game: keep everything on team/member stats, never solo ----
-                        Team currentTeam = forceItemPlayer.currentTeam();
-                        boolean teamWon = teamPlaces != null && Integer.valueOf(1).equals(teamPlaces.get(currentTeam));
-
                         for (ForceItemPlayer teamPlayer : currentTeam.getPlayers()) {
                             if (!teamPlayer.equals(forceItemPlayer)) {
                                 UUID teammateUuid = teamPlayer.player().getUniqueId();
@@ -351,7 +430,7 @@ public class Gamemanager implements Manager {
                                         .highestScore((long) currentTeam.getCurrentScore());
                                 boolean lowerSide = player.getUniqueId().toString()
                                         .compareTo(teammateUuid.toString()) < 0;
-                                if (lowerSide && teamWon) {
+                                if (lowerSide && won) {
                                     teamUpdate.gamesWonAdd(1);
                                 }
 
@@ -360,12 +439,32 @@ public class Gamemanager implements Manager {
                             }
                         }
                     }
+
+                    // Win streak. Player-scoped, so this is unlike every other write above:
+                    //   - losers report too — a LOSS is what resets the streak
+                    //   - no lower-UUID dedupe — both members of a winning team each own a streak,
+                    //     so both send their own WIN
+                    helper.recordGameOutcomeAsync(
+                            player.getUniqueId(),
+                            new FibPlayerStatsUpdateRequestDto()
+                                    .outcome(won
+                                            ? FibPlayerStatsUpdateRequestDto.OutcomeEnum.WIN
+                                            : FibPlayerStatsUpdateRequestDto.OutcomeEnum.LOSS));
                 }
             } catch (Exception exception) {
                 this.forceItemBattle.getLogger().warning(
                         "Failed to finish round for " + player.getName() + ": " + exception.getMessage());
             }
         });
+
+        if (statsEnabled) {
+            for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+                ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(onlinePlayer.getUniqueId());
+                if (forceItemPlayer != null && !forceItemPlayer.isSpectator()) {
+                    this.forceItemBattle.getAchievementManager().evaluateGlobalAchievements(onlinePlayer);
+                }
+            }
+        }
     }
 
     public String placeColor(int place) {

@@ -8,8 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import lombok.Getter;
 
 public class TradingManager implements Manager {
-
-    public static final String PREFIX = "<dark_gray>» <green>Trade <dark_gray>┃ ";
+    
     private final ForceItemBattle forceItemBattle;
     private final Map<ForceItemPlayer, ForceItemPlayer> pendingTradeRequests;
     @Getter

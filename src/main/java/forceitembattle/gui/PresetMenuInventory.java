@@ -9,16 +9,15 @@ import java.util.ArrayList;
 import java.util.List;
 import org.bukkit.Material;
 import org.bukkit.Sound;
-import org.bukkit.inventory.ItemFlag;
 
-public class InvPresetMenu extends InventoryBuilder {
+public class PresetMenuInventory extends InventoryBuilder {
 
-    public InvPresetMenu(ForceItemBattle forceItemBattle, GameSettings gameSettings) {
+    public PresetMenuInventory(ForceItemBattle forceItemBattle, GameSettings gameSettings) {
         super(9 * 5, Text.of("<dark_gray>» <dark_aqua>Settings <dark_gray>● <gray>Presets"));
 
         /* BORDER */
-        this.setItems(0, 8, new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE).setDisplayName("<aqua>").addItemFlags(ItemFlag.values()).getItemStack());
-        this.setItems(36, 44, new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE).setDisplayName("<aqua>").addItemFlags(ItemFlag.values()).getItemStack());
+        this.setItems(0, 8, GuiItems.border());
+        this.setItems(36, 44, GuiItems.border());
 
         this.addUpdateHandler(() -> {
 
@@ -28,7 +27,7 @@ public class InvPresetMenu extends InventoryBuilder {
 
                 getPlayer().playSound(getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
                 GamePreset tempGamePreset = new GamePreset();
-                new InvSettingsPresets(forceItemBattle, tempGamePreset, gameSettings).open(getPlayer());
+                new SettingsPresetsInventory(forceItemBattle, tempGamePreset, gameSettings).open(getPlayer());
             });
 
             List<String> lore = new ArrayList<>();

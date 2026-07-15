@@ -1,59 +1,94 @@
 package forceitembattle.model;
 
+import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.datacomponent.item.CustomModelData;
+import java.util.List;
 import lombok.Getter;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * A match spec for items this plugin does <i>not</i> create — datapack loot-table
+ * items such as Cavendish, Gros Michel and the legendary template. Items the plugin
+ * builds itself live in {@link CustomMaterials} instead.
+ */
 
 @Getter
 public class CustomItem {
 
+    @Nullable
     private final Material material;
-    private final int customModelData;
-    private final String customModelDataString;
-    private final String checkedName;
 
-    // Persistent-data (custom_data under PublicBukkitValues) match: key is a
-    // "namespace:key" string, value is the expected String value.
+    /** Entry expected in the item's {@code custom_model_data} string list. */
+    @Nullable
+    private final String customModelDataString;
+
+    /** PDC key, as {@code "namespace:key"}. */
+    @Nullable
     private final String customDataKey;
+
+    @Nullable
     private final String customDataValue;
 
-    // Full constructor
-    public CustomItem(Material material, int customModelData, String customModelDataString, String checkedName,
-                      String customDataKey, String customDataValue) {
+    private CustomItem(@Nullable Material material, @Nullable String customModelDataString,
+                       @Nullable String customDataKey, @Nullable String customDataValue) {
         this.material = material;
-        this.customModelData = customModelData;
         this.customModelDataString = customModelDataString;
-        this.checkedName = checkedName;
         this.customDataKey = customDataKey;
         this.customDataValue = customDataValue;
     }
 
-    // Full constructor without custom data
-    public CustomItem(Material material, int customModelData, String customModelDataString, String checkedName) {
-        this(material, customModelData, customModelDataString, checkedName, null, null);
+    /** Matches a material carrying the given custom-model-data string. */
+    public static CustomItem ofModelData(Material material, String customModelDataString) {
+        return new CustomItem(material, customModelDataString, null, null);
     }
 
-    // Legacy constructor (integer custom model data)
-    public CustomItem(Material material, int customModelData, String checkedName) {
-        this(material, customModelData, null, checkedName, null, null);
-    }
-
-    // String-based custom model data constructor
-    public CustomItem(Material material, String customModelDataString, String checkedName) {
-        this(material, 0, customModelDataString, checkedName, null, null);
-    }
-
-    // Name-only constructor
-    public CustomItem(Material material, String checkedName) {
-        this(material, 0, null, checkedName, null, null);
-    }
-
-    // Material-only constructor
-    public CustomItem(Material material) {
-        this(material, 0, null, null, null, null);
-    }
-
-    //  Matches purely on a persistent-data (custom_data / PublicBukkitValues) string tag
+    /** Matches purely on a persistent-data (custom_data / PublicBukkitValues) string tag. */
     public static CustomItem customData(String customDataKey, String customDataValue) {
-        return new CustomItem(null, 0, null, null, customDataKey, customDataValue);
+        return new CustomItem(null, null, customDataKey, customDataValue);
+    }
+
+    /**
+     * Whether the given stack satisfies every criterion of this spec.
+     */
+    public boolean matches(@Nullable ItemStack item) {
+        if (item == null || item.getType() == Material.AIR) {
+            return false;
+        }
+
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) {
+            return false;
+        }
+
+        if (this.material != null && item.getType() != this.material) {
+            return false;
+        }
+
+        if (this.customModelDataString != null) {
+            CustomModelData customModelData = item.getData(DataComponentTypes.CUSTOM_MODEL_DATA);
+            if (customModelData == null) {
+                return false;
+            }
+            List<String> strings = customModelData.strings();
+            if (strings == null || !strings.contains(this.customModelDataString)) {
+                return false;
+            }
+        }
+
+        if (this.customDataKey != null) {
+            NamespacedKey key = NamespacedKey.fromString(this.customDataKey);
+            if (key == null) {
+                return false;
+            }
+            String value = meta.getPersistentDataContainer().get(key, PersistentDataType.STRING);
+            return value != null && value.equals(this.customDataValue);
+        }
+
+        return true;
     }
 }

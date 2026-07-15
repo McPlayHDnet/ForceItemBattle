@@ -1,12 +1,13 @@
 package forceitembattle.achievements;
 
+import forceitembattle.achievements.global.GlobalRule;
+import forceitembattle.achievements.global.GlobalStat;
 import forceitembattle.achievements.handlers.AchievementHandler;
 import forceitembattle.achievements.handlers.AntimatterTeleporterUsesAchievementHandler;
 import forceitembattle.achievements.handlers.BackToBackAchievementHandler;
 import forceitembattle.achievements.handlers.BackToBackCountAchievementHandler;
 import forceitembattle.achievements.handlers.BeehiveAchievementHandler;
 import forceitembattle.achievements.handlers.CollectionAchievementHandler;
-import forceitembattle.achievements.handlers.CompletionistAchievementHandler;
 import forceitembattle.achievements.handlers.ConsecutiveStoneAchievementHandler;
 import forceitembattle.achievements.handlers.CounterAchievementHandler;
 import forceitembattle.achievements.handlers.DeathCounterAchievementHandler;
@@ -26,6 +27,8 @@ import forceitembattle.achievements.handlers.WheelOfFortuneAchievementHandler;
 import forceitembattle.achievements.handlers.WheelOfFortuneUsesAchievementHandler;
 import forceitembattle.model.BiomeGroup;
 import forceitembattle.model.CustomItem;
+import forceitembattle.model.Dimension;
+import java.util.EnumSet;
 import java.util.Set;
 import lombok.Getter;
 import org.bukkit.Material;
@@ -52,16 +55,16 @@ public enum Achievements {
             new CounterAchievementHandler(85, false, null)),
 
     ONE_DIMENSION_WONDER("One Dimension Wonder", "Collect 10 overworld items in a row",
-            new CounterAchievementHandler(10, true, "world")),
+            new CounterAchievementHandler(10, true, Dimension.OVERWORLD)),
 
     NEVER_LEFT_HOME("Never Left Home", "Collect 20 overworld items in a row",
-            new CounterAchievementHandler(20, true, "world")),
+            new CounterAchievementHandler(20, true, Dimension.OVERWORLD)),
 
     INFINITE_FIRE("Infinite Fire", "Collect 5 nether items in a row",
-            new CounterAchievementHandler(5, true, "world_nether")),
+            new CounterAchievementHandler(5, true, Dimension.NETHER)),
 
     ITS_SO_EMPTY("It's so empty", "Collect 3 end items in a row",
-            new CounterAchievementHandler(3, true, "world_the_end")),
+            new CounterAchievementHandler(3, true, Dimension.END)),
 
     WAIT_WOOD("Wait Wood?", "Collect at least one item from each wood type in one round",
             CollectionAchievementHandler.woodTypesHandler()),
@@ -155,7 +158,7 @@ public enum Achievements {
                     Biome.DEEP_DARK, Biome.DRIPSTONE_CAVES, Biome.LUSH_CAVES, Biome.SULFUR_CAVES))),
 
     ALWAYS_ON_THE_GO("Always On The Go", "Visit all three dimensions in one round",
-            CollectionAchievementHandler.dimensionHandler(Set.of("world", "world_nether", "world_the_end"))),
+            CollectionAchievementHandler.dimensionHandler(EnumSet.allOf(Dimension.class))),
 
     PALE_PLEASE("Pale Please", "Use 10 different antimatter teleporters in one game",
             new AntimatterTeleporterUsesAchievementHandler(10)),
@@ -178,7 +181,7 @@ public enum Achievements {
             new DeathCounterAchievementHandler(0)),
 
     CONNOISSEUR("Connoisseur", "Eat Cavendish",
-            new EatingAchievementHandler(1, new CustomItem(Material.ENCHANTED_GOLDEN_APPLE, "cavendish", null))),
+            new EatingAchievementHandler(1, CustomItem.ofModelData(Material.ENCHANTED_GOLDEN_APPLE, "cavendish"))),
 
     THANK_YOU("Thank you", "Trade with the wandering trader 10 times in one round",
             new TradingAchievementHandler(10)),
@@ -201,27 +204,149 @@ public enum Achievements {
     FIFTEEN_MULT("+15 Mult", "Find Gros Michel inside the Antimatter Depths",
             new LootAchievementHandler(1,
                     NamespacedKey.fromString("fib:antimatter_depths_treasure"),
-                    new CustomItem(Material.GOLDEN_APPLE, "gros_michel", null), false)),
+                    CustomItem.ofModelData(Material.GOLDEN_APPLE, "gros_michel"), false)),
 
     WILL_IT_BREAK("Will it break?", "Find Cavendish inside the Antimatter Depths",
             new LootAchievementHandler(1,
                     NamespacedKey.fromString("fib:antimatter_depths_treasure"),
-                    new CustomItem(Material.ENCHANTED_GOLDEN_APPLE, "cavendish", null), false)),
+                    CustomItem.ofModelData(Material.ENCHANTED_GOLDEN_APPLE, "cavendish"), false)),
 
     BELIEVER("Believer", "Find your currently needed item in a loot chest",
             new LootAchievementHandler(1, null, null, true)),
 
+    // GLOBAL achievements
+    FIRST_OF_MANY("First of Many", "Play 10 games",
+            new GlobalRule(GlobalStat.GAMES_PLAYED, 10)),
+
+    SEASONED_VETERAN("Seasoned Veteran", "Play 50 games",
+            new GlobalRule(GlobalStat.GAMES_PLAYED, 50)),
+
+    TASTE_OF_VICTORY("Taste of Victory", "Win 5 games",
+            new GlobalRule(GlobalStat.GAMES_WON, 5)),
+
+    HALL_OF_FAME("Hall of Fame", "Win 25 games",
+            new GlobalRule(GlobalStat.GAMES_WON, 25)),
+
+    STOCKPILE("Stockpile", "Collect 1000 items across all games",
+            new GlobalRule(GlobalStat.TOTAL_ITEMS, 1000)),
+
+    WAREHOUSE("Warehouse", "Collect 5000 items across all games",
+            new GlobalRule(GlobalStat.TOTAL_ITEMS, 5000)),
+
+    FORTUNE_FAVOURS("Fortune Favours", "Get 100 back-to-backs across all games",
+            new GlobalRule(GlobalStat.BACK_TO_BACKS, 100)),
+
+    PROBABILITY_BROKEN("Probability, Broken", "Get 250 back-to-backs across all games",
+            new GlobalRule(GlobalStat.BACK_TO_BACKS, 250)),
+
+    BACK_TO_BACK_TO_BACK_TO_BACK("Back to Back to Back to Back to Back", "Get 1000 back-to-backs across all games",
+            new GlobalRule(GlobalStat.BACK_TO_BACKS, 1000)),
+
+    WHEEL_ENTHUSIAST("Wheel Enthusiast", "Use the Wheel of Fortune 250 times",
+            new GlobalRule(GlobalStat.WHEEL_OF_FORTUNE_USES, 250)),
+
+    WHEEL_ADDICT("Wheel Addict", "Use the Wheel of Fortune 500 times",
+            new GlobalRule(GlobalStat.WHEEL_OF_FORTUNE_USES, 500)),
+
+    GAMBA_GAMBA_GAMA("Gamba Gamba Gamba", "Use the Wheel of Fortune 1000 times",
+            new GlobalRule(GlobalStat.WHEEL_OF_FORTUNE_USES, 1000)),
+
+    FREQUENT_FLYER("Frequent Flyer", "Use the Antimatter Teleporter 100 times",
+            new GlobalRule(GlobalStat.ANTIMATTER_TELEPORTS, 100)),
+
+    QUANTUM_COMMUTER("Quantum Commuter", "Use the Antimatter Teleporter 250 times",
+            new GlobalRule(GlobalStat.ANTIMATTER_TELEPORTS, 250)),
+
+    LEARNING_EXPERIENCE("Learning Experience", "Die 50 times",
+            new GlobalRule(GlobalStat.DEATHS, 50)),
+
+    BETTER_LUCK_NEXT_TIME("Better Luck Next Time", "Die 250 times",
+            new GlobalRule(GlobalStat.DEATHS, 250)),
+
+    ARE_YOU_EVEN_TRYING("Are You Even Trying?", "Die 500 times",
+            new GlobalRule(GlobalStat.DEATHS, 500)),
+
+    GLOBETROTTER("Globetrotter", "Travel 50000 blocks",
+            new GlobalRule(GlobalStat.BLOCKS_TRAVELLED, 50_000)),
+
+    MARATHON_RUNNER("Marathon Runner", "Travel 250000 blocks",
+            new GlobalRule(GlobalStat.BLOCKS_TRAVELLED, 250_000)),
+
+    HAT_TRICK("Hat Trick", "Win 3 games in a row",
+            new GlobalRule(GlobalStat.HIGHEST_WIN_STREAK, 3)),
+
+    UNSTOPPABLE("Unstoppable", "Win 5 games in a row",
+            new GlobalRule(GlobalStat.HIGHEST_WIN_STREAK, 5)),
+
+    // Per-rarity back-to-backs. Deliberately kept alongside the total-count achievements
+    // rather than replacing them: the totals reward volume, these reward luck.
+    NOTHING_SPECIAL("Nothing Special", "Get 250 rare back-to-backs",
+            new GlobalRule(GlobalStat.RARE_BACK_TO_BACKS, 250)),
+
+    PURPLE_REIGN("Purple Reign", "Get 100 epic back-to-backs",
+            new GlobalRule(GlobalStat.EPIC_BACK_TO_BACKS, 100)),
+
+    STUFF_OF_LEGENDS("The Stuff of Legends", "Get 50 legendary back-to-backs",
+            new GlobalRule(GlobalStat.LEGENDARY_BACK_TO_BACKS, 50)),
+
+    BLESSED_BY_RNGESUS("Blessed by RNGesus", "Get 2 RNGesus back-to-backs",
+            new GlobalRule(GlobalStat.RNGESUS_BACK_TO_BACKS, 2)),
+
+    FEELS_FAMILIAR("Feels Familiar", "Get 5 extraordinary back-to-backs",
+            new GlobalRule(GlobalStat.EXTRAORDINARY_BACK_TO_BACKS, 5)),
+
     // META achievement
-    COMPLETIONIST("Completionist++", "Complete all achievements",
-            new CompletionistAchievementHandler());
+    COMPLETIONIST("Completionist+", "Complete every round achievement",
+            new CompletionistRule(AchievementScope.ROUND)),
+
+    COMPLETIONIST_PLUS_PLUS("Completionist++", "Complete every round and global achievement",
+            new CompletionistRule(AchievementScope.ROUND, AchievementScope.GLOBAL));
 
     private final String title;
     private final String description;
+    private final AchievementScope scope;
+    /** ROUND only. */
     private final AchievementHandler<?> handler;
+    /** GLOBAL only. */
+    private final GlobalRule globalRule;
+    /** META only. */
+    private final CompletionistRule completionistRule;
 
     Achievements(String title, String description, AchievementHandler<?> handler) {
+        this(title, description, AchievementScope.ROUND, handler, null, null);
+    }
+
+    Achievements(String title, String description, GlobalRule globalRule) {
+        this(title, description, AchievementScope.GLOBAL, null, globalRule, null);
+    }
+
+    Achievements(String title, String description, CompletionistRule completionistRule) {
+        this(title, description, AchievementScope.META, null, null, completionistRule);
+    }
+
+    Achievements(String title, String description, AchievementScope scope, AchievementHandler<?> handler,
+                 GlobalRule globalRule, CompletionistRule completionistRule) {
+        int carriers = (handler != null ? 1 : 0) + (globalRule != null ? 1 : 0) + (completionistRule != null ? 1 : 0);
+        boolean matchesScope = switch (scope) {
+            case ROUND -> handler != null;
+            case GLOBAL -> globalRule != null;
+            case META -> completionistRule != null;
+        };
+        if (carriers != 1 || !matchesScope) {
+            throw new IllegalArgumentException(
+                    scope + " achievement '" + title + "' must carry exactly its own rule/handler");
+        }
+
         this.title = title;
         this.description = description;
+        this.scope = scope;
         this.handler = handler;
+        this.globalRule = globalRule;
+        this.completionistRule = completionistRule;
+    }
+
+    public boolean isGlobal() {
+        return scope == AchievementScope.GLOBAL;
     }
 }
+

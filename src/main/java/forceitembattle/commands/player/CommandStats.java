@@ -1,14 +1,13 @@
 package forceitembattle.commands.player;
 
 import de.threeseconds.openapi.fibservice.client.model.FibItemCountDto;
-import de.threeseconds.openapi.fibservice.client.model.FibPlayerCombinedTeamStatsDto;
 import de.threeseconds.openapi.fibservice.client.model.FibRaritiesDto;
-import de.threeseconds.openapi.fibservice.client.model.FibSoloStatisticsDto;
 import de.threeseconds.openapi.fibservice.client.model.FibTeamMemberStatsDto;
-import de.threeseconds.openapi.fibservice.client.model.FibTeamStatisticsDto;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
+import forceitembattle.model.Rarity;
+import forceitembattle.model.StatsView;
 import forceitembattle.service.FibStatisticsClient;
 import forceitembattle.util.Text;
 import java.text.DecimalFormat;
@@ -31,7 +30,7 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
 
     private record PendingReset(String scope, UUID targetUuid, String targetName, long createdAt) {
     }
-
+    
     public CommandStats(ForceItemBattle plugin) {
         super(plugin, "stats");
 
@@ -60,7 +59,7 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
 
         if (args.length == 1) {
             helper.getSoloStatisticsAsync(player.getUniqueId(),
-                    stats -> sendSoloMessage(player, player.getName(), stats),
+                    stats -> sendStats(player, "Solo Stats", "<green>" + player.getName(), StatsView.of(stats)),
                     error -> player.sendMessage(Text.of("<red>Could not load your solo stats.")));
             return;
         }
@@ -72,7 +71,7 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
         }
 
         helper.getSoloStatisticsAsync(targetUuid,
-                stats -> sendSoloMessage(player, args[1], stats),
+                stats -> sendStats(player, "Solo Stats", "<green>" + args[1], StatsView.of(stats)),
                 error -> player.sendMessage(Text.of("<yellow>" + args[1] + " <red>has no solo stats yet")));
     }
 
@@ -81,7 +80,7 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
 
         if (args.length == 1) {
             helper.getPlayerCombinedTeamStatsAsync(player.getUniqueId(),
-                    stats -> sendCombinedTeamMessage(player, player.getName(), stats),
+                    stats -> sendStats(player, "Team Stats", "<green>" + player.getName(), StatsView.of(stats)),
                     error -> player.sendMessage(Text.of("<red>Could not load your team stats.")));
             return;
         }
@@ -93,7 +92,7 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
         }
 
         helper.getPlayerCombinedTeamStatsAsync(targetUuid,
-                stats -> sendCombinedTeamMessage(player, args[1], stats),
+                stats -> sendStats(player, "Team Stats", "<green>" + args[1], StatsView.of(stats)),
                 error -> player.sendMessage(Text.of("<yellow>" + args[1] + " <red>has no team stats yet")));
     }
 
@@ -133,16 +132,18 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
             return;
         }
 
+        String subject = "<green>" + player1Name + " <dark_gray>& <green>" + player2Name;
+
         helper.getTeamStatisticsAsync(player1Uuid, player2Uuid,
-                stats -> sendDuoMessage(player, player1Name, player2Name, stats),
+                stats -> {
+                    sendStats(player, "Duo Stats", subject, StatsView.of(stats));
+                    sendContributions(player, stats.getMemberStats());
+                },
                 error -> player.sendMessage(Text.of("<yellow>" + player1Name + " <red>and <yellow>" + player2Name + " <red>have no duo stats yet")));
     }
 
     private void handleReset(Player player, String[] args) {
-        if (!player.isOp()) {
-            player.sendMessage(Text.of("<red>You don't have permission to do that."));
-            return;
-        }
+        if (!requireOp(player)) return;
 
         if (args.length >= 2 && args[1].equalsIgnoreCase("confirm")) {
             confirmReset(player);
@@ -200,101 +201,58 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
         }
     }
 
-    private void sendSoloMessage(Player player, String targetName, FibSoloStatisticsDto stats) {
-        int gamesPlayed = stats.getGamesPlayed();
-        int gamesWon = stats.getGamesWon();
-        double winPct = gamesPlayed != 0 ? (double) gamesWon / gamesPlayed * 100 : 0;
+    /**
+     * The stats screen. Solo, team and duo all render through here — only the header,
+     * the score label and the optional "teams played with" line differ.
+     */
+    private void sendStats(Player player, String title, String subject, StatsView view) {
         DecimalFormat df = new DecimalFormat("0.#");
 
         player.sendMessage(" ");
-        player.sendMessage(Text.of("<dark_gray>» <gold><b>Solo Stats</b> <dark_gray>● <green>" + targetName + " <dark_gray>«"));
-        player.sendMessage(" ");
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Total items found <dark_gray>» <dark_aqua>" + stats.getTotalItemsFound()));
-        sendTopItems(player, stats.getTopThreeItems());
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Travelled <dark_gray>» <dark_aqua>" + stats.getBlocksTravelled() + " blocks"));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Highest score <dark_gray>» <dark_aqua>" + stats.getHighestScore()));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Back-to-Back streak <dark_gray>» <dark_aqua>" + stats.getHighestB2BStreak()));
-        sendRarities(player, stats.getRarities());
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Games played <dark_gray>» <dark_aqua>" + gamesPlayed));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Games won <dark_gray>» <dark_aqua>" + gamesWon));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Win percentage <dark_gray>» <dark_aqua>" + df.format(winPct) + "%"));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Deaths <dark_gray>» <dark_aqua>" + stats.getDeaths()));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Longest item streak <dark_gray>» <dark_aqua>" + stats.getLongestItemStreak()));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Wheel of Fortune uses <dark_gray>» <dark_aqua>" + stats.getWheelOfFortuneUses()));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Antimatter teleports <dark_gray>» <dark_aqua>" + stats.getEnteredAntimatterTeleporter()));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Avg. items / game <dark_gray>» <dark_aqua>" + df.format(gamesPlayed != 0 ? (double) stats.getTotalItemsFound() / gamesPlayed : 0)));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Avg. back-to-backs / game <dark_gray>» <dark_aqua>" + df.format(gamesPlayed != 0 ? (double) totalRarities(stats.getRarities()) / gamesPlayed : 0)));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Avg. time per item <dark_gray>» <dark_aqua>" + formatTime(stats.getTotalItemsFound() > 0 ? stats.getTotalTimeSpentOnItems() / stats.getTotalItemsFound() : 0)));
-        player.sendMessage(" ");
-    }
-
-    private void sendCombinedTeamMessage(Player player, String targetName, FibPlayerCombinedTeamStatsDto stats) {
-        int gamesPlayed = stats.getTotalGamesPlayed();
-        int gamesWon = stats.getTotalGamesWon();
-        double winPct = gamesPlayed != 0 ? (double) gamesWon / gamesPlayed * 100 : 0;
-        DecimalFormat df = new DecimalFormat("0.#");
-
-        player.sendMessage(" ");
-        player.sendMessage(Text.of("<dark_gray>» <gold><b>Team Stats</b> <dark_gray>● <green>" + targetName + " <dark_gray>«"));
-        player.sendMessage(" ");
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Teams played with <dark_gray>» <dark_aqua>" + stats.getTeamsCount()));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Total items found <dark_gray>» <dark_aqua>" + stats.getTotalItemsFound()));
-        sendTopItems(player, stats.getTopThreeItems());
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Travelled <dark_gray>» <dark_aqua>" + stats.getBlocksTravelled() + " blocks"));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Highest team score <dark_gray>» <dark_aqua>" + stats.getHighestTeamScore()));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Back-to-Back streak <dark_gray>» <dark_aqua>" + stats.getHighestB2BStreak()));
-        sendRarities(player, stats.getRarities());
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Games played <dark_gray>» <dark_aqua>" + gamesPlayed));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Games won <dark_gray>» <dark_aqua>" + gamesWon));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Win percentage <dark_gray>» <dark_aqua>" + df.format(winPct) + "%"));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Deaths <dark_gray>» <dark_aqua>" + stats.getDeaths()));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Longest item streak <dark_gray>» <dark_aqua>" + stats.getLongestTeamItemStreak()));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Wheel of Fortune uses <dark_gray>» <dark_aqua>" + stats.getWheelOfFortuneUses()));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Antimatter teleports <dark_gray>» <dark_aqua>" + stats.getEnteredAntimatterTeleporter()));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Avg. items / game <dark_gray>» <dark_aqua>" + df.format(gamesPlayed != 0 ? (double) stats.getTotalItemsFound() / gamesPlayed : 0)));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Avg. back-to-backs / game <dark_gray>» <dark_aqua>" + df.format(gamesPlayed != 0 ? (double) totalRarities(stats.getRarities()) / gamesPlayed : 0)));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Avg. time per item <dark_gray>» <dark_aqua>" + formatTime(stats.getTotalItemsFound() > 0 ? stats.getTotalTimeSpentOnItems() / stats.getTotalItemsFound() : 0)));
-        player.sendMessage(" ");
-    }
-
-    private void sendDuoMessage(Player player, String p1Name, String p2Name, FibTeamStatisticsDto stats) {
-        int gamesPlayed = stats.getGamesPlayed();
-        int gamesWon = stats.getGamesWon();
-        double winPct = gamesPlayed != 0 ? (double) gamesWon / gamesPlayed * 100 : 0;
-        DecimalFormat df = new DecimalFormat("0.#");
-
-        player.sendMessage(" ");
-        player.sendMessage(Text.of("<dark_gray>» <gold><b>Duo Stats</b> <dark_gray>● <green>" + p1Name + " <dark_gray>& <green>" + p2Name + " <dark_gray>«"));
-        player.sendMessage(" ");
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Highest score <dark_gray>» <dark_aqua>" + stats.getHighestScore()));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Total items found <dark_gray>» <dark_aqua>" + stats.getTotalItemsFound()));
-        sendTopItems(player, stats.getTopThreeItems());
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Travelled <dark_gray>» <dark_aqua>" + stats.getBlocksTravelled() + " blocks"));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Back-to-Back streak <dark_gray>» <dark_aqua>" + stats.getHighestB2BStreak()));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Games played <dark_gray>» <dark_aqua>" + gamesPlayed));
-        sendRarities(player, stats.getRarities());
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Games won <dark_gray>» <dark_aqua>" + gamesWon));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Win percentage <dark_gray>» <dark_aqua>" + df.format(winPct) + "%"));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Deaths <dark_gray>» <dark_aqua>" + stats.getDeaths()));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Longest item streak <dark_gray>» <dark_aqua>" + stats.getLongestItemStreak()));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Wheel of Fortune uses <dark_gray>» <dark_aqua>" + stats.getWheelOfFortuneUses()));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Antimatter teleports <dark_gray>» <dark_aqua>" + stats.getEnteredAntimatterTeleporter()));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Avg. items / game <dark_gray>» <dark_aqua>" + df.format(gamesPlayed != 0 ? (double) stats.getTotalItemsFound() / gamesPlayed : 0)));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Avg. back-to-backs / game <dark_gray>» <dark_aqua>" + df.format(gamesPlayed != 0 ? (double) totalRarities(stats.getRarities()) / gamesPlayed : 0)));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Avg. time per item <dark_gray>» <dark_aqua>" + formatTime(stats.getTotalItemsFound() > 0 ? stats.getTotalTimeSpentOnItems() / stats.getTotalItemsFound() : 0)));
+        player.sendMessage(Text.of("<dark_gray>» <gold><b>" + title + "</b> <dark_gray>● " + subject + " <dark_gray>«"));
         player.sendMessage(" ");
 
-        if (!stats.getMemberStats().isEmpty()) {
-            player.sendMessage(Text.of("  <dark_gray>● <gray>Contributions <dark_gray>»"));
-            for (FibTeamMemberStatsDto member : stats.getMemberStats()) {
-                String memberName = resolveName(member.getMemberUuid());
-                player.sendMessage(Text.of("    <dark_gray>» <green>" + memberName
-                        + " <dark_gray>| <dark_aqua>" + member.getTotalItemsFound() + " items"
-                        + " <dark_gray>| <dark_aqua>" + member.getDeaths() + " deaths"
-                        + " <dark_gray>| <dark_aqua>" + member.getBlocksTravelled() + " blocks"));
-            }
-            player.sendMessage(" ");
+        if (view.teamsPlayedWith() != null) {
+            sendLine(player, "Teams played with", view.teamsPlayedWith());
         }
+
+        sendLine(player, "Total items found", view.totalItemsFound());
+        sendTopItems(player, view.topThreeItems());
+        sendLine(player, "Travelled", view.blocksTravelled() + " blocks");
+        sendLine(player, view.scoreLabel(), view.highestScore());
+        sendLine(player, "Back-to-Back streak", view.highestB2BStreak());
+        sendRarities(player, view.rarities());
+        sendLine(player, "Games played", view.gamesPlayed());
+        sendLine(player, "Games won", view.gamesWon());
+        sendLine(player, "Win percentage", df.format(view.winPercentage()) + "%");
+        sendLine(player, "Deaths", view.deaths());
+        sendLine(player, "Longest item streak", view.longestItemStreak());
+        sendLine(player, "Wheel of Fortune uses", view.wheelOfFortuneUses());
+        sendLine(player, "Antimatter teleports", view.antimatterTeleports());
+        sendLine(player, "Avg. items / game", df.format(view.averageItemsPerGame()));
+        sendLine(player, "Avg. back-to-backs / game", df.format(view.averageBackToBacksPerGame()));
+        sendLine(player, "Avg. time per item", formatTime(view.averageTimePerItem()));
+        player.sendMessage(" ");
+    }
+
+    private void sendLine(Player player, String label, Object value) {
+        player.sendMessage(Text.of("  <dark_gray>● <gray>" + label + " <dark_gray>» <dark_aqua>" + value));
+    }
+
+    private void sendContributions(Player player, List<FibTeamMemberStatsDto> memberStats) {
+        if (memberStats == null || memberStats.isEmpty()) {
+            return;
+        }
+
+        player.sendMessage(Text.of("  <dark_gray>● <gray>Contributions <dark_gray>»"));
+        for (FibTeamMemberStatsDto member : memberStats) {
+            String memberName = resolveName(member.getMemberUuid());
+            player.sendMessage(Text.of("    <dark_gray>» <green>" + memberName
+                    + " <dark_gray>| <dark_aqua>" + member.getTotalItemsFound() + " items"
+                    + " <dark_gray>| <dark_aqua>" + member.getDeaths() + " deaths"
+                    + " <dark_gray>| <dark_aqua>" + member.getBlocksTravelled() + " blocks"));
+        }
+        player.sendMessage(" ");
     }
 
     private void sendTopItems(Player player, List<FibItemCountDto> topItems) {
@@ -310,32 +268,17 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
     }
 
     private void sendRarities(Player player, FibRaritiesDto rarities) {
-        if (rarities == null) {
+        if (Rarity.total(rarities) == 0) {
             return;
         }
-        long total = totalRarities(rarities);
-        if (total == 0) {
-            return;
-        }
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Rarities <dark_gray>»"));
-        if (rarities.getRare() > 0)
-            player.sendMessage(Text.of("    <dark_gray>» <blue>Rare <dark_gray>× <dark_aqua>" + rarities.getRare()));
-        if (rarities.getEpic() > 0)
-            player.sendMessage(Text.of("    <dark_gray>» <dark_purple>Epic <dark_gray>× <dark_aqua>" + rarities.getEpic()));
-        if (rarities.getLegendary() > 0)
-            player.sendMessage(Text.of("    <dark_gray>» <gold>Legendary <dark_gray>× <dark_aqua>" + rarities.getLegendary()));
-        if (rarities.getRngesus() > 0)
-            player.sendMessage(Text.of("    <dark_gray>» <gradient:#E41EBC:#9A4992>RNGesus</gradient> <dark_gray>× <dark_aqua>" + rarities.getRngesus()));
-        if (rarities.getExtraordinary() > 0)
-            player.sendMessage(Text.of("    <dark_gray>» <gradient:#73FF00:#14C8FF>Extraordinary</gradient> <dark_gray>× <dark_aqua>" + rarities.getExtraordinary()));
-    }
 
-    private long totalRarities(FibRaritiesDto rarities) {
-        if (rarities == null) {
-            return 0;
+        player.sendMessage(Text.of("  <dark_gray>● <gray>Rarities <dark_gray>»"));
+        for (Rarity rarity : Rarity.values()) {
+            long count = rarity.count(rarities);
+            if (count > 0) {
+                player.sendMessage(Text.of("    <dark_gray>» " + rarity.displayName() + " <dark_gray>× <dark_aqua>" + count));
+            }
         }
-        return rarities.getRare() + rarities.getEpic() + rarities.getLegendary()
-                + rarities.getRngesus() + rarities.getExtraordinary();
     }
 
     private UUID resolvePlayer(String name) {

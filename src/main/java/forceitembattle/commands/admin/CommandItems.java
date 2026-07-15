@@ -15,8 +15,7 @@ public class CommandItems extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (player.isOp()) {
-            new ItemsInventory(this.plugin, player).open(player);
-        }
+        if (!requireOp(player)) return;
+        new ItemsInventory(this.plugin, player).open(player);
     }
 }

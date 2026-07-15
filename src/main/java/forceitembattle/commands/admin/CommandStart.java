@@ -5,6 +5,7 @@ import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.ItemDifficultiesManager;
+import forceitembattle.model.Dimension;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GamePreset;
 import forceitembattle.service.FIBServiceClient;
@@ -44,28 +45,28 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (player.isOp()) {
-            if (args.length == 1) {
-                if (this.plugin.getSettings().getGamePreset(args[0]) == null) {
-                    player.sendMessage(Text.of("<yellow>" + args[0] + " <red>does not exist in presets."));
-                    return;
-                }
+        if (!requireOp(player)) return;
 
-                GamePreset gamePreset = this.plugin.getSettings().getGamePreset(args[0]);
-                this.plugin.getGamemanager().setCurrentGamePreset(gamePreset);
-                this.performCommand(gamePreset, player, args);
-
-            } else if (args.length == 2) {
-                try {
-                    this.performCommand(null, player, args);
-
-                } catch (NumberFormatException e) {
-                    player.sendMessage(Text.of("<red>Usage: /start <time in min> <jokers>"));
-                    player.sendMessage(Text.of("<red><time> and <jokers> have to be numbers"));
-                }
-            } else {
-                player.sendMessage(Text.of("<red>Usage: /start <time in min> <jokers>"));
+        if (args.length == 1) {
+            if (this.plugin.getSettings().getGamePreset(args[0]) == null) {
+                player.sendMessage(Text.of("<yellow>" + args[0] + " <red>does not exist in presets."));
+                return;
             }
+
+            GamePreset gamePreset = this.plugin.getSettings().getGamePreset(args[0]);
+            this.plugin.getGamemanager().setCurrentGamePreset(gamePreset);
+            this.performCommand(gamePreset, player, args);
+
+        } else if (args.length == 2) {
+            try {
+                this.performCommand(null, player, args);
+
+            } catch (NumberFormatException e) {
+                player.sendMessage(Text.of("<red>Usage: /start <time in min> <jokers>"));
+                player.sendMessage(Text.of("<red><time> and <jokers> have to be numbers"));
+            }
+        } else {
+            player.sendMessage(Text.of("<red>Usage: /start <time in min> <jokers>"));
         }
     }
 
@@ -183,7 +184,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
             this.plugin.getItemDifficultiesManager().setupStates();
         }
 
-        World world = Objects.requireNonNull(Bukkit.getWorld("world"));
+        World world = Objects.requireNonNull(Dimension.OVERWORLD.world());
         Location spawnLocation = world.getSpawnLocation();
         setupSpawnLocation(spawnLocation);
 
@@ -268,8 +269,9 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
         }
 
         this.plugin.getWanderingTraderManager().startTimer();
+        this.plugin.getRandomEventManager().startGame();
         this.plugin.getGamemanager().setGameStartTime(System.currentTimeMillis());
-        Bukkit.getWorld("world").setTime(0);
+        Dimension.OVERWORLD.world().setTime(0);
         this.plugin.getAchievementManager().resetProgress();
         this.plugin.getItemDifficultiesManager().resetUnlockAnnouncements();
         this.plugin.getGamemanager().setCurrentGameState(GameState.MID_GAME);

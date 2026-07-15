@@ -53,7 +53,7 @@ public class RecipeInventory extends InventoryBuilder {
 
         for (int i = 0; i < this.getInventory().getSize(); i++) {
             if (!SLOTS.contains(i)) {
-                this.setItem(i, new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE).setDisplayName("<dark_green>").getItemStack());
+                this.setItem(i, GuiItems.filler());
             }
         }
 
@@ -66,7 +66,7 @@ public class RecipeInventory extends InventoryBuilder {
         forceItemBattle.getRecipeManager().closeHandlers.put(recipeViewer.uuid(), () -> forceItemBattle.getRecipeManager().ignoreCloseHandler.remove(player.getUniqueId()));
 
         this.addUpdateHandler(() -> {
-            this.setItem(PREVIOUS_RECIPE_ITEM_SLOT, new ItemBuilder(Material.RED_STAINED_GLASS_PANE).setDisplayName("<dark_red>« <red>Previous Recipe").getItemStack(), event -> {
+            this.setItem(PREVIOUS_RECIPE_ITEM_SLOT, GuiItems.previous("Previous Recipe"), event -> {
                 if (recipeViewer.pages() == 1) {
                     return;
                 }
@@ -87,7 +87,7 @@ public class RecipeInventory extends InventoryBuilder {
                 new RecipeInventory(forceItemBattle, recipeViewer, player).open(player);
             });
 
-            this.setItem(NEXT_RECIPE_ITEM_SLOT, new ItemBuilder(Material.LIME_STAINED_GLASS_PANE).setDisplayName("<dark_green>» <green>Next Recipe").getItemStack(), inventoryClickEvent -> {
+            this.setItem(NEXT_RECIPE_ITEM_SLOT, GuiItems.next("Next Recipe"), inventoryClickEvent -> {
                 if (recipeViewer.pages() == 1) {
                     return;
                 }

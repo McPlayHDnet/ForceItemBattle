@@ -2,12 +2,13 @@ package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.ItemDifficultiesManager.State;
+import forceitembattle.model.ActiveTrader;
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.util.LocationFormat;
 import forceitembattle.util.Text;
 import java.util.List;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 /**
@@ -95,20 +96,15 @@ public class TabListManager implements Manager {
     }
 
     private String buildTraderBlock() {
-        WanderingTraderManager trader = this.plugin.getWanderingTraderManager();
-        if (!trader.isTraderActive() || trader.getTraderLocation() == null) {
-            return "";
-        }
-        return "\n\n<green><b>Wandering Trader</b>\n"
-                + locationToString(trader.getTraderLocation()) + "\n"
-                + formatColoredTime(trader.getTraderTimer()) + "\n";
-    }
+        StringBuilder block = new StringBuilder();
 
-    private String locationToString(Location location) {
-        if (location.getWorld() == null) {
-            return "<red>unknown location";
+        for (ActiveTrader trader : this.plugin.getWanderingTraderManager().activeTraders()) {
+            block.append("\n\n").append(trader.getKind().boldColoredName()).append("\n")
+                    .append(LocationFormat.xyz(trader.getLocation())).append("\n")
+                    .append(formatColoredTime(trader.getTimer())).append("\n");
         }
-        return "<dark_aqua>" + location.getBlockX() + "<gray>, <dark_aqua>" + location.getBlockY() + "<gray>, <dark_aqua>" + location.getBlockZ();
+
+        return block.toString();
     }
 
     private String formatColoredTime(int remainingSeconds) {

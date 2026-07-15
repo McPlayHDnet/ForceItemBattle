@@ -4,7 +4,7 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.player.CommandShout;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GamePreset;
-import forceitembattle.gui.InvSettingsPresets;
+import forceitembattle.gui.SettingsPresetsInventory;
 import forceitembattle.model.Team;
 import forceitembattle.util.Text;
 import io.papermc.paper.event.player.AsyncChatEvent;
@@ -28,13 +28,13 @@ public class ChatListener implements Listener {
         String message = PlainTextComponentSerializer.plainText().serialize(event.originalMessage());
 
         // Preset naming phase: capture the message as the preset name instead of chatting.
-        if (InvSettingsPresets.namingPhase != null
-                && InvSettingsPresets.namingPhase.containsKey(player.getUniqueId())) {
+        if (SettingsPresetsInventory.namingPhase != null
+                && SettingsPresetsInventory.namingPhase.containsKey(player.getUniqueId())) {
             Bukkit.getScheduler().runTask(this.plugin, () -> {
-                GamePreset gamePreset = InvSettingsPresets.namingPhase.get(player.getUniqueId());
+                GamePreset gamePreset = SettingsPresetsInventory.namingPhase.get(player.getUniqueId());
                 gamePreset.setPresetName(message);
-                new InvSettingsPresets(this.plugin, gamePreset, this.plugin.getSettings()).open(player);
-                InvSettingsPresets.namingPhase.remove(player.getUniqueId());
+                new SettingsPresetsInventory(this.plugin, gamePreset, this.plugin.getSettings()).open(player);
+                SettingsPresetsInventory.namingPhase.remove(player.getUniqueId());
             });
             return;
         }

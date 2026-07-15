@@ -16,8 +16,8 @@ public class TeleporterInventory extends InventoryBuilder {
 
         this.plugin = plugin;
 
-        this.setItems(0, 8, new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE).setDisplayName("<aqua>").addItemFlags(ItemFlag.values()).getItemStack());
-        this.setItems(45, 53, new ItemBuilder(Material.LIGHT_BLUE_STAINED_GLASS_PANE).setDisplayName("<aqua>").addItemFlags(ItemFlag.values()).getItemStack());
+        this.setItems(0, 8, GuiItems.border());
+        this.setItems(45, 53, GuiItems.border());
 
         this.addUpdateHandler(() -> {
             int slot = 9;
