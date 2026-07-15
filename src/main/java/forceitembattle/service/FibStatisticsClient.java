@@ -12,6 +12,8 @@ import de.threeseconds.openapi.fibservice.client.model.FibTeamStatisticsDto;
 import de.threeseconds.openapi.fibservice.client.model.FibTeamStatisticsUpdateRequestDto;
 import de.threeseconds.openapi.fibservice.client.model.FibPlayerStatsDto;
 import de.threeseconds.openapi.fibservice.client.model.FibPlayerStatsUpdateRequestDto;
+import forceitembattle.ForceItemBattle;
+import forceitembattle.achievements.global.GlobalStatsCache;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -26,10 +28,19 @@ public class FibStatisticsClient {
 
     private final FibStatisticsControllerApi api;
     private final ApiExecutor executor;
+    private final ForceItemBattle plugin;
 
-    FibStatisticsClient(FibStatisticsControllerApi api, ApiExecutor executor) {
+    FibStatisticsClient(FibStatisticsControllerApi api, ApiExecutor executor, ForceItemBattle plugin) {
         this.api = api;
         this.executor = executor;
+        this.plugin = plugin;
+    }
+
+    private void invalidateGlobal(UUID... playerUuids) {
+        GlobalStatsCache cache = this.plugin.getAchievementManager().getGlobalStatsCache();
+        for (UUID playerUuid : playerUuids) {
+            cache.invalidate(playerUuid);
+        }
     }
 
     // ==================== SOLO ====================
@@ -56,6 +67,7 @@ public class FibStatisticsClient {
     }
 
     public void updateSoloStatisticsAsync(UUID playerUuid, FibSoloStatisticsUpdateRequestDto request, Consumer<FibSoloStatisticsDto> onSuccess, Consumer<ApiException> onError) {
+        invalidateGlobal(playerUuid);
         executor.runAsync(() -> api.updateSoloStatistics(playerUuid, request), onSuccess, onError);
     }
 
@@ -72,6 +84,7 @@ public class FibStatisticsClient {
     }
 
     public void deleteSoloStatisticsAsync(UUID playerUuid, Runnable onSuccess, Consumer<ApiException> onError) {
+        invalidateGlobal(playerUuid);
         executor.runAsync(() -> {
             api.deleteSoloStatistics(playerUuid);
             return null;
@@ -118,6 +131,7 @@ public class FibStatisticsClient {
     }
 
     public void updateTeamStatisticsAsync(UUID playerUuid, UUID teammateUuid, FibTeamStatisticsUpdateRequestDto request, Consumer<FibTeamStatisticsDto> onSuccess, Consumer<ApiException> onError) {
+        invalidateGlobal(playerUuid, teammateUuid);
         executor.runAsync(() -> api.updateTeamStatistics(playerUuid, teammateUuid, request), onSuccess, onError);
     }
 
@@ -126,6 +140,7 @@ public class FibStatisticsClient {
     }
 
     public void deleteTeamStatisticsAsync(UUID playerUuid, UUID teammateUuid) {
+        invalidateGlobal(playerUuid);
         executor.runAsync(() -> {
             api.deleteTeamStatistics(playerUuid, teammateUuid);
             return null;
@@ -138,6 +153,7 @@ public class FibStatisticsClient {
     }
 
     public void deleteAllTeamStatisticsForPlayerAsync(UUID playerUuid) {
+        this.plugin.getAchievementManager().getGlobalStatsCache().clear();
         executor.runAsync(() -> {
             api.deleteAllTeamStatisticsForPlayer(playerUuid);
             return null;
@@ -172,6 +188,7 @@ public class FibStatisticsClient {
     }
 
     public void updateMemberStatisticsAsync(UUID playerUuid, UUID teammateUuid, UUID memberUuid, FibTeamMemberStatsUpdateRequestDto request, Consumer<FibTeamMemberStatsDto> onSuccess, Consumer<ApiException> onError) {
+        invalidateGlobal(playerUuid, teammateUuid, memberUuid);
         executor.runAsync(() -> api.updateMemberStatistics(playerUuid, teammateUuid, memberUuid, request), onSuccess, onError);
     }
 
@@ -247,10 +264,12 @@ public class FibStatisticsClient {
     }
 
     public void recordGameOutcomeAsync(UUID playerUuid, FibPlayerStatsUpdateRequestDto request, Consumer<FibPlayerStatsDto> onSuccess, Consumer<ApiException> onError) {
+        invalidateGlobal(playerUuid);
         executor.runAsync(() -> api.recordGameOutcome(playerUuid, request), onSuccess, onError);
     }
 
     public void deletePlayerStatsAsync(UUID playerUuid, Runnable onSuccess, Consumer<ApiException> onError) {
+        invalidateGlobal(playerUuid);
         executor.runAsync(() -> {
             api.deletePlayerStats(playerUuid);
             return null;

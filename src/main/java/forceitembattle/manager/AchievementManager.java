@@ -5,6 +5,7 @@ import forceitembattle.achievements.AchievementMode;
 import forceitembattle.achievements.AchievementScope;
 import forceitembattle.achievements.AchievementStorage;
 import forceitembattle.achievements.Achievements;
+import forceitembattle.achievements.global.GlobalStatsCache;
 import forceitembattle.achievements.global.GlobalStatsLoader;
 import forceitembattle.achievements.Trigger;
 import forceitembattle.achievements.handlers.AchievementHandler;
@@ -44,6 +45,8 @@ public class AchievementManager implements Manager {
     private final Map<Team, Map<Achievements, AchievementProgressTracker>> teamProgress = new HashMap<>();
     private final AchievementStorage storage;
     @Getter
+    private final GlobalStatsCache globalStatsCache;
+    @Getter
     private final GlobalStatsLoader globalStatsLoader;
 
     // OPTIMIZATION: Pre-built map of achievements by trigger
@@ -52,7 +55,8 @@ public class AchievementManager implements Manager {
     public AchievementManager(ForceItemBattle plugin) {
         this.plugin = plugin;
         this.storage = new AchievementStorage(plugin);
-        this.globalStatsLoader = new GlobalStatsLoader(plugin);
+        this.globalStatsCache = new GlobalStatsCache();
+        this.globalStatsLoader = new GlobalStatsLoader(plugin, this.globalStatsCache);
         this.achievementsByTrigger = buildTriggerMap();
     }
 

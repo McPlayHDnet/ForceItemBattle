@@ -13,12 +13,20 @@ import org.bukkit.Bukkit;
 public class GlobalStatsLoader {
 
     private final ForceItemBattle plugin;
+    private final GlobalStatsCache cache;
 
-    public GlobalStatsLoader(ForceItemBattle plugin) {
+    public GlobalStatsLoader(ForceItemBattle plugin, GlobalStatsCache cache) {
         this.plugin = plugin;
+        this.cache = cache;
     }
 
     public void load(UUID playerUuid, Consumer<GlobalStats> onLoaded) {
+        GlobalStats cached = this.cache.get(playerUuid);
+        if (cached != null) {
+            onLoaded.accept(cached);
+            return;
+        }
+
         FibStatisticsClient statistics = this.plugin.getFibService().statistics();
 
         AtomicReference<StatsView> solo = new AtomicReference<>();
@@ -30,13 +38,16 @@ public class GlobalStatsLoader {
         AtomicBoolean delivered = new AtomicBoolean();
 
         Runnable maybeDeliver = () -> {
-            if (!soloDone.get() || !teamDone.get()) {
+            // All three sources must be in before assembling — previously player-stats was omitted
+            // from this gate, so a slow player-stats call could deliver with player.get() null.
+            if (!soloDone.get() || !teamDone.get() || !playerDone.get()) {
                 return;
             }
             if (!delivered.compareAndSet(false, true)) {
                 return;
             }
             GlobalStats stats = GlobalStats.of(new GlobalStatSources(solo.get(), team.get(), player.get()));
+            this.cache.put(playerUuid, stats);
             Bukkit.getScheduler().runTask(this.plugin, () -> onLoaded.accept(stats));
         };
 
