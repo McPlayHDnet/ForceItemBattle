@@ -219,35 +219,62 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
     @Override
     public List<String> onTabComplete(Player player, String label, String[] args) {
         if (args.length == 1) {
-            return List.of("list", "grant", "revoke", "reset", "progress");
+            List<String> subs = new ArrayList<>(List.of("list", "progress", "global"));
+            if (player.isOp()) {
+                subs.addAll(List.of("grant", "revoke", "reset"));
+            }
+            return filter(subs, args[0]);
         }
+
+        String sub = args[0].toLowerCase();
 
         if (args.length == 2) {
             // progress self-form: /achievements progress <achievement>
-            if (args[0].equalsIgnoreCase("progress")) {
-                List<String> achievementNames = new ArrayList<>();
-                for (Achievements achievement : Achievements.values()) {
-                    achievementNames.add(achievement.name());
-                }
-                return achievementNames;
+            if (sub.equals("progress")) {
+                return filter(achievementNames(), args[1]);
             }
-            List<String> playerNames = new ArrayList<>();
-            for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-                playerNames.add(onlinePlayer.getName());
+            // player argument — the op-only subcommands still need one, but only for ops
+            if (sub.equals("list") || sub.equals("global")
+                    || (player.isOp() && (sub.equals("grant") || sub.equals("revoke") || sub.equals("reset")))) {
+                return filter(onlinePlayerNames(), args[1]);
             }
-            return playerNames;
+            return List.of();
         }
 
-        if (args.length == 3 && (args[0].equalsIgnoreCase("grant")
-                || args[0].equalsIgnoreCase("revoke")
-                || args[0].equalsIgnoreCase("progress"))) {
-            List<String> achievementNames = new ArrayList<>();
-            for (Achievements achievement : Achievements.values()) {
-                achievementNames.add(achievement.name());
+        if (args.length == 3) {
+            boolean opAction = player.isOp() && (sub.equals("grant") || sub.equals("revoke"));
+            if (opAction || sub.equals("progress")) {
+                return filter(achievementNames(), args[2]);
             }
-            return achievementNames;
         }
 
-        return null;
+        return List.of();
+    }
+
+    private List<String> filter(List<String> options, String typed) {
+        String prefix = typed.toLowerCase();
+        List<String> matches = new ArrayList<>();
+        for (String option : options) {
+            if (option.toLowerCase().startsWith(prefix)) {
+                matches.add(option);
+            }
+        }
+        return matches;
+    }
+
+    private List<String> achievementNames() {
+        List<String> names = new ArrayList<>();
+        for (Achievements achievement : Achievements.values()) {
+            names.add(achievement.name());
+        }
+        return names;
+    }
+
+    private List<String> onlinePlayerNames() {
+        List<String> names = new ArrayList<>();
+        for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+            names.add(onlinePlayer.getName());
+        }
+        return names;
     }
 }
