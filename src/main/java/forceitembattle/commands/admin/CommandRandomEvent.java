@@ -18,9 +18,7 @@ public class CommandRandomEvent extends CustomCommand implements CustomTabComple
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (!player.isOp()) {
-            return;
-        }
+        if (!requireOp(player)) return;
 
         if (!this.plugin.getGamemanager().isMidGame()) {
             player.sendMessage(Text.of("<red>The game is not running. Start it first with /start"));

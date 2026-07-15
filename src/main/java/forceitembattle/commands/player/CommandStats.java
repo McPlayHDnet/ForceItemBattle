@@ -143,10 +143,7 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
     }
 
     private void handleReset(Player player, String[] args) {
-        if (!player.isOp()) {
-            player.sendMessage(Text.of("<red>You don't have permission to do that."));
-            return;
-        }
+        if (!requireOp(player)) return;
 
         if (args.length >= 2 && args[1].equalsIgnoreCase("confirm")) {
             confirmReset(player);

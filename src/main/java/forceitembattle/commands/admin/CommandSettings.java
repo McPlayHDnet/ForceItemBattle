@@ -15,8 +15,7 @@ public class CommandSettings extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (player.isOp()) {
-            new SettingsInventory(this.plugin, null).open(player);
-        }
+        if (!requireOp(player)) return;
+        new SettingsInventory(this.plugin, null).open(player);
     }
 }

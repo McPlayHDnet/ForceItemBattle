@@ -45,10 +45,7 @@ public class CommandVote extends CustomCommand implements CustomTabCompleter {
             case "yes" -> this.plugin.getVoteSkipManager().castVote(player, true);
             case "no" -> this.plugin.getVoteSkipManager().castVote(player, false);
             case "cancel" -> {
-                if (!player.isOp()) {
-                    player.sendMessage(Text.of("<red>You must be an operator to cancel a vote."));
-                    return;
-                }
+                if (!requireOp(player)) return;
 
                 this.plugin.getVoteSkipManager().cancelVote();
                 player.sendMessage(Text.of("<gray>You cancelled the vote."));

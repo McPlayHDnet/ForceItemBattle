@@ -26,7 +26,7 @@ public class CommandAskTrade extends CustomCommand {
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
         if (this.plugin.getSettings().isSettingEnabled(GameSetting.EVENT) && !player.isOp()) {
-            player.sendMessage(Text.of("<red>You don't have permission to use this command."));
+            player.sendMessage(Text.of(NO_PERMISSION));
             return;
         }
         if (!this.plugin.getGamemanager().isMidGame()) {

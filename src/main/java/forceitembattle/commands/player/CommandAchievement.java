@@ -45,10 +45,7 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
     }
 
     private void requireOp(Player player, Runnable action) {
-        if (!player.isOp()) {
-            player.sendMessage(Text.of("<red>You don't have permission to do that."));
-            return;
-        }
+        if (!requireOp(player)) return;
         action.run();
     }
 

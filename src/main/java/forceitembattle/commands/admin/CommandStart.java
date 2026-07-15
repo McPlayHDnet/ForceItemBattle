@@ -45,28 +45,28 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (player.isOp()) {
-            if (args.length == 1) {
-                if (this.plugin.getSettings().getGamePreset(args[0]) == null) {
-                    player.sendMessage(Text.of("<yellow>" + args[0] + " <red>does not exist in presets."));
-                    return;
-                }
+        if (!requireOp(player)) return;
 
-                GamePreset gamePreset = this.plugin.getSettings().getGamePreset(args[0]);
-                this.plugin.getGamemanager().setCurrentGamePreset(gamePreset);
-                this.performCommand(gamePreset, player, args);
-
-            } else if (args.length == 2) {
-                try {
-                    this.performCommand(null, player, args);
-
-                } catch (NumberFormatException e) {
-                    player.sendMessage(Text.of("<red>Usage: /start <time in min> <jokers>"));
-                    player.sendMessage(Text.of("<red><time> and <jokers> have to be numbers"));
-                }
-            } else {
-                player.sendMessage(Text.of("<red>Usage: /start <time in min> <jokers>"));
+        if (args.length == 1) {
+            if (this.plugin.getSettings().getGamePreset(args[0]) == null) {
+                player.sendMessage(Text.of("<yellow>" + args[0] + " <red>does not exist in presets."));
+                return;
             }
+
+            GamePreset gamePreset = this.plugin.getSettings().getGamePreset(args[0]);
+            this.plugin.getGamemanager().setCurrentGamePreset(gamePreset);
+            this.performCommand(gamePreset, player, args);
+
+        } else if (args.length == 2) {
+            try {
+                this.performCommand(null, player, args);
+
+            } catch (NumberFormatException e) {
+                player.sendMessage(Text.of("<red>Usage: /start <time in min> <jokers>"));
+                player.sendMessage(Text.of("<red><time> and <jokers> have to be numbers"));
+            }
+        } else {
+            player.sendMessage(Text.of("<red>Usage: /start <time in min> <jokers>"));
         }
     }
 

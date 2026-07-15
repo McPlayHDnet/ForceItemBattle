@@ -18,9 +18,7 @@ public class CommandForceTeam extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (!player.isOp()) {
-            return;
-        }
+        if (!requireOp(player)) return;
 
         if (!this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
             player.sendMessage(Text.of("<red>Teams are not enabled!"));
