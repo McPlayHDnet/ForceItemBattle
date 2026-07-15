@@ -131,7 +131,8 @@ public class AchievementInventory extends InventoryBuilder {
         int startIndex = this.currentPage * itemsPerPage;
         int endIndex = Math.min(startIndex + itemsPerPage, this.entries.size());
 
-        this.setItem(49, new ItemBuilder(Material.BARRIER)
+        this.setItem(49, new ItemBuilder(Material.PLAYER_HEAD)
+                        .setSkullTexture("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvM2VkMWFiYTczZjYzOWY0YmM0MmJkNDgxOTZjNzE1MTk3YmUyNzEyYzNiOTYyYzk3ZWJmOWU5ZWQ4ZWZhMDI1In19fQ==")
                         .setDisplayName("<dark_red>« <red>Back")
                         .getItemStack(),
                 inventoryClickEvent -> {
