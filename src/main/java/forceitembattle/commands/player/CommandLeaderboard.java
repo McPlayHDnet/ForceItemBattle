@@ -7,12 +7,12 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.service.FibStatisticsClient;
+import forceitembattle.util.PlayerNameResolver;
 import forceitembattle.util.Text;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
-import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
 public class CommandLeaderboard extends CustomCommand implements CustomTabCompleter {
@@ -24,10 +24,6 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
     // Scope selectors that mirror the /stats views: solo, duo (a team pair), teams
     // (a player's combined across-all-teams stats).
     private static final List<String> SCOPES = List.of("solo", "duo", "teams", "achievements");
-
-    // The achievement board ranks players by unlocked-achievement count, so it takes no
-    // category and shows a short podium rather than the usual ten rows.
-    private static final int ACHIEVEMENT_TOP_LIMIT = 3;
 
     private static final List<String> CATEGORIES = List.of(
             "highest_score", "total_items", "games_won", "back_to_back_streak", "blocks_travelled"
@@ -75,26 +71,38 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
             sendHeader(player, "Leaderboard", category);
             if (entries.isEmpty()) {
                 sendEmpty(player);
-            } else {
-                for (FibLeaderboardEntryDto entry : entries) {
-                    sendRow(player, entry.getRank(), resolvePlayerName(entry.getPlayerUuid()), entry.getValue(), suffixFor(category));
-                }
+                player.sendMessage(" ");
+                return;
             }
-            player.sendMessage(" ");
+
+            List<UUID> uuids = entries.stream().map(FibLeaderboardEntryDto::getPlayerUuid).toList();
+            PlayerNameResolver.resolveAll(uuids, names -> {
+                for (FibLeaderboardEntryDto entry : entries) {
+                    sendRow(player, entry.getRank(), displayName(names, entry.getPlayerUuid()),
+                            entry.getValue(), suffixFor(category));
+                }
+                player.sendMessage(" ");
+            });
         }, error -> sendError(player));
     }
 
     private void showTeamsLeaderboard(Player player, FibStatisticsClient helper, String category) {
         helper.getCombinedTeamLeaderboardAsync(category, TOP_LIMIT, entries -> {
-            sendHeader(player, "Team Leaderboard", category);
+            sendHeader(player, "Teams Leaderboard", category);
             if (entries.isEmpty()) {
                 sendEmpty(player);
-            } else {
-                for (FibLeaderboardEntryDto entry : entries) {
-                    sendRow(player, entry.getRank(), resolvePlayerName(entry.getPlayerUuid()), entry.getValue(), suffixFor(category));
-                }
+                player.sendMessage(" ");
+                return;
             }
-            player.sendMessage(" ");
+
+            List<UUID> uuids = entries.stream().map(FibLeaderboardEntryDto::getPlayerUuid).toList();
+            PlayerNameResolver.resolveAll(uuids, names -> {
+                for (FibLeaderboardEntryDto entry : entries) {
+                    sendRow(player, entry.getRank(), displayName(names, entry.getPlayerUuid()),
+                            entry.getValue(), suffixFor(category));
+                }
+                player.sendMessage(" ");
+            });
         }, error -> sendError(player));
     }
 
@@ -103,34 +111,48 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
             sendHeader(player, "Duo Leaderboard", category);
             if (entries.isEmpty()) {
                 sendEmpty(player);
-            } else {
-                for (FibTeamLeaderboardEntryDto entry : entries) {
-                    String names = resolvePlayerName(entry.getPlayer1Uuid())
-                            + " <dark_gray>& <green>" + resolvePlayerName(entry.getPlayer2Uuid());
-                    sendRow(player, entry.getRank(), names, entry.getValue(), suffixFor(category));
-                }
+                player.sendMessage(" ");
+                return;
             }
-            player.sendMessage(" ");
+
+            List<UUID> uuids = new ArrayList<>();
+            entries.forEach(entry -> {
+                uuids.add(entry.getPlayer1Uuid());
+                uuids.add(entry.getPlayer2Uuid());
+            });
+
+            PlayerNameResolver.resolveAll(uuids, names -> {
+                for (FibTeamLeaderboardEntryDto entry : entries) {
+                    String pair = displayName(names, entry.getPlayer1Uuid())
+                            + " <dark_gray>& <green>" + displayName(names, entry.getPlayer2Uuid());
+                    sendRow(player, entry.getRank(), pair, entry.getValue(), suffixFor(category));
+                }
+                player.sendMessage(" ");
+            });
         }, error -> sendError(player));
     }
 
     private void showAchievementLeaderboard(Player player) {
-        this.plugin.getFibService().achievements().getAchievementLeaderboardAsync(ACHIEVEMENT_TOP_LIMIT, entries -> {
+        this.plugin.getFibService().achievements().getAchievementLeaderboardAsync(TOP_LIMIT, entries -> {
             player.sendMessage(" ");
             player.sendMessage(Text.of("<dark_gray>» <gold><b>Leaderboard</b> <dark_gray>● <green>Achievements <dark_gray>«"));
             player.sendMessage(" ");
 
             if (entries.isEmpty()) {
                 sendEmpty(player);
-            } else {
-                for (FibAchievementLeaderboardEntryDto entry : entries) {
-                    int count = entry.getCount();
-                    sendRow(player, entry.getRank(), resolvePlayerName(entry.getPlayerUuid()), count,
-                            count == 1 ? " achievement" : " achievements");
-                }
+                player.sendMessage(" ");
+                return;
             }
 
-            player.sendMessage(" ");
+            List<UUID> uuids = entries.stream().map(FibAchievementLeaderboardEntryDto::getPlayerUuid).toList();
+            PlayerNameResolver.resolveAll(uuids, names -> {
+                for (FibAchievementLeaderboardEntryDto entry : entries) {
+                    int count = entry.getCount();
+                    sendRow(player, entry.getRank(), displayName(names, entry.getPlayerUuid()), count,
+                            count == 1 ? " achievement" : " achievements");
+                }
+                player.sendMessage(" ");
+            });
         }, error -> sendError(player));
     }
 
@@ -164,13 +186,8 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
         player.sendMessage(Text.of("<red>Could not load leaderboard."));
     }
 
-    private String resolvePlayerName(UUID uuid) {
-        Player online = Bukkit.getPlayer(uuid);
-        if (online != null) {
-            return online.getName();
-        }
-        OfflinePlayer offline = Bukkit.getOfflinePlayer(uuid);
-        String name = offline.getName();
+    private String displayName(Map<UUID, String> names, UUID uuid) {
+        String name = names.get(uuid);
         return name != null ? name : uuid.toString().substring(0, 8);
     }
 
