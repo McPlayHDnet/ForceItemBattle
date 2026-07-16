@@ -147,9 +147,8 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
             List<UUID> uuids = entries.stream().map(FibAchievementLeaderboardEntryDto::getPlayerUuid).toList();
             PlayerNameResolver.resolveAll(uuids, names -> {
                 for (FibAchievementLeaderboardEntryDto entry : entries) {
-                    int count = entry.getCount();
-                    sendRow(player, entry.getRank(), displayName(names, entry.getPlayerUuid()), count,
-                            count == 1 ? " achievement" : " achievements");
+                    sendRow(player, entry.getRank(), displayName(names, entry.getPlayerUuid()),
+                            entry.getCount(), "");
                 }
                 player.sendMessage(" ");
             });
