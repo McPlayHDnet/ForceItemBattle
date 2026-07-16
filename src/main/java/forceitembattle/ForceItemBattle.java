@@ -73,6 +73,7 @@ import forceitembattle.util.FileLogger;
 import forceitembattle.util.Scheduler;
 import forceitembattle.manager.TimerManager;
 import forceitembattle.manager.WanderingTraderManager;
+import forceitembattle.util.SeedPool;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -146,6 +147,8 @@ public final class ForceItemBattle extends JavaPlugin {
     private Location spawnLocation;
     @Getter
     private GameSettings settings;
+    @Getter
+    private SeedPool seedPool;
 
     @Override
     public void onLoad() {
@@ -165,6 +168,9 @@ public final class ForceItemBattle extends JavaPlugin {
     public void onEnable() {
         Scheduler.init(this);
         FileLogger.init(getDataFolder());
+        this.seedPool = new SeedPool(this);
+        this.seedPool.load();
+
         this.gamemanager = register(new Gamemanager(this));
         this.timerManager = register(new TimerManager(this));
         this.backpackManager = register(new BackpackManager(this));
@@ -262,8 +268,16 @@ public final class ForceItemBattle extends JavaPlugin {
     }
 
     public void scheduleReset() {
+        scheduleReset(null);
+    }
+
+    public void scheduleReset(Long seed) {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
+                // Set (or clear) the world seed for the regenerated world. Done in
+                // the shutdown hook so it lands after Paper's own shutdown save.
+                writeLevelSeed(seed == null ? "" : Long.toString(seed));
+
                 File world = new File(Bukkit.getWorldContainer(), "world").toPath().normalize().toFile();
                 if (world.exists()) {
                     FileUtils.deleteDirectory(world);
@@ -280,6 +294,28 @@ public final class ForceItemBattle extends JavaPlugin {
         }));
 
         Bukkit.restart();
+    }
+
+    private void writeLevelSeed(String value) throws IOException {
+        File props = new File("server.properties");
+        if (!props.isFile()) {
+            System.out.println("[FIB] server.properties not found; cannot set level-seed.");
+            return;
+        }
+        List<String> lines = Files.readAllLines(props.toPath());
+        boolean found = false;
+        for (int i = 0; i < lines.size(); i++) {
+            if (lines.get(i).startsWith("level-seed=")) {
+                lines.set(i, "level-seed=" + value);
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            lines.add("level-seed=" + value);
+        }
+        Files.write(props.toPath(), lines);
+        System.out.println("[FIB] level-seed set to '" + value + "'.");
     }
 
     private void initListeners() {
