@@ -171,6 +171,9 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
     }
 
     private void startGame(int timeMinutes, int jokersAmount) {
+        this.plugin.getGamemanager().setGameStartTime(System.currentTimeMillis());
+        this.plugin.getGamemanager().setMatchId(java.util.UUID.randomUUID());
+        
         this.plugin.getRecipeManager().initRecipes();
 
         this.plugin.getPositionManager().clearPositions();

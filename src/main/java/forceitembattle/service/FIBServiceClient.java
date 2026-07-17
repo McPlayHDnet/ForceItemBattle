@@ -3,6 +3,8 @@ package forceitembattle.service;
 import de.threeseconds.openapi.fibservice.client.api.FibAchievementControllerApi;
 import de.threeseconds.openapi.fibservice.client.api.FibStatisticsControllerApi;
 import de.threeseconds.openapi.fibservice.client.model.FibAchievementUnlockRequestDto;
+import de.threeseconds.openapi.fibservice.client.api.FibMatchControllerApi;
+import de.threeseconds.openapi.fibservice.client.model.FibMatchSubmitRequestDto;
 import de.threeseconds.openapi.fibservice.client.model.FibSoloStatisticsUpdateRequestDto;
 import de.threeseconds.openapi.fibservice.client.model.FibTeamMemberStatsUpdateRequestDto;
 import de.threeseconds.openapi.fibservice.client.model.FibTeamStatisticsUpdateRequestDto;
@@ -17,7 +19,8 @@ public class FIBServiceClient implements Manager {
     private final ApiClient apiClient;
     private final ApiExecutor executor;
     private final FibStatisticsClient statistics;
-    private final FibAchievementClient achievements;
+    private final FibAchievementClient achievements;;
+    private final FibMatchHistoryClient matchHistory;
 
     public FIBServiceClient(ForceItemBattle plugin) {
         this(plugin, DEFAULT_BASE_URL);
@@ -31,6 +34,7 @@ public class FIBServiceClient implements Manager {
         this.executor = new ApiExecutor(plugin);
         this.statistics = new FibStatisticsClient(new FibStatisticsControllerApi(client), executor, plugin);
         this.achievements = new FibAchievementClient(new FibAchievementControllerApi(client), executor);
+        this.matchHistory = new FibMatchHistoryClient(new FibMatchControllerApi(client), executor, plugin);
     }
 
     public FibStatisticsClient statistics() {
@@ -55,6 +59,14 @@ public class FIBServiceClient implements Manager {
 
     public static FibAchievementUnlockRequestDto achievementUnlock() {
         return new FibAchievementUnlockRequestDto();
+    }
+
+    public FibMatchHistoryClient matchHistory() {
+        return matchHistory;
+    }
+
+    public static FibMatchSubmitRequestDto matchSubmit() {
+        return new FibMatchSubmitRequestDto();
     }
 
     @Override
