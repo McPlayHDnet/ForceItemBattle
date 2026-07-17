@@ -295,6 +295,10 @@ public enum Achievements {
     FEELS_FAMILIAR("Feels Familiar", "Get 5 extraordinary back-to-backs",
             new GlobalRule(GlobalStat.EXTRAORDINARY_BACK_TO_BACKS, 5)),
 
+    // COLLECTION achievement
+    THE_COLLECTOR("The Collector", "Collect every item in the game at least once",
+            new CollectionRule()),
+
     // META achievement
     COMPLETIONIST("Completionist+", "Complete every round achievement",
             new CompletionistRule(AchievementScope.ROUND)),
@@ -311,26 +315,34 @@ public enum Achievements {
     private final GlobalRule globalRule;
     /** META only. */
     private final CompletionistRule completionistRule;
+    /** COLLECTION only. */
+    private final CollectionRule collectionRule;
 
     Achievements(String title, String description, AchievementHandler<?> handler) {
-        this(title, description, AchievementScope.ROUND, handler, null, null);
+        this(title, description, AchievementScope.ROUND, handler, null, null, null);
     }
 
     Achievements(String title, String description, GlobalRule globalRule) {
-        this(title, description, AchievementScope.GLOBAL, null, globalRule, null);
+        this(title, description, AchievementScope.GLOBAL, null, globalRule, null, null);
     }
 
     Achievements(String title, String description, CompletionistRule completionistRule) {
-        this(title, description, AchievementScope.META, null, null, completionistRule);
+        this(title, description, AchievementScope.META, null, null, completionistRule, null);
+    }
+
+    Achievements(String title, String description, CollectionRule collectionRule) {
+        this(title, description, AchievementScope.COLLECTION, null, null, null, collectionRule);
     }
 
     Achievements(String title, String description, AchievementScope scope, AchievementHandler<?> handler,
-                 GlobalRule globalRule, CompletionistRule completionistRule) {
-        int carriers = (handler != null ? 1 : 0) + (globalRule != null ? 1 : 0) + (completionistRule != null ? 1 : 0);
+                 GlobalRule globalRule, CompletionistRule completionistRule, CollectionRule collectionRule) {
+        int carriers = (handler != null ? 1 : 0) + (globalRule != null ? 1 : 0)
+                + (completionistRule != null ? 1 : 0) + (collectionRule != null ? 1 : 0);
         boolean matchesScope = switch (scope) {
             case ROUND -> handler != null;
             case GLOBAL -> globalRule != null;
             case META -> completionistRule != null;
+            case COLLECTION -> collectionRule != null;
         };
         if (carriers != 1 || !matchesScope) {
             throw new IllegalArgumentException(
@@ -343,6 +355,7 @@ public enum Achievements {
         this.handler = handler;
         this.globalRule = globalRule;
         this.completionistRule = completionistRule;
+        this.collectionRule = collectionRule;
     }
 
     public boolean isGlobal() {

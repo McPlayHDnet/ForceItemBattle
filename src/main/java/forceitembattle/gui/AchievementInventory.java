@@ -23,6 +23,7 @@ import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.inventory.ItemStack;
 
 public class AchievementInventory extends InventoryBuilder {
 
@@ -43,6 +44,8 @@ public class AchievementInventory extends InventoryBuilder {
     private Map<String, List<FibAchievementDto>> unlocks = new HashMap<>();
     // Only fetched for the GLOBAL scope; null until it lands.
     private GlobalStats globalStats;
+    // Found-set for the COLLECTION achievement's progress bar on the GLOBAL page; null until loaded.
+    private Set<String> foundItems;
 
     public AchievementInventory(ForceItemBattle plugin, String playerName, UUID playerUUID, AchievementScope scope) {
         super(9 * 6, Text.of("<dark_gray>» <dark_aqua>" + scope.getDisplayName() + " <dark_gray>◆ <gray>" + playerName));
@@ -53,7 +56,8 @@ public class AchievementInventory extends InventoryBuilder {
         this.scope = scope;
         this.currentPage = 0;
         this.entries = Arrays.stream(Achievements.values())
-                .filter(achievement -> achievement.getScope() == scope)
+                .filter(achievement -> achievement.getScope() == scope
+                        || (scope == AchievementScope.GLOBAL && achievement.getScope() == AchievementScope.COLLECTION))
                 .toList();
 
         this.addUpdateHandler(this::updateInventory);
@@ -76,6 +80,10 @@ public class AchievementInventory extends InventoryBuilder {
         if (scope == AchievementScope.GLOBAL) {
             this.plugin.getAchievementManager().getGlobalStatsLoader().load(playerUUID, stats -> {
                 this.globalStats = stats;
+                this.updateInventory();
+            });
+            this.plugin.getAchievementManager().getFoundItemsLoader().load(playerUUID, found -> {
+                this.foundItems = found;
                 this.updateInventory();
             });
         }
@@ -211,10 +219,25 @@ public class AchievementInventory extends InventoryBuilder {
             }
             lore.add("");
 
-            this.setItem(slotIndex, new ItemBuilder(displayMaterial)
+            boolean isDex = achievement.getScope() == AchievementScope.COLLECTION;
+            if (isDex) {
+                lore.add("<yellow>Click to view your collection");
+                lore.add("");
+            }
+
+            ItemStack stack = new ItemBuilder(displayMaterial)
                     .setDisplayName(displayName)
                     .setLore(lore)
-                    .getItemStack());
+                    .getItemStack();
+
+            if (isDex) {
+                this.setItem(slotIndex, stack, inventoryClickEvent -> {
+                    this.getPlayer().playSound(this.getPlayer(), Sound.UI_BUTTON_CLICK, 1, 1);
+                    new CollectionBookInventory(this.plugin, this.playerName, this.playerUUID).open(this.getPlayer());
+                });
+            } else {
+                this.setItem(slotIndex, stack);
+            }
         }
     }
 
@@ -233,6 +256,19 @@ public class AchievementInventory extends InventoryBuilder {
      */
     private List<String> progressLore(Achievements achievement, Set<String> cachedIds) {
         List<String> lore = new ArrayList<>();
+
+        if (achievement.getScope() == AchievementScope.COLLECTION) {
+            Set<String> catalogue = this.plugin.getAchievementManager().getCollectionCatalogue();
+            if (this.foundItems == null) {
+                lore.add("<dark_gray>» <gray>Loading progress...");
+                return lore;
+            }
+            long total = catalogue.size();
+            long current = catalogue.stream().filter(this.foundItems::contains).count();
+            lore.add("<dark_gray>» <dark_aqua>" + current + " <gray>/ <dark_aqua>" + total + " <gray>items collected");
+            lore.add("<dark_gray>» " + progressBar(current, total));
+            return lore;
+        }
 
         if (achievement.getScope() == AchievementScope.GLOBAL) {
             GlobalRule rule = achievement.getGlobalRule();

@@ -3,7 +3,10 @@ package forceitembattle.service;
 import de.threeseconds.openapi.fibservice.client.api.FibMatchControllerApi;
 import de.threeseconds.openapi.fibservice.client.model.FibMatchSubmitRequestDto;
 import forceitembattle.ForceItemBattle;
+import forceitembattle.achievements.global.FoundItemsCache;
 import forceitembattle.achievements.global.GlobalStatsCache;
+import forceitembattle.manager.AchievementManager;
+import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 import org.openapitools.client.ApiException;
@@ -26,9 +29,8 @@ public class FibMatchHistoryClient {
         this.plugin = plugin;
     }
 
-    public void submitMatchAsync(UUID matchId, FibMatchSubmitRequestDto request) {
-        submitMatchAsync(matchId, request, () -> {
-        }, executor::logError);
+    public void submitMatchAsync(UUID matchId, FibMatchSubmitRequestDto request, Runnable onSuccess) {
+        submitMatchAsync(matchId, request, onSuccess, executor::logError);
     }
 
     public void submitMatchAsync(UUID matchId, FibMatchSubmitRequestDto request, Runnable onSuccess, Consumer<ApiException> onError) {
@@ -42,14 +44,26 @@ public class FibMatchHistoryClient {
         }, result -> onSuccess.run(), onError);
     }
 
+    public void getFoundItemNamesAsync(UUID playerUuid, Consumer<List<String>> onSuccess) {
+        getFoundItemNamesAsync(playerUuid, onSuccess, executor::logError);
+    }
+
+    public void getFoundItemNamesAsync(UUID playerUuid, Consumer<List<String>> onSuccess, Consumer<ApiException> onError) {
+        executor.runAsync(() -> api.getFoundItemNames(playerUuid), onSuccess, onError);
+    }
+
     private void invalidateParticipants(FibMatchSubmitRequestDto request) {
         if (request.getParticipants() == null) {
             return;
         }
-        GlobalStatsCache cache = this.plugin.getAchievementManager().getGlobalStatsCache();
+        AchievementManager achievements = this.plugin.getAchievementManager();
+        GlobalStatsCache globalStats = achievements.getGlobalStatsCache();
+        FoundItemsCache foundItems = achievements.getFoundItemsCache();
         request.getParticipants().forEach(participant -> {
-            if (participant.getPlayerUuid() != null) {
-                cache.invalidate(participant.getPlayerUuid());
+            UUID playerUuid = participant.getPlayerUuid();
+            if (playerUuid != null) {
+                globalStats.invalidate(playerUuid);
+                foundItems.invalidate(playerUuid);
             }
         });
     }

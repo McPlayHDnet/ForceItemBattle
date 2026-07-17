@@ -5,6 +5,8 @@ import forceitembattle.achievements.AchievementMode;
 import forceitembattle.achievements.AchievementScope;
 import forceitembattle.achievements.AchievementStorage;
 import forceitembattle.achievements.Achievements;
+import forceitembattle.achievements.global.FoundItemsCache;
+import forceitembattle.achievements.global.FoundItemsLoader;
 import forceitembattle.achievements.global.GlobalStatsCache;
 import forceitembattle.achievements.global.GlobalStatsLoader;
 import forceitembattle.achievements.Trigger;
@@ -33,6 +35,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -48,6 +51,10 @@ public class AchievementManager implements Manager {
     private final GlobalStatsCache globalStatsCache;
     @Getter
     private final GlobalStatsLoader globalStatsLoader;
+    @Getter
+    private final FoundItemsCache foundItemsCache;
+    @Getter
+    private final FoundItemsLoader foundItemsLoader;
 
     // OPTIMIZATION: Pre-built map of achievements by trigger
     private final Map<Trigger, List<Achievements>> achievementsByTrigger;
@@ -57,6 +64,8 @@ public class AchievementManager implements Manager {
         this.storage = new AchievementStorage(plugin);
         this.globalStatsCache = new GlobalStatsCache();
         this.globalStatsLoader = new GlobalStatsLoader(plugin, this.globalStatsCache);
+        this.foundItemsCache = new FoundItemsCache();
+        this.foundItemsLoader = new FoundItemsLoader(plugin, this.foundItemsCache);
         this.achievementsByTrigger = buildTriggerMap();
     }
 
@@ -254,6 +263,60 @@ public class AchievementManager implements Manager {
 
             checkMetaTiers(uuid, player);
         });
+    }
+
+    /**
+     * Evaluates the COLLECTION achievement(s) for one player after a match has been persisted.
+     * Called from the match submit's success callback, so the just-finished game is already in the
+     * DB -- the achievement fills at conclusion rather than a game late.
+     */
+    public void evaluateCollectionAchievement(Player player) {
+        UUID uuid = player.getUniqueId();
+
+        boolean anyOutstanding = false;
+        for (Achievements achievement : Achievements.values()) {
+            if (achievement.getScope() == AchievementScope.COLLECTION && !storage.hasAchievement(uuid, achievement)) {
+                anyOutstanding = true;
+                break;
+            }
+        }
+        if (!anyOutstanding) {
+            return;
+        }
+
+        // The submit already invalidated the found-set; invalidate again right before the read to
+        // close the window where a concurrent load could have re-cached the pre-match set.
+        foundItemsCache.invalidate(uuid);
+        foundItemsLoader.load(uuid, found -> {
+            if (!player.isOnline()) {
+                return;
+            }
+            Set<String> catalogue = getCollectionCatalogue();
+            for (Achievements achievement : Achievements.values()) {
+                if (achievement.getScope() != AchievementScope.COLLECTION || storage.hasAchievement(uuid, achievement)) {
+                    continue;
+                }
+                if (!achievement.getCollectionRule().isMet(found, catalogue)) {
+                    continue;
+                }
+                // Recorded SOLO with no teammate, like the GLOBAL unlocks: a lifetime collection
+                // spans both modes, so the unlock's mode is meaningless.
+                writeUnlock(uuid, player, achievement, null, false);
+            }
+            checkMetaTiers(uuid, player);
+        });
+    }
+
+    /** Namespaced keys of every registered item = the EARLY∪MID∪LATE catalogue. Session-static. */
+    private Set<String> collectionCatalogue;
+
+    public Set<String> getCollectionCatalogue() {
+        if (this.collectionCatalogue == null) {
+            this.collectionCatalogue = this.plugin.getItemDifficultiesManager().getAllItems().stream()
+                    .map(material -> material.getKey().asString())
+                    .collect(Collectors.toUnmodifiableSet());
+        }
+        return this.collectionCatalogue;
     }
 
     /**

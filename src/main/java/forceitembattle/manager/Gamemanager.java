@@ -191,7 +191,19 @@ public class Gamemanager implements Manager {
                 .items(items)
                 .settings(settingsSnapshot);
 
-        this.forceItemBattle.getFibService().matchHistory().submitMatchAsync(this.matchId, request);
+        this.forceItemBattle.getFibService().matchHistory().submitMatchAsync(this.matchId, request, () -> {
+            // Match is persisted now, so each participant's found-set includes it. Evaluate the
+            // collection achievement at conclusion (fresh read), not a game late.
+            for (ForceItemPlayer participant : this.forceItemPlayerMap.values()) {
+                if (participant.isSpectator()) {
+                    continue;
+                }
+                Player participantPlayer = participant.player();
+                if (participantPlayer != null && participantPlayer.isOnline()) {
+                    this.forceItemBattle.getAchievementManager().evaluateCollectionAchievement(participantPlayer);
+                }
+            }
+        });
     }
 
     private void appendMatchItems(List<FibMatchItemSubmitDto> out, List<ForceItem> found, UUID playerUuid, Integer teamIndex) {
