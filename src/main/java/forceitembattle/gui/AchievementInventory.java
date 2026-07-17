@@ -27,7 +27,7 @@ import org.bukkit.Sound;
 public class AchievementInventory extends InventoryBuilder {
 
     private static final DateTimeFormatter WHEN_FORMAT = DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm");
-    private static final int BAR_WIDTH = 20;
+    private static final int BAR_WIDTH = 24;
 
     private final ForceItemBattle plugin;
     private final String playerName;
@@ -132,7 +132,7 @@ public class AchievementInventory extends InventoryBuilder {
         int endIndex = Math.min(startIndex + itemsPerPage, this.entries.size());
 
         this.setItem(49, new ItemBuilder(Material.PLAYER_HEAD)
-                        .setSkullTexture("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvM2VkMWFiYTczZjYzOWY0YmM0MmJkNDgxOTZjNzE1MTk3YmUyNzEyYzNiOTYyYzk3ZWJmOWU5ZWQ4ZWZhMDI1In19fQ==")
+                        .setSkullTexture("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYmViNTg4YjIxYTZmOThhZDFmZjRlMDg1YzU1MmRjYjA1MGVmYzljYWI0MjdmNDYwNDhmMThmYzgwMzQ3NWY3In19fQ==")
                         .setDisplayName("<dark_red>« <red>Back")
                         .getItemStack(),
                 inventoryClickEvent -> {
@@ -271,8 +271,14 @@ public class AchievementInventory extends InventoryBuilder {
     }
 
     private String progressBar(long current, long target) {
-        int filled = target <= 0 ? BAR_WIDTH : (int) Math.clamp(current * BAR_WIDTH / target, 0, BAR_WIDTH);
-        return "<green>" + "▉".repeat(filled) + "<dark_gray>" + "▉".repeat(BAR_WIDTH - filled);
+        double ratio = target <= 0 ? 1.0 : Math.clamp((double) current / target, 0.0, 1.0);
+        double pct = Math.round(ratio * 1000) / 10.0;
+        int filled = (int) Math.round(ratio * BAR_WIDTH);
+        if (pct >= 100.0) filled = BAR_WIDTH;
+        else if (pct > 0.0) filled = Math.clamp(filled, 1, BAR_WIDTH - 1);
+        return "<dark_gray><st><green>" + " ".repeat(filled) + "</st>"
+                + "<dark_gray><st>" + " ".repeat(BAR_WIDTH - filled) + "</st>"
+                + " <yellow>" + pct + "%";
     }
 
     private String teammateName(UUID teammateUuid) {
