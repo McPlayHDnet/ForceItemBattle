@@ -12,6 +12,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import org.bukkit.Material;
@@ -27,7 +28,7 @@ public class CollectionDexInventory extends InventoryBuilder {
 
     private static final int ITEMS_PER_PAGE = 36;
     private static final DateTimeFormatter DATE_FORMAT =
-            DateTimeFormatter.ofPattern("d MMM yyyy").withZone(ZoneId.systemDefault());
+            DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH).withZone(ZoneId.systemDefault());
 
     private enum Filter {
         ALL("All items"),
