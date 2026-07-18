@@ -23,10 +23,12 @@ import forceitembattle.achievements.progress.SimpleAchievementProgress;
 import forceitembattle.achievements.progress.SkipAchievementProgress;
 import forceitembattle.achievements.progress.TimeAchievementProgress;
 import forceitembattle.event.PlayerGrantAchievementEvent;
+import forceitembattle.gui.CollectionCategory;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.Team;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,6 +40,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 
@@ -307,16 +310,34 @@ public class AchievementManager implements Manager {
         });
     }
 
-    /** Namespaced keys of every registered item = the EARLY∪MID∪LATE catalogue. Session-static. */
     private Set<String> collectionCatalogue;
 
     public Set<String> getCollectionCatalogue() {
         if (this.collectionCatalogue == null) {
-            this.collectionCatalogue = this.plugin.getItemDifficultiesManager().getAllItems().stream()
+            this.collectionCatalogue = this.plugin.getItemDifficultiesManager().getCollectableItems().stream()
                     .map(material -> material.getKey().asString())
                     .collect(Collectors.toUnmodifiableSet());
         }
         return this.collectionCatalogue;
+    }
+
+    // Catalogue split into display categories, sorted within each. Built once (session-static),
+    // shared by the collection book and every category page so nothing re-buckets per open.
+    private Map<CollectionCategory, List<Material>> collectionBuckets;
+
+    public Map<CollectionCategory, List<Material>> getCollectionBuckets() {
+        if (this.collectionBuckets == null) {
+            Map<CollectionCategory, List<Material>> buckets = new EnumMap<>(CollectionCategory.class);
+            for (CollectionCategory category : CollectionCategory.values()) {
+                buckets.put(category, new ArrayList<>());
+            }
+            for (Material material : this.plugin.getItemDifficultiesManager().getCollectableItems()) {
+                buckets.get(CollectionCategory.categoryOf(material)).add(material);
+            }
+            buckets.values().forEach(list -> list.sort(Comparator.comparing(material -> material.getKey().asString())));
+            this.collectionBuckets = buckets;
+        }
+        return this.collectionBuckets;
     }
 
     /**

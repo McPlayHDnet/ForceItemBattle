@@ -152,6 +152,18 @@ public class ItemDifficultiesManager implements Manager {
     }
 
     /**
+     * All registered items except EXTREME-tagged ones. Source for the collection book and the
+     * collection achievement: EXTREME items are excluded because they're unrealistic to obtain,
+     * so requiring them would make "collect everything" effectively uncompletable.
+     */
+    public Set<Material> getCollectableItems() {
+        return itemRegistry.values().stream()
+                .filter(def -> !def.hasTag(ItemTag.EXTREME))
+                .map(ItemDefinition::material)
+                .collect(Collectors.toSet());
+    }
+
+    /**
      * Get items available based on elapsed game time.
      */
     public List<Material> getAvailableItems() {
