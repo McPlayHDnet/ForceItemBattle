@@ -81,10 +81,11 @@ public class CollectionBookInventory extends InventoryBuilder {
             summaryLore.add("<dark_gray>» <dark_aqua>" + overallFound + " <gray>/ <dark_aqua>" + overallTotal + " <gray>items collected");
             summaryLore.add("<dark_gray>» " + ProgressBar.of(overallFound, overallTotal));
         }
-        this.setItem(4, new ItemBuilder(Material.BUNDLE)
-                .setDisplayName("<dark_gray>» <dark_aqua>Your Collection")
-                .setLore(summaryLore)
-                .getItemStack());
+        this.setItem(4, new ItemBuilder(Material.PLAYER_HEAD)
+                        .setSkullTexture("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNzQwNmU0NTMxOGU5YTRhNmJmZTEzMmYyMDJmZTNjZWFjMTVkMTFlYWVkYmVmMWViMDZhMzc2ZGI0MzMwOTBhOCJ9fX0=")
+                        .setDisplayName("<dark_gray>» <dark_aqua>Your Collection")
+                        .setLore(summaryLore)
+                        .getItemStack());
 
         this.setItem(49, new ItemBuilder(Material.PLAYER_HEAD)
                         .setSkullTexture("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYmViNTg4YjIxYTZmOThhZDFmZjRlMDg1YzU1MmRjYjA1MGVmYzljYWI0MjdmNDYwNDhmMThmYzgwMzQ3NWY3In19fQ==")

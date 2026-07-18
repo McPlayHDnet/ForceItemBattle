@@ -151,11 +151,14 @@ public class CollectionDexInventory extends InventoryBuilder {
         }
 
         long players = this.rarity.playersWith(material.getKey().asString());
+        if (players == 0 && isCollected(material)) {
+            players = 1;
+        }
         if (players == 0) {
             return "<dark_gray>» <gold>Nobody has found this yet";
         }
 
-        double percent = this.rarity.percentWith(material.getKey().asString());
+        double percent = (double) players / this.rarity.totalPlayers() * 100.0;
         // Below 0.1% the rounded figure would read 0%, which looks like a bug rather than "rare".
         String formatted = percent < 0.1 ? "<0.1" : String.valueOf(Math.round(percent * 10) / 10.0);
         return "<dark_gray>» <gray>Owned by <white>" + formatted + "%<gray> of players";
@@ -238,7 +241,7 @@ public class CollectionDexInventory extends InventoryBuilder {
                 });
 
         this.setItem(49, new ItemBuilder(Material.PLAYER_HEAD)
-                        .setSkullTexture("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvM2VkMWFiYTczZjYzOWY0YmM0MmJkNDgxOTZjNzE1MTk3YmUyNzEyYzNiOTYyYzk3ZWJmOWU5ZWQ4ZWZhMDI1In19fQ==")
+                        .setSkullTexture("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYmViNTg4YjIxYTZmOThhZDFmZjRlMDg1YzU1MmRjYjA1MGVmYzljYWI0MjdmNDYwNDhmMThmYzgwMzQ3NWY3In19fQ==")
                         .setDisplayName("<dark_red>« <red>Back")
                         .getItemStack(),
                 inventoryClickEvent -> {
