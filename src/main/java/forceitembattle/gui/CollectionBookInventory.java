@@ -7,6 +7,7 @@ import forceitembattle.collection.CollectionCategory;
 import forceitembattle.util.ProgressBar;
 import forceitembattle.util.Text;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -60,11 +61,16 @@ public class CollectionBookInventory extends InventoryBuilder {
 
         Map<CollectionCategory, List<Material>> buckets = this.plugin.getCollectionManager().getCollectionBuckets();
 
+        // Counted once per category and reused below: the render loop used to re-scan every
+        // bucket, walking the whole ~1300-item catalogue twice per repaint.
+        Map<CollectionCategory, Integer> foundPerCategory = new EnumMap<>(CollectionCategory.class);
         int overallTotal = 0;
         int overallFound = 0;
-        for (List<Material> items : buckets.values()) {
-            overallTotal += items.size();
-            overallFound += countCollected(items);
+        for (Map.Entry<CollectionCategory, List<Material>> entry : buckets.entrySet()) {
+            int found = countCollected(entry.getValue());
+            foundPerCategory.put(entry.getKey(), found);
+            overallTotal += entry.getValue().size();
+            overallFound += found;
         }
 
         List<String> summaryLore = new ArrayList<>();
@@ -96,7 +102,7 @@ public class CollectionBookInventory extends InventoryBuilder {
             List<Material> items = buckets.getOrDefault(category, List.of());
 
             int total = items.size();
-            int found = countCollected(items);
+            int found = foundPerCategory.getOrDefault(category, 0);
             boolean complete = this.collected != null && total > 0 && found == total;
 
             List<String> lore = new ArrayList<>();

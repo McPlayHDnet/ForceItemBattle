@@ -6,12 +6,14 @@ import forceitembattle.collection.FoundItemsCache;
 import forceitembattle.collection.FoundItemsLoader;
 import forceitembattle.collection.ItemRarityCache;
 import forceitembattle.collection.ItemRarityLoader;
+import forceitembattle.model.CustomMaterials;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import org.bukkit.Material;
@@ -25,6 +27,8 @@ public class CollectionManager implements Manager {
     private final FoundItemsLoader foundItemsLoader;
     private final ItemRarityCache itemRarityCache;
     private final ItemRarityLoader itemRarityLoader;
+    
+    private final Map<Material, String> displayNames = new ConcurrentHashMap<>();
 
     /** Namespaced keys of every collectable item. Session-static, built on first use. */
     private Set<String> collectionCatalogue;
@@ -44,6 +48,10 @@ public class CollectionManager implements Manager {
     public void disable() {
         this.foundItemsCache.clear();
         this.itemRarityCache.clear();
+    }
+
+    public String displayNameOf(Material material) {
+        return this.displayNames.computeIfAbsent(material, CustomMaterials::nameOf);
     }
 
     /**

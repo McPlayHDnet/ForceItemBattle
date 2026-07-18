@@ -2,10 +2,9 @@ package forceitembattle.gui;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.collection.CollectedItem;
-import forceitembattle.collection.ItemRarity;
 import forceitembattle.collection.CollectionCategory;
+import forceitembattle.collection.ItemRarity;
 import forceitembattle.manager.ItemDifficultiesManager;
-import forceitembattle.model.CustomMaterials;
 import forceitembattle.util.ProgressBar;
 import forceitembattle.util.Text;
 import java.time.ZoneId;
@@ -95,6 +94,11 @@ public class CollectionDexInventory extends InventoryBuilder {
         });
     }
 
+    /** Memoised via CollectionManager -- sorting compares names O(n log n) times per repaint. */
+    private String displayName(Material material) {
+        return this.plugin.getCollectionManager().displayNameOf(material);
+    }
+
     private boolean isCollected(Material material) {
         return this.collected != null && this.collected.containsKey(material.getKey().asString());
     }
@@ -119,7 +123,7 @@ public class CollectionDexInventory extends InventoryBuilder {
 
         // Ties (and every missing item under the metadata sorts) fall back to name order, so the
         // grid is stable rather than registry-ordered.
-        Comparator<Material> byName = Comparator.comparing(material -> CustomMaterials.nameOf(material));
+        Comparator<Material> byName = Comparator.comparing(this::displayName);
         Comparator<Material> comparator = switch (this.sort) {
             case ALPHABETICAL -> byName;
             case COLLECTED_FIRST -> Comparator.comparing((Material material) -> !isCollected(material)).thenComparing(byName);
@@ -300,7 +304,7 @@ public class CollectionDexInventory extends InventoryBuilder {
 
             this.setItem(slotIndex, new ItemBuilder(material)
                     .setGlowing(found)
-                    .setDisplayName((found ? "<green>" : "<gray>") + CustomMaterials.nameOf(material))
+                    .setDisplayName((found ? "<green>" : "<gray>") + displayName(material))
                     .setLore(lore)
                     .getItemStack());
         }
