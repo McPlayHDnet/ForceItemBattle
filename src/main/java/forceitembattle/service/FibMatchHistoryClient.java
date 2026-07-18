@@ -1,10 +1,11 @@
 package forceitembattle.service;
 
 import de.threeseconds.openapi.fibservice.client.api.FibMatchControllerApi;
+import de.threeseconds.openapi.fibservice.client.model.FibCollectionRarityDto;
 import de.threeseconds.openapi.fibservice.client.model.FibFoundItemStatsDto;
 import de.threeseconds.openapi.fibservice.client.model.FibMatchSubmitRequestDto;
 import forceitembattle.ForceItemBattle;
-import forceitembattle.achievements.global.FoundItemsCache;
+import forceitembattle.collection.FoundItemsCache;
 import forceitembattle.achievements.global.GlobalStatsCache;
 import forceitembattle.manager.AchievementManager;
 import java.util.List;
@@ -53,13 +54,17 @@ public class FibMatchHistoryClient {
         executor.runAsync(() -> api.getFoundItemStats(playerUuid), onSuccess, onError);
     }
 
+    public void getCollectionRarityAsync(Consumer<FibCollectionRarityDto> onSuccess, Consumer<ApiException> onError) {
+        executor.runAsync(api::getCollectionRarity, onSuccess, onError);
+    }
+
     private void invalidateParticipants(FibMatchSubmitRequestDto request) {
         if (request.getParticipants() == null) {
             return;
         }
         AchievementManager achievements = this.plugin.getAchievementManager();
         GlobalStatsCache globalStats = achievements.getGlobalStatsCache();
-        FoundItemsCache foundItems = achievements.getFoundItemsCache();
+        FoundItemsCache foundItems = this.plugin.getCollectionManager().getFoundItemsCache();
         request.getParticipants().forEach(participant -> {
             UUID playerUuid = participant.getPlayerUuid();
             if (playerUuid != null) {

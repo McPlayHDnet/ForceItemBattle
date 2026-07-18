@@ -1,4 +1,4 @@
-package forceitembattle.achievements.global;
+package forceitembattle.collection;
 
 import java.time.Instant;
 

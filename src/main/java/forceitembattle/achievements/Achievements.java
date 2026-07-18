@@ -296,8 +296,11 @@ public enum Achievements {
             new GlobalRule(GlobalStat.EXTRAORDINARY_BACK_TO_BACKS, 5)),
 
     // COLLECTION achievement
+    COLLECTOR_I("Collector I", "Collect 25% of all items", new CollectionRule(0.25)),
+    COLLECTOR_II("Collector II", "Collect 50% of all items", new CollectionRule(0.50)),
+    COLLECTOR_III("Collector III", "Collect 75% of all items", new CollectionRule(0.75)),
     FORCEITEMBATTLE("ForceItemBattle", "Collect every item in the game at least once",
-            new CollectionRule()),
+            new CollectionRule(1.0)),
 
     // META achievement
     COMPLETIONIST("Completionist+", "Complete every round achievement",

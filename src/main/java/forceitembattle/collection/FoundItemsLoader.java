@@ -1,4 +1,4 @@
-package forceitembattle.achievements.global;
+package forceitembattle.collection;
 
 import de.threeseconds.openapi.fibservice.client.model.FibFoundItemStatsDto;
 import forceitembattle.ForceItemBattle;

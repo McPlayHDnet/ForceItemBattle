@@ -1,5 +1,6 @@
-package forceitembattle.achievements.global;
+package forceitembattle.collection;
 
+import forceitembattle.achievements.global.GlobalStatsCache;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;

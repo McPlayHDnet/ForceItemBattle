@@ -5,8 +5,6 @@ import forceitembattle.achievements.AchievementMode;
 import forceitembattle.achievements.AchievementScope;
 import forceitembattle.achievements.AchievementStorage;
 import forceitembattle.achievements.Achievements;
-import forceitembattle.achievements.global.FoundItemsCache;
-import forceitembattle.achievements.global.FoundItemsLoader;
 import forceitembattle.achievements.global.GlobalStatsCache;
 import forceitembattle.achievements.global.GlobalStatsLoader;
 import forceitembattle.achievements.Trigger;
@@ -15,7 +13,6 @@ import forceitembattle.achievements.progress.AchievementProgressTracker;
 import forceitembattle.achievements.progress.BackToBackAchievementProgress;
 import forceitembattle.achievements.handlers.CollectionAchievementHandler;
 import forceitembattle.achievements.progress.CollectionAchievementProgress;
-import forceitembattle.achievements.handlers.ConsecutiveStoneAchievementHandler;
 import forceitembattle.achievements.progress.ConsecutiveStoneAchievementProgress;
 import forceitembattle.achievements.progress.CounterAchievementProgress;
 import forceitembattle.achievements.progress.ItemFrequencyAchievementProgress;
@@ -23,12 +20,10 @@ import forceitembattle.achievements.progress.SimpleAchievementProgress;
 import forceitembattle.achievements.progress.SkipAchievementProgress;
 import forceitembattle.achievements.progress.TimeAchievementProgress;
 import forceitembattle.event.PlayerGrantAchievementEvent;
-import forceitembattle.gui.CollectionCategory;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.Team;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,10 +32,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 
@@ -54,10 +47,6 @@ public class AchievementManager implements Manager {
     private final GlobalStatsCache globalStatsCache;
     @Getter
     private final GlobalStatsLoader globalStatsLoader;
-    @Getter
-    private final FoundItemsCache foundItemsCache;
-    @Getter
-    private final FoundItemsLoader foundItemsLoader;
 
     // OPTIMIZATION: Pre-built map of achievements by trigger
     private final Map<Trigger, List<Achievements>> achievementsByTrigger;
@@ -67,8 +56,6 @@ public class AchievementManager implements Manager {
         this.storage = new AchievementStorage(plugin);
         this.globalStatsCache = new GlobalStatsCache();
         this.globalStatsLoader = new GlobalStatsLoader(plugin, this.globalStatsCache);
-        this.foundItemsCache = new FoundItemsCache();
-        this.foundItemsLoader = new FoundItemsLoader(plugin, this.foundItemsCache);
         this.achievementsByTrigger = buildTriggerMap();
     }
 
@@ -289,12 +276,13 @@ public class AchievementManager implements Manager {
 
         // The submit already invalidated the found-set; invalidate again right before the read to
         // close the window where a concurrent load could have re-cached the pre-match set.
-        foundItemsCache.invalidate(uuid);
-        foundItemsLoader.load(uuid, found -> {
+        CollectionManager collection = this.plugin.getCollectionManager();
+        collection.getFoundItemsCache().invalidate(uuid);
+        collection.getFoundItemsLoader().load(uuid, found -> {
             if (!player.isOnline()) {
                 return;
             }
-            Set<String> catalogue = getCollectionCatalogue();
+            Set<String> catalogue = collection.getCollectionCatalogue();
             for (Achievements achievement : Achievements.values()) {
                 if (achievement.getScope() != AchievementScope.COLLECTION || storage.hasAchievement(uuid, achievement)) {
                     continue;
@@ -308,36 +296,6 @@ public class AchievementManager implements Manager {
             }
             checkMetaTiers(uuid, player);
         });
-    }
-
-    private Set<String> collectionCatalogue;
-
-    public Set<String> getCollectionCatalogue() {
-        if (this.collectionCatalogue == null) {
-            this.collectionCatalogue = this.plugin.getItemDifficultiesManager().getCollectableItems().stream()
-                    .map(material -> material.getKey().asString())
-                    .collect(Collectors.toUnmodifiableSet());
-        }
-        return this.collectionCatalogue;
-    }
-
-    // Catalogue split into display categories, sorted within each. Built once (session-static),
-    // shared by the collection book and every category page so nothing re-buckets per open.
-    private Map<CollectionCategory, List<Material>> collectionBuckets;
-
-    public Map<CollectionCategory, List<Material>> getCollectionBuckets() {
-        if (this.collectionBuckets == null) {
-            Map<CollectionCategory, List<Material>> buckets = new EnumMap<>(CollectionCategory.class);
-            for (CollectionCategory category : CollectionCategory.values()) {
-                buckets.put(category, new ArrayList<>());
-            }
-            for (Material material : this.plugin.getItemDifficultiesManager().getCollectableItems()) {
-                buckets.get(CollectionCategory.categoryOf(material)).add(material);
-            }
-            buckets.values().forEach(list -> list.sort(Comparator.comparing(material -> material.getKey().asString())));
-            this.collectionBuckets = buckets;
-        }
-        return this.collectionBuckets;
     }
 
     /**

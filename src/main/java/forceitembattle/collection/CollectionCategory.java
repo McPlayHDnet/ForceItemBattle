@@ -1,5 +1,6 @@
-package forceitembattle.gui;
+package forceitembattle.collection;
 
+import forceitembattle.gui.ItemBuilder;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.MaterialCategory;
 import java.util.function.Predicate;

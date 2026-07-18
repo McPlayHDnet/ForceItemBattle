@@ -6,9 +6,11 @@ import de.threeseconds.openapi.fibservice.client.model.FibPlayerAchievementsDto;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.AchievementScope;
 import forceitembattle.achievements.Achievements;
-import forceitembattle.achievements.global.CollectedItem;
+import forceitembattle.achievements.CollectionRule;
+import forceitembattle.collection.CollectedItem;
 import forceitembattle.achievements.global.GlobalRule;
 import forceitembattle.achievements.global.GlobalStats;
+import forceitembattle.util.ProgressBar;
 import forceitembattle.util.Text;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -83,7 +85,7 @@ public class AchievementInventory extends InventoryBuilder {
                 this.globalStats = stats;
                 this.updateInventory();
             });
-            this.plugin.getAchievementManager().getFoundItemsLoader().load(playerUUID, found -> {
+            this.plugin.getCollectionManager().getFoundItemsLoader().load(playerUUID, found -> {
                 this.foundItems = found;
                 this.updateInventory();
             });
@@ -259,15 +261,16 @@ public class AchievementInventory extends InventoryBuilder {
         List<String> lore = new ArrayList<>();
 
         if (achievement.getScope() == AchievementScope.COLLECTION) {
-            Set<String> catalogue = this.plugin.getAchievementManager().getCollectionCatalogue();
+            Set<String> catalogue = this.plugin.getCollectionManager().getCollectionCatalogue();
             if (this.foundItems == null) {
                 lore.add("<dark_gray>» <gray>Loading progress...");
                 return lore;
             }
-            long total = catalogue.size();
-            long current = catalogue.stream().filter(this.foundItems::containsKey).count();
-            lore.add("<dark_gray>» <dark_aqua>" + current + " <gray>/ <dark_aqua>" + total + " <gray>items collected");
-            lore.add("<dark_gray>» " + progressBar(current, total));
+            CollectionRule rule = achievement.getCollectionRule();
+            long required = rule.requiredCount(catalogue.size());
+            long current = rule.collectedCount(this.foundItems.keySet(), catalogue);
+            lore.add("<dark_gray>» <dark_aqua>" + current + " <gray>/ <dark_aqua>" + required + " <gray>items collected");
+            lore.add("<dark_gray>» " + ProgressBar.of(current, required));
             return lore;
         }
 

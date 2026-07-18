@@ -1,8 +1,12 @@
 package forceitembattle.gui;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.achievements.global.CollectedItem;
+import forceitembattle.collection.CollectedItem;
+import forceitembattle.collection.ItemRarity;
+import forceitembattle.collection.CollectionCategory;
+import forceitembattle.manager.ItemDifficultiesManager;
 import forceitembattle.model.CustomMaterials;
+import forceitembattle.util.ProgressBar;
 import forceitembattle.util.Text;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -61,6 +65,9 @@ public class CollectionDexInventory extends InventoryBuilder {
     private Sort sort = Sort.COLLECTED_FIRST;
     // null until the collection lands.
     private Map<String, CollectedItem> collected;
+    // Server-wide rarity; null until it lands. Independent of the collection load, so the grid
+    // renders as soon as either arrives and gains the rarity line when it shows up.
+    private ItemRarity rarity;
 
     public CollectionDexInventory(ForceItemBattle plugin, String playerName, UUID playerUUID, CollectionCategory category) {
         super(9 * 6, Text.of("<dark_gray>» <dark_aqua>" + category.getDisplayName() + " <dark_gray>◆ <gray>" + playerName));
@@ -71,14 +78,19 @@ public class CollectionDexInventory extends InventoryBuilder {
         this.category = category;
         this.currentPage = 0;
         // Pre-bucketed and pre-sorted once by the manager; just read this category's list.
-        this.items = this.plugin.getAchievementManager().getCollectionBuckets()
+        this.items = this.plugin.getCollectionManager().getCollectionBuckets()
                 .getOrDefault(category, List.of());
 
         this.addUpdateHandler(this::updateInventory);
         this.addClickHandler(inventoryClickEvent -> inventoryClickEvent.setCancelled(true));
 
-        this.plugin.getAchievementManager().getFoundItemsLoader().load(playerUUID, found -> {
+        this.plugin.getCollectionManager().getFoundItemsLoader().load(playerUUID, found -> {
             this.collected = found;
+            this.updateInventory();
+        });
+
+        this.plugin.getCollectionManager().getItemRarityLoader().load(loaded -> {
+            this.rarity = loaded;
             this.updateInventory();
         });
     }
@@ -125,6 +137,50 @@ public class CollectionDexInventory extends InventoryBuilder {
         return visible;
     }
 
+    /**
+     * How rare this item is server-wide. Null while rarity is still loading or before anyone has
+     * played a recorded match -- a percentage with no denominator would read as a hard 0%.
+     */
+    private String rarityLine(Material material) {
+        if (this.rarity == null || this.rarity.totalPlayers() <= 0) {
+            return null;
+        }
+
+        long players = this.rarity.playersWith(material.getKey().asString());
+        if (players == 0) {
+            return "<dark_gray>» <gold>Nobody has found this yet";
+        }
+
+        double percent = this.rarity.percentWith(material.getKey().asString());
+        // Below 0.1% the rounded figure would read 0%, which looks like a bug rather than "rare".
+        String formatted = percent < 0.1 ? "<0.1" : String.valueOf(Math.round(percent * 10) / 10.0);
+        return "<dark_gray>» <gray>Owned by <white>" + formatted + "%<gray> of players";
+    }
+
+    /**
+     * Where an item comes from: which pool it unlocks in, and whether it needs another dimension.
+     * Straight off the item registry, which owns both facts -- so a retagged item updates here for
+     * free. EXTREME never appears: those items aren't in the catalogue at all.
+     */
+    private List<String> huntingHints(Material material) {
+        ItemDifficultiesManager.ItemDefinition definition =
+                this.plugin.getItemDifficultiesManager().getItemRegistry().get(material);
+        if (definition == null) {
+            return List.of();
+        }
+
+        List<String> hints = new ArrayList<>();
+        ItemDifficultiesManager.State state = definition.state();
+        hints.add("<dark_gray>» <gray>Pool: <" + state.getColor() + ">" + state.getDisplayName());
+
+        if (definition.hasTag(ItemDifficultiesManager.ItemTag.NETHER)) {
+            hints.add("<dark_gray>» <gray>Requires: <red>Nether");
+        } else if (definition.hasTag(ItemDifficultiesManager.ItemTag.END)) {
+            hints.add("<dark_gray>» <gray>Requires: <dark_purple>End");
+        }
+        return hints;
+    }
+
     private int totalPages(int visibleCount) {
         return Math.max(1, (int) Math.ceil((double) visibleCount / ITEMS_PER_PAGE));
     }
@@ -138,7 +194,6 @@ public class CollectionDexInventory extends InventoryBuilder {
         List<Material> visible = visibleItems();
         int total = this.items.size();
         int foundCount = (int) this.items.stream().filter(this::isCollected).count();
-        double percent = total == 0 ? 0.0 : Math.round((double) foundCount / total * 1000) / 10.0;
 
         List<String> summaryLore = new ArrayList<>();
         summaryLore.add("");
@@ -146,7 +201,7 @@ public class CollectionDexInventory extends InventoryBuilder {
             summaryLore.add("<gray>Loading...");
         } else {
             summaryLore.add("<dark_gray>» <dark_aqua>" + foundCount + " <gray>/ <dark_aqua>" + total + " <gray>collected");
-            summaryLore.add("<dark_gray>» <yellow>" + percent + "%");
+            summaryLore.add("<dark_gray>» " + ProgressBar.of(foundCount, total));
         }
         this.setItem(4, this.category.head()
                 .setDisplayName("<dark_gray>» <dark_aqua>" + this.category.getDisplayName())
@@ -235,6 +290,11 @@ public class CollectionDexInventory extends InventoryBuilder {
                 lore.add("<dark_gray>» <gray>Collected <white>" + stats.timesCollected() + "<gray>x");
             } else {
                 lore.add("<dark_gray>» <gray>✘ Not collected yet");
+            }
+            lore.addAll(huntingHints(material));
+            String rarityLine = rarityLine(material);
+            if (rarityLine != null) {
+                lore.add(rarityLine);
             }
             lore.add("");
 

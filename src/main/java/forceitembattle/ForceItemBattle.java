@@ -51,6 +51,7 @@ import forceitembattle.listener.SettingsListener;
 import forceitembattle.listener.TradeListener;
 import forceitembattle.listener.VillagerTradeListener;
 import forceitembattle.manager.AchievementManager;
+import forceitembattle.manager.CollectionManager;
 import forceitembattle.manager.CustomItemManager;
 import forceitembattle.manager.BackToBackManager;
 import forceitembattle.manager.Gamemanager;
@@ -133,6 +134,8 @@ public final class ForceItemBattle extends JavaPlugin {
     @Getter
     private AchievementManager achievementManager;
     @Getter
+    private CollectionManager collectionManager;
+    @Getter
     private AchievementListener achievementListener;
     @Getter
     private LocatorManager locatorManager;
@@ -185,6 +188,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.tradingManager = register(new TradingManager(this));
         this.commandsManager = register(new CommandsManager(this));
         this.achievementManager = register(new AchievementManager(this));
+        this.collectionManager = register(new CollectionManager(this));
         this.locatorManager = register(new LocatorManager(this));
         this.protectionManager = register(new ProtectionManager(this));
         this.wanderingTraderManager = register(new WanderingTraderManager(this));
