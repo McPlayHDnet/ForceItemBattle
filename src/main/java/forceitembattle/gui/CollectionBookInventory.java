@@ -2,6 +2,7 @@ package forceitembattle.gui;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.AchievementScope;
+import forceitembattle.achievements.global.CollectedItem;
 import forceitembattle.util.Text;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +33,7 @@ public class CollectionBookInventory extends InventoryBuilder {
     private final String playerName;
     private final UUID playerUUID;
     // null until the found-set lands.
-    private Set<String> foundItems;
+    private Map<String, CollectedItem> foundItems;
 
     public CollectionBookInventory(ForceItemBattle plugin, String playerName, UUID playerUUID) {
         super(9 * 6, Text.of("<dark_gray>» <dark_aqua>Collection <dark_gray>◆ <gray>" + playerName));
@@ -59,7 +60,7 @@ public class CollectionBookInventory extends InventoryBuilder {
         Map<CollectionCategory, List<Material>> buckets = this.plugin.getAchievementManager().getCollectionBuckets();
 
         this.setItem(49, new ItemBuilder(Material.PLAYER_HEAD)
-                        .setSkullTexture("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvM2VkMWFiYTczZjYzOWY0YmM0MmJkNDgxOTZjNzE1MTk3YmUyNzEyYzNiOTYyYzk3ZWJmOWU5ZWQ4ZWZhMDI1In19fQ==")
+                        .setSkullTexture("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYmViNTg4YjIxYTZmOThhZDFmZjRlMDg1YzU1MmRjYjA1MGVmYzljYWI0MjdmNDYwNDhmMThmYzgwMzQ3NWY3In19fQ==")
                         .setDisplayName("<dark_red>« <red>Back")
                         .getItemStack(),
                 inventoryClickEvent -> {
@@ -75,7 +76,7 @@ public class CollectionBookInventory extends InventoryBuilder {
 
             int total = items.size();
             int found = this.foundItems == null ? 0 : (int) items.stream()
-                    .filter(material -> this.foundItems.contains(material.getKey().asString()))
+                    .filter(material -> this.foundItems.containsKey(material.getKey().asString()))
                     .count();
             double percent = total == 0 ? 0.0 : Math.round((double) found / total * 1000) / 10.0;
 

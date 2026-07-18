@@ -6,6 +6,7 @@ import de.threeseconds.openapi.fibservice.client.model.FibPlayerAchievementsDto;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.AchievementScope;
 import forceitembattle.achievements.Achievements;
+import forceitembattle.achievements.global.CollectedItem;
 import forceitembattle.achievements.global.GlobalRule;
 import forceitembattle.achievements.global.GlobalStats;
 import forceitembattle.util.Text;
@@ -45,7 +46,7 @@ public class AchievementInventory extends InventoryBuilder {
     // Only fetched for the GLOBAL scope; null until it lands.
     private GlobalStats globalStats;
     // Found-set for the COLLECTION achievement's progress bar on the GLOBAL page; null until loaded.
-    private Set<String> foundItems;
+    private Map<String, CollectedItem> foundItems;
 
     public AchievementInventory(ForceItemBattle plugin, String playerName, UUID playerUUID, AchievementScope scope) {
         super(9 * 6, Text.of("<dark_gray>» <dark_aqua>" + scope.getDisplayName() + " <dark_gray>◆ <gray>" + playerName));
@@ -264,7 +265,7 @@ public class AchievementInventory extends InventoryBuilder {
                 return lore;
             }
             long total = catalogue.size();
-            long current = catalogue.stream().filter(this.foundItems::contains).count();
+            long current = catalogue.stream().filter(this.foundItems::containsKey).count();
             lore.add("<dark_gray>» <dark_aqua>" + current + " <gray>/ <dark_aqua>" + total + " <gray>items collected");
             lore.add("<dark_gray>» " + progressBar(current, total));
             return lore;

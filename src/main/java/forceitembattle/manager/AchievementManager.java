@@ -299,7 +299,7 @@ public class AchievementManager implements Manager {
                 if (achievement.getScope() != AchievementScope.COLLECTION || storage.hasAchievement(uuid, achievement)) {
                     continue;
                 }
-                if (!achievement.getCollectionRule().isMet(found, catalogue)) {
+                if (!achievement.getCollectionRule().isMet(found.keySet(), catalogue)) {
                     continue;
                 }
                 // Recorded SOLO with no teammate, like the GLOBAL unlocks: a lifetime collection

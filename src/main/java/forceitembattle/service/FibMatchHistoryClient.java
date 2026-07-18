@@ -1,6 +1,7 @@
 package forceitembattle.service;
 
 import de.threeseconds.openapi.fibservice.client.api.FibMatchControllerApi;
+import de.threeseconds.openapi.fibservice.client.model.FibFoundItemStatsDto;
 import de.threeseconds.openapi.fibservice.client.model.FibMatchSubmitRequestDto;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.global.FoundItemsCache;
@@ -44,12 +45,12 @@ public class FibMatchHistoryClient {
         }, result -> onSuccess.run(), onError);
     }
 
-    public void getFoundItemNamesAsync(UUID playerUuid, Consumer<List<String>> onSuccess) {
-        getFoundItemNamesAsync(playerUuid, onSuccess, executor::logError);
+    public void getFoundItemStatsAsync(UUID playerUuid, Consumer<List<FibFoundItemStatsDto>> onSuccess) {
+        getFoundItemStatsAsync(playerUuid, onSuccess, executor::logError);
     }
 
-    public void getFoundItemNamesAsync(UUID playerUuid, Consumer<List<String>> onSuccess, Consumer<ApiException> onError) {
-        executor.runAsync(() -> api.getFoundItemNames(playerUuid), onSuccess, onError);
+    public void getFoundItemStatsAsync(UUID playerUuid, Consumer<List<FibFoundItemStatsDto>> onSuccess, Consumer<ApiException> onError) {
+        executor.runAsync(() -> api.getFoundItemStats(playerUuid), onSuccess, onError);
     }
 
     private void invalidateParticipants(FibMatchSubmitRequestDto request) {

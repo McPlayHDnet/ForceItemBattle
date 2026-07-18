@@ -85,6 +85,7 @@ public class FoundItemListener implements Listener {
             BackToBackProbability probability = this.plugin.getBackToBackManager().calculateProbability(forceItemPlayer);
             back2Back.setPercentage(probability.percentage());
             back2Back.setRarity(probability.formatted());
+            back2Back.setRarityType(probability.rarity());
 
             if (context.statsEnabled() && !context.runMode()) {
                 trackRarity(forceItemPlayer, probability.rarity(), context);

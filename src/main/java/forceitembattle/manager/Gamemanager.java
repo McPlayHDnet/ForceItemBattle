@@ -209,8 +209,9 @@ public class Gamemanager implements Manager {
     private void appendMatchItems(List<FibMatchItemSubmitDto> out, List<ForceItem> found, UUID playerUuid, Integer teamIndex) {
         for (int i = 0; i < found.size(); i++) {
             ForceItem forceItem = found.get(i);
-            String b2bRarity = (forceItem.back2Back() != null && forceItem.back2Back().isActive())
-                    ? forceItem.back2Back().getRarity()
+            String b2bRarity = (forceItem.back2Back() != null && forceItem.back2Back().isActive()
+                    && forceItem.back2Back().getRarityType() != null)
+                    ? forceItem.back2Back().getRarityType().name()
                     : null;
             out.add(new FibMatchItemSubmitDto()
                     .playerUuid(playerUuid)

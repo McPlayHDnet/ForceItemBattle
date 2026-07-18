@@ -1,23 +1,55 @@
 package forceitembattle.gui;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.achievements.global.CollectedItem;
+import forceitembattle.model.CustomMaterials;
 import forceitembattle.util.Text;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import java.util.UUID;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 
 /**
- * One category's slice of the collection: every item in the given {@link CollectionCategory},
- * found ones glowing, missing ones plain. Read-only, paged. The item list comes from the memoized
- * catalogue buckets and the found-set from the cached loader, so this can't disagree with the
- * achievement or with the book's counts.
+ * One category's slice of the collection: found items glowing, missing ones plain, with a filter
+ * (all / collected / missing) and a sort toggle. The item list comes from the memoized catalogue
+ * buckets and the collection from the cached loader, so this can't disagree with the achievement
+ * or with the book's counts.
  */
 public class CollectionDexInventory extends InventoryBuilder {
 
     private static final int ITEMS_PER_PAGE = 36;
+    private static final DateTimeFormatter DATE_FORMAT =
+            DateTimeFormatter.ofPattern("d MMM yyyy").withZone(ZoneId.systemDefault());
+
+    private enum Filter {
+        ALL("All items"),
+        COLLECTED("Collected only"),
+        MISSING("Missing only");
+
+        private final String displayName;
+
+        Filter(String displayName) {
+            this.displayName = displayName;
+        }
+    }
+
+    private enum Sort {
+        COLLECTED_FIRST("Collected first"),
+        ALPHABETICAL("Alphabetical"),
+        FIRST_OBTAINED("First obtained"),
+        MOST_COLLECTED("Most collected");
+
+        private final String displayName;
+
+        Sort(String displayName) {
+            this.displayName = displayName;
+        }
+    }
 
     private final ForceItemBattle plugin;
     private final String playerName;
@@ -25,8 +57,10 @@ public class CollectionDexInventory extends InventoryBuilder {
     private final CollectionCategory category;
     private final List<Material> items;
     private int currentPage;
-    // null until the found-set lands.
-    private Set<String> foundItems;
+    private Filter filter = Filter.ALL;
+    private Sort sort = Sort.COLLECTED_FIRST;
+    // null until the collection lands.
+    private Map<String, CollectedItem> collected;
 
     public CollectionDexInventory(ForceItemBattle plugin, String playerName, UUID playerUUID, CollectionCategory category) {
         super(9 * 6, Text.of("<dark_gray>» <dark_aqua>" + category.getDisplayName() + " <dark_gray>◆ <gray>" + playerName));
@@ -44,13 +78,55 @@ public class CollectionDexInventory extends InventoryBuilder {
         this.addClickHandler(inventoryClickEvent -> inventoryClickEvent.setCancelled(true));
 
         this.plugin.getAchievementManager().getFoundItemsLoader().load(playerUUID, found -> {
-            this.foundItems = found;
+            this.collected = found;
             this.updateInventory();
         });
     }
 
-    private int totalPages() {
-        return Math.max(1, (int) Math.ceil((double) this.items.size() / ITEMS_PER_PAGE));
+    private boolean isCollected(Material material) {
+        return this.collected != null && this.collected.containsKey(material.getKey().asString());
+    }
+
+    private CollectedItem statsOf(Material material) {
+        return this.collected == null ? null : this.collected.get(material.getKey().asString());
+    }
+
+    /** This category's items with the active filter applied and the active sort imposed. */
+    private List<Material> visibleItems() {
+        List<Material> visible = new ArrayList<>();
+        for (Material material : this.items) {
+            boolean found = isCollected(material);
+            if (this.filter == Filter.COLLECTED && !found) {
+                continue;
+            }
+            if (this.filter == Filter.MISSING && found) {
+                continue;
+            }
+            visible.add(material);
+        }
+
+        // Ties (and every missing item under the metadata sorts) fall back to name order, so the
+        // grid is stable rather than registry-ordered.
+        Comparator<Material> byName = Comparator.comparing(material -> CustomMaterials.nameOf(material));
+        Comparator<Material> comparator = switch (this.sort) {
+            case ALPHABETICAL -> byName;
+            case COLLECTED_FIRST -> Comparator.comparing((Material material) -> !isCollected(material)).thenComparing(byName);
+            case FIRST_OBTAINED -> Comparator.comparing((Material material) -> {
+                CollectedItem stats = statsOf(material);
+                // Missing items sort last: no date to order them by.
+                return stats == null || stats.firstCollected() == null ? Long.MAX_VALUE : stats.firstCollected().toEpochMilli();
+            }).thenComparing(byName);
+            case MOST_COLLECTED -> Comparator.comparing((Material material) -> {
+                CollectedItem stats = statsOf(material);
+                return stats == null ? 0L : -stats.timesCollected();
+            }).thenComparing(byName);
+        };
+        visible.sort(comparator);
+        return visible;
+    }
+
+    private int totalPages(int visibleCount) {
+        return Math.max(1, (int) Math.ceil((double) visibleCount / ITEMS_PER_PAGE));
     }
 
     private void updateInventory() {
@@ -59,15 +135,14 @@ public class CollectionDexInventory extends InventoryBuilder {
         this.setItems(0, 8, GuiItems.accentBorder());
         this.setItems(45, 53, GuiItems.accentBorder());
 
+        List<Material> visible = visibleItems();
         int total = this.items.size();
-        int foundCount = this.foundItems == null ? 0 : (int) this.items.stream()
-                .filter(material -> this.foundItems.contains(material.getKey().asString()))
-                .count();
+        int foundCount = (int) this.items.stream().filter(this::isCollected).count();
         double percent = total == 0 ? 0.0 : Math.round((double) foundCount / total * 1000) / 10.0;
 
         List<String> summaryLore = new ArrayList<>();
         summaryLore.add("");
-        if (this.foundItems == null) {
+        if (this.collected == null) {
             summaryLore.add("<gray>Loading...");
         } else {
             summaryLore.add("<dark_gray>» <dark_aqua>" + foundCount + " <gray>/ <dark_aqua>" + total + " <gray>collected");
@@ -78,6 +153,31 @@ public class CollectionDexInventory extends InventoryBuilder {
                 .setLore(summaryLore)
                 .getItemStack());
 
+        // --- controls ---
+        this.setItem(47, new ItemBuilder(Material.HOPPER)
+                        .setDisplayName("<dark_gray>» <dark_aqua>Filter<gray>: <yellow>" + this.filter.displayName)
+                        .setLore(List.of("", "<yellow>Click to change"))
+                        .getItemStack(),
+                inventoryClickEvent -> {
+                    this.getPlayer().playSound(this.getPlayer(), Sound.UI_BUTTON_CLICK, 1, 1);
+                    Filter[] filters = Filter.values();
+                    this.filter = filters[(this.filter.ordinal() + 1) % filters.length];
+                    this.currentPage = 0;
+                    this.updateInventory();
+                });
+
+        this.setItem(51, new ItemBuilder(Material.COMPARATOR)
+                        .setDisplayName("<dark_gray>» <dark_aqua>Sort<gray>: <yellow>" + this.sort.displayName)
+                        .setLore(List.of("", "<yellow>Click to change"))
+                        .getItemStack(),
+                inventoryClickEvent -> {
+                    this.getPlayer().playSound(this.getPlayer(), Sound.UI_BUTTON_CLICK, 1, 1);
+                    Sort[] sorts = Sort.values();
+                    this.sort = sorts[(this.sort.ordinal() + 1) % sorts.length];
+                    this.currentPage = 0;
+                    this.updateInventory();
+                });
+
         this.setItem(49, new ItemBuilder(Material.PLAYER_HEAD)
                         .setSkullTexture("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvM2VkMWFiYTczZjYzOWY0YmM0MmJkNDgxOTZjNzE1MTk3YmUyNzEyYzNiOTYyYzk3ZWJmOWU5ZWQ4ZWZhMDI1In19fQ==")
                         .setDisplayName("<dark_red>« <red>Back")
@@ -87,7 +187,7 @@ public class CollectionDexInventory extends InventoryBuilder {
                     new CollectionBookInventory(this.plugin, this.playerName, this.playerUUID).open(this.getPlayer());
                 });
 
-        if (this.items.size() > ITEMS_PER_PAGE) {
+        if (visible.size() > ITEMS_PER_PAGE) {
             this.setItem(45, new ItemBuilder(Material.PLAYER_HEAD)
                             .setSkullTexture("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZjZkYWI3MjcxZjRmZjA0ZDU0NDAyMTkwNjdhMTA5YjVjMGMxZDFlMDFlYzYwMmMwMDIwNDc2ZjdlYjYxMjE4MCJ9fX0=")
                             .setDisplayName("<dark_red>« <red>Previous page")
@@ -107,7 +207,7 @@ public class CollectionDexInventory extends InventoryBuilder {
                             .setDisplayName("<dark_green>» <green>Next page")
                             .getItemStack(),
                     inventoryClickEvent -> {
-                        if (this.currentPage < this.totalPages() - 1) {
+                        if (this.currentPage < this.totalPages(visible.size()) - 1) {
                             this.getPlayer().playSound(this.getPlayer(), Sound.ITEM_BOOK_PAGE_TURN, 1, 1);
                             this.currentPage++;
                             this.updateInventory();
@@ -118,33 +218,31 @@ public class CollectionDexInventory extends InventoryBuilder {
         }
 
         int startIndex = this.currentPage * ITEMS_PER_PAGE;
-        int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, this.items.size());
+        int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, visible.size());
         for (int i = startIndex; i < endIndex; i++) {
             int slotIndex = i - startIndex + 9;
-            Material material = this.items.get(i);
-            boolean found = this.foundItems != null && this.foundItems.contains(material.getKey().asString());
+            Material material = visible.get(i);
+            CollectedItem stats = statsOf(material);
+            boolean found = stats != null;
 
             List<String> lore = new ArrayList<>();
             lore.add("");
-            lore.add(found ? "<dark_gray>» <green>✔ Collected" : "<dark_gray>» <gray>✘ Not collected yet");
+            if (found) {
+                lore.add("<dark_gray>» <green>✔ Collected");
+                if (stats.firstCollected() != null) {
+                    lore.add("<dark_gray>» <gray>First: <white>" + DATE_FORMAT.format(stats.firstCollected()));
+                }
+                lore.add("<dark_gray>» <gray>Collected <white>" + stats.timesCollected() + "<gray>x");
+            } else {
+                lore.add("<dark_gray>» <gray>✘ Not collected yet");
+            }
             lore.add("");
 
             this.setItem(slotIndex, new ItemBuilder(material)
                     .setGlowing(found)
-                    .setDisplayName((found ? "<green>" : "<gray>") + prettify(material))
+                    .setDisplayName((found ? "<green>" : "<gray>") + CustomMaterials.nameOf(material))
                     .setLore(lore)
                     .getItemStack());
         }
-    }
-
-    private static String prettify(Material material) {
-        String[] parts = material.getKey().getKey().split("_");
-        StringBuilder builder = new StringBuilder();
-        for (String part : parts) {
-            if (!part.isEmpty()) {
-                builder.append(Character.toUpperCase(part.charAt(0))).append(part.substring(1)).append(' ');
-            }
-        }
-        return builder.toString().trim();
     }
 }
