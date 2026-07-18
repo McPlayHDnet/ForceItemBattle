@@ -296,7 +296,7 @@ public enum Achievements {
             new GlobalRule(GlobalStat.EXTRAORDINARY_BACK_TO_BACKS, 5)),
 
     // COLLECTION achievement
-    THE_COLLECTOR("The Collector", "Collect every item in the game at least once",
+    FORCEITEMBATTLE("ForceItemBattle", "Collect every item in the game at least once",
             new CollectionRule()),
 
     // META achievement

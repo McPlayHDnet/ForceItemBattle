@@ -148,7 +148,7 @@ public class CollectionDexInventory extends InventoryBuilder {
             summaryLore.add("<dark_gray>» <dark_aqua>" + foundCount + " <gray>/ <dark_aqua>" + total + " <gray>collected");
             summaryLore.add("<dark_gray>» <yellow>" + percent + "%");
         }
-        this.setItem(4, new ItemBuilder(this.category.getIcon())
+        this.setItem(4, this.category.head()
                 .setDisplayName("<dark_gray>» <dark_aqua>" + this.category.getDisplayName())
                 .setLore(summaryLore)
                 .getItemStack());

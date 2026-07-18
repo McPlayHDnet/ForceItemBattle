@@ -23,6 +23,7 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 
 @RequiredArgsConstructor
@@ -66,6 +67,10 @@ public class PlayerLifecycleListener implements Listener {
             player.setFoodLevel(20);
             player.setGameMode(GameMode.ADVENTURE);
 
+            player.getInventory().setItem(0, new ItemBuilder(Material.WRITTEN_BOOK)
+                    .setDisplayName("<dark_gray>» <dark_aqua>Collection")
+                    .addItemFlags(ItemFlag.values())
+                    .getItemStack());
             player.getInventory().setItem(4, new ItemBuilder(Material.LIME_DYE).setDisplayName("<dark_gray>» <green>Achievements").getItemStack());
             player.getInventory().setItem(8, new ItemBuilder(Material.ENDER_PEARL).setDisplayName("<dark_gray>» <gray>Spectate game").getItemStack());
         }

@@ -91,11 +91,7 @@ public class CollectionBookInventory extends InventoryBuilder {
                 lore.add("<yellow>Click to view");
             }
 
-            ItemBuilder builder = category.getHeadTexture().isEmpty()
-                    ? new ItemBuilder(category.getIcon())
-                    : new ItemBuilder(Material.PLAYER_HEAD).setSkullTexture(category.getHeadTexture());
-
-            this.setItem(CONTENT_SLOTS[i], builder
+            this.setItem(CONTENT_SLOTS[i], category.head()
                             .setDisplayName("<dark_gray>» <dark_aqua>" + category.getDisplayName())
                             .setLore(lore)
                             .getItemStack(),
