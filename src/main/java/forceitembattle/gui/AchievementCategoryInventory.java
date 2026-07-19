@@ -13,6 +13,8 @@ import org.bukkit.Sound;
 
 public class AchievementCategoryInventory extends InventoryBuilder {
 
+    private static final AchievementScope[] DISPLAYED =
+            {AchievementScope.ROUND, AchievementScope.GLOBAL, AchievementScope.META};
     private static final int[] SLOTS = {11, 13, 15};
     private static final Material[] ICONS = {Material.CLOCK, Material.COMPASS, Material.NETHER_STAR};
 
@@ -40,9 +42,8 @@ public class AchievementCategoryInventory extends InventoryBuilder {
         Set<String> cachedIds = this.plugin.getAchievementManager()
                 .getAchievementStorage().getPlayerAchievements(this.playerUUID);
 
-        AchievementScope[] scopes = AchievementScope.values();
-        for (int i = 0; i < scopes.length; i++) {
-            AchievementScope scope = scopes[i];
+        for (int i = 0; i < DISPLAYED.length; i++) {
+            AchievementScope scope = DISPLAYED[i];
 
             int total = 0;
             int done = 0;

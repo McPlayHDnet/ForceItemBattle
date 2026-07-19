@@ -13,7 +13,10 @@ public enum AchievementScope {
     GLOBAL("Global Achievements", "Earned across every round you play"),
 
     /** Evaluated against the player's other unlocks, via a {@link CompletionistRule}. */
-    META("Meta Achievements", "Earned by completing other achievements");
+    META("Meta Achievements", "Earned by completing other achievements"),
+
+    /** Evaluated across every round, from match history, via a {@link CollectionRule}. */
+    COLLECTION("Collection Achievements", "Earned by collecting every item");
 
     private final String displayName;
     private final String subtitle;

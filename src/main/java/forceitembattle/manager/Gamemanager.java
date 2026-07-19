@@ -1,9 +1,14 @@
 package forceitembattle.manager;
 
+import de.threeseconds.openapi.fibservice.client.model.FibMatchItemSubmitDto;
+import de.threeseconds.openapi.fibservice.client.model.FibMatchParticipantSubmitDto;
+import de.threeseconds.openapi.fibservice.client.model.FibMatchSubmitRequestDto;
+import de.threeseconds.openapi.fibservice.client.model.FibMatchTeamSubmitDto;
 import de.threeseconds.openapi.fibservice.client.model.FibPlayerStatsUpdateRequestDto;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.Dimension;
+import forceitembattle.model.ForceItem;
 import forceitembattle.model.GameContext;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GamePreset;
@@ -13,7 +18,11 @@ import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameState;
 import forceitembattle.gui.ItemBuilder;
 import forceitembattle.model.Team;
+import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Text;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -38,6 +47,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.Statistic;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
@@ -59,6 +69,9 @@ public class Gamemanager implements Manager {
     @Getter
     @Setter
     private long gameStartTime;
+    @Getter
+    @Setter
+    private UUID matchId;
     /**
      * Total game duration (seconds).
      */
@@ -111,6 +124,105 @@ public class Gamemanager implements Manager {
             previousScore = currentScore;
         }
         return placesMap;
+    }
+
+    private void submitMatchHistory(Map<ForceItemPlayer, Integer> placesMap, Map<Team, Integer> teamPlaces) {
+        GameSettings settings = this.forceItemBattle.getSettings();
+        boolean teamMode = settings.isSettingEnabled(GameSetting.TEAM);
+
+        // Settings snapshot: GameSetting constant name -> value as text. Integer-valued settings
+        // (BACKPACKSIZE, QUICKIE, ...) read via getSettingValue; everything else is a toggle.
+        Map<String, String> settingsSnapshot = new LinkedHashMap<>();
+        for (GameSetting setting : GameSetting.values()) {
+            String value = setting.defaultValue() instanceof Integer
+                    ? String.valueOf(settings.getSettingValue(setting))
+                    : String.valueOf(settings.isSettingEnabled(setting));
+            settingsSnapshot.put(setting.name(), value);
+        }
+
+        List<FibMatchTeamSubmitDto> teams = new ArrayList<>();
+        if (teamMode) {
+            for (Team team : this.forceItemBattle.getTeamManager().getTeams()) {
+                teams.add(new FibMatchTeamSubmitDto()
+                        .teamIndex(team.getTeamId())
+                        .teamName(team.getName())
+                        .color(team.getColor() != null ? team.getColor().name() : null));
+            }
+        }
+
+        List<FibMatchParticipantSubmitDto> participants = new ArrayList<>();
+        for (ForceItemPlayer forceItemPlayer : this.forceItemPlayerMap.values()) {
+            if (forceItemPlayer.isSpectator()) {
+                continue;
+            }
+            Team team = forceItemPlayer.currentTeam();
+            Integer placement = team == null
+                    ? placesMap.get(forceItemPlayer)
+                    : (teamPlaces != null ? teamPlaces.get(team) : null);
+            long score = team == null ? forceItemPlayer.currentScore() : team.getCurrentScore();
+            participants.add(new FibMatchParticipantSubmitDto()
+                    .playerUuid(forceItemPlayer.player().getUniqueId())
+                    .teamIndex(team == null ? null : team.getTeamId())
+                    .finalScore(score)
+                    .placement(placement != null ? placement : 0)
+                    .won(placement != null && placement == 1));
+        }
+
+        List<FibMatchItemSubmitDto> items = new ArrayList<>();
+        if (teamMode) {
+            for (Team team : this.forceItemBattle.getTeamManager().getTeams()) {
+                appendMatchItems(items, team.getFoundItems(), null, team.getTeamId());
+            }
+        } else {
+            for (ForceItemPlayer forceItemPlayer : this.forceItemPlayerMap.values()) {
+                if (forceItemPlayer.isSpectator()) {
+                    continue;
+                }
+                appendMatchItems(items, forceItemPlayer.foundItems(), forceItemPlayer.player().getUniqueId(), null);
+            }
+        }
+
+        FibMatchSubmitRequestDto request = new FibMatchSubmitRequestDto()
+                .startedAt(Instant.ofEpochMilli(this.gameStartTime).atOffset(ZoneOffset.UTC))
+                .endedAt(OffsetDateTime.now(ZoneOffset.UTC))
+                .durationSeconds(this.gameDuration)
+                .mode(teamMode ? FibMatchSubmitRequestDto.ModeEnum.TEAM : FibMatchSubmitRequestDto.ModeEnum.SOLO)
+                .teams(teams)
+                .participants(participants)
+                .items(items)
+                .settings(settingsSnapshot);
+
+        this.forceItemBattle.getFibService().matchHistory().submitMatchAsync(this.matchId, request, () -> {
+            // Match is persisted now, so each participant's found-set includes it. Evaluate the
+            // collection achievement at conclusion (fresh read), not a game late.
+            for (ForceItemPlayer participant : this.forceItemPlayerMap.values()) {
+                if (participant.isSpectator()) {
+                    continue;
+                }
+                Player participantPlayer = participant.player();
+                if (participantPlayer != null && participantPlayer.isOnline()) {
+                    this.forceItemBattle.getAchievementManager().evaluateCollectionAchievement(participantPlayer);
+                }
+            }
+        });
+    }
+
+    private void appendMatchItems(List<FibMatchItemSubmitDto> out, List<ForceItem> found, UUID playerUuid, Integer teamIndex) {
+        for (int i = 0; i < found.size(); i++) {
+            ForceItem forceItem = found.get(i);
+            String b2bRarity = (forceItem.back2Back() != null && forceItem.back2Back().isActive()
+                    && forceItem.back2Back().getRarityType() != null)
+                    ? forceItem.back2Back().getRarityType().name()
+                    : null;
+            out.add(new FibMatchItemSubmitDto()
+                    .playerUuid(playerUuid)
+                    .teamIndex(teamIndex)
+                    .itemName(forceItem.material().getKey().asString())
+                    .skipped(forceItem.usedSkip())
+                    .b2bRarity(b2bRarity)
+                    .orderIndex(i)
+                    .collectedAt(Instant.ofEpochMilli(forceItem.timeStamp()).atOffset(ZoneOffset.UTC)));
+        }
     }
 
     public static Material getJokerMaterial() {
@@ -350,6 +462,10 @@ public class Gamemanager implements Manager {
 
     public void giveSpectatorItems(Player player) {
         player.getInventory().setItem(1, new ItemBuilder(Material.LIME_DYE).setDisplayName("<dark_gray>» <green>Achievements").getItemStack());
+        player.getInventory().setItem(2, new ItemBuilder(Material.WRITTEN_BOOK)
+                .setDisplayName("<dark_gray>» <dark_aqua>Collection")
+                .addItemFlags(ItemFlag.values())
+                .getItemStack());
         player.getInventory().setItem(3, new ItemBuilder(Material.COMPASS).setDisplayName("<dark_gray>» <yellow>Teleporter").getItemStack());
         player.getInventory().setItem(5, new ItemBuilder(Material.GRASS_BLOCK).setDisplayName("<dark_gray>» <dark_green>Overworld").getItemStack());
         player.getInventory().setItem(6, new ItemBuilder(Material.NETHERRACK).setDisplayName("<dark_gray>» <red>Nether").getItemStack());
@@ -458,6 +574,7 @@ public class Gamemanager implements Manager {
         });
 
         if (statsEnabled) {
+            this.submitMatchHistory(placesMap, teamPlaces);
             for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
                 ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(onlinePlayer.getUniqueId());
                 if (forceItemPlayer != null && !forceItemPlayer.isSpectator()) {

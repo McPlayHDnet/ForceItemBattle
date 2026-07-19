@@ -13,7 +13,6 @@ import forceitembattle.achievements.progress.AchievementProgressTracker;
 import forceitembattle.achievements.progress.BackToBackAchievementProgress;
 import forceitembattle.achievements.handlers.CollectionAchievementHandler;
 import forceitembattle.achievements.progress.CollectionAchievementProgress;
-import forceitembattle.achievements.handlers.ConsecutiveStoneAchievementHandler;
 import forceitembattle.achievements.progress.ConsecutiveStoneAchievementProgress;
 import forceitembattle.achievements.progress.CounterAchievementProgress;
 import forceitembattle.achievements.progress.ItemFrequencyAchievementProgress;
@@ -252,6 +251,49 @@ public class AchievementManager implements Manager {
                 writeUnlock(uuid, player, achievement, null, false);
             }
 
+            checkMetaTiers(uuid, player);
+        });
+    }
+
+    /**
+     * Evaluates the COLLECTION achievement(s) for one player after a match has been persisted.
+     * Called from the match submit's success callback, so the just-finished game is already in the
+     * DB -- the achievement fills at conclusion rather than a game late.
+     */
+    public void evaluateCollectionAchievement(Player player) {
+        UUID uuid = player.getUniqueId();
+
+        boolean anyOutstanding = false;
+        for (Achievements achievement : Achievements.values()) {
+            if (achievement.getScope() == AchievementScope.COLLECTION && !storage.hasAchievement(uuid, achievement)) {
+                anyOutstanding = true;
+                break;
+            }
+        }
+        if (!anyOutstanding) {
+            return;
+        }
+
+        // The submit already invalidated the found-set; invalidate again right before the read to
+        // close the window where a concurrent load could have re-cached the pre-match set.
+        CollectionManager collection = this.plugin.getCollectionManager();
+        collection.getFoundItemsCache().invalidate(uuid);
+        collection.getFoundItemsLoader().load(uuid, found -> {
+            if (!player.isOnline()) {
+                return;
+            }
+            Set<String> catalogue = collection.getCollectionCatalogue();
+            for (Achievements achievement : Achievements.values()) {
+                if (achievement.getScope() != AchievementScope.COLLECTION || storage.hasAchievement(uuid, achievement)) {
+                    continue;
+                }
+                if (!achievement.getCollectionRule().isMet(found.keySet(), catalogue)) {
+                    continue;
+                }
+                // Recorded SOLO with no teammate, like the GLOBAL unlocks: a lifetime collection
+                // spans both modes, so the unlock's mode is meaningless.
+                writeUnlock(uuid, player, achievement, null, false);
+            }
             checkMetaTiers(uuid, player);
         });
     }

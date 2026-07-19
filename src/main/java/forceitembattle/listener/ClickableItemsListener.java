@@ -3,6 +3,7 @@ package forceitembattle.listener;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.gui.AchievementCategoryInventory;
 import forceitembattle.event.FoundItemEvent;
+import forceitembattle.gui.CollectionBookInventory;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.Dimension;
@@ -61,6 +62,12 @@ public class ClickableItemsListener implements Listener {
                 player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
                 Bukkit.getScheduler().runTask(plugin, () ->
                         new AchievementCategoryInventory(this.plugin, player.getName(), player.getUniqueId()).open(player));
+            }
+            case WRITTEN_BOOK -> {
+                e.setCancelled(true);
+                player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
+                Bukkit.getScheduler().runTask(plugin, () ->
+                        new CollectionBookInventory(this.plugin, player.getName(), player.getUniqueId()).open(player));
             }
             case COMPASS -> {
                 e.setCancelled(true);
@@ -233,6 +240,12 @@ public class ClickableItemsListener implements Listener {
                 player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
                 Bukkit.getScheduler().runTask(plugin, () ->
                         new AchievementCategoryInventory(this.plugin, player.getName(), player.getUniqueId()).open(player));
+            }
+            case WRITTEN_BOOK -> {
+                e.setCancelled(true);
+                player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
+                Bukkit.getScheduler().runTask(plugin, () ->
+                        new CollectionBookInventory(this.plugin, player.getName(), player.getUniqueId()).open(player));
             }
             case ENDER_PEARL -> {
                 e.setCancelled(true);

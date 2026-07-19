@@ -228,7 +228,6 @@ public class WanderingTraderManager implements Manager {
             List<ItemStack> ingredients = recipe.getIngredients();
             ingredients.forEach(ingredient -> ingredient.setAmount(1));
             recipe.setIngredients(ingredients);
-            recipe.setMaxUses(Integer.MAX_VALUE);
         });
 
         MerchantRecipe wheel = new MerchantRecipe(CustomMaterials.WHEEL_OF_FORTUNE.itemStack(), Integer.MAX_VALUE);

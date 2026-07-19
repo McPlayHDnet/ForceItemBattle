@@ -94,7 +94,7 @@ public class BackToBackManager implements Manager {
                 InventorySearch.collectUniqueMaterials(this.plugin.getBackpackManager().getTeamBackpack(team), uniqueMaterials);
             }
 
-            streak = Math.max(streak, team.getBackToBackStreak());
+            streak = team.getBackToBackStreak();
         } else {
             InventorySearch.collectUniqueMaterials(player.getInventory(), uniqueMaterials);
 
@@ -125,7 +125,9 @@ public class BackToBackManager implements Manager {
         }
 
         if (context.teamGame() && forceItemPlayer.currentTeam() != null) {
-            forceItemPlayer.currentTeam().setBackToBackStreak(0);
+            Team team = forceItemPlayer.currentTeam();
+            team.setBackToBackStreak(0);
+            team.getPlayers().forEach(member -> member.setBackToBackStreak(0));
         }
     }
 

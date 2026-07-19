@@ -106,6 +106,7 @@ public class TimeBasedAchievementHandler implements AchievementHandler<TimeAchie
                 return false; // Not a skip, so can't be procrastinator
             }
             long timeSinceReceived = progress.itemReceivedSecondsLeft - secondsLeft;
+            progress.itemReceivedSecondsLeft = secondsLeft;
             return timeSinceReceived >= skipAfterSeconds;
         }
 

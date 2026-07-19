@@ -14,6 +14,7 @@ import forceitembattle.commands.player.CommandAchievement;
 import forceitembattle.commands.player.CommandAskTrade;
 import forceitembattle.commands.player.CommandBed;
 import forceitembattle.commands.player.CommandBp;
+import forceitembattle.commands.player.CommandCollection;
 import forceitembattle.commands.player.CommandFixSkips;
 import forceitembattle.commands.player.CommandHelp;
 import forceitembattle.commands.player.CommandInfo;
@@ -50,6 +51,7 @@ import forceitembattle.listener.SettingsListener;
 import forceitembattle.listener.TradeListener;
 import forceitembattle.listener.VillagerTradeListener;
 import forceitembattle.manager.AchievementManager;
+import forceitembattle.manager.CollectionManager;
 import forceitembattle.manager.CustomItemManager;
 import forceitembattle.manager.BackToBackManager;
 import forceitembattle.manager.Gamemanager;
@@ -132,6 +134,8 @@ public final class ForceItemBattle extends JavaPlugin {
     @Getter
     private AchievementManager achievementManager;
     @Getter
+    private CollectionManager collectionManager;
+    @Getter
     private AchievementListener achievementListener;
     @Getter
     private LocatorManager locatorManager;
@@ -184,6 +188,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.tradingManager = register(new TradingManager(this));
         this.commandsManager = register(new CommandsManager(this));
         this.achievementManager = register(new AchievementManager(this));
+        this.collectionManager = register(new CollectionManager(this));
         this.locatorManager = register(new LocatorManager(this));
         this.protectionManager = register(new ProtectionManager(this));
         this.wanderingTraderManager = register(new WanderingTraderManager(this));
@@ -371,6 +376,7 @@ public final class ForceItemBattle extends JavaPlugin {
         commands.registerCommand(new CommandPause(this));
         commands.registerCommand(new CommandResume(this));
         commands.registerCommand(new CommandStats(this));
+        commands.registerCommand(new CommandCollection(this));
         commands.registerCommand(new CommandLeaderboard(this));
         commands.registerCommand(new CommandPosition(this));
         commands.registerCommand(new CommandPing(this));

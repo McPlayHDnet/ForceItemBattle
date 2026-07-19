@@ -9,6 +9,7 @@ public class BackToBack {
 
     private boolean active;
     private String rarity;
+    private Rarity rarityType;
     private double percentage;
 
     public BackToBack(boolean active) {

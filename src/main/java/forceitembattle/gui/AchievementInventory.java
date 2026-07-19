@@ -6,8 +6,11 @@ import de.threeseconds.openapi.fibservice.client.model.FibPlayerAchievementsDto;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.AchievementScope;
 import forceitembattle.achievements.Achievements;
+import forceitembattle.achievements.CollectionRule;
+import forceitembattle.collection.CollectedItem;
 import forceitembattle.achievements.global.GlobalRule;
 import forceitembattle.achievements.global.GlobalStats;
+import forceitembattle.util.ProgressBar;
 import forceitembattle.util.Text;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -23,11 +26,12 @@ import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.inventory.ItemStack;
 
 public class AchievementInventory extends InventoryBuilder {
 
     private static final DateTimeFormatter WHEN_FORMAT = DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm");
-    private static final int BAR_WIDTH = 20;
+    private static final int BAR_WIDTH = 24;
 
     private final ForceItemBattle plugin;
     private final String playerName;
@@ -43,6 +47,8 @@ public class AchievementInventory extends InventoryBuilder {
     private Map<String, List<FibAchievementDto>> unlocks = new HashMap<>();
     // Only fetched for the GLOBAL scope; null until it lands.
     private GlobalStats globalStats;
+    // Found-set for the COLLECTION achievement's progress bar on the GLOBAL page; null until loaded.
+    private Map<String, CollectedItem> foundItems;
 
     public AchievementInventory(ForceItemBattle plugin, String playerName, UUID playerUUID, AchievementScope scope) {
         super(9 * 6, Text.of("<dark_gray>» <dark_aqua>" + scope.getDisplayName() + " <dark_gray>◆ <gray>" + playerName));
@@ -53,7 +59,8 @@ public class AchievementInventory extends InventoryBuilder {
         this.scope = scope;
         this.currentPage = 0;
         this.entries = Arrays.stream(Achievements.values())
-                .filter(achievement -> achievement.getScope() == scope)
+                .filter(achievement -> achievement.getScope() == scope
+                        || (scope == AchievementScope.GLOBAL && achievement.getScope() == AchievementScope.COLLECTION))
                 .toList();
 
         this.addUpdateHandler(this::updateInventory);
@@ -76,6 +83,10 @@ public class AchievementInventory extends InventoryBuilder {
         if (scope == AchievementScope.GLOBAL) {
             this.plugin.getAchievementManager().getGlobalStatsLoader().load(playerUUID, stats -> {
                 this.globalStats = stats;
+                this.updateInventory();
+            });
+            this.plugin.getCollectionManager().getFoundItemsLoader().load(playerUUID, found -> {
+                this.foundItems = found;
                 this.updateInventory();
             });
         }
@@ -132,7 +143,7 @@ public class AchievementInventory extends InventoryBuilder {
         int endIndex = Math.min(startIndex + itemsPerPage, this.entries.size());
 
         this.setItem(49, new ItemBuilder(Material.PLAYER_HEAD)
-                        .setSkullTexture("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvM2VkMWFiYTczZjYzOWY0YmM0MmJkNDgxOTZjNzE1MTk3YmUyNzEyYzNiOTYyYzk3ZWJmOWU5ZWQ4ZWZhMDI1In19fQ==")
+                        .setSkullTexture("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYmViNTg4YjIxYTZmOThhZDFmZjRlMDg1YzU1MmRjYjA1MGVmYzljYWI0MjdmNDYwNDhmMThmYzgwMzQ3NWY3In19fQ==")
                         .setDisplayName("<dark_red>« <red>Back")
                         .getItemStack(),
                 inventoryClickEvent -> {
@@ -211,10 +222,25 @@ public class AchievementInventory extends InventoryBuilder {
             }
             lore.add("");
 
-            this.setItem(slotIndex, new ItemBuilder(displayMaterial)
+            boolean isDex = achievement.getScope() == AchievementScope.COLLECTION;
+            if (isDex) {
+                lore.add("<yellow>Click to view your collection");
+                lore.add("");
+            }
+
+            ItemStack stack = new ItemBuilder(displayMaterial)
                     .setDisplayName(displayName)
                     .setLore(lore)
-                    .getItemStack());
+                    .getItemStack();
+
+            if (isDex) {
+                this.setItem(slotIndex, stack, inventoryClickEvent -> {
+                    this.getPlayer().playSound(this.getPlayer(), Sound.UI_BUTTON_CLICK, 1, 1);
+                    new CollectionBookInventory(this.plugin, this.playerName, this.playerUUID).open(this.getPlayer());
+                });
+            } else {
+                this.setItem(slotIndex, stack);
+            }
         }
     }
 
@@ -233,6 +259,20 @@ public class AchievementInventory extends InventoryBuilder {
      */
     private List<String> progressLore(Achievements achievement, Set<String> cachedIds) {
         List<String> lore = new ArrayList<>();
+
+        if (achievement.getScope() == AchievementScope.COLLECTION) {
+            Set<String> catalogue = this.plugin.getCollectionManager().getCollectionCatalogue();
+            if (this.foundItems == null) {
+                lore.add("<dark_gray>» <gray>Loading progress...");
+                return lore;
+            }
+            CollectionRule rule = achievement.getCollectionRule();
+            long required = rule.requiredCount(catalogue.size());
+            long current = rule.collectedCount(this.foundItems.keySet(), catalogue);
+            lore.add("<dark_gray>» <dark_aqua>" + current + " <gray>/ <dark_aqua>" + required + " <gray>items collected");
+            lore.add("<dark_gray>» " + ProgressBar.of(current, required));
+            return lore;
+        }
 
         if (achievement.getScope() == AchievementScope.GLOBAL) {
             GlobalRule rule = achievement.getGlobalRule();
@@ -271,8 +311,14 @@ public class AchievementInventory extends InventoryBuilder {
     }
 
     private String progressBar(long current, long target) {
-        int filled = target <= 0 ? BAR_WIDTH : (int) Math.clamp(current * BAR_WIDTH / target, 0, BAR_WIDTH);
-        return "<green>" + "▉".repeat(filled) + "<dark_gray>" + "▉".repeat(BAR_WIDTH - filled);
+        double ratio = target <= 0 ? 1.0 : Math.clamp((double) current / target, 0.0, 1.0);
+        double pct = Math.round(ratio * 1000) / 10.0;
+        int filled = (int) Math.round(ratio * BAR_WIDTH);
+        if (pct >= 100.0) filled = BAR_WIDTH;
+        else if (pct > 0.0) filled = Math.clamp(filled, 1, BAR_WIDTH - 1);
+        return "<dark_gray><st><green>" + " ".repeat(filled) + "</st>"
+                + "<dark_gray><st>" + " ".repeat(BAR_WIDTH - filled) + "</st>"
+                + " <yellow>" + pct + "%";
     }
 
     private String teammateName(UUID teammateUuid) {
