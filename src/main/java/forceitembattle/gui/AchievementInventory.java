@@ -47,7 +47,7 @@ public class AchievementInventory extends InventoryBuilder {
     private Map<String, List<FibAchievementDto>> unlocks = new HashMap<>();
     // Only fetched for the GLOBAL scope; null until it lands.
     private GlobalStats globalStats;
-    // Found-set for the COLLECTION achievement's progress bar on the GLOBAL page; null until loaded.
+    // Found-set for the COLLECTION page's progress bars; null until loaded.
     private Map<String, CollectedItem> foundItems;
 
     public AchievementInventory(ForceItemBattle plugin, String playerName, UUID playerUUID, AchievementScope scope) {
@@ -59,8 +59,7 @@ public class AchievementInventory extends InventoryBuilder {
         this.scope = scope;
         this.currentPage = 0;
         this.entries = Arrays.stream(Achievements.values())
-                .filter(achievement -> achievement.getScope() == scope
-                        || (scope == AchievementScope.GLOBAL && achievement.getScope() == AchievementScope.COLLECTION))
+                .filter(achievement -> achievement.getScope() == scope)
                 .toList();
 
         this.addUpdateHandler(this::updateInventory);
@@ -85,6 +84,7 @@ public class AchievementInventory extends InventoryBuilder {
                 this.globalStats = stats;
                 this.updateInventory();
             });
+        } else if (scope == AchievementScope.COLLECTION) {
             this.plugin.getCollectionManager().getFoundItemsLoader().load(playerUUID, found -> {
                 this.foundItems = found;
                 this.updateInventory();

@@ -13,10 +13,16 @@ import org.bukkit.Sound;
 
 public class AchievementCategoryInventory extends InventoryBuilder {
 
-    private static final AchievementScope[] DISPLAYED =
-            {AchievementScope.ROUND, AchievementScope.GLOBAL, AchievementScope.META};
-    private static final int[] SLOTS = {11, 13, 15};
-    private static final Material[] ICONS = {Material.CLOCK, Material.COMPASS, Material.NETHER_STAR};
+    /** One tile per displayed scope. Scope, slot and icon travel together so they cannot drift apart. */
+    private record Tile(AchievementScope scope, int slot, Material icon) {
+    }
+
+    private static final Tile[] TILES = {
+            new Tile(AchievementScope.ROUND, 10, Material.CLOCK),
+            new Tile(AchievementScope.GLOBAL, 12, Material.COMPASS),
+            new Tile(AchievementScope.COLLECTION, 14, Material.KNOWLEDGE_BOOK),
+            new Tile(AchievementScope.META, 16, Material.NETHER_STAR),
+    };
 
     private final ForceItemBattle plugin;
     private final String playerName;
@@ -42,8 +48,8 @@ public class AchievementCategoryInventory extends InventoryBuilder {
         Set<String> cachedIds = this.plugin.getAchievementManager()
                 .getAchievementStorage().getPlayerAchievements(this.playerUUID);
 
-        for (int i = 0; i < DISPLAYED.length; i++) {
-            AchievementScope scope = DISPLAYED[i];
+        for (Tile tile : TILES) {
+            AchievementScope scope = tile.scope();
 
             int total = 0;
             int done = 0;
@@ -65,7 +71,7 @@ public class AchievementCategoryInventory extends InventoryBuilder {
             lore.add("");
             lore.add("<yellow>Click to view");
 
-            this.setItem(SLOTS[i], new ItemBuilder(ICONS[i])
+            this.setItem(tile.slot(), new ItemBuilder(tile.icon())
                             .setDisplayName("<dark_gray>» <dark_aqua>" + scope.getDisplayName())
                             .setLore(lore)
                             .getItemStack(),
