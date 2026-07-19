@@ -274,10 +274,9 @@ public class AchievementManager implements Manager {
             return;
         }
 
-        // The submit already invalidated the found-set; invalidate again right before the read to
-        // close the window where a concurrent load could have re-cached the pre-match set.
+        // No invalidation needed here: submitMatchAsync clears each participant's found-set after the
+        // write lands and before this callback runs, so the load below always reads through.
         CollectionManager collection = this.plugin.getCollectionManager();
-        collection.getFoundItemsCache().invalidate(uuid);
         collection.getFoundItemsLoader().load(uuid, found -> {
             if (!player.isOnline()) {
                 return;
