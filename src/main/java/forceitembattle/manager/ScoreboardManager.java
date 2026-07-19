@@ -1,6 +1,7 @@
 package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.model.ActiveTrader;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.model.ForceItemPlayer;
@@ -88,6 +89,16 @@ public class ScoreboardManager implements Manager {
             }
 
             team.addPlayer(fibPlayer.player());
+        }
+
+        for (ActiveTrader trader : this.plugin.getWanderingTraderManager().activeTraders()) {
+            String name = "TRADER_" + trader.getKind().name();
+            org.bukkit.scoreboard.Team traderTeam = board.getTeam(name);
+            if (traderTeam == null) {
+                traderTeam = board.registerNewTeam(name);
+                traderTeam.color(trader.getKind().getGlowColor());
+            }
+            traderTeam.addEntry(trader.getUuid().toString());
         }
     }
 

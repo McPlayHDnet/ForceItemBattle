@@ -168,6 +168,7 @@ public class WanderingTraderManager implements Manager {
         ActiveTrader trader = new ActiveTrader(entity.getUniqueId(), kind, location, recipes);
         trader.setTimer(TRADER_LIFETIME_SECONDS);
         this.traders.put(trader.getUuid(), trader);
+        this.plugin.getScoreboardManager().updateAllPlayers();
 
         this.announce(trader);
         trader.setTask(this.startDespawnTimer(trader, entity));
