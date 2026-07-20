@@ -2,6 +2,7 @@ package forceitembattle.service;
 
 import de.threeseconds.openapi.fibservice.client.api.FibAchievementControllerApi;
 import de.threeseconds.openapi.fibservice.client.api.FibStatisticsControllerApi;
+import de.threeseconds.openapi.fibservice.client.invoker.ApiClient;
 import de.threeseconds.openapi.fibservice.client.model.FibAchievementUnlockRequestDto;
 import de.threeseconds.openapi.fibservice.client.api.FibMatchControllerApi;
 import de.threeseconds.openapi.fibservice.client.model.FibMatchSubmitRequestDto;
@@ -10,7 +11,6 @@ import de.threeseconds.openapi.fibservice.client.model.FibTeamMemberStatsUpdateR
 import de.threeseconds.openapi.fibservice.client.model.FibTeamStatisticsUpdateRequestDto;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.Manager;
-import org.openapitools.client.ApiClient;
 
 public class FIBServiceClient implements Manager {
 

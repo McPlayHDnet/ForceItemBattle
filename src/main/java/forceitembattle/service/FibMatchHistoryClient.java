@@ -1,6 +1,7 @@
 package forceitembattle.service;
 
 import de.threeseconds.openapi.fibservice.client.api.FibMatchControllerApi;
+import de.threeseconds.openapi.fibservice.client.invoker.ApiException;
 import de.threeseconds.openapi.fibservice.client.model.FibCollectionRarityDto;
 import de.threeseconds.openapi.fibservice.client.model.FibFoundItemStatsDto;
 import de.threeseconds.openapi.fibservice.client.model.FibMatchSubmitRequestDto;
@@ -11,7 +12,6 @@ import forceitembattle.manager.AchievementManager;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
-import org.openapitools.client.ApiException;
 
 /**
  * Match-history domain of FIBService: submits one finished game (participants, teams, item

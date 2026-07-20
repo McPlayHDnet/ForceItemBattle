@@ -1,12 +1,12 @@
 package forceitembattle.service;
 
+import de.threeseconds.openapi.fibservice.client.invoker.ApiException;
 import forceitembattle.ForceItemBattle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import org.bukkit.Bukkit;
-import org.openapitools.client.ApiException;
 
 class ApiExecutor {
 

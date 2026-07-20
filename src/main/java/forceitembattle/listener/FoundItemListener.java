@@ -117,6 +117,7 @@ public class FoundItemListener implements Listener {
                     1
             );
         }
+        this.plugin.getGamemanager().evaluateLead();
     }
 
     private void trackRarity(ForceItemPlayer forceItemPlayer, Rarity rarity, GameContext context) {
