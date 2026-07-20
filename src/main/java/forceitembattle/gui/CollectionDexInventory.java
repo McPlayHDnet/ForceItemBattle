@@ -5,6 +5,7 @@ import forceitembattle.collection.CollectedItem;
 import forceitembattle.collection.CollectionCategory;
 import forceitembattle.collection.ItemRarity;
 import forceitembattle.manager.ItemDifficultiesManager;
+import forceitembattle.model.CustomMaterials;
 import forceitembattle.util.ProgressBar;
 import forceitembattle.util.Text;
 import java.time.ZoneId;
@@ -250,13 +251,14 @@ public class CollectionDexInventory extends InventoryBuilder {
                     new CollectionBookInventory(this.plugin, this.playerName, this.playerUUID).open(this.getPlayer());
                 });
 
-        if (visible.size() > ITEMS_PER_PAGE) {
-            this.setItem(45, new ItemBuilder(Material.PLAYER_HEAD)
-                            .setSkullTexture("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZjZkYWI3MjcxZjRmZjA0ZDU0NDAyMTkwNjdhMTA5YjVjMGMxZDFlMDFlYzYwMmMwMDIwNDc2ZjdlYjYxMjE4MCJ9fX0=")
-                            .setDisplayName("<dark_red>« <red>Previous page")
-                            .getItemStack(),
+        int totalPages = this.totalPages(visible.size());
+        if (totalPages > 1) {
+            boolean hasPrevious = this.currentPage > 0;
+            boolean hasNext = this.currentPage < totalPages - 1;
+
+            this.setItem(45, GuiItems.pageBack(hasPrevious),
                     inventoryClickEvent -> {
-                        if (this.currentPage > 0) {
+                        if (hasPrevious) {
                             this.getPlayer().playSound(this.getPlayer(), Sound.ITEM_BOOK_PAGE_TURN, 1, 1);
                             this.currentPage--;
                             this.updateInventory();
@@ -265,12 +267,9 @@ public class CollectionDexInventory extends InventoryBuilder {
                         }
                     });
 
-            this.setItem(53, new ItemBuilder(Material.PLAYER_HEAD)
-                            .setSkullTexture("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMTliZjMyOTJlMTI2YTEwNWI1NGViYTcxM2FhMWIxNTJkNTQxYTFkODkzODgyOWM1NjM2NGQxNzhlZDIyYmYifX19")
-                            .setDisplayName("<dark_green>» <green>Next page")
-                            .getItemStack(),
+            this.setItem(53, GuiItems.pageForward(hasNext),
                     inventoryClickEvent -> {
-                        if (this.currentPage < this.totalPages(visible.size()) - 1) {
+                        if (hasNext) {
                             this.getPlayer().playSound(this.getPlayer(), Sound.ITEM_BOOK_PAGE_TURN, 1, 1);
                             this.currentPage++;
                             this.updateInventory();
@@ -306,7 +305,7 @@ public class CollectionDexInventory extends InventoryBuilder {
             }
             lore.add("");
 
-            this.setItem(slotIndex, new ItemBuilder(material)
+            this.setItem(slotIndex, new ItemBuilder(CustomMaterials.itemStackOf(material))
                     .setGlowing(found)
                     .setDisplayName((found ? "<green>" : "<gray>") + displayName(material))
                     .setLore(lore)

@@ -1,7 +1,6 @@
 package forceitembattle.gui;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.achievements.AchievementScope;
 import forceitembattle.collection.CollectedItem;
 import forceitembattle.collection.CollectionCategory;
 import forceitembattle.util.ProgressBar;
@@ -93,8 +92,7 @@ public class CollectionBookInventory extends InventoryBuilder {
                         .getItemStack(),
                 inventoryClickEvent -> {
                     this.getPlayer().playSound(this.getPlayer(), Sound.UI_BUTTON_CLICK, 1, 1);
-                    new AchievementInventory(this.plugin, this.playerName, this.playerUUID, AchievementScope.GLOBAL)
-                            .open(this.getPlayer());
+                    this.getPlayer().closeInventory();
                 });
 
         CollectionCategory[] categories = CollectionCategory.values();
