@@ -1,6 +1,7 @@
 package forceitembattle.service;
 
 import de.threeseconds.openapi.fibservice.client.api.FibMatchControllerApi;
+import de.threeseconds.openapi.fibservice.client.invoker.ApiException;
 import de.threeseconds.openapi.fibservice.client.model.FibCollectionRarityDto;
 import de.threeseconds.openapi.fibservice.client.model.FibFoundItemStatsDto;
 import de.threeseconds.openapi.fibservice.client.model.FibMatchSubmitRequestDto;
@@ -11,7 +12,6 @@ import forceitembattle.manager.AchievementManager;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
-import org.openapitools.client.ApiException;
 
 /**
  * Match-history domain of FIBService: submits one finished game (participants, teams, item
@@ -36,14 +36,17 @@ public class FibMatchHistoryClient {
     }
 
     public void submitMatchAsync(UUID matchId, FibMatchSubmitRequestDto request, Runnable onSuccess, Consumer<ApiException> onError) {
-        // The match write is the chokepoint that changes what each participant has collected, so it
-        // invalidates their cached global stats -- the same read-through / write-invalidate contract
-        // the stat writes use, and what the (future) collect-all achievement read will hang off.
-        invalidateParticipants(request);
         executor.runAsync(() -> {
             api.submitMatch(matchId, request);
             return null;
-        }, result -> onSuccess.run(), onError);
+        }, result -> {
+            // Invalidated after the write, not before: until the PUT lands the cached found-set still
+            // matches the DB, so clearing early only opens a window for an in-flight read to re-cache
+            // pre-match data with no invalidation left to follow it. Runs before onSuccess so the
+            // collection-achievement evaluation hanging off that callback reads through to fresh data.
+            invalidateParticipants(request);
+            onSuccess.run();
+        }, onError);
     }
 
     public void getFoundItemStatsAsync(UUID playerUuid, Consumer<List<FibFoundItemStatsDto>> onSuccess) {

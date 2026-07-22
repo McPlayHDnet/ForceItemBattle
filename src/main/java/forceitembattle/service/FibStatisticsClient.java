@@ -1,6 +1,7 @@
 package forceitembattle.service;
 
 import de.threeseconds.openapi.fibservice.client.api.FibStatisticsControllerApi;
+import de.threeseconds.openapi.fibservice.client.invoker.ApiException;
 import de.threeseconds.openapi.fibservice.client.model.FibLeaderboardEntryDto;
 import de.threeseconds.openapi.fibservice.client.model.FibPlayerCombinedTeamStatsDto;
 import de.threeseconds.openapi.fibservice.client.model.FibSoloStatisticsDto;
@@ -17,7 +18,6 @@ import forceitembattle.achievements.global.GlobalStatsCache;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
-import org.openapitools.client.ApiException;
 
 /**
  * Statistics domain of FIBService: solo, team, member, combined, and leaderboard.

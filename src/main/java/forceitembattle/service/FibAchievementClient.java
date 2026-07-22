@@ -1,13 +1,13 @@
 package forceitembattle.service;
 
 import de.threeseconds.openapi.fibservice.client.api.FibAchievementControllerApi;
+import de.threeseconds.openapi.fibservice.client.invoker.ApiException;
 import de.threeseconds.openapi.fibservice.client.model.FibAchievementLeaderboardEntryDto;
 import de.threeseconds.openapi.fibservice.client.model.FibAchievementUnlockRequestDto;
 import de.threeseconds.openapi.fibservice.client.model.FibPlayerAchievementsDto;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
-import org.openapitools.client.ApiException;
 
 /**
  * Achievement domain of FIBService. Wraps {@link FibAchievementControllerApi} and

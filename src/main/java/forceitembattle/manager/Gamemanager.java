@@ -10,6 +10,7 @@ import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.Dimension;
 import forceitembattle.model.ForceItem;
 import forceitembattle.model.GameContext;
+import forceitembattle.model.LeadTracker;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GamePreset;
 import forceitembattle.service.FIBServiceClient;
@@ -61,6 +62,7 @@ public class Gamemanager implements Manager {
     /** End-of-game result screens, keyed by player / by team. Paged: page → slot → stack. */
     private final Map<UUID, Map<Integer, Map<Integer, ItemStack>>> savedInventory = new HashMap<>();
     private final Map<Team, Map<Integer, Map<Integer, ItemStack>>> savedInventoryTeam = new HashMap<>();
+    private final LeadTracker leadTracker = new LeadTracker();
     @Setter
     @Getter
     public GameState currentGameState;
@@ -187,6 +189,7 @@ public class Gamemanager implements Manager {
                 .endedAt(OffsetDateTime.now(ZoneOffset.UTC))
                 .durationSeconds(this.gameDuration)
                 .mode(teamMode ? FibMatchSubmitRequestDto.ModeEnum.TEAM : FibMatchSubmitRequestDto.ModeEnum.SOLO)
+                .leadChanges(this.leadTracker.leadChanges())
                 .teams(teams)
                 .participants(participants)
                 .items(items)
@@ -205,6 +208,55 @@ public class Gamemanager implements Manager {
                 }
             }
         });
+    }
+
+    /**
+     * Re-evaluates who is in front and records a lead change if the sole leader's identity moved.
+     * Called from the one place a score can change.
+     */
+    public void evaluateLead() {
+        this.leadTracker.onStandingsChanged(this.currentSoleLeader());
+    }
+
+    /**
+     * Identity of the unique highest scorer, or null when the top score is shared. Team mode keys on
+     * team id, solo on player UUID; the two never mix within a game, since the mode can't change
+     * mid-match.
+     *
+     * Spectators are skipped, matching who gets written as a participant at submit time -- otherwise a
+     * spectator sitting on 0 could create a phantom tie in a one-player game.
+     */
+    private Object currentSoleLeader() {
+        Object best = null;
+        int bestScore = Integer.MIN_VALUE;
+        boolean tied = false;
+        if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+            for (Team team : this.forceItemBattle.getTeamManager().getTeams()) {
+                int score = team.getCurrentScore() == null ? 0 : team.getCurrentScore();
+                if (best == null || score > bestScore) {
+                    best = team.getTeamId();
+                    bestScore = score;
+                    tied = false;
+                } else if (score == bestScore) {
+                    tied = true;
+                }
+            }
+        } else {
+            for (ForceItemPlayer forceItemPlayer : this.forceItemPlayerMap.values()) {
+                if (forceItemPlayer.isSpectator()) {
+                    continue;
+                }
+                int score = forceItemPlayer.currentScore() == null ? 0 : forceItemPlayer.currentScore();
+                if (best == null || score > bestScore) {
+                    best = forceItemPlayer.player().getUniqueId();
+                    bestScore = score;
+                    tied = false;
+                } else if (score == bestScore) {
+                    tied = true;
+                }
+            }
+        }
+        return tied ? null : best;
     }
 
     private void appendMatchItems(List<FibMatchItemSubmitDto> out, List<ForceItem> found, UUID playerUuid, Integer teamIndex) {
@@ -328,6 +380,7 @@ public class Gamemanager implements Manager {
 
     public void initializeMaterials() {
         this.forcedItemQueue.clear();
+        this.leadTracker.reset();
         boolean runMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.RUN);
         boolean teamMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM);
         long now = System.currentTimeMillis();

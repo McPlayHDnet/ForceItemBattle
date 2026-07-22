@@ -10,18 +10,6 @@ import org.bukkit.Material;
  * Buckets for the collection book. Reuses {@link MaterialCategory} for the achievement-shared
  * predicates (tools/armor/wood/stone/food) and adds book-only predicates for the rest.
  * {@link #OTHER} is the fallback and MUST stay last.
- * <p>
- * ORDER MATTERS: {@link #categoryOf(Material)} returns the first match in declaration order, so
- * specific categories precede general ones. Notable interactions:
- * - CANDLES_AND_HONEY before FOOD (honey bottle is edible).
- * - TRANSPORT / FLOWERS_AND_PLANTS / NETHER_BLOCKS before WOOD (wooden boats, saplings/leaves and
- * the crimson/warped fungus+roots, and nylium would otherwise match isWoodType).
- * - FOOD before FLOWERS_AND_PLANTS (edible crops/berries).
- * - ORES / COPPER / NETHER before STONE (deepslate ores, blackstone/basalt).
- * - MOB_DROPS before UTILITY (string, bones, etc.).
- * - STONE adds sandstone here; the achievement's isStoneType still excludes it, unchanged.
- * <p>
- * Each category is rendered as a player head built from its {@code headTexture}.
  */
 public enum CollectionCategory {
 
@@ -31,7 +19,6 @@ public enum CollectionCategory {
     POTTERY_SHERDS("Pottery Sherds", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNGNlNDFjZWY1ZGViYjIyY2M0NWQ4N2Y0MDg1NWQ4OWM0NDJjZWJiYjk4MjBjNDdjZDRkMWYzODlmZGUzNmNmOSJ9fX0=", material -> material.name().endsWith("_POTTERY_SHERD")),
     TEMPLATES("Templates & Patterns", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNzc3ZTQwYmIwYjM3MWIzNzQ1ZGZlNWVkNTIwMzNmZmNmYzhjODJmZWVmYzI1YjM0YmFjN2FlZDFmZjljZTU4ZiJ9fX0=", material ->
             material.name().endsWith("_SMITHING_TEMPLATE") || material.name().endsWith("_BANNER_PATTERN")),
-    TRANSPORT("Transport", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMjE3OTk1YTdhZjJmYWU3MDFhMDgyY2RhMWQzODU2MDZjN2NjYmYwYjIxODYxMTRiZTkwMGM5MTM4Y2VlNjkwZiJ9fX0=", CollectionCategory::isTransport),
     CANDLES_AND_HONEY("Candles & Honey", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNzFhMWVkNzBiM2Y5NTJiYzI4OWQ0NzJhNmNhNjcyZDA0NmMxMWVmNDE4MjUwOTgzYzg0ODcyNjE4YjkwNGJhZCJ9fX0=", CollectionCategory::isCandleOrHoney),
     FOOD("Food", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYTZlZjFjMjVmNTE2ZjJlN2Q2Zjc2Njc0MjBlMzNhZGNmM2NkZjkzOGNiMzdmOWE0MWE4YjM1ODY5ZjU2OWIifX19", CollectionCategory::isFoodItem),
     COPPER("Copper", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZmQ1NzI0YTc5ZjkwZmQxZTU0NzY1ZDc1OTY5MjgxNDZkY2I5ZTUwZmRiODg1OTYyMDFjNGEyMzVjNGE2ZjRlZSJ9fX0=", material ->
@@ -39,13 +26,12 @@ public enum CollectionCategory {
     ORES_AND_MINERALS("Ores & Minerals", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvM2UwYWEzYTk1MjVkODY0NmYwNmIxMmE1NGExOTc3MGVhZjMyMDA1N2M5OGViZjYzZTY2M2ZkZTJkOWQ5YjEzMSJ9fX0=", CollectionCategory::isOreOrMineral),
     NETHER_BLOCKS("Nether Blocks", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYTliOTRlNWFkOTNkYzdhZGY1OTAwNTZkNGExZTAzNDA5MjUzZGZlY2ZjODhlODMxNTQxYzhkZjU0ZmYwNWNhNiJ9fX0=", CollectionCategory::isNetherBlock),
     END_BLOCKS("End Blocks", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMTlmMjFmNWQ4ODMzMTZmZDY1YTkzNjZmMzJhMzMwMTMxODJlMzM4MWRlYzIxYzE3Yzc4MzU1ZDliZjRmMCJ9fX0=", CollectionCategory::isEndBlock),
-    ICE("Ice", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNTgxYjRmNWYzZDk5NjcyYWIxYTM5ZjVmNDEwYmQ0ZDRmZDkyNTQ4ZTA3ZDE3YmRmMGQ0ZjFmNTdkY2ViYjVjZiJ9fX0=", material -> material.name().endsWith("ICE")),
     FLOWERS_AND_PLANTS("Flowers & Plants", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZDJmZTBmMmU2YzBmZmVlZmJiODRjMzJlNzE4NzZiNjhkY2JmN2FjOWU4NDIwYTNkMWJmNTkzYWEyMWE4Mzc0YSJ9fX0=", CollectionCategory::isFlowerOrPlant),
     WOOD("Wood", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvY2YxMzQ2MDkyYzgwZDNkYjIxN2VmZTRjOTM2OTY5MWU2MWM4YWZjMWIyODc0MWZhNTA0ODJjOTJjOWZkM2QxOCJ9fX0=", CollectionCategory::isWoodItem),
     CORALS("Corals", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOWZlOGRlZDNjNzRlYWNkNzg0MTJhOTAzYjkwNGY1NTc3ODUwZDFlMjBkMzQ4NzhmZDc3NTk3YWQxNjMzYmY3NCJ9fX0=", material -> material.name().contains("CORAL")),
     DYES("Dyes", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNDdjOTAzY2ZjM2NlOGJkYTU5YzgzZTViYjc4NTU1MjJkYzE3ZmViMmI4MTI4ZDA3NDc4NmYyMDBkNzMwYzdiNCJ9fX0=", material -> material.name().endsWith("_DYE")),
     WOOL_AND_FABRIC("Wool & Fabric", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNzE4Njk5YmFlOWYxZTAyYTdhNjUxODNiZDAwNzk0ODllNGU2MTVkYWRkY2UzYzkyNjQ5Y2RlZDMxMmIyMjZkYyJ9fX0=", CollectionCategory::isWoolOrFabric),
-    GLASS("Glass", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMTE1MjBlYTQzODRlOGM0ODI1ODY1ZWU3ZGNmMTA5MmFmNDQzZjE1MGFhYjE3MDQxODA4YzlkMzFjZDAxZmRmNyJ9fX0=", material -> material.name().contains("GLASS")),
+    GLASS("Glass", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMTE1MjBlYTQzODRlOGM0ODI1ODY1ZWU3ZGNmMTA5MmFmNDQzZjE1MGFhYjE3MDQxODA4YzlkMzFjZDAxZmRmNyJ9fX0=", CollectionCategory::isGlass),
     CLAY_BLOCKS("Concrete & Terracotta", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvM2UwYjk3Yzc4NWUzOTc2ZWZhNzhhY2M4MjhkYjY3ZTcxZGVhZDliNjY5NGZkZTYxM2QyZTJlN2NhZmJlMWQ1YiJ9fX0=", CollectionCategory::isConcreteOrTerracotta),
     REDSTONE("Redstone", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNzQyMGExMjVjMmNjMWE2NDQzNjNhYzNlMDg1MDRkNjYwNTRiMmE3ZTRlMDVlYTU2MGYyNDNkZjVmNzdiYWY0MyJ9fX0=", CollectionCategory::isRedstone),
     DIRT_AND_SOIL("Dirt & Soil", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMWFiNDNiOGMzZDM0ZjEyNWU1YTNmOGI5MmNkNDNkZmQxNGM2MjQwMmMzMzI5ODQ2MWQ0ZDRkN2NlMmQzYWVhIn19fQ==", CollectionCategory::isDirtOrSoil),
@@ -95,15 +81,25 @@ public enum CollectionCategory {
 
     private static boolean isFoodItem(Material material) {
         return switch (material.name()) {
-            case "POPPED_CHORUS_FRUIT", "CAKE", "SUGAR" -> true;
+            // Not edible, so MaterialCategory.isFood misses it -- but it is a melon slice and belongs
+            // with the food, not wherever a substring predicate happens to land it.
+            case "POPPED_CHORUS_FRUIT", "CAKE", "SUGAR", "GLISTERING_MELON_SLICE" -> true;
             default -> MaterialCategory.isFood(material);
         };
     }
 
     // --- book-only extensions of the achievement-shared MaterialCategory predicates ---
 
+    private static boolean isGlass(Material material) {
+        String name = material.name();
+        return !name.equals("SPYGLASS") && name.contains("GLASS");
+    }
+
     private static boolean isWoodItem(Material material) {
         String name = material.name();
+        if (name.endsWith("_BOAT") || name.endsWith("_RAFT")) {
+            return true;
+        }
         // STICK and STRIPPED_BAMBOO_BLOCK are excluded by isWoodType; add them for the book.
         return MaterialCategory.isWoodType(material) || name.equals("STICK") || name.endsWith("BAMBOO_BLOCK");
     }
@@ -118,18 +114,6 @@ public enum CollectionCategory {
         return MaterialCategory.isStoneType(material)
                 || name.contains("SANDSTONE") || name.contains("BRICK") || name.contains("PRISMARINE")
                 || name.contains("SULFUR") || name.contains("CINNABAR") || name.equals("RESIN_BLOCK");
-    }
-
-    private static boolean isTransport(Material material) {
-        String name = material.name();
-        if (name.endsWith("_BOAT") || name.endsWith("_RAFT") || name.contains("MINECART")
-                || name.equals("RAIL") || name.endsWith("_RAIL")) {
-            return true;
-        }
-        return switch (name) {
-            case "SADDLE", "CARROT_ON_A_STICK", "WARPED_FUNGUS_ON_A_STICK" -> true;
-            default -> false;
-        };
     }
 
     private static boolean isCandleOrHoney(Material material) {
@@ -228,6 +212,9 @@ public enum CollectionCategory {
         if (name.contains("REDSTONE") || name.endsWith("_BUTTON") || name.endsWith("_PRESSURE_PLATE")) {
             return true;
         }
+        if (name.equals("RAIL") || name.endsWith("_RAIL") || name.contains("MINECART")) {
+            return true;
+        }
         return switch (name) {
             case "REPEATER", "COMPARATOR", "OBSERVER", "PISTON", "STICKY_PISTON",
                  "DISPENSER", "DROPPER", "HOPPER", "LEVER", "TRIPWIRE_HOOK", "TARGET",
@@ -237,7 +224,11 @@ public enum CollectionCategory {
     }
 
     private static boolean isDirtOrSoil(Material material) {
-        return switch (material.name()) {
+        String name = material.name();
+        if (name.equals("ICE") || name.endsWith("_ICE")) {
+            return true;
+        }
+        return switch (name) {
             case "DIRT", "COARSE_DIRT", "ROOTED_DIRT", "GRASS_BLOCK", "PODZOL", "MYCELIUM",
                  "DIRT_PATH", "FARMLAND", "MUD", "MUDDY_MANGROVE_ROOTS", "PACKED_MUD", "CLAY",
                  "SAND", "RED_SAND", "GRAVEL", "SUSPICIOUS_SAND", "SUSPICIOUS_GRAVEL",
@@ -285,7 +276,8 @@ public enum CollectionCategory {
                  "MAP", "SPYGLASS", "NAME_TAG", "LEAD", "SHIELD", "ELYTRA", "TOTEM_OF_UNDYING",
                  "BOOK", "WRITABLE_BOOK", "ENCHANTED_BOOK", "PAPER", "BRUSH",
                  "ITEM_FRAME", "GLOW_ITEM_FRAME", "PAINTING", "ARMOR_STAND", "FLOWER_POT",
-                 "BOW", "CROSSBOW", "ARROW", "TRIDENT", "FIREWORK_ROCKET" -> true;
+                 "BOW", "CROSSBOW", "ARROW", "TRIDENT", "FIREWORK_ROCKET",
+                 "SADDLE", "CARROT_ON_A_STICK", "WARPED_FUNGUS_ON_A_STICK" -> true;
             default -> false;
         };
     }

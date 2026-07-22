@@ -306,8 +306,8 @@ public enum Achievements {
     COMPLETIONIST("Completionist+", "Complete every round achievement",
             new CompletionistRule(AchievementScope.ROUND)),
 
-    COMPLETIONIST_PLUS_PLUS("Completionist++", "Complete every round and global achievement",
-            new CompletionistRule(AchievementScope.ROUND, AchievementScope.GLOBAL));
+    COMPLETIONIST_PLUS_PLUS("Completionist++", "Complete every round, global and collection achievement",
+            new CompletionistRule(AchievementScope.ROUND, AchievementScope.GLOBAL, AchievementScope.COLLECTION));
 
     private final String title;
     private final String description;
