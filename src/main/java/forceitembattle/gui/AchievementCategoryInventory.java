@@ -20,7 +20,7 @@ public class AchievementCategoryInventory extends InventoryBuilder {
     private static final Tile[] TILES = {
             new Tile(AchievementScope.ROUND, 10, Material.CLOCK),
             new Tile(AchievementScope.GLOBAL, 12, Material.COMPASS),
-            new Tile(AchievementScope.COLLECTION, 14, Material.KNOWLEDGE_BOOK),
+            new Tile(AchievementScope.COLLECTION, 14, Material.WRITTEN_BOOK),
             new Tile(AchievementScope.META, 16, Material.NETHER_STAR),
     };
 
