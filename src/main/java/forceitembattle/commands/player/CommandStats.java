@@ -1,6 +1,7 @@
 package forceitembattle.commands.player;
 
 import de.threeseconds.openapi.fibservice.client.model.FibItemCountDto;
+import de.threeseconds.openapi.fibservice.client.model.FibPlayerIdentityDto;
 import de.threeseconds.openapi.fibservice.client.model.FibRaritiesDto;
 import de.threeseconds.openapi.fibservice.client.model.FibTeamMemberStatsDto;
 import forceitembattle.ForceItemBattle;
@@ -246,7 +247,7 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
 
         player.sendMessage(Text.of("  <dark_gray>● <gray>Contributions <dark_gray>»"));
         for (FibTeamMemberStatsDto member : memberStats) {
-            String memberName = resolveName(member.getMemberUuid());
+            String memberName = displayName(member.getMember());
             player.sendMessage(Text.of("    <dark_gray>» <green>" + memberName
                     + " <dark_gray>| <dark_aqua>" + member.getTotalItemsFound() + " items"
                     + " <dark_gray>| <dark_aqua>" + member.getDeaths() + " deaths"
@@ -293,14 +294,12 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
         return null;
     }
 
-    private String resolveName(UUID uuid) {
-        Player online = Bukkit.getPlayer(uuid);
-        if (online != null) {
-            return online.getName();
+    private String displayName(FibPlayerIdentityDto identity) {
+        if (identity == null || identity.getUuid() == null) {
+            return "?";
         }
-        OfflinePlayer offline = Bukkit.getOfflinePlayer(uuid);
-        String name = offline.getName();
-        return name != null ? name : uuid.toString().substring(0, 8);
+        String name = identity.getName();
+        return name != null ? name : identity.getUuid().toString().substring(0, 8);
     }
 
     private void sendUsage(Player player) {

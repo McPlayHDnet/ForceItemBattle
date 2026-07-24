@@ -2,17 +2,15 @@ package forceitembattle.commands.player;
 
 import de.threeseconds.openapi.fibservice.client.model.FibAchievementLeaderboardEntryDto;
 import de.threeseconds.openapi.fibservice.client.model.FibLeaderboardEntryDto;
+import de.threeseconds.openapi.fibservice.client.model.FibPlayerIdentityDto;
 import de.threeseconds.openapi.fibservice.client.model.FibTeamLeaderboardEntryDto;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.service.FibStatisticsClient;
-import forceitembattle.util.PlayerNameResolver;
 import forceitembattle.util.Text;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 import org.bukkit.entity.Player;
 
 public class CommandLeaderboard extends CustomCommand implements CustomTabCompleter {
@@ -75,14 +73,13 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
                 return;
             }
 
-            List<UUID> uuids = entries.stream().map(FibLeaderboardEntryDto::getPlayerUuid).toList();
-            PlayerNameResolver.resolveAll(uuids, names -> {
-                for (FibLeaderboardEntryDto entry : entries) {
-                    sendRow(player, entry.getRank(), displayName(names, entry.getPlayerUuid()),
-                            entry.getValue(), suffixFor(category));
-                }
-                player.sendMessage(" ");
-            });
+            // Names arrive inside each entry now, so there is no lookup to do -- the row renders
+            // straight from the payload.
+            for (FibLeaderboardEntryDto entry : entries) {
+                sendRow(player, entry.getRank(), displayName(entry.getPlayer()),
+                        entry.getValue(), suffixFor(category));
+            }
+            player.sendMessage(" ");
         }, error -> sendError(player));
     }
 
@@ -95,14 +92,11 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
                 return;
             }
 
-            List<UUID> uuids = entries.stream().map(FibLeaderboardEntryDto::getPlayerUuid).toList();
-            PlayerNameResolver.resolveAll(uuids, names -> {
-                for (FibLeaderboardEntryDto entry : entries) {
-                    sendRow(player, entry.getRank(), displayName(names, entry.getPlayerUuid()),
-                            entry.getValue(), suffixFor(category));
-                }
-                player.sendMessage(" ");
-            });
+            for (FibLeaderboardEntryDto entry : entries) {
+                sendRow(player, entry.getRank(), displayName(entry.getPlayer()),
+                        entry.getValue(), suffixFor(category));
+            }
+            player.sendMessage(" ");
         }, error -> sendError(player));
     }
 
@@ -115,20 +109,12 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
                 return;
             }
 
-            List<UUID> uuids = new ArrayList<>();
-            entries.forEach(entry -> {
-                uuids.add(entry.getPlayer1Uuid());
-                uuids.add(entry.getPlayer2Uuid());
-            });
-
-            PlayerNameResolver.resolveAll(uuids, names -> {
-                for (FibTeamLeaderboardEntryDto entry : entries) {
-                    String pair = displayName(names, entry.getPlayer1Uuid())
-                            + " <dark_gray>& <green>" + displayName(names, entry.getPlayer2Uuid());
-                    sendRow(player, entry.getRank(), pair, entry.getValue(), suffixFor(category));
-                }
-                player.sendMessage(" ");
-            });
+            for (FibTeamLeaderboardEntryDto entry : entries) {
+                String pair = displayName(entry.getPlayer1())
+                        + " <dark_gray>& <green>" + displayName(entry.getPlayer2());
+                sendRow(player, entry.getRank(), pair, entry.getValue(), suffixFor(category));
+            }
+            player.sendMessage(" ");
         }, error -> sendError(player));
     }
 
@@ -144,14 +130,11 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
                 return;
             }
 
-            List<UUID> uuids = entries.stream().map(FibAchievementLeaderboardEntryDto::getPlayerUuid).toList();
-            PlayerNameResolver.resolveAll(uuids, names -> {
-                for (FibAchievementLeaderboardEntryDto entry : entries) {
-                    sendRow(player, entry.getRank(), displayName(names, entry.getPlayerUuid()),
-                            entry.getCount(), "");
-                }
-                player.sendMessage(" ");
-            });
+            for (FibAchievementLeaderboardEntryDto entry : entries) {
+                sendRow(player, entry.getRank(), displayName(entry.getPlayer()),
+                        entry.getCount(), "");
+            }
+            player.sendMessage(" ");
         }, error -> sendError(player));
     }
 
@@ -185,9 +168,17 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
         player.sendMessage(Text.of("<red>Could not load leaderboard."));
     }
 
-    private String displayName(Map<UUID, String> names, UUID uuid) {
-        String name = names.get(uuid);
-        return name != null ? name : uuid.toString().substring(0, 8);
+    /**
+     * The player's name, or the first eight characters of their uuid when the name has not been
+     * recorded yet. A null identity should not happen on a ranked row, but is guarded so one bad
+     * entry cannot take down the whole board render.
+     */
+    private String displayName(FibPlayerIdentityDto identity) {
+        if (identity == null || identity.getUuid() == null) {
+            return "?";
+        }
+        String name = identity.getName();
+        return name != null ? name : identity.getUuid().toString().substring(0, 8);
     }
 
     private String formatCategoryName(String category) {
