@@ -875,7 +875,7 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.DIAMOND_CHESTPLATE, State.MID);
         register(Material.DIAMOND_HELMET, State.MID);
         register(Material.DIAMOND_HOE, State.EARLY);
-        register(Material.DIAMOND_HORSE_ARMOR, State.MID);
+        register(Material.DIAMOND_HORSE_ARMOR, State.LATE);
         register(Material.DIAMOND_LEGGINGS, State.MID);
         register(Material.DIAMOND_NAUTILUS_ARMOR, State.LATE);
         register(Material.DIAMOND_ORE, State.LATE, ItemTag.EXTREME);
@@ -1237,7 +1237,7 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.MUSIC_DISC_PRECIPICE, State.LATE, ItemTag.EXTREME);
         register(Material.MUSIC_DISC_TEARS, State.MID, ItemTag.NETHER);
         register(Material.MUTTON, State.EARLY);
-        register(Material.MYCELIUM, State.LATE);
+        register(Material.MYCELIUM, State.LATE, ItemTag.EXTREME);
         register(Material.NAME_TAG, State.EARLY);
         register(Material.NAUTILUS_SHELL, State.MID);
         register(Material.NETHER_BRICK, State.MID);

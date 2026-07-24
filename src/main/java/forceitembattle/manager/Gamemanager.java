@@ -173,14 +173,15 @@ public class Gamemanager implements Manager {
         List<FibMatchItemSubmitDto> items = new ArrayList<>();
         if (teamMode) {
             for (Team team : this.forceItemBattle.getTeamManager().getTeams()) {
-                appendMatchItems(items, team.getFoundItems(), null, team.getTeamId());
+                appendMatchItems(items, team.getFoundItems(), null, team.getTeamId(), this.gameStartTime);
             }
         } else {
             for (ForceItemPlayer forceItemPlayer : this.forceItemPlayerMap.values()) {
                 if (forceItemPlayer.isSpectator()) {
                     continue;
                 }
-                appendMatchItems(items, forceItemPlayer.foundItems(), forceItemPlayer.player().getUniqueId(), null);
+                appendMatchItems(items, forceItemPlayer.foundItems(),
+                        forceItemPlayer.player().getUniqueId(), null, this.gameStartTime);
             }
         }
 
@@ -259,13 +260,21 @@ public class Gamemanager implements Manager {
         return tied ? null : best;
     }
 
-    private void appendMatchItems(List<FibMatchItemSubmitDto> out, List<ForceItem> found, UUID playerUuid, Integer teamIndex) {
+    private void appendMatchItems(List<FibMatchItemSubmitDto> out, List<ForceItem> found,
+                                  UUID playerUuid, Integer teamIndex, long startedAtMillis) {
+        // The first item is measured from the match start; every later one from the previous
+        // hand-in by this same owner. Computed from timestamps rather than parsed out of
+        // ForceItem.timeNeeded, which is a formatted display string.
+        long previousMillis = startedAtMillis;
         for (int i = 0; i < found.size(); i++) {
             ForceItem forceItem = found.get(i);
             String b2bRarity = (forceItem.back2Back() != null && forceItem.back2Back().isActive()
                     && forceItem.back2Back().getRarityType() != null)
                     ? forceItem.back2Back().getRarityType().name()
                     : null;
+            // Clamped: a clock adjustment mid-match must not write a negative duration.
+            long secondsTaken = Math.max(0L, (forceItem.timeStamp() - previousMillis) / 1000L);
+            previousMillis = forceItem.timeStamp();
             out.add(new FibMatchItemSubmitDto()
                     .playerUuid(playerUuid)
                     .teamIndex(teamIndex)
@@ -273,6 +282,7 @@ public class Gamemanager implements Manager {
                     .skipped(forceItem.usedSkip())
                     .b2bRarity(b2bRarity)
                     .orderIndex(i)
+                    .secondsTaken((int) secondsTaken)
                     .collectedAt(Instant.ofEpochMilli(forceItem.timeStamp()).atOffset(ZoneOffset.UTC)));
         }
     }
@@ -618,7 +628,8 @@ public class Gamemanager implements Manager {
                             new FibPlayerStatsUpdateRequestDto()
                                     .outcome(won
                                             ? FibPlayerStatsUpdateRequestDto.OutcomeEnum.WIN
-                                            : FibPlayerStatsUpdateRequestDto.OutcomeEnum.LOSS));
+                                            : FibPlayerStatsUpdateRequestDto.OutcomeEnum.LOSS)
+                                    .playerName(player.getName()));
                 }
             } catch (Exception exception) {
                 this.forceItemBattle.getLogger().warning(
