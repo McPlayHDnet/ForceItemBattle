@@ -1,8 +1,8 @@
 package forceitembattle.gui;
 
-import com.destroystokyo.paper.profile.PlayerProfile;
 import de.threeseconds.openapi.fibservice.client.model.FibAchievementDto;
 import de.threeseconds.openapi.fibservice.client.model.FibPlayerAchievementsDto;
+import de.threeseconds.openapi.fibservice.client.model.FibPlayerIdentityDto;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.AchievementScope;
 import forceitembattle.achievements.Achievements;
@@ -18,12 +18,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.inventory.ItemStack;
@@ -39,9 +37,6 @@ public class AchievementInventory extends InventoryBuilder {
     private final AchievementScope scope;
     /** Only the achievements of this scope, in declaration order. Paging is over this, not values(). */
     private final List<Achievements> entries;
-    // Resolved teammate names (from local cache or Mojang), so each UUID is looked up once.
-    private final Map<UUID, String> nameCache = new HashMap<>();
-    private final Set<UUID> nameLookupsInFlight = new HashSet<>();
     private int currentPage;
     // achievementId -> its unlock records (SOLO/TEAM), fetched from the service for display.
     private Map<String, List<FibAchievementDto>> unlocks = new HashMap<>();
@@ -66,6 +61,8 @@ public class AchievementInventory extends InventoryBuilder {
 
         // Pull the full unlock records (mode + teammate + unlockedAt) from the
         // service — the local cache only holds ids — and refresh once they arrive.
+        // The teammate name now travels inside each record, so there is no second
+        // lookup to trigger a further refresh.
         this.plugin.getFibService().achievements().getPlayerAchievementsAsync(playerUUID,
                 dto -> {
                     this.unlocks = indexByAchievementId(dto);
@@ -206,7 +203,7 @@ public class AchievementInventory extends InventoryBuilder {
                 if (unlockRecords != null) {
                     for (FibAchievementDto entry : unlockRecords) {
                         if ("TEAM".equalsIgnoreCase(String.valueOf(entry.getMode()))) {
-                            lore.add("<dark_gray>» <aqua>Team <dark_gray>◆ <gray>with <yellow>" + teammateName(entry.getTeammateUuid()));
+                            lore.add("<dark_gray>» <aqua>Team <dark_gray>◆ <gray>with <yellow>" + teammateName(entry.getTeammate()));
                         } else {
                             lore.add("<dark_gray>» <aqua>Solo");
                         }
@@ -321,47 +318,12 @@ public class AchievementInventory extends InventoryBuilder {
                 + " <yellow>" + pct + "%";
     }
 
-    private String teammateName(UUID teammateUuid) {
-        if (teammateUuid == null) {
+    private String teammateName(FibPlayerIdentityDto teammate) {
+        if (teammate == null || teammate.getUuid() == null) {
             return "Unknown";
         }
-        String cached = this.nameCache.get(teammateUuid);
-        if (cached != null) {
-            return cached;
-        }
-        String name = Bukkit.getOfflinePlayer(teammateUuid).getName();
-        if (name != null) {
-            this.nameCache.put(teammateUuid, name);
-            return name;
-        }
-        // Unknown locally — look it up from Mojang off-thread, then refresh the menu.
-        // Show the short UUID as a placeholder until it resolves.
-        resolveNameAsync(teammateUuid);
-        return teammateUuid.toString().substring(0, 8);
-    }
-
-    private void resolveNameAsync(UUID teammateUuid) {
-        if (!this.nameLookupsInFlight.add(teammateUuid)) {
-            return; // a lookup for this UUID is already running
-        }
-        Bukkit.getScheduler().runTaskAsynchronously(this.plugin, () -> {
-            String resolved = null;
-            try {
-                PlayerProfile profile = Bukkit.createProfile(teammateUuid);
-                profile.complete(false); // fills name + uuid from cache/Mojang, skips textures
-                resolved = profile.getName();
-            } catch (Exception ignored) {
-                // network/lookup failure — fall back to the short UUID below
-            }
-            final String name = resolved;
-            Bukkit.getScheduler().runTask(this.plugin, () -> {
-                this.nameLookupsInFlight.remove(teammateUuid);
-                this.nameCache.put(teammateUuid, (name != null && !name.isEmpty())
-                        ? name
-                        : teammateUuid.toString().substring(0, 8));
-                this.updateInventory();
-            });
-        });
+        String name = teammate.getName();
+        return name != null ? name : teammate.getUuid().toString().substring(0, 8);
     }
 
     private String formatWhen(OffsetDateTime when) {
