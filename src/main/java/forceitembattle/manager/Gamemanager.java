@@ -74,6 +74,22 @@ public class Gamemanager implements Manager {
     @Getter
     @Setter
     private UUID matchId;
+
+    /**
+     * Wall-clock intervals during which the game was paused, as [start, end] millis pairs.
+     *
+     * Item times are wall-clock deltas between hand-ins, so a pause between two hand-ins would
+     * otherwise be counted as time spent finding — a 22-minute pause turned one item into a 30-minute
+     * "timesink" that never happened. Recording the pause intervals lets submit time subtract the
+     * pause overlap from each item's window, so seconds_taken reflects play time, not wall time.
+     *
+     * A pause in progress is held in pauseStartedAt until it is resumed and the closed interval is
+     * appended here. Cleared at the start of each game.
+     */
+    private final List<long[]> pauseIntervals = new ArrayList<>();
+
+    /** Wall-clock millis when the current pause began, or 0 when the game is not paused. */
+    private long pauseStartedAt;
     /**
      * Total game duration (seconds).
      */
@@ -272,8 +288,14 @@ public class Gamemanager implements Manager {
                     && forceItem.back2Back().getRarityType() != null)
                     ? forceItem.back2Back().getRarityType().name()
                     : null;
+            // Pause-aware: the raw wall-clock span for this item minus any time the game spent
+            // paused inside that span, so a pause between two hand-ins is not counted as time spent
+            // finding. Without this a single item that straddled a 22-minute pause reads as a
+            // 22-minute find that never happened, and lands at the top of the "biggest timesinks".
             // Clamped: a clock adjustment mid-match must not write a negative duration.
-            long secondsTaken = Math.max(0L, (forceItem.timeStamp() - previousMillis) / 1000L);
+            long rawMillis = forceItem.timeStamp() - previousMillis;
+            long playMillis = rawMillis - pausedMillisWithin(previousMillis, forceItem.timeStamp());
+            long secondsTaken = Math.max(0L, playMillis / 1000L);
             previousMillis = forceItem.timeStamp();
             out.add(new FibMatchItemSubmitDto()
                     .playerUuid(playerUuid)
@@ -391,6 +413,7 @@ public class Gamemanager implements Manager {
     public void initializeMaterials() {
         this.forcedItemQueue.clear();
         this.leadTracker.reset();
+        this.clearPauseIntervals();
         boolean runMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.RUN);
         boolean teamMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM);
         long now = System.currentTimeMillis();
@@ -710,6 +733,55 @@ public class Gamemanager implements Manager {
 
     public boolean isPausedGame() {
         return this.getCurrentGameState() == GameState.PAUSED_GAME;
+    }
+
+    /**
+     * Begin a pause: flip state and record when it started, so its duration can be subtracted from
+     * item times on resume. Called by /pause instead of setting the state directly, so the timing
+     * bookkeeping cannot be bypassed.
+     */
+    public void pauseGame() {
+        this.pauseStartedAt = System.currentTimeMillis();
+        this.setCurrentGameState(GameState.PAUSED_GAME);
+    }
+
+    /**
+     * End a pause: close the open interval and flip state back. The closed [start, end] is kept so
+     * that any item whose find-window straddled this pause has the paused span removed from its
+     * seconds_taken at submit time.
+     */
+    public void resumeGame() {
+        if (this.pauseStartedAt > 0L) {
+            this.pauseIntervals.add(new long[]{this.pauseStartedAt, System.currentTimeMillis()});
+            this.pauseStartedAt = 0L;
+        }
+        this.setCurrentGameState(GameState.MID_GAME);
+    }
+
+    /** Clears recorded pauses. Called when a new game starts so intervals never carry across games. */
+    public void clearPauseIntervals() {
+        this.pauseIntervals.clear();
+        this.pauseStartedAt = 0L;
+    }
+
+    /**
+     * The milliseconds of pause that overlap the window [fromMillis, toMillis].
+     *
+     * Summed over every recorded interval by clamping each to the window and taking the positive
+     * width — so a pause fully inside the window counts whole, a pause partly overlapping counts
+     * only its overlap, and a pause outside counts zero. Correct regardless of how many pauses fall
+     * in one item's window, or whether the item began mid-pause.
+     */
+    private long pausedMillisWithin(long fromMillis, long toMillis) {
+        long paused = 0L;
+        for (long[] interval : this.pauseIntervals) {
+            long overlapStart = Math.max(fromMillis, interval[0]);
+            long overlapEnd = Math.min(toMillis, interval[1]);
+            if (overlapEnd > overlapStart) {
+                paused += overlapEnd - overlapStart;
+            }
+        }
+        return paused;
     }
 
     public boolean isMidGame() {
