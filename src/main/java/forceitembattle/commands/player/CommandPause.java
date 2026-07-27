@@ -29,6 +29,7 @@ public class CommandPause extends CustomCommand {
         }
         Bukkit.broadcast(Text.of("<gold>The game has been paused!"));
         Dimension.OVERWORLD.world().setGameRule(GameRules.ADVANCE_TIME, false);
+        Dimension.OVERWORLD.world().setGameRule(GameRules.ADVANCE_WEATHER, false);
         this.plugin.getGamemanager().pauseGame();
     }
 }

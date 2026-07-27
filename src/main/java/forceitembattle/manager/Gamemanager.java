@@ -47,6 +47,7 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Statistic;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -743,6 +744,25 @@ public class Gamemanager implements Manager {
     public void pauseGame() {
         this.pauseStartedAt = System.currentTimeMillis();
         this.setCurrentGameState(GameState.PAUSED_GAME);
+        this.clearMobTargets();
+    }
+
+    /**
+     * Drop every mob's aggro at the moment of pause.
+     *
+     * Cancelling target-acquisition (in the entity-target listener) stops mobs locking on DURING the
+     * pause, but a mob already chasing a player when /pause runs keeps its target and keeps pathing —
+     * and lands its hit the instant the game resumes. Clearing targets here makes the pause actually
+     * calm: mobs already tracking a player let go, and the listener keeps them from re-acquiring
+     * until resume. Together they give "no aggro while paused, no free hit on unpause".
+     */
+    private void clearMobTargets() {
+        Bukkit.getWorlds().forEach(world ->
+                world.getEntitiesByClass(Mob.class).forEach(mob -> {
+                    if (mob.getTarget() instanceof Player) {
+                        mob.setTarget(null);
+                    }
+                }));
     }
 
     /**

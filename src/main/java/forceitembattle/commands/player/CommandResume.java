@@ -30,6 +30,7 @@ public class CommandResume extends CustomCommand {
 
         Bukkit.broadcast(Text.of("<gold>The timer has been resumed!"));
         Dimension.OVERWORLD.world().setGameRule(GameRules.ADVANCE_TIME, true);
+        Dimension.OVERWORLD.world().setGameRule(GameRules.ADVANCE_WEATHER, true);
         this.plugin.getGamemanager().resumeGame();
     }
 }

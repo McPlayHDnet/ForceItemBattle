@@ -15,6 +15,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntitySpawnEvent;
+import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
 
 @RequiredArgsConstructor
 public class PvPListener implements Listener {
@@ -81,6 +82,13 @@ public class PvPListener implements Listener {
                     return;
                 }
             }
+        }
+    }
+
+    @EventHandler
+    public void onEntityTarget(EntityTargetLivingEntityEvent event) {
+        if (this.plugin.getGamemanager().isPausedGame() && event.getTarget() instanceof Player) {
+            event.setCancelled(true);
         }
     }
 
