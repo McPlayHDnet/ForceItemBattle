@@ -58,6 +58,7 @@ public class Gamemanager implements Manager {
 
     public static final NamespacedKey BACKPACK_KEY = new NamespacedKey("fib", "backpack");
     private static final Material JOKER_MATERIAL = Material.BARRIER;
+    private static final String MATCH_STATS_URL = "https://forceitembattle.net/stats?view=match&id=";
     private final ForceItemBattle forceItemBattle;
     private final Map<UUID, ForceItemPlayer> forceItemPlayerMap;
     /** End-of-game result screens, keyed by player / by team. Paged: page → slot → stack. */
@@ -75,6 +76,13 @@ public class Gamemanager implements Manager {
     @Getter
     @Setter
     private UUID matchId;
+
+    /** True once the match-history PUT landed; the stats link is held back until the result reveal. */
+    private boolean matchStatsLinkReady;
+    /** True once every result has been revealed via /result (the winner comes last). */
+    private boolean matchResultsRevealed;
+    /** Guard so the stats link is broadcast exactly once per match. */
+    private boolean matchStatsLinkShared;
 
     /**
      * Wall-clock intervals during which the game was paused, as [start, end] millis pairs.
@@ -225,6 +233,37 @@ public class Gamemanager implements Manager {
                     this.forceItemBattle.getAchievementManager().evaluateCollectionAchievement(participantPlayer);
                 }
             }
+
+            this.matchStatsLinkReady = true;
+            this.tryShareMatchStatsLink();
+        });
+    }
+
+    /**
+     * Marks the ceremonial /result reveal as finished (the winner is shown last). Called by
+     * /result; the stats link goes out only once both this and the match PUT have completed.
+     */
+    public void markMatchResultsRevealed() {
+        this.matchResultsRevealed = true;
+        this.tryShareMatchStatsLink();
+    }
+
+    /**
+     * Broadcasts the match stats link, but only once the match is persisted (so the page exists)
+     * and the full /result reveal has finished — any earlier and the link would spoil the winner.
+     */
+    private void tryShareMatchStatsLink() {
+        if (!this.matchStatsLinkReady || !this.matchResultsRevealed || this.matchStatsLinkShared) {
+            return;
+        }
+        this.matchStatsLinkShared = true;
+
+        String matchUrl = MATCH_STATS_URL + this.matchId;
+        Bukkit.getOnlinePlayers().forEach(player -> {
+            player.sendMessage(" ");
+            player.sendMessage(Text.of("<gray>Match has concluded - find all stats here:"));
+            player.sendMessage(Text.of("<dark_aqua><underlined><click:open_url:'" + matchUrl + "'>" + matchUrl + "</click>"));
+            player.sendMessage(" ");
         });
     }
 
@@ -415,6 +454,9 @@ public class Gamemanager implements Manager {
         this.forcedItemQueue.clear();
         this.leadTracker.reset();
         this.clearPauseIntervals();
+        this.matchStatsLinkReady = false;
+        this.matchResultsRevealed = false;
+        this.matchStatsLinkShared = false;
         boolean runMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.RUN);
         boolean teamMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM);
         long now = System.currentTimeMillis();

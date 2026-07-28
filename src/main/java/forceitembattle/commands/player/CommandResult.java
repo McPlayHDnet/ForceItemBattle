@@ -9,6 +9,7 @@ import forceitembattle.model.Team;
 import forceitembattle.util.Text;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.bukkit.Bukkit;
@@ -17,6 +18,8 @@ import org.bukkit.entity.Player;
 public class CommandResult extends CustomCommand {
 
     public int place;
+    /** Match the reveal counter belongs to — a new match restarts the paging from last place. */
+    private UUID lastSeenMatchId;
 
     public CommandResult(ForceItemBattle plugin) {
         super(plugin, "result");
@@ -27,6 +30,13 @@ public class CommandResult extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
+        // The reveal pages from last place to the winner, so each match needs a fresh counter.
+        UUID matchId = this.plugin.getGamemanager().getMatchId();
+        if (!Objects.equals(matchId, this.lastSeenMatchId)) {
+            this.lastSeenMatchId = matchId;
+            this.place = -1;
+        }
+
         if (this.plugin.getTimerManager().getTimeLeft() > 0) {
             return;
         }
@@ -81,7 +91,11 @@ public class CommandResult extends CustomCommand {
             ForceItemPlayer currentPlayer = sortedMapDesc.values().toArray(new ForceItemPlayer[0])[this.place - 1];
             int currentPlace = placesMap.get(currentPlayer);
 
-            Bukkit.getOnlinePlayers().forEach(players -> new FinishInventory(this.plugin, currentPlayer, null, currentPlace, true).open(players));
+            // The winner is revealed last; the link may only go out once that reveal finished.
+            Runnable onRevealComplete = this.place == 1
+                    ? () -> this.plugin.getGamemanager().markMatchResultsRevealed()
+                    : null;
+            Bukkit.getOnlinePlayers().forEach(players -> new FinishInventory(this.plugin, currentPlayer, null, currentPlace, true, onRevealComplete).open(players));
 
             this.place--;
 
@@ -99,7 +113,11 @@ public class CommandResult extends CustomCommand {
             Team currentTeam = placesMap.keySet().toArray(new Team[0])[this.place - 1];
             int currentPlace = placesMap.get(currentTeam);
 
-            Bukkit.getOnlinePlayers().forEach(players -> new FinishInventory(this.plugin, null, currentTeam, currentPlace, true).open(players));
+            // The winner is revealed last; the link may only go out once that reveal finished.
+            Runnable onRevealComplete = this.place == 1
+                    ? () -> this.plugin.getGamemanager().markMatchResultsRevealed()
+                    : null;
+            Bukkit.getOnlinePlayers().forEach(players -> new FinishInventory(this.plugin, null, currentTeam, currentPlace, true, onRevealComplete).open(players));
 
             this.place--;
 
