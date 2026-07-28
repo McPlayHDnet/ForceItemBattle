@@ -16,10 +16,12 @@ import io.papermc.paper.registry.set.RegistryKeySet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import lombok.Getter;
@@ -52,6 +54,10 @@ public class WanderingTraderManager implements Manager {
     private static final int SPAWN_ATTEMPTS = 40;
     private static final int SPAWN_RETRY_SECONDS = 20;
     private static final int TRADER_LIFETIME_SECONDS = 5 * 60;
+    /** Entering this spawn radius replays the trader direction line... */
+    private static final int SPAWN_PING_RADIUS = 60;
+    /** ...and it re-arms once the player left this radius (hysteresis against boundary flapping). */
+    private static final int SPAWN_PING_EXIT_RADIUS = 80;
 
     private static final int SPECIAL_WHEEL_AMOUNT = 3;
     private static final int SPECIAL_WHEEL_PRICE = 1;
@@ -69,6 +75,9 @@ public class WanderingTraderManager implements Manager {
 
     /** Player uuid -> the trader whose merchant they currently have open. */
     private final Map<UUID, UUID> tradingPlayers = new HashMap<>();
+
+    /** Players currently inside the spawn ping zone; entering it replays the trader direction line. */
+    private final Set<UUID> nearSpawnPlayers = new HashSet<>();
 
     private int randomAfterStartSpawnTime;
     private int timer;
@@ -94,6 +103,7 @@ public class WanderingTraderManager implements Manager {
         });
         this.traders.clear();
         this.tradingPlayers.clear();
+        this.nearSpawnPlayers.clear();
     }
 
     public void startTimer() {
@@ -116,6 +126,8 @@ public class WanderingTraderManager implements Manager {
                 } else {
                     timer--;
                 }
+
+                rePingTradersNearSpawn();
             }
         };
 
@@ -189,6 +201,35 @@ public class WanderingTraderManager implements Manager {
                 trader.setTimer(trader.getTimer() - 1);
             }
         }.runTaskTimer(this.plugin, 0L, 20L);
+    }
+
+    /**
+     * Replays the trader direction line for players who (re-)enter the spawn area. The one-shot
+     * line on spawn is long gone by the time someone walks back to spawn to look for the trader.
+     * Zone membership is tracked continuously, so a trader spawning while a player already stands
+     * at spawn does not ping them twice (the announce line covers that moment).
+     */
+    private void rePingTradersNearSpawn() {
+        World world = Dimension.OVERWORLD.world();
+        if (world == null) return;
+
+        Location spawn = world.getSpawnLocation();
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (player.getWorld() != world) {
+                this.nearSpawnPlayers.remove(player.getUniqueId());
+                continue;
+            }
+
+            double distance = player.getLocation().distance(spawn);
+            if (distance <= SPAWN_PING_RADIUS) {
+                if (this.nearSpawnPlayers.add(player.getUniqueId()) && !this.traders.isEmpty()) {
+                    this.traders.values().forEach(trader -> this.plugin.getPositionManager()
+                            .playParticleLine(player, trader.getLocation(), trader.getKind().getParticleColor()));
+                }
+            } else if (distance > SPAWN_PING_EXIT_RADIUS) {
+                this.nearSpawnPlayers.remove(player.getUniqueId());
+            }
+        }
     }
 
     private void despawn(ActiveTrader trader, Entity entity) {

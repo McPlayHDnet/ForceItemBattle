@@ -23,6 +23,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
+import org.bukkit.World;
 import org.bukkit.block.Biome;
 import org.bukkit.entity.Player;
 import org.bukkit.generator.structure.Structure;
@@ -45,9 +46,12 @@ public class LocatorManager implements Manager {
         this.locatedStructures = new HashMap<>();
         this.activeLocators = new HashMap<>();
 
-        this.addLocator(new Locator("fib:antimatter_depths", "Antimatter", CustomMaterials.ANTIMATTER_LOCATOR, Locator.Type.STRUCTURE));
-        this.addLocator(new Locator("trial_chambers", "Trial Chambers", CustomMaterials.TRIAL_LOCATOR, Locator.Type.STRUCTURE));
-        this.addLocator(new Locator("sulfur_caves", "Sulfur Cave", CustomMaterials.SULFUR_LOCATOR, Locator.Type.BIOME));
+        this.addLocator(new Locator("fib:antimatter_depths", "Antimatter", CustomMaterials.ANTIMATTER_LOCATOR, Locator.Type.STRUCTURE,
+                Color.PURPLE, "#B314A8:#E775C3"));
+        this.addLocator(new Locator("trial_chambers", "Trial Chambers", CustomMaterials.TRIAL_LOCATOR, Locator.Type.STRUCTURE,
+                Color.fromRGB(0x4F, 0xB4, 0x93), "#2E7D68:#7FD8BC"));
+        this.addLocator(new Locator("sulfur_caves", "Sulfur Cave", CustomMaterials.SULFUR_LOCATOR, Locator.Type.BIOME,
+                Color.YELLOW, "#C7A500:#FFF27E"));
     }
 
     @Override
@@ -137,20 +141,36 @@ public class LocatorManager implements Manager {
     }
 
     private void reveal(Locator locator, Player player, Location targetLocation) {
+        // Resolved here on the main thread; the async session task must not touch the world.
+        Location digSpot = this.surfaceDigSpot(targetLocation);
+
         if (!this.isAlreadyRevealed(locator.getStructureId(), targetLocation)) {
             this.destroyLocator(player, locator.getLocatorMaterial());
             player.playSound(player, Sound.BLOCK_CONDUIT_AMBIENT_SHORT, 2, 1);
-            this.startLocatorSession(locator, player, targetLocation);
+            this.startLocatorSession(locator, player, targetLocation, digSpot);
         }
 
-        this.plugin.getPositionManager().playParticleLine(player, targetLocation, Color.PURPLE);
+        this.plugin.getPositionManager().playParticleLine(player, targetLocation, locator.getLineColor());
+        this.plugin.getPositionManager().playSurfaceMarker(player, digSpot, locator.getLineColor());
         player.sendMessage(Text.of(Prefix.LOCATOR + "<dark_aqua>" + locator.getStructureName() + " <gray>located at "
                 + LocationFormat.xz(targetLocation)
                 + LocationFormat.distance(player.getLocation(), targetLocation)));
         this.locatedStructures.put(locator.getStructureId(), targetLocation);
     }
 
-    private void startLocatorSession(Locator locator, Player player, Location targetLocation) {
+    // The surface block above the target, i.e. where the player has to dig down.
+    private Location surfaceDigSpot(Location targetLocation) {
+        World world = targetLocation.getWorld();
+        if (world == null) {
+            return targetLocation;
+        }
+        return new Location(world,
+                targetLocation.getBlockX() + 0.5,
+                world.getHighestBlockYAt(targetLocation.getBlockX(), targetLocation.getBlockZ()) + 1,
+                targetLocation.getBlockZ() + 0.5);
+    }
+
+    private void startLocatorSession(Locator locator, Player player, Location targetLocation, Location digSpot) {
         UUID playerId = player.getUniqueId();
 
         // Drop any previous session for this exact locator before opening a new one.
@@ -159,14 +179,21 @@ public class LocatorManager implements Manager {
         BossBar bar = BossBar.bossBar(Text.of(""), 1, BossBar.Color.WHITE, BossBar.Overlay.NOTCHED_6);
 
         BukkitRunnable task = new BukkitRunnable() {
+            /** Task runs between particle line redraws; the boss bar itself updates every run. */
+            private static final int RUNS_PER_LINE = 30;
+            private int runs = 0;
+
             @Override
             public void run() {
-                String bossBarTitle = "<gradient:#B314A8:#E775C3><b>" + locator.getStructureName() + " <reset><dark_gray>» "
+                String bossBarTitle = "<gradient:" + locator.getBossBarGradient() + "><b>" + locator.getStructureName() + " <reset><dark_gray>» "
                         + LocationFormat.xz(targetLocation)
                         + LocationFormat.distance(player.getLocation(), targetLocation);
                 bar.name(Text.of(bossBarTitle));
                 player.showBossBar(bar);
-                LocatorManager.this.plugin.getPositionManager().playParticleLine(player, targetLocation, Color.PURPLE);
+
+                if (this.runs++ % RUNS_PER_LINE == 0) {
+                    LocatorManager.this.plugin.getPositionManager().playParticleLine(player, targetLocation, locator.getLineColor());
+                }
 
                 if (player.getWorld() == targetLocation.getWorld()
                         && player.getLocation().distance(targetLocation) <= 50) {
@@ -175,13 +202,16 @@ public class LocatorManager implements Manager {
             }
         };
 
+        // Persistent dig-spot marker, cancelled together with the session.
+        BukkitRunnable markerTask = this.plugin.getPositionManager().startSurfaceMarker(player, digSpot, locator.getLineColor());
+
         synchronized (this.activeLocators) {
             this.activeLocators
                     .computeIfAbsent(playerId, uuid -> new LinkedHashMap<>())
-                    .put(locator.getStructureId(), new ActiveLocator(bar, task));
+                    .put(locator.getStructureId(), new ActiveLocator(bar, task, markerTask));
         }
 
-        task.runTaskTimerAsynchronously(this.plugin, 0L, 300L);
+        task.runTaskTimerAsynchronously(this.plugin, 0L, 10L);
     }
 
     // Removes a session from the tracking map without touching the boss bar.
@@ -274,10 +304,13 @@ public class LocatorManager implements Manager {
         player.getInventory().setItemInMainHand(null);
     }
 
-    private record ActiveLocator(BossBar bossBar, BukkitRunnable task) {
+    private record ActiveLocator(BossBar bossBar, BukkitRunnable task, @Nullable BukkitRunnable markerTask) {
 
         void cancelAndHide(@Nullable Player player) {
             this.task.cancel();
+            if (this.markerTask != null && !this.markerTask.isCancelled()) {
+                this.markerTask.cancel();
+            }
             if (player != null) {
                 player.hideBossBar(this.bossBar);
             }
