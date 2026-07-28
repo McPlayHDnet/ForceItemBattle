@@ -198,6 +198,10 @@ public class WanderingTraderManager implements Manager {
                     return;
                 }
 
+                if (plugin.getGamemanager().isPausedGame()) {
+                    return; // the trader's lifetime freezes while the game is paused
+                }
+
                 trader.setTimer(trader.getTimer() - 1);
             }
         }.runTaskTimer(this.plugin, 0L, 20L);
