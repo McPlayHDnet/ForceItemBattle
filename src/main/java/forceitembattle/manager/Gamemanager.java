@@ -47,6 +47,7 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Statistic;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -57,6 +58,7 @@ public class Gamemanager implements Manager {
 
     public static final NamespacedKey BACKPACK_KEY = new NamespacedKey("fib", "backpack");
     private static final Material JOKER_MATERIAL = Material.BARRIER;
+    private static final String MATCH_STATS_URL = "https://forceitembattle.net/stats?view=match&id=";
     private final ForceItemBattle forceItemBattle;
     private final Map<UUID, ForceItemPlayer> forceItemPlayerMap;
     /** End-of-game result screens, keyed by player / by team. Paged: page → slot → stack. */
@@ -74,6 +76,29 @@ public class Gamemanager implements Manager {
     @Getter
     @Setter
     private UUID matchId;
+
+    /** True once the match-history PUT landed; the stats link is held back until the result reveal. */
+    private boolean matchStatsLinkReady;
+    /** True once every result has been revealed via /result (the winner comes last). */
+    private boolean matchResultsRevealed;
+    /** Guard so the stats link is broadcast exactly once per match. */
+    private boolean matchStatsLinkShared;
+
+    /**
+     * Wall-clock intervals during which the game was paused, as [start, end] millis pairs.
+     *
+     * Item times are wall-clock deltas between hand-ins, so a pause between two hand-ins would
+     * otherwise be counted as time spent finding — a 22-minute pause turned one item into a 30-minute
+     * "timesink" that never happened. Recording the pause intervals lets submit time subtract the
+     * pause overlap from each item's window, so seconds_taken reflects play time, not wall time.
+     *
+     * A pause in progress is held in pauseStartedAt until it is resumed and the closed interval is
+     * appended here. Cleared at the start of each game.
+     */
+    private final List<long[]> pauseIntervals = new ArrayList<>();
+
+    /** Wall-clock millis when the current pause began, or 0 when the game is not paused. */
+    private long pauseStartedAt;
     /**
      * Total game duration (seconds).
      */
@@ -208,6 +233,37 @@ public class Gamemanager implements Manager {
                     this.forceItemBattle.getAchievementManager().evaluateCollectionAchievement(participantPlayer);
                 }
             }
+
+            this.matchStatsLinkReady = true;
+            this.tryShareMatchStatsLink();
+        });
+    }
+
+    /**
+     * Marks the ceremonial /result reveal as finished (the winner is shown last). Called by
+     * /result; the stats link goes out only once both this and the match PUT have completed.
+     */
+    public void markMatchResultsRevealed() {
+        this.matchResultsRevealed = true;
+        this.tryShareMatchStatsLink();
+    }
+
+    /**
+     * Broadcasts the match stats link, but only once the match is persisted (so the page exists)
+     * and the full /result reveal has finished — any earlier and the link would spoil the winner.
+     */
+    private void tryShareMatchStatsLink() {
+        if (!this.matchStatsLinkReady || !this.matchResultsRevealed || this.matchStatsLinkShared) {
+            return;
+        }
+        this.matchStatsLinkShared = true;
+
+        String matchUrl = MATCH_STATS_URL + this.matchId;
+        Bukkit.getOnlinePlayers().forEach(player -> {
+            player.sendMessage(" ");
+            player.sendMessage(Text.of("<gray>Match has concluded - find all stats here:"));
+            player.sendMessage(Text.of("<dark_aqua><underlined><click:open_url:'" + matchUrl + "'>" + matchUrl + "</click>"));
+            player.sendMessage(" ");
         });
     }
 
@@ -272,8 +328,14 @@ public class Gamemanager implements Manager {
                     && forceItem.back2Back().getRarityType() != null)
                     ? forceItem.back2Back().getRarityType().name()
                     : null;
+            // Pause-aware: the raw wall-clock span for this item minus any time the game spent
+            // paused inside that span, so a pause between two hand-ins is not counted as time spent
+            // finding. Without this a single item that straddled a 22-minute pause reads as a
+            // 22-minute find that never happened, and lands at the top of the "biggest timesinks".
             // Clamped: a clock adjustment mid-match must not write a negative duration.
-            long secondsTaken = Math.max(0L, (forceItem.timeStamp() - previousMillis) / 1000L);
+            long rawMillis = forceItem.timeStamp() - previousMillis;
+            long playMillis = rawMillis - pausedMillisWithin(previousMillis, forceItem.timeStamp());
+            long secondsTaken = Math.max(0L, playMillis / 1000L);
             previousMillis = forceItem.timeStamp();
             out.add(new FibMatchItemSubmitDto()
                     .playerUuid(playerUuid)
@@ -391,6 +453,10 @@ public class Gamemanager implements Manager {
     public void initializeMaterials() {
         this.forcedItemQueue.clear();
         this.leadTracker.reset();
+        this.clearPauseIntervals();
+        this.matchStatsLinkReady = false;
+        this.matchResultsRevealed = false;
+        this.matchStatsLinkShared = false;
         boolean runMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.RUN);
         boolean teamMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM);
         long now = System.currentTimeMillis();
@@ -710,6 +776,74 @@ public class Gamemanager implements Manager {
 
     public boolean isPausedGame() {
         return this.getCurrentGameState() == GameState.PAUSED_GAME;
+    }
+
+    /**
+     * Begin a pause: flip state and record when it started, so its duration can be subtracted from
+     * item times on resume. Called by /pause instead of setting the state directly, so the timing
+     * bookkeeping cannot be bypassed.
+     */
+    public void pauseGame() {
+        this.pauseStartedAt = System.currentTimeMillis();
+        this.setCurrentGameState(GameState.PAUSED_GAME);
+        this.clearMobTargets();
+    }
+
+    /**
+     * Drop every mob's aggro at the moment of pause.
+     *
+     * Cancelling target-acquisition (in the entity-target listener) stops mobs locking on DURING the
+     * pause, but a mob already chasing a player when /pause runs keeps its target and keeps pathing —
+     * and lands its hit the instant the game resumes. Clearing targets here makes the pause actually
+     * calm: mobs already tracking a player let go, and the listener keeps them from re-acquiring
+     * until resume. Together they give "no aggro while paused, no free hit on unpause".
+     */
+    private void clearMobTargets() {
+        Bukkit.getWorlds().forEach(world ->
+                world.getEntitiesByClass(Mob.class).forEach(mob -> {
+                    if (mob.getTarget() instanceof Player) {
+                        mob.setTarget(null);
+                    }
+                }));
+    }
+
+    /**
+     * End a pause: close the open interval and flip state back. The closed [start, end] is kept so
+     * that any item whose find-window straddled this pause has the paused span removed from its
+     * seconds_taken at submit time.
+     */
+    public void resumeGame() {
+        if (this.pauseStartedAt > 0L) {
+            this.pauseIntervals.add(new long[]{this.pauseStartedAt, System.currentTimeMillis()});
+            this.pauseStartedAt = 0L;
+        }
+        this.setCurrentGameState(GameState.MID_GAME);
+    }
+
+    /** Clears recorded pauses. Called when a new game starts so intervals never carry across games. */
+    public void clearPauseIntervals() {
+        this.pauseIntervals.clear();
+        this.pauseStartedAt = 0L;
+    }
+
+    /**
+     * The milliseconds of pause that overlap the window [fromMillis, toMillis].
+     *
+     * Summed over every recorded interval by clamping each to the window and taking the positive
+     * width — so a pause fully inside the window counts whole, a pause partly overlapping counts
+     * only its overlap, and a pause outside counts zero. Correct regardless of how many pauses fall
+     * in one item's window, or whether the item began mid-pause.
+     */
+    private long pausedMillisWithin(long fromMillis, long toMillis) {
+        long paused = 0L;
+        for (long[] interval : this.pauseIntervals) {
+            long overlapStart = Math.max(fromMillis, interval[0]);
+            long overlapEnd = Math.min(toMillis, interval[1]);
+            if (overlapEnd > overlapStart) {
+                paused += overlapEnd - overlapStart;
+            }
+        }
+        return paused;
     }
 
     public boolean isMidGame() {

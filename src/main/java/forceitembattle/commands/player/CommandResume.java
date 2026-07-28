@@ -4,7 +4,6 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.model.Dimension;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.model.GameState;
 import forceitembattle.util.Text;
 import org.bukkit.Bukkit;
 import org.bukkit.GameRules;
@@ -31,6 +30,7 @@ public class CommandResume extends CustomCommand {
 
         Bukkit.broadcast(Text.of("<gold>The timer has been resumed!"));
         Dimension.OVERWORLD.world().setGameRule(GameRules.ADVANCE_TIME, true);
-        this.plugin.getGamemanager().setCurrentGameState(GameState.MID_GAME);
+        Dimension.OVERWORLD.world().setGameRule(GameRules.ADVANCE_WEATHER, true);
+        this.plugin.getGamemanager().resumeGame();
     }
 }

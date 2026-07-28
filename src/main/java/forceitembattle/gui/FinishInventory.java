@@ -1,6 +1,7 @@
 package forceitembattle.gui;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ForceItem;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.Team;
@@ -32,6 +33,14 @@ public class FinishInventory extends InventoryBuilder {
     private final Map<Integer, Map<Integer, ItemStack>> pages = new HashMap<>();
 
     public FinishInventory(ForceItemBattle forceItemBattle, @Nullable ForceItemPlayer targetPlayer, @Nullable Team targetTeam, Integer place, boolean firstTime) {
+        this(forceItemBattle, targetPlayer, targetTeam, place, firstTime, null);
+    }
+
+    /**
+     * @param onRevealComplete run once the item-by-item reveal finished and the result summary
+     *                         (title + chat line) went out — only relevant when {@code firstTime}
+     */
+    public FinishInventory(ForceItemBattle forceItemBattle, @Nullable ForceItemPlayer targetPlayer, @Nullable Team targetTeam, Integer place, boolean firstTime, @Nullable Runnable onRevealComplete) {
         super(9 * 6, Text.of("<dark_gray>» <gold>Items <dark_gray>● <gray>" + (firstTime ? "????????" : (targetTeam == null ? targetPlayer.player().getName() : "Team " + targetTeam.getTeamDisplay()))));
 
         /* TOP-BORDER */
@@ -76,7 +85,7 @@ public class FinishInventory extends InventoryBuilder {
                     } else {
                         ForceItem forceItem = items.get(placedItems);
 
-                        String displayName = WordUtils.capitalizeFully(forceItem.material().name().replace("_", " "))
+                        String displayName = CustomMaterials.nameOf(forceItem.material())
                                 + " <dark_gray>» <gold>" + forceItem.timeNeeded();
 
                         List<String> lore = new ArrayList<>();
@@ -90,7 +99,7 @@ public class FinishInventory extends InventoryBuilder {
                             lore.add("<dark_gray>[<dark_aqua>B2B <dark_gray>» <aqua>" + forceItem.back2Back().getRarity() + "<dark_gray>]");
                         }
 
-                        ItemStack itemStack = new ItemBuilder(forceItem.material())
+                        ItemStack itemStack = new ItemBuilder(CustomMaterials.itemStackOf(forceItem.material()))
                                 .setDisplayName(displayName)
                                 .setLore(lore)
                                 .setGlowing(forceItem.usedSkip())
@@ -145,6 +154,10 @@ public class FinishInventory extends InventoryBuilder {
                                 }
 
                                 getPlayer().sendMessage(Text.of(chatMessage));
+
+                                if (onRevealComplete != null) {
+                                    onRevealComplete.run();
+                                }
                             }
                         }.runTaskLater(forceItemBattle, 100L);
 

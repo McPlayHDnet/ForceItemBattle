@@ -2,10 +2,10 @@ package forceitembattle.listener;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.event.FoundItemEvent;
+import forceitembattle.gui.InventoryBuilder;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.model.ForceItemPlayer;
 import lombok.RequiredArgsConstructor;
-import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -62,8 +62,9 @@ public class ItemsListener implements Listener {
             return;
         }
 
-        if (inventoryClickEvent.getView().title().contains(Component.text("<dark_gray>●"))) {
-            return; //prevents from getting the needed item onClick inside the recipe
+        if (inventoryClickEvent.getClickedInventory() != null
+                && inventoryClickEvent.getClickedInventory().getHolder() instanceof InventoryBuilder) {
+            return; //prevents from getting the needed item onClick inside any custom GUI
         }
 
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());

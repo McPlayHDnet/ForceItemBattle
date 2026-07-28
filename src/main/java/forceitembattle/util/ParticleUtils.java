@@ -69,13 +69,18 @@ public class ParticleUtils {
     }
 
     public static void drawLine(@NonNull Player player, @NonNull Location point1, @NonNull Location point2, @NonNull Particle particle, @Nullable Particle.DustOptions dustOptions, int count, double space, int max) {
+        drawLine(player, point1, point2, particle, dustOptions, count, space, max, 0);
+    }
+
+    public static void drawLine(@NonNull Player player, @NonNull Location point1, @NonNull Location point2, @NonNull Particle particle, @Nullable Particle.DustOptions dustOptions, int count, double space, int max, double phase) {
         World world = point1.getWorld();
         if (!Objects.equals(world, point2.getWorld())) return;
         double distance = point1.distance(point2);
         Vector p1 = point1.toVector();
-        Vector p2 = point2.toVector();
-        Vector vector = p2.clone().subtract(p1).normalize().multiply(space);
-        double length = 0;
+        Vector direction = point2.toVector().subtract(p1).normalize();
+        Vector vector = direction.clone().multiply(space);
+        p1.add(direction.multiply(phase));
+        double length = phase;
         int current = 0;
         for (; length < distance; p1.add(vector)) {
             player.spawnParticle(particle, p1.getX(), p1.getY(), p1.getZ(), count, dustOptions);
