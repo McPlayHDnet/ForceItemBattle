@@ -13,8 +13,9 @@ import org.jetbrains.annotations.Nullable;
 @Getter
 public enum RandomEvents {
 
-    ITEM_HUNT("Item Hunt", "<gold>", 10, false, ItemHunt::new),
-    SPECIAL_TRADER("Special Trader", "<light_purple>", 2, true, SpecialTrader::new);
+    ITEM_HUNT("Item Hunt", "<gold>", 10, false, 0, ItemHunt::new),
+    SPECIAL_TRADER("Special Trader", "<light_purple>", 2, true, 0, SpecialTrader::new),
+    POINT_HUNT("Point Hunt", "<aqua>", 6, true, PointHunt.MIN_START_SECONDS, PointHunt::new);
 
     private final String displayName;
     private final String color;
@@ -30,14 +31,22 @@ public enum RandomEvents {
      */
     private final boolean oncePerGame;
 
+    /**
+     * Clock an event needs left on the timer to be worth starting. A timed event that would be
+     * truncated by game end is filtered out of the pick until enough time remains; instant and
+     * find-resolved events leave this at 0.
+     */
+    private final int minSecondsToRun;
+
     private final Function<ForceItemBattle, RandomEvent> factory;
 
     RandomEvents(String displayName, String color, int weight, boolean oncePerGame,
-                 Function<ForceItemBattle, RandomEvent> factory) {
+                 int minSecondsToRun, Function<ForceItemBattle, RandomEvent> factory) {
         this.displayName = displayName;
         this.color = color;
         this.weight = weight;
         this.oncePerGame = oncePerGame;
+        this.minSecondsToRun = minSecondsToRun;
         this.factory = factory;
     }
 

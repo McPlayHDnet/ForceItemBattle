@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.ChatColor;
@@ -124,6 +125,16 @@ public class ItemDifficultiesManager implements Manager {
                 .filter(def -> def.state() == state)
                 .map(ItemDefinition::material)
                 .toList();
+    }
+
+    /**
+     * The pool (state) an item belongs to, or {@code null} for a material that isn't a pool item
+     * (a custom or unregistered material). The registry is the single source of truth for this.
+     */
+    @Nullable
+    public State getState(Material material) {
+        ItemDefinition definition = this.itemRegistry.get(material);
+        return definition == null ? null : definition.state();
     }
 
     public Set<Material> getItemsIn(Dimension dimension) {
