@@ -116,7 +116,7 @@ public class WanderingTraderManager implements Manager {
 
                 if (timer <= 0) {
                     if (spawnWanderingTrader()) {
-                        randomAfterStartSpawnTime = (new Random().nextInt(4) + 7) * 60;
+                        randomAfterStartSpawnTime = TRADER_LIFETIME_SECONDS + ThreadLocalRandom.current().nextInt(7, 11) * 60;
                         timer = randomAfterStartSpawnTime;
                     } else {
                         // No solid ground found near spawn (an ocean start, say). Retry shortly

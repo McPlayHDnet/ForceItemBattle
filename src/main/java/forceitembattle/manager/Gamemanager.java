@@ -59,6 +59,7 @@ public class Gamemanager implements Manager {
     public static final NamespacedKey BACKPACK_KEY = new NamespacedKey("fib", "backpack");
     private static final Material JOKER_MATERIAL = Material.BARRIER;
     private static final String MATCH_STATS_URL = "https://forceitembattle.net/stats?view=match&id=";
+    private static final long MATCH_STATS_LINK_DELAY_TICKS = 5L;
     private final ForceItemBattle forceItemBattle;
     private final Map<UUID, ForceItemPlayer> forceItemPlayerMap;
     /** End-of-game result screens, keyed by player / by team. Paged: page → slot → stack. */
@@ -259,12 +260,14 @@ public class Gamemanager implements Manager {
         this.matchStatsLinkShared = true;
 
         String matchUrl = MATCH_STATS_URL + this.matchId;
-        Bukkit.getOnlinePlayers().forEach(player -> {
+        Bukkit.getScheduler().runTaskLater(this.forceItemBattle, () -> Bukkit.getOnlinePlayers().forEach(player -> {
             player.sendMessage(" ");
-            player.sendMessage(Text.of("<gray>Match has concluded - find all stats here:"));
-            player.sendMessage(Text.of("<dark_aqua><underlined><click:open_url:'" + matchUrl + "'>" + matchUrl + "</click>"));
+            player.sendMessage(Text.of("<gray>The match has concluded — see the full breakdown:"));
+            player.sendMessage(Text.of("<dark_gray>» <click:open_url:'" + matchUrl
+                    + "'><hover:show_text:'<gray>Opens the match stats in your browser'>"
+                    + "<dark_gray>[<aqua><b>View Match Stats</b><dark_gray>]</hover></click>"));
             player.sendMessage(" ");
-        });
+        }), MATCH_STATS_LINK_DELAY_TICKS);
     }
 
     /**

@@ -29,6 +29,17 @@ public interface RandomEvent {
     }
 
     /**
+     * Routed once per second from RandomEventManager while this event holds the active slot.
+     * Because that tick runs mid-game only, a countdown driven from here freezes during pause
+     * with no extra handling.
+     *
+     * @return true when the event has concluded and should be cleared.
+     */
+    default boolean tick() {
+        return false;
+    }
+
+    /**
      * The round ended (or the plugin shut down) with this event still running.
      */
     default void cancel() {

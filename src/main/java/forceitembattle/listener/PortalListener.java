@@ -45,7 +45,7 @@ public class PortalListener implements Listener {
     public void onMove(PlayerMoveEvent playerMoveEvent) {
         Player player = playerMoveEvent.getPlayer();
 
-        if (!this.plugin.getGamemanager().isMidGame()) {
+        if (!this.plugin.getGamemanager().isMidGame() && !this.plugin.getGamemanager().isEndGame()) {
             return;
         }
         Location playerLocation = player.getLocation();
@@ -81,7 +81,9 @@ public class PortalListener implements Listener {
     }
 
     private void teleportPlayerRandomly(Player player) {
-        if (this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
+        boolean midGame = this.plugin.getGamemanager().isMidGame();
+
+        if (midGame && this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
             FibStatisticsClient helper = this.plugin.getFibService().statistics();
             ForceItemPlayer fip = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
             if (fip != null && fip.currentTeam() != null) {
@@ -99,7 +101,9 @@ public class PortalListener implements Listener {
         Location existingLocation = this.findExistingLocation(player);
         if (existingLocation != null) {
             // Re-using a teleporter already used this round — not a new/distinct one.
-            Bukkit.getPluginManager().callEvent(new AntimatterTeleporterUseEvent(player, false));
+            if (midGame) {
+                Bukkit.getPluginManager().callEvent(new AntimatterTeleporterUseEvent(player, false));
+            }
             player.teleport(existingLocation);
             return;
         }
@@ -122,7 +126,9 @@ public class PortalListener implements Listener {
         playerTeleporterLocations.get(player.getUniqueId()).add(new TeleporterLocation(currentLocation, newLocation));
 
         // A teleporter this player hasn't used before this round — counts as distinct.
-        Bukkit.getPluginManager().callEvent(new AntimatterTeleporterUseEvent(player, true));
+        if (midGame) {
+            Bukkit.getPluginManager().callEvent(new AntimatterTeleporterUseEvent(player, true));
+        }
 
         player.teleport(newLocation);
     }

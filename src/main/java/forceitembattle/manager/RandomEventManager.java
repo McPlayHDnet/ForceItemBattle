@@ -96,6 +96,13 @@ public class RandomEventManager implements Manager {
      * Called once per second from TimerManager, mid-game only.
      */
     public void tick(int timeLeft) {
+        // Drive a running timed event's own clock first; it may conclude here. Because this method
+        // is mid-game only, that countdown freezes during pause with no extra handling.
+        if (this.activeEvent != null && this.activeEvent.tick()) {
+            this.activeEvent = null;
+            this.activeType = null;
+        }
+
         Integer next = this.schedule.peek();
         if (next == null || timeLeft > next) {
             return;
@@ -114,9 +121,9 @@ public class RandomEventManager implements Manager {
             return;
         }
 
-        RandomEvents type = this.pickWeighted();
+        RandomEvents type = this.pickWeighted(timeLeft);
         if (type == null) {
-            return; // everything eligible has already had its one shot
+            return; // nothing eligible with enough time left (or all one-shots already fired)
         }
 
         this.trigger(type);
@@ -159,10 +166,11 @@ public class RandomEventManager implements Manager {
     }
 
     @Nullable
-    private RandomEvents pickWeighted() {
+    private RandomEvents pickWeighted(int timeLeft) {
         List<RandomEvents> eligible = Arrays.stream(RandomEvents.values())
                 .filter(type -> !type.isOncePerGame() || !this.fired.contains(type))
                 .filter(type -> type.getWeight() > 0)
+                .filter(type -> type.getMinSecondsToRun() <= timeLeft)
                 .toList();
 
         int totalWeight = eligible.stream().mapToInt(RandomEvents::getWeight).sum();
