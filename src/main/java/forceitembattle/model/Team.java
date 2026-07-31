@@ -46,12 +46,14 @@ public class Team {
         players.addAll(Arrays.asList(teamPlayers));
     }
 
+    /**
+     * The team's label as MiniMessage: bracketed and in the team colour, whether it was named via
+     * /forceteam or auto-generated. A named team used to return the bare name, which rendered
+     * without brackets or colour and so looked nothing like the auto-team labels next to it in the
+     * same tab list. Callers that need the raw name for storage use {@link #getName()}.
+     */
     public String getTeamDisplay() {
-        if (this.name != null) {
-            return this.name;
-        }
-
-        return "<color:" + colorToHex() + ">[#" + this.teamId + "]";
+        return "<color:" + colorToHex() + ">[" + (this.name != null ? this.name : "#" + this.teamId) + "]";
     }
 
     private DyeColor getRandomColor() {
