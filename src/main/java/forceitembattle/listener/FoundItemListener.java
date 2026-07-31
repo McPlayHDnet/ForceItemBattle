@@ -97,7 +97,8 @@ public class FoundItemListener implements Listener {
                 this.plugin.getTimerManager().formatSeconds(this.plugin.getTimerManager().getTimeLeft()),
                 System.currentTimeMillis(),
                 back2Back,
-                event.isSkipped()
+                event.isSkipped(),
+                forceItemPlayer.player().getUniqueId()
         );
 
         if (context.teamGame()) {

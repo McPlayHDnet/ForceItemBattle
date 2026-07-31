@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -89,6 +90,17 @@ public class FinishInventory extends InventoryBuilder {
                                 + " <dark_gray>» <gold>" + forceItem.timeNeeded();
 
                         List<String> lore = new ArrayList<>();
+
+                        // Team mode only: the found list belongs to the team, so without this the
+                        // individual contribution is invisible. In solo it would just repeat the
+                        // inventory title.
+                        if (targetTeam != null) {
+                            String collector = collectorName(targetTeam, forceItem.collectedBy());
+                            if (collector != null) {
+                                lore.add("<dark_gray>» <gray>" + (forceItem.usedSkip() ? "Skipped" : "Found")
+                                        + " by <yellow>" + collector);
+                            }
+                        }
 
                         if (forceItem.usedSkip()) {
                             lore.add("");
@@ -189,6 +201,24 @@ public class FinishInventory extends InventoryBuilder {
                 }, 1L);
             });
         }
+    }
+
+    /**
+     * The name of the team member who handed this item in, or null when it cannot be attributed —
+     * the collector is by definition a member of this team, so this resolves locally and never has
+     * to touch an offline profile.
+     */
+    @Nullable
+    private static String collectorName(Team team, @Nullable UUID collectedBy) {
+        if (collectedBy == null) {
+            return null;
+        }
+        return team.getPlayers().stream()
+                .map(ForceItemPlayer::player)
+                .filter(member -> member != null && member.getUniqueId().equals(collectedBy))
+                .map(Player::getName)
+                .findFirst()
+                .orElse(null);
     }
 
     private void renderPage(@Nullable Map<Integer, Map<Integer, ItemStack>> savedPages, AtomicInteger currentPage) {
