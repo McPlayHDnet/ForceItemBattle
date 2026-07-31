@@ -1,6 +1,7 @@
 package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ActiveTrader;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
@@ -75,7 +76,7 @@ public class ScoreboardManager implements Manager {
                         .getUnicodeFromMaterial(true, mat);
 
                 team.suffix(Text.of(
-                        " <gray>[<gold>" + gameManager.getMaterialName(mat)
+                        " <gray>[<gold>" + CustomMaterials.nameOf(mat)
                                 + " <reset><shadow:black:0.4>" + itemIcon + "</shadow><gray>]"
                 ));
             } else {

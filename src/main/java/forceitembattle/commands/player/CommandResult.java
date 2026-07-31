@@ -31,7 +31,7 @@ public class CommandResult extends CustomCommand {
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
         // The reveal pages from last place to the winner, so each match needs a fresh counter.
-        UUID matchId = this.plugin.getGamemanager().getMatchId();
+        UUID matchId = this.plugin.getGamemanager().getMatchHistory().getMatchId();
         if (!Objects.equals(matchId, this.lastSeenMatchId)) {
             this.lastSeenMatchId = matchId;
             this.place = -1;
@@ -93,7 +93,7 @@ public class CommandResult extends CustomCommand {
 
             // The winner is revealed last; the link may only go out once that reveal finished.
             Runnable onRevealComplete = this.place == 1
-                    ? () -> this.plugin.getGamemanager().markMatchResultsRevealed()
+                    ? () -> this.plugin.getGamemanager().getMatchHistory().markResultsRevealed()
                     : null;
             Bukkit.getOnlinePlayers().forEach(players -> new FinishInventory(this.plugin, currentPlayer, null, currentPlace, true, onRevealComplete).open(players));
 
@@ -115,7 +115,7 @@ public class CommandResult extends CustomCommand {
 
             // The winner is revealed last; the link may only go out once that reveal finished.
             Runnable onRevealComplete = this.place == 1
-                    ? () -> this.plugin.getGamemanager().markMatchResultsRevealed()
+                    ? () -> this.plugin.getGamemanager().getMatchHistory().markResultsRevealed()
                     : null;
             Bukkit.getOnlinePlayers().forEach(players -> new FinishInventory(this.plugin, null, currentTeam, currentPlace, true, onRevealComplete).open(players));
 

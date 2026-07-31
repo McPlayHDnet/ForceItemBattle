@@ -134,7 +134,7 @@ public class FinishInventory extends InventoryBuilder {
                                                 .map(name -> name.player().getName())
                                                 .collect(Collectors.joining(", "));
 
-                        String placeColor = forceItemBattle.getGamemanager().placeColor(place);
+                        String placeColor = Text.placeColor(place);
 
                         String chatMessage = placeColor + place + "<white>. " + teamDisplay + " <dark_gray>┃ <gold>" + (placedItems + 1) + " Items found " +
                                 "<dark_gray>» <click:run_command:/result " + (targetTeam == null ? targetPlayer.player().getUniqueId() : "#" + targetTeam.getTeamId()) + "><dark_gray>[<aqua>Inventory<dark_gray>]";

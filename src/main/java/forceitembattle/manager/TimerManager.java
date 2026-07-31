@@ -1,6 +1,7 @@
 package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.FileLogger;
@@ -112,13 +113,13 @@ public class TimerManager implements Manager {
                             )
                     );
 
-                    String bossBarTitle = "<gradient:#6eee87:#5fc52e><b>" + this.forceItemBattle.getGamemanager().getMaterialName(material) +
+                    String bossBarTitle = "<gradient:#6eee87:#5fc52e><b>" + CustomMaterials.nameOf(material) +
                             " <reset><shadow:black:0.4>" + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(false, material) + "</shadow>";
                     String chainBossTitle = null;
 
                     if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.CHAIN)) {
                         Material nextMaterial = forceItemPlayer.activeNextMaterial();
-                        chainBossTitle = "<gradient:#6eee87:#5fc52e><b>" + this.forceItemBattle.getGamemanager().getMaterialName(nextMaterial) + " <reset><shadow:black:0.4>" + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(false, nextMaterial) + "</shadow>";
+                        chainBossTitle = "<gradient:#6eee87:#5fc52e><b>" + CustomMaterials.nameOf(nextMaterial) + " <reset><shadow:black:0.4>" + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(false, nextMaterial) + "</shadow>";
                     }
 
                     String finalBossBar = bossBarTitle + (chainBossTitle != null ? " <gray><b>➡</b> " + chainBossTitle : "");

@@ -1,6 +1,7 @@
 package forceitembattle.commands.player;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.model.CustomMaterials;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.util.Text;
@@ -42,7 +43,7 @@ public class CommandInfoWiki extends CustomCommand {
 
         player.sendMessage(Text.of(
                 "<gray>Check out the minecraft wiki for <green>" + WordUtils.capitalizeFully(item.getType().name().toLowerCase().replace("_", " ")
-                        + " <click:open_url:https://minecraft.wiki/" + this.plugin.getGamemanager().formatMaterialName(item.getType().name().toLowerCase()) + "><white>[<aqua>Click here<white>]"))
+                        + " <click:open_url:https://minecraft.wiki/" + CustomMaterials.wikiSlugOf(item.getType()) + "><white>[<aqua>Click here<white>]"))
         );
 
     }

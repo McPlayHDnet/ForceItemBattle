@@ -3,6 +3,7 @@ package forceitembattle.manager;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.model.BackToBackProbability;
+import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameContext;
 import forceitembattle.model.Rarity;
@@ -167,7 +168,7 @@ public class BackToBackManager implements Manager {
 
             BackToBackProbability probability = calculateProbability(forceItemPlayer);
             String unicode = this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, foundItem.getType());
-            String materialName = this.plugin.getGamemanager().getMaterialName(foundItem.getType());
+            String materialName = CustomMaterials.nameOf(foundItem.getType());
 
             Component message;
             if (result.teammateWhoHasIt() != null) {

@@ -4,6 +4,7 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.model.BackToBack;
 import forceitembattle.model.BackToBackProbability;
+import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ForceItem;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameContext;
@@ -65,7 +66,7 @@ public class FoundItemListener implements Listener {
     private void handleRegularFind(FoundItemEvent event, Player player, ItemStack itemStack, ForceItemPlayer forceItemPlayer, GameContext context) {
         String action = event.isSkipped() ? "skipped" : "found";
         String unicode = this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType());
-        String materialName = this.plugin.getGamemanager().getMaterialName(itemStack.getType());
+        String materialName = CustomMaterials.nameOf(itemStack.getType());
 
         Component message = Text.of(
                 String.format("<green>%s <gray>%s <reset><shadow:black:0.4>%s</shadow> <gold>%s",

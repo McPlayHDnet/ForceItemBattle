@@ -1,6 +1,7 @@
 package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.util.Text;
 import java.util.HashSet;
@@ -45,7 +46,7 @@ public class VoteSkipManager implements Manager {
         this.initiator = this.plugin.getGamemanager().getForceItemPlayer(initiator.getUniqueId());
         this.votedMaterial = this.initiator.activeMaterial();
 
-        String materialName = this.plugin.getGamemanager().getMaterialName(this.votedMaterial);
+        String materialName = CustomMaterials.nameOf(this.votedMaterial);
         String unicodeMaterial = this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, this.votedMaterial);
 
         Bukkit.getOnlinePlayers().forEach(player -> {
@@ -92,7 +93,7 @@ public class VoteSkipManager implements Manager {
         int no = this.noVotes.size();
         String voteLabel = (yes != 1 ? "votes" : "vote");
 
-        String materialName = this.plugin.getGamemanager().getMaterialName(this.votedMaterial);
+        String materialName = CustomMaterials.nameOf(this.votedMaterial);
         String unicodeMaterial = this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, this.votedMaterial);
 
         boolean skipItem = false;

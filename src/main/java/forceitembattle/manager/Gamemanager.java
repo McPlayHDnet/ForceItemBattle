@@ -1,20 +1,14 @@
 package forceitembattle.manager;
 
-import de.threeseconds.openapi.fibservice.client.model.FibMatchItemSubmitDto;
-import de.threeseconds.openapi.fibservice.client.model.FibMatchParticipantSubmitDto;
-import de.threeseconds.openapi.fibservice.client.model.FibMatchSubmitRequestDto;
-import de.threeseconds.openapi.fibservice.client.model.FibMatchTeamSubmitDto;
 import de.threeseconds.openapi.fibservice.client.model.FibPlayerStatsUpdateRequestDto;
 import forceitembattle.ForceItemBattle;
-import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.Dimension;
-import forceitembattle.model.ForceItem;
 import forceitembattle.model.GameContext;
-import forceitembattle.model.LeadTracker;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GamePreset;
 import forceitembattle.service.FIBServiceClient;
 import forceitembattle.service.FibStatisticsClient;
+import forceitembattle.service.MatchHistoryReporter;
 import forceitembattle.service.PlayerStatsWrite;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameState;
@@ -22,9 +16,6 @@ import forceitembattle.gui.ItemBuilder;
 import forceitembattle.model.Team;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Text;
-import java.time.Instant;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -40,8 +31,6 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.Setter;
-import net.kyori.adventure.text.minimessage.MiniMessage;
-import org.apache.commons.lang3.text.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
@@ -66,14 +55,19 @@ public class Gamemanager implements Manager {
 
     public static final NamespacedKey BACKPACK_KEY = new NamespacedKey("fib", "backpack");
     private static final Material JOKER_MATERIAL = Material.BARRIER;
-    private static final String MATCH_STATS_URL = "https://forceitembattle.net/stats?view=match&id=";
-    private static final long MATCH_STATS_LINK_DELAY_TICKS = 5L;
     private final ForceItemBattle forceItemBattle;
     private final Map<UUID, ForceItemPlayer> forceItemPlayerMap;
     /** End-of-game result screens, keyed by player / by team. Paged: page → slot → stack. */
     private final Map<UUID, Map<Integer, Map<Integer, ItemStack>>> savedInventory = new HashMap<>();
     private final Map<Team, Map<Integer, Map<Integer, ItemStack>>> savedInventoryTeam = new HashMap<>();
-    private final LeadTracker leadTracker = new LeadTracker();
+
+    /**
+     * Match telemetry. Owns everything that only exists to be reported: the match id, lead changes,
+     * pause intervals, and the submit/link-broadcast flow.
+     */
+    @Getter
+    private final MatchHistoryReporter matchHistory;
+
     @Setter
     @Getter
     public GameState currentGameState;
@@ -82,32 +76,6 @@ public class Gamemanager implements Manager {
     @Getter
     @Setter
     private long gameStartTime;
-    @Getter
-    @Setter
-    private UUID matchId;
-
-    /** True once the match-history PUT landed; the stats link is held back until the result reveal. */
-    private boolean matchStatsLinkReady;
-    /** True once every result has been revealed via /result (the winner comes last). */
-    private boolean matchResultsRevealed;
-    /** Guard so the stats link is broadcast exactly once per match. */
-    private boolean matchStatsLinkShared;
-
-    /**
-     * Wall-clock intervals during which the game was paused, as [start, end] millis pairs.
-     *
-     * Item times are wall-clock deltas between hand-ins, so a pause between two hand-ins would
-     * otherwise be counted as time spent finding — a 22-minute pause turned one item into a 30-minute
-     * "timesink" that never happened. Recording the pause intervals lets submit time subtract the
-     * pause overlap from each item's window, so seconds_taken reflects play time, not wall time.
-     *
-     * A pause in progress is held in pauseStartedAt until it is resumed and the closed interval is
-     * appended here. Cleared at the start of each game.
-     */
-    private final List<long[]> pauseIntervals = new ArrayList<>();
-
-    /** Wall-clock millis when the current pause began, or 0 when the game is not paused. */
-    private long pauseStartedAt;
     /**
      * Total game duration (seconds).
      */
@@ -140,6 +108,7 @@ public class Gamemanager implements Manager {
         this.currentGamePreset = null;
 
         this.forceItemPlayerMap = new HashMap<>();
+        this.matchHistory = new MatchHistoryReporter(forceItemBattle);
     }
 
     private static <T> Map<T, Integer> calculatePlaces(List<T> entities, ToIntFunction<T> score) {
@@ -162,128 +131,12 @@ public class Gamemanager implements Manager {
         return placesMap;
     }
 
-    private void submitMatchHistory(Map<ForceItemPlayer, Integer> placesMap, Map<Team, Integer> teamPlaces) {
-        GameSettings settings = this.forceItemBattle.getSettings();
-        boolean teamMode = settings.isSettingEnabled(GameSetting.TEAM);
-
-        // Settings snapshot: GameSetting constant name -> value as text. Integer-valued settings
-        // (BACKPACKSIZE, QUICKIE, ...) read via getSettingValue; everything else is a toggle.
-        Map<String, String> settingsSnapshot = new LinkedHashMap<>();
-        for (GameSetting setting : GameSetting.values()) {
-            String value = setting.defaultValue() instanceof Integer
-                    ? String.valueOf(settings.getSettingValue(setting))
-                    : String.valueOf(settings.isSettingEnabled(setting));
-            settingsSnapshot.put(setting.name(), value);
-        }
-
-        List<FibMatchTeamSubmitDto> teams = new ArrayList<>();
-        if (teamMode) {
-            for (Team team : this.forceItemBattle.getTeamManager().getTeams()) {
-                teams.add(new FibMatchTeamSubmitDto()
-                        .teamIndex(team.getTeamId())
-                        .teamName(team.getName())
-                        .color(team.getColor() != null ? team.getColor().name() : null));
-            }
-        }
-
-        List<FibMatchParticipantSubmitDto> participants = new ArrayList<>();
-        for (ForceItemPlayer forceItemPlayer : this.forceItemPlayerMap.values()) {
-            if (forceItemPlayer.isSpectator()) {
-                continue;
-            }
-            Team team = forceItemPlayer.currentTeam();
-            Integer placement = team == null
-                    ? placesMap.get(forceItemPlayer)
-                    : (teamPlaces != null ? teamPlaces.get(team) : null);
-            long score = forceItemPlayer.activeScore();
-            participants.add(new FibMatchParticipantSubmitDto()
-                    .playerUuid(forceItemPlayer.player().getUniqueId())
-                    .teamIndex(team == null ? null : team.getTeamId())
-                    .finalScore(score)
-                    .placement(placement != null ? placement : 0)
-                    .won(placement != null && placement == 1));
-        }
-
-        List<FibMatchItemSubmitDto> items = new ArrayList<>();
-        if (teamMode) {
-            for (Team team : this.forceItemBattle.getTeamManager().getTeams()) {
-                appendMatchItems(items, team.getFoundItems(), null, team.getTeamId(), this.gameStartTime);
-            }
-        } else {
-            for (ForceItemPlayer forceItemPlayer : this.forceItemPlayerMap.values()) {
-                if (forceItemPlayer.isSpectator()) {
-                    continue;
-                }
-                appendMatchItems(items, forceItemPlayer.foundItems(),
-                        forceItemPlayer.player().getUniqueId(), null, this.gameStartTime);
-            }
-        }
-
-        FibMatchSubmitRequestDto request = new FibMatchSubmitRequestDto()
-                .startedAt(Instant.ofEpochMilli(this.gameStartTime).atOffset(ZoneOffset.UTC))
-                .endedAt(OffsetDateTime.now(ZoneOffset.UTC))
-                .durationSeconds(this.gameDuration)
-                .mode(teamMode ? FibMatchSubmitRequestDto.ModeEnum.TEAM : FibMatchSubmitRequestDto.ModeEnum.SOLO)
-                .leadChanges(this.leadTracker.leadChanges())
-                .teams(teams)
-                .participants(participants)
-                .items(items)
-                .settings(settingsSnapshot);
-
-        this.forceItemBattle.getFibService().matchHistory().submitMatchAsync(this.matchId, request, () -> {
-            // Match is persisted now, so each participant's found-set includes it. Evaluate the
-            // collection achievement at conclusion (fresh read), not a game late.
-            for (ForceItemPlayer participant : this.forceItemPlayerMap.values()) {
-                if (participant.isSpectator()) {
-                    continue;
-                }
-                Player participantPlayer = participant.player();
-                if (participantPlayer != null && participantPlayer.isOnline()) {
-                    this.forceItemBattle.getAchievementManager().evaluateCollectionAchievement(participantPlayer);
-                }
-            }
-
-            this.matchStatsLinkReady = true;
-            this.tryShareMatchStatsLink();
-        });
-    }
-
-    /**
-     * Marks the ceremonial /result reveal as finished (the winner is shown last). Called by
-     * /result; the stats link goes out only once both this and the match PUT have completed.
-     */
-    public void markMatchResultsRevealed() {
-        this.matchResultsRevealed = true;
-        this.tryShareMatchStatsLink();
-    }
-
-    /**
-     * Broadcasts the match stats link, but only once the match is persisted (so the page exists)
-     * and the full /result reveal has finished — any earlier and the link would spoil the winner.
-     */
-    private void tryShareMatchStatsLink() {
-        if (!this.matchStatsLinkReady || !this.matchResultsRevealed || this.matchStatsLinkShared) {
-            return;
-        }
-        this.matchStatsLinkShared = true;
-
-        String matchUrl = MATCH_STATS_URL + this.matchId;
-        Bukkit.getScheduler().runTaskLater(this.forceItemBattle, () -> Bukkit.getOnlinePlayers().forEach(player -> {
-            player.sendMessage(" ");
-            player.sendMessage(Text.of("<gray>The match has concluded — see the full breakdown:"));
-            player.sendMessage(Text.of("<dark_gray>» <click:open_url:'" + matchUrl
-                    + "'><hover:show_text:'<gray>Opens the match stats in your browser'>"
-                    + "<dark_gray>[<aqua><b>View Match Stats</b><dark_gray>]</hover></click>"));
-            player.sendMessage(" ");
-        }), MATCH_STATS_LINK_DELAY_TICKS);
-    }
-
     /**
      * Re-evaluates who is in front and records a lead change if the sole leader's identity moved.
      * Called from the one place a score can change.
      */
     public void evaluateLead() {
-        this.leadTracker.onStandingsChanged(this.currentSoleLeader());
+        this.matchHistory.recordStandings(this.currentSoleLeader());
     }
 
     /**
@@ -325,39 +178,6 @@ public class Gamemanager implements Manager {
             }
         }
         return tied ? null : best;
-    }
-
-    private void appendMatchItems(List<FibMatchItemSubmitDto> out, List<ForceItem> found,
-                                  UUID playerUuid, Integer teamIndex, long startedAtMillis) {
-        // The first item is measured from the match start; every later one from the previous
-        // hand-in by this same owner. Computed from timestamps rather than parsed out of
-        // ForceItem.timeNeeded, which is a formatted display string.
-        long previousMillis = startedAtMillis;
-        for (int i = 0; i < found.size(); i++) {
-            ForceItem forceItem = found.get(i);
-            String b2bRarity = (forceItem.back2Back() != null && forceItem.back2Back().isActive()
-                    && forceItem.back2Back().getRarityType() != null)
-                    ? forceItem.back2Back().getRarityType().name()
-                    : null;
-            // Pause-aware: the raw wall-clock span for this item minus any time the game spent
-            // paused inside that span, so a pause between two hand-ins is not counted as time spent
-            // finding. Without this a single item that straddled a 22-minute pause reads as a
-            // 22-minute find that never happened, and lands at the top of the "biggest timesinks".
-            // Clamped: a clock adjustment mid-match must not write a negative duration.
-            long rawMillis = forceItem.timeStamp() - previousMillis;
-            long playMillis = rawMillis - pausedMillisWithin(previousMillis, forceItem.timeStamp());
-            long secondsTaken = Math.max(0L, playMillis / 1000L);
-            previousMillis = forceItem.timeStamp();
-            out.add(new FibMatchItemSubmitDto()
-                    .playerUuid(playerUuid)
-                    .teamIndex(teamIndex)
-                    .itemName(forceItem.material().getKey().asString())
-                    .skipped(forceItem.usedSkip())
-                    .b2bRarity(b2bRarity)
-                    .orderIndex(i)
-                    .secondsTaken((int) secondsTaken)
-                    .collectedAt(Instant.ofEpochMilli(forceItem.timeStamp()).atOffset(ZoneOffset.UTC)));
-        }
     }
 
     public static Material getJokerMaterial() {
@@ -410,10 +230,6 @@ public class Gamemanager implements Manager {
         return Boolean.TRUE.equals(itemStack.getItemMeta().getPersistentDataContainer().get(BACKPACK_KEY, PersistentDataType.BOOLEAN));
     }
 
-    public MiniMessage getMiniMessage() {
-        return Text.mm();
-    }
-
     public void addPlayer(Player player, ForceItemPlayer forceItemPlayer) {
         this.forceItemPlayerMap.put(player.getUniqueId(), forceItemPlayer);
     }
@@ -448,26 +264,8 @@ public class Gamemanager implements Manager {
     private record MaterialPair(Material current, Material next) {
     }
 
-    public String getMaterialName(Material material) {
-        return CustomMaterials.nameOf(material);
-    }
-
-    public String formatMaterialName(String material) {
-        String materialName = WordUtils.capitalizeFully(material.replace("_", " "));
-        String[] wordsToIgnore = {"and", "with", "of", "on", "a", "the"};
-        for (String word : wordsToIgnore) {
-            materialName = materialName.replace(WordUtils.capitalize(word), word.toLowerCase());
-        }
-        return materialName.replace(" ", "_");
-    }
-
     public void initializeMaterials() {
         this.forcedItemQueue.clear();
-        this.leadTracker.reset();
-        this.clearPauseIntervals();
-        this.matchStatsLinkReady = false;
-        this.matchResultsRevealed = false;
-        this.matchStatsLinkShared = false;
         boolean runMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.RUN);
         boolean teamMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM);
         long now = System.currentTimeMillis();
@@ -744,7 +542,7 @@ public class Gamemanager implements Manager {
      */
     public void startGame(int durationMinutes, int jokersAmount) {
         this.setGameStartTime(System.currentTimeMillis());
-        this.setMatchId(UUID.randomUUID());
+        this.matchHistory.beginMatch(UUID.randomUUID());
 
         this.forceItemBattle.getRecipeManager().initRecipes();
         this.forceItemBattle.getPositionManager().clearPositions();
@@ -903,7 +701,8 @@ public class Gamemanager implements Manager {
         });
 
         if (statsEnabled) {
-            this.submitMatchHistory(placesMap, teamPlaces);
+            this.matchHistory.submit(placesMap, teamPlaces, this.gameDuration,
+                    this::evaluateCollectionAchievements);
             for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
                 ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(onlinePlayer.getUniqueId());
                 if (forceItemPlayer != null && !forceItemPlayer.isSpectator()) {
@@ -913,18 +712,8 @@ public class Gamemanager implements Manager {
         }
     }
 
-    public String placeColor(int place) {
-        String placeColor;
-        switch (place) {
-            case 3 -> placeColor = "<red>";
-            case 2 -> placeColor = "<gray>";
-            case 1 -> placeColor = "<gold>";
-            default -> placeColor = "<white>";
-        }
-        return placeColor;
-    }
-
-    public int calculateDistance(Player player) {
+    /** Blocks travelled this round, summed over every distance statistic Bukkit tracks (all in cm). */
+    private int calculateDistance(Player player) {
         int distance = 0;
 
         for (Statistic statistics : Statistic.values()) {
@@ -992,9 +781,25 @@ public class Gamemanager implements Manager {
      * bookkeeping cannot be bypassed.
      */
     public void pauseGame() {
-        this.pauseStartedAt = System.currentTimeMillis();
+        this.matchHistory.onPaused();
         this.setCurrentGameState(GameState.PAUSED_GAME);
         this.clearMobTargets();
+    }
+
+    /**
+     * Re-checks the collection achievement for every participant once the match is persisted, so it
+     * sees a found-set that includes the round just played rather than trailing it by a game.
+     */
+    private void evaluateCollectionAchievements() {
+        for (ForceItemPlayer participant : this.forceItemPlayerMap.values()) {
+            if (participant.isSpectator()) {
+                continue;
+            }
+            Player participantPlayer = participant.player();
+            if (participantPlayer != null && participantPlayer.isOnline()) {
+                this.forceItemBattle.getAchievementManager().evaluateCollectionAchievement(participantPlayer);
+            }
+        }
     }
 
     /**
@@ -1021,37 +826,8 @@ public class Gamemanager implements Manager {
      * seconds_taken at submit time.
      */
     public void resumeGame() {
-        if (this.pauseStartedAt > 0L) {
-            this.pauseIntervals.add(new long[]{this.pauseStartedAt, System.currentTimeMillis()});
-            this.pauseStartedAt = 0L;
-        }
+        this.matchHistory.onResumed();
         this.setCurrentGameState(GameState.MID_GAME);
-    }
-
-    /** Clears recorded pauses. Called when a new game starts so intervals never carry across games. */
-    public void clearPauseIntervals() {
-        this.pauseIntervals.clear();
-        this.pauseStartedAt = 0L;
-    }
-
-    /**
-     * The milliseconds of pause that overlap the window [fromMillis, toMillis].
-     *
-     * Summed over every recorded interval by clamping each to the window and taking the positive
-     * width — so a pause fully inside the window counts whole, a pause partly overlapping counts
-     * only its overlap, and a pause outside counts zero. Correct regardless of how many pauses fall
-     * in one item's window, or whether the item began mid-pause.
-     */
-    private long pausedMillisWithin(long fromMillis, long toMillis) {
-        long paused = 0L;
-        for (long[] interval : this.pauseIntervals) {
-            long overlapStart = Math.max(fromMillis, interval[0]);
-            long overlapEnd = Math.min(toMillis, interval[1]);
-            if (overlapEnd > overlapStart) {
-                paused += overlapEnd - overlapStart;
-            }
-        }
-        return paused;
     }
 
     public boolean isMidGame() {

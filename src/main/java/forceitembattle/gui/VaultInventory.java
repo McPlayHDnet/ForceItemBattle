@@ -59,7 +59,7 @@ public class VaultInventory extends InventoryBuilder {
                         Material wonMaterial = Objects.requireNonNull(getInventory().getItem(22)).getType();
                         Bukkit.getPluginManager().callEvent(new WheelOfFortuneWinEvent(getPlayer(), wonMaterial));
 
-                        Component subTitle = Text.of("<gold>" + plugin.getGamemanager().getMaterialName(wonMaterial));
+                        Component subTitle = Text.of("<gold>" + CustomMaterials.nameOf(wonMaterial));
 
                         Title.Times times = Title.Times.times(Duration.ofMillis(600), Duration.ofMillis(2000), Duration.ofMillis(600));
                         Title title = Title.title(Component.empty(), subTitle, times);

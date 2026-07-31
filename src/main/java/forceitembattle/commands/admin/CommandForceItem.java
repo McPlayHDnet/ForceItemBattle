@@ -1,6 +1,7 @@
 package forceitembattle.commands.admin;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.model.CustomMaterials;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.manager.Gamemanager;
@@ -86,11 +87,11 @@ public class CommandForceItem extends CustomCommand implements CustomTabComplete
         this.plugin.getScoreboardManager().updateAllPlayers();
 
         StringBuilder confirmation = new StringBuilder("<gray>Forced item <dark_gray>» <green>"
-                + gamemanager.getMaterialName(current));
+                + CustomMaterials.nameOf(current));
         if (row.size() > 1) {
             List<String> upcoming = new ArrayList<>();
             for (Material material : row.subList(1, row.size())) {
-                upcoming.add(gamemanager.getMaterialName(material));
+                upcoming.add(CustomMaterials.nameOf(material));
             }
             confirmation.append(" <gray>then <white>").append(String.join("<gray>, <white>", upcoming));
         }

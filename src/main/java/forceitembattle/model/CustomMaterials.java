@@ -190,4 +190,21 @@ public enum CustomMaterials {
         CustomMaterials custom = byMaterial(material);
         return custom != null ? custom.getId() : material.name().toLowerCase();
     }
+
+    /**
+     * The minecraft.wiki page slug for a material, e.g. {@code Block_of_Redstone}.
+     *
+     * The wiki title-cases every word except a handful of short joining words, so those are lowered
+     * back down after the blanket capitalisation. Lives next to {@link #nameOf(Material)} because it
+     * is the same question — what is this material called — asked for a URL instead of a chat line.
+     */
+    public static String wikiSlugOf(Material material) {
+        String name = WordUtils.capitalizeFully(material.name().toLowerCase().replace("_", " "));
+        for (String word : WIKI_LOWERCASE_WORDS) {
+            name = name.replace(WordUtils.capitalize(word), word);
+        }
+        return name.replace(" ", "_");
+    }
+
+    private static final String[] WIKI_LOWERCASE_WORDS = {"and", "with", "of", "on", "a", "the"};
 }
