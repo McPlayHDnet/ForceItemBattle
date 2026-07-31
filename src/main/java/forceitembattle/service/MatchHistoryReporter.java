@@ -245,6 +245,10 @@ public class MatchHistoryReporter {
         }
     }
 
+    private long pausedMillisWithin(long fromMillis, long toMillis) {
+        return pausedMillisWithin(this.pauseIntervals, fromMillis, toMillis);
+    }
+
     /**
      * The milliseconds of pause that overlap the window [fromMillis, toMillis].
      *
@@ -252,10 +256,13 @@ public class MatchHistoryReporter {
      * width — so a pause fully inside the window counts whole, a pause partly overlapping counts
      * only its overlap, and a pause outside counts zero. Correct regardless of how many pauses fall
      * in one item's window, or whether the item began mid-pause.
+     *
+     * <p>Static and takes the intervals rather than reading the field, so the arithmetic can be
+     * tested against hand-built intervals instead of real wall-clock pauses.
      */
-    private long pausedMillisWithin(long fromMillis, long toMillis) {
+    static long pausedMillisWithin(List<long[]> intervals, long fromMillis, long toMillis) {
         long paused = 0L;
-        for (long[] interval : this.pauseIntervals) {
+        for (long[] interval : intervals) {
             long overlapStart = Math.max(fromMillis, interval[0]);
             long overlapEnd = Math.min(toMillis, interval[1]);
             if (overlapEnd > overlapStart) {
