@@ -1,6 +1,7 @@
 package forceitembattle.achievements;
 
 import de.threeseconds.openapi.fibservice.client.model.FibAchievementDto;
+import forceitembattle.util.Scheduler;
 import de.threeseconds.openapi.fibservice.client.model.FibAchievementUnlockRequestDto;
 import de.threeseconds.openapi.fibservice.client.model.FibPlayerAchievementsDto;
 import forceitembattle.ForceItemBattle;
@@ -12,7 +13,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import org.bukkit.Bukkit;
 
 public class AchievementStorage {
 
@@ -43,7 +43,7 @@ public class AchievementStorage {
     public void loadPlayer(UUID playerUUID, Runnable onLoaded) {
         if (loaded.contains(playerUUID)) {
             if (onLoaded != null) {
-                Bukkit.getScheduler().runTask(plugin, onLoaded);
+                Scheduler.runSync(onLoaded);
             }
             return;
         }

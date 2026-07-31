@@ -6,6 +6,7 @@ import forceitembattle.model.ForceItem;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.Team;
 import forceitembattle.settings.GameSetting;
+import forceitembattle.util.Scheduler;
 import forceitembattle.util.Text;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -18,7 +19,6 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
-import org.apache.commons.lang3.text.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -148,7 +148,7 @@ public class FinishInventory extends InventoryBuilder {
                                 clearCloseHandlers();
 
                                 // just for safety in case there is a re-open in the very last tick... don't think this will ever happen but yeah why not
-                                Bukkit.getScheduler().runTaskLater(forceItemBattle, () -> {
+                                Scheduler.runLaterSync(() -> {
                                     Bukkit.getOnlinePlayers().forEach(p -> {
                                         if (p.getOpenInventory().getTopInventory() == getInventory())
                                             p.closeInventory();
@@ -194,7 +194,7 @@ public class FinishInventory extends InventoryBuilder {
             this.addCloseHandler(event -> {
                 Player player = (Player) event.getPlayer();
 
-                Bukkit.getScheduler().runTaskLater(forceItemBattle, () -> {
+                Scheduler.runLaterSync(() -> {
                     if (!player.isOnline()) return;
 
                     player.openInventory(getInventory());

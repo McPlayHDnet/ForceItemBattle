@@ -48,7 +48,7 @@ public class ForceItemPlayer {
     @Setter
     private int remainingJokers;
     @Setter
-    private Integer currentScore;
+    private int currentScore;
     @Setter
     private Team currentTeam;
     @Setter
@@ -73,7 +73,7 @@ public class ForceItemPlayer {
     @Setter
     private Material lastSkippedMaterial;
 
-    public ForceItemPlayer(Player player, Material currentMaterial, int remainingJokers, Integer currentScore) {
+    public ForceItemPlayer(Player player, Material currentMaterial, int remainingJokers, int currentScore) {
         this.player = player;
         this.foundItems = new ArrayList<>();
         this.currentMaterial = currentMaterial;
@@ -116,7 +116,7 @@ public class ForceItemPlayer {
         return remainingJokers;
     }
 
-    public Integer currentScore() {
+    public int currentScore() {
         return currentScore;
     }
 
@@ -144,17 +144,12 @@ public class ForceItemPlayer {
 
     /** Skips left to spend — the shared team pool in a team game. */
     public int activeJokers() {
-        if (currentTeam == null) {
-            return remainingJokers;
-        }
-        Integer teamJokers = currentTeam.getRemainingJokers();
-        return teamJokers == null ? 0 : teamJokers;
+        return currentTeam != null ? currentTeam.getRemainingJokers() : remainingJokers;
     }
 
     /** Score on the board for this player — the shared team score in a team game. */
     public int activeScore() {
-        Integer score = currentTeam != null ? currentTeam.getCurrentScore() : currentScore;
-        return score == null ? 0 : score;
+        return currentTeam != null ? currentTeam.getCurrentScore() : currentScore;
     }
 
     /** When the current item was handed out, for measuring how long it took to find. */

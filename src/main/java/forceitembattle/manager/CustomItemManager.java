@@ -2,6 +2,7 @@ package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.model.CustomMaterials;
+import forceitembattle.util.Scheduler;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -21,7 +22,7 @@ public class CustomItemManager implements Manager {
 
     @Override
     public void enable() {
-        Bukkit.getScheduler().runTask(this.forceItemBattle, this::resolvePrototypes);
+        Scheduler.runSync(this::resolvePrototypes);
     }
 
     @Override

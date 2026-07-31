@@ -31,24 +31,6 @@ public class SettingsInventory extends InventoryBuilder {
         return (int) Math.ceil(GameSetting.values().length / 7.0);
     }
 
-    private String getPageButton(int slot, int currentPage) {
-        String headValue = "";
-        if (slot == 27) {
-            if (currentPage == 0) {
-                headValue = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZjZkYWI3MjcxZjRmZjA0ZDU0NDAyMTkwNjdhMTA5YjVjMGMxZDFlMDFlYzYwMmMwMDIwNDc2ZjdlYjYxMjE4MCJ9fX0=";
-            } else {
-                headValue = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYmQ2OWUwNmU1ZGFkZmQ4NGU1ZjNkMWMyMTA2M2YyNTUzYjJmYTk0NWVlMWQ0ZDcxNTJmZGM1NDI1YmMxMmE5In19fQ==";
-            }
-        } else if (slot == 35) {
-            if (currentPage == this.totalPages() - 1) {
-                headValue = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOGFhMTg3ZmVkZTg4ZGUwMDJjYmQ5MzA1NzVlYjdiYTQ4ZDNiMWEwNmQ5NjFiZGM1MzU4MDA3NTBhZjc2NDkyNiJ9fX0=";
-            } else {
-                headValue = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMTliZjMyOTJlMTI2YTEwNWI1NGViYTcxM2FhMWIxNTJkNTQxYTFkODkzODgyOWM1NjM2NGQxNzhlZDIyYmYifX19";
-            }
-        }
-        return headValue;
-    }
-
     private void updateInventory() {
         this.setItems(0, getInventory().getSize() - 1, GuiItems.filler());
 
@@ -56,13 +38,12 @@ public class SettingsInventory extends InventoryBuilder {
         int startIndex = this.currentPage * itemsPerPage;
         int endIndex = Math.min(startIndex + itemsPerPage - 1, GameSetting.values().length - 1);
 
+        boolean hasPrevious = this.currentPage > 0;
+        boolean hasNext = this.currentPage < this.totalPages() - 1;
 
-        this.setItem(27, new ItemBuilder(Material.PLAYER_HEAD)
-                        .setSkullTexture(this.getPageButton(27, this.currentPage))
-                        .setDisplayName("<dark_red>« <red>Previous page")
-                        .getItemStack(),
+        this.setItem(27, GuiItems.pageBack(hasPrevious),
                 inventoryClickEvent -> {
-                    if (this.currentPage > 0) {
+                    if (hasPrevious) {
                         this.getPlayer().playSound(this.getPlayer(), Sound.ITEM_BOOK_PAGE_TURN, 1, 1);
                         this.currentPage--;
                     } else this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);
@@ -70,12 +51,9 @@ public class SettingsInventory extends InventoryBuilder {
                 }
         );
 
-        this.setItem(35, new ItemBuilder(Material.PLAYER_HEAD)
-                        .setSkullTexture(this.getPageButton(35, this.currentPage))
-                        .setDisplayName("<dark_green>» <green>Next page")
-                        .getItemStack(),
+        this.setItem(35, GuiItems.pageForward(hasNext),
                 inventoryClickEvent -> {
-                    if (this.currentPage < this.totalPages() - 1) {
+                    if (hasNext) {
                         this.getPlayer().playSound(this.getPlayer(), Sound.ITEM_BOOK_PAGE_TURN, 1, 1);
                         this.currentPage++;
                     } else this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);

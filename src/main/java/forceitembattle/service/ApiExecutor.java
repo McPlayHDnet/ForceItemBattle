@@ -1,12 +1,12 @@
 package forceitembattle.service;
 
 import de.threeseconds.openapi.fibservice.client.invoker.ApiException;
+import forceitembattle.util.Scheduler;
 import forceitembattle.ForceItemBattle;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.logging.Level;
-import org.bukkit.Bukkit;
 
 class ApiExecutor {
 
@@ -26,9 +26,9 @@ class ApiExecutor {
         worker.execute(() -> {
             try {
                 T result = apiCall.execute();
-                Bukkit.getScheduler().runTask(plugin, () -> onSuccess.accept(result));
+                Scheduler.runSync(() -> onSuccess.accept(result));
             } catch (ApiException e) {
-                Bukkit.getScheduler().runTask(plugin, () -> onError.accept(e));
+                Scheduler.runSync(() -> onError.accept(e));
             }
         });
     }

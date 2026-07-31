@@ -11,6 +11,7 @@ import forceitembattle.model.LeadTracker;
 import forceitembattle.model.Team;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
+import forceitembattle.util.Scheduler;
 import forceitembattle.util.Text;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -275,7 +276,7 @@ public class MatchHistoryReporter {
         this.linkShared = true;
 
         String matchUrl = MATCH_STATS_URL + this.matchId;
-        Bukkit.getScheduler().runTaskLater(this.plugin, () -> Bukkit.getOnlinePlayers().forEach(player -> {
+        Scheduler.runLaterSync(() -> Bukkit.getOnlinePlayers().forEach(player -> {
             player.sendMessage(" ");
             player.sendMessage(Text.of("<gray>The match has concluded — see the full breakdown:"));
             player.sendMessage(Text.of("<dark_gray>» <click:open_url:'" + matchUrl

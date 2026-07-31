@@ -1,6 +1,7 @@
 package forceitembattle.achievements.global;
 
 import de.threeseconds.openapi.fibservice.client.model.FibPlayerStatsDto;
+import forceitembattle.util.Scheduler;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.model.StatsView;
 import forceitembattle.service.FibStatisticsClient;
@@ -8,7 +9,6 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import org.bukkit.Bukkit;
 
 public class GlobalStatsLoader {
 
@@ -48,7 +48,7 @@ public class GlobalStatsLoader {
             }
             GlobalStats stats = GlobalStats.of(new GlobalStatSources(solo.get(), team.get(), player.get()));
             this.cache.put(playerUuid, stats);
-            Bukkit.getScheduler().runTask(this.plugin, () -> onLoaded.accept(stats));
+            Scheduler.runSync(() -> onLoaded.accept(stats));
         };
 
         statistics.getSoloStatisticsAsync(playerUuid,

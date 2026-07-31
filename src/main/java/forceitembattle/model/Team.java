@@ -34,9 +34,9 @@ public class Team {
     @Setter
     private long lastItemAssignedAt;
     @Setter
-    private Integer currentScore, remainingJokers;
+    private int currentScore, remainingJokers;
 
-    public Team(int teamId, Material currentMaterial, Integer currentScore, Integer remainingJokers, ForceItemPlayer... teamPlayers) {
+    public Team(int teamId, Material currentMaterial, int currentScore, int remainingJokers, ForceItemPlayer... teamPlayers) {
         this.teamId = teamId;
         this.color = getRandomColor();
         this.foundItems = new ArrayList<>();

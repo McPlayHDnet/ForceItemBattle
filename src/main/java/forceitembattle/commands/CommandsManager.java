@@ -36,4 +36,29 @@ public class CommandsManager implements Manager {
         this.commands.add(customCommand);
     }
 
+    /**
+     * Warns about commands declared in the generated plugin.yml that no {@link CustomCommand} ever
+     * claimed. Call once, after every command has been registered.
+     *
+     * The command list is maintained twice — the {@code bukkitPluginYaml} block in build.gradle.kts
+     * and {@code initCommands()} — and only one direction of drift was caught: registering an
+     * executor for a name that isn't declared throws above. The other direction was silent, which is
+     * how {@code asktrade} sat in plugin.yml with no executor behind it while the class that looked
+     * like it owned that name was actually called {@code trade}. A declared command with no executor
+     * still exists to the server: it tab-completes, passes the "unknown command" check, and then
+     * does nothing but print its usage line.
+     */
+    public void warnAboutUnboundCommands() {
+        for (String name : this.plugin.getDescription().getCommands().keySet()) {
+            PluginCommand command = this.plugin.getCommand(name);
+            // Bukkit leaves the owning plugin as the executor when nobody sets one.
+            if (command != null && command.getExecutor() == this.plugin) {
+                this.plugin.getLogger().warning("Command '" + name
+                        + "' is declared in plugin.yml but has no executor — it will do nothing."
+                        + " Remove it from bukkitPluginYaml in build.gradle.kts, or register a"
+                        + " CustomCommand for it in initCommands().");
+            }
+        }
+    }
+
 }

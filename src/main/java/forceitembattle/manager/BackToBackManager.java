@@ -13,6 +13,7 @@ import forceitembattle.service.FibStatisticsClient;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.GameBroadcast;
 import forceitembattle.util.InventorySearch;
+import forceitembattle.util.Scheduler;
 import forceitembattle.util.Text;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
@@ -158,7 +159,7 @@ public class BackToBackManager implements Manager {
     private void triggerBackToBackEvent(ForceItemPlayer forceItemPlayer, BackToBackResult result, GameContext context) {
         Player player = forceItemPlayer.player();
 
-        Bukkit.getScheduler().runTaskLater(this.plugin, () -> {
+        Scheduler.runLaterSync(() -> {
             ItemStack foundItem = new ItemStack(forceItemPlayer.activeMaterial());
 
             FoundItemEvent foundNextItemEvent = new FoundItemEvent(player);

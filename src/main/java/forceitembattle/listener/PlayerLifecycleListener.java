@@ -1,6 +1,7 @@
 package forceitembattle.listener;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.util.Scheduler;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.service.FIBServiceClient;
@@ -149,11 +150,7 @@ public class PlayerLifecycleListener implements Listener {
         }
 
         // Automatically respawn player.
-        Bukkit.getScheduler().runTaskLater(
-                this.plugin,
-                () -> event.getEntity().spigot().respawn(),
-                1
-        );
+        Scheduler.runLaterSync(() -> event.getEntity().spigot().respawn(), 1);
     }
 
     @EventHandler

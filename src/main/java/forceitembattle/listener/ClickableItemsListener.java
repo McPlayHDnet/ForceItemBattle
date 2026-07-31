@@ -15,6 +15,7 @@ import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.gui.ItemBuilder;
 import forceitembattle.model.Locator;
 import forceitembattle.gui.TeleporterInventory;
+import forceitembattle.util.Scheduler;
 import forceitembattle.util.Text;
 import forceitembattle.gui.VaultInventory;
 import java.util.Objects;
@@ -61,19 +62,19 @@ public class ClickableItemsListener implements Listener {
             case LIME_DYE -> {
                 e.setCancelled(true);
                 player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
-                Bukkit.getScheduler().runTask(plugin, () ->
+                Scheduler.runSync(() ->
                         new AchievementCategoryInventory(this.plugin, player.getName(), player.getUniqueId()).open(player));
             }
             case WRITTEN_BOOK -> {
                 e.setCancelled(true);
                 player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
-                Bukkit.getScheduler().runTask(plugin, () ->
+                Scheduler.runSync(() ->
                         new CollectionBookInventory(this.plugin, player.getName(), player.getUniqueId()).open(player));
             }
             case COMPASS -> {
                 e.setCancelled(true);
                 player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
-                Bukkit.getScheduler().runTask(plugin, () -> new TeleporterInventory(this.plugin).open(player));
+                Scheduler.runSync(() -> new TeleporterInventory(this.plugin).open(player));
             }
             case GRASS_BLOCK -> teleportToDimension(e, player, Dimension.OVERWORLD, this.plugin::getSpawnLocation);
             case NETHERRACK  -> teleportToDimension(e, player, Dimension.NETHER,
@@ -227,13 +228,13 @@ public class ClickableItemsListener implements Listener {
             case LIME_DYE -> {
                 e.setCancelled(true);
                 player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
-                Bukkit.getScheduler().runTask(plugin, () ->
+                Scheduler.runSync(() ->
                         new AchievementCategoryInventory(this.plugin, player.getName(), player.getUniqueId()).open(player));
             }
             case WRITTEN_BOOK -> {
                 e.setCancelled(true);
                 player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
-                Bukkit.getScheduler().runTask(plugin, () ->
+                Scheduler.runSync(() ->
                         new CollectionBookInventory(this.plugin, player.getName(), player.getUniqueId()).open(player));
             }
             case ENDER_PEARL -> {

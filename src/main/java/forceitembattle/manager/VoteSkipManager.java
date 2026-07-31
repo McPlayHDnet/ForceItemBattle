@@ -3,6 +3,7 @@ package forceitembattle.manager;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.util.Scheduler;
 import forceitembattle.util.Text;
 import java.util.HashSet;
 import java.util.Random;
@@ -59,7 +60,7 @@ public class VoteSkipManager implements Manager {
             player.sendMessage(" ");
         });
 
-        this.voteTask = Bukkit.getScheduler().runTaskLater(this.plugin, this::endVoting, 20 * 60);
+        this.voteTask = Scheduler.runLaterSync(this::endVoting, 20 * 60);
     }
 
     public void castVote(Player player, boolean voteYes) {

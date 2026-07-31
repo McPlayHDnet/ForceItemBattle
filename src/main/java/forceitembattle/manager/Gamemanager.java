@@ -153,7 +153,7 @@ public class Gamemanager implements Manager {
         boolean tied = false;
         if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM)) {
             for (Team team : this.forceItemBattle.getTeamManager().getTeams()) {
-                int score = team.getCurrentScore() == null ? 0 : team.getCurrentScore();
+                int score = team.getCurrentScore();
                 if (best == null || score > bestScore) {
                     best = team.getTeamId();
                     bestScore = score;

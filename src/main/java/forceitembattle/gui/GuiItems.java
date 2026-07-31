@@ -17,6 +17,8 @@ public final class GuiItems {
             "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMTliZjMyOTJlMTI2YTEwNWI1NGViYTcxM2FhMWIxNTJkNTQxYTFkODkzODgyOWM1NjM2NGQxNzhlZDIyYmYifX19";
     private static final String NEXT_DISABLED =
             "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOGFhMTg3ZmVkZTg4ZGUwMDJjYmQ5MzA1NzVlYjdiYTQ4ZDNiMWEwNmQ5NjFiZGM1MzU4MDA3NTBhZjc2NDkyNiJ9fX0=";
+    private static final String BACK =
+            "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYmViNTg4YjIxYTZmOThhZDFmZjRlMDg1YzU1MmRjYjA1MGVmYzljYWI0MjdmNDYwNDhmMThmYzgwMzQ3NWY3In19fQ==";
 
     /** Neutral filler for the body of a menu. */
     public static ItemStack filler() {
@@ -68,6 +70,11 @@ public final class GuiItems {
      * Note which is which: PREVIOUS_DISABLED and NEXT_ACTIVE are easy to mix up, and the collection
      * dex did exactly that -- it drew the greyed previous arrow on every page, on every page number.
      */
+    /** "Back" head that returns to the menu above this one — the same icon in every menu that has one. */
+    public static ItemStack back() {
+        return pageHead(BACK, "<dark_red>« <red>Back", null);
+    }
+
     public static ItemStack pageBack(boolean enabled) {
         return pageHead(enabled ? PREVIOUS_ACTIVE : PREVIOUS_DISABLED,
                 enabled ? "<dark_red>« <red>Previous page" : "<dark_gray>« <gray>Previous page",

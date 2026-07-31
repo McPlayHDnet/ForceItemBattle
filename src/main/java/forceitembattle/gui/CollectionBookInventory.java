@@ -86,10 +86,7 @@ public class CollectionBookInventory extends InventoryBuilder {
                         .setLore(summaryLore)
                         .getItemStack());
 
-        this.setItem(49, new ItemBuilder(Material.PLAYER_HEAD)
-                        .setSkullTexture("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYmViNTg4YjIxYTZmOThhZDFmZjRlMDg1YzU1MmRjYjA1MGVmYzljYWI0MjdmNDYwNDhmMThmYzgwMzQ3NWY3In19fQ==")
-                        .setDisplayName("<dark_red>« <red>Back")
-                        .getItemStack(),
+        this.setItem(49, GuiItems.back(),
                 inventoryClickEvent -> {
                     this.getPlayer().playSound(this.getPlayer(), Sound.UI_BUTTON_CLICK, 1, 1);
                     this.getPlayer().closeInventory();

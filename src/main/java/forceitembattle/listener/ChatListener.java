@@ -1,6 +1,7 @@
 package forceitembattle.listener;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.util.Scheduler;
 import forceitembattle.commands.player.CommandShout;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GamePreset;
@@ -30,7 +31,7 @@ public class ChatListener implements Listener {
         // Preset naming phase: capture the message as the preset name instead of chatting.
         if (SettingsPresetsInventory.namingPhase != null
                 && SettingsPresetsInventory.namingPhase.containsKey(player.getUniqueId())) {
-            Bukkit.getScheduler().runTask(this.plugin, () -> {
+            Scheduler.runSync(() -> {
                 GamePreset gamePreset = SettingsPresetsInventory.namingPhase.get(player.getUniqueId());
                 gamePreset.setPresetName(message);
                 new SettingsPresetsInventory(this.plugin, gamePreset, this.plugin.getSettings()).open(player);

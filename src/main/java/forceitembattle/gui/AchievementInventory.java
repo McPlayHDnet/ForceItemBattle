@@ -106,24 +106,6 @@ public class AchievementInventory extends InventoryBuilder {
         return Math.max(1, (int) Math.ceil((double) this.entries.size() / objectsPerPage));
     }
 
-    private String getPageButton(int slot, int currentPage, int objectsPerPage) {
-        String headValue = "";
-        if (slot == 45) {
-            if (currentPage == 0) {
-                headValue = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZjZkYWI3MjcxZjRmZjA0ZDU0NDAyMTkwNjdhMTA5YjVjMGMxZDFlMDFlYzYwMmMwMDIwNDc2ZjdlYjYxMjE4MCJ9fX0=";
-            } else {
-                headValue = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYmQ2OWUwNmU1ZGFkZmQ4NGU1ZjNkMWMyMTA2M2YyNTUzYjJmYTk0NWVlMWQ0ZDcxNTJmZGM1NDI1YmMxMmE5In19fQ==";
-            }
-        } else if (slot == 53) {
-            if (currentPage == this.totalPages(objectsPerPage) - 1) {
-                headValue = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOGFhMTg3ZmVkZTg4ZGUwMDJjYmQ5MzA1NzVlYjdiYTQ4ZDNiMWEwNmQ5NjFiZGM1MzU4MDA3NTBhZjc2NDkyNiJ9fX0=";
-            } else {
-                headValue = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMTliZjMyOTJlMTI2YTEwNWI1NGViYTcxM2FhMWIxNTJkNTQxYTFkODkzODgyOWM1NjM2NGQxNzhlZDIyYmYifX19";
-            }
-        }
-        return headValue;
-    }
-
     private void updateInventory() {
         this.getInventory().clear();
 
@@ -139,10 +121,7 @@ public class AchievementInventory extends InventoryBuilder {
         int startIndex = this.currentPage * itemsPerPage;
         int endIndex = Math.min(startIndex + itemsPerPage, this.entries.size());
 
-        this.setItem(49, new ItemBuilder(Material.PLAYER_HEAD)
-                        .setSkullTexture("eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYmViNTg4YjIxYTZmOThhZDFmZjRlMDg1YzU1MmRjYjA1MGVmYzljYWI0MjdmNDYwNDhmMThmYzgwMzQ3NWY3In19fQ==")
-                        .setDisplayName("<dark_red>« <red>Back")
-                        .getItemStack(),
+        this.setItem(49, GuiItems.back(),
                 inventoryClickEvent -> {
                     this.getPlayer().playSound(this.getPlayer(), Sound.UI_BUTTON_CLICK, 1, 1);
                     new AchievementCategoryInventory(this.plugin, this.playerName, this.playerUUID)
@@ -150,12 +129,12 @@ public class AchievementInventory extends InventoryBuilder {
                 });
 
         if (this.entries.size() > itemsPerPage) {
-            this.setItem(45, new ItemBuilder(Material.PLAYER_HEAD)
-                            .setSkullTexture(this.getPageButton(45, this.currentPage, itemsPerPage))
-                            .setDisplayName("<dark_red>« <red>Previous page")
-                            .getItemStack(),
+            boolean hasPrevious = this.currentPage > 0;
+            boolean hasNext = this.currentPage < this.totalPages(itemsPerPage) - 1;
+
+            this.setItem(45, GuiItems.pageBack(hasPrevious),
                     inventoryClickEvent -> {
-                        if (this.currentPage > 0) {
+                        if (hasPrevious) {
                             this.getPlayer().playSound(this.getPlayer(), Sound.ITEM_BOOK_PAGE_TURN, 1, 1);
                             this.currentPage--;
                             this.updateInventory();
@@ -165,12 +144,9 @@ public class AchievementInventory extends InventoryBuilder {
                     }
             );
 
-            this.setItem(53, new ItemBuilder(Material.PLAYER_HEAD)
-                            .setSkullTexture(this.getPageButton(53, this.currentPage, itemsPerPage))
-                            .setDisplayName("<dark_green>» <green>Next page")
-                            .getItemStack(),
+            this.setItem(53, GuiItems.pageForward(hasNext),
                     inventoryClickEvent -> {
-                        if (this.currentPage < this.totalPages(itemsPerPage) - 1) {
+                        if (hasNext) {
                             this.getPlayer().playSound(this.getPlayer(), Sound.ITEM_BOOK_PAGE_TURN, 1, 1);
                             this.currentPage++;
                             this.updateInventory();
