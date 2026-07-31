@@ -1,9 +1,10 @@
 package forceitembattle.gui;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.manager.ItemDifficultiesManager;
 import forceitembattle.util.Text;
 import java.util.HashMap;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiPredicate;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -13,74 +14,69 @@ import org.bukkit.inventory.ItemStack;
 
 public class ItemsInventory extends InventoryBuilder {
 
+    private static final int FIRST_CONTENT_SLOT = 9;
+    private static final int FIRST_FILTER_SLOT = 2;
+
+    private final ForceItemBattle forceItemBattle;
+    private final HashMap<Integer, HashMap<Integer, ItemStack>> pages = new HashMap<>();
+    private final int[] currentPage = {0};
+    private Filter currentFilter = Filter.ALL;
+
+    /**
+     * The five views of the item catalogue this menu offers.
+     *
+     * Each used to be a branch of one long if/else chain that repeated the whole paging routine —
+     * page bucket, slot advance, page rollover — five times over, differing only in the test at the
+     * top and (for {@link #EXCLUDED}) how the icon is drawn.
+     */
+    private enum Filter {
+        ALL(Material.LIME_DYE, "<green>All items",
+                (items, material) -> true),
+        INCLUDED(Material.ORANGE_DYE, "<gold>Included Items",
+                ItemDifficultiesManager::itemInList),
+        NON_CRAFTABLE(Material.RED_DYE, "<red>All non-craftable",
+                (items, material) -> Bukkit.getRecipesFor(new ItemStack(material)).isEmpty()),
+        DESCRIBED(Material.LIGHT_BLUE_DYE, "<aqua>Included Items with description",
+                (items, material) -> items.itemInAllLists(material) && items.itemHasDescription(material)),
+        EXCLUDED(Material.GRAY_DYE, "<gray>Excluded Items",
+                (items, material) -> !items.itemInAllLists(material));
+
+        static final Filter[] VALUES = values();
+
+        private final Material icon;
+        private final String displayName;
+        private final BiPredicate<ItemDifficultiesManager, Material> test;
+
+        Filter(Material icon, String displayName, BiPredicate<ItemDifficultiesManager, Material> test) {
+            this.icon = icon;
+            this.displayName = displayName;
+            this.test = test;
+        }
+
+        boolean accepts(ItemDifficultiesManager items, Material material) {
+            return this.test.test(items, material);
+        }
+
+        /**
+         * Whether entries carry the "registered" glow and their description lore. Excluded items are
+         * by definition in neither, so they are drawn bare.
+         */
+        boolean detailed() {
+            return this != EXCLUDED;
+        }
+    }
 
     public ItemsInventory(ForceItemBattle forceItemBattle, Player player) {
-        super(9 * 6, Text.of("<dark_gray>» <gold>Items <gray>(" + forceItemBattle.getItemDifficultiesManager().getAllItems().size() + ") <dark_gray>● <gray>Settings"));
+        super(9 * 6, Text.of("<dark_gray>» <gold>Items <gray>("
+                + forceItemBattle.getItemDifficultiesManager().getAllItems().size()
+                + ") <dark_gray>● <gray>Settings"));
 
-        HashMap<Integer, HashMap<Integer, ItemStack>> pages = new HashMap<>();
-
-        final int[] currentPage = {0};
-        AtomicReference<Material> currentFilter = new AtomicReference<>(Material.LIME_DYE);
+        this.forceItemBattle = forceItemBattle;
 
         /* TOP-BORDER */
         this.setItems(0, 8, GuiItems.border());
 
-
-        this.setItem(2, new ItemBuilder(Material.LIME_DYE).setDisplayName("<green>All items").setGlowing(currentFilter.get() == Material.LIME_DYE).addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
-            if (currentFilter.get() == Material.LIME_DYE) return;
-            currentFilter.set(Material.LIME_DYE);
-            currentPage[0] = 0;
-
-            player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
-            this.setItems(9, this.getInventory().getSize() - 1, new ItemStack(Material.AIR));
-            this.setFilteredItems(forceItemBattle, currentFilter.get(), currentPage[0], pages);
-
-        });
-
-        this.setItem(3, new ItemBuilder(Material.ORANGE_DYE).setDisplayName("<gold>Included Items").setGlowing(currentFilter.get() == Material.ORANGE_DYE).addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
-            if (currentFilter.get() == Material.ORANGE_DYE) return;
-            currentFilter.set(Material.ORANGE_DYE);
-            currentPage[0] = 0;
-
-            player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
-            this.setItems(9, this.getInventory().getSize() - 1, new ItemStack(Material.AIR));
-            this.setFilteredItems(forceItemBattle, currentFilter.get(), currentPage[0], pages);
-
-        });
-
-        this.setItem(4, new ItemBuilder(Material.RED_DYE).setDisplayName("<red>All non-craftable").setGlowing(currentFilter.get() == Material.RED_DYE).addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
-            if (currentFilter.get() == Material.RED_DYE) return;
-            currentFilter.set(Material.RED_DYE);
-            currentPage[0] = 0;
-
-            player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
-            this.setItems(9, this.getInventory().getSize() - 1, new ItemStack(Material.AIR));
-            this.setFilteredItems(forceItemBattle, currentFilter.get(), currentPage[0], pages);
-
-        });
-
-        this.setItem(5, new ItemBuilder(Material.LIGHT_BLUE_DYE).setDisplayName("<aqua>Included Items with description").setGlowing(currentFilter.get() == Material.LIGHT_BLUE_DYE).addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
-            if (currentFilter.get() == Material.LIGHT_BLUE_DYE) return;
-            currentFilter.set(Material.LIGHT_BLUE_DYE);
-            currentPage[0] = 0;
-
-            player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
-            this.setItems(9, this.getInventory().getSize() - 1, new ItemStack(Material.AIR));
-            this.setFilteredItems(forceItemBattle, currentFilter.get(), currentPage[0], pages);
-
-        });
-
-        this.setItem(6, new ItemBuilder(Material.GRAY_DYE).setDisplayName("<gray>Excluded Items").setGlowing(currentFilter.get() == Material.GRAY_DYE).addItemFlags(ItemFlag.values()).getItemStack(), inventoryClickEvent -> {
-            if (currentFilter.get() == Material.GRAY_DYE) return;
-            currentFilter.set(Material.GRAY_DYE);
-            currentPage[0] = 0;
-
-            player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
-            this.setItems(9, this.getInventory().getSize() - 1, new ItemStack(Material.AIR));
-            this.setFilteredItems(forceItemBattle, currentFilter.get(), currentPage[0], pages);
-
-        });
-
+        drawFilterButtons(player);
 
         this.setItem(0, GuiItems.previousPage(), inventoryClickEvent -> {
             if (currentPage[0] != 0) {
@@ -98,133 +94,90 @@ public class ItemsInventory extends InventoryBuilder {
 
                 player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 1, 1);
 
-                this.setItems(9, this.getInventory().getSize() - 1, new ItemStack(Material.AIR));
+                clearContent();
                 pages.get(currentPage[0]).forEach(this::setItem);
 
             } else player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
         });
 
-
-        this.setFilteredItems(forceItemBattle, currentFilter.get(), currentPage[0], pages);
-
+        this.setFilteredItems();
 
         this.addClickHandler(inventoryClickEvent -> inventoryClickEvent.setCancelled(true));
     }
 
-    private void setFilteredItems(ForceItemBattle forceItemBattle, Material currentFilter, int currentPage, HashMap<Integer, HashMap<Integer, ItemStack>> pages) {
-        int startSlot = 9;
-        int initialPages = 0;
-        int items = 0;
+    /**
+     * Paints the filter row. Redrawn on every switch so the glow actually tracks the active filter —
+     * the buttons used to be built once with a fixed glow, which left "All items" lit no matter
+     * which view you were looking at.
+     */
+    private void drawFilterButtons(Player player) {
+        for (Filter filter : Filter.VALUES) {
+            this.setItem(FIRST_FILTER_SLOT + filter.ordinal(),
+                    new ItemBuilder(filter.icon)
+                            .setDisplayName(filter.displayName)
+                            .setGlowing(this.currentFilter == filter)
+                            .addItemFlags(ItemFlag.values())
+                            .getItemStack(),
+                    inventoryClickEvent -> {
+                        if (this.currentFilter == filter) return;
+                        this.currentFilter = filter;
+                        this.currentPage[0] = 0;
 
-        HashMap<Integer, ItemStack> itemStackHashMap = new HashMap<>();
-        pages.clear();
-        for (Material materials : Material.values()) {
-            if (materials.isItem() && !materials.isAir()) {
-                if (currentFilter == Material.LIME_DYE) {
-                    if (!pages.containsKey(initialPages)) {
-                        itemStackHashMap = new HashMap<>();
-                        pages.put(initialPages, itemStackHashMap);
-                    }
+                        player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
+                        drawFilterButtons(player);
+                        clearContent();
+                        this.setFilteredItems();
+                    });
+        }
+    }
 
-                    itemStackHashMap.put(startSlot, new ItemBuilder(materials).setGlowing((forceItemBattle.getItemDifficultiesManager().itemInAllLists(materials))).setLoreLegacy(forceItemBattle.getItemDifficultiesManager().getDescriptionItemLines(materials)).addItemFlags(ItemFlag.values()).getItemStack());
+    private void clearContent() {
+        this.setItems(FIRST_CONTENT_SLOT, this.getInventory().getSize() - 1, new ItemStack(Material.AIR));
+    }
 
-                    startSlot++;
+    private void setFilteredItems() {
+        ItemDifficultiesManager items = this.forceItemBattle.getItemDifficultiesManager();
 
-                    if (startSlot == this.getInventory().getSize()) {
-                        startSlot = 9;
-                        initialPages++;
-                    }
+        int slot = FIRST_CONTENT_SLOT;
+        int page = 0;
 
-                    items++;
-
-                } else if (currentFilter == Material.ORANGE_DYE) {
-                    if (forceItemBattle.getItemDifficultiesManager().itemInList(materials)) {
-                        if (!pages.containsKey(initialPages)) {
-                            itemStackHashMap = new HashMap<>();
-                            pages.put(initialPages, itemStackHashMap);
-                        }
-
-                        itemStackHashMap.put(startSlot, new ItemBuilder(materials).setGlowing((forceItemBattle.getItemDifficultiesManager().itemInAllLists(materials))).setLoreLegacy(forceItemBattle.getItemDifficultiesManager().getDescriptionItemLines(materials)).addItemFlags(ItemFlag.values()).getItemStack());
-
-                        startSlot++;
-
-                        if (startSlot == this.getInventory().getSize()) {
-                            startSlot = 9;
-                            initialPages++;
-                        }
-
-                        items++;
-                    }
-
-                } else if (currentFilter == Material.RED_DYE) {
-                    if (Bukkit.getRecipesFor(new ItemStack(materials)).isEmpty()) {
-                        if (!pages.containsKey(initialPages)) {
-                            itemStackHashMap = new HashMap<>();
-                            pages.put(initialPages, itemStackHashMap);
-                        }
-
-                        itemStackHashMap.put(startSlot, new ItemBuilder(materials).setGlowing(forceItemBattle.getItemDifficultiesManager().itemInAllLists(materials)).setLoreLegacy(forceItemBattle.getItemDifficultiesManager().getDescriptionItemLines(materials)).addItemFlags(ItemFlag.values()).getItemStack());
-
-                        startSlot++;
-
-                        if (startSlot == this.getInventory().getSize()) {
-                            startSlot = 9;
-                            initialPages++;
-                        }
-
-                        items++;
-                    }
-
-                } else if (currentFilter == Material.LIGHT_BLUE_DYE) {
-                    if (forceItemBattle.getItemDifficultiesManager().itemInAllLists(materials) && forceItemBattle.getItemDifficultiesManager().itemHasDescription(materials)) {
-                        if (!pages.containsKey(initialPages)) {
-                            itemStackHashMap = new HashMap<>();
-                            pages.put(initialPages, itemStackHashMap);
-                        }
-
-                        itemStackHashMap.put(startSlot, new ItemBuilder(materials).setGlowing(forceItemBattle.getItemDifficultiesManager().itemInAllLists(materials)).setLoreLegacy(forceItemBattle.getItemDifficultiesManager().getDescriptionItemLines(materials)).addItemFlags(ItemFlag.values()).getItemStack());
-
-                        startSlot++;
-
-                        if (startSlot == this.getInventory().getSize()) {
-                            startSlot = 9;
-                            initialPages++;
-                        }
-
-                        items++;
-                    }
-
-                } else if (currentFilter == Material.GRAY_DYE) {
-                    if (!forceItemBattle.getItemDifficultiesManager().itemInAllLists(materials)) {
-                        if (!pages.containsKey(initialPages)) {
-                            itemStackHashMap = new HashMap<>();
-                            pages.put(initialPages, itemStackHashMap);
-                        }
-
-                        itemStackHashMap.put(startSlot, new ItemBuilder(materials).addItemFlags(ItemFlag.values()).getItemStack());
-
-                        startSlot++;
-
-                        if (startSlot == this.getInventory().getSize()) {
-                            startSlot = 9;
-                            initialPages++;
-                        }
-
-                        items++;
-                    }
-                }
+        this.pages.clear();
+        for (Material material : Material.values()) {
+            if (!material.isItem() || material.isAir()) {
+                continue;
+            }
+            if (!this.currentFilter.accepts(items, material)) {
+                continue;
             }
 
+            this.pages.computeIfAbsent(page, key -> new HashMap<>())
+                    .put(slot, icon(items, material));
+
+            slot++;
+            if (slot == this.getInventory().getSize()) {
+                slot = FIRST_CONTENT_SLOT;
+                page++;
+            }
         }
 
-        if (pages.isEmpty()) {
-            pages.put(0, new HashMap<>());
+        if (this.pages.isEmpty()) {
+            this.pages.put(0, new HashMap<>());
         }
 
-        if (pages.containsKey(currentPage)) {
-            pages.get(currentPage).forEach(this::setItem);
+        HashMap<Integer, ItemStack> shown = this.pages.get(this.currentPage[0]);
+        if (shown != null) {
+            shown.forEach(this::setItem);
         } else {
             getPlayer().sendMessage("No items to display on this page.");
         }
+    }
+
+    private ItemStack icon(ItemDifficultiesManager items, Material material) {
+        ItemBuilder builder = new ItemBuilder(material);
+        if (this.currentFilter.detailed()) {
+            builder.setGlowing(items.itemInAllLists(material))
+                    .setLoreLegacy(items.getDescriptionItemLines(material));
+        }
+        return builder.addItemFlags(ItemFlag.values()).getItemStack();
     }
 }

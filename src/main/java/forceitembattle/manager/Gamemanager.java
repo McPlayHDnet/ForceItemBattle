@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
@@ -44,10 +45,15 @@ import org.apache.commons.lang3.text.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
+import org.bukkit.GameRules;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
 import org.bukkit.Statistic;
+import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
@@ -725,6 +731,86 @@ public class Gamemanager implements Manager {
         player.sendMessage(Text.of("  <dark_gray>» <gold>/bed"));
         player.sendMessage(Text.of("  <dark_gray>» <gold>/pos"));
         player.sendMessage("");
+    }
+
+    /**
+     * Everything that has to happen the instant /start's countdown reaches zero: the round's
+     * identity, the world reset, per-player setup, and the flip to MID_GAME.
+     *
+     * This lived in /start, which left the two halves of a round's lifecycle in different classes —
+     * end-of-game here, start-of-game in a command — and put nine managers' worth of orchestration
+     * behind an argument parser. The command now parses arguments and runs the countdown; the round
+     * itself is the manager's business.
+     */
+    public void startGame(int durationMinutes, int jokersAmount) {
+        this.setGameStartTime(System.currentTimeMillis());
+        this.setMatchId(UUID.randomUUID());
+
+        this.forceItemBattle.getRecipeManager().initRecipes();
+        this.forceItemBattle.getPositionManager().clearPositions();
+        this.forceItemBattle.getItemDifficultiesManager().configureUnlockSchedule(durationMinutes);
+
+        World world = Objects.requireNonNull(Dimension.OVERWORLD.world());
+        prepareSpawn(world.getSpawnLocation());
+
+        Bukkit.getWorlds().forEach(w -> w.getWorldBorder().reset());
+        world.setGameRule(GameRules.ADVANCE_TIME, true);
+        world.setTime(0);
+
+        // Only the players online at this instant. Anyone who disconnected during the countdown
+        // keeps their roster spot and is set up by the same call when they rejoin.
+        Bukkit.getOnlinePlayers().forEach(this::applyStartSetup);
+
+        if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+            distributeTeamJokers(jokersAmount);
+        }
+
+        this.forceItemBattle.getWanderingTraderManager().startTimer();
+        this.forceItemBattle.getRandomEventManager().startGame();
+        this.forceItemBattle.getAchievementManager().resetProgress();
+        this.forceItemBattle.getItemDifficultiesManager().resetUnlockAnnouncements();
+        this.setCurrentGameState(GameState.MID_GAME);
+        this.forceItemBattle.getScoreboardManager().updateAllPlayers();
+    }
+
+    /**
+     * Splits the round's joker pool across each team's members.
+     *
+     * The share is computed for the whole team either way, so the split stays stable; a member who
+     * is offline right now simply gets no stack here and is handed the team's remaining pool by
+     * {@link #applyStartSetup(Player)} when they rejoin.
+     */
+    private void distributeTeamJokers(int jokersAmount) {
+        this.forceItemBattle.getTeamManager().getTeams().forEach(team -> {
+            team.setRemainingJokers(jokersAmount);
+            int totalPlayers = team.getPlayers().size();
+            int jokerPerPlayer = jokersAmount / totalPlayers;
+            int remainingJoker = jokersAmount % totalPlayers;
+
+            for (ForceItemPlayer teamPlayer : team.getPlayers()) {
+                int playerJoker = jokerPerPlayer;
+
+                if (remainingJoker > 0) {
+                    playerJoker++;
+                    remainingJoker--;
+                }
+
+                Player teamMember = teamPlayer.player();
+                if (teamMember == null || !teamMember.isOnline()) {
+                    continue;
+                }
+                teamMember.getInventory().setItem(4, getJokers(playerJoker));
+            }
+        });
+    }
+
+    /** Clears the two blocks at spawn so nobody starts the round inside terrain. */
+    private void prepareSpawn(Location location) {
+        this.forceItemBattle.setSpawnLocation(location.clone());
+
+        Block block = location.getBlock();
+        block.setType(Material.AIR);
+        block.getRelative(BlockFace.UP).setType(Material.AIR);
     }
 
     public void finishGame() {

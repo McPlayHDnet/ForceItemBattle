@@ -3,9 +3,6 @@ package forceitembattle.commands.admin;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
-import forceitembattle.manager.Gamemanager;
-import forceitembattle.manager.ItemDifficultiesManager;
-import forceitembattle.model.Dimension;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GamePreset;
 import forceitembattle.model.ForceItemPlayer;
@@ -14,17 +11,10 @@ import forceitembattle.util.Text;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
-import org.bukkit.GameRules;
-import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.Sound;
-import org.bukkit.World;
-import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -101,7 +91,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
                 if (seconds == 0) {
                     cancel();
 
-                    startGame(durationMinutes, jokersAmount);
+                    plugin.getGamemanager().startGame(durationMinutes, jokersAmount);
                     return;
                 }
                 if (seconds < 6) {
@@ -134,19 +124,17 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
                         return;
                     }
 
-                    for (ForceItemPlayer teammate : forceItemPlayer.currentTeam().getPlayers()) {
-                        if (teammate == forceItemPlayer) continue;
+                    forceItemPlayer.teammate().ifPresent(teammate -> {
                         // A teammate who disconnected during the countdown keeps their roster spot,
                         // so their Player reference is still here but no longer connected.
-                        if (teammate.player() == null || !teammate.player().isOnline()) continue;
+                        if (teammate.player() == null || !teammate.player().isOnline()) return;
 
-                        Component subTitle = Text.of("<yellow>Team " + teammate.currentTeam().getTeamDisplay() + " <gray>| <green>" + forceItemPlayer.player().getName());
+                        Component subTitle = Text.of("<yellow>Team " + teammate.currentTeam().getTeamDisplay()
+                                + " <gray>| <green>" + forceItemPlayer.player().getName());
 
                         Title.Times times = Title.Times.times(Duration.ofMillis(600), Duration.ofMillis(2000), Duration.ofMillis(600));
-                        Title title = Title.title(Component.empty(), subTitle, times);
-
-                        teammate.player().showTitle(title);
-                    }
+                        teammate.player().showTitle(Title.title(Component.empty(), subTitle, times));
+                    });
                 });
             }
 
@@ -166,85 +154,6 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
                 return subTitle;
             }
         }.runTaskTimer(this.plugin, 0L, 20L);
-    }
-
-    private void startGame(int timeMinutes, int jokersAmount) {
-        this.plugin.getGamemanager().setGameStartTime(System.currentTimeMillis());
-        this.plugin.getGamemanager().setMatchId(java.util.UUID.randomUUID());
-        
-        this.plugin.getRecipeManager().initRecipes();
-
-        this.plugin.getPositionManager().clearPositions();
-        // Fixed 5 / 15 minutes switch times.
-        if (timeMinutes >= 50) {
-            ItemDifficultiesManager.State.EARLY.setUnlockedAtPercentage(0);
-            ItemDifficultiesManager.State.MID.setUnlockedAtPercentage((5. / timeMinutes) * 100);
-            ItemDifficultiesManager.State.LATE.setUnlockedAtPercentage((15. / timeMinutes) * 100);
-        } else {
-            // If game is under 50 minutes, use percentages
-            this.plugin.getItemDifficultiesManager().setupStates();
-        }
-
-        World world = Objects.requireNonNull(Dimension.OVERWORLD.world());
-        Location spawnLocation = world.getSpawnLocation();
-        setupSpawnLocation(spawnLocation);
-
-        Bukkit.getWorlds().forEach(worlds -> worlds.getWorldBorder().reset());
-        world.setGameRule(GameRules.ADVANCE_TIME, true);
-
-        // Only the players online at this instant. Anyone who disconnected during the countdown
-        // keeps their roster spot and is set up by the same call when they rejoin.
-        Bukkit.getOnlinePlayers().forEach(player -> this.plugin.getGamemanager().applyStartSetup(player));
-
-        if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-            distributeTeamJokers(jokersAmount);
-        }
-
-        this.plugin.getWanderingTraderManager().startTimer();
-        this.plugin.getRandomEventManager().startGame();
-        this.plugin.getGamemanager().setGameStartTime(System.currentTimeMillis());
-        Dimension.OVERWORLD.world().setTime(0);
-        this.plugin.getAchievementManager().resetProgress();
-        this.plugin.getItemDifficultiesManager().resetUnlockAnnouncements();
-        this.plugin.getGamemanager().setCurrentGameState(GameState.MID_GAME);
-        this.plugin.getScoreboardManager().updateAllPlayers();
-    }
-
-    private void distributeTeamJokers(int jokersAmount) {
-        this.plugin.getTeamManager().getTeams().forEach(team -> {
-            team.setRemainingJokers(jokersAmount);
-            int totalPlayers = team.getPlayers().size();
-            int jokerPerPlayer = jokersAmount / totalPlayers;
-            int remainingJoker = jokersAmount % totalPlayers;
-
-            for (ForceItemPlayer teamPlayer : team.getPlayers()) {
-                int playerJoker = jokerPerPlayer;
-
-                if (remainingJoker > 0) {
-                    playerJoker++;
-                    remainingJoker--;
-                }
-
-                // The share is computed for the whole team either way, so the split stays stable;
-                // a member who is offline right now simply gets no stack here and is handed the
-                // team's remaining pool by applyStartSetup when they rejoin.
-                Player teamMember = teamPlayer.player();
-                if (teamMember == null || !teamMember.isOnline()) {
-                    continue;
-                }
-                teamMember.getInventory().setItem(4, Gamemanager.getJokers(playerJoker));
-            }
-        });
-    }
-
-    private void setupSpawnLocation(Location location) {
-        this.plugin.setSpawnLocation(location.clone());
-
-        Block block = location.getBlock();
-        block.setType(Material.AIR);
-
-        block.getRelative(BlockFace.UP)
-                .setType(Material.AIR);
     }
 
     @Override
