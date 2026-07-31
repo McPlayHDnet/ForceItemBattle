@@ -33,6 +33,15 @@ public class ForceItemPlayer {
     private long lastItemAssignedAt;
     @Setter
     private boolean isSpectator;
+    /**
+     * Whether this player already received the round setup (gamemode, jokers, tools, backpack).
+     *
+     * The countdown-end pass only reaches players who are online at that instant, so a player who
+     * was disconnected then gets the same setup when they rejoin. This flag is what keeps that from
+     * handing out a second set of jokers to everyone else.
+     */
+    @Setter
+    private boolean startSetupApplied;
     @Setter
     private boolean lastItemWasSkipped;
     @Setter
@@ -130,6 +139,10 @@ public class ForceItemPlayer {
 
     public boolean isSpectator() {
         return isSpectator;
+    }
+
+    public boolean isStartSetupApplied() {
+        return startSetupApplied;
     }
 
     public boolean isLastItemWasSkipped() {

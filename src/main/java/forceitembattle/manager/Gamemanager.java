@@ -45,6 +45,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Sound;
 import org.bukkit.Statistic;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Mob;
@@ -108,14 +109,14 @@ public class Gamemanager implements Manager {
     private int gameDuration;
 
     /**
-     * True from the moment {@code /start} begins its countdown until the game
-     * actually flips to MID_GAME. During this window teams and force items have
-     * already been assigned, so anyone joining must be treated as a spectator
-     * rather than a half-initialized participant.
+     * Jokers configured for the current round.
+     *
+     * Kept here rather than only in /start's local scope because a player who reconnects after the
+     * countdown ended still has to be equipped, and by then the command's frame is long gone.
      */
     @Getter
     @Setter
-    private boolean starting;
+    private int jokerAmount;
 
     /**
      * Dev/testing override queue. When non-empty, {@link #generateMaterial()} and
@@ -464,6 +465,9 @@ public class Gamemanager implements Manager {
         boolean teamMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM);
         long now = System.currentTimeMillis();
 
+        // Everyone starts the round un-equipped; applyStartSetup flips this back per player.
+        this.forceItemPlayerMap.values().forEach(forceItemPlayer -> forceItemPlayer.setStartSetupApplied(false));
+
         // In run mode everyone shares one seeded pair; otherwise each player gets their own.
         MaterialPair shared = runMode ? this.nextMaterials(true) : null;
 
@@ -507,6 +511,10 @@ public class Gamemanager implements Manager {
 
         if (context.teamGame()) {
             this.forceItemPlayerMap.values().forEach(player -> {
+                // Spectators hold no team -- someone who joined during the countdown sits in the
+                // roster with a null team, and used to take the whole skip down with an NPE.
+                if (player.isSpectator()) return;
+
                 Team team = player.currentTeam();
                 team.setPreviousMaterial(team.getCurrentMaterial());
                 team.setCurrentMaterial(team.getNextMaterial());
@@ -515,6 +523,8 @@ public class Gamemanager implements Manager {
             });
         } else {
             this.forceItemPlayerMap.values().forEach(player -> {
+                if (player.isSpectator()) return;
+
                 player.setPreviousMaterial(player.currentMaterial());
                 player.setCurrentMaterial(player.getNextMaterial());
                 player.setNextMaterial(nextMaterial);
@@ -577,6 +587,10 @@ public class Gamemanager implements Manager {
         ForceItemPlayer gamePlayer = getForceItemPlayer(player.getUniqueId());
         if (teamMode) {
             forceItemPlayerMap().values().forEach(p -> {
+                // Spectators hold no team; skipping them here is what keeps a countdown joiner from
+                // NPE-ing every skip for the rest of the round.
+                if (p.isSpectator()) return;
+
                 if (!adminCommand)
                     gamePlayer.currentTeam().setRemainingJokers(gamePlayer.currentTeam().getRemainingJokers() - 1);
                 p.currentTeam().setCurrentMaterial(pair.current());
@@ -584,6 +598,8 @@ public class Gamemanager implements Manager {
             });
         } else {
             forceItemPlayerMap().values().forEach(p -> {
+                if (p.isSpectator()) return;
+
                 if (!adminCommand) gamePlayer.setRemainingJokers(gamePlayer.remainingJokers() - 1);
                 p.setCurrentMaterial(pair.current());
                 p.setNextMaterial(pair.next());
@@ -603,6 +619,120 @@ public class Gamemanager implements Manager {
         player.getInventory().setItem(6, new ItemBuilder(Material.NETHERRACK).setDisplayName("<dark_gray>» <red>Nether").getItemStack());
         player.getInventory().setItem(7, new ItemBuilder(Material.ENDER_EYE).setDisplayName("<dark_gray>» <dark_purple>End").getItemStack());
         player.getInventory().setItem(8, new ItemBuilder(Material.SPYGLASS).setDisplayName("<dark_gray>» <green>Spectate").getItemStack());
+    }
+
+    /**
+     * Applies one player's round setup: gamemode, jokers, starting tools, backpack and the
+     * gamesPlayed write. Spectators are put into spectator mode instead. Safe to call more than
+     * once — {@link ForceItemPlayer#isStartSetupApplied()} makes every call after the first a no-op.
+     *
+     * This lives here rather than inside /start because the countdown-end pass only walks the
+     * players who happen to be online at that instant. Someone who disconnected during the countdown
+     * is still a participant — their team and force item were assigned before the countdown even
+     * began — so the exact same setup has to run when they come back, or they rejoin in ADVENTURE
+     * mode with an empty inventory and no jokers, unable to play the round they are scored in.
+     */
+    public void applyStartSetup(Player player) {
+        ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
+
+        if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
+            player.setGameMode(GameMode.SPECTATOR);
+            player.getInventory().clear();
+            return;
+        }
+        if (forceItemPlayer.isStartSetupApplied()) {
+            return;
+        }
+        forceItemPlayer.setStartSetupApplied(true);
+
+        boolean teamMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM);
+
+        this.sendStartSummary(player, this.gameDuration / 60, this.jokerAmount);
+
+        player.setHealth(20);
+        player.setSaturation(20);
+        player.getInventory().clear();
+
+        if (!teamMode) {
+            forceItemPlayer.setRemainingJokers(this.jokerAmount);
+            if (!this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.RUN)) {
+                player.getInventory().setItem(4, getJokers(this.jokerAmount));
+            }
+        } else if (!this.isStarting() && forceItemPlayer.getRemainingJokers() > 0) {
+            // At countdown end the whole roster is served by /start's distributeTeamJokers, which
+            // splits the pool across both members. A player rejoining later missed that split, so
+            // hand them what the team has left: the stack is only the button, the count that gates
+            // a skip lives on the team.
+            player.getInventory().setItem(4, getJokers(forceItemPlayer.getRemainingJokers()));
+        }
+
+        player.getInventory().addItem(new ItemStack(Material.STONE_AXE));
+        player.getInventory().addItem(new ItemStack(Material.STONE_PICKAXE));
+        player.getInventory().addItem(new ItemStack(Material.STONE_SHOVEL));
+
+        player.setLevel(0);
+        player.setExp(0);
+        player.setWalkSpeed(0.2f);
+        player.setStatistic(Statistic.TIME_SINCE_REST, 72000); // 1hr = 3600 seconds * 20 ticks
+        player.getPassengers().forEach(Entity::remove);
+        player.getActivePotionEffects().forEach(potionEffect -> player.removePotionEffect(potionEffect.getType()));
+        player.setGameMode(GameMode.SURVIVAL);
+        player.playSound(player, Sound.BLOCK_END_PORTAL_SPAWN, 1, 1);
+
+        if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.BACKPACK)) {
+            if (teamMode) {
+                this.forceItemBattle.getBackpackManager().createTeamBackpack(forceItemPlayer.currentTeam(), forceItemPlayer);
+            } else {
+                this.forceItemBattle.getBackpackManager().createBackpack(forceItemPlayer);
+            }
+        }
+
+        if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.STATS)) {
+            FibStatisticsClient helper = this.forceItemBattle.getFibService().statistics();
+            if (!teamMode) {
+                helper.updateSoloStatisticsAsync(player.getUniqueId(), FIBServiceClient.soloUpdate().gamesPlayedAdd(1));
+                return;
+            }
+            if (forceItemPlayer.currentTeam() != null) {
+                Team currentTeam = forceItemPlayer.currentTeam();
+
+                for (ForceItemPlayer teamPlayer : currentTeam.getPlayers()) {
+                    if (!teamPlayer.equals(forceItemPlayer)) {
+                        // Both teammates write the same normalized team row, so only the
+                        // lower-UUID side sends gamesPlayed — otherwise every game counts twice.
+                        if (player.getUniqueId().toString()
+                                .compareTo(teamPlayer.player().getUniqueId().toString()) < 0) {
+                            helper.updateTeamStatisticsAsync(
+                                    player.getUniqueId(),
+                                    teamPlayer.player().getUniqueId(),
+                                    FIBServiceClient.teamUpdate().gamesPlayedAdd(1)
+                            );
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    private void sendStartSummary(Player player, int timeMinutes, int jokersAmount) {
+        player.sendMessage(" ");
+        player.sendMessage(Text.of("<dark_gray>» <gold><b>Force Item Battle</b> <dark_gray>«"));
+        player.sendMessage(" ");
+        player.sendMessage(Text.of("  <dark_gray>● <gray>Duration <dark_gray>» <green>" + timeMinutes + " minutes"));
+        player.sendMessage(Text.of("  <dark_gray>● <gray>Jokers <dark_gray>» <green>" + jokersAmount));
+        for (GameSetting gameSettings : GameSetting.values()) {
+            if (gameSettings.defaultValue() instanceof Integer) continue;
+            player.sendMessage(Text.of("  <dark_gray>● <gray>" + gameSettings.displayName() + " <dark_gray>» <green>" + (this.forceItemBattle.getSettings().isSettingEnabled(gameSettings) ? "<dark_green>✔" : "<dark_red>✘")));
+        }
+        player.sendMessage(" ");
+        player.sendMessage(Text.of(" <dark_gray>● <gray>Useful Commands:"));
+        player.sendMessage(Text.of("  <dark_gray>» <gold>/info"));
+        player.sendMessage(Text.of("  <dark_gray>» <gold>/infowiki"));
+        player.sendMessage(Text.of("  <dark_gray>» <gold>/spawn"));
+        player.sendMessage(Text.of("  <dark_gray>» <gold>/bed"));
+        player.sendMessage(Text.of("  <dark_gray>» <gold>/pos"));
+        player.sendMessage("");
     }
 
     public void finishGame() {
@@ -775,6 +905,15 @@ public class Gamemanager implements Manager {
 
     public boolean isPreGame() {
         return this.getCurrentGameState() == GameState.PRE_GAME;
+    }
+
+    /**
+     * True from the moment {@code /start} begins its countdown until the game actually flips to
+     * MID_GAME. During this window teams and force items have already been assigned, so the roster
+     * is frozen: anyone joining is a spectator for the round, and anyone leaving keeps their spot.
+     */
+    public boolean isStarting() {
+        return this.getCurrentGameState() == GameState.STARTING;
     }
 
     public boolean isPausedGame() {

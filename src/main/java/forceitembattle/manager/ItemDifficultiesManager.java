@@ -860,7 +860,7 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.DEAD_TUBE_CORAL, State.LATE);
         register(Material.DEAD_TUBE_CORAL_BLOCK, State.MID);
         register(Material.DEAD_TUBE_CORAL_FAN, State.LATE);
-        register(Material.DECORATED_POT, State.LATE);
+        register(Material.DECORATED_POT, State.EARLY);
         register(Material.DEEPSLATE, State.EARLY);
         register(Material.DEEPSLATE_BRICK_SLAB, State.EARLY);
         register(Material.DEEPSLATE_BRICK_STAIRS, State.EARLY);
