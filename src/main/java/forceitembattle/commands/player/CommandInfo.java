@@ -47,7 +47,7 @@ public class CommandInfo extends CustomCommand implements CustomTabCompleter {
                     player.sendMessage(Text.of("<red>You are not playing, type /info [item] to get information about an item"));
                     return;
                 }
-                item = new ItemStack(forceItemPlayer.getCurrentMaterial());
+                item = new ItemStack(forceItemPlayer.activeMaterial());
             } else {
                 player.sendMessage(Text.of("<red>You are not playing, type /info [item] to get information about an item"));
             }

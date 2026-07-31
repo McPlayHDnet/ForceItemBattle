@@ -15,6 +15,7 @@ import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GamePreset;
 import forceitembattle.service.FIBServiceClient;
 import forceitembattle.service.FibStatisticsClient;
+import forceitembattle.service.PlayerStatsWrite;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameState;
 import forceitembattle.gui.ItemBuilder;
@@ -188,7 +189,7 @@ public class Gamemanager implements Manager {
             Integer placement = team == null
                     ? placesMap.get(forceItemPlayer)
                     : (teamPlaces != null ? teamPlaces.get(team) : null);
-            long score = team == null ? forceItemPlayer.currentScore() : team.getCurrentScore();
+            long score = forceItemPlayer.activeScore();
             participants.add(new FibMatchParticipantSubmitDto()
                     .playerUuid(forceItemPlayer.player().getUniqueId())
                     .teamIndex(team == null ? null : team.getTeamId())
@@ -307,7 +308,7 @@ public class Gamemanager implements Manager {
                 if (forceItemPlayer.isSpectator()) {
                     continue;
                 }
-                int score = forceItemPlayer.currentScore() == null ? 0 : forceItemPlayer.currentScore();
+                int score = forceItemPlayer.activeScore();
                 if (best == null || score > bestScore) {
                     best = forceItemPlayer.player().getUniqueId();
                     bestScore = score;
@@ -526,7 +527,7 @@ public class Gamemanager implements Manager {
                 if (player.isSpectator()) return;
 
                 player.setPreviousMaterial(player.currentMaterial());
-                player.setCurrentMaterial(player.getNextMaterial());
+                player.setCurrentMaterial(player.nextMaterial());
                 player.setNextMaterial(nextMaterial);
                 player.setLastItemAssignedAt(now);
             });
@@ -545,7 +546,7 @@ public class Gamemanager implements Manager {
             team.setLastItemAssignedAt(now);
         } else {
             forceItemPlayer.setPreviousMaterial(forceItemPlayer.currentMaterial());
-            forceItemPlayer.setCurrentMaterial(forceItemPlayer.getNextMaterial());
+            forceItemPlayer.setCurrentMaterial(forceItemPlayer.nextMaterial());
             forceItemPlayer.setNextMaterial(nextMaterial);
             forceItemPlayer.setLastItemAssignedAt(now);
         }
@@ -574,7 +575,16 @@ public class Gamemanager implements Manager {
         return null;
     }
 
-    public void forceSkipItem(Player player, boolean adminCommand) {
+    /**
+     * Replaces the current item for the whole server with a freshly generated one — what /voteskip
+     * does when the vote carries, and what /skip does as an admin override.
+     *
+     * Charging a joker is <em>not</em> part of this: the only caller that costs one (the vote)
+     * spends it itself, on the initiator. It used to be charged here as well, inside the per-player
+     * loop below and always against the initiator — so a carried vote cost them one joker per
+     * non-spectator in the round, plus the one the vote had already taken.
+     */
+    public void forceSkipItem(Player player) {
         if (!forceItemPlayerExist(player.getUniqueId())) {
             return;
         }
@@ -584,28 +594,19 @@ public class Gamemanager implements Manager {
 
         MaterialPair pair = this.nextMaterials(runMode);
 
-        ForceItemPlayer gamePlayer = getForceItemPlayer(player.getUniqueId());
-        if (teamMode) {
-            forceItemPlayerMap().values().forEach(p -> {
-                // Spectators hold no team; skipping them here is what keeps a countdown joiner from
-                // NPE-ing every skip for the rest of the round.
-                if (p.isSpectator()) return;
+        forceItemPlayerMap().values().forEach(p -> {
+            // Spectators hold no team; skipping them here is what keeps a countdown joiner from
+            // NPE-ing every skip for the rest of the round.
+            if (p.isSpectator()) return;
 
-                if (!adminCommand)
-                    gamePlayer.currentTeam().setRemainingJokers(gamePlayer.currentTeam().getRemainingJokers() - 1);
+            if (teamMode) {
                 p.currentTeam().setCurrentMaterial(pair.current());
                 p.currentTeam().setNextMaterial(pair.next());
-            });
-        } else {
-            forceItemPlayerMap().values().forEach(p -> {
-                if (p.isSpectator()) return;
-
-                if (!adminCommand) gamePlayer.setRemainingJokers(gamePlayer.remainingJokers() - 1);
+            } else {
                 p.setCurrentMaterial(pair.current());
                 p.setNextMaterial(pair.next());
-            });
-        }
-
+            }
+        });
     }
 
     public void giveSpectatorItems(Player player) {
@@ -658,12 +659,12 @@ public class Gamemanager implements Manager {
             if (!this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.RUN)) {
                 player.getInventory().setItem(4, getJokers(this.jokerAmount));
             }
-        } else if (!this.isStarting() && forceItemPlayer.getRemainingJokers() > 0) {
+        } else if (!this.isStarting() && forceItemPlayer.activeJokers() > 0) {
             // At countdown end the whole roster is served by /start's distributeTeamJokers, which
             // splits the pool across both members. A player rejoining later missed that split, so
             // hand them what the team has left: the stack is only the button, the count that gates
             // a skip lives on the team.
-            player.getInventory().setItem(4, getJokers(forceItemPlayer.getRemainingJokers()));
+            player.getInventory().setItem(4, getJokers(forceItemPlayer.activeJokers()));
         }
 
         player.getInventory().addItem(new ItemStack(Material.STONE_AXE));
@@ -693,24 +694,15 @@ public class Gamemanager implements Manager {
                 helper.updateSoloStatisticsAsync(player.getUniqueId(), FIBServiceClient.soloUpdate().gamesPlayedAdd(1));
                 return;
             }
-            if (forceItemPlayer.currentTeam() != null) {
-                Team currentTeam = forceItemPlayer.currentTeam();
-
-                for (ForceItemPlayer teamPlayer : currentTeam.getPlayers()) {
-                    if (!teamPlayer.equals(forceItemPlayer)) {
-                        // Both teammates write the same normalized team row, so only the
-                        // lower-UUID side sends gamesPlayed — otherwise every game counts twice.
-                        if (player.getUniqueId().toString()
-                                .compareTo(teamPlayer.player().getUniqueId().toString()) < 0) {
-                            helper.updateTeamStatisticsAsync(
-                                    player.getUniqueId(),
-                                    teamPlayer.player().getUniqueId(),
-                                    FIBServiceClient.teamUpdate().gamesPlayedAdd(1)
-                            );
-                        }
-                        break;
-                    }
-                }
+            Team currentTeam = forceItemPlayer.currentTeam();
+            if (currentTeam != null && currentTeam.isPrimaryWriter(forceItemPlayer)) {
+                // Both teammates write the same normalized team row, so only the primary side sends
+                // gamesPlayed — otherwise every game counts twice.
+                forceItemPlayer.teammate().ifPresent(teammate -> helper.updateTeamStatisticsAsync(
+                        player.getUniqueId(),
+                        teammate.player().getUniqueId(),
+                        FIBServiceClient.teamUpdate().gamesPlayedAdd(1)
+                ));
             }
         }
     }
@@ -777,45 +769,33 @@ public class Gamemanager implements Manager {
                             ? Integer.valueOf(1).equals(placesMap.get(forceItemPlayer))
                             : (teamPlaces != null && Integer.valueOf(1).equals(teamPlaces.get(currentTeam)));
 
-                    if (currentTeam == null) {
-                        // ---- Solo game: everything on solo stats ----
-                        var soloUpdate = FIBServiceClient.soloUpdate()
-                                .blocksTravelledAdd(distance)
-                                .highestScore((long) forceItemPlayer.currentScore());
-
-                        if (won) {
-                            soloUpdate.gamesWonAdd(1);
-                        }
-
-                        helper.updateSoloStatisticsAsync(player.getUniqueId(), soloUpdate);
-                    } else {
-                        // ---- Team game: keep everything on team/member stats, never solo ----
-                        for (ForceItemPlayer teamPlayer : currentTeam.getPlayers()) {
-                            if (!teamPlayer.equals(forceItemPlayer)) {
-                                UUID teammateUuid = teamPlayer.player().getUniqueId();
-
-                                // This player's own travel → their own member contribution.
-                                helper.updateMemberStatisticsAsync(
-                                        player.getUniqueId(),
-                                        teammateUuid,
-                                        player.getUniqueId(),
-                                        FIBServiceClient.memberUpdate().blocksTravelledAdd(distance)
-                                );
-
-                                // Shared team stats. highestScore is a max-set (safe from both
-                                // sides); gamesWon must count once, so only the lower-UUID side sends.
-                                var teamUpdate = FIBServiceClient.teamUpdate()
-                                        .highestScore((long) currentTeam.getCurrentScore());
-                                boolean lowerSide = player.getUniqueId().toString()
-                                        .compareTo(teammateUuid.toString()) < 0;
-                                if (lowerSide && won) {
-                                    teamUpdate.gamesWonAdd(1);
+                    // This player's own travel: their solo row when solo, their member contribution
+                    // inside the team otherwise. highestScore rides along on the solo update only —
+                    // in a team game the score belongs to the shared team row written below.
+                    PlayerStatsWrite.record(helper, player.getUniqueId(), forceItemPlayer,
+                            () -> {
+                                var soloUpdate = FIBServiceClient.soloUpdate()
+                                        .blocksTravelledAdd(distance)
+                                        .highestScore((long) forceItemPlayer.activeScore());
+                                if (won) {
+                                    soloUpdate.gamesWonAdd(1);
                                 }
+                                return soloUpdate;
+                            },
+                            () -> FIBServiceClient.memberUpdate().blocksTravelledAdd(distance));
 
-                                helper.updateTeamStatisticsAsync(player.getUniqueId(), teammateUuid, teamUpdate);
-                                break;
+                    if (currentTeam != null) {
+                        // Shared team stats. highestScore is a max-set (safe from both sides);
+                        // gamesWon must count once, so only the primary side sends it.
+                        forceItemPlayer.teammate().ifPresent(teammate -> {
+                            var teamUpdate = FIBServiceClient.teamUpdate()
+                                    .highestScore((long) forceItemPlayer.activeScore());
+                            if (won && currentTeam.isPrimaryWriter(forceItemPlayer)) {
+                                teamUpdate.gamesWonAdd(1);
                             }
-                        }
+                            helper.updateTeamStatisticsAsync(
+                                    player.getUniqueId(), teammate.player().getUniqueId(), teamUpdate);
+                        });
                     }
 
                     // Win streak. Player-scoped, so this is unlike every other write above:

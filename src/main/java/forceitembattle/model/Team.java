@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import lombok.Getter;
 import lombok.Setter;
@@ -77,6 +78,39 @@ public class Team {
         if (forceItem != null) {
             this.foundItems.add(forceItem);
         }
+    }
+
+    /**
+     * The member of this team that isn't {@code player}, or empty if they are the only one on it.
+     *
+     * Every stats write in a team game is addressed by the pair (player, teammate), so this lookup
+     * used to be open-coded at nine call sites in three different shapes — a stream with
+     * {@code findFirst}, a stream with {@code forEach}, and a {@code for} loop with {@code break}.
+     */
+    public Optional<ForceItemPlayer> teammateOf(ForceItemPlayer player) {
+        return this.players.stream()
+                .filter(member -> !member.equals(player))
+                .findFirst();
+    }
+
+    /**
+     * Whether {@code player} is the member responsible for this team's once-per-team writes.
+     *
+     * Both members write the same normalized team row, so a stat that counts rather than maxes
+     * (gamesPlayed, gamesWon) would be doubled if both sides sent it. Picking the lowest UUID is
+     * arbitrary but stable, and both members agree on the answer without coordinating.
+     *
+     * <p>Not for per-player stats: a win streak is owned by each member individually, so both
+     * report those. See the callers in {@code Gamemanager} for which is which.
+     */
+    public boolean isPrimaryWriter(ForceItemPlayer player) {
+        if (player == null || player.player() == null) {
+            return false;
+        }
+        String own = player.player().getUniqueId().toString();
+        return this.players.stream()
+                .filter(member -> member.player() != null)
+                .noneMatch(member -> member.player().getUniqueId().toString().compareTo(own) < 0);
     }
 
     public List<ForceItem> getFoundItems() {

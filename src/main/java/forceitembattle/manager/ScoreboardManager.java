@@ -67,13 +67,7 @@ public class ScoreboardManager implements Manager {
                 team.prefix(Text.of(""));
             }
 
-            Material mat;
-
-            if (settings.isSettingEnabled(GameSetting.TEAM) && fibPlayer.currentTeam() != null) {
-                mat = fibPlayer.currentTeam().getCurrentMaterial();
-            } else {
-                mat = fibPlayer.currentMaterial();
-            }
+            Material mat = fibPlayer.activeMaterial();
 
             if (mat != null) {
                 String itemIcon = this.plugin

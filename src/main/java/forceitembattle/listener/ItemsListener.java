@@ -158,7 +158,7 @@ public class ItemsListener implements Listener {
     }
 
     private void checkItemFound(Player player, ForceItemPlayer forceItemPlayer, ItemStack item) {
-        Material currentItem = forceItemPlayer.getCurrentMaterial();
+        Material currentItem = forceItemPlayer.activeMaterial();
         if (item == null) {
             return;
         }

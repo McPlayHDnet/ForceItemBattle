@@ -43,7 +43,7 @@ public class VoteSkipManager implements Manager {
         this.noVotes.clear();
         this.yesVotes.add(initiator.getUniqueId());
         this.initiator = this.plugin.getGamemanager().getForceItemPlayer(initiator.getUniqueId());
-        this.votedMaterial = this.initiator.getCurrentMaterial();
+        this.votedMaterial = this.initiator.activeMaterial();
 
         String materialName = this.plugin.getGamemanager().getMaterialName(this.votedMaterial);
         String unicodeMaterial = this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, this.votedMaterial);
@@ -118,13 +118,10 @@ public class VoteSkipManager implements Manager {
             player.sendMessage(" ");
         });
 
-        if (this.initiator.currentTeam() == null) {
-            this.initiator.setRemainingJokers(this.initiator.remainingJokers() - 1);
-        } else {
-            this.initiator.currentTeam().setRemainingJokers(this.initiator.currentTeam().getRemainingJokers() - 1);
-        }
+        // The vote costs the initiator a joker whether or not it carried.
+        this.initiator.spendJoker();
         if (skipItem) {
-            this.plugin.getGamemanager().forceSkipItem(this.initiator.player(), false);
+            this.plugin.getGamemanager().forceSkipItem(this.initiator.player());
         }
 
         this.votedMaterial = null;

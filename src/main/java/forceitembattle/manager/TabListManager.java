@@ -92,7 +92,7 @@ public class TabListManager implements Manager {
         if (forceItemPlayer.isSpectator()) {
             return "";
         }
-        return "\n<gray>Jokers · <aqua>" + forceItemPlayer.getRemainingJokers();
+        return "\n<gray>Jokers · <aqua>" + forceItemPlayer.activeJokers();
     }
 
     private String buildTraderBlock() {

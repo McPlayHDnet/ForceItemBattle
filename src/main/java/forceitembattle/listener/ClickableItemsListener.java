@@ -10,6 +10,7 @@ import forceitembattle.model.Dimension;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.service.FIBServiceClient;
 import forceitembattle.service.FibStatisticsClient;
+import forceitembattle.service.PlayerStatsWrite;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.gui.ItemBuilder;
 import forceitembattle.model.Locator;
@@ -142,16 +143,9 @@ public class ClickableItemsListener implements Listener {
 
             if (this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
                 FibStatisticsClient helper = this.plugin.getFibService().statistics();
-                if (forceItemPlayer.currentTeam() != null) {
-                    forceItemPlayer.currentTeam().getPlayers().stream()
-                            .filter(t -> !t.equals(forceItemPlayer))
-                            .forEach(t -> helper.updateMemberStatisticsAsync(
-                                    player.getUniqueId(), t.player().getUniqueId(), player.getUniqueId(),
-                                    FIBServiceClient.memberUpdate().wheelOfFortuneUsesAdd(1L)));
-                } else {
-                    helper.updateSoloStatisticsAsync(player.getUniqueId(),
-                            FIBServiceClient.soloUpdate().wheelOfFortuneUsesAdd(1L));
-                }
+                PlayerStatsWrite.record(helper, player.getUniqueId(), forceItemPlayer,
+                        () -> FIBServiceClient.soloUpdate().wheelOfFortuneUsesAdd(1L),
+                        () -> FIBServiceClient.memberUpdate().wheelOfFortuneUsesAdd(1L));
             }
             return;
         }
@@ -171,14 +165,11 @@ public class ClickableItemsListener implements Listener {
         }
         e.setCancelled(true);
 
-        int jokers = forceItemPlayer.getRemainingJokers();
-        if (jokers <= 0) {
+        if (forceItemPlayer.activeJokers() <= 0) {
             player.sendMessage(Text.of("<red>No more skips left."));
             player.getInventory().remove(Gamemanager.getJokerMaterial());
             return;
         }
-
-        jokers--;
 
         int foundSlot = e.getPlayer()
                 .getInventory()
@@ -187,13 +178,17 @@ public class ClickableItemsListener implements Listener {
             return;
         }
 
+        Material mat = forceItemPlayer.activeMaterial();
+        int jokersLeft = forceItemPlayer.spendJoker();
+
         ItemStack stack = player.getInventory().getItem(foundSlot);
         if (stack.getAmount() > 1) {
-            stack.setAmount((this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM) ? stack.getAmount() - 1 : jokers));
+            // In a team game the pool is shared, so this player's stack only loses the one they
+            // just spent; solo, the stack size *is* the remaining count.
+            stack.setAmount(forceItemPlayer.isInTeam() ? stack.getAmount() - 1 : jokersLeft);
         } else {
             stack.setType(Material.AIR);
         }
-        Material mat = forceItemPlayer.getCurrentMaterial();
 
         player.getInventory().setItem(foundSlot, stack);
 
@@ -202,12 +197,6 @@ public class ClickableItemsListener implements Listener {
             player.getWorld().dropItemNaturally(player.getLocation(), CustomMaterials.itemStackOf(mat));
         }
         this.plugin.getTimerManager().sendActionBar();
-
-        if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-            forceItemPlayer.currentTeam().setRemainingJokers(jokers);
-        } else {
-            forceItemPlayer.setRemainingJokers(jokers);
-        }
 
         FoundItemEvent foundItemEvent = new FoundItemEvent(player);
         foundItemEvent.setFoundItem(new ItemStack(mat));

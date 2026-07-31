@@ -5,6 +5,7 @@ import forceitembattle.manager.Gamemanager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.service.FIBServiceClient;
 import forceitembattle.service.FibStatisticsClient;
+import forceitembattle.service.PlayerStatsWrite;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.gui.ItemBuilder;
 import forceitembattle.util.Text;
@@ -142,19 +143,9 @@ public class PlayerLifecycleListener implements Listener {
 
         if (this.plugin.getGamemanager().isMidGame() && this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
             FibStatisticsClient helper = plugin.getFibService().statistics();
-            if (gamePlayer != null && gamePlayer.currentTeam() != null) {
-                gamePlayer.currentTeam().getPlayers().stream()
-                        .filter(teammate -> !teammate.equals(gamePlayer))
-                        .forEach(teammate -> helper.updateMemberStatisticsAsync(
-                                player.getUniqueId(),
-                                teammate.player().getUniqueId(),
-                                player.getUniqueId(),
-                                FIBServiceClient.memberUpdate().deathsAdd(1L)
-                        ));
-            } else {
-                helper.updateSoloStatisticsAsync(player.getUniqueId(),
-                        FIBServiceClient.soloUpdate().deathsAdd(1L));
-            }
+            PlayerStatsWrite.record(helper, player.getUniqueId(), gamePlayer,
+                    () -> FIBServiceClient.soloUpdate().deathsAdd(1L),
+                    () -> FIBServiceClient.memberUpdate().deathsAdd(1L));
         }
 
         // Automatically respawn player.

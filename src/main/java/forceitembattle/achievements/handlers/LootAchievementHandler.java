@@ -55,7 +55,7 @@ public class LootAchievementHandler implements AchievementHandler<SimpleAchievem
         List<ItemStack> loot = lootEvent.getLoot();
 
         if (neededItem) {
-            Material needed = forceItemPlayer.getCurrentMaterial();
+            Material needed = forceItemPlayer.activeMaterial();
             for (ItemStack item : loot) {
                 if (item != null && item.getType() == needed) {
                     return true;

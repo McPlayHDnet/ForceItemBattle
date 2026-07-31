@@ -31,7 +31,7 @@ public class CommandSkip extends CustomCommand {
 
             if (target != null) {
                 player.sendMessage(Text.of("<gray>Skipped this item for " + target.getName()));
-                this.plugin.getGamemanager().forceSkipItem(target, true);
+                this.plugin.getGamemanager().forceSkipItem(target);
             } else {
                 player.sendMessage(Text.of("<red>This player is not online"));
             }

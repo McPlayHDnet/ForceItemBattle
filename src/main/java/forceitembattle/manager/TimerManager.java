@@ -94,16 +94,16 @@ public class TimerManager implements Manager {
                 ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
 
                 if (!forceItemPlayer.isSpectator()) {
-                    Material material = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM) ? forceItemPlayer.currentTeam().getCurrentMaterial() : forceItemPlayer.currentMaterial();
+                    Material material = forceItemPlayer.activeMaterial();
 
                     boolean teamMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM);
                     boolean scoreShown = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.SCORE);
                     String timeText = "<gradient:#fcef64:#fcc44b:#ff9e59><b>" + this.formatSeconds(this.getTimeLeft()) + "</b></gradient>";
                     String scoreText = "";
                     if (scoreShown) {
-                        scoreText = teamMode
-                                ? "<dark_gray>| <green>Team score: <white>" + forceItemPlayer.currentTeam().getCurrentScore()
-                                : "<dark_gray>| <green>Your score: <white>" + forceItemPlayer.currentScore();
+                        // Only the label differs by mode now — the number is the active score either way.
+                        scoreText = "<dark_gray>| <green>" + (teamMode ? "Team score: " : "Your score: ")
+                                + "<white>" + forceItemPlayer.activeScore();
                     }
 
                     player.sendActionBar(
@@ -117,7 +117,7 @@ public class TimerManager implements Manager {
                     String chainBossTitle = null;
 
                     if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.CHAIN)) {
-                        Material nextMaterial = forceItemPlayer.getNextMaterial();
+                        Material nextMaterial = forceItemPlayer.activeNextMaterial();
                         chainBossTitle = "<gradient:#6eee87:#5fc52e><b>" + this.forceItemBattle.getGamemanager().getMaterialName(nextMaterial) + " <reset><shadow:black:0.4>" + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(false, nextMaterial) + "</shadow>";
                     }
 

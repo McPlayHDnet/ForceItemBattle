@@ -28,7 +28,7 @@ public class CommandFixSkips extends CustomCommand {
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
 
         boolean usingTeams = this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM);
-        int remainingJokers = forceItemPlayer.getRemainingJokers();
+        int remainingJokers = forceItemPlayer.activeJokers();
         if (remainingJokers == 0) {
             if (!silent) {
                 player.sendMessage(Text.of("<red>You don't have any jokers left."));

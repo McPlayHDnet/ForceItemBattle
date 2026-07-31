@@ -28,7 +28,7 @@ public class CommandInfoWiki extends CustomCommand {
                     player.sendMessage(Text.of("<red>You are not playing."));
                     return;
                 }
-                item = new ItemStack(forceItemPlayer.getCurrentMaterial());
+                item = new ItemStack(forceItemPlayer.activeMaterial());
             } else {
                 player.sendMessage(Text.of("<red>You are not playing."));
                 return;

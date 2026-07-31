@@ -34,7 +34,7 @@ public class CommandAskTrade extends CustomCommand {
             return;
         }
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-        Material currentMaterial = forceItemPlayer.getCurrentMaterial();
+        Material currentMaterial = forceItemPlayer.activeMaterial();
         String materialName = this.plugin.getGamemanager().getMaterialName(currentMaterial);
 
         player.sendMessage(Text.of(Prefix.TRADE + "<gray>You asked for <dark_aqua>" + materialName));
