@@ -3,36 +3,19 @@ package forceitembattle.commands.admin;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
-import forceitembattle.manager.Gamemanager;
-import forceitembattle.manager.ItemDifficultiesManager;
-import forceitembattle.model.Dimension;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GamePreset;
-import forceitembattle.service.FIBServiceClient;
-import forceitembattle.service.FibStatisticsClient;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameState;
-import forceitembattle.model.Team;
 import forceitembattle.util.Text;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
-import org.bukkit.GameRules;
-import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.Sound;
-import org.bukkit.Statistic;
-import org.bukkit.World;
-import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
 public class CommandStart extends CustomCommand implements CustomTabCompleter {
@@ -92,9 +75,11 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
 
         this.plugin.getTimerManager().setTimeLeft(durationSeconds);
         this.plugin.getGamemanager().setGameDuration(durationSeconds);
+        this.plugin.getGamemanager().setJokerAmount(jokersAmount);
         this.plugin.getGamemanager().initializeMaterials();
 
-        this.plugin.getGamemanager().setStarting(true);
+        // Teams and force items are assigned by now, so the roster is frozen from here on.
+        this.plugin.getGamemanager().setCurrentGameState(GameState.STARTING);
 
         new BukkitRunnable() {
 
@@ -106,7 +91,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
                 if (seconds == 0) {
                     cancel();
 
-                    startGame(durationMinutes, jokersAmount);
+                    plugin.getGamemanager().startGame(durationMinutes, jokersAmount);
                     return;
                 }
                 if (seconds < 6) {
@@ -139,16 +124,17 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
                         return;
                     }
 
-                    for (ForceItemPlayer teammate : forceItemPlayer.currentTeam().getPlayers()) {
-                        if (teammate == forceItemPlayer) continue;
+                    forceItemPlayer.teammate().ifPresent(teammate -> {
+                        // A teammate who disconnected during the countdown keeps their roster spot,
+                        // so their Player reference is still here but no longer connected.
+                        if (teammate.player() == null || !teammate.player().isOnline()) return;
 
-                        Component subTitle = Text.of("<yellow>Team " + teammate.currentTeam().getTeamDisplay() + " <gray>| <green>" + forceItemPlayer.player().getName());
+                        Component subTitle = Text.of("<yellow>Team " + teammate.currentTeam().getTeamDisplay()
+                                + " <gray>| <green>" + forceItemPlayer.player().getName());
 
                         Title.Times times = Title.Times.times(Duration.ofMillis(600), Duration.ofMillis(2000), Duration.ofMillis(600));
-                        Title title = Title.title(Component.empty(), subTitle, times);
-
-                        teammate.player().showTitle(title);
-                    }
+                        teammate.player().showTitle(Title.title(Component.empty(), subTitle, times));
+                    });
                 });
             }
 
@@ -168,167 +154,6 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
                 return subTitle;
             }
         }.runTaskTimer(this.plugin, 0L, 20L);
-    }
-
-    private void startGame(int timeMinutes, int jokersAmount) {
-        this.plugin.getGamemanager().setGameStartTime(System.currentTimeMillis());
-        this.plugin.getGamemanager().setMatchId(java.util.UUID.randomUUID());
-        
-        this.plugin.getRecipeManager().initRecipes();
-
-        this.plugin.getPositionManager().clearPositions();
-        // Fixed 5 / 15 minutes switch times.
-        if (timeMinutes >= 50) {
-            ItemDifficultiesManager.State.EARLY.setUnlockedAtPercentage(0);
-            ItemDifficultiesManager.State.MID.setUnlockedAtPercentage((5. / timeMinutes) * 100);
-            ItemDifficultiesManager.State.LATE.setUnlockedAtPercentage((15. / timeMinutes) * 100);
-        } else {
-            // If game is under 50 minutes, use percentages
-            this.plugin.getItemDifficultiesManager().setupStates();
-        }
-
-        World world = Objects.requireNonNull(Dimension.OVERWORLD.world());
-        Location spawnLocation = world.getSpawnLocation();
-        setupSpawnLocation(spawnLocation);
-
-        Bukkit.getWorlds().forEach(worlds -> worlds.getWorldBorder().reset());
-        world.setGameRule(GameRules.ADVANCE_TIME, true);
-
-        Bukkit.getOnlinePlayers().forEach(player -> {
-            ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-
-            if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
-                player.setGameMode(GameMode.SPECTATOR);
-                player.getInventory().clear();
-                return;
-            }
-
-            sendStartSummary(player, timeMinutes, jokersAmount);
-
-            player.setHealth(20);
-            player.setSaturation(20);
-            player.getInventory().clear();
-
-            if (!this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-                forceItemPlayer.setRemainingJokers(jokersAmount);
-                if (!this.plugin.getSettings().isSettingEnabled(GameSetting.RUN)) {
-                    player.getInventory().setItem(4, Gamemanager.getJokers(jokersAmount));
-                }
-            }
-
-            player.getInventory().addItem(new ItemStack(Material.STONE_AXE));
-            player.getInventory().addItem(new ItemStack(Material.STONE_PICKAXE));
-            player.getInventory().addItem(new ItemStack(Material.STONE_SHOVEL));
-
-            player.setLevel(0);
-            player.setExp(0);
-            player.setWalkSpeed(0.2f);
-            player.setStatistic(Statistic.TIME_SINCE_REST, 72000); // 1hr = 3600 seconds * 20 ticks
-            player.getPassengers().forEach(Entity::remove);
-            player.getActivePotionEffects().forEach(potionEffect -> player.removePotionEffect(potionEffect.getType()));
-            player.setGameMode(!forceItemPlayer.isSpectator() ? GameMode.SURVIVAL : GameMode.SPECTATOR);
-            player.playSound(player, Sound.BLOCK_END_PORTAL_SPAWN, 1, 1);
-
-            if (this.plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK)) {
-                if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-                    this.plugin.getBackpackManager().createTeamBackpack(forceItemPlayer.currentTeam(), forceItemPlayer);
-                } else {
-                    this.plugin.getBackpackManager().createBackpack(forceItemPlayer);
-                }
-
-            }
-
-
-            if (this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
-                FibStatisticsClient helper = this.plugin.getFibService().statistics();
-                if (!this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-                    helper.updateSoloStatisticsAsync(player.getUniqueId(), FIBServiceClient.soloUpdate().gamesPlayedAdd(1));
-                    return;
-                }
-                if (forceItemPlayer.currentTeam() != null) {
-                    Team currentTeam = forceItemPlayer.currentTeam();
-
-                    for (ForceItemPlayer teamPlayer : currentTeam.getPlayers()) {
-                        if (!teamPlayer.equals(forceItemPlayer)) {
-                            // Both teammates write the same normalized team row, so only the
-                            // lower-UUID side sends gamesPlayed — otherwise every game counts twice.
-                            if (player.getUniqueId().toString()
-                                    .compareTo(teamPlayer.player().getUniqueId().toString()) < 0) {
-                                helper.updateTeamStatisticsAsync(
-                                        player.getUniqueId(),
-                                        teamPlayer.player().getUniqueId(),
-                                        FIBServiceClient.teamUpdate().gamesPlayedAdd(1)
-                                );
-                            }
-                            break;
-                        }
-                    }
-                }
-            }
-
-        });
-        if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-            distributeTeamJokers(jokersAmount);
-        }
-
-        this.plugin.getWanderingTraderManager().startTimer();
-        this.plugin.getRandomEventManager().startGame();
-        this.plugin.getGamemanager().setGameStartTime(System.currentTimeMillis());
-        Dimension.OVERWORLD.world().setTime(0);
-        this.plugin.getAchievementManager().resetProgress();
-        this.plugin.getItemDifficultiesManager().resetUnlockAnnouncements();
-        this.plugin.getGamemanager().setCurrentGameState(GameState.MID_GAME);
-        this.plugin.getGamemanager().setStarting(false);
-        this.plugin.getScoreboardManager().updateAllPlayers();
-    }
-
-    private void sendStartSummary(Player player, int timeMinutes, int jokersAmount) {
-        player.sendMessage(" ");
-        player.sendMessage(Text.of("<dark_gray>» <gold><b>Force Item Battle</b> <dark_gray>«"));
-        player.sendMessage(" ");
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Duration <dark_gray>» <green>" + timeMinutes + " minutes"));
-        player.sendMessage(Text.of("  <dark_gray>● <gray>Jokers <dark_gray>» <green>" + jokersAmount));
-        for (GameSetting gameSettings : GameSetting.values()) {
-            if (gameSettings.defaultValue() instanceof Integer) continue;
-            player.sendMessage(Text.of("  <dark_gray>● <gray>" + gameSettings.displayName() + " <dark_gray>» <green>" + (this.plugin.getSettings().isSettingEnabled(gameSettings) ? "<dark_green>✔" : "<dark_red>✘")));
-        }
-        player.sendMessage(" ");
-        player.sendMessage(Text.of(" <dark_gray>● <gray>Useful Commands:"));
-        player.sendMessage(Text.of("  <dark_gray>» <gold>/info"));
-        player.sendMessage(Text.of("  <dark_gray>» <gold>/infowiki"));
-        player.sendMessage(Text.of("  <dark_gray>» <gold>/spawn"));
-        player.sendMessage(Text.of("  <dark_gray>» <gold>/bed"));
-        player.sendMessage(Text.of("  <dark_gray>» <gold>/pos"));
-        player.sendMessage("");
-    }
-
-    private void distributeTeamJokers(int jokersAmount) {
-        this.plugin.getTeamManager().getTeams().forEach(team -> {
-            team.setRemainingJokers(jokersAmount);
-            int totalPlayers = team.getPlayers().size();
-            int jokerPerPlayer = jokersAmount / totalPlayers;
-            int remainingJoker = jokersAmount % totalPlayers;
-
-            for (ForceItemPlayer teamPlayer : team.getPlayers()) {
-                int playerJoker = jokerPerPlayer;
-
-                if (remainingJoker > 0) {
-                    playerJoker++;
-                    remainingJoker--;
-                }
-                teamPlayer.player().getInventory().setItem(4, Gamemanager.getJokers(playerJoker));
-            }
-        });
-    }
-
-    private void setupSpawnLocation(Location location) {
-        this.plugin.setSpawnLocation(location.clone());
-
-        Block block = location.getBlock();
-        block.setType(Material.AIR);
-
-        block.getRelative(BlockFace.UP)
-                .setType(Material.AIR);
     }
 
     @Override

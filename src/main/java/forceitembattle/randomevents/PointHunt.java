@@ -9,6 +9,7 @@ import forceitembattle.model.Team;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.Prefix;
 import forceitembattle.util.Text;
+import forceitembattle.util.TimeFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -105,6 +106,17 @@ public class PointHunt implements RandomEvent {
         }
         this.conclude();
         return true;
+    }
+
+    /**
+     * How long the hunt has left, for the tab footer. Scores are deliberately not shown — the hunt
+     * is a race you play by finding items faster, not by watching a board, and the footer already
+     * carries pools, jokers and any trader.
+     */
+    @Override
+    public String tabFooterBlock() {
+        return "\n\n<b>" + RandomEvents.POINT_HUNT.coloredName() + "</b> <dark_gray>· "
+                + TimeFormat.colored(this.secondsLeft);
     }
 
     @Override

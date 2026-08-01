@@ -1,6 +1,7 @@
 package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ActiveTrader;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
@@ -67,13 +68,7 @@ public class ScoreboardManager implements Manager {
                 team.prefix(Text.of(""));
             }
 
-            Material mat;
-
-            if (settings.isSettingEnabled(GameSetting.TEAM) && fibPlayer.currentTeam() != null) {
-                mat = fibPlayer.currentTeam().getCurrentMaterial();
-            } else {
-                mat = fibPlayer.currentMaterial();
-            }
+            Material mat = fibPlayer.activeMaterial();
 
             if (mat != null) {
                 String itemIcon = this.plugin
@@ -81,7 +76,7 @@ public class ScoreboardManager implements Manager {
                         .getUnicodeFromMaterial(true, mat);
 
                 team.suffix(Text.of(
-                        " <gray>[<gold>" + gameManager.getMaterialName(mat)
+                        " <gray>[<gold>" + CustomMaterials.nameOf(mat)
                                 + " <reset><shadow:black:0.4>" + itemIcon + "</shadow><gray>]"
                 ));
             } else {

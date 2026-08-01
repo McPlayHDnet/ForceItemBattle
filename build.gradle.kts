@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "forceitembattle"
-version = "26.7.8" // year.month.update
+version = "26.7.9" // year.month.update
 description = "ForceItemBattle for McPlayHD.net"
 
 java {
@@ -102,7 +102,6 @@ bukkitPluginYaml {
     commands.register("ping")
     commands.register("stoptimer")
     commands.register("teams")
-    commands.register("asktrade")
     commands.register("trade")
     commands.register("shout")
     commands.register("fixskips")

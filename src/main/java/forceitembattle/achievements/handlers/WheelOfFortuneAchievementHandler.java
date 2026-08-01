@@ -19,7 +19,7 @@ public class WheelOfFortuneAchievementHandler implements AchievementHandler<Simp
         if (!(event instanceof WheelOfFortuneWinEvent win)) {
             return false;
         }
-        return win.getWonItem() == forceItemPlayer.getCurrentMaterial();
+        return win.getWonItem() == forceItemPlayer.activeMaterial();
     }
 
     @Override

@@ -1,6 +1,7 @@
 package forceitembattle.listener;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.util.Scheduler;
 import forceitembattle.achievements.Achievements;
 import forceitembattle.achievements.Trigger;
 import forceitembattle.event.AntimatterTeleporterUseEvent;
@@ -13,7 +14,6 @@ import forceitembattle.util.Text;
 import io.papermc.paper.advancement.AdvancementDisplay;
 import io.papermc.paper.event.player.PlayerInventorySlotChangeEvent;
 import io.papermc.paper.event.player.PlayerPurchaseEvent;
-import io.papermc.paper.event.player.PlayerTradeEvent;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -190,7 +190,7 @@ public class AchievementListener implements Listener {
             return;
         }
         // Click/drag fire before the slot settles, so re-check on the next tick.
-        Bukkit.getScheduler().runTask(this.plugin, () ->
+        Scheduler.runSync(() ->
                 this.plugin.getAchievementManager().handleEvent(player, event, Trigger.INVENTORY_FULL));
     }
 

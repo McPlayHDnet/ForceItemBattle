@@ -44,4 +44,17 @@ public interface RandomEvent {
      */
     default void cancel() {
     }
+
+    /**
+     * This event's contribution to the tab footer, as MiniMessage, refreshed once a second while
+     * the event holds the active slot. Empty by default — an event with nothing ongoing to report
+     * (an instant one, or one that resolves on the next find) shows nothing.
+     *
+     * The same for every player, so it is built once per refresh rather than per viewer. Blocks
+     * start with a blank line to separate them from what precedes; see
+     * {@link forceitembattle.manager.TabListManager} for the surrounding layout.
+     */
+    default String tabFooterBlock() {
+        return "";
+    }
 }

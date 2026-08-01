@@ -8,7 +8,6 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.IntStream;
 import javax.annotation.Nonnull;
 import lombok.Getter;
 import lombok.Setter;
@@ -177,19 +176,6 @@ public class InventoryBuilder implements InventoryHolder {
         this.player = player;
         this.update();
         player.openInventory(this.inventory);
-    }
-
-    public int[] getBorders() {
-        int size = this.inventory.getSize();
-        return IntStream.range(0, size).filter(i -> size < 27 || i < 9
-                || i % 9 == 0 || (i - 8) % 9 == 0 || i > size - 9).toArray();
-    }
-
-    public int[] getCorners() {
-        int size = this.inventory.getSize();
-        return IntStream.range(0, size).filter(i -> i < 2 || (i > 6 && i < 10)
-                || i == 17 || i == size - 18
-                || (i > size - 11 && i < size - 7) || i > size - 3).toArray();
     }
 
     @Override

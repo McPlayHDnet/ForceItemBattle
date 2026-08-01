@@ -204,13 +204,12 @@ public final class ForceItemBattle extends JavaPlugin {
         this.initCommands();
 
         //this 0 delay scheduler is needed in paper, because at that time this code gets initialized and the worlds after that, so we'll wait
-        Bukkit.getScheduler().scheduleSyncDelayedTask(this, () -> Bukkit.getWorlds().forEach(world -> {
+        Scheduler.runLaterSync(() -> Bukkit.getWorlds().forEach(world -> {
             boolean keepInventory = getSettings().isSettingEnabled(GameSetting.KEEP_INVENTORY);
             if (getSettings().isSettingEnabled(GameSetting.EVENT) && !keepInventory) {
 
                 keepInventory = true;
-                Bukkit.getScheduler().scheduleSyncDelayedTask(
-                        this,
+                Scheduler.runLaterSync(
                         () -> world.setGameRule(GameRules.KEEP_INVENTORY, false),
                         20 * 60 * 5 // 5 minutes
                 );
@@ -393,6 +392,8 @@ public final class ForceItemBattle extends JavaPlugin {
         commands.registerCommand(new CommandFixLocate(this));
         commands.registerCommand(new CommandForceItem(this));
         commands.registerCommand(new CommandRandomEvent(this));
+
+        commands.warnAboutUnboundCommands();
     }
 
     @Override

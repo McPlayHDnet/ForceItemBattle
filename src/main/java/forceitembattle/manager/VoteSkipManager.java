@@ -1,7 +1,9 @@
 package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.util.Scheduler;
 import forceitembattle.util.Text;
 import java.util.HashSet;
 import java.util.Random;
@@ -43,9 +45,9 @@ public class VoteSkipManager implements Manager {
         this.noVotes.clear();
         this.yesVotes.add(initiator.getUniqueId());
         this.initiator = this.plugin.getGamemanager().getForceItemPlayer(initiator.getUniqueId());
-        this.votedMaterial = this.initiator.getCurrentMaterial();
+        this.votedMaterial = this.initiator.activeMaterial();
 
-        String materialName = this.plugin.getGamemanager().getMaterialName(this.votedMaterial);
+        String materialName = CustomMaterials.nameOf(this.votedMaterial);
         String unicodeMaterial = this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, this.votedMaterial);
 
         Bukkit.getOnlinePlayers().forEach(player -> {
@@ -58,7 +60,7 @@ public class VoteSkipManager implements Manager {
             player.sendMessage(" ");
         });
 
-        this.voteTask = Bukkit.getScheduler().runTaskLater(this.plugin, this::endVoting, 20 * 60);
+        this.voteTask = Scheduler.runLaterSync(this::endVoting, 20 * 60);
     }
 
     public void castVote(Player player, boolean voteYes) {
@@ -92,7 +94,7 @@ public class VoteSkipManager implements Manager {
         int no = this.noVotes.size();
         String voteLabel = (yes != 1 ? "votes" : "vote");
 
-        String materialName = this.plugin.getGamemanager().getMaterialName(this.votedMaterial);
+        String materialName = CustomMaterials.nameOf(this.votedMaterial);
         String unicodeMaterial = this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, this.votedMaterial);
 
         boolean skipItem = false;
@@ -118,13 +120,10 @@ public class VoteSkipManager implements Manager {
             player.sendMessage(" ");
         });
 
-        if (this.initiator.currentTeam() == null) {
-            this.initiator.setRemainingJokers(this.initiator.remainingJokers() - 1);
-        } else {
-            this.initiator.currentTeam().setRemainingJokers(this.initiator.currentTeam().getRemainingJokers() - 1);
-        }
+        // The vote costs the initiator a joker whether or not it carried.
+        this.initiator.spendJoker();
         if (skipItem) {
-            this.plugin.getGamemanager().forceSkipItem(this.initiator.player(), false);
+            this.plugin.getGamemanager().forceSkipItem(this.initiator.player());
         }
 
         this.votedMaterial = null;

@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.model.Dimension;
 import forceitembattle.settings.GameSetting;
+import forceitembattle.settings.GameSettings;
 import forceitembattle.settings.QuickieMode;
 import forceitembattle.model.DescriptionItem;
 import java.io.File;
@@ -14,6 +15,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -24,12 +26,21 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import lombok.Getter;
-import lombok.Setter;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 
 public class ItemDifficultiesManager implements Manager {
+
+    /**
+     * Rounds at or above this length use fixed minute marks for the MID/LATE unlocks instead of
+     * percentages, so a long game doesn't hold the later pools back for half an hour.
+     */
+    private static final int FIXED_SCHEDULE_MIN_MINUTES = 50;
+    private static final int FIXED_MID_UNLOCK_MINUTES = 5;
+    private static final int FIXED_LATE_UNLOCK_MINUTES = 15;
+
+    private static final Random RANDOM = new Random();
 
     private final ForceItemBattle plugin;
     @Getter
@@ -46,6 +57,38 @@ public class ItemDifficultiesManager implements Manager {
     // only reported once. Cleared per game via resetUnlockAnnouncements().
     private final Set<State> announcedUnlockedStates = EnumSet.noneOf(State.class);
 
+    /**
+     * When each pool opens, as a percentage of the round's total duration.
+     *
+     * This used to be a {@code @Setter} field on the {@link State} enum constants themselves, which
+     * made the unlock schedule JVM-global state hanging off an enum — /start reached in and wrote it
+     * directly, and nothing but the next call to the setup method ever reset it. It belongs to the
+     * manager that owns the pools, so it lives here.
+     */
+    private final Map<State, Double> unlockPercentages = new EnumMap<>(State.class);
+
+    /** Materials per pool, derived from {@link #itemRegistry} once at enable. */
+    private final Map<State, List<Material>> itemsByState = new EnumMap<>(State.class);
+
+    /**
+     * The generation pool for the current tick: every unlocked item minus the ones the current
+     * settings exclude.
+     *
+     * Rebuilding this walked all ~1,367 registered items and re-read three settings per item, and
+     * {@link #getAvailableItems()} is called on every item generation, every back-to-back
+     * probability, and once per candidate material when the /items menu paints — where it was an
+     * O(n²) scan that rebuilt the list 1,367 times for one GUI open. It is cached against the
+     * inputs that can change it instead.
+     */
+    private List<Material> availablePool;
+    private Set<Material> availablePoolIndex;
+    private PoolKey availablePoolKey;
+
+    /** Everything {@link #getAvailableItems()} depends on; a change in any of it rebuilds the pool. */
+    private record PoolKey(List<State> activeStates, QuickieMode quickieMode,
+                           boolean hard, boolean extreme, boolean end) {
+    }
+
     public ItemDifficultiesManager(ForceItemBattle forceItemBattle) {
         this.plugin = forceItemBattle;
         this.FIXED_RANDOM_SEED = new Random().nextLong();
@@ -56,19 +99,43 @@ public class ItemDifficultiesManager implements Manager {
     @Override
     public void enable() {
         registerAllItems();
-        setupStates();
+        for (State state : State.VALUES) {
+            itemsByState.put(state, getItemsByState(state));
+        }
+        useDefaultUnlockSchedule();
         loadDescriptions();
     }
 
-    public void setupStates() {
-        State.EARLY.setUnlockedAtPercentage(0);
-        State.MID.setUnlockedAtPercentage(11.11);
-        State.LATE.setUnlockedAtPercentage(28.88);
+    /**
+     * Percentage-based unlock points, used for any round short enough that fixed minute marks would
+     * put a pool past the end of the game.
+     */
+    public void useDefaultUnlockSchedule() {
+        setUnlockSchedule(0, 11.11, 28.88);
+    }
 
-        // Populate state item lists from registry
-        for (State state : State.VALUES) {
-            state.setItems(getItemsByState(state));
+    /**
+     * Picks the unlock schedule for a round of {@code durationMinutes}.
+     *
+     * Long rounds get fixed marks — MID at 5 minutes, LATE at 15 — because on a 90-minute game the
+     * percentage schedule would hold LATE back for 26 minutes. Below that threshold the percentages
+     * keep the three pools spread across the round instead of bunched at the start.
+     */
+    public void configureUnlockSchedule(int durationMinutes) {
+        if (durationMinutes >= FIXED_SCHEDULE_MIN_MINUTES) {
+            setUnlockSchedule(0,
+                    (FIXED_MID_UNLOCK_MINUTES / (double) durationMinutes) * 100,
+                    (FIXED_LATE_UNLOCK_MINUTES / (double) durationMinutes) * 100);
+        } else {
+            useDefaultUnlockSchedule();
         }
+    }
+
+    private void setUnlockSchedule(double early, double mid, double late) {
+        unlockPercentages.put(State.EARLY, early);
+        unlockPercentages.put(State.MID, mid);
+        unlockPercentages.put(State.LATE, late);
+        invalidateAvailablePool();
     }
 
     private void loadDescriptions() {
@@ -175,28 +242,55 @@ public class ItemDifficultiesManager implements Manager {
     }
 
     /**
-     * Get items available based on elapsed game time.
+     * The items a force item can currently be drawn from: every unlocked pool, minus what the
+     * current settings exclude.
+     *
+     * Cached — see {@link #availablePool}. The returned list is unmodifiable: callers used to get a
+     * fresh copy they could rearrange in place, and the wheel of fortune shuffled it. That caller
+     * now copies explicitly, so an in-place edit here fails loudly instead of corrupting the pool
+     * every other reader is about to use this tick.
      */
     public List<Material> getAvailableItems() {
-        int timeLeft = this.plugin.getTimerManager().getTimeLeft();
-        int totalDuration = this.plugin.getGamemanager().getGameDuration();
-        List<Material> items = new ArrayList<>();
+        refreshAvailablePool();
+        return this.availablePool;
+    }
 
-        int elapsedTime = (totalDuration - timeLeft) / 60;
+    /** Whether {@code material} is in the current generation pool. O(1), unlike scanning the list. */
+    public boolean itemInList(Material material) {
+        refreshAvailablePool();
+        return this.availablePoolIndex.contains(material);
+    }
 
-        QuickieMode quickieMode = this.plugin.getSettings().getQuickieMode();
+    private void refreshAvailablePool() {
+        GameSettings settings = this.plugin.getSettings();
+        PoolKey key = new PoolKey(
+                getActiveStates(),
+                settings.getQuickieMode(),
+                settings.isSettingEnabled(GameSetting.HARD),
+                settings.isSettingEnabled(GameSetting.EXTREME),
+                settings.isSettingEnabled(GameSetting.END));
 
-        for (State state : State.VALUES) {
-            if (!quickieAllows(quickieMode, state)) {
-                continue;
-            }
-            int unlockTime = (int) Math.round((totalDuration * (state.getUnlockedAtPercentage() / 100)) / 60);
-            if (elapsedTime >= unlockTime) {
-                items.addAll(state.getItems());
-            }
+        if (key.equals(this.availablePoolKey) && this.availablePool != null) {
+            return;
         }
 
-        return items;
+        List<Material> items = new ArrayList<>();
+        for (State state : key.activeStates()) {
+            items.addAll(itemsByState.getOrDefault(state, List.of()));
+        }
+        filterDisabledItems(items);
+
+        this.availablePool = List.copyOf(items);
+        this.availablePoolIndex = Set.copyOf(items);
+        this.availablePoolKey = key;
+    }
+
+    /**
+     * Drops the cached pool so the next read rebuilds it. Needed when something the {@link PoolKey}
+     * cannot see changes — the unlock schedule, or the registry itself.
+     */
+    private void invalidateAvailablePool() {
+        this.availablePoolKey = null;
     }
 
     /**
@@ -207,23 +301,11 @@ public class ItemDifficultiesManager implements Manager {
      * and is never announced.
      */
     public List<State> pollNewlyUnlockedStates() {
-        int timeLeft = this.plugin.getTimerManager().getTimeLeft();
-        int totalDuration = this.plugin.getGamemanager().getGameDuration();
-        int elapsedTime = (totalDuration - timeLeft) / 60;
-
-        QuickieMode quickieMode = this.plugin.getSettings().getQuickieMode();
+        announcedUnlockedStates.add(State.EARLY); // baseline pool, never announced
 
         List<State> newlyUnlocked = new ArrayList<>();
-        for (State state : State.VALUES) {
-            if (state == State.EARLY) {
-                announcedUnlockedStates.add(state); // baseline pool, never announced
-                continue;
-            }
-            if (!quickieAllows(quickieMode, state)) {
-                continue;
-            }
-            int unlockTime = (int) Math.round((totalDuration * (state.getUnlockedAtPercentage() / 100)) / 60);
-            if (elapsedTime >= unlockTime && announcedUnlockedStates.add(state)) {
+        for (State state : getActiveStates()) {
+            if (announcedUnlockedStates.add(state)) {
                 newlyUnlocked.add(state);
             }
         }
@@ -304,37 +386,40 @@ public class ItemDifficultiesManager implements Manager {
         return (totalDuration - timeLeft) / 60;
     }
 
+    /**
+     * The minute mark this pool opens at, for the current round's duration. The one place this is
+     * worked out — {@code getAvailableItems} and {@code pollNewlyUnlockedStates} each carried their
+     * own inlined copy of the same expression.
+     */
     private int unlockMinutes(State state) {
         int totalDuration = this.plugin.getGamemanager().getGameDuration();
-        return (int) Math.round((totalDuration * (state.getUnlockedAtPercentage() / 100)) / 60);
-    }
-
-    public Material generateRandomMaterial() {
-        List<Material> items = new ArrayList<>(getAvailableItems());
-        filterDisabledItems(items);
-
-        if (items.isEmpty()) {
-            throw new IllegalStateException("No available items after filtering.");
-        }
-
-        return items.get(new Random().nextInt(items.size()));
-    }
-
-    public Material generateSeededRandomMaterial() {
-        List<Material> items = new ArrayList<>(getAvailableItems());
-        filterDisabledItems(items);
-
-        if (items.isEmpty()) {
-            throw new IllegalStateException("No available items after filtering.");
-        }
-
-        return items.get(FIXED_RANDOM.nextInt(items.size()));
+        double percentage = this.unlockPercentages.getOrDefault(state, 0d);
+        return (int) Math.round((totalDuration * (percentage / 100)) / 60);
     }
 
     // ==================== ITEM GENERATION ====================
 
+    public Material generateRandomMaterial() {
+        return drawFrom(RANDOM);
+    }
+
+    public Material generateSeededRandomMaterial() {
+        return drawFrom(FIXED_RANDOM);
+    }
+
+    private Material drawFrom(Random random) {
+        List<Material> items = getAvailableItems();
+
+        if (items.isEmpty()) {
+            throw new IllegalStateException("No available items after filtering.");
+        }
+
+        return items.get(random.nextInt(items.size()));
+    }
+
     /**
-     * Filter out items based on game settings.
+     * Filter out items based on game settings. Applied once when the pool is built, not per draw —
+     * {@link #getAvailableItems()} already hands back a filtered list.
      */
     private void filterDisabledItems(Collection<Material> items) {
         items.removeIf(material -> {
@@ -363,10 +448,6 @@ public class ItemDifficultiesManager implements Manager {
 
             return false;
         });
-    }
-
-    public boolean itemInList(Material material) {
-        return this.getAvailableItems().contains(material);
     }
 
     public boolean itemInAllLists(Material material) {
@@ -860,7 +941,7 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.DEAD_TUBE_CORAL, State.LATE);
         register(Material.DEAD_TUBE_CORAL_BLOCK, State.MID);
         register(Material.DEAD_TUBE_CORAL_FAN, State.LATE);
-        register(Material.DECORATED_POT, State.LATE);
+        register(Material.DECORATED_POT, State.EARLY);
         register(Material.DEEPSLATE, State.EARLY);
         register(Material.DEEPSLATE_BRICK_SLAB, State.EARLY);
         register(Material.DEEPSLATE_BRICK_STAIRS, State.EARLY);
@@ -1865,6 +1946,14 @@ public class ItemDifficultiesManager implements Manager {
         EXTREME
     }
 
+    /**
+     * The three item pools, in unlock order.
+     *
+     * Carries only its own identity — label and colour. The pool's contents and the point in the
+     * round it opens at are per-game facts owned by {@link ItemDifficultiesManager}; they used to
+     * be mutable fields here, which made them JVM-global and let /start rewrite the schedule by
+     * reaching into an enum constant.
+     */
     @Getter
     public enum State {
         EARLY("Early", "green"),
@@ -1875,12 +1964,6 @@ public class ItemDifficultiesManager implements Manager {
 
         private final String displayName;
         private final String color;
-
-        @Setter
-        private List<Material> items = new ArrayList<>();
-
-        @Setter
-        private double unlockedAtPercentage;
 
         State(String displayName, String color) {
             this.displayName = displayName;

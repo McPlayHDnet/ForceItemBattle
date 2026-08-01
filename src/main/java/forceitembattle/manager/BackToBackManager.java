@@ -3,6 +3,7 @@ package forceitembattle.manager;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.model.BackToBackProbability;
+import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameContext;
 import forceitembattle.model.Rarity;
@@ -12,6 +13,7 @@ import forceitembattle.service.FibStatisticsClient;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.GameBroadcast;
 import forceitembattle.util.InventorySearch;
+import forceitembattle.util.Scheduler;
 import forceitembattle.util.Text;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
@@ -39,11 +41,7 @@ public class BackToBackManager implements Manager {
             return;
         }
 
-        Material currentMaterial = context.teamGame()
-                ? forceItemPlayer.currentTeam().getCurrentMaterial()
-                : forceItemPlayer.getCurrentMaterial();
-
-        BackToBackResult result = check(forceItemPlayer, currentMaterial, context);
+        BackToBackResult result = check(forceItemPlayer, forceItemPlayer.activeMaterial(), context);
 
         if (!result.hasBackToBack()) {
             resetStreaks(forceItemPlayer, result, context);
@@ -80,31 +78,27 @@ public class BackToBackManager implements Manager {
         boolean backpackEnabled = this.plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK);
         boolean teamGame = forceItemPlayer.currentTeam() != null;
 
+        // Everything the owner of this streak already holds: both members' inventories in a team
+        // game, just this player's when solo.
         Set<Material> uniqueMaterials = new HashSet<>();
+        for (ForceItemPlayer member : forceItemPlayer.squad()) {
+            InventorySearch.collectUniqueMaterials(member.player().getInventory(), uniqueMaterials);
+        }
+
         int streak = forceItemPlayer.backToBackStreak();
 
         if (teamGame) {
             Team team = forceItemPlayer.currentTeam();
-
-            for (ForceItemPlayer teammate : team.getPlayers()) {
-                InventorySearch.collectUniqueMaterials(teammate.player().getInventory(), uniqueMaterials);
-            }
-
             if (backpackEnabled) {
                 InventorySearch.collectUniqueMaterials(this.plugin.getBackpackManager().getTeamBackpack(team), uniqueMaterials);
             }
-
             streak = team.getBackToBackStreak();
-        } else {
-            InventorySearch.collectUniqueMaterials(player.getInventory(), uniqueMaterials);
-
-            if (backpackEnabled) {
-                InventorySearch.collectUniqueMaterials(this.plugin.getBackpackManager().getPlayerBackpack(player), uniqueMaterials);
-            }
+        } else if (backpackEnabled) {
+            InventorySearch.collectUniqueMaterials(this.plugin.getBackpackManager().getPlayerBackpack(player), uniqueMaterials);
         }
 
-        Material previous = forceItemPlayer.getPreviousMaterial();
-        Material current = forceItemPlayer.getCurrentMaterial();
+        Material previous = forceItemPlayer.activePreviousMaterial();
+        Material current = forceItemPlayer.activeMaterial();
 
         double baseProbability = Math.min((double) uniqueMaterials.size() / totalItemsInPool, 1.0); // 100% cap
         double probability = Math.pow(baseProbability, streak);
@@ -136,11 +130,7 @@ public class BackToBackManager implements Manager {
      * or (in team games) a teammate.
      */
     private BackToBackResult check(ForceItemPlayer forceItemPlayer, Material targetMaterial, GameContext context) {
-        Material previousMaterial = context.teamGame()
-                ? forceItemPlayer.currentTeam().getPreviousMaterial()
-                : forceItemPlayer.previousMaterial();
-
-        if (previousMaterial == targetMaterial) {
+        if (forceItemPlayer.activePreviousMaterial() == targetMaterial) {
             return new BackToBackResult(true, null);
         }
 
@@ -158,16 +148,9 @@ public class BackToBackManager implements Manager {
             }
         }
 
-        if (context.teamGame() && forceItemPlayer.currentTeam() != null) {
-            for (ForceItemPlayer teammate : forceItemPlayer.currentTeam().getPlayers()) {
-                if (teammate.equals(forceItemPlayer)) {
-                    continue;
-                }
-
-                if (InventorySearch.contains(teammate.player().getInventory(), targetMaterial)) {
-                    return new BackToBackResult(true, teammate);
-                }
-            }
+        ForceItemPlayer teammate = forceItemPlayer.teammate().orElse(null);
+        if (teammate != null && InventorySearch.contains(teammate.player().getInventory(), targetMaterial)) {
+            return new BackToBackResult(true, teammate);
         }
 
         return new BackToBackResult(false, null);
@@ -176,8 +159,8 @@ public class BackToBackManager implements Manager {
     private void triggerBackToBackEvent(ForceItemPlayer forceItemPlayer, BackToBackResult result, GameContext context) {
         Player player = forceItemPlayer.player();
 
-        Bukkit.getScheduler().runTaskLater(this.plugin, () -> {
-            ItemStack foundItem = new ItemStack(forceItemPlayer.getCurrentMaterial());
+        Scheduler.runLaterSync(() -> {
+            ItemStack foundItem = new ItemStack(forceItemPlayer.activeMaterial());
 
             FoundItemEvent foundNextItemEvent = new FoundItemEvent(player);
             foundNextItemEvent.setFoundItem(foundItem);
@@ -186,7 +169,7 @@ public class BackToBackManager implements Manager {
 
             BackToBackProbability probability = calculateProbability(forceItemPlayer);
             String unicode = this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, foundItem.getType());
-            String materialName = this.plugin.getGamemanager().getMaterialName(foundItem.getType());
+            String materialName = CustomMaterials.nameOf(foundItem.getType());
 
             Component message;
             if (result.teammateWhoHasIt() != null) {
@@ -228,10 +211,7 @@ public class BackToBackManager implements Manager {
             return;
         }
 
-        ForceItemPlayer teammate = team.getPlayers().stream()
-                .filter(t -> !t.equals(forceItemPlayer))
-                .findFirst()
-                .orElse(null);
+        ForceItemPlayer teammate = forceItemPlayer.teammate().orElse(null);
         if (teammate == null) {
             return;
         }

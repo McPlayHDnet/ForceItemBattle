@@ -52,7 +52,8 @@ public class GameRulesListener implements Listener {
         if (!(event.getEntity() instanceof Player)) {
             return;
         }
-        if (this.plugin.getGamemanager().isPreGame()) {
+        // Countdown counts as lobby here: no one should lose hunger before the game actually runs.
+        if (this.plugin.getGamemanager().isPreGame() || this.plugin.getGamemanager().isStarting()) {
             event.setCancelled(true);
             return;
         }

@@ -4,13 +4,14 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.model.BackToBack;
 import forceitembattle.model.BackToBackProbability;
+import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ForceItem;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameContext;
 import forceitembattle.model.Rarity;
-import forceitembattle.model.Team;
 import forceitembattle.service.FIBServiceClient;
 import forceitembattle.service.FibStatisticsClient;
+import forceitembattle.service.PlayerStatsWrite;
 import forceitembattle.util.GameBroadcast;
 import forceitembattle.util.Text;
 import java.util.Map;
@@ -49,9 +50,7 @@ public class FoundItemListener implements Listener {
 
         long timeSpentMs = 0;
         if (!event.isBackToBack()) {
-            long assignedAt = context.teamGame()
-                    ? forceItemPlayer.currentTeam().getLastItemAssignedAt()
-                    : forceItemPlayer.lastItemAssignedAt();
+            long assignedAt = forceItemPlayer.activeItemAssignedAt();
             if (assignedAt > 0) {
                 timeSpentMs = System.currentTimeMillis() - assignedAt;
             }
@@ -67,7 +66,7 @@ public class FoundItemListener implements Listener {
     private void handleRegularFind(FoundItemEvent event, Player player, ItemStack itemStack, ForceItemPlayer forceItemPlayer, GameContext context) {
         String action = event.isSkipped() ? "skipped" : "found";
         String unicode = this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, itemStack.getType());
-        String materialName = this.plugin.getGamemanager().getMaterialName(itemStack.getType());
+        String materialName = CustomMaterials.nameOf(itemStack.getType());
 
         Component message = Text.of(
                 String.format("<green>%s <gray>%s <reset><shadow:black:0.4>%s</shadow> <gold>%s",
@@ -97,48 +96,25 @@ public class FoundItemListener implements Listener {
                 this.plugin.getTimerManager().formatSeconds(this.plugin.getTimerManager().getTimeLeft()),
                 System.currentTimeMillis(),
                 back2Back,
-                event.isSkipped()
+                event.isSkipped(),
+                forceItemPlayer.player().getUniqueId()
         );
 
-        if (context.teamGame()) {
-            Team team = forceItemPlayer.currentTeam();
-            team.setCurrentScore(team.getCurrentScore() + 1);
-            team.addFoundItemToList(forceItem);
-            team.getPlayers().forEach(p ->
-                    p.player().playSound(p.player().getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1)
-            );
-        } else {
-            forceItemPlayer.setCurrentScore(forceItemPlayer.currentScore() + 1);
-            forceItemPlayer.addFoundItemToList(forceItem);
-            forceItemPlayer.player().playSound(
-                    forceItemPlayer.player().getLocation(),
-                    Sound.BLOCK_NOTE_BLOCK_BELL,
-                    1,
-                    1
-            );
-        }
+        forceItemPlayer.recordFoundItem(forceItem);
+        forceItemPlayer.squad().forEach(member ->
+                member.player().playSound(member.player().getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1)
+        );
+
         this.plugin.getGamemanager().evaluateLead();
     }
 
     private void trackRarity(ForceItemPlayer forceItemPlayer, Rarity rarity, GameContext context) {
         FibStatisticsClient statistics = this.plugin.getFibService().statistics();
-        Player player = forceItemPlayer.player();
-
         var raritiesUpdate = rarity.toRaritiesUpdate();
 
-        if (context.teamGame()) {
-            forceItemPlayer.currentTeam().getPlayers().stream()
-                    .filter(teammate -> !teammate.equals(forceItemPlayer))
-                    .forEach(teammate -> statistics.updateMemberStatisticsAsync(
-                            player.getUniqueId(),
-                            teammate.player().getUniqueId(),
-                            player.getUniqueId(),
-                            FIBServiceClient.memberUpdate().raritiesAdd(raritiesUpdate)
-                    ));
-        } else {
-            statistics.updateSoloStatisticsAsync(player.getUniqueId(),
-                    FIBServiceClient.soloUpdate().raritiesAdd(raritiesUpdate));
-        }
+        PlayerStatsWrite.record(statistics, forceItemPlayer.player().getUniqueId(), forceItemPlayer,
+                () -> FIBServiceClient.soloUpdate().raritiesAdd(raritiesUpdate),
+                () -> FIBServiceClient.memberUpdate().raritiesAdd(raritiesUpdate));
     }
 
     private void updateStats(ForceItemPlayer forceItemPlayer, Player player,
@@ -157,46 +133,37 @@ public class FoundItemListener implements Listener {
             forceItemPlayer.setItemStreak(forceItemPlayer.itemStreak() + 1);
         }
 
-        if (context.teamGame()) {
-            if (!isSkipped) {
-                int teamStreak = forceItemPlayer.itemStreak();
-                statistics.updateTeamStatisticsAsync(
-                        player.getUniqueId(),
-                        forceItemPlayer.currentTeam().getPlayers().stream()
-                                .filter(t -> !t.equals(forceItemPlayer)).findFirst()
-                                .map(t -> t.player().getUniqueId()).orElse(player.getUniqueId()),
-                        FIBServiceClient.teamUpdate().longestItemStreak(teamStreak)
-                );
-            }
-
-            long finalTimeSpentMs = timeSpentMs;
-            forceItemPlayer.currentTeam().getPlayers().stream()
-                    .filter(teammate -> !teammate.equals(forceItemPlayer))
-                    .forEach(teammate -> {
-                        var memberUpdate = FIBServiceClient.memberUpdate()
-                                .totalItemsFoundAdd(1L)
-                                .itemCountsAdd(Map.of(itemName, 1L));
-                        if (finalTimeSpentMs > 0) {
-                            memberUpdate.totalTimeSpentOnItemsAdd(finalTimeSpentMs);
-                        }
-                        statistics.updateMemberStatisticsAsync(
-                                player.getUniqueId(),
-                                teammate.player().getUniqueId(),
-                                player.getUniqueId(),
-                                memberUpdate
-                        );
-                    });
-        } else {
-            var soloUpdate = FIBServiceClient.soloUpdate()
-                    .totalItemsFoundAdd(1L)
-                    .itemCountsAdd(Map.of(itemName, 1L));
-            if (!isSkipped) {
-                soloUpdate.longestItemStreak(forceItemPlayer.itemStreak());
-            }
-            if (timeSpentMs > 0) {
-                soloUpdate.totalTimeSpentOnItemsAdd(timeSpentMs);
-            }
-            statistics.updateSoloStatisticsAsync(player.getUniqueId(), soloUpdate);
+        // The shared team row carries the streak; in solo it rides along on the solo update below.
+        if (context.teamGame() && !isSkipped) {
+            forceItemPlayer.teammate().ifPresent(teammate -> statistics.updateTeamStatisticsAsync(
+                    player.getUniqueId(),
+                    teammate.player().getUniqueId(),
+                    FIBServiceClient.teamUpdate().longestItemStreak(forceItemPlayer.itemStreak())
+            ));
         }
+
+        long finalTimeSpentMs = timeSpentMs;
+        PlayerStatsWrite.record(statistics, player.getUniqueId(), forceItemPlayer,
+                () -> {
+                    var soloUpdate = FIBServiceClient.soloUpdate()
+                            .totalItemsFoundAdd(1L)
+                            .itemCountsAdd(Map.of(itemName, 1L));
+                    if (!isSkipped) {
+                        soloUpdate.longestItemStreak(forceItemPlayer.itemStreak());
+                    }
+                    if (finalTimeSpentMs > 0) {
+                        soloUpdate.totalTimeSpentOnItemsAdd(finalTimeSpentMs);
+                    }
+                    return soloUpdate;
+                },
+                () -> {
+                    var memberUpdate = FIBServiceClient.memberUpdate()
+                            .totalItemsFoundAdd(1L)
+                            .itemCountsAdd(Map.of(itemName, 1L));
+                    if (finalTimeSpentMs > 0) {
+                        memberUpdate.totalTimeSpentOnItemsAdd(finalTimeSpentMs);
+                    }
+                    return memberUpdate;
+                });
     }
 }

@@ -5,6 +5,7 @@ import forceitembattle.event.WheelOfFortuneWinEvent;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.util.Text;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -39,7 +40,9 @@ public class VaultInventory extends InventoryBuilder {
                 .getItemStack());
 
         this.addUpdateHandler(() -> {
-            List<Material> itemList = plugin.getItemDifficultiesManager().getAvailableItems();
+            // Copy before shuffling: the manager hands back its cached pool, shared with every
+            // other reader this tick.
+            List<Material> itemList = new ArrayList<>(plugin.getItemDifficultiesManager().getAvailableItems());
             Collections.shuffle(itemList);
 
             new BukkitRunnable() {
@@ -56,7 +59,7 @@ public class VaultInventory extends InventoryBuilder {
                         Material wonMaterial = Objects.requireNonNull(getInventory().getItem(22)).getType();
                         Bukkit.getPluginManager().callEvent(new WheelOfFortuneWinEvent(getPlayer(), wonMaterial));
 
-                        Component subTitle = Text.of("<gold>" + plugin.getGamemanager().getMaterialName(wonMaterial));
+                        Component subTitle = Text.of("<gold>" + CustomMaterials.nameOf(wonMaterial));
 
                         Title.Times times = Title.Times.times(Duration.ofMillis(600), Duration.ofMillis(2000), Duration.ofMillis(600));
                         Title title = Title.title(Component.empty(), subTitle, times);

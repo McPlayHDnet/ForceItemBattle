@@ -139,9 +139,12 @@ public class TeamsManager implements Manager {
         if (second != null) this.addToTeam(team, second);
 
         this.teams.add(team);
+        // No playerListName here. The tab list is rendered by ScoreboardManager's scoreboard team
+        // (prefix = team display, suffix = current force item), and the client only applies that
+        // prefix/suffix to players who have NO tab-list display name of their own. Setting one for
+        // a single member — as this used to do for `second` — made that one player skip the team
+        // formatting entirely, so the two halves of the same team rendered differently.
         this.forceItemBattle.getScoreboardManager().updateAllPlayers();
-        if (second != null)
-            second.player().playerListName(Text.of("<yellow>[" + team.getTeamDisplay() + "] <white>" + second.player().getName()));
 
         String message = "<dark_aqua>You are now in team <green>" + name + " <dark_aqua>with <yellow>";
 
@@ -197,11 +200,15 @@ public class TeamsManager implements Manager {
         this.forceItemBattle.getGamemanager().forceItemPlayerMap().values().forEach(players -> {
             if (players.currentTeam() != null) {
                 players.setCurrentTeam(null);
-                players.player().playerListName(Text.of(players.player().getName()));
+                // null, not the plain name: any display name at all makes the client skip the
+                // scoreboard prefix/suffix, which would cost these players their force-item suffix
+                // in tab for the rest of the session.
+                players.player().playerListName(null);
             }
         });
         this.pendingInvite.clear();
         this.getTeams().clear();
+        this.forceItemBattle.getScoreboardManager().updateAllPlayers();
     }
 
     private void disbandTeam(Team team) {
@@ -210,7 +217,7 @@ public class TeamsManager implements Manager {
                 if (inviteesTeam == team) {
                     pendingInvitees.player().sendMessage(Text.of("<red>The invite expired, the team got disbanded"));
                     this.pendingInvite.remove(pendingInvitees);
-                    pendingInvitees.player().playerListName(Text.of(pendingInvitees.player().getName()));
+                    pendingInvitees.player().playerListName(null);
                 }
             });
             this.getTeams().remove(team);

@@ -1,6 +1,7 @@
 package forceitembattle.listener;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.util.Scheduler;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.gui.InventoryBuilder;
 import lombok.RequiredArgsConstructor;
@@ -62,7 +63,7 @@ public class GuiListener implements Listener {
         if (inventoryCloseEvent.getInventory().getHolder() instanceof InventoryBuilder inventoryBuilder) {
 
             if (inventoryBuilder.handleClose(inventoryCloseEvent)) {
-                Bukkit.getScheduler().runTask(this.plugin, () -> inventoryBuilder.open((Player) inventoryCloseEvent.getPlayer()));
+                Scheduler.runSync(() -> inventoryBuilder.open((Player) inventoryCloseEvent.getPlayer()));
                 return;
             }
         }

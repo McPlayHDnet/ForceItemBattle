@@ -17,4 +17,17 @@ public final class Text {
     public static Component of(String miniMessage) {
         return MINI_MESSAGE.deserialize(miniMessage);
     }
+
+    /**
+     * The MiniMessage colour a finishing place is shown in: gold, silver and bronze for the podium,
+     * plain white for everyone else.
+     */
+    public static String placeColor(int place) {
+        return switch (place) {
+            case 1 -> "<gold>";
+            case 2 -> "<gray>";
+            case 3 -> "<red>";
+            default -> "<white>";
+        };
+    }
 }

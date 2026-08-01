@@ -6,18 +6,19 @@ import forceitembattle.model.ForceItem;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.Team;
 import forceitembattle.settings.GameSetting;
+import forceitembattle.util.Scheduler;
 import forceitembattle.util.Text;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
-import org.apache.commons.lang3.text.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -90,6 +91,17 @@ public class FinishInventory extends InventoryBuilder {
 
                         List<String> lore = new ArrayList<>();
 
+                        // Team mode only: the found list belongs to the team, so without this the
+                        // individual contribution is invisible. In solo it would just repeat the
+                        // inventory title.
+                        if (targetTeam != null) {
+                            String collector = collectorName(targetTeam, forceItem.collectedBy());
+                            if (collector != null) {
+                                lore.add("<dark_gray>» <gray>" + (forceItem.usedSkip() ? "Skipped" : "Found")
+                                        + " by <yellow>" + collector);
+                            }
+                        }
+
                         if (forceItem.usedSkip()) {
                             lore.add("");
                             lore.add("<dark_gray>[<red>Joker<dark_gray>]");
@@ -122,7 +134,7 @@ public class FinishInventory extends InventoryBuilder {
                                                 .map(name -> name.player().getName())
                                                 .collect(Collectors.joining(", "));
 
-                        String placeColor = forceItemBattle.getGamemanager().placeColor(place);
+                        String placeColor = Text.placeColor(place);
 
                         String chatMessage = placeColor + place + "<white>. " + teamDisplay + " <dark_gray>┃ <gold>" + (placedItems + 1) + " Items found " +
                                 "<dark_gray>» <click:run_command:/result " + (targetTeam == null ? targetPlayer.player().getUniqueId() : "#" + targetTeam.getTeamId()) + "><dark_gray>[<aqua>Inventory<dark_gray>]";
@@ -136,7 +148,7 @@ public class FinishInventory extends InventoryBuilder {
                                 clearCloseHandlers();
 
                                 // just for safety in case there is a re-open in the very last tick... don't think this will ever happen but yeah why not
-                                Bukkit.getScheduler().runTaskLater(forceItemBattle, () -> {
+                                Scheduler.runLaterSync(() -> {
                                     Bukkit.getOnlinePlayers().forEach(p -> {
                                         if (p.getOpenInventory().getTopInventory() == getInventory())
                                             p.closeInventory();
@@ -182,13 +194,31 @@ public class FinishInventory extends InventoryBuilder {
             this.addCloseHandler(event -> {
                 Player player = (Player) event.getPlayer();
 
-                Bukkit.getScheduler().runTaskLater(forceItemBattle, () -> {
+                Scheduler.runLaterSync(() -> {
                     if (!player.isOnline()) return;
 
                     player.openInventory(getInventory());
                 }, 1L);
             });
         }
+    }
+
+    /**
+     * The name of the team member who handed this item in, or null when it cannot be attributed —
+     * the collector is by definition a member of this team, so this resolves locally and never has
+     * to touch an offline profile.
+     */
+    @Nullable
+    private static String collectorName(Team team, @Nullable UUID collectedBy) {
+        if (collectedBy == null) {
+            return null;
+        }
+        return team.getPlayers().stream()
+                .map(ForceItemPlayer::player)
+                .filter(member -> member != null && member.getUniqueId().equals(collectedBy))
+                .map(Player::getName)
+                .findFirst()
+                .orElse(null);
     }
 
     private void renderPage(@Nullable Map<Integer, Map<Integer, ItemStack>> savedPages, AtomicInteger currentPage) {

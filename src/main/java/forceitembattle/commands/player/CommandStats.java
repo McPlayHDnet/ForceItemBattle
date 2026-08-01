@@ -1,6 +1,7 @@
 package forceitembattle.commands.player;
 
 import de.threeseconds.openapi.fibservice.client.model.FibItemCountDto;
+import forceitembattle.model.CustomMaterials;
 import de.threeseconds.openapi.fibservice.client.model.FibPlayerIdentityDto;
 import de.threeseconds.openapi.fibservice.client.model.FibRaritiesDto;
 import de.threeseconds.openapi.fibservice.client.model.FibTeamMemberStatsDto;
@@ -263,7 +264,7 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
         for (FibItemCountDto item : topItems) {
             Material material = Material.valueOf(item.getItemName().toUpperCase());
             String unicode = this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, material);
-            String formattedName = this.plugin.getGamemanager().getMaterialName(material);
+            String formattedName = CustomMaterials.nameOf(material);
             player.sendMessage(Text.of("    <dark_gray>» <reset>" + unicode + " <gray>" + formattedName + " <dark_gray>× <dark_aqua>" + item.getCount()));
         }
     }

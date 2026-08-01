@@ -4,6 +4,7 @@ import forceitembattle.gui.ItemBuilder;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -190,4 +191,36 @@ public enum CustomMaterials {
         CustomMaterials custom = byMaterial(material);
         return custom != null ? custom.getId() : material.name().toLowerCase();
     }
+
+    /**
+     * The minecraft.wiki page slug for a material, e.g. {@code Heart_of_the_Sea}.
+     *
+     * The wiki title-cases every word except a handful of short joining words. Those are matched
+     * whole rather than as substrings: the previous version capitalised everything and then ran
+     * {@code replace("A", "a")} over the result, which lowercased the A inside Axe, Apple, Armor,
+     * Andesite and Amethyst, and {@code replace("With", "with")} caught Wither — 63 materials came
+     * out with a wrong page title. A joining word also never leads a title, so only later words are
+     * lowered.
+     *
+     * <p>Lives next to {@link #nameOf(Material)} because it is the same question — what is this
+     * material called — asked for a URL instead of a chat line.
+     */
+    public static String wikiSlugOf(Material material) {
+        String[] words = material.name().toLowerCase().split("_");
+        StringBuilder slug = new StringBuilder(material.name().length());
+
+        for (int index = 0; index < words.length; index++) {
+            if (index > 0) {
+                slug.append('_');
+            }
+            String word = words[index];
+            boolean joining = index > 0 && WIKI_LOWERCASE_WORDS.contains(word);
+            slug.append(joining ? word : WordUtils.capitalize(word));
+        }
+
+        return slug.toString();
+    }
+
+    private static final Set<String> WIKI_LOWERCASE_WORDS =
+            Set.of("and", "with", "of", "on", "a", "the");
 }
