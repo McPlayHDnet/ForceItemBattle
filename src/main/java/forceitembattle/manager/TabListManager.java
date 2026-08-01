@@ -3,12 +3,16 @@ package forceitembattle.manager;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.ItemDifficultiesManager.State;
 import forceitembattle.model.ActiveTrader;
+import forceitembattle.model.Dimension;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.util.LocationFormat;
 import forceitembattle.util.Text;
+import forceitembattle.util.TimeFormat;
 import java.util.List;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 
 /**
@@ -21,6 +25,11 @@ import org.bukkit.entity.Player;
  * exposes trader state now, it no longer touches the footer. Refreshed once per
  * second from {@link TimerManager}'s tick, after the pool-unlock poll, so the pool
  * countdown flips to "active" on the exact tick the unlock message is announced.
+ * <p>
+ * A running random event contributes its own block, rendered by the event rather than
+ * here — this class still owns when and to whom the footer is pushed. The same tick
+ * ordering applies: the event's clock is advanced before this runs, so a concluding
+ * event's block is already gone on the tick its winner is announced.
  */
 public class TabListManager implements Manager {
 
@@ -37,10 +46,13 @@ public class TabListManager implements Manager {
      */
     public void update() {
         String poolLine = buildPoolLine();
+        String timeLine = buildTimeLine();
         String traderBlock = buildTraderBlock();
+        String eventBlock = this.plugin.getRandomEventManager().tabFooterBlock();
 
         for (Player player : Bukkit.getOnlinePlayers()) {
-            String footer = "\n" + poolLine + buildJokerLine(player) + traderBlock;
+            String footer = "\n" + poolLine + buildJokerLine(player) + timeLine
+                    + traderBlock + eventBlock;
             player.sendPlayerListFooter(Text.of(footer));
         }
     }
@@ -78,10 +90,42 @@ public class TabListManager implements Manager {
         if (secondsLeft >= 0) {
             State next = items.getNextState();
             String nextName = next != null ? next.getDisplayName() : "next";
-            line.append(" <gray>· ").append(nextName).append(" in ").append(formatColoredTime(secondsLeft));
+            line.append(" <gray>· ").append(nextName).append(" in ").append(TimeFormat.colored(secondsLeft));
         }
 
         return line.toString();
+    }
+
+    /**
+     * The overworld's time of day, with a day/night marker.
+     *
+     * Always the overworld, whichever dimension the reader is standing in: the nether and end have
+     * no day cycle, so a player checking whether it is safe to go back up wants the surface clock,
+     * not their own. Colour follows day/night as well as the word does, but the word is what makes
+     * it readable to someone who does not know Minecraft's clock off by heart.
+     */
+    private String buildTimeLine() {
+        World world = Dimension.OVERWORLD.world();
+        if (world == null) {
+            return "";
+        }
+
+        boolean day = world.isDayTime();
+        String color = day ? "<gold>" : "<aqua>";
+
+        return "\n<gray>Time · " + clockIcon() + color + TimeFormat.worldClock(world.getTime())
+                + " <dark_gray>(<gray>" + (day ? "Day" : "Night") + "<dark_gray>)";
+    }
+
+    /**
+     * The clock glyph from the resourcepack font, or nothing when the icon map is missing —
+     * {@code getUnicodeFromMaterial} falls back to the literal string "NULL", which would sit in
+     * everyone's tab list forever rather than failing once and visibly.
+     */
+    private String clockIcon() {
+        String icon = this.plugin.getItemDifficultiesManager()
+                .getUnicodeFromMaterial(true, Material.CLOCK);
+        return "NULL".equals(icon) ? "" : "<reset><shadow:black:0.4>" + icon + "</shadow> ";
     }
 
     private String buildJokerLine(Player player) {
@@ -101,31 +145,10 @@ public class TabListManager implements Manager {
         for (ActiveTrader trader : this.plugin.getWanderingTraderManager().activeTraders()) {
             block.append("\n\n").append(trader.getKind().boldColoredName()).append("\n")
                     .append(LocationFormat.xyz(trader.getLocation())).append("\n")
-                    .append(formatColoredTime(trader.getTimer())).append("\n");
+                    .append(TimeFormat.colored(trader.getTimer())).append("\n");
         }
 
         return block.toString();
     }
 
-    private String formatColoredTime(int remainingSeconds) {
-        remainingSeconds = Math.max(remainingSeconds, 0);
-
-        int minutes = remainingSeconds / 60;
-        int seconds = remainingSeconds % 60;
-
-        String timeString = String.format("%02d:%02d", minutes, seconds);
-
-        String colorTag;
-        if (remainingSeconds <= 10) {
-            colorTag = "<dark_red>";
-        } else if (remainingSeconds <= 30) {
-            colorTag = "<red>";
-        } else if (remainingSeconds <= 120) {
-            colorTag = "<gold>";
-        } else {
-            colorTag = "<green>";
-        }
-
-        return colorTag + timeString;
-    }
 }

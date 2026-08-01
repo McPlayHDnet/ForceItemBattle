@@ -154,6 +154,15 @@ public class RandomEventManager implements Manager {
         return true;
     }
 
+    /**
+     * The running event's tab-footer block, or empty when nothing is running. Called once per
+     * second from {@link TabListManager}.
+     */
+    public String tabFooterBlock() {
+        RandomEvent event = this.activeEvent;
+        return event == null ? "" : event.tabFooterBlock();
+    }
+
     public void handleFoundItem(FoundItemEvent foundItemEvent, ForceItemPlayer forceItemPlayer) {
         if (this.activeEvent == null) {
             return;
