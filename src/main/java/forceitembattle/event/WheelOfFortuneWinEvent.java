@@ -25,9 +25,6 @@ public class WheelOfFortuneWinEvent extends Event {
         return player;
     }
 
-    /**
-     * The item the wheel landed on.
-     */
     public Material getWonItem() {
         return wonItem;
     }

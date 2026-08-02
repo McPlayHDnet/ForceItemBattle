@@ -11,9 +11,6 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 
-/**
- * Handler for beehive harvesting achievements
- */
 public class BeehiveAchievementHandler implements AchievementHandler<SimpleAchievementProgress> {
 
     private final int targetAmount;

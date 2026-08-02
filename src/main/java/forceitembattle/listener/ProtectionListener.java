@@ -201,8 +201,6 @@ public class ProtectionListener implements Listener {
         }
     }
 
-    // utils
-
     @EventHandler
     public void onBurn(BlockBurnEvent e) {
         if (this.plugin.getGamemanager().isMidGame()) {

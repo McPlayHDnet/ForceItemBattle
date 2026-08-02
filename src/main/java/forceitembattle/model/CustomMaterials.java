@@ -195,12 +195,10 @@ public enum CustomMaterials {
     /**
      * The minecraft.wiki page slug for a material, e.g. {@code Heart_of_the_Sea}.
      *
-     * The wiki title-cases every word except a handful of short joining words. Those are matched
-     * whole rather than as substrings: the previous version capitalised everything and then ran
-     * {@code replace("A", "a")} over the result, which lowercased the A inside Axe, Apple, Armor,
-     * Andesite and Amethyst, and {@code replace("With", "with")} caught Wither — 63 materials came
-     * out with a wrong page title. A joining word also never leads a title, so only later words are
-     * lowered.
+     * The wiki title-cases every word except a handful of short joining words, and a joining word
+     * never leads a title — hence the {@code index > 0}. Match those words whole: a substring
+     * replace over the finished slug lowercases the A inside Axe, Apple, Armor, Andesite and
+     * Amethyst, and catches the "With" inside Wither.
      *
      * <p>Lives next to {@link #nameOf(Material)} because it is the same question — what is this
      * material called — asked for a URL instead of a chat line.

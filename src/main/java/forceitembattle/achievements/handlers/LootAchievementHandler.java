@@ -12,9 +12,6 @@ import org.bukkit.event.Event;
 import org.bukkit.event.world.LootGenerateEvent;
 import org.bukkit.inventory.ItemStack;
 
-/**
- * Handler for loot-based achievements
- */
 public class LootAchievementHandler implements AchievementHandler<SimpleAchievementProgress> {
 
     private final int targetAmount;

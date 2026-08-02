@@ -58,7 +58,6 @@ public class PositionManager implements Manager {
     public void playParticleLine(@NonNull Player player, @NonNull Location position, Color color) {
         if (player.getWorld() != position.getWorld()) return;
 
-        // Defining target location to
         Location target = position.clone().add(0, 0.3, 0);
 
         new BukkitRunnable() {

@@ -21,13 +21,13 @@ import org.bukkit.entity.Player;
  * is alive, the wandering trader's location and despawn timer — rendered in its
  * original standalone style.
  * <p>
- * This is the single writer of the footer: {@link WanderingTraderManager} only
- * exposes trader state now, it no longer touches the footer. Refreshed once per
- * second from {@link TimerManager}'s tick, after the pool-unlock poll, so the pool
- * countdown flips to "active" on the exact tick the unlock message is announced.
+ * This is the single writer of the footer; {@link WanderingTraderManager} only exposes
+ * trader state and never touches it. Refreshed once per second from {@link TimerManager}'s
+ * tick, after the pool-unlock poll, so the pool countdown flips to "active" on the exact
+ * tick the unlock message is announced.
  * <p>
  * A running random event contributes its own block, rendered by the event rather than
- * here — this class still owns when and to whom the footer is pushed. The same tick
+ * here — this class owns only when and to whom the footer is pushed. The same tick
  * ordering applies: the event's clock is advanced before this runs, so a concluding
  * event's block is already gone on the tick its winner is announced.
  */

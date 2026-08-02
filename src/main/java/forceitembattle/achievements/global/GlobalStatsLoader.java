@@ -38,8 +38,8 @@ public class GlobalStatsLoader {
         AtomicBoolean delivered = new AtomicBoolean();
 
         Runnable maybeDeliver = () -> {
-            // All three sources must be in before assembling — previously player-stats was omitted
-            // from this gate, so a slow player-stats call could deliver with player.get() null.
+            // All three sources, player-stats included: drop one from this gate and a slow call
+            // delivers with its AtomicReference still null.
             if (!soloDone.get() || !teamDone.get() || !playerDone.get()) {
                 return;
             }

@@ -317,7 +317,7 @@ public class Gamemanager implements Manager {
         if (context.teamGame()) {
             this.forceItemPlayerMap.values().forEach(player -> {
                 // Spectators hold no team -- someone who joined during the countdown sits in the
-                // roster with a null team, and used to take the whole skip down with an NPE.
+                // roster with a null team, and would NPE the whole skip.
                 if (player.isSpectator()) return;
 
                 Team team = player.currentTeam();
@@ -384,9 +384,8 @@ public class Gamemanager implements Manager {
      * does when the vote carries, and what /skip does as an admin override.
      *
      * Charging a joker is <em>not</em> part of this: the only caller that costs one (the vote)
-     * spends it itself, on the initiator. It used to be charged here as well, inside the per-player
-     * loop below and always against the initiator — so a carried vote cost them one joker per
-     * non-spectator in the round, plus the one the vote had already taken.
+     * spends it itself, on the initiator. Do not charge one inside the per-player loop below —
+     * it runs once per non-spectator, so the initiator would pay a joker for each of them.
      */
     public void forceSkipItem(Player player) {
         if (!forceItemPlayerExist(player.getUniqueId())) {
@@ -535,10 +534,8 @@ public class Gamemanager implements Manager {
      * Everything that has to happen the instant /start's countdown reaches zero: the round's
      * identity, the world reset, per-player setup, and the flip to MID_GAME.
      *
-     * This lived in /start, which left the two halves of a round's lifecycle in different classes —
-     * end-of-game here, start-of-game in a command — and put nine managers' worth of orchestration
-     * behind an argument parser. The command now parses arguments and runs the countdown; the round
-     * itself is the manager's business.
+     * Both halves of a round's lifecycle belong here: /start only parses arguments and runs the
+     * countdown, then hands over. Keep orchestration out of the command.
      */
     public void startGame(int durationMinutes, int jokersAmount) {
         this.setGameStartTime(System.currentTimeMillis());
@@ -717,7 +714,6 @@ public class Gamemanager implements Manager {
         int distance = 0;
 
         for (Statistic statistics : Statistic.values()) {
-            //check and get every statistic that has CM (distance based)
             if (statistics.name().contains("CM")) {
                 distance += player.getStatistic(statistics);
             }

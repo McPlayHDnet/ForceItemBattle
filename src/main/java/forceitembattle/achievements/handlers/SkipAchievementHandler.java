@@ -59,12 +59,11 @@ public class SkipAchievementHandler implements AchievementHandler<SkipAchievemen
                     progress.skipCount = 0;
                 }
             } else {
-                // No time constraint
                 progress.skipCount++;
                 result = progress.skipCount >= targetSkips;
             }
         } else {
-            // Found (not skipped) breaks a consecutive-skip streak
+            // Found (not skipped) breaks a consecutive-skip streak.
             if (requireConsecutive) {
                 progress.skipCount = 0;
             }

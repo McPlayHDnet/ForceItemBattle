@@ -238,7 +238,6 @@ public class LocatorManager implements Manager {
         }
     }
 
-    // Dismisses a single active locator for a player by its structure id.
     public boolean dismiss(Player player, String structureId) {
         ActiveLocator active = this.removeSession(player.getUniqueId(), structureId);
         if (active == null) {

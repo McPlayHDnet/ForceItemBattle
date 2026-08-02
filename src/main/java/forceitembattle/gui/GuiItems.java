@@ -43,7 +43,6 @@ public final class GuiItems {
         return previous("Previous Page");
     }
 
-    /** Forward button, e.g. {@code next("Next Recipe")}. */
     public static ItemStack next(String label) {
         return new ItemBuilder(Material.LIME_STAINED_GLASS_PANE)
                 .setDisplayName("<dark_green>» <green>" + label)
@@ -51,7 +50,6 @@ public final class GuiItems {
                 .getItemStack();
     }
 
-    /** Back button, e.g. {@code previous("Previous Recipe")}. */
     public static ItemStack previous(String label) {
         return new ItemBuilder(Material.RED_STAINED_GLASS_PANE)
                 .setDisplayName("<dark_red>« <red>" + label)
@@ -59,22 +57,16 @@ public final class GuiItems {
                 .getItemStack();
     }
 
-    /**
-     * Page arrows as player heads, greyed when the move isn't available.
-     *
-     * The four textures are the ones the achievement menu already uses, lifted here so every paged
-     * menu draws its arrows from one place rather than each carrying its own copy. AchievementInventory
-     * still holds its own set and can be migrated onto these separately -- it works as-is, so there is
-     * no reason to touch it in the same change.
-     *
-     * Note which is which: PREVIOUS_DISABLED and NEXT_ACTIVE are easy to mix up, and the collection
-     * dex did exactly that -- it drew the greyed previous arrow on every page, on every page number.
-     */
     /** "Back" head that returns to the menu above this one — the same icon in every menu that has one. */
     public static ItemStack back() {
         return pageHead(BACK, "<dark_red>« <red>Back", null);
     }
 
+    /**
+     * Page arrows as player heads, greyed when the move isn't available. Mind the texture
+     * constants: PREVIOUS_DISABLED and NEXT_ACTIVE are easy to mix up, and swapping them greys
+     * an arrow that still works.
+     */
     public static ItemStack pageBack(boolean enabled) {
         return pageHead(enabled ? PREVIOUS_ACTIVE : PREVIOUS_DISABLED,
                 enabled ? "<dark_red>« <red>Previous page" : "<dark_gray>« <gray>Previous page",

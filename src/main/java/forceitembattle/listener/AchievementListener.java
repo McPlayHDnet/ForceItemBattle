@@ -102,7 +102,6 @@ public class AchievementListener implements Listener {
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
-        // Only handle beehive harvesting here
         this.plugin.getAchievementManager().handleEvent(player, event, Trigger.BEEHIVE_HARVEST);
     }
 
@@ -112,7 +111,6 @@ public class AchievementListener implements Listener {
             return;
         }
 
-        // Check for loot achievements when opening chest inventory
         this.plugin.getAchievementManager().handleEvent(player, event, Trigger.LOOT);
     }
 

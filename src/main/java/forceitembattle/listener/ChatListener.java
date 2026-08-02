@@ -61,7 +61,6 @@ public class ChatListener implements Listener {
             return;
         }
 
-        // Team chat.
         String teamMessage = "<green>Team</green> <gray>| <gold>" + player.getName() +
                 " <dark_gray>» <white>" + message;
 

@@ -48,7 +48,7 @@ public class AchievementManager implements Manager {
     @Getter
     private final GlobalStatsLoader globalStatsLoader;
 
-    // OPTIMIZATION: Pre-built map of achievements by trigger
+    // Pre-built so handleEvent only walks the achievements bound to the incoming trigger.
     private final Map<Trigger, List<Achievements>> achievementsByTrigger;
 
     public AchievementManager(ForceItemBattle plugin) {
@@ -79,9 +79,6 @@ public class AchievementManager implements Manager {
         return map;
     }
 
-    /**
-     * Main event handler with trigger-based filtering
-     */
     public void handleEvent(Player player, Event event, Trigger trigger) {
         UUID uuid = player.getUniqueId();
 
@@ -98,11 +95,9 @@ public class AchievementManager implements Manager {
             return;
         }
 
-        // Initialize progress
         playerProgress.putIfAbsent(uuid, new HashMap<>());
         Map<Achievements, AchievementProgressTracker> progress = playerProgress.get(uuid);
 
-        // Handle team progress
         Map<Achievements, AchievementProgressTracker> teamProgressMap = null;
         Team team = null;
         if (plugin.getSettings().isSettingEnabled(GameSetting.TEAM) && forceItemPlayer.currentTeam() != null) {
@@ -111,17 +106,14 @@ public class AchievementManager implements Manager {
             teamProgressMap = teamProgress.get(team);
         }
 
-        // OPTIMIZATION: Only check achievements for this trigger
         List<Achievements> relevantAchievements = achievementsByTrigger.get(trigger);
         for (Achievements achievement : relevantAchievements) {
             AchievementHandler<?> handler = achievement.getHandler();
 
-            // Determine team vs player progress
             boolean useTeamProgress = handler.isTeamEligible() &&
                     !handler.isPlayerBased() &&
                     teamProgressMap != null;
 
-            // Skip if already has achievement
             if (storage.hasAchievement(uuid, achievement) && !useTeamProgress) {
                 continue;
             }
@@ -135,17 +127,14 @@ public class AchievementManager implements Manager {
                 }
             }
 
-            // Get or create progress
             Map<Achievements, AchievementProgressTracker> progressMap = useTeamProgress ? teamProgressMap : progress;
             progressMap.putIfAbsent(achievement, handler.createProgress());
             AchievementProgressTracker tracker = progressMap.get(achievement);
 
-            // Type-safe check
             @SuppressWarnings("unchecked")
             AchievementHandler<AchievementProgressTracker> typedHandler =
                     (AchievementHandler<AchievementProgressTracker>) handler;
 
-            // Check if completed
             if (typedHandler.check(event, tracker, forceItemPlayer, plugin)) {
                 grantAchievement(player, achievement, useTeamProgress, forceItemPlayer);
             }
@@ -157,15 +146,13 @@ public class AchievementManager implements Manager {
         Team team = forceItemPlayer.currentTeam();
         boolean teamGame = plugin.getSettings().isSettingEnabled(GameSetting.TEAM) && team != null;
 
-        // Grant to the triggering player.
         if (!storage.hasAchievement(player.getUniqueId(), achievement)) {
             writeUnlock(player.getUniqueId(), player, achievement, team, teamGame);
             checkMetaTiers(player.getUniqueId(), player, team, teamGame);
         }
 
-        // Team-eligible achievements are also granted to the rest of the team.
-        // (Which achievements are team-eligible vs player-only is decided by the
-        // handler flags — that scoping is unchanged here.)
+        // Team-eligible achievements are also granted to the rest of the team; which ones
+        // those are is decided by the handler flags.
         if (isTeamAchievement && team != null) {
             for (ForceItemPlayer teamMember : team.getPlayers()) {
                 UUID memberUuid = teamMember.player().getUniqueId();
@@ -332,9 +319,6 @@ public class AchievementManager implements Manager {
         return null;
     }
 
-    /**
-     * Check game-end achievements like Chicot (no deaths)
-     */
     public void checkGameEndAchievements() {
         if (!plugin.getGamemanager().isEndGame()) {
             return;
@@ -346,7 +330,6 @@ public class AchievementManager implements Manager {
 
         boolean teamGameEnabled = plugin.getSettings().isSettingEnabled(GameSetting.TEAM);
 
-        // Check all players
         for (UUID uuid : plugin.getGamemanager().forceItemPlayerMap().keySet()) {
             ForceItemPlayer fip = plugin.getGamemanager().getForceItemPlayer(uuid);
             if (fip == null || fip.isSpectator()) {
@@ -363,8 +346,6 @@ public class AchievementManager implements Manager {
                 progress.putIfAbsent(Achievements.CHICOT, Achievements.CHICOT.getHandler().createProgress());
                 if (progress.get(Achievements.CHICOT) instanceof SimpleAchievementProgress simpleProgress
                         && simpleProgress.deathCount == 0) {
-                    // writeUnlock persists with the right mode/teammate and fires the
-                    // event only if the player is online (so Completionist can chain).
                     writeUnlock(uuid, fip.player(), Achievements.CHICOT, team, teamGame);
                 }
             }
@@ -388,7 +369,7 @@ public class AchievementManager implements Manager {
                 writeUnlock(uuid, fip.player(), Achievements.NO_SHORTCUTS, team, teamGame);
             }
 
-            // OVERWORLD_PURIST — finish without leaving the Overworld.
+            // IT_IS_BEAUTIFUL — finish without leaving the Overworld.
             if (!storage.hasAchievement(uuid, Achievements.IT_IS_BEAUTIFUL)
                     && !hadOccurrence(uuid, Achievements.IT_IS_BEAUTIFUL)) {
                 writeUnlock(uuid, fip.player(), Achievements.IT_IS_BEAUTIFUL, team, teamGame);

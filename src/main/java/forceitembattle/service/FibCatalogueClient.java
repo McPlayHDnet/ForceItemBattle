@@ -68,8 +68,8 @@ public class FibCatalogueClient {
         for (Achievements achievement : Achievements.values()) {
             achievements.add(new FibCatalogueAchievementSubmitDto()
                     // name() and not an ordinal or a display string: the constant name is the
-                    // identifier the unlock rows already use, so the catalogue joins straight to
-                    // them. Renaming a constant breaks that join, same as it always has.
+                    // identifier the unlock rows use, so the catalogue joins straight to them.
+                    // Renaming a constant breaks that join.
                     .achievementId(achievement.name())
                     .title(achievement.getTitle())
                     .description(achievement.getDescription())

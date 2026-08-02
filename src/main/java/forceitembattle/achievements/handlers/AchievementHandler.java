@@ -17,30 +17,19 @@ import org.bukkit.event.Event;
  */
 public interface AchievementHandler<P extends AchievementProgressTracker> {
 
-    /**
-     * Which trigger does this handler respond to?
-     */
     Trigger getTrigger();
 
-    /**
-     * Check if achievement condition is met
-     */
     boolean check(Event event, P progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin);
 
-    /**
-     * Create progress tracker
-     */
     P createProgress();
 
-    /**
-     * Can this be earned by teams?
-     */
     default boolean isTeamEligible() {
         return getTrigger().isAchieveableInTeams();
     }
 
     /**
-     * Is this player-specific?
+     * Whether progress stays per-player even in a team game. Team-eligible handlers otherwise
+     * share one tracker across the team, so either member's actions advance it.
      */
     default boolean isPlayerBased() {
         return false;

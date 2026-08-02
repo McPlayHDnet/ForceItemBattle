@@ -139,11 +139,11 @@ public class TeamsManager implements Manager {
         if (second != null) this.addToTeam(team, second);
 
         this.teams.add(team);
-        // No playerListName here. The tab list is rendered by ScoreboardManager's scoreboard team
-        // (prefix = team display, suffix = current force item), and the client only applies that
-        // prefix/suffix to players who have NO tab-list display name of their own. Setting one for
-        // a single member — as this used to do for `second` — made that one player skip the team
-        // formatting entirely, so the two halves of the same team rendered differently.
+        // Never set a playerListName here. The tab list is rendered by ScoreboardManager's
+        // scoreboard team (prefix = team display, suffix = current force item), and the client
+        // only applies that prefix/suffix to players who have NO tab-list display name of their
+        // own — giving one member a name makes them skip the team formatting entirely, so the two
+        // halves of a team render differently.
         this.forceItemBattle.getScoreboardManager().updateAllPlayers();
 
         String message = "<dark_aqua>You are now in team <green>" + name + " <dark_aqua>with <yellow>";

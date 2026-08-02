@@ -52,9 +52,7 @@ public class CustomItem {
         return new CustomItem(null, null, customDataKey, customDataValue);
     }
 
-    /**
-     * Whether the given stack satisfies every criterion of this spec.
-     */
+    /** Every criterion of this spec must hold; unset ones are simply not checked. */
     public boolean matches(@Nullable ItemStack item) {
         if (item == null || item.getType() == Material.AIR) {
             return false;

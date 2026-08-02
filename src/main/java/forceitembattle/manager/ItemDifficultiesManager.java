@@ -58,12 +58,8 @@ public class ItemDifficultiesManager implements Manager {
     private final Set<State> announcedUnlockedStates = EnumSet.noneOf(State.class);
 
     /**
-     * When each pool opens, as a percentage of the round's total duration.
-     *
-     * This used to be a {@code @Setter} field on the {@link State} enum constants themselves, which
-     * made the unlock schedule JVM-global state hanging off an enum — /start reached in and wrote it
-     * directly, and nothing but the next call to the setup method ever reset it. It belongs to the
-     * manager that owns the pools, so it lives here.
+     * When each pool opens, as a percentage of the round's total duration. Per-round state, so it
+     * belongs to the manager and not to the {@link State} enum constants.
      */
     private final Map<State, Double> unlockPercentages = new EnumMap<>(State.class);
 
@@ -74,11 +70,10 @@ public class ItemDifficultiesManager implements Manager {
      * The generation pool for the current tick: every unlocked item minus the ones the current
      * settings exclude.
      *
-     * Rebuilding this walked all ~1,367 registered items and re-read three settings per item, and
-     * {@link #getAvailableItems()} is called on every item generation, every back-to-back
-     * probability, and once per candidate material when the /items menu paints — where it was an
-     * O(n²) scan that rebuilt the list 1,367 times for one GUI open. It is cached against the
-     * inputs that can change it instead.
+     * Cached against {@link PoolKey} because a rebuild walks all ~1,367 registered items and
+     * re-reads three settings per item, while {@link #getAvailableItems()} is called on every item
+     * generation, every back-to-back probability, and once per candidate material when the /items
+     * menu paints — uncached, that last one is an O(n²) scan for a single GUI open.
      */
     private List<Material> availablePool;
     private Set<Material> availablePoolIndex;
@@ -153,30 +148,18 @@ public class ItemDifficultiesManager implements Manager {
         }
     }
 
-    /**
-     * Get all items that have the NETHER tag.
-     */
     public List<Material> getNetherItems() {
         return getItemsByTag(ItemTag.NETHER);
     }
 
-    /**
-     * Get all items that have the END tag.
-     */
     public List<Material> getEndItems() {
         return getItemsByTag(ItemTag.END);
     }
 
-    /**
-     * Get all items that have the EXTREME tag.
-     */
     public List<Material> getExtremeItems() {
         return getItemsByTag(ItemTag.EXTREME);
     }
 
-    /**
-     * Get all items with a specific tag.
-     */
     public List<Material> getItemsByTag(ItemTag tag) {
         return itemRegistry.values().stream()
                 .filter(def -> def.hasTag(tag))
@@ -184,9 +167,6 @@ public class ItemDifficultiesManager implements Manager {
                 .toList();
     }
 
-    /**
-     * Get all items for a specific game state.
-     */
     public List<Material> getItemsByState(State state) {
         return itemRegistry.values().stream()
                 .filter(def -> def.state() == state)
@@ -212,9 +192,7 @@ public class ItemDifficultiesManager implements Manager {
         };
     }
 
-    /**
-     * Get overworld items.
-     */
+    /** Everything not tagged NETHER or END. */
     public Set<Material> getOverworldItems() {
         return itemRegistry.values().stream()
                 .filter(def -> !def.hasAnyTag(ItemTag.NETHER, ItemTag.END))
@@ -222,9 +200,6 @@ public class ItemDifficultiesManager implements Manager {
                 .collect(Collectors.toSet());
     }
 
-    /**
-     * Get all registered items.
-     */
     public Set<Material> getAllItems() {
         return new HashSet<>(itemRegistry.keySet());
     }
@@ -245,10 +220,9 @@ public class ItemDifficultiesManager implements Manager {
      * The items a force item can currently be drawn from: every unlocked pool, minus what the
      * current settings exclude.
      *
-     * Cached — see {@link #availablePool}. The returned list is unmodifiable: callers used to get a
-     * fresh copy they could rearrange in place, and the wheel of fortune shuffled it. That caller
-     * now copies explicitly, so an in-place edit here fails loudly instead of corrupting the pool
-     * every other reader is about to use this tick.
+     * Cached — see {@link #availablePool} — and unmodifiable: the returned list is the live pool
+     * every other reader shares this tick, so a caller that needs to sort or shuffle must copy
+     * first. An in-place edit fails loudly rather than corrupting it for everyone.
      */
     public List<Material> getAvailableItems() {
         refreshAvailablePool();
@@ -387,9 +361,8 @@ public class ItemDifficultiesManager implements Manager {
     }
 
     /**
-     * The minute mark this pool opens at, for the current round's duration. The one place this is
-     * worked out — {@code getAvailableItems} and {@code pollNewlyUnlockedStates} each carried their
-     * own inlined copy of the same expression.
+     * The minute mark this pool opens at, for the current round's duration. Every caller that needs
+     * an unlock time goes through here, so the schedule is only defined once.
      */
     private int unlockMinutes(State state) {
         int totalDuration = this.plugin.getGamemanager().getGameDuration();
@@ -426,20 +399,18 @@ public class ItemDifficultiesManager implements Manager {
             ItemDefinition def = itemRegistry.get(material);
             if (def == null) return false;
 
-            // If HARD mode is disabled, remove NETHER and EXTREME items
+            // HARD subsumes EXTREME: dropping it takes the extreme items with it, so the
+            // EXTREME setting only has anything left to do while HARD is on.
             if (!plugin.getSettings().isSettingEnabled(GameSetting.HARD)) {
                 if (def.hasAnyTag(ItemTag.NETHER, ItemTag.EXTREME)) {
                     return true;
                 }
-            }
-            // If EXTREME mode is disabled (but HARD is enabled), only remove EXTREME items
-            else if (!plugin.getSettings().isSettingEnabled(GameSetting.EXTREME)) {
+            } else if (!plugin.getSettings().isSettingEnabled(GameSetting.EXTREME)) {
                 if (def.hasTag(ItemTag.EXTREME)) {
                     return true;
                 }
             }
 
-            // If END is disabled, remove END items
             if (!plugin.getSettings().isSettingEnabled(GameSetting.END)) {
                 if (def.hasTag(ItemTag.END)) {
                     return true;
@@ -545,9 +516,6 @@ public class ItemDifficultiesManager implements Manager {
         return itemsUnicode;
     }
 
-    /**
-     * Register a single item with its state and optional tags.
-     */
     private void register(Material material, State state, ItemTag... tags) {
         if (itemRegistry.containsKey(material)) {
             plugin.getLogger().warning("Duplicate registration: " + material.name());
@@ -1947,12 +1915,9 @@ public class ItemDifficultiesManager implements Manager {
     }
 
     /**
-     * The three item pools, in unlock order.
-     *
-     * Carries only its own identity — label and colour. The pool's contents and the point in the
-     * round it opens at are per-game facts owned by {@link ItemDifficultiesManager}; they used to
-     * be mutable fields here, which made them JVM-global and let /start rewrite the schedule by
-     * reaching into an enum constant.
+     * The three item pools, in unlock order. Carries only its own identity — label and colour.
+     * A pool's contents and the point in the round it opens at are per-game facts and stay on
+     * {@link ItemDifficultiesManager}; keep mutable state off these constants.
      */
     @Getter
     public enum State {

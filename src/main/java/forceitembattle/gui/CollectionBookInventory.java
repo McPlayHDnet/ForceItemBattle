@@ -60,8 +60,8 @@ public class CollectionBookInventory extends InventoryBuilder {
 
         Map<CollectionCategory, List<Material>> buckets = this.plugin.getCollectionManager().getCollectionBuckets();
 
-        // Counted once per category and reused below: the render loop used to re-scan every
-        // bucket, walking the whole ~1300-item catalogue twice per repaint.
+        // Counted once per category and reused by the render loop below, which would otherwise
+        // walk the whole ~1300-item catalogue a second time on every repaint.
         Map<CollectionCategory, Integer> foundPerCategory = new EnumMap<>(CollectionCategory.class);
         int overallTotal = 0;
         int overallFound = 0;

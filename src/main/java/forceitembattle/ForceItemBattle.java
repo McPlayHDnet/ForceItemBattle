@@ -203,7 +203,8 @@ public final class ForceItemBattle extends JavaPlugin {
         this.initListeners();
         this.initCommands();
 
-        //this 0 delay scheduler is needed in paper, because at that time this code gets initialized and the worlds after that, so we'll wait
+        // Paper initialises the plugin before the worlds, so a 0-delay task is what puts this
+        // after they exist.
         Scheduler.runLaterSync(() -> Bukkit.getWorlds().forEach(world -> {
             boolean keepInventory = getSettings().isSettingEnabled(GameSetting.KEEP_INVENTORY);
             if (getSettings().isSettingEnabled(GameSetting.EVENT) && !keepInventory) {
@@ -215,11 +216,9 @@ public final class ForceItemBattle extends JavaPlugin {
                 );
             }
 
-            // Apply settings.
             world.setGameRule(GameRules.KEEP_INVENTORY, keepInventory);
             getSettings().setSettingEnabled(GameSetting.FASTER_RANDOM_TICK, getSettings().isSettingEnabled(GameSetting.FASTER_RANDOM_TICK));
 
-            //world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
             world.setGameRule(GameRules.LOCATOR_BAR, false);
             world.setGameRule(GameRules.ADVANCE_TIME, false);
             world.setGameRule(GameRules.SPECTATORS_GENERATE_CHUNKS, false);
@@ -251,11 +250,9 @@ public final class ForceItemBattle extends JavaPlugin {
         File world = new File(Bukkit.getWorldContainer(), "world");
 
         try {
-            // Create Path objects for source and destination directories
             Path sourceDirectory = Paths.get(this.getDataFolder() + "/" + datapackName + ".zip");
             Path destinationDirectory = Paths.get(world + "/datapacks/" + datapackName + ".zip");
 
-            // Copy the directory and its contents recursively
             Files.walk(sourceDirectory)
                     .forEach(source -> {
                         try {

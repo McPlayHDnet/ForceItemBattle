@@ -26,7 +26,6 @@ public class TradingManager implements Manager {
 
     public void sendTradeRequest(ForceItemPlayer player, ForceItemPlayer target) {
         if (this.hasInvite(target)) {
-            //already got an invite
             return;
         }
 

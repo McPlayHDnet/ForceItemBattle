@@ -24,9 +24,6 @@ public class RecipeViewer {
         this.pages = recipes.size();
     }
 
-    /**
-     * All recipes for this item.
-     */
     public List<Recipe> recipes() {
         return recipes;
     }
@@ -39,9 +36,6 @@ public class RecipeViewer {
         return itemStack;
     }
 
-    /**
-     * Currently viewed recipe.
-     */
     public Recipe recipe() {
         return recipe;
     }
@@ -50,9 +44,6 @@ public class RecipeViewer {
         return currentRecipeIndex;
     }
 
-    /**
-     * Total amount of recipes for this item.
-     */
     public int pages() {
         return pages;
     }

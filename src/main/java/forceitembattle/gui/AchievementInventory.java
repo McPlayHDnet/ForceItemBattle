@@ -59,10 +59,9 @@ public class AchievementInventory extends InventoryBuilder {
 
         this.addUpdateHandler(this::updateInventory);
 
-        // Pull the full unlock records (mode + teammate + unlockedAt) from the
-        // service — the local cache only holds ids — and refresh once they arrive.
-        // The teammate name now travels inside each record, so there is no second
-        // lookup to trigger a further refresh.
+        // Pull the full unlock records (mode + teammate + unlockedAt) from the service — the local
+        // cache only holds ids — and refresh once they arrive. Each record carries its teammate's
+        // name, so this one round trip is everything the menu needs.
         this.plugin.getFibService().achievements().getPlayerAchievementsAsync(playerUUID,
                 dto -> {
                     this.unlocks = indexByAchievementId(dto);

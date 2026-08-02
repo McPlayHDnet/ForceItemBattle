@@ -7,9 +7,6 @@ import forceitembattle.model.ForceItemPlayer;
 import io.papermc.paper.event.player.PlayerPurchaseEvent;
 import org.bukkit.event.Event;
 
-/**
- * Handler for trading-based achievements
- */
 public class TradingAchievementHandler implements AchievementHandler<SimpleAchievementProgress> {
 
     private final int targetAmount;

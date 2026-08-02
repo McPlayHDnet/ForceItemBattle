@@ -36,7 +36,7 @@ public class ProtectionManager implements Manager {
                 continue;
             }
 
-            // 4 blocks protection radius
+            // 3 block protection radius, squared.
             if (p.getRespawnLocation().distanceSquared(atLocation) < 9) {
                 // Only disallow break above bed
                 if (atLocation.getBlockY() >= p.getRespawnLocation().getBlockY()) {
