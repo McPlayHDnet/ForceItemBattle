@@ -22,6 +22,7 @@ import forceitembattle.gui.VaultInventory;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
@@ -49,6 +50,21 @@ public class ClickableItemsListener implements Listener {
      * leaning on the button could otherwise fire one blocking structure search after another.
      */
     private static final long BRUSH_SWEEP_COOLDOWN_MS = 1500L;
+
+    /**
+     * Ground loose enough to sweep for a find. Stone, wood and the like give the brush nothing to
+     * read, so the locator only answers on soil — both snows count, since a layer of it is what
+     * covers the ground you would be standing on.
+     */
+    private static final Set<Material> SWEEPABLE_GROUND = Set.of(
+            Material.GRASS_BLOCK,
+            Material.SAND,
+            Material.MUD,
+            Material.PODZOL,
+            Material.COARSE_DIRT,
+            Material.SNOW,
+            Material.SNOW_BLOCK
+    );
 
     private final ForceItemBattle plugin;
     private final Map<UUID, Long> lastBrushSweep = new HashMap<>();
@@ -183,7 +199,14 @@ public class ClickableItemsListener implements Listener {
                             + locator.getStructureName() + "<gray>."));
                     return;
                 }
+                // Guard before the ground check as well, so brushing at a wall cannot spam chat.
                 if (this.isSweepingTooFast(player)) {
+                    return;
+                }
+                if (!SWEEPABLE_GROUND.contains(e.getClickedBlock().getType())) {
+                    player.sendMessage(Text.of(Prefix.LOCATOR + "<gray>Nothing to sweep here — the brush needs "
+                            + "loose ground: <dark_aqua>grass<gray>, <dark_aqua>sand<gray>, <dark_aqua>mud<gray>, "
+                            + "<dark_aqua>podzol<gray>, <dark_aqua>coarse dirt <gray>or <dark_aqua>snow<gray>."));
                     return;
                 }
             } else {
