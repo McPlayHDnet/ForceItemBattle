@@ -28,8 +28,7 @@ public final class PlayerStatsWrite {
 
     /**
      * @param self           the acting player's UUID — passed separately because the solo branch
-     *                       has to work even for someone with no roster entry, which is what the
-     *                       hand-rolled {@code fip != null && fip.currentTeam() != null} checks did
+     *                       has to work even for someone with no roster entry
      * @param forceItemPlayer the acting player's roster entry, or {@code null} if they have none
      */
     public static void record(FibStatisticsClient statistics,
@@ -42,8 +41,8 @@ public final class PlayerStatsWrite {
             return;
         }
 
-        // An odd player count leaves someone in a one-person team. They have no member row to write
-        // to, and the old hand-rolled loops silently skipped them too — keep that.
+        // An odd player count leaves someone in a one-person team. There is no member row to write
+        // to, so they are skipped rather than recorded against themselves.
         forceItemPlayer.teammate().ifPresent(teammate -> {
             if (teammate.player() == null) {
                 return;

@@ -161,8 +161,8 @@ public class WanderingTraderManager implements Manager {
         entity.setAI(false);
         entity.setGravity(true);
 
-        // The wandering trader stays anonymous, as it always has. The special one is worth
-        // walking to, so it says what it is from a distance.
+        // The wandering trader stays anonymous. The special one is worth walking to, so it says
+        // what it is from a distance.
         if (kind == TraderKind.SPECIAL) {
             entity.customName(Text.of(kind.boldColoredName()));
             entity.setCustomNameVisible(true);
@@ -173,8 +173,8 @@ public class WanderingTraderManager implements Manager {
             case SPECIAL -> this.specialRecipes();
         };
 
-        // The entity is now only a marker: right-clicking it is intercepted and each player is
-        // handed their own merchant, so its own recipe list is never actually opened by anyone.
+        // The entity is only a marker: right-clicking it is intercepted and each player is handed
+        // their own merchant, so nobody ever opens this recipe list. It is the template.
         entity.setRecipes(recipes);
 
         ActiveTrader trader = new ActiveTrader(entity.getUniqueId(), kind, location, recipes);

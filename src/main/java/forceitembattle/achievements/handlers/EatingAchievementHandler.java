@@ -8,9 +8,6 @@ import forceitembattle.model.ForceItemPlayer;
 import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 
-/**
- * Handler for eating-based achievements
- */
 public class EatingAchievementHandler implements AchievementHandler<SimpleAchievementProgress> {
 
     private final int targetAmount;

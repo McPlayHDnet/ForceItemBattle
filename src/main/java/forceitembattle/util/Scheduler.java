@@ -8,10 +8,9 @@ import org.bukkit.scheduler.BukkitTask;
  * The plugin's entry point to the Bukkit scheduler, so no caller has to hold a plugin reference
  * just to schedule something.
  *
- * Every method returns the {@link BukkitTask} rather than void — a caller that needs to cancel
- * later (a vote timer, a repeating announcement) was previously forced back to
- * {@code Bukkit.getScheduler()} because these did not hand the handle back, which is most of why
- * the util was bypassed at twenty-odd call sites.
+ * Every method returns the {@link BukkitTask} rather than void, so a caller that needs to cancel
+ * later (a vote timer, a repeating announcement) never has to drop down to
+ * {@code Bukkit.getScheduler()} for the handle.
  */
 public final class Scheduler {
 

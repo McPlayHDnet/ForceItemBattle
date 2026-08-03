@@ -53,8 +53,6 @@ public class FibAchievementClient {
         }, executor::logError);
     }
 
-    // ==================== LEADERBOARD ====================
-
     public List<FibAchievementLeaderboardEntryDto> getAchievementLeaderboard(int limit) throws ApiException {
         return achievementApi.getAchievementLeaderboard(limit);
     }

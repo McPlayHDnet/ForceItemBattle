@@ -179,7 +179,7 @@ public class RecipeInventory extends InventoryBuilder {
             }
 
         } else if (recipeViewer.recipe() instanceof SmithingRecipe smithing) {
-            // Unknown smithing recipe?
+            // A smithing recipe that isn't a transform or trim: no template to show.
             ingredients.add(smithing.getAddition().getItemStack());
             ingredients.add(smithing.getBase().getItemStack());
 

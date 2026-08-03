@@ -39,9 +39,7 @@ public class CounterAchievementHandler implements AchievementHandler<CounterAchi
             return progress.count >= targetAmount;
         }
 
-        // CONSECUTIVE achievements — tracked on the (shared, in teams) progress tracker.
-
-        // Skip events break the streak
+        // Consecutive achievements are tracked on the (shared, in teams) progress tracker.
         if (foundEvent.isSkipped()) {
             if (requireConsecutive) {
                 progress.consecutiveCount = 0;
@@ -51,7 +49,6 @@ public class CounterAchievementHandler implements AchievementHandler<CounterAchi
 
         Material itemType = foundEvent.getFoundItem().getType();
 
-        // Check dimension if specified
         if (dimension != null && !plugin.getItemDifficultiesManager().getItemsIn(dimension).contains(itemType)) {
             if (requireConsecutive) {
                 progress.consecutiveCount = 0;
@@ -59,7 +56,6 @@ public class CounterAchievementHandler implements AchievementHandler<CounterAchi
             return false;
         }
 
-        // Update counters
         if (requireConsecutive) {
             progress.consecutiveCount++;
             return progress.consecutiveCount >= targetAmount;

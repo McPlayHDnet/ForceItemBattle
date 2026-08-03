@@ -26,10 +26,6 @@ import org.bukkit.entity.Player;
  *       the per-player value is genuinely the subject (solo placements, the raw roster).</li>
  * </ul>
  *
- * These used to be {@code getCurrentMaterial()} (team-aware) and {@code currentMaterial()} (not),
- * a one-character difference that decided which of two values you got. Callers could not tell them
- * apart at a glance and several hand-rolled the team branch that the getter already did.
- *
  * <p>Note the deliberate asymmetry: reads route through the team, but the Lombok setters always
  * write this player's own field. Mutating something the team owns goes through the routed mutators
  * ({@link #spendJoker()}, {@link #recordFoundItem(ForceItem)}), never a setter.
@@ -97,8 +93,6 @@ public class ForceItemPlayer {
         }
     }
 
-    // ==================== OWN VALUES (this player's fields, team ignored) ====================
-
     public Material currentMaterial() {
         return currentMaterial;
     }
@@ -123,8 +117,6 @@ public class ForceItemPlayer {
     public long lastItemAssignedAt() {
         return lastItemAssignedAt;
     }
-
-    // ==================== ACTIVE VALUES (the team's in a team game) ====================
 
     /** The force item this player is currently hunting. */
     public Material activeMaterial() {
@@ -157,8 +149,6 @@ public class ForceItemPlayer {
         return currentTeam != null ? currentTeam.getLastItemAssignedAt() : lastItemAssignedAt;
     }
 
-    // ==================== TEAM ====================
-
     public Team currentTeam() {
         return currentTeam;
     }
@@ -169,8 +159,7 @@ public class ForceItemPlayer {
 
     /**
      * The other member of this player's team, or empty when playing solo. Teams are pairs, so
-     * "the teammate" is well defined; if a team ever held more than two, this returns the first
-     * other member, which is what every call site did by hand before.
+     * "the teammate" is well defined; a team holding more than two yields the first other member.
      */
     public Optional<ForceItemPlayer> teammate() {
         return currentTeam == null ? Optional.empty() : currentTeam.teammateOf(this);
@@ -184,8 +173,6 @@ public class ForceItemPlayer {
     public List<ForceItemPlayer> squad() {
         return currentTeam == null ? List.of(this) : currentTeam.getPlayers();
     }
-
-    // ==================== ROUTED MUTATORS ====================
 
     /**
      * Spends one skip from whichever pool this player draws on, and returns what is left.
@@ -217,8 +204,6 @@ public class ForceItemPlayer {
         this.currentScore = activeScore() + 1;
         addFoundItemToList(forceItem);
     }
-
-    // ==================== MISC ====================
 
     public int backToBackStreak() {
         return backToBackStreak;

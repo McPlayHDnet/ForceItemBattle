@@ -58,7 +58,6 @@ public class CommandForceTeam extends CustomCommand {
             this.plugin.getTeamManager().create(first, second, teamName);
             player.sendMessage(Text.of("<dark_aqua>Successfully created team <green>" + teamName));
         } else {
-            // Create solo team
             this.plugin.getTeamManager().create(first, null, teamName);
             player.sendMessage(Text.of("<dark_aqua>Successfully created solo team <green>" + teamName));
         }

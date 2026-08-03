@@ -27,9 +27,7 @@ public class TimerManager implements Manager {
     private final ForceItemBattle forceItemBattle;
     @Getter
     private final Map<UUID, BossBar> bossBar = new HashMap<>();
-    /**
-     * Time left until the game end (seconds).
-     */
+    /** Seconds until the game ends. */
     @Setter
     @Getter
     private int timeLeft;
@@ -102,7 +100,7 @@ public class TimerManager implements Manager {
                     String timeText = "<gradient:#fcef64:#fcc44b:#ff9e59><b>" + this.formatSeconds(this.getTimeLeft()) + "</b></gradient>";
                     String scoreText = "";
                     if (scoreShown) {
-                        // Only the label differs by mode now — the number is the active score either way.
+                        // Only the label differs by mode; the number is the active score either way.
                         scoreText = "<dark_gray>| <green>" + (teamMode ? "Team score: " : "Your score: ")
                                 + "<white>" + forceItemPlayer.activeScore();
                     }
@@ -161,7 +159,6 @@ public class TimerManager implements Manager {
                 setTimeLeft(getTimeLeft() - 1);
                 forceItemBattle.getRandomEventManager().tick(getTimeLeft());
 
-                // Notify everyone in chat when a new item pool unlocks (once per pool).
                 for (ItemDifficultiesManager.State unlockedPool :
                         forceItemBattle.getItemDifficultiesManager().pollNewlyUnlockedStates()) {
                     Bukkit.getOnlinePlayers().forEach(players -> {

@@ -49,9 +49,8 @@ public class Team {
 
     /**
      * The team's label as MiniMessage: bracketed and in the team colour, whether it was named via
-     * /forceteam or auto-generated. A named team used to return the bare name, which rendered
-     * without brackets or colour and so looked nothing like the auto-team labels next to it in the
-     * same tab list. Callers that need the raw name for storage use {@link #getName()}.
+     * /forceteam or auto-generated — both shapes have to render alike side by side in the tab list.
+     * Callers that need the raw name for storage use {@link #getName()}.
      */
     public String getTeamDisplay() {
         return "<color:" + colorToHex() + ">[" + (this.name != null ? this.name : "#" + this.teamId) + "]";
@@ -80,13 +79,7 @@ public class Team {
         }
     }
 
-    /**
-     * The member of this team that isn't {@code player}, or empty if they are the only one on it.
-     *
-     * Every stats write in a team game is addressed by the pair (player, teammate), so this lookup
-     * used to be open-coded at nine call sites in three different shapes — a stream with
-     * {@code findFirst}, a stream with {@code forEach}, and a {@code for} loop with {@code break}.
-     */
+    /** The member of this team that isn't {@code player}, or empty if they are the only one on it. */
     public Optional<ForceItemPlayer> teammateOf(ForceItemPlayer player) {
         return this.players.stream()
                 .filter(member -> !member.equals(player))

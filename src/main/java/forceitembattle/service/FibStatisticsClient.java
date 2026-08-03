@@ -43,8 +43,6 @@ public class FibStatisticsClient {
         }
     }
 
-    // ==================== SOLO ====================
-
     public FibSoloStatisticsDto getSoloStatistics(UUID playerUuid) throws ApiException {
         return api.getSoloStatistics(playerUuid);
     }
@@ -90,8 +88,6 @@ public class FibStatisticsClient {
             return null;
         }, result -> onSuccess.run(), onError);
     }
-
-    // ==================== TEAM (shared) ====================
 
     public FibTeamStatisticsDto getTeamStatistics(UUID playerUuid, UUID teammateUuid) throws ApiException {
         return api.getTeamStatistics(playerUuid, teammateUuid);
@@ -168,8 +164,6 @@ public class FibStatisticsClient {
         }, result -> onSuccess.run(), onError);
     }
 
-    // ==================== MEMBER ====================
-
     public FibTeamMemberStatsDto getMemberStatistics(UUID playerUuid, UUID teammateUuid, UUID memberUuid) throws ApiException {
         return api.getMemberStatistics(playerUuid, teammateUuid, memberUuid);
     }
@@ -192,8 +186,6 @@ public class FibStatisticsClient {
         executor.runAsync(() -> api.updateMemberStatistics(playerUuid, teammateUuid, memberUuid, request), onSuccess, onError);
     }
 
-    // ==================== COMBINED ====================
-
     public FibPlayerCombinedTeamStatsDto getPlayerCombinedTeamStats(UUID playerUuid) throws ApiException {
         return api.getPlayerCombinedTeamStats(playerUuid);
     }
@@ -205,8 +197,6 @@ public class FibStatisticsClient {
     public void getPlayerCombinedTeamStatsAsync(UUID playerUuid, Consumer<FibPlayerCombinedTeamStatsDto> onSuccess, Consumer<ApiException> onError) {
         executor.runAsync(() -> api.getPlayerCombinedTeamStats(playerUuid), onSuccess, onError);
     }
-
-    // ==================== LEADERBOARD ====================
 
     public List<FibLeaderboardEntryDto> getSoloLeaderboard(String category, int limit) throws ApiException {
         return api.getSoloLeaderboard(category, limit);
@@ -243,8 +233,6 @@ public class FibStatisticsClient {
     public void getCombinedTeamLeaderboardAsync(String category, int limit, Consumer<List<FibLeaderboardEntryDto>> onSuccess, Consumer<ApiException> onError) {
         executor.runAsync(() -> api.getCombinedTeamLeaderboard(category, limit), onSuccess, onError);
     }
-
-    // ==================== PLAYER (mode-independent) ====================
 
     public FibPlayerStatsDto getPlayerStats(UUID playerUuid) throws ApiException {
         return api.getPlayerStats(playerUuid);

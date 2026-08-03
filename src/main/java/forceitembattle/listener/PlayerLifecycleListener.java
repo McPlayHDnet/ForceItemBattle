@@ -149,7 +149,7 @@ public class PlayerLifecycleListener implements Listener {
                     () -> FIBServiceClient.memberUpdate().deathsAdd(1L));
         }
 
-        // Automatically respawn player.
+        // Skip the death screen entirely; nobody sits out a round here.
         Scheduler.runLaterSync(() -> event.getEntity().spigot().respawn(), 1);
     }
 

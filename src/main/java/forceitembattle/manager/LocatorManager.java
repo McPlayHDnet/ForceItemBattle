@@ -20,13 +20,13 @@ import java.util.concurrent.ThreadLocalRandom;
 import net.kyori.adventure.bossbar.BossBar;
 import org.bukkit.Color;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
 import org.bukkit.entity.Player;
 import org.bukkit.generator.structure.Structure;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.StructureSearchResult;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +34,11 @@ import org.jetbrains.annotations.Nullable;
 public class LocatorManager implements Manager {
 
     private static final int STRUCTURE_SEARCH_RADIUS = 20;  // chunks
+
+    /** Close enough to start digging for something that is under you. */
+    private static final int BURIED_ARRIVAL_RADIUS = 50;    // blocks
+    /** Close enough to spot something standing at the surface. */
+    private static final int SURFACE_ARRIVAL_RADIUS = 70;   // blocks
 
     private final ForceItemBattle plugin;
     private final Map<String, Locator> locators;
@@ -47,11 +52,13 @@ public class LocatorManager implements Manager {
         this.activeLocators = new HashMap<>();
 
         this.addLocator(new Locator("fib:antimatter_depths", "Antimatter", CustomMaterials.ANTIMATTER_LOCATOR, Locator.Type.STRUCTURE,
-                Color.PURPLE, "#B314A8:#E775C3"));
+                Locator.Use.RIGHT_CLICK, BURIED_ARRIVAL_RADIUS, Color.PURPLE, "#B314A8:#E775C3"));
         this.addLocator(new Locator("trial_chambers", "Trial Chambers", CustomMaterials.TRIAL_LOCATOR, Locator.Type.STRUCTURE,
-                Color.fromRGB(0x4F, 0xB4, 0x93), "#2E7D68:#7FD8BC"));
+                Locator.Use.RIGHT_CLICK, BURIED_ARRIVAL_RADIUS, Color.fromRGB(0x4F, 0xB4, 0x93), "#2E7D68:#7FD8BC"));
         this.addLocator(new Locator("sulfur_caves", "Sulfur Cave", CustomMaterials.SULFUR_LOCATOR, Locator.Type.BIOME,
-                Color.YELLOW, "#C7A500:#FFF27E"));
+                Locator.Use.RIGHT_CLICK, BURIED_ARRIVAL_RADIUS, Color.YELLOW, "#C7A500:#FFF27E"));
+        this.addLocator(new Locator("trail_ruins", "Trail Ruins", CustomMaterials.KILN_FIRED_BRUSH, Locator.Type.STRUCTURE,
+                Locator.Use.BRUSH_GROUND, SURFACE_ARRIVAL_RADIUS, Color.fromRGB(0xC7, 0x7B, 0x3E), "#8A4B22:#E0A46B"));
     }
 
     @Override
@@ -145,17 +152,31 @@ public class LocatorManager implements Manager {
         Location digSpot = this.surfaceDigSpot(targetLocation);
 
         if (!this.isAlreadyRevealed(locator.getStructureId(), targetLocation)) {
-            this.destroyLocator(player, locator.getLocatorMaterial());
+            if (locator.getUse().consumedOnFind()) {
+                this.destroyLocator(player, locator);
+            }
             player.playSound(player, Sound.BLOCK_CONDUIT_AMBIENT_SHORT, 2, 1);
             this.startLocatorSession(locator, player, targetLocation, digSpot);
         }
 
-        this.plugin.getPositionManager().playParticleLine(player, targetLocation, locator.getLineColor());
-        this.plugin.getPositionManager().playSurfaceMarker(player, digSpot, locator.getLineColor());
+        this.showTheWay(locator, player, targetLocation, digSpot);
         player.sendMessage(Text.of(Prefix.LOCATOR + "<dark_aqua>" + locator.getStructureName() + " <gray>located at "
                 + LocationFormat.xz(targetLocation)
                 + LocationFormat.distance(player.getLocation(), targetLocation)));
         this.locatedStructures.put(locator.getStructureId(), targetLocation);
+    }
+
+    /**
+     * Points the player at the find, the way this locator points: footprints along the ground, or
+     * a line through the air plus a beam over the spot to dig at.
+     */
+    private void showTheWay(Locator locator, Player player, Location targetLocation, Location digSpot) {
+        if (locator.getUse().leavesFootprints()) {
+            this.plugin.getPositionManager().playFootprintTrail(player, targetLocation, locator.getLineColor());
+            return;
+        }
+        this.plugin.getPositionManager().playParticleLine(player, targetLocation, locator.getLineColor());
+        this.plugin.getPositionManager().playSurfaceMarker(player, digSpot, locator.getLineColor());
     }
 
     // The surface block above the target, i.e. where the player has to dig down.
@@ -179,7 +200,7 @@ public class LocatorManager implements Manager {
         BossBar bar = BossBar.bossBar(Text.of(""), 1, BossBar.Color.WHITE, BossBar.Overlay.NOTCHED_6);
 
         BukkitRunnable task = new BukkitRunnable() {
-            /** Task runs between particle line redraws; the boss bar itself updates every run. */
+            /** Task runs between particle line replays; the boss bar itself updates every run. */
             private static final int RUNS_PER_LINE = 30;
             private int runs = 0;
 
@@ -191,24 +212,31 @@ public class LocatorManager implements Manager {
                 bar.name(Text.of(bossBarTitle));
                 player.showBossBar(bar);
 
-                if (this.runs++ % RUNS_PER_LINE == 0) {
-                    LocatorManager.this.plugin.getPositionManager().playParticleLine(player, targetLocation, locator.getLineColor());
+                // The line is a one-off animation, so it is replayed now and then. Footprints are
+                // held up continuously by their own task instead — replaying them would be the
+                // pulse the ground trail is meant not to have.
+                if (!locator.getUse().leavesFootprints() && this.runs++ % RUNS_PER_LINE == 0) {
+                    LocatorManager.this.plugin.getPositionManager()
+                            .playParticleLine(player, targetLocation, locator.getLineColor());
                 }
 
                 if (player.getWorld() == targetLocation.getWorld()
-                        && player.getLocation().distance(targetLocation) <= 50) {
+                        && player.getLocation().distance(targetLocation) <= locator.getArrivalRadius()) {
                     LocatorManager.this.clearLocator(playerId, locator.getStructureId());
                 }
             }
         };
 
-        // Persistent dig-spot marker, cancelled together with the session.
-        BukkitRunnable markerTask = this.plugin.getPositionManager().startSurfaceMarker(player, digSpot, locator.getLineColor());
+        // The persistent ground visual, cancelled together with the session: a beam over the dig
+        // spot, or the footprint trail for a find that needs no digging.
+        BukkitRunnable groundTask = locator.getUse().leavesFootprints()
+                ? this.plugin.getPositionManager().startFootprintTrail(player, targetLocation, locator.getLineColor())
+                : this.plugin.getPositionManager().startSurfaceMarker(player, digSpot, locator.getLineColor());
 
         synchronized (this.activeLocators) {
             this.activeLocators
                     .computeIfAbsent(playerId, uuid -> new LinkedHashMap<>())
-                    .put(locator.getStructureId(), new ActiveLocator(bar, task, markerTask));
+                    .put(locator.getStructureId(), new ActiveLocator(bar, task, groundTask));
         }
 
         task.runTaskTimerAsynchronously(this.plugin, 0L, 10L);
@@ -238,7 +266,6 @@ public class LocatorManager implements Manager {
         }
     }
 
-    // Dismisses a single active locator for a player by its structure id.
     public boolean dismiss(Player player, String structureId) {
         ActiveLocator active = this.removeSession(player.getUniqueId(), structureId);
         if (active == null) {
@@ -278,9 +305,14 @@ public class LocatorManager implements Manager {
         return byStructure.size();
     }
 
-    public Locator getLocatorByMaterial(Material material) {
+    /**
+     * The locator this stack is the item for, or null. Matching on the stack rather than on its
+     * material is what keeps a plain brush from working as the Trail Ruins locator.
+     */
+    @Nullable
+    public Locator getLocatorByItem(ItemStack itemStack) {
         return this.locators.values().stream()
-                .filter(locator -> locator.getLocatorMaterial() == material)
+                .filter(locator -> locator.matches(itemStack))
                 .findFirst()
                 .orElse(null);
     }
@@ -299,17 +331,17 @@ public class LocatorManager implements Manager {
         return location.equals(locatedStructures.get(structureId));
     }
 
-    private void destroyLocator(Player player, Material material) {
-        if (player.getInventory().getItemInMainHand().getType() != material) return;
+    private void destroyLocator(Player player, Locator locator) {
+        if (!locator.matches(player.getInventory().getItemInMainHand())) return;
         player.getInventory().setItemInMainHand(null);
     }
 
-    private record ActiveLocator(BossBar bossBar, BukkitRunnable task, @Nullable BukkitRunnable markerTask) {
+    private record ActiveLocator(BossBar bossBar, BukkitRunnable task, @Nullable BukkitRunnable groundTask) {
 
         void cancelAndHide(@Nullable Player player) {
             this.task.cancel();
-            if (this.markerTask != null && !this.markerTask.isCancelled()) {
-                this.markerTask.cancel();
+            if (this.groundTask != null && !this.groundTask.isCancelled()) {
+                this.groundTask.cancel();
             }
             if (player != null) {
                 player.hideBossBar(this.bossBar);

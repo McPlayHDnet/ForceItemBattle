@@ -12,9 +12,6 @@ import org.bukkit.event.Event;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
-/**
- * Handler for full inventory achievement
- */
 public class InventoryFullAchievementHandler implements AchievementHandler<SimpleAchievementProgress> {
 
     @Override
@@ -27,7 +24,7 @@ public class InventoryFullAchievementHandler implements AchievementHandler<Simpl
         Player player = forceItemPlayer.player();
         Inventory inv = player.getInventory();
 
-        // Check all 36 slots (0-35)
+        // The 36 storage slots; armour and offhand don't count.
         for (int i = 0; i < 36; i++) {
             ItemStack item = inv.getItem(i);
             if (item == null || item.getType() == Material.AIR) {
@@ -35,7 +32,6 @@ public class InventoryFullAchievementHandler implements AchievementHandler<Simpl
             }
         }
 
-        // Also check backpack if enabled
         ForceItemBattle fib = plugin;
         if (fib.getSettings().isSettingEnabled(GameSetting.BACKPACK)) {
             Inventory backpack = fib.getBackpackManager().getBackpackForPlayer(player);

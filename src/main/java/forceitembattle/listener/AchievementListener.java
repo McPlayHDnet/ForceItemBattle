@@ -102,7 +102,6 @@ public class AchievementListener implements Listener {
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
-        // Only handle beehive harvesting here
         this.plugin.getAchievementManager().handleEvent(player, event, Trigger.BEEHIVE_HARVEST);
     }
 
@@ -112,7 +111,6 @@ public class AchievementListener implements Listener {
             return;
         }
 
-        // Check for loot achievements when opening chest inventory
         this.plugin.getAchievementManager().handleEvent(player, event, Trigger.LOOT);
     }
 
@@ -128,7 +126,6 @@ public class AchievementListener implements Listener {
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
         Achievements achievement = event.getAchievement();
 
-        // Announce the achievement to everyone (skipped for spectators).
         if (forceItemPlayer == null || !forceItemPlayer.isSpectator()) {
             player.playSound(player, Sound.BLOCK_AMETHYST_BLOCK_RESONATE, 1, 1);
             Bukkit.getOnlinePlayers().forEach(players -> {

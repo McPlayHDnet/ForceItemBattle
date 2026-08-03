@@ -68,7 +68,6 @@ public class FinishInventory extends InventoryBuilder {
                     placedItems++;
 
                     if (startSlot == 53) {
-                        //check if is even needed to create a new page
                         if ((targetTeam != null && targetTeam.getFoundItems().size() > 35) || targetPlayer.foundItems().size() > 35) {
                             pages.put(pagesAmount, new HashMap<>(slots));
                             pagesAmount++;
@@ -147,7 +146,7 @@ public class FinishInventory extends InventoryBuilder {
                             public void run() {
                                 clearCloseHandlers();
 
-                                // just for safety in case there is a re-open in the very last tick... don't think this will ever happen but yeah why not
+                                // Guards against a re-open landing on the very last tick.
                                 Scheduler.runLaterSync(() -> {
                                     Bukkit.getOnlinePlayers().forEach(p -> {
                                         if (p.getOpenInventory().getTopInventory() == getInventory())
@@ -180,7 +179,6 @@ public class FinishInventory extends InventoryBuilder {
                 }
             }.runTaskTimer(forceItemBattle, 0L, isEvent ? 8L : 10L);
         } else {
-            //Open Inventory beginning from the first page
             this.addUpdateHandler(() -> {
                 Map<Integer, Map<Integer, ItemStack>> savedPages =
                         forceItemBattle.getGamemanager().getResultPages(targetPlayer, targetTeam);

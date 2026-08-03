@@ -22,13 +22,7 @@ public class ItemsInventory extends InventoryBuilder {
     private final int[] currentPage = {0};
     private Filter currentFilter = Filter.ALL;
 
-    /**
-     * The five views of the item catalogue this menu offers.
-     *
-     * Each used to be a branch of one long if/else chain that repeated the whole paging routine —
-     * page bucket, slot advance, page rollover — five times over, differing only in the test at the
-     * top and (for {@link #EXCLUDED}) how the icon is drawn.
-     */
+    /** The five views of the item catalogue this menu offers. */
     private enum Filter {
         ALL(Material.LIME_DYE, "<green>All items",
                 (items, material) -> true),
@@ -105,11 +99,7 @@ public class ItemsInventory extends InventoryBuilder {
         this.addClickHandler(inventoryClickEvent -> inventoryClickEvent.setCancelled(true));
     }
 
-    /**
-     * Paints the filter row. Redrawn on every switch so the glow actually tracks the active filter —
-     * the buttons used to be built once with a fixed glow, which left "All items" lit no matter
-     * which view you were looking at.
-     */
+    /** Must be redrawn on every filter switch, or the glow stays on whichever view was built first. */
     private void drawFilterButtons(Player player) {
         for (Filter filter : Filter.VALUES) {
             this.setItem(FIRST_FILTER_SLOT + filter.ordinal(),

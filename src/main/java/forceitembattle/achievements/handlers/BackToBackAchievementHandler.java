@@ -15,12 +15,11 @@ public class BackToBackAchievementHandler implements AchievementHandler<BackToBa
     private final boolean requireSkippedThenGot;
 
     public BackToBackAchievementHandler(int targetAmount, boolean requireSameItem, boolean requireSkippedThenGot) {
-        // VALIDATION: targetAmount must be positive
         if (targetAmount < 1) {
             throw new IllegalArgumentException("targetAmount must be at least 1, got: " + targetAmount);
         }
 
-        // VALIDATION: the preceding item is either skipped or normally obtained, not both
+        // The preceding item is either skipped or normally obtained, not both.
         if (requireSameItem && requireSkippedThenGot) {
             throw new IllegalArgumentException(
                     "Cannot have both requireSameItem and requireSkippedThenGot - they are mutually exclusive"

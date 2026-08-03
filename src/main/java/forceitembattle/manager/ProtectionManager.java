@@ -27,7 +27,6 @@ public class ProtectionManager implements Manager {
     public boolean isNearProtectedBed(@Nullable Player player, Location atLocation) {
         for (var entry : this.plugin.getGamemanager().forceItemPlayerMap().entrySet()) {
             if (player != null && entry.getKey().equals(player.getUniqueId())) {
-                // ignore breaking your own bed
                 continue;
             }
 
@@ -36,9 +35,8 @@ public class ProtectionManager implements Manager {
                 continue;
             }
 
-            // 4 blocks protection radius
+            // 3 block protection radius, squared.
             if (p.getRespawnLocation().distanceSquared(atLocation) < 9) {
-                // Only disallow break above bed
                 if (atLocation.getBlockY() >= p.getRespawnLocation().getBlockY()) {
                     return true;
                 }

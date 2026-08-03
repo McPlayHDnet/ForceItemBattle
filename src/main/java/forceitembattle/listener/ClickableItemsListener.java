@@ -15,10 +15,15 @@ import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.gui.ItemBuilder;
 import forceitembattle.model.Locator;
 import forceitembattle.gui.TeleporterInventory;
+import forceitembattle.util.Prefix;
 import forceitembattle.util.Scheduler;
 import forceitembattle.util.Text;
 import forceitembattle.gui.VaultInventory;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
@@ -27,6 +32,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.World;
+import org.bukkit.block.BrushableBlock;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -39,7 +45,35 @@ import org.bukkit.inventory.ItemStack;
 @RequiredArgsConstructor
 public class ClickableItemsListener implements Listener {
 
+    /**
+     * Brushing is a hold-to-use action, and a failed sweep does not use the brush up, so a player
+     * leaning on the button could otherwise fire one blocking structure search after another.
+     */
+    private static final long BRUSH_SWEEP_COOLDOWN_MS = 1500L;
+
+    /**
+     * Ground loose enough to sweep for a find. Stone, wood and the like give the brush nothing to
+     * read, so the locator only answers on soil — both snows count, since a layer of it is what
+     * covers the ground you would be standing on.
+     */
+    private static final Set<Material> SWEEPABLE_GROUND = Set.of(
+            Material.GRASS_BLOCK,
+            Material.SAND,
+            Material.MUD,
+            Material.PODZOL,
+            Material.COARSE_DIRT,
+            Material.SNOW,
+            Material.SNOW_BLOCK
+    );
+
     private final ForceItemBattle plugin;
+    private final Map<UUID, Long> lastBrushSweep = new HashMap<>();
+
+    private boolean isSweepingTooFast(Player player) {
+        long now = System.currentTimeMillis();
+        Long last = this.lastBrushSweep.put(player.getUniqueId(), now);
+        return last != null && now - last < BRUSH_SWEEP_COOLDOWN_MS;
+    }
 
     private static boolean isRightClick(Action action) {
         return action == Action.RIGHT_CLICK_BLOCK || action == Action.RIGHT_CLICK_AIR;
@@ -151,9 +185,33 @@ public class ClickableItemsListener implements Listener {
             return;
         }
 
-        Locator locator = this.plugin.getLocatorManager().getLocatorByMaterial(e.getItem().getType());
+        Locator locator = this.plugin.getLocatorManager().getLocatorByItem(e.getItem());
         if (locator != null) {
-            e.setCancelled(true);
+            if (locator.getUse() == Locator.Use.BRUSH_GROUND) {
+                // A brush is still a brush: on something that can actually be brushed, stay out of
+                // the way and let the player dig their sherd out.
+                if (e.getClickedBlock() != null && e.getClickedBlock().getState() instanceof BrushableBlock) {
+                    return;
+                }
+                e.setCancelled(true);
+                if (e.getClickedBlock() == null) {
+                    player.sendMessage(Text.of(Prefix.LOCATOR + "<gray>Brush the ground with it to sweep for <dark_aqua>"
+                            + locator.getStructureName() + "<gray>."));
+                    return;
+                }
+                // Guard before the ground check as well, so brushing at a wall cannot spam chat.
+                if (this.isSweepingTooFast(player)) {
+                    return;
+                }
+                if (!SWEEPABLE_GROUND.contains(e.getClickedBlock().getType())) {
+                    player.sendMessage(Text.of(Prefix.LOCATOR + "<gray>Nothing to sweep here — the brush needs "
+                            + "loose ground: <dark_aqua>grass<gray>, <dark_aqua>sand<gray>, <dark_aqua>mud<gray>, "
+                            + "<dark_aqua>podzol<gray>, <dark_aqua>coarse dirt <gray>or <dark_aqua>snow<gray>."));
+                    return;
+                }
+            } else {
+                e.setCancelled(true);
+            }
             this.plugin.getLocatorManager().locate(locator.getStructureId(), forceItemPlayer);
             return;
         }

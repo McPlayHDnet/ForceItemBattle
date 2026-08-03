@@ -12,8 +12,7 @@ import org.bukkit.entity.Player;
 /**
  * Command that is specified in plugin.yml.
  *
- * <p>The owning plugin is injected via the constructor. Registration is no longer
- * a constructor side effect — commands are registered explicitly through
+ * <p>Constructing one does not register it: that happens explicitly through
  * {@link CommandsManager#registerCommand(CustomCommand)} during bootstrap.
  */
 @Getter

@@ -64,7 +64,6 @@ public class CollectionDexInventory extends InventoryBuilder {
     private int currentPage;
     private Filter filter = Filter.ALL;
     private Sort sort = Sort.COLLECTED_FIRST;
-    // null until the collection lands.
     private Map<String, CollectedItem> collected;
     // Server-wide rarity; null until it lands. Independent of the collection load, so the grid
     // renders as soon as either arrives and gains the rarity line when it shows up.
@@ -217,7 +216,6 @@ public class CollectionDexInventory extends InventoryBuilder {
                 .setLore(summaryLore)
                 .getItemStack());
 
-        // --- controls ---
         this.setItem(47, new ItemBuilder(Material.HOPPER)
                         .setDisplayName("<dark_gray>» <dark_aqua>Filter<gray>: <yellow>" + this.filter.displayName)
                         .setLore(List.of("", "<yellow>Click to change"))

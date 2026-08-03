@@ -88,7 +88,7 @@ public enum CollectionCategory {
         };
     }
 
-    // --- book-only extensions of the achievement-shared MaterialCategory predicates ---
+    // Book-only extensions of the achievement-shared MaterialCategory predicates.
 
     private static boolean isGlass(Material material) {
         String name = material.name();
@@ -142,7 +142,7 @@ public enum CollectionCategory {
         };
     }
 
-    // --- book-only predicates (achievement-shared ones live in MaterialCategory) ---
+    // Book-only predicates; the achievement-shared ones live in MaterialCategory.
 
     // Specific on purpose -- must NOT grab NETHER_WART/NETHER_SPROUTS (plants), crimson/warped wood,
     // or MAGMA_CREAM (a mob drop). QUARTZ blocks land here; raw QUARTZ / NETHER_QUARTZ_ORE earlier.

@@ -167,6 +167,13 @@ public class ItemBuilder {
         return this;
     }
 
+    public ItemBuilder setItemModel(NamespacedKey itemModel) {
+        ItemMeta itemMeta = getItemStack().getItemMeta();
+        itemMeta.setItemModel(itemModel);
+        setItemMeta(itemMeta);
+        return this;
+    }
+
     public <P, C> ItemBuilder setPersistentData(NamespacedKey key, PersistentDataType<P, C> type, C value) {
         ItemMeta itemMeta = getItemStack().getItemMeta();
         itemMeta.getPersistentDataContainer().set(key, type, value);

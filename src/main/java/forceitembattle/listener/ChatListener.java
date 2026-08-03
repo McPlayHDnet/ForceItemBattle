@@ -42,7 +42,6 @@ public class ChatListener implements Listener {
 
         Team currentTeam = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId()).currentTeam();
 
-        // Shout: always global.
         if (CommandShout.isShouting(player)) {
             Bukkit.broadcast(Text.of(
                     "<gold>" + player.getName() + " <dark_gray>» <white>" + message
@@ -61,7 +60,6 @@ public class ChatListener implements Listener {
             return;
         }
 
-        // Team chat.
         String teamMessage = "<green>Team</green> <gray>| <gold>" + player.getName() +
                 " <dark_gray>» <white>" + message;
 

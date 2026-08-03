@@ -22,7 +22,6 @@ public class TimeBasedAchievementHandler implements AchievementHandler<TimeAchie
                                        long skipAfterSeconds, int closeCallSeconds, boolean noSkip,
                                        boolean firstPlayer, boolean playerBased) {
 
-        // VALIDATION: Only one time constraint should be set
         int constraintCount = 0;
         if (withinSeconds > 0) constraintCount++;
         if (timeFrameSeconds > 0) constraintCount++;
@@ -39,12 +38,10 @@ public class TimeBasedAchievementHandler implements AchievementHandler<TimeAchie
             );
         }
 
-        // VALIDATION: targetAmount must be positive
         if (targetAmount < 1) {
             throw new IllegalArgumentException("targetAmount must be at least 1, got: " + targetAmount);
         }
 
-        // VALIDATION: noSkip only makes sense with certain time constraints
         if (noSkip && (skipAfterSeconds > 0 || firstPlayer)) {
             throw new IllegalArgumentException(
                     "noSkip=true doesn't make sense with skipAfterSeconds or firstPlayer"
@@ -76,9 +73,9 @@ public class TimeBasedAchievementHandler implements AchievementHandler<TimeAchie
         // Pause-aware game clock: the Timer only counts down during MID_GAME, so
         // deriving elapsed/remaining from it (instead of wall time) stays correct
         // across /pause and /resume. Mirrors ItemDifficultiesManager's elapsed calc.
-        int gameDuration = fib.getGamemanager().getGameDuration();   // total round seconds
-        int secondsLeft = fib.getTimerManager().getTimeLeft();              // seconds remaining
-        long elapsedGameTime = gameDuration - secondsLeft;           // seconds since round start
+        int gameDuration = fib.getGamemanager().getGameDuration();
+        int secondsLeft = fib.getTimerManager().getTimeLeft();
+        long elapsedGameTime = gameDuration - secondsLeft;
 
         // Anchor per-item markers to the round start on first use. The first item
         // is assigned at game start, i.e. when secondsLeft == gameDuration.
@@ -88,42 +85,39 @@ public class TimeBasedAchievementHandler implements AchievementHandler<TimeAchie
             progress.initialized = true;
         }
 
-        long elapsedItemTime = progress.lastItemSecondsLeft - secondsLeft; // seconds since last counted item
+        long elapsedItemTime = progress.lastItemSecondsLeft - secondsLeft;
 
-        // Update item received marker for non-b2b, non-skip items
         if (!foundEvent.isBackToBack() && !foundEvent.isSkipped()) {
             progress.itemReceivedSecondsLeft = secondsLeft;
         }
 
-        // Track if player has skipped
         if (foundEvent.isSkipped()) {
             progress.hasSkipped = true;
         }
 
-        // PROCRASTINATOR - special case: ONLY triggers on skip events
+        // PROCRASTINATOR is the one achievement here that only triggers on skips.
         if (skipAfterSeconds > 0) {
             if (!foundEvent.isSkipped()) {
-                return false; // Not a skip, so can't be procrastinator
+                return false;
             }
             long timeSinceReceived = progress.itemReceivedSecondsLeft - secondsLeft;
             progress.itemReceivedSecondsLeft = secondsLeft;
             return timeSinceReceived >= skipAfterSeconds;
         }
 
-        // ALL OTHER TIME-BASED ACHIEVEMENTS: Skip events don't count
+        // Every other time-based achievement ignores skips.
         if (foundEvent.isSkipped()) {
             return false;
         }
 
-        // If noSkip is true and player has skipped, they can't get this achievement
         if (noSkip && progress.hasSkipped) {
             return false;
         }
 
-        // EARLY BIRD - first player to collect (non-b2b, non-skip)
+        // EARLY_BIRD - first player to collect.
         if (firstPlayer) {
             if (foundEvent.isBackToBack()) {
-                return false; // B2B doesn't count as "first item"
+                return false; // a b2b doesn't count as "first item"
             }
             if (progress.firstItemCollected) {
                 return false;
@@ -152,12 +146,11 @@ public class TimeBasedAchievementHandler implements AchievementHandler<TimeAchie
             return false;
         }
 
-        // CLOSE CALL / final-window - count items collected within the last X seconds.
-        // targetAmount=1 → CLOSE_CALL (one item in the window)
-        // targetAmount=3 → BUZZER_BEATER (three items in the window)
+        // Items collected within the last X seconds.
+        // targetAmount=1 → CLOSE_CALL, 3 → BUZZER_BEATER
         if (closeCallSeconds > 0) {
             if (secondsLeft > closeCallSeconds) {
-                return false; // Not in the final window yet
+                return false;
             }
             progress.count++;
             progress.lastItemSecondsLeft = secondsLeft;

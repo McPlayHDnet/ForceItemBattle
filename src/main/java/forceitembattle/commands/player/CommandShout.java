@@ -34,7 +34,7 @@ public class CommandShout extends CustomCommand {
             return;
         }
 
-        // Just in case, if someone wants to one-time shout
+        // With a message, shout it once without touching shout mode.
         Bukkit.broadcast(Text.of(
                 "<gold>" + player.getName() + " <dark_gray>» <white>" + String.join(" ", args)
         ));

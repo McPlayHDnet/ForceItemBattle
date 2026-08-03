@@ -26,11 +26,10 @@ public class CollectionAchievementHandler<T> implements AchievementHandler<Colle
         this.extractor = extractor;
     }
 
-    // Factory methods
     public static CollectionAchievementHandler<BiomeGroup> biomeHandler(Set<BiomeGroup> requiredBiomes) {
         return new CollectionAchievementHandler<>(Trigger.VISIT, requiredBiomes, (event, player, progress) -> {
             if (event instanceof PlayerMoveEvent moveEvent) {
-                // OPTIMIZATION: Only check when player moves to a new block
+                // A biome lookup per move event is far too hot; only do it on a block change.
                 int x = moveEvent.getTo().getBlockX();
                 int y = moveEvent.getTo().getBlockY();
                 int z = moveEvent.getTo().getBlockZ();
@@ -39,12 +38,11 @@ public class CollectionAchievementHandler<T> implements AchievementHandler<Colle
                         new CollectionAchievementProgress.LastCheckedPosition(x, y, z);
 
                 if (current.equals(progress.lastPosition)) {
-                    return null; // Same block, no need to check
+                    return null;
                 }
 
                 progress.lastPosition = current;
 
-                // Now check biome
                 Biome biome = moveEvent.getTo().getBlock().getBiome();
                 for (BiomeGroup group : BiomeGroup.values()) {
                     if (group.getBiomes().contains(biome)) {
@@ -67,7 +65,7 @@ public class CollectionAchievementHandler<T> implements AchievementHandler<Colle
                         new CollectionAchievementProgress.LastCheckedPosition(x, y, z);
 
                 if (current.equals(progress.lastPosition)) {
-                    return null; // Same block, no need to check
+                    return null;
                 }
 
                 progress.lastPosition = current;

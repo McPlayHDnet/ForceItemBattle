@@ -15,7 +15,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class SeedPool {
 
-    // --- version guard: must match the pool's manifest.txt header ---
+    // Version guard: must match the pool's manifest.txt header.
     private static final String EXPECTED_MC    = "26.2";
     private static final String EXPECTED_FLAGS = "0";
     private static final String EXPECTED_POINT = "0,63,0";

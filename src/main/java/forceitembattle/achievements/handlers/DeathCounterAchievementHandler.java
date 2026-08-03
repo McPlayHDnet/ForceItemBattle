@@ -7,9 +7,7 @@ import forceitembattle.model.ForceItemPlayer;
 import org.bukkit.event.Event;
 import org.bukkit.event.entity.PlayerDeathEvent;
 
-/**
- * Handler for death-counter achievements (Chicot - no deaths)
- */
+/** Counts deaths only; CHICOT is awarded from the count by checkGameEndAchievements. */
 public class DeathCounterAchievementHandler implements AchievementHandler<SimpleAchievementProgress> {
 
     private final int maxDeaths;
@@ -31,7 +29,6 @@ public class DeathCounterAchievementHandler implements AchievementHandler<Simple
         if (event instanceof PlayerDeathEvent) {
             progress.deathCount++;
         }
-        // Never triggers during the game - checked at end
         return false;
     }
 
