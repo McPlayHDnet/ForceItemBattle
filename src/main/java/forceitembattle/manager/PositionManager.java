@@ -8,6 +8,8 @@ import lombok.NonNull;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.Nullable;
@@ -22,6 +24,23 @@ public class PositionManager implements Manager {
     private static final int MARKER_RING_POINTS = 16;
     private static final double MARKER_INNER_RING_RADIUS = 0.75;
     private static final int MARKER_INNER_RING_POINTS = 10;
+
+    /** Redraw faster than dust fades, so the trail looks like it is lying there. */
+    private static final long FOOTPRINT_REDRAW_TICKS = 10L;
+    private static final int FOOTPRINT_COUNT = 12;
+    private static final double FOOTPRINT_STRIDE = 1.4;
+    /** Sideways offset of each print from the walking line, alternating left and right. */
+    private static final double FOOTPRINT_STRIDE_WIDTH = 0.3;
+    private static final float FOOTPRINT_DUST_SIZE = 0.7f;
+    /** How far above and below the player's feet a step looks for ground. */
+    private static final int FOOTPRINT_GROUND_UP = 2;
+    private static final int FOOTPRINT_GROUND_DOWN = 4;
+
+    /** Offsets of one footprint's dust, as {along travel, across travel} in blocks. */
+    private static final double[][] FOOTPRINT_SHAPE = {
+            {0.18, 0.00}, {0.12, 0.07}, {0.12, -0.07}, {0.00, 0.09}, {0.00, -0.09},
+            {-0.12, 0.06}, {-0.12, -0.06}, {-0.18, 0.00},
+    };
 
     private final ForceItemBattle plugin;
     private final Map<String, Location> positionsMap;
@@ -95,6 +114,109 @@ public class PositionManager implements Manager {
                 return levelAim;
             }
         }.runTaskTimer(this.plugin, 0L, 10L);
+    }
+
+    /**
+     * Dusts a short-lived (~5s) line of footprints across the ground towards the target, as if
+     * someone had already walked it.
+     */
+    public void playFootprintTrail(@NonNull Player player, @NonNull Location position, Color color) {
+        if (player.getWorld() != position.getWorld()) return;
+        this.createFootprintTrail(player, position, color, 10).runTaskTimer(this.plugin, 0L, FOOTPRINT_REDRAW_TICKS);
+    }
+
+    /**
+     * Starts a footprint trail (see {@link #playFootprintTrail}) that keeps redrawing until the
+     * returned task is cancelled by the caller. Dust only lives about a second, so the trail is
+     * laid again every redraw — often enough that it reads as standing there rather than blinking,
+     * and re-anchored on the player each time, so it always leads away from where they are now.
+     *
+     * @return the trail task, or null when the player is in another world
+     */
+    @Nullable
+    public BukkitRunnable startFootprintTrail(@NonNull Player player, @NonNull Location position, Color color) {
+        if (player.getWorld() != position.getWorld()) return null;
+        BukkitRunnable trail = this.createFootprintTrail(player, position, color, -1);
+        trail.runTaskTimer(this.plugin, 0L, FOOTPRINT_REDRAW_TICKS);
+        return trail;
+    }
+
+    private BukkitRunnable createFootprintTrail(Player player, Location position, Color color, int maxRedraws) {
+        return new BukkitRunnable() {
+            int current = 0;
+
+            @Override
+            public void run() {
+                if (!player.isOnline()) {
+                    this.cancel();
+                    return;
+                }
+                if (++this.current == maxRedraws) {
+                    this.cancel();
+                }
+                drawFootprintFrame(player, position, new Particle.DustOptions(color, FOOTPRINT_DUST_SIZE));
+            }
+        };
+    }
+
+    /**
+     * One full trail of prints, from the player's feet towards the target.
+     *
+     * <p>Each print is snapped to whatever a walker would step on near that spot rather than to the
+     * world surface: underground the surface is the roof of the cave, and the trail would be drawn
+     * in the ceiling. A step with no ground under it (a cliff edge, a gap) is simply skipped.
+     *
+     * <p>Reads blocks, so this only ever runs on the main thread — the async locator session
+     * schedules the task rather than drawing itself.
+     */
+    private static void drawFootprintFrame(Player player, Location position, Particle.DustOptions dust) {
+        Location from = player.getLocation();
+        double dx = position.getX() - from.getX();
+        double dz = position.getZ() - from.getZ();
+        double distance = Math.sqrt(dx * dx + dz * dz);
+        if (distance < 1) {
+            return; // standing on it
+        }
+
+        double forwardX = dx / distance;
+        double forwardZ = dz / distance;
+
+        int prints = Math.min(FOOTPRINT_COUNT, (int) (distance / FOOTPRINT_STRIDE));
+        for (int step = 1; step <= prints; step++) {
+            // Left, right, left … a walk rather than a row of stamps.
+            double side = (step % 2 == 0 ? FOOTPRINT_STRIDE_WIDTH : -FOOTPRINT_STRIDE_WIDTH);
+            double x = from.getX() + forwardX * step * FOOTPRINT_STRIDE - forwardZ * side;
+            double z = from.getZ() + forwardZ * step * FOOTPRINT_STRIDE + forwardX * side;
+
+            Double y = groundAt(from, x, z);
+            if (y != null) {
+                drawFootprint(player, x, y, z, forwardX, forwardZ, dust);
+            }
+        }
+    }
+
+    /** Top face of the block a walker would step on around this spot, or null if there is none. */
+    @Nullable
+    private static Double groundAt(Location from, double x, double z) {
+        for (int y = from.getBlockY() + FOOTPRINT_GROUND_UP; y >= from.getBlockY() - FOOTPRINT_GROUND_DOWN; y--) {
+            Block block = from.getWorld().getBlockAt((int) Math.floor(x), y, (int) Math.floor(z));
+            if (!block.isPassable() && block.getRelative(BlockFace.UP).isPassable()) {
+                return block.getBoundingBox().getMaxY() + 0.05;
+            }
+        }
+        return null;
+    }
+
+    /** One print: a small oval of dust, long side along the direction of travel. */
+    private static void drawFootprint(Player player, double x, double y, double z,
+                                      double forwardX, double forwardZ, Particle.DustOptions dust) {
+        for (double[] offset : FOOTPRINT_SHAPE) {
+            player.spawnParticle(Particle.DUST,
+                    x + forwardX * offset[0] - forwardZ * offset[1],
+                    y,
+                    z + forwardZ * offset[0] + forwardX * offset[1],
+                    1, dust);
+        }
     }
 
     /**

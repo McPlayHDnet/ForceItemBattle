@@ -20,18 +20,33 @@ import org.jetbrains.annotations.Nullable;
 @Getter
 public enum CustomMaterials {
 
-    ANTIMATTER_LOCATOR(Material.KNOWLEDGE_BOOK, "antimatter_locator", "Antimatter Locator", "<dark_purple>", null, null, null, null),
-    TRIAL_LOCATOR(Material.WITHER_ROSE, "trial_locator", "Trial Locator", "<gold>", null, null, null, null),
-    SULFUR_LOCATOR(Material.MUSIC_DISC_CHIRP, "sulfur_locator", "Sulfur Locator", "<yellow>", null, null, null, null),
+    ANTIMATTER_LOCATOR(Material.KNOWLEDGE_BOOK, "antimatter_locator", "Antimatter Locator", "<dark_purple>", null, null, null, null, null),
+    TRIAL_LOCATOR(Material.WITHER_ROSE, "trial_locator", "Trial Locator", "<gold>", null, null, null, null, null),
+    SULFUR_LOCATOR(Material.MUSIC_DISC_CHIRP, "sulfur_locator", "Sulfur Locator", "<yellow>", null, null, null, null, null),
     EYE_OF_ANTIMATTER(Material.TORCHFLOWER_SEEDS, "eye_of_antimatter", "Eye of Antimatter", "<dark_purple>", null,
-            new NamespacedKey("fib", "eye_of_antimatter"), "eye_of_antimatter", null),
+            new NamespacedKey("fib", "eye_of_antimatter"), "eye_of_antimatter", null, null),
     WEATHERED_CAPTAINS_JOURNAL(Material.TORCHFLOWER, "journal_book", "Weathered Captain's Journal", null,
             new NamespacedKey("fib", "items/weathered_captains_journal"),
-            new NamespacedKey("fib", "journal"), null, null),
+            new NamespacedKey("fib", "journal"), null, null, null),
     WHEEL_OF_FORTUNE(Material.NETHER_STAR, "wheel_of_fortune", "Wheel of Fortune", null, null, null,
-            "wheel", "<yellow><b>Wheel of Fortune");
+            "wheel", "<yellow><b>Wheel of Fortune", null),
+    KILN_FIRED_BRUSH(Material.BRUSH, "kiln_fired_brush", "Kiln-Fired Brush", "<#c77b3e>", null, null,
+            "kiln_fired_brush", null, new NamespacedKey("fib", "kiln_fired_brush"));
+
+    /**
+     * Custom items that must not answer for their bare material.
+     *
+     * <p>The other entries sit on a material the pool never really asks for on its own — nobody is
+     * sent to find a knowledge book or a nether star as such, so letting the material stand for the
+     * custom item is what players expect. A brush is different: it is an EARLY force item found by
+     * crafting a plain one, so {@code nameOf(BRUSH)} has to stay "Brush" and a joker skip has to
+     * hand out a plain brush, not a free locator. The Kiln-Fired Brush is still reachable by id and
+     * still recognised by {@link #matches}, which is all the locator needs.
+     */
+    private static final Set<CustomMaterials> SHARES_MATERIAL_WITH_POOL_ITEM = Set.of(KILN_FIRED_BRUSH);
 
     private static final Map<Material, CustomMaterials> BY_MATERIAL = Arrays.stream(values())
+            .filter(custom -> !SHARES_MATERIAL_WITH_POOL_ITEM.contains(custom))
             .collect(Collectors.toMap(CustomMaterials::getMaterial, Function.identity()));
     private static final Map<String, CustomMaterials> BY_ID = Arrays.stream(values())
             .collect(Collectors.toMap(CustomMaterials::getId, Function.identity()));
@@ -70,6 +85,16 @@ public enum CustomMaterials {
     private final String customModelDataString;
 
     /**
+     * Item-model the resourcepack draws this item with, replacing the one its material would use.
+     * Null when the material's own model is fine — most custom items are told apart by
+     * {@link #customModelDataString} in a select on the vanilla item instead. The brush cannot be:
+     * its item definition drives the brushing animation, and overriding that would mean rebuilding
+     * vanilla's states, so it points at a model of its own.
+     */
+    @Nullable
+    private final NamespacedKey itemModel;
+
+    /**
      * Resolved from {@link #itemLootTable} on enable by CustomItemManager.
      * Never handed out directly — always cloned.
      */
@@ -79,7 +104,8 @@ public enum CustomMaterials {
 
     CustomMaterials(Material material, String id, String itemName, @Nullable String color,
                     @Nullable NamespacedKey itemLootTable, @Nullable NamespacedKey markerKey,
-                    @Nullable String customModelDataString, @Nullable String displayNameOverride) {
+                    @Nullable String customModelDataString, @Nullable String displayNameOverride,
+                    @Nullable NamespacedKey itemModel) {
         this.material = material;
         this.id = id;
         this.itemName = itemName;
@@ -88,6 +114,7 @@ public enum CustomMaterials {
         this.markerKey = markerKey;
         this.customModelDataString = customModelDataString;
         this.displayNameOverride = displayNameOverride;
+        this.itemModel = itemModel;
     }
 
     /**
@@ -113,6 +140,11 @@ public enum CustomMaterials {
         ItemBuilder itemBuilder = new ItemBuilder(this.material).setDisplayName(this.displayName());
         if (this.customModelDataString != null) {
             itemBuilder.setCustomModelDataStrings(List.of(this.customModelDataString));
+        }
+        // Keeps a plugin-built copy — the one the special trader sells — looking like the one the
+        // datapack recipe produces.
+        if (this.itemModel != null) {
+            itemBuilder.setItemModel(this.itemModel);
         }
         // Only for items we build ourselves — a loot table owns the marker on the items it defines,
         // and those return above from the prototype.

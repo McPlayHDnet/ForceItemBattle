@@ -15,10 +15,14 @@ import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.gui.ItemBuilder;
 import forceitembattle.model.Locator;
 import forceitembattle.gui.TeleporterInventory;
+import forceitembattle.util.Prefix;
 import forceitembattle.util.Scheduler;
 import forceitembattle.util.Text;
 import forceitembattle.gui.VaultInventory;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
@@ -27,6 +31,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.World;
+import org.bukkit.block.BrushableBlock;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -39,7 +44,20 @@ import org.bukkit.inventory.ItemStack;
 @RequiredArgsConstructor
 public class ClickableItemsListener implements Listener {
 
+    /**
+     * Brushing is a hold-to-use action, and a failed sweep does not use the brush up, so a player
+     * leaning on the button could otherwise fire one blocking structure search after another.
+     */
+    private static final long BRUSH_SWEEP_COOLDOWN_MS = 1500L;
+
     private final ForceItemBattle plugin;
+    private final Map<UUID, Long> lastBrushSweep = new HashMap<>();
+
+    private boolean isSweepingTooFast(Player player) {
+        long now = System.currentTimeMillis();
+        Long last = this.lastBrushSweep.put(player.getUniqueId(), now);
+        return last != null && now - last < BRUSH_SWEEP_COOLDOWN_MS;
+    }
 
     private static boolean isRightClick(Action action) {
         return action == Action.RIGHT_CLICK_BLOCK || action == Action.RIGHT_CLICK_AIR;
@@ -151,9 +169,26 @@ public class ClickableItemsListener implements Listener {
             return;
         }
 
-        Locator locator = this.plugin.getLocatorManager().getLocatorByMaterial(e.getItem().getType());
+        Locator locator = this.plugin.getLocatorManager().getLocatorByItem(e.getItem());
         if (locator != null) {
-            e.setCancelled(true);
+            if (locator.getUse() == Locator.Use.BRUSH_GROUND) {
+                // A brush is still a brush: on something that can actually be brushed, stay out of
+                // the way and let the player dig their sherd out.
+                if (e.getClickedBlock() != null && e.getClickedBlock().getState() instanceof BrushableBlock) {
+                    return;
+                }
+                e.setCancelled(true);
+                if (e.getClickedBlock() == null) {
+                    player.sendMessage(Text.of(Prefix.LOCATOR + "<gray>Brush the ground with it to sweep for <dark_aqua>"
+                            + locator.getStructureName() + "<gray>."));
+                    return;
+                }
+                if (this.isSweepingTooFast(player)) {
+                    return;
+                }
+            } else {
+                e.setCancelled(true);
+            }
             this.plugin.getLocatorManager().locate(locator.getStructureId(), forceItemPlayer);
             return;
         }
