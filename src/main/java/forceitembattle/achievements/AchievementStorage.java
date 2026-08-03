@@ -29,8 +29,6 @@ public class AchievementStorage {
         return plugin.getFibService().achievements();
     }
 
-    // ==================== LOADING ====================
-
     public void loadPlayer(UUID playerUUID) {
         loadPlayer(playerUUID, null);
     }
@@ -86,8 +84,6 @@ public class AchievementStorage {
         return loaded.contains(playerUUID);
     }
 
-    // ==================== READS (cache only) ====================
-
     public boolean hasAchievement(UUID playerUUID, Achievements achievement) {
         Set<String> achievements = cache.get(playerUUID);
         return achievements != null && achievements.contains(achievement.name());
@@ -101,8 +97,6 @@ public class AchievementStorage {
     public Map<UUID, Set<String>> getAllAchievements() {
         return new HashMap<>(cache);
     }
-
-    // ==================== WRITES (cache + async service) ====================
 
     /**
      * Grants an achievement recorded as SOLO with no teammate. Convenience for

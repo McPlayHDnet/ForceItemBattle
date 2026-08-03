@@ -370,8 +370,6 @@ public class ItemDifficultiesManager implements Manager {
         return (int) Math.round((totalDuration * (percentage / 100)) / 60);
     }
 
-    // ==================== ITEM GENERATION ====================
-
     public Material generateRandomMaterial() {
         return drawFrom(RANDOM);
     }
@@ -433,8 +431,6 @@ public class ItemDifficultiesManager implements Manager {
         return this.descriptionItems.get(material) != null;
     }
 
-    // ==================== DESCRIPTIONS ====================
-
     public List<String> getDescriptionItemLines(Material material) {
         if (!isItemInDescriptionList(material)) {
             return new ArrayList<>();
@@ -468,8 +464,6 @@ public class ItemDifficultiesManager implements Manager {
         }
         return bigIconUnicodes;
     }
-
-    // ==================== UNICODE ICONS ====================
 
     private Map<Material, String> readItemUnicodes(boolean smallIcon) {
         Map<Material, String> itemsUnicode = new HashMap<>();
@@ -1905,8 +1899,6 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.YELLOW_TERRACOTTA, State.EARLY);
         register(Material.YELLOW_WOOL, State.EARLY);
     }
-
-    // ==================== ITEM LIST ====================
 
     /**
      * Tags that describe item properties/requirements.

@@ -126,7 +126,6 @@ public class AchievementListener implements Listener {
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
         Achievements achievement = event.getAchievement();
 
-        // Announce the achievement to everyone (skipped for spectators).
         if (forceItemPlayer == null || !forceItemPlayer.isSpectator()) {
             player.playSound(player, Sound.BLOCK_AMETHYST_BLOCK_RESONATE, 1, 1);
             Bukkit.getOnlinePlayers().forEach(players -> {

@@ -33,7 +33,6 @@ public class CollectionBookInventory extends InventoryBuilder {
     private final ForceItemBattle plugin;
     private final String playerName;
     private final UUID playerUUID;
-    // null until the collection lands.
     private Map<String, CollectedItem> collected;
 
     public CollectionBookInventory(ForceItemBattle plugin, String playerName, UUID playerUUID) {

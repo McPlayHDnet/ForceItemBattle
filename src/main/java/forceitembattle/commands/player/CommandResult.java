@@ -113,7 +113,6 @@ public class CommandResult extends CustomCommand {
             Team currentTeam = placesMap.keySet().toArray(new Team[0])[this.place - 1];
             int currentPlace = placesMap.get(currentTeam);
 
-            // The winner is revealed last; the link may only go out once that reveal finished.
             Runnable onRevealComplete = this.place == 1
                     ? () -> this.plugin.getGamemanager().getMatchHistory().markResultsRevealed()
                     : null;

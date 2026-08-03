@@ -159,7 +159,6 @@ public class TimerManager implements Manager {
                 setTimeLeft(getTimeLeft() - 1);
                 forceItemBattle.getRandomEventManager().tick(getTimeLeft());
 
-                // Notify everyone in chat when a new item pool unlocks (once per pool).
                 for (ItemDifficultiesManager.State unlockedPool :
                         forceItemBattle.getItemDifficultiesManager().pollNewlyUnlockedStates()) {
                     Bukkit.getOnlinePlayers().forEach(players -> {

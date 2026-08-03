@@ -93,8 +93,6 @@ public class ForceItemPlayer {
         }
     }
 
-    // ==================== OWN VALUES (this player's fields, team ignored) ====================
-
     public Material currentMaterial() {
         return currentMaterial;
     }
@@ -119,8 +117,6 @@ public class ForceItemPlayer {
     public long lastItemAssignedAt() {
         return lastItemAssignedAt;
     }
-
-    // ==================== ACTIVE VALUES (the team's in a team game) ====================
 
     /** The force item this player is currently hunting. */
     public Material activeMaterial() {
@@ -153,8 +149,6 @@ public class ForceItemPlayer {
         return currentTeam != null ? currentTeam.getLastItemAssignedAt() : lastItemAssignedAt;
     }
 
-    // ==================== TEAM ====================
-
     public Team currentTeam() {
         return currentTeam;
     }
@@ -179,8 +173,6 @@ public class ForceItemPlayer {
     public List<ForceItemPlayer> squad() {
         return currentTeam == null ? List.of(this) : currentTeam.getPlayers();
     }
-
-    // ==================== ROUTED MUTATORS ====================
 
     /**
      * Spends one skip from whichever pool this player draws on, and returns what is left.
@@ -212,8 +204,6 @@ public class ForceItemPlayer {
         this.currentScore = activeScore() + 1;
         addFoundItemToList(forceItem);
     }
-
-    // ==================== MISC ====================
 
     public int backToBackStreak() {
         return backToBackStreak;

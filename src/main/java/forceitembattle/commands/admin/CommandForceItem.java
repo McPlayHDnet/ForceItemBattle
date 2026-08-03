@@ -82,7 +82,6 @@ public class CommandForceItem extends CustomCommand implements CustomTabComplete
             forceItemPlayer.setNextMaterial(next);
         }
 
-        // Reflect the change immediately in the boss bar and scoreboard.
         this.plugin.getTimerManager().sendActionBar();
         this.plugin.getScoreboardManager().updateAllPlayers();
 
