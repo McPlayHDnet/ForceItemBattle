@@ -696,6 +696,7 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.BUBBLE_CORAL_FAN, State.LATE);
         register(Material.BUCKET, State.EARLY);
         register(Material.BUNDLE, State.EARLY);
+        register(Material.BURN_POTTERY_SHERD, State.LATE);
         register(Material.BUSH, State.EARLY);
         register(Material.CACTUS, State.MID);
         register(Material.CACTUS_FLOWER, State.MID);
@@ -871,6 +872,7 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.CYAN_WOOL, State.MID);
         register(Material.DAMAGED_ANVIL, State.LATE);
         register(Material.DANDELION, State.EARLY);
+        register(Material.DANGER_POTTERY_SHERD, State.LATE);
         register(Material.DARK_OAK_BOAT, State.EARLY);
         register(Material.DARK_OAK_BUTTON, State.EARLY);
         register(Material.DARK_OAK_CHEST_BOAT, State.EARLY);
@@ -1017,6 +1019,7 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.FLOWER_POT, State.EARLY);
         register(Material.FLOWERING_AZALEA, State.MID);
         register(Material.FLOWERING_AZALEA_LEAVES, State.MID);
+        register(Material.FRIEND_POTTERY_SHERD, State.LATE);
         register(Material.FURNACE, State.EARLY);
         register(Material.FURNACE_MINECART, State.EARLY);
         register(Material.GHAST_TEAR, State.MID, ItemTag.NETHER);
@@ -1095,6 +1098,8 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.HANGING_ROOTS, State.MID);
         register(Material.HAY_BLOCK, State.EARLY);
         register(Material.HEART_OF_THE_SEA, State.MID);
+        register(Material.HEART_POTTERY_SHERD, State.LATE);
+        register(Material.HEARTBREAK_POTTERY_SHERD, State.LATE);
         register(Material.HEAVY_WEIGHTED_PRESSURE_PLATE, State.EARLY);
         register(Material.HONEY_BLOCK, State.LATE);
         register(Material.HONEY_BOTTLE, State.LATE);
@@ -1105,6 +1110,8 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.HORN_CORAL, State.LATE);
         register(Material.HORN_CORAL_BLOCK, State.LATE);
         register(Material.HORN_CORAL_FAN, State.LATE);
+        register(Material.HOST_ARMOR_TRIM_SMITHING_TEMPLATE, State.LATE);
+        register(Material.HOWL_POTTERY_SHERD, State.LATE);
         register(Material.ICE, State.LATE);
         register(Material.INK_SAC, State.EARLY);
         register(Material.IRON_AXE, State.EARLY);
@@ -1295,6 +1302,7 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.MUSIC_DISC_OTHERSIDE, State.LATE);
         register(Material.MUSIC_DISC_PIGSTEP, State.LATE, ItemTag.NETHER);
         register(Material.MUSIC_DISC_PRECIPICE, State.LATE, ItemTag.EXTREME);
+        register(Material.MUSIC_DISC_RELIC, State.LATE);
         register(Material.MUSIC_DISC_TEARS, State.MID, ItemTag.NETHER);
         register(Material.MUTTON, State.EARLY);
         register(Material.MYCELIUM, State.LATE, ItemTag.EXTREME);
@@ -1522,6 +1530,7 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.RABBIT_HIDE, State.MID);
         register(Material.RABBIT_STEW, State.LATE);
         register(Material.RAIL, State.EARLY);
+        register(Material.RAISER_ARMOR_TRIM_SMITHING_TEMPLATE, State.LATE);
         register(Material.RAW_COPPER, State.EARLY);
         register(Material.RAW_COPPER_BLOCK, State.EARLY);
         register(Material.RAW_GOLD, State.EARLY);
@@ -1593,6 +1602,8 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.SEA_PICKLE, State.MID);
         register(Material.SEAGRASS, State.EARLY);
         register(Material.SENTRY_ARMOR_TRIM_SMITHING_TEMPLATE, State.LATE);
+        register(Material.SHAPER_ARMOR_TRIM_SMITHING_TEMPLATE, State.LATE);
+        register(Material.SHEAF_POTTERY_SHERD, State.LATE);
         register(Material.SHEARS, State.EARLY);
         register(Material.SHELTER_POTTERY_SHERD, State.LATE);
         register(Material.SHIELD, State.EARLY);
@@ -1828,6 +1839,7 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.WAXED_WEATHERED_CUT_COPPER_SLAB, State.LATE);
         register(Material.WAXED_WEATHERED_CUT_COPPER_STAIRS, State.LATE);
         register(Material.WAXED_WEATHERED_LIGHTNING_ROD, State.LATE);
+        register(Material.WAYFINDER_ARMOR_TRIM_SMITHING_TEMPLATE, State.LATE);
         register(Material.WEATHERED_CHISELED_COPPER, State.LATE);
         register(Material.WEATHERED_COPPER, State.LATE);
         register(Material.WEATHERED_COPPER_BARS, State.LATE);
