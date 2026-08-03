@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "forceitembattle"
-version = "26.7.9" // year.month.update
+version = "26.8.1" // year.month.update
 description = "ForceItemBattle for McPlayHD.net"
 
 java {

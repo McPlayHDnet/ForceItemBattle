@@ -18,6 +18,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
+import org.bukkit.inventory.RecipeChoice;
 import org.bukkit.inventory.ShapedRecipe;
 
 public class RecipeManager implements Manager {
@@ -57,20 +58,17 @@ public class RecipeManager implements Manager {
     public void initRecipes() {
         final boolean easyRecipes = !this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.HARDER_TRACKERS);
 
+        // The antimatter locator has a single recipe — what used to be the HARDER_TRACKERS variant,
+        // with the ender eye replaced by the Eye of Antimatter. The setting still swaps the
+        // chambers locator below.
         NamespacedKey antimatterKey = new NamespacedKey("fib", "antimatter_locator");
         ShapedRecipe antimatterRecipe = new ShapedRecipe(antimatterKey, CustomMaterials.ANTIMATTER_LOCATOR.itemStack());
-        if (easyRecipes) {
-            antimatterRecipe.shape(" N ", "GQG", " N ");
-            antimatterRecipe.setIngredient('N', Material.NETHER_BRICK);
-            antimatterRecipe.setIngredient('G', Material.GLOWSTONE_DUST);
-            antimatterRecipe.setIngredient('Q', Material.QUARTZ);
-        } else {
-            antimatterRecipe.shape("BGB", "QEQ", "BGB");
-            antimatterRecipe.setIngredient('B', Material.NETHER_BRICK);
-            antimatterRecipe.setIngredient('E', Material.ENDER_EYE);
-            antimatterRecipe.setIngredient('G', Material.GLOWSTONE_DUST);
-            antimatterRecipe.setIngredient('Q', Material.QUARTZ);
-        }
+        antimatterRecipe.shape("BGB", "QEQ", "BGB");
+        antimatterRecipe.setIngredient('B', Material.NETHER_BRICK);
+        // Exact, so plain sniffer seeds do not craft it.
+        antimatterRecipe.setIngredient('E', new RecipeChoice.ExactChoice(CustomMaterials.EYE_OF_ANTIMATTER.itemStack()));
+        antimatterRecipe.setIngredient('G', Material.GLOWSTONE_DUST);
+        antimatterRecipe.setIngredient('Q', Material.QUARTZ);
 
         NamespacedKey chambersKey = new NamespacedKey("fib", "chambers_locator");
         ShapedRecipe chambersRecipe = new ShapedRecipe(chambersKey, CustomMaterials.TRIAL_LOCATOR.itemStack());

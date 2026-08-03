@@ -23,6 +23,8 @@ public enum CustomMaterials {
     ANTIMATTER_LOCATOR(Material.KNOWLEDGE_BOOK, "antimatter_locator", "Antimatter Locator", "<dark_purple>", null, null, null, null),
     TRIAL_LOCATOR(Material.WITHER_ROSE, "trial_locator", "Trial Locator", "<gold>", null, null, null, null),
     SULFUR_LOCATOR(Material.MUSIC_DISC_CHIRP, "sulfur_locator", "Sulfur Locator", "<yellow>", null, null, null, null),
+    EYE_OF_ANTIMATTER(Material.TORCHFLOWER_SEEDS, "eye_of_antimatter", "Eye of Antimatter", "<dark_purple>", null,
+            new NamespacedKey("fib", "eye_of_antimatter"), "eye_of_antimatter", null),
     WEATHERED_CAPTAINS_JOURNAL(Material.TORCHFLOWER, "journal_book", "Weathered Captain's Journal", null,
             new NamespacedKey("fib", "items/weathered_captains_journal"),
             new NamespacedKey("fib", "journal"), null, null),
@@ -111,6 +113,11 @@ public enum CustomMaterials {
         ItemBuilder itemBuilder = new ItemBuilder(this.material).setDisplayName(this.displayName());
         if (this.customModelDataString != null) {
             itemBuilder.setCustomModelDataStrings(List.of(this.customModelDataString));
+        }
+        // Only for items we build ourselves — a loot table owns the marker on the items it defines,
+        // and those return above from the prototype.
+        if (this.markerKey != null) {
+            itemBuilder.setPersistentData(this.markerKey, PersistentDataType.BYTE, (byte) 1);
         }
         return itemBuilder.getItemStack();
     }

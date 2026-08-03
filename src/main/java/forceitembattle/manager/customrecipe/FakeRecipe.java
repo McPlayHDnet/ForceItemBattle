@@ -16,20 +16,13 @@ import org.bukkit.inventory.ShapelessRecipe;
 
 public enum FakeRecipe {
 
+    // Mirrors the real recipe in RecipeManager — one recipe, HARDER_TRACKERS does not change it.
     END_STRUCTURE(Material.KNOWLEDGE_BOOK, item ->
-            RecipeBuilder.newBuilder(ShapedRecipe::new)
-                    .apply(shapedRecipe -> shapedRecipe.shape(" N ", "GQG", " N "))
-                    .apply(shapedRecipe -> shapedRecipe.setIngredient('N', Material.NETHER_BRICK))
-                    .apply(shapedRecipe -> shapedRecipe.setIngredient('G', Material.GLOWSTONE_DUST))
-                    .apply(shapedRecipe -> shapedRecipe.setIngredient('Q', Material.QUARTZ))
-                    .build("fib:antimatter_locator", CustomMaterials.ANTIMATTER_LOCATOR.itemStack())
-    ),
-
-    END_STRUCTURE_HARD(Material.KNOWLEDGE_BOOK, item ->
             RecipeBuilder.newBuilder(ShapedRecipe::new)
                     .apply(shapedRecipe -> shapedRecipe.shape("BGB", "QEQ", "BGB"))
                     .apply(shapedRecipe -> shapedRecipe.setIngredient('B', Material.NETHER_BRICK))
-                    .apply(shapedRecipe -> shapedRecipe.setIngredient('E', Material.ENDER_EYE))
+                    .apply(shapedRecipe -> shapedRecipe.setIngredient('E',
+                            new RecipeChoice.ExactChoice(CustomMaterials.EYE_OF_ANTIMATTER.itemStack())))
                     .apply(shapedRecipe -> shapedRecipe.setIngredient('G', Material.GLOWSTONE_DUST))
                     .apply(shapedRecipe -> shapedRecipe.setIngredient('Q', Material.QUARTZ))
                     .build("fib:antimatter_locator", CustomMaterials.ANTIMATTER_LOCATOR.itemStack())
@@ -300,17 +293,33 @@ public enum FakeRecipe {
         this.recipeSupplier = recipeSupplier;
     }
 
+    /**
+     * The recipe to show for this item, honouring HARDER_TRACKERS.
+     *
+     * <p>Most entries have no {@code _HARD} sibling — either the setting does not touch them
+     * (suspicious stew, concrete, …) or it no longer does (the antimatter locator). Those are used
+     * whatever the setting says, so the plain entry is remembered and only overruled by a matching
+     * {@code _HARD} one.
+     */
     @Nullable
     public static FakeRecipe forItem(ItemStack item, ForceItemBattle plugin) {
+        boolean harderTrackers = plugin.getSettings().isSettingEnabled(GameSetting.HARDER_TRACKERS);
+        FakeRecipe plainMatch = null;
+
         for (FakeRecipe recipe : CACHE) {
-            if (recipe.itemMatcher.test(item)) {
-                boolean isRecipeHard = recipe.name().endsWith("_HARD");
-                if (isRecipeHard == plugin.getSettings().isSettingEnabled(GameSetting.HARDER_TRACKERS)) {
+            if (!recipe.itemMatcher.test(item)) {
+                continue;
+            }
+            if (recipe.name().endsWith("_HARD")) {
+                if (harderTrackers) {
                     return recipe;
                 }
+            } else if (plainMatch == null) {
+                plainMatch = recipe;
             }
         }
-        return null;
+
+        return plainMatch;
     }
 
     public Recipe getRecipe(ItemStack targetItem, ForceItemBattle plugin) {

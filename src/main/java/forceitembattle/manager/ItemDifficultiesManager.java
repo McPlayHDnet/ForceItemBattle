@@ -1725,6 +1725,7 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.TNT_MINECART, State.MID);
         register(Material.TORCH, State.EARLY);
         register(Material.TORCHFLOWER, State.MID);
+        register(Material.TORCHFLOWER_SEEDS, State.MID);
         register(Material.TOTEM_OF_UNDYING, State.LATE, ItemTag.EXTREME);
         register(Material.TRAPPED_CHEST, State.EARLY);
         register(Material.TRIAL_KEY, State.LATE);
