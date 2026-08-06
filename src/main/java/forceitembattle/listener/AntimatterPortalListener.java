@@ -3,6 +3,7 @@ package forceitembattle.listener;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.AntimatterPortalManager;
 import forceitembattle.model.CustomMaterials;
+import forceitembattle.model.Dimension;
 import forceitembattle.util.Text;
 import java.util.Set;
 import java.util.UUID;
@@ -10,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Location;
 import org.bukkit.Sound;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -21,6 +23,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 
@@ -158,15 +161,23 @@ public class AntimatterPortalListener implements Listener {
         player.teleport(home);
     }
 
-    /**
-     * Vanilla still wants to run its own portal logic on the return portal's blocks. It has nowhere
-     * sensible to send anyone from a custom dimension, and the walk-in handler above has already
-     * dealt with it, so the attempt is stopped here before {@code PortalListener} sees it.
-     */
     @EventHandler(priority = EventPriority.LOWEST)
     public void onPortalTravel(PlayerPortalEvent event) {
-        if (this.plugin.getAntimatterPortalManager().isAntimatterWorld(event.getFrom().getWorld())) {
+        if (!this.plugin.getAntimatterPortalManager().isAntimatterWorld(event.getFrom().getWorld())) {
+            return;
+        }
+        if (event.getCause() != PlayerTeleportEvent.TeleportCause.END_PORTAL) {
             event.setCancelled(true);
+            return;
+        }
+
+        World end = Dimension.END.world();
+        if (end == null) {
+            event.setCancelled(true);
+            return;
+        }
+        if (event.getTo() == null || !end.equals(event.getTo().getWorld())) {
+            event.setTo(end.getSpawnLocation());
         }
     }
 

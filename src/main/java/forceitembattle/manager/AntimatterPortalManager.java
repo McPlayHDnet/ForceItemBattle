@@ -332,7 +332,7 @@ public class AntimatterPortalManager implements Manager {
         int chunkZ = structureLocation.getBlockZ() >> 4;
 
         for (GeneratedStructure generated : world.getStructures(chunkX, chunkZ)) {
-            if (!generated.getStructure().getKey().equals(DEPTHS_STRUCTURE)) {
+            if (!DEPTHS_STRUCTURE.equals(Registry.STRUCTURE.getKey(generated.getStructure()))) {
                 continue;
             }
             for (StructurePiece piece : generated.getPieces()) {

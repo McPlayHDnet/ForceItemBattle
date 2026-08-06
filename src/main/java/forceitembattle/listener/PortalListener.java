@@ -148,6 +148,10 @@ public class PortalListener implements Listener {
         }
         Player player = event.getPlayer();
 
+        if (this.plugin.getAntimatterPortalManager().isAntimatterWorld(player.getWorld())) {
+            return;
+        }
+
         if (Dimension.of(player) == Dimension.END) {
             if (this.playerEndLocations.containsKey(player.getUniqueId())) {
                 player.teleport(this.playerEndLocations.get(player.getUniqueId()));
