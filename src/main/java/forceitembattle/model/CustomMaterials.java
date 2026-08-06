@@ -23,8 +23,8 @@ public enum CustomMaterials {
     ANTIMATTER_LOCATOR(Material.KNOWLEDGE_BOOK, "antimatter_locator", "Antimatter Locator", "<dark_purple>", null, null, null, null, null),
     TRIAL_LOCATOR(Material.WITHER_ROSE, "trial_locator", "Trial Locator", "<gold>", null, null, null, null, null),
     SULFUR_LOCATOR(Material.MUSIC_DISC_CHIRP, "sulfur_locator", "Sulfur Locator", "<yellow>", null, null, null, null, null),
-    EYE_OF_ANTIMATTER(Material.TORCHFLOWER_SEEDS, "eye_of_antimatter", "Eye of Antimatter", "<dark_purple>", null,
-            new NamespacedKey("fib", "eye_of_antimatter"), "eye_of_antimatter", null, null),
+    EYE_OF_ANTIMATTER(Material.TORCHFLOWER_SEEDS, "eye_of_antimatter", "Eye of Antimatter", "<dark_purple>",
+            new NamespacedKey("fib", "items/eye_of_antimatter"), null, "eye_of_antimatter", null, null),
     WEATHERED_CAPTAINS_JOURNAL(Material.TORCHFLOWER, "journal_book", "Weathered Captain's Journal", null,
             new NamespacedKey("fib", "items/weathered_captains_journal"),
             new NamespacedKey("fib", "journal"), null, null, null),
@@ -67,7 +67,9 @@ public enum CustomMaterials {
     private final String itemName;
 
     /**
-     * MiniMessage colour used by {@link #displayName()}. Null when a loot table owns the name.
+     * MiniMessage colour used by {@link #displayName()}. Null when a loot table owns the name and
+     * nothing is lost by an unnamed fallback; set alongside {@link #itemLootTable} when the item
+     * still has to read correctly if that table fails to load.
      */
     @Nullable
     private final String color;
