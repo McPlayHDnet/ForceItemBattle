@@ -92,6 +92,16 @@ public class AntimatterPortalManager implements Manager {
 
     private final ForceItemBattle plugin;
     private final Map<UUID, List<ActivePortal>> portalsByOwner = new HashMap<>();
+
+    /**
+     * Frames a player has already paid for but whose surface has not been spawned yet.
+     *
+     * <p>The totem is taken the moment the vault is clicked and the portal only appears
+     * {@value #REVEAL_DELAY} ticks later, so for that window {@link #portalsByOwner} has no record
+     * of it. Without this, a second click inside those two seconds — which spam-clicking a vault
+     * produces easily — passed the duplicate check and cost a second totem for nothing.
+     */
+    private final Map<UUID, List<Location>> openingByOwner = new HashMap<>();
     private final Map<UUID, Location> depthsByPlayer = new HashMap<>();
     private final Map<UUID, Location> returnByPlayer = new HashMap<>();
     private final Map<UUID, ActivePortal> returnPortalByPlayer = new HashMap<>();
@@ -122,6 +132,7 @@ public class AntimatterPortalManager implements Manager {
                 .flatMap(List::stream)
                 .forEach(portal -> portal.display().remove());
         this.portalsByOwner.clear();
+        this.openingByOwner.clear();
         this.depthsByPlayer.clear();
         this.returnByPlayer.clear();
         this.returnPortalByPlayer.values().forEach(portal -> portal.display().remove());
@@ -154,7 +165,7 @@ public class AntimatterPortalManager implements Manager {
             return false;
         }
 
-        if (portalAt(player, frame.centre()) != null) {
+        if (portalAt(player, frame.centre()) != null || isOpening(player, frame.centre())) {
             player.sendMessage(Text.of("<dark_purple>This portal is already open for you."));
             return false;
         }
@@ -164,11 +175,16 @@ public class AntimatterPortalManager implements Manager {
         // makes it the natural place to put them back down on the way home — anywhere derived from
         // the portal itself risks landing them inside it and bouncing them straight back.
         Location returnSpot = player.getLocation();
+        this.openingByOwner.computeIfAbsent(player.getUniqueId(), key -> new ArrayList<>())
+                .add(frame.centre());
         player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, REVEAL_DELAY + 20, 0, false, false));
         world.playSound(frame.centre(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 1.0f, 0.6f);
         world.strikeLightningEffect(frame.centre());
 
         Scheduler.runLaterSync(() -> {
+            // Released first, so a player who logs out mid-reveal does not leave the frame
+            // permanently marked as opening and unusable for the rest of the round.
+            forgetOpening(player, frame.centre());
             if (!player.isOnline()) {
                 return;
             }
@@ -234,6 +250,10 @@ public class AntimatterPortalManager implements Manager {
     /**
      * Hides every open portal from a player who did not open it. Called on join, because
      * {@link Player#hideEntity} only applies to players who were online when the portal was spawned.
+     *
+     * <p>Covers the return portals down in the Depths as well as the ruins up top. They are just as
+     * private — one is spawned per player on arrival, so a Depths that two players have somehow both
+     * been given holds two frames stacked in the same place, each meant for one of them.
      */
     public void hideForeignPortals(Player player) {
         this.portalsByOwner.forEach((owner, portals) -> {
@@ -241,6 +261,12 @@ public class AntimatterPortalManager implements Manager {
                 return;
             }
             portals.forEach(portal -> player.hideEntity(this.plugin, portal.display()));
+        });
+        this.returnPortalByPlayer.forEach((owner, portal) -> {
+            if (owner.equals(player.getUniqueId())) {
+                return;
+            }
+            player.hideEntity(this.plugin, portal.display());
         });
     }
 
@@ -268,16 +294,29 @@ public class AntimatterPortalManager implements Manager {
             return null;
         }
 
-        // Scatter the search origin so two players are overwhelmingly unlikely to be sent to the
-        // same dungeon, then take the nearest unexplored one from there.
+        // Scatter the search origin, then take the nearest Depths nobody has been given yet.
+        //
+        // The scatter alone is not enough. The structure set spaces these 156 chunks apart, so a
+        // 20k box holds only about 256 of them, and two uniform draws collide about as often as a
+        // birthday clash in a room of that size — around one game in ten at eight players, one in
+        // two at twenty. Sharing a dungeon defeats the entire point of the private portal, since
+        // whoever arrives first empties the barrels and the vault for both.
+        //
+        // Asking for an unexplored one is what actually makes it exclusive: locating with that flag
+        // set marks the structure as referenced and later searches skip it, which is the same
+        // mechanism that stops two ocean explorer maps pointing at one monument. It persists in the
+        // chunk data, so it survives the reload a player logging out and back in causes.
         Location origin = new Location(antimatter,
                 this.random.nextInt(-DEPTHS_SCATTER, DEPTHS_SCATTER), 64,
                 this.random.nextInt(-DEPTHS_SCATTER, DEPTHS_SCATTER));
 
-        var result = antimatter.locateNearestStructure(origin, depths, DEPTHS_SEARCH_RADIUS, false);
+        var result = antimatter.locateNearestStructure(origin, depths, DEPTHS_SEARCH_RADIUS, true);
         if (result == null) {
-            this.plugin.getLogger().warning("No " + DEPTHS_STRUCTURE + " found within "
-                    + DEPTHS_SEARCH_RADIUS + " chunks of " + origin);
+            // The radius counts placement cells rather than chunks, so at this spacing it reaches
+            // roughly a quarter of a million blocks out — running dry means every Depths in range
+            // is already claimed, not that the search was too small.
+            this.plugin.getLogger().warning("No unclaimed " + DEPTHS_STRUCTURE + " found within "
+                    + DEPTHS_SEARCH_RADIUS + " placement cells of " + origin);
             return null;
         }
 
@@ -289,19 +328,30 @@ public class AntimatterPortalManager implements Manager {
         return landing;
     }
 
+    /**
+     * Where to put a player arriving in this Depths, or null if this one cannot take them.
+     *
+     * <p>Refusing is the only safe answer when the return portal cannot be found. The Depths sits in
+     * a void dimension and the way out is the frame in its start room; dropping someone in without
+     * one — which an earlier version did, onto whatever ground it could find nearby — left them with
+     * no way home at all, because {@link #isInReturnPortal} has nothing to match against. Dying was
+     * the only exit. A refusal costs the player a walk back into the portal, and because the search
+     * above has already claimed this Depths, stepping through again rolls a different one.
+     */
+    @Nullable
     private Location arrivalAtReturnPortal(Player player, World world, Location structureLocation) {
         Frame frame = findReturnFrame(world, structureLocation);
         if (frame == null) {
             this.plugin.getLogger().warning("No return portal frame found in the Depths near "
-                    + structureLocation + " — falling back to the nearest safe ground.");
-            return safeLandingNear(structureLocation);
+                    + structureLocation + " — refusing to send " + player.getName() + " there.");
+            return null;
         }
 
         Location arrival = arrivalInFrontOf(frame);
         if (arrival == null) {
             this.plugin.getLogger().warning("Return portal frame at " + frame.centre()
-                    + " has no standable side — falling back to the nearest safe ground.");
-            return safeLandingNear(structureLocation);
+                    + " has no standable side — refusing to send " + player.getName() + " there.");
+            return null;
         }
 
         // Fill the frame, so the way home looks like the way in rather than an empty hole.
@@ -448,39 +498,6 @@ public class AntimatterPortalManager implements Manager {
     }
 
     /**
-     * A place to stand inside the Depths: two free blocks with something solid underneath.
-     *
-     * <p>Only a fallback for when the return portal cannot be found — it lands players wherever the
-     * structure first offers footing, which is often its roof. The dimension being a void is what
-     * makes even this workable: the only solid blocks anywhere near are the structure itself.
-     */
-    @Nullable
-    private Location safeLandingNear(Location structureLocation) {
-        World world = structureLocation.getWorld();
-        int baseX = structureLocation.getBlockX();
-        int baseZ = structureLocation.getBlockZ();
-
-        for (int radius = 0; radius <= 8; radius++) {
-            for (int x = baseX - radius; x <= baseX + radius; x++) {
-                for (int z = baseZ - radius; z <= baseZ + radius; z++) {
-                    for (int y = world.getMinHeight() + 1; y < world.getMaxHeight() - 2; y++) {
-                        Block floor = world.getBlockAt(x, y, z);
-                        if (floor.getType().isAir() || !floor.getType().isSolid()) {
-                            continue;
-                        }
-                        if (world.getBlockAt(x, y + 1, z).getType().isAir()
-                                && world.getBlockAt(x, y + 2, z).getType().isAir()) {
-                            return new Location(world, x + 0.5, y + 1, z + 0.5);
-                        }
-                    }
-                }
-            }
-        }
-        this.plugin.getLogger().warning("No safe landing found near " + structureLocation);
-        return null;
-    }
-
-    /**
      * Works out where the portal surface goes from the vault that opens it.
      */
     @Nullable
@@ -537,6 +554,26 @@ public class AntimatterPortalManager implements Manager {
         }
     }
 
+    private boolean isOpening(Player player, Location centre) {
+        List<Location> opening = this.openingByOwner.get(player.getUniqueId());
+        return opening != null && opening.stream().anyMatch(pending -> sameFrame(pending, centre));
+    }
+
+    private void forgetOpening(Player player, Location centre) {
+        List<Location> opening = this.openingByOwner.get(player.getUniqueId());
+        if (opening == null) {
+            return;
+        }
+        opening.removeIf(pending -> sameFrame(pending, centre));
+        if (opening.isEmpty()) {
+            this.openingByOwner.remove(player.getUniqueId());
+        }
+    }
+
+    private boolean sameFrame(Location one, Location other) {
+        return one.getWorld().equals(other.getWorld()) && one.distanceSquared(other) < 1.0;
+    }
+
     @Nullable
     private ActivePortal portalAt(Player player, Location centre) {
         List<ActivePortal> portals = this.portalsByOwner.get(player.getUniqueId());
@@ -544,8 +581,7 @@ public class AntimatterPortalManager implements Manager {
             return null;
         }
         return portals.stream()
-                .filter(portal -> portal.centre().getWorld().equals(centre.getWorld())
-                        && portal.centre().distanceSquared(centre) < 1.0)
+                .filter(portal -> sameFrame(portal.centre(), centre))
                 .findFirst()
                 .orElse(null);
     }

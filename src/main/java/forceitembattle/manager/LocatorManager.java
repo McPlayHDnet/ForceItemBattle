@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class LocatorManager implements Manager {
 
-    private static final int STRUCTURE_SEARCH_RADIUS = 20;  // chunks
+    private static final int STRUCTURE_SEARCH_RADIUS = 20;
 
     /** Close enough to start digging for something that is under you. */
     private static final int BURIED_ARRIVAL_RADIUS = 50;    // blocks
@@ -51,8 +51,8 @@ public class LocatorManager implements Manager {
         this.locatedStructures = new HashMap<>();
         this.activeLocators = new HashMap<>();
 
-        this.addLocator(new Locator("fib:antimatter_depths", "Antimatter", CustomMaterials.ANTIMATTER_LOCATOR, Locator.Type.STRUCTURE,
-                Locator.Use.RIGHT_CLICK, BURIED_ARRIVAL_RADIUS, Color.PURPLE, "#B314A8:#E775C3"));
+        this.addLocator(new Locator("fib:antimatter_depths_portal", "Antimatter", CustomMaterials.ANTIMATTER_LOCATOR, Locator.Type.STRUCTURE,
+                Locator.Use.RIGHT_CLICK, SURFACE_ARRIVAL_RADIUS, Color.PURPLE, "#B314A8:#E775C3"));
         this.addLocator(new Locator("trial_chambers", "Trial Chambers", CustomMaterials.TRIAL_LOCATOR, Locator.Type.STRUCTURE,
                 Locator.Use.RIGHT_CLICK, BURIED_ARRIVAL_RADIUS, Color.fromRGB(0x4F, 0xB4, 0x93), "#2E7D68:#7FD8BC"));
         this.addLocator(new Locator("sulfur_caves", "Sulfur Cave", CustomMaterials.SULFUR_LOCATOR, Locator.Type.BIOME,

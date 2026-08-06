@@ -142,7 +142,10 @@ public class AntimatterPortalListener implements Listener {
         AntimatterPortalManager portals = this.plugin.getAntimatterPortalManager();
         Location depths = portals.depthsFor(player);
         if (depths == null) {
-            player.sendMessage(Text.of("<red>The Antimatter Depths would not open. Tell an admin."));
+            // Recoverable more often than not: the manager refuses a Depths it cannot bring the
+            // player home from, and having claimed that one it hands out a different one next time.
+            player.sendMessage(Text.of("<dark_purple>The Depths would not take you. "
+                    + "<gray>Step through again — if it keeps failing, tell eltobito."));
             return;
         }
         portals.rememberReturn(player, portal);
