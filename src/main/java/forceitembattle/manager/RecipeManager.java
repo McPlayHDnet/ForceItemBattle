@@ -88,8 +88,19 @@ public class RecipeManager implements Manager {
             chambersRecipe.setIngredient('D', Material.DIAMOND);
         }
 
+        // The key to an Antimatter Depths portal. Exact on the eye for the same reason as the
+        // locator above, and exact on the output too: the portal vault matches its key by
+        // components, so the crafted totem has to be the loot table's copy, not a lookalike.
+        NamespacedKey totemKey = new NamespacedKey("fib", "totem_of_antimatter");
+        ShapedRecipe totemRecipe = new ShapedRecipe(totemKey, CustomMaterials.TOTEM_OF_ANTIMATTER.itemStack());
+        totemRecipe.shape(" E ", "QGQ", " Q ");
+        totemRecipe.setIngredient('E', new RecipeChoice.ExactChoice(CustomMaterials.EYE_OF_ANTIMATTER.itemStack()));
+        totemRecipe.setIngredient('G', Material.GLOWSTONE);
+        totemRecipe.setIngredient('Q', Material.QUARTZ);
+
         Bukkit.addRecipe(antimatterRecipe);
         Bukkit.addRecipe(chambersRecipe);
+        Bukkit.addRecipe(totemRecipe);
     }
 
     public boolean ignoreInventoryClosed(Player player) {

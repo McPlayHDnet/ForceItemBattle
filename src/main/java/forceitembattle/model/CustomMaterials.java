@@ -31,7 +31,13 @@ public enum CustomMaterials {
     WHEEL_OF_FORTUNE(Material.NETHER_STAR, "wheel_of_fortune", "Wheel of Fortune", null, null, null,
             "wheel", "<yellow><b>Wheel of Fortune", null),
     KILN_FIRED_BRUSH(Material.BRUSH, "kiln_fired_brush", "Kiln-Fired Brush", "<#c77b3e>", null, null,
-            "kiln_fired_brush", null, new NamespacedKey("fib", "kiln_fired_brush"));
+            "kiln_fired_brush", null, new NamespacedKey("fib", "kiln_fired_brush")),
+    // Built from its loot table rather than renamed here, because the portal vault matches its key
+    // by exact components: a plugin-built copy has to be byte-identical to the datapack one or the
+    // vault silently refuses it.
+    TOTEM_OF_ANTIMATTER(Material.TOTEM_OF_UNDYING, "totem_of_antimatter", "Totem of Antimatter", null,
+            new NamespacedKey("fib", "items/totem_of_antimatter"), null,
+            "totem_of_antimatter", null, null);
 
     /**
      * Custom items that must not answer for their bare material.
@@ -42,8 +48,13 @@ public enum CustomMaterials {
      * crafting a plain one, so {@code nameOf(BRUSH)} has to stay "Brush" and a joker skip has to
      * hand out a plain brush, not a free locator. The Kiln-Fired Brush is still reachable by id and
      * still recognised by {@link #matches}, which is all the locator needs.
+     *
+     * <p>The Totem of Antimatter is the same case: TOTEM_OF_UNDYING is a LATE/EXTREME force item, so
+     * {@code nameOf} has to keep saying "Totem of Undying" and a skip has to hand out a plain totem
+     * rather than a free portal key.
      */
-    private static final Set<CustomMaterials> SHARES_MATERIAL_WITH_POOL_ITEM = Set.of(KILN_FIRED_BRUSH);
+    private static final Set<CustomMaterials> SHARES_MATERIAL_WITH_POOL_ITEM =
+            Set.of(KILN_FIRED_BRUSH, TOTEM_OF_ANTIMATTER);
 
     private static final Map<Material, CustomMaterials> BY_MATERIAL = Arrays.stream(values())
             .filter(custom -> !SHARES_MATERIAL_WITH_POOL_ITEM.contains(custom))

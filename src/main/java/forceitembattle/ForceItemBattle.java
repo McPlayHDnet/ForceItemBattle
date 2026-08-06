@@ -34,6 +34,7 @@ import forceitembattle.commands.player.CommandTeams;
 import forceitembattle.commands.player.CommandVote;
 import forceitembattle.commands.player.CommandVoteSkip;
 import forceitembattle.listener.AchievementListener;
+import forceitembattle.listener.AntimatterPortalListener;
 import forceitembattle.listener.ChatListener;
 import forceitembattle.listener.ClickableItemsListener;
 import forceitembattle.listener.FoundItemListener;
@@ -52,6 +53,7 @@ import forceitembattle.listener.TradeListener;
 import forceitembattle.listener.VillagerTradeListener;
 import forceitembattle.manager.AchievementManager;
 import forceitembattle.manager.CollectionManager;
+import forceitembattle.manager.AntimatterPortalManager;
 import forceitembattle.manager.CustomItemManager;
 import forceitembattle.manager.BackToBackManager;
 import forceitembattle.manager.Gamemanager;
@@ -110,6 +112,8 @@ public final class ForceItemBattle extends JavaPlugin {
     private BackToBackManager backToBackManager;
     @Getter
     private ItemDifficultiesManager itemDifficultiesManager;
+    @Getter
+    private AntimatterPortalManager antimatterPortalManager;
     @Getter
     private CustomItemManager customItemManager;
     @Getter
@@ -183,6 +187,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.customItemManager = register(new CustomItemManager(this));
         this.itemDifficultiesManager = register(new ItemDifficultiesManager(this));
         this.recipeManager = register(new RecipeManager(this));
+        this.antimatterPortalManager = register(new AntimatterPortalManager(this));
         this.positionManager = register(new PositionManager(this));
         this.teamManager = register(new TeamsManager(this));
         this.tradingManager = register(new TradingManager(this));
@@ -335,6 +340,7 @@ public final class ForceItemBattle extends JavaPlugin {
                 new ClickableItemsListener(this),
                 new ItemsListener(this),
                 new PortalListener(this),
+                new AntimatterPortalListener(this),
                 new AchievementListener(this),
                 new PreGameLockListener(this),
                 new ChatListener(this),
