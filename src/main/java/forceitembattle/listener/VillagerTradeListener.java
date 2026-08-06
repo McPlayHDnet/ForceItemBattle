@@ -27,7 +27,7 @@ public class VillagerTradeListener implements Listener {
 
     /** The cleric offers the Eye of Antimatter from apprentice onwards, always. */
     private static final int CLERIC_TRADE_LEVEL = 2;
-    private static final int CLERIC_TRADE_PRICE = 5;
+    private static final int CLERIC_TRADE_PRICE = 6;
     private static final int CLERIC_TRADE_MAX_USES = 12;
 
     private final ForceItemBattle plugin;

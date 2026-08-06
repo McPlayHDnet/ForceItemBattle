@@ -19,10 +19,8 @@ public enum FakeRecipe {
     // Mirrors the real recipe in RecipeManager — one recipe, HARDER_TRACKERS does not change it.
     END_STRUCTURE(Material.KNOWLEDGE_BOOK, item ->
             RecipeBuilder.newBuilder(ShapedRecipe::new)
-                    .apply(shapedRecipe -> shapedRecipe.shape("BGB", "QEQ", "BGB"))
+                    .apply(shapedRecipe -> shapedRecipe.shape(" B ", "GQG", " B "))
                     .apply(shapedRecipe -> shapedRecipe.setIngredient('B', Material.NETHER_BRICK))
-                    .apply(shapedRecipe -> shapedRecipe.setIngredient('E',
-                            new RecipeChoice.ExactChoice(CustomMaterials.EYE_OF_ANTIMATTER.itemStack())))
                     .apply(shapedRecipe -> shapedRecipe.setIngredient('G', Material.GLOWSTONE_DUST))
                     .apply(shapedRecipe -> shapedRecipe.setIngredient('Q', Material.QUARTZ))
                     .build("fib:antimatter_locator", CustomMaterials.ANTIMATTER_LOCATOR.itemStack())

@@ -23,15 +23,21 @@ public enum CustomMaterials {
     ANTIMATTER_LOCATOR(Material.KNOWLEDGE_BOOK, "antimatter_locator", "Antimatter Locator", "<dark_purple>", null, null, null, null, null),
     TRIAL_LOCATOR(Material.WITHER_ROSE, "trial_locator", "Trial Locator", "<gold>", null, null, null, null, null),
     SULFUR_LOCATOR(Material.MUSIC_DISC_CHIRP, "sulfur_locator", "Sulfur Locator", "<yellow>", null, null, null, null, null),
-    EYE_OF_ANTIMATTER(Material.TORCHFLOWER_SEEDS, "eye_of_antimatter", "Eye of Antimatter", "<dark_purple>", null,
-            new NamespacedKey("fib", "eye_of_antimatter"), "eye_of_antimatter", null, null),
+    EYE_OF_ANTIMATTER(Material.TORCHFLOWER_SEEDS, "eye_of_antimatter", "Eye of Antimatter", "<dark_purple>",
+            new NamespacedKey("fib", "items/eye_of_antimatter"), null, "eye_of_antimatter", null, null),
     WEATHERED_CAPTAINS_JOURNAL(Material.TORCHFLOWER, "journal_book", "Weathered Captain's Journal", null,
             new NamespacedKey("fib", "items/weathered_captains_journal"),
             new NamespacedKey("fib", "journal"), null, null, null),
     WHEEL_OF_FORTUNE(Material.NETHER_STAR, "wheel_of_fortune", "Wheel of Fortune", null, null, null,
             "wheel", "<yellow><b>Wheel of Fortune", null),
     KILN_FIRED_BRUSH(Material.BRUSH, "kiln_fired_brush", "Kiln-Fired Brush", "<#c77b3e>", null, null,
-            "kiln_fired_brush", null, new NamespacedKey("fib", "kiln_fired_brush"));
+            "kiln_fired_brush", null, new NamespacedKey("fib", "kiln_fired_brush")),
+    // Built from its loot table rather than renamed here, because the portal vault matches its key
+    // by exact components: a plugin-built copy has to be byte-identical to the datapack one or the
+    // vault silently refuses it.
+    TOTEM_OF_ANTIMATTER(Material.TOTEM_OF_UNDYING, "totem_of_antimatter", "Totem of Antimatter", null,
+            new NamespacedKey("fib", "items/totem_of_antimatter"), null,
+            "totem_of_antimatter", null, null);
 
     /**
      * Custom items that must not answer for their bare material.
@@ -42,8 +48,13 @@ public enum CustomMaterials {
      * crafting a plain one, so {@code nameOf(BRUSH)} has to stay "Brush" and a joker skip has to
      * hand out a plain brush, not a free locator. The Kiln-Fired Brush is still reachable by id and
      * still recognised by {@link #matches}, which is all the locator needs.
+     *
+     * <p>The Totem of Antimatter is the same case: TOTEM_OF_UNDYING is a LATE/EXTREME force item, so
+     * {@code nameOf} has to keep saying "Totem of Undying" and a skip has to hand out a plain totem
+     * rather than a free portal key.
      */
-    private static final Set<CustomMaterials> SHARES_MATERIAL_WITH_POOL_ITEM = Set.of(KILN_FIRED_BRUSH);
+    private static final Set<CustomMaterials> SHARES_MATERIAL_WITH_POOL_ITEM =
+            Set.of(KILN_FIRED_BRUSH, TOTEM_OF_ANTIMATTER);
 
     private static final Map<Material, CustomMaterials> BY_MATERIAL = Arrays.stream(values())
             .filter(custom -> !SHARES_MATERIAL_WITH_POOL_ITEM.contains(custom))
@@ -56,7 +67,9 @@ public enum CustomMaterials {
     private final String itemName;
 
     /**
-     * MiniMessage colour used by {@link #displayName()}. Null when a loot table owns the name.
+     * MiniMessage colour used by {@link #displayName()}. Null when a loot table owns the name and
+     * nothing is lost by an unnamed fallback; set alongside {@link #itemLootTable} when the item
+     * still has to read correctly if that table fails to load.
      */
     @Nullable
     private final String color;

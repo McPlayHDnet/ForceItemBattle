@@ -66,7 +66,9 @@ public class PortalListener implements Listener {
         }
     }
 
-    @EventHandler
+    // ignoreCancelled, so the antimatter Depths' return portal — which AntimatterPortalListener
+    // cancels and handles itself — does not also draw a "travelling is disabled" refusal here.
+    @EventHandler(ignoreCancelled = true)
     public void onPortalEvent(PlayerPortalEvent playerPortalEvent) {
         Player player = playerPortalEvent.getPlayer();
         if (!this.plugin.getGamemanager().isMidGame()) {
@@ -141,10 +143,14 @@ public class PortalListener implements Listener {
 
     @EventHandler
     public void onChangedWorld(PlayerChangedWorldEvent event) {
-        if (!this.plugin.getGamemanager().isMidGame()) {
+        if (!this.plugin.getGamemanager().isMidGame() && !this.plugin.getGamemanager().isEndGame()) {
             return;
         }
         Player player = event.getPlayer();
+
+        if (this.plugin.getAntimatterPortalManager().isAntimatterWorld(player.getWorld())) {
+            return;
+        }
 
         if (Dimension.of(player) == Dimension.END) {
             if (this.playerEndLocations.containsKey(player.getUniqueId())) {
