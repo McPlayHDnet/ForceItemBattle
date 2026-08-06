@@ -78,9 +78,7 @@ Item Display
 
 ![Chat](https://github.com/McPlayHDnet/ForceItemBattle/assets/77849496/dc5c6ca1-d8c5-4b44-a2b8-1c20367a9956)
 
-
 To display all items you need to use [this resourcepack](https://github.com/btlmt-de/FIB/tree/main/ForceItemBattle)
-
 
 Item Description
 
