@@ -7,7 +7,6 @@ Recommended Minecraft Version: 26.2
 
 Originally based on https://github.com/170yt/ForceItemBattle, but extensively rewritten over time and now maintained independently.
 
-
 ## Commands & Settings
 
 ### Player Commands
