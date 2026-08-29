@@ -20,6 +20,13 @@ import javax.annotation.Nullable;
  * <p>Deliberately not for shared team stats (highest score, longest streak): those live on the team
  * row, are written once per team, and go through {@code updateTeamStatisticsAsync} guarded by
  * {@link forceitembattle.model.Team#isPrimaryWriter(ForceItemPlayer)}.
+ *
+ * <p><b>Who counts as a participant is decided here, not at the call sites.</b> It used to be each
+ * site's job, and four of the five remembered while the antimatter teleporter did not — a spectator
+ * walking over a teleporter pad mid-game had the use written to their solo row, and since they never
+ * played, that single stat was the only thing they owned. It surfaced on the stats page as a player
+ * whose entire career is one teleporter use. The rule belongs somewhere it cannot be forgotten by
+ * the sixth caller, and this is the routing point every one of them already goes through.
  */
 public final class PlayerStatsWrite {
 
@@ -27,8 +34,8 @@ public final class PlayerStatsWrite {
     }
 
     /**
-     * @param self           the acting player's UUID — passed separately because the solo branch
-     *                       has to work even for someone with no roster entry
+     * @param self           the acting player's UUID — passed separately because it addresses the
+     *                       row, and the roster entry is consulted only to decide which row
      * @param forceItemPlayer the acting player's roster entry, or {@code null} if they have none
      */
     public static void record(FibStatisticsClient statistics,
@@ -36,7 +43,14 @@ public final class PlayerStatsWrite {
                               @Nullable ForceItemPlayer forceItemPlayer,
                               Supplier<FibSoloStatisticsUpdateRequestDto> soloUpdate,
                               Supplier<FibTeamMemberStatsUpdateRequestDto> memberUpdate) {
-        if (forceItemPlayer == null || !forceItemPlayer.isInTeam()) {
+        // Nothing to attribute. Both shapes of "watching rather than playing" land here: someone who
+        // took the spectate toggle in the lobby keeps a roster entry with the flag set, while someone
+        // who connected after the round began has no roster entry at all.
+        if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
+            return;
+        }
+
+        if (!forceItemPlayer.isInTeam()) {
             statistics.updateSoloStatisticsAsync(self, soloUpdate.get());
             return;
         }
