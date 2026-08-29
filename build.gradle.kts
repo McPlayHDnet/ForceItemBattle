@@ -38,7 +38,7 @@ repositories {
 dependencies {
     paperweight.paperDevBundle("26.2.build.+")
     implementation("org.apache.commons:commons-text:1.13.1")
-    implementation("de.threeseconds:FIBServiceClient:1.0.2")
+    implementation("de.threeseconds:FIBServiceClient:1.0.3")
     // paperweight.foliaDevBundle("1.20.4-R0.1-SNAPSHOT")
     // paperweight.devBundle("com.example.paperfork", "1.20.4-R0.1-SNAPSHOT")
 }
