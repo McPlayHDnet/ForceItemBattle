@@ -1,9 +1,8 @@
 package forceitembattle.randomevents;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.event.FoundItemEvent;
 import forceitembattle.model.CustomMaterials;
-import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.Find;
 import forceitembattle.util.Prefix;
 import forceitembattle.util.Text;
 import java.util.concurrent.ThreadLocalRandom;
@@ -32,12 +31,12 @@ public class ItemHunt implements RandomEvent {
     }
 
     @Override
-    public boolean onFoundItem(FoundItemEvent foundItemEvent, ForceItemPlayer forceItemPlayer) {
-        if (foundItemEvent.isSkipped() || foundItemEvent.isBackToBack()) {
+    public boolean onFoundItem(Find find) {
+        if (find.skipped() || find.backToBack()) {
             return false;
         }
 
-        Player winner = forceItemPlayer.player();
+        Player winner = find.player();
         int wheels = ThreadLocalRandom.current().nextInt(MIN_WHEELS, MAX_WHEELS + 1);
         this.giveWheels(winner, wheels);
 

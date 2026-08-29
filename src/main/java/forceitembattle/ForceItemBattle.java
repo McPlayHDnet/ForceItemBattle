@@ -56,6 +56,7 @@ import forceitembattle.manager.CollectionManager;
 import forceitembattle.manager.AntimatterPortalManager;
 import forceitembattle.manager.CustomItemManager;
 import forceitembattle.manager.BackToBackManager;
+import forceitembattle.manager.FoundItemResolver;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.ItemDifficultiesManager;
 import forceitembattle.manager.LocatorManager;
@@ -104,6 +105,8 @@ public final class ForceItemBattle extends JavaPlugin {
     private final List<Manager> managers = new ArrayList<>();
     @Getter
     private Gamemanager gamemanager;
+    @Getter
+    private FoundItemResolver foundItemResolver;
     @Getter
     private TimerManager timerManager;
     @Getter
@@ -201,6 +204,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.tabListManager = register(new TabListManager(this));
         this.voteSkipManager = register(new VoteSkipManager(this));
         this.scoreboardManager = register(new ScoreboardManager(this));
+        this.foundItemResolver = register(new FoundItemResolver(this));
         this.fibService = register(new FIBServiceClient(this));
 
         this.managers.forEach(Manager::enable);

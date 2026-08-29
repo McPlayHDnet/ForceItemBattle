@@ -6,8 +6,6 @@ import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.model.ForceItemPlayer;
-import forceitembattle.model.Team;
-import forceitembattle.settings.GameSetting;
 import forceitembattle.util.Text;
 import java.util.ArrayList;
 import java.util.List;
@@ -73,14 +71,7 @@ public class CommandForceItem extends CustomCommand implements CustomTabComplete
         // Second item forced when given; otherwise generate normally (queue is empty here).
         Material next = row.size() >= 2 ? row.get(1) : gamemanager.generateMaterial();
 
-        if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-            Team team = forceItemPlayer.currentTeam();
-            team.setCurrentMaterial(current);
-            team.setNextMaterial(next);
-        } else {
-            forceItemPlayer.setCurrentMaterial(current);
-            forceItemPlayer.setNextMaterial(next);
-        }
+        forceItemPlayer.scoreOwner().assignMaterials(current, next);
 
         this.plugin.getTimerManager().sendActionBar();
         this.plugin.getScoreboardManager().updateAllPlayers();

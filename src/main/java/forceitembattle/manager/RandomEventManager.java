@@ -1,7 +1,7 @@
 package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.event.FoundItemEvent;
+import forceitembattle.model.Find;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.randomevents.RandomEvent;
 import forceitembattle.randomevents.RandomEvents;
@@ -163,12 +163,12 @@ public class RandomEventManager implements Manager {
         return event == null ? "" : event.tabFooterBlock();
     }
 
-    public void handleFoundItem(FoundItemEvent foundItemEvent, ForceItemPlayer forceItemPlayer) {
+    public void handleFoundItem(Find find) {
         if (this.activeEvent == null) {
             return;
         }
 
-        if (this.activeEvent.onFoundItem(foundItemEvent, forceItemPlayer)) {
+        if (this.activeEvent.onFoundItem(find)) {
             this.activeEvent = null;
             this.activeType = null;
         }

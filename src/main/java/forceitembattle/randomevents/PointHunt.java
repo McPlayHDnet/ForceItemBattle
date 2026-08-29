@@ -1,10 +1,11 @@
 package forceitembattle.randomevents;
 
 import forceitembattle.ForceItemBattle;
-import forceitembattle.event.FoundItemEvent;
+import forceitembattle.model.Find;
 import forceitembattle.manager.ItemDifficultiesManager.State;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.ScoreOwner;
 import forceitembattle.model.Team;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.Prefix;
@@ -24,10 +25,10 @@ import org.bukkit.inventory.ItemStack;
  * — Early 1, Mid 2, Late 3 — and the top scorer at the end takes the Wheels.
  *
  * Unlike the other events it resolves on its own clock rather than on a find, so it holds the
- * active slot the whole time and concludes from {@link #tick()}. Scoring keys on the scoring
- * entity the game itself uses: the {@link Team} in a team game, the {@link ForceItemPlayer} in
- * solo (where {@code currentTeam()} is null). The countdown is driven by the manager's per-second
- * tick, which runs mid-game only, so it freezes during pause.
+ * active slot the whole time and concludes from {@link #tick()}. Scoring keys on the
+ * {@link ScoreOwner} the game itself uses, so teammates share a tally and a solo player has their
+ * own without this class deciding which is which. The countdown is driven by the manager's
+ * per-second tick, which runs mid-game only, so it freezes during pause.
  */
 @RequiredArgsConstructor
 public class PointHunt implements RandomEvent {
@@ -50,10 +51,10 @@ public class PointHunt implements RandomEvent {
     private final ForceItemBattle plugin;
 
     /**
-     * Points this round, keyed by scoring entity: a Team in a team game, a ForceItemPlayer in solo.
-     * Identity keys — both are the live per-round instances, reused for the whole round.
+     * Points this round, keyed by {@link ScoreOwner}. Identity keys — an owner is the live
+     * per-round instance, reused for the whole round, and neither implementation overrides equals.
      */
-    private final Map<Object, Integer> points = new LinkedHashMap<>();
+    private final Map<ScoreOwner, Integer> points = new LinkedHashMap<>();
 
     private int secondsLeft = DURATION_SECONDS;
 
@@ -76,26 +77,23 @@ public class PointHunt implements RandomEvent {
     }
 
     @Override
-    public boolean onFoundItem(FoundItemEvent foundItemEvent, ForceItemPlayer forceItemPlayer) {
-        if (foundItemEvent.isSkipped()) {
+    public boolean onFoundItem(Find find) {
+        if (find.skipped()) {
             return false; // skips never score; back-to-backs do
         }
 
-        ItemStack found = foundItemEvent.getFoundItem();
-        if (found == null) {
+        if (find.material() == null) {
             return false;
         }
 
-        State state = this.plugin.getItemDifficultiesManager().getState(found.getType());
+        State state = this.plugin.getItemDifficultiesManager().getState(find.material());
         if (state == null) {
             return false; // not a pool item (custom/unregistered) — no points
         }
 
-        // Team game: everyone has a team, teammates share the tally. Solo: currentTeam() is null,
-        // so the player is their own scoring entity.
-        Team team = forceItemPlayer.currentTeam();
-        Object entity = team != null ? team : forceItemPlayer;
-        this.points.merge(entity, pointsFor(state), Integer::sum);
+        // Teammates share one tally, a solo player has their own — which is exactly what a score
+        // owner is. This used to be an Object holding either a Team or a ForceItemPlayer.
+        this.points.merge(find.finder().scoreOwner(), pointsFor(state), Integer::sum);
         return false; // Point Hunt only ends on its own clock
     }
 
@@ -128,8 +126,8 @@ public class PointHunt implements RandomEvent {
         Bukkit.getOnlinePlayers().forEach(players ->
                 players.playSound(players.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1, 1));
 
-        List<Map.Entry<Object, Integer>> ranked = this.points.entrySet().stream()
-                .sorted(Map.Entry.<Object, Integer>comparingByValue().reversed())
+        List<Map.Entry<ScoreOwner, Integer>> ranked = this.points.entrySet().stream()
+                .sorted(Map.Entry.<ScoreOwner, Integer>comparingByValue().reversed())
                 .toList();
 
         if (ranked.isEmpty()) {
@@ -146,7 +144,7 @@ public class PointHunt implements RandomEvent {
             return;
         }
 
-        Object winner = ranked.getFirst().getKey();
+        ScoreOwner winner = ranked.getFirst().getKey();
         String display = this.awardAndDescribe(winner);
 
         Bukkit.broadcast(Text.of(Prefix.RANDOM_EVENT + display + " <gray>won the "
@@ -154,27 +152,27 @@ public class PointHunt implements RandomEvent {
     }
 
     /** Pays the winner and returns their display name. Team: 4 split evenly (2/2). Solo: 3. */
-    private String awardAndDescribe(Object winner) {
-        if (winner instanceof Team team) {
-            List<ForceItemPlayer> members = team.getPlayers();
-            if (members.size() <= 1) {
-                members.forEach(member -> this.giveWheels(member.player(), SOLO_WHEELS));
-            } else {
-                int base = TEAM_WHEELS_TOTAL / members.size();
-                int remainder = TEAM_WHEELS_TOTAL % members.size();
-                for (int i = 0; i < members.size(); i++) {
-                    int amount = base + (i < remainder ? 1 : 0);
-                    if (amount > 0) {
-                        this.giveWheels(members.get(i).player(), amount);
-                    }
+    private String awardAndDescribe(ScoreOwner winner) {
+        List<ForceItemPlayer> members = winner.members();
+
+        if (members.size() <= 1) {
+            members.forEach(member -> this.giveWheels(member.player(), SOLO_WHEELS));
+        } else {
+            int base = TEAM_WHEELS_TOTAL / members.size();
+            int remainder = TEAM_WHEELS_TOTAL % members.size();
+            for (int i = 0; i < members.size(); i++) {
+                int amount = base + (i < remainder ? 1 : 0);
+                if (amount > 0) {
+                    this.giveWheels(members.get(i).player(), amount);
                 }
             }
-            return team.getTeamDisplay();
         }
 
-        ForceItemPlayer solo = (ForceItemPlayer) winner;
-        this.giveWheels(solo.player(), SOLO_WHEELS);
-        return "<green>" + solo.player().getName();
+        // The payout is a score-owner question and is answered above without asking. The label is
+        // not: a team has a name and a colour, and a solo winner has neither.
+        return winner instanceof Team team
+                ? team.getTeamDisplay()
+                : "<green>" + members.getFirst().player().getName();
     }
 
     private void giveWheels(Player player, int amount) {
@@ -183,3 +181,4 @@ public class PointHunt implements RandomEvent {
                 player.getWorld().dropItemNaturally(player.getLocation(), leftover));
     }
 }
+

@@ -12,6 +12,7 @@ import forceitembattle.service.MatchHistoryReporter;
 import forceitembattle.service.PlayerStatsWrite;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameState;
+import forceitembattle.model.ScoreOwner;
 import forceitembattle.gui.ItemBuilder;
 import forceitembattle.model.Team;
 import forceitembattle.settings.GameSettings;
@@ -267,93 +268,67 @@ public class Gamemanager implements Manager {
     public void initializeMaterials() {
         this.forcedItemQueue.clear();
         boolean runMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.RUN);
-        boolean teamMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM);
         long now = System.currentTimeMillis();
 
         // Everyone starts the round un-equipped; applyStartSetup flips this back per player.
         this.forceItemPlayerMap.values().forEach(forceItemPlayer -> forceItemPlayer.setStartSetupApplied(false));
 
-        // In run mode everyone shares one seeded pair; otherwise each player gets their own.
+        // In run mode everyone shares one seeded pair; otherwise each owner gets their own.
         MaterialPair shared = runMode ? this.nextMaterials(true) : null;
 
-        if (teamMode) {
-            this.forceItemPlayerMap.forEach((uuid, forceItemPlayer) -> {
-                if (forceItemPlayer.isSpectator()) return;
-
-                MaterialPair pair = runMode ? shared : this.nextMaterials(false);
-
-                forceItemPlayer.currentTeam().setCurrentScore(0);
-                forceItemPlayer.currentTeam().setCurrentMaterial(pair.current());
-                forceItemPlayer.currentTeam().setNextMaterial(pair.next());
-                forceItemPlayer.currentTeam().setLastItemAssignedAt(now);
-            });
-        } else {
-            Bukkit.getOnlinePlayers().forEach(player -> {
-                ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
-                if (forceItemPlayer.isSpectator()) return;
-
-                MaterialPair pair = runMode ? shared : this.nextMaterials(false);
-
-                forceItemPlayer.setCurrentScore(0);
-                forceItemPlayer.setCurrentMaterial(pair.current());
-                forceItemPlayer.setNextMaterial(pair.next());
-                forceItemPlayer.setLastItemAssignedAt(now);
-            });
-        }
+        // One pass over the roster, one pair per score owner. The team and solo halves of this used
+        // to be written out separately and had drifted apart in two ways worth naming, because both
+        // are fixed by the collapse rather than by anything clever:
+        //
+        //   - the solo half walked Bukkit.getOnlinePlayers() instead of the roster, so a player who
+        //     disconnected during the countdown -- who keeps their spot by design, see isStarting()
+        //     -- was never dealt an item, and rejoined hunting whatever they held last round. It
+        //     also NPE'd on anyone online without a roster entry.
+        //   - the team half drew a fresh pair for every member and let the last one win, so a pair
+        //     of players burned two draws to be handed one item.
+        this.activeScoreOwners().forEach(owner -> {
+            MaterialPair pair = runMode ? shared : this.nextMaterials(false);
+            owner.startRound(pair.current(), pair.next(), now);
+        });
     }
 
+    /**
+     * Every score owner playing this round, each appearing once: one per solo player, one per team
+     * however many members it has. Spectators hold no stake in a round and are left out.
+     *
+     * <p>The de-duplication is the point. Anything that acts on "the thing that scores" -- dealing
+     * the opening pair, skipping the whole server's item -- has to run once per owner, and the
+     * roster hands out one entry per player.
+     */
+    private List<ScoreOwner> activeScoreOwners() {
+        return this.forceItemPlayerMap.values().stream()
+                .filter(forceItemPlayer -> !forceItemPlayer.isSpectator())
+                .map(ForceItemPlayer::scoreOwner)
+                .distinct()
+                .toList();
+    }
+
+    /**
+     * Moves whoever this find belongs to onto their next item.
+     *
+     * <p>Run mode is the one distinction left here, and it is a real one: everybody races for the
+     * same seeded item, so one find advances the whole server. Otherwise only the finder's own
+     * owner moves. Team versus solo no longer appears — it is the owner's business, not this
+     * method's.
+     */
     public void advanceMaterials(ForceItemPlayer forceItemPlayer, GameContext context) {
+        long now = System.currentTimeMillis();
+
         if (context.runMode()) {
-            advanceSeededMaterials(context);
-        } else {
-            advanceRandomMaterials(forceItemPlayer, context);
+            Material nextMaterial = this.generateSeededMaterial();
+            // Once per owner. The team branch this replaces ran per member, which advanced a
+            // two-player team twice: the queued item was skipped over and current and next both
+            // ended up holding nextMaterial.
+            this.activeScoreOwners().forEach(owner -> owner.advance(nextMaterial, now));
+            return;
         }
-    }
 
-    private void advanceSeededMaterials(GameContext context) {
-        Material nextMaterial = this.generateSeededMaterial();
-        long now = System.currentTimeMillis();
-
-        if (context.teamGame()) {
-            this.forceItemPlayerMap.values().forEach(player -> {
-                // Spectators hold no team -- someone who joined during the countdown sits in the
-                // roster with a null team, and would NPE the whole skip.
-                if (player.isSpectator()) return;
-
-                Team team = player.currentTeam();
-                team.setPreviousMaterial(team.getCurrentMaterial());
-                team.setCurrentMaterial(team.getNextMaterial());
-                team.setNextMaterial(nextMaterial);
-                team.setLastItemAssignedAt(now);
-            });
-        } else {
-            this.forceItemPlayerMap.values().forEach(player -> {
-                if (player.isSpectator()) return;
-
-                player.setPreviousMaterial(player.currentMaterial());
-                player.setCurrentMaterial(player.nextMaterial());
-                player.setNextMaterial(nextMaterial);
-                player.setLastItemAssignedAt(now);
-            });
-        }
-    }
-
-    private void advanceRandomMaterials(ForceItemPlayer forceItemPlayer, GameContext context) {
-        Material nextMaterial = this.generateMaterial();
-        long now = System.currentTimeMillis();
-
-        if (context.teamGame()) {
-            Team team = forceItemPlayer.currentTeam();
-            team.setPreviousMaterial(team.getCurrentMaterial());
-            team.setCurrentMaterial(team.getNextMaterial());
-            team.setNextMaterial(nextMaterial);
-            team.setLastItemAssignedAt(now);
-        } else {
-            forceItemPlayer.setPreviousMaterial(forceItemPlayer.currentMaterial());
-            forceItemPlayer.setCurrentMaterial(forceItemPlayer.nextMaterial());
-            forceItemPlayer.setNextMaterial(nextMaterial);
-            forceItemPlayer.setLastItemAssignedAt(now);
-        }
+        forceItemPlayer.scoreOwner().advance(this.generateMaterial(), now);
     }
 
     /** Stores the paged result screen for a finished player or team. */
@@ -393,23 +368,13 @@ public class Gamemanager implements Manager {
         }
 
         boolean runMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.RUN);
-        boolean teamMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM);
 
         MaterialPair pair = this.nextMaterials(runMode);
 
-        forceItemPlayerMap().values().forEach(p -> {
-            // Spectators hold no team; skipping them here is what keeps a countdown joiner from
-            // NPE-ing every skip for the rest of the round.
-            if (p.isSpectator()) return;
-
-            if (teamMode) {
-                p.currentTeam().setCurrentMaterial(pair.current());
-                p.currentTeam().setNextMaterial(pair.next());
-            } else {
-                p.setCurrentMaterial(pair.current());
-                p.setNextMaterial(pair.next());
-            }
-        });
+        // Everyone gets the same replacement pair, so this is one pair handed to every owner.
+        // Spectators are already out of activeScoreOwners(), which is what keeps a countdown
+        // joiner -- who holds no team -- from NPE-ing every skip for the rest of the round.
+        this.activeScoreOwners().forEach(owner -> owner.assignMaterials(pair.current(), pair.next()));
     }
 
     public void giveSpectatorItems(Player player) {
@@ -458,7 +423,7 @@ public class Gamemanager implements Manager {
         player.getInventory().clear();
 
         if (!teamMode) {
-            forceItemPlayer.setRemainingJokers(this.jokerAmount);
+            forceItemPlayer.scoreOwner().setJokers(this.jokerAmount);
             if (!this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.RUN)) {
                 player.getInventory().setItem(4, getJokers(this.jokerAmount));
             }

@@ -1,7 +1,6 @@
 package forceitembattle.randomevents;
 
-import forceitembattle.event.FoundItemEvent;
-import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.Find;
 
 public interface RandomEvent {
 
@@ -20,11 +19,11 @@ public interface RandomEvent {
     }
 
     /**
-     * Routed from FoundItemListener for every find while this event is running.
+     * Routed from FoundItemResolver for every find while this event is running.
      *
      * @return true when the event has concluded and should be cleared.
      */
-    default boolean onFoundItem(FoundItemEvent foundItemEvent, ForceItemPlayer forceItemPlayer) {
+    default boolean onFoundItem(Find find) {
         return false;
     }
 
