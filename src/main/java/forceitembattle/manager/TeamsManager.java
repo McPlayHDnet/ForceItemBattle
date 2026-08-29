@@ -3,17 +3,26 @@ package forceitembattle.manager;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.Team;
+import forceitembattle.util.TeamPairing;
 import forceitembattle.util.Text;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import lombok.Getter;
+import org.bukkit.entity.Player;
 
 public class TeamsManager implements Manager {
+
+    private static final String LAST_PAIRINGS_PATH = "teams.lastPairings";
 
     private final ForceItemBattle forceItemBattle;
 
@@ -22,12 +31,21 @@ public class TeamsManager implements Manager {
     private final List<Team> teams;
     @Getter
     private final int maxTeamSize;
+    private final Set<String> previousPairings;
+    private final Random random;
 
     public TeamsManager(ForceItemBattle forceItemBattle) {
         this.forceItemBattle = forceItemBattle;
         this.pendingInvite = new ConcurrentHashMap<>();
         this.teams = new ArrayList<>();
         this.maxTeamSize = 2;
+        this.previousPairings = new HashSet<>();
+        this.random = new Random();
+    }
+
+    @Override
+    public void enable() {
+        this.previousPairings.addAll(this.forceItemBattle.getConfig().getStringList(LAST_PAIRINGS_PATH));
     }
 
     public void autoTeams() {
@@ -35,12 +53,15 @@ public class TeamsManager implements Manager {
                 .filter(player -> player.currentTeam() == null)
                 .collect(Collectors.toList());
 
-        Collections.shuffle(playersWithoutTeam);
+        List<ForceItemPlayer> ordered = this.orderAvoidingPreviousPairings(playersWithoutTeam);
 
         int teamSizeLimit = this.getMaxTeamSize();
-        while (playersWithoutTeam.size() >= teamSizeLimit) {
-            List<ForceItemPlayer> teamPlayers = playersWithoutTeam.subList(0, teamSizeLimit);
-            playersWithoutTeam = playersWithoutTeam.subList(teamSizeLimit, playersWithoutTeam.size());
+        int next = 0;
+        while (ordered.size() - next >= teamSizeLimit) {
+            // Copied out of the ordering rather than kept as a subList view: Team holds on to what it
+            // is given, and a chain of views over a list we still index into is a trap for later edits.
+            List<ForceItemPlayer> teamPlayers = new ArrayList<>(ordered.subList(next, next + teamSizeLimit));
+            next += teamSizeLimit;
 
             Team randomTeam = new Team(this.teams.size() + 1, null, 0, 0, teamPlayers.toArray(new ForceItemPlayer[0]));
             this.teams.add(randomTeam);
@@ -50,14 +71,59 @@ public class TeamsManager implements Manager {
             }
         }
 
-        for (ForceItemPlayer player : playersWithoutTeam) {
+        for (ForceItemPlayer player : new ArrayList<>(ordered.subList(next, ordered.size()))) {
             Team singlePlayerTeam = new Team(this.teams.size() + 1, null, 0, 0, player);
             this.teams.add(singlePlayerTeam);
 
             player.setCurrentTeam(singlePlayerTeam);
             this.forceItemBattle.getScoreboardManager().updateAllPlayers();
         }
+
+        this.rememberPairings();
         this.forceItemBattle.getScoreboardManager().updateAllPlayers();
+    }
+
+    private List<ForceItemPlayer> orderAvoidingPreviousPairings(List<ForceItemPlayer> players) {
+        Map<UUID, ForceItemPlayer> byId = new LinkedHashMap<>();
+        for (ForceItemPlayer player : players) {
+            if (player.player() == null) continue;
+            byId.put(player.player().getUniqueId(), player);
+        }
+
+        if (this.previousPairings.isEmpty() || this.getMaxTeamSize() != 2 || byId.size() != players.size()) {
+            List<ForceItemPlayer> shuffled = new ArrayList<>(players);
+            Collections.shuffle(shuffled, this.random);
+            return shuffled;
+        }
+
+        List<UUID> ordered = TeamPairing.orderAvoidingPairs(
+                new ArrayList<>(byId.keySet()), this.previousPairings, this.random);
+
+        List<ForceItemPlayer> result = new ArrayList<>(ordered.size());
+        for (UUID id : ordered) {
+            result.add(byId.get(id));
+        }
+        return result;
+    }
+
+    private void rememberPairings() {
+        this.previousPairings.clear();
+
+        for (Team team : this.teams) {
+            List<ForceItemPlayer> members = team.getPlayers();
+            for (int i = 0; i < members.size(); i++) {
+                for (int j = i + 1; j < members.size(); j++) {
+                    Player first = members.get(i).player();
+                    Player second = members.get(j).player();
+                    if (first == null || second == null) continue;
+
+                    this.previousPairings.add(TeamPairing.pairKey(first.getUniqueId(), second.getUniqueId()));
+                }
+            }
+        }
+
+        this.forceItemBattle.getConfig().set(LAST_PAIRINGS_PATH, new ArrayList<>(this.previousPairings));
+        this.forceItemBattle.saveConfig();
     }
 
     public boolean alreadyInTeam(Team team, ForceItemPlayer player) {
