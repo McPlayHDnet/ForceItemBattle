@@ -61,6 +61,9 @@ import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.ItemDifficultiesManager;
 import forceitembattle.manager.LocatorManager;
 import forceitembattle.manager.Manager;
+import forceitembattle.model.RoundClock;
+import forceitembattle.model.RoundPhase;
+import forceitembattle.model.Roster;
 import forceitembattle.manager.PositionManager;
 import forceitembattle.manager.ProtectionManager;
 import forceitembattle.manager.RandomEventManager;
@@ -107,6 +110,25 @@ public final class ForceItemBattle extends JavaPlugin {
 
     /** The lifecycle order, resolved once at boot so disable() reverses exactly what enable() ran. */
     private List<Manager> lifecycle = List.of();
+    /**
+     * Who is in the round. Constructed before every manager and depending on none of them, which
+     * is what keeps the manager graph acyclic — see {@link forceitembattle.model.Roster}.
+     */
+    @Getter
+    private final Roster roster = new Roster();
+
+    /**
+     * Where the round is. Like the roster: constructed before every manager, depending on none.
+     */
+    @Getter
+    private final RoundPhase roundPhase = new RoundPhase();
+
+    /**
+     * How much of the round is left, and how long it is. Shared rather than owned by
+     * {@code TimerManager}, which merely drives it — see {@link forceitembattle.model.RoundClock}.
+     */
+    @Getter
+    private final RoundClock roundClock = new RoundClock();
     @Getter
     private Gamemanager gamemanager;
     @Getter
@@ -255,8 +277,8 @@ public final class ForceItemBattle extends JavaPlugin {
         this.seedPool = new SeedPool(this);
         this.seedPool.load();
 
-        this.gamemanager = register(new Gamemanager(this));
-        this.timerManager = register(new TimerManager(this));
+        this.gamemanager = register(new Gamemanager(this, this.roster, this.roundPhase));
+        this.timerManager = register(new TimerManager(this, this.roundClock));
         this.backpackManager = register(new BackpackManager(this));
         this.backToBackManager = register(new BackToBackManager(this));
         this.customItemManager = register(new CustomItemManager(this));
@@ -277,11 +299,11 @@ public final class ForceItemBattle extends JavaPlugin {
         this.collectionManager = register(
                 new CollectionManager(this.itemDifficultiesManager, this.fibService));
         this.locatorManager = register(new LocatorManager(this, this.positionManager));
-        this.protectionManager = register(new ProtectionManager(this.gamemanager));
+        this.protectionManager = register(new ProtectionManager(this.roster, this.gamemanager));
         this.wanderingTraderManager = register(new WanderingTraderManager(this));
         this.randomEventManager = register(new RandomEventManager(this));
-        this.tabListManager = register(new TabListManager(this.gamemanager, this.itemDifficultiesManager, this.randomEventManager, this.wanderingTraderManager));
-        this.voteSkipManager = register(new VoteSkipManager(this.gamemanager, this.itemDifficultiesManager));
+        this.tabListManager = register(new TabListManager(this.roster, this.gamemanager, this.itemDifficultiesManager, this.randomEventManager, this.wanderingTraderManager));
+        this.voteSkipManager = register(new VoteSkipManager(this.roster, this.gamemanager, this.itemDifficultiesManager));
         this.scoreboardManager = register(new ScoreboardManager(this));
 
         // Named dependencies rather than the plugin, so this one has to be built after all of them.
@@ -430,22 +452,22 @@ public final class ForceItemBattle extends JavaPlugin {
 
     private void initListeners() {
         registerListeners(
-                new FoundItemListener(this.foundItemResolver, this.gamemanager),
+                new FoundItemListener(this.roster, this.foundItemResolver, this.gamemanager),
                 new SettingsListener(this.settings),
                 new RecipeListener(this.recipeManager),
-                new PvPListener(this.gamemanager, this.settings),
-                new ProtectionListener(this, this.gamemanager, this.protectionManager),
-                new ClickableItemsListener(this, this.backpackManager, this.fibService, this.gamemanager, this.locatorManager, this.settings, this.timerManager),
-                new ItemsListener(this.gamemanager),
-                new PortalListener(this.antimatterPortalManager, this.fibService, this.gamemanager, this.settings),
-                new AntimatterPortalListener(this.antimatterPortalManager, this.gamemanager),
-                new AchievementListener(this.achievementManager, this.backpackManager, this.gamemanager, this.settings),
-                new PreGameLockListener(this.gamemanager),
-                new ChatListener(this, this.gamemanager, this.settings),
-                new PlayerLifecycleListener(this.fibService, this.gamemanager, this.scoreboardManager, this.settings, this.teamManager, this.timerManager),
+                new PvPListener(this.roundPhase, this.settings),
+                new ProtectionListener(this, this.roster, this.roundPhase, this.protectionManager),
+                new ClickableItemsListener(this, this.roster, this.backpackManager, this.fibService, this.roundPhase, this.locatorManager, this.settings, this.timerManager),
+                new ItemsListener(this.roster, this.roundPhase),
+                new PortalListener(this.roster, this.antimatterPortalManager, this.fibService, this.roundPhase, this.settings),
+                new AntimatterPortalListener(this.antimatterPortalManager, this.roundPhase),
+                new AchievementListener(this.roster, this.achievementManager, this.backpackManager, this.roundPhase, this.settings),
+                new PreGameLockListener(this.roundPhase),
+                new ChatListener(this, this.roster, this.gamemanager, this.settings),
+                new PlayerLifecycleListener(this.roster, this.fibService, this.roundPhase, this.gamemanager, this.scoreboardManager, this.settings, this.teamManager, this.timerManager),
                 new TradeListener(this.wanderingTraderManager),
                 new VillagerTradeListener(this),
-                new GameRulesListener(this.gamemanager, this.settings),
+                new GameRulesListener(this.roundPhase, this.settings),
                 new GuiListener(this),
                 new JournalListener(this)
         );

@@ -25,8 +25,35 @@ public final class RoundClock {
 
     private int secondsLeft;
 
+    /**
+     * The round's full length. Held here because everything that wants it wants it <em>with</em>
+     * the time remaining — to work out how far in we are.
+     *
+     * <p>That subtraction was written out by hand in three places: two achievement handlers, each
+     * reaching a game manager and a timer manager for the two halves, and a comment in
+     * {@code ItemDifficultiesManager} noting it was "mirroring" them. It is {@link #elapsedSeconds}
+     * now. Keeping the two numbers together is also what let the round's duration stop living on
+     * {@code Gamemanager}, which is what two of the last dependency cycles were made of.
+     */
+    private int totalSeconds;
+
     public int secondsLeft() {
         return this.secondsLeft;
+    }
+
+    public int totalSeconds() {
+        return this.totalSeconds;
+    }
+
+    /** How far into the round we are. Pause-aware, because the clock itself is. */
+    public int elapsedSeconds() {
+        return this.totalSeconds - this.secondsLeft;
+    }
+
+    /** Starts a round of {@code totalSeconds}, with all of it remaining. */
+    public void startRound(int totalSeconds) {
+        this.totalSeconds = totalSeconds;
+        this.secondsLeft = totalSeconds;
     }
 
     public void setSecondsLeft(int secondsLeft) {

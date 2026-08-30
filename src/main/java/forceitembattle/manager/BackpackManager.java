@@ -25,7 +25,7 @@ public class BackpackManager implements Manager {
     }
 
     public Inventory getBackpackForPlayer(Player player) {
-        ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        ForceItemPlayer forceItemPlayer = this.forceItemBattle.getRoster().get(player.getUniqueId());
 
         // Whether this player has a team, not whether the round was configured for them. With the
         // setting on and no team -- a spectator who joined during the countdown -- the old check

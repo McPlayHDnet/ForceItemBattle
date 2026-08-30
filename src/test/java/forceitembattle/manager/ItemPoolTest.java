@@ -1,5 +1,6 @@
 package forceitembattle.manager;
 
+import forceitembattle.model.RoundClock;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
@@ -27,8 +28,8 @@ import org.junit.jupiter.api.Test;
  * every read. These tests exist mostly so that the second one — a cache — cannot go stale unnoticed.
  */
 class ItemPoolTest {
-
     private ItemDifficultiesManager items;
+    private final RoundClock roundClock = new RoundClock();
     private GameSettings settings;
     private TimerManager timer;
     private Gamemanager game;
@@ -43,6 +44,7 @@ class ItemPoolTest {
         when(plugin.getSettings()).thenReturn(settings);
         when(plugin.getTimerManager()).thenReturn(timer);
         when(plugin.getGamemanager()).thenReturn(game);
+        when(plugin.getRoundClock()).thenReturn(roundClock);
         when(plugin.getConfig()).thenReturn(new YamlConfiguration());
 
         when(settings.getQuickieMode()).thenReturn(QuickieMode.DISABLED);
@@ -54,11 +56,16 @@ class ItemPoolTest {
         items.enable();
     }
 
-    /** Puts the clock at {@code elapsedMinutes} into a round of {@code durationMinutes}. */
+    /**
+     * Puts the clock at {@code elapsedMinutes} into a round of {@code durationMinutes}.
+     *
+     * <p>A real {@link RoundClock} rather than two mocked managers: the round's length and the time
+     * remaining used to live on different objects, so saying "we are twenty minutes in" meant
+     * stubbing a game manager and a timer manager to agree with each other.
+     */
     private void clock(int durationMinutes, int elapsedMinutes) {
-        int durationSeconds = durationMinutes * 60;
-        when(game.getGameDuration()).thenReturn(durationSeconds);
-        when(timer.getTimeLeft()).thenReturn(durationSeconds - elapsedMinutes * 60);
+        roundClock.startRound(durationMinutes * 60);
+        roundClock.setSecondsLeft(durationMinutes * 60 - elapsedMinutes * 60);
     }
 
     // ==================== unlock schedule ====================

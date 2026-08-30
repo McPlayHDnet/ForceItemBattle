@@ -31,7 +31,7 @@ public final class PluginAchievementWorld implements AchievementWorld {
 
     @Override
     public int roundDuration() {
-        return this.plugin.getGamemanager().getGameDuration();
+        return this.plugin.getRoundClock().totalSeconds();
     }
 
     @Override
@@ -62,6 +62,6 @@ public final class PluginAchievementWorld implements AchievementWorld {
 
     @Override
     public List<ScoreOwner> scoreOwners() {
-        return this.plugin.getGamemanager().activeScoreOwners();
+        return this.plugin.getRoster().activeScoreOwners();
     }
 }

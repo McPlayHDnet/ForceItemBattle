@@ -1,5 +1,8 @@
 package forceitembattle.listener;
 
+import forceitembattle.manager.Gamemanager;
+import forceitembattle.model.RoundPhase;
+import forceitembattle.model.Roster;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.BackpackManager;
 import forceitembattle.manager.LocatorManager;
@@ -9,7 +12,6 @@ import forceitembattle.settings.GameSettings;
 import forceitembattle.gui.AchievementCategoryInventory;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.gui.CollectionBookInventory;
-import forceitembattle.manager.Gamemanager;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.Dimension;
 import forceitembattle.settings.GameSetting;
@@ -70,9 +72,10 @@ public class ClickableItemsListener implements Listener {
     );
     /** Still needed: this listener opens four GUIs, and the GUI layer has not been swept. */
     private final ForceItemBattle plugin;
+    private final Roster roster;
     private final BackpackManager backpackManager;
     private final FIBServiceClient fibService;
-    private final Gamemanager gamemanager;
+    private final RoundPhase roundPhase;
     private final LocatorManager locatorManager;
     private final GameSettings settings;
     private final TimerManager timerManager;
@@ -91,7 +94,7 @@ public class ClickableItemsListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH)
     public void onAfterGame(PlayerInteractEvent e) {
         Player player = e.getPlayer();
-        if (!this.gamemanager.isEndGame()) {
+        if (!this.roundPhase.isEndGame()) {
             return;
         }
         if (e.getItem() == null) {
@@ -157,10 +160,10 @@ public class ClickableItemsListener implements Listener {
     @EventHandler
     public void onClick(PlayerInteractEvent e) { // triggered if a joker is used
         Player player = e.getPlayer();
-        if (!this.gamemanager.roundRunning()) {
+        if (!this.roundPhase.roundRunning()) {
             return;
         }
-        if (!this.gamemanager.forceItemPlayerExist(player.getUniqueId())) {
+        if (!this.roster.contains(player.getUniqueId())) {
             return;
         }
         if (e.getItem() == null) {
@@ -170,7 +173,7 @@ public class ClickableItemsListener implements Listener {
             return;
         }
 
-        ForceItemPlayer forceItemPlayer = this.gamemanager.getForceItemPlayer(player.getUniqueId());
+        ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());
 
         if (Gamemanager.isBackpack(e.getItem())) {
             // isInTeam(), not the setting: with the setting on and no team this passed and then
@@ -276,10 +279,10 @@ public class ClickableItemsListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH)
     public void onPreGame(PlayerInteractEvent e) {
         Player player = e.getPlayer();
-        if (!this.gamemanager.isPreGame()) {
+        if (!this.roundPhase.isPreGame()) {
             return;
         }
-        if (!this.gamemanager.forceItemPlayerExist(player.getUniqueId())) {
+        if (!this.roster.contains(player.getUniqueId())) {
             return;
         }
         if (e.getItem() == null) {
@@ -289,7 +292,7 @@ public class ClickableItemsListener implements Listener {
             return;
         }
 
-        ForceItemPlayer forceItemPlayer = this.gamemanager.getForceItemPlayer(player.getUniqueId());
+        ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());
 
         switch (e.getItem().getType()) {
             case LIME_DYE -> {

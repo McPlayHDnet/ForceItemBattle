@@ -23,19 +23,19 @@ public class CommandTeams extends CustomCommand {
         }
 
 
-        if (!this.plugin.getGamemanager().isPreGame()) {
+        if (!this.plugin.getRoundPhase().isPreGame()) {
             player.sendMessage(Text.of("<red>The game already started"));
             return;
         }
 
         if (args.length == 1) {
             if (args[0].equalsIgnoreCase("leave")) {
-                ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+                ForceItemPlayer forceItemPlayer = this.plugin.getRoster().get(player.getUniqueId());
                 this.plugin.getTeamManager().leave(forceItemPlayer);
                 return;
             }
             if (args[0].equalsIgnoreCase("list")) {
-                ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+                ForceItemPlayer forceItemPlayer = this.plugin.getRoster().get(player.getUniqueId());
                 this.plugin.getTeamManager().showTeamList(forceItemPlayer);
                 return;
             }
@@ -49,8 +49,8 @@ public class CommandTeams extends CustomCommand {
                     player.sendMessage(Text.of("<yellow>" + args[1] + " <red>is not online"));
                     return;
                 }
-                ForceItemPlayer inviter = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-                ForceItemPlayer invitee = this.plugin.getGamemanager().getForceItemPlayer(Bukkit.getPlayer(args[1]).getUniqueId());
+                ForceItemPlayer inviter = this.plugin.getRoster().get(player.getUniqueId());
+                ForceItemPlayer invitee = this.plugin.getRoster().get(Bukkit.getPlayer(args[1]).getUniqueId());
                 this.plugin.getTeamManager().invite(inviter, invitee);
                 return;
             }
@@ -60,8 +60,8 @@ public class CommandTeams extends CustomCommand {
                     player.sendMessage(Text.of("<yellow>" + args[1] + " <red>is not online"));
                     return;
                 }
-                ForceItemPlayer inviter = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-                ForceItemPlayer invitee = this.plugin.getGamemanager().getForceItemPlayer(Bukkit.getPlayer(args[1]).getUniqueId());
+                ForceItemPlayer inviter = this.plugin.getRoster().get(player.getUniqueId());
+                ForceItemPlayer invitee = this.plugin.getRoster().get(Bukkit.getPlayer(args[1]).getUniqueId());
                 this.plugin.getTeamManager().accept(inviter, invitee);
                 return;
             }
@@ -71,8 +71,8 @@ public class CommandTeams extends CustomCommand {
                     player.sendMessage(Text.of("<yellow>" + args[1] + " <red>is not online"));
                     return;
                 }
-                ForceItemPlayer inviter = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-                ForceItemPlayer invitee = this.plugin.getGamemanager().getForceItemPlayer(Bukkit.getPlayer(args[1]).getUniqueId());
+                ForceItemPlayer inviter = this.plugin.getRoster().get(player.getUniqueId());
+                ForceItemPlayer invitee = this.plugin.getRoster().get(Bukkit.getPlayer(args[1]).getUniqueId());
                 this.plugin.getTeamManager().decline(inviter, invitee);
                 return;
             }

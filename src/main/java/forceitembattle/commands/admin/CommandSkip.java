@@ -17,7 +17,7 @@ public class CommandSkip extends CustomCommand {
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
         if (!requireOp(player)) {
-            if (!this.plugin.getGamemanager().roundRunning()) {
+            if (!this.plugin.getRoundPhase().roundRunning()) {
                 player.sendMessage(Text.of("<red>The game is not running. Start it first with /start"));
                 return;
             }

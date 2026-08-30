@@ -69,7 +69,7 @@ public class RandomEventManager implements Manager {
             return;
         }
 
-        this.planSchedule(this.plugin.getGamemanager().getGameDuration());
+        this.planSchedule(this.plugin.getRoundClock().totalSeconds());
     }
 
     public void reset() {
@@ -199,7 +199,7 @@ public class RandomEventManager implements Manager {
     }
 
     private long countParticipants() {
-        return this.plugin.getGamemanager().forceItemPlayerMap().values().stream()
+        return this.plugin.getRoster().players().values().stream()
                 .filter(forceItemPlayer -> !forceItemPlayer.isSpectator())
                 .count();
     }

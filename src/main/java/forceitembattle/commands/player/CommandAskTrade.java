@@ -30,11 +30,11 @@ public class CommandAskTrade extends CustomCommand {
             player.sendMessage(Text.of(NO_PERMISSION));
             return;
         }
-        if (!this.plugin.getGamemanager().roundRunning()) {
+        if (!this.plugin.getRoundPhase().roundRunning()) {
 
             return;
         }
-        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        ForceItemPlayer forceItemPlayer = this.plugin.getRoster().get(player.getUniqueId());
         Material currentMaterial = forceItemPlayer.activeMaterial();
         String materialName = CustomMaterials.nameOf(currentMaterial);
 

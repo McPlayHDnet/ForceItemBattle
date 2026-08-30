@@ -1,5 +1,6 @@
 package forceitembattle.manager;
 
+import forceitembattle.model.Roster;
 import forceitembattle.manager.ItemDifficultiesManager.State;
 import forceitembattle.model.ActiveTrader;
 import forceitembattle.model.Dimension;
@@ -31,11 +32,13 @@ import org.bukkit.entity.Player;
  * event's block is already gone on the tick its winner is announced.
  */
 public class TabListManager implements Manager {
+    private final Roster roster;
     private final Gamemanager gamemanager;
     private final ItemDifficultiesManager itemDifficultiesManager;
     private final RandomEventManager randomEventManager;
     private final WanderingTraderManager wanderingTraderManager;
-    public TabListManager(Gamemanager gamemanager, ItemDifficultiesManager itemDifficultiesManager, RandomEventManager randomEventManager, WanderingTraderManager wanderingTraderManager) {
+    public TabListManager(Roster roster, Gamemanager gamemanager, ItemDifficultiesManager itemDifficultiesManager, RandomEventManager randomEventManager, WanderingTraderManager wanderingTraderManager) {
+        this.roster = roster;
         this.gamemanager = gamemanager;
         this.itemDifficultiesManager = itemDifficultiesManager;
         this.randomEventManager = randomEventManager;
@@ -132,10 +135,10 @@ public class TabListManager implements Manager {
     }
 
     private String buildJokerLine(Player player) {
-        if (!this.gamemanager.forceItemPlayerExist(player.getUniqueId())) {
+        if (!this.roster.contains(player.getUniqueId())) {
             return "";
         }
-        ForceItemPlayer forceItemPlayer = this.gamemanager.getForceItemPlayer(player.getUniqueId());
+        ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());
         if (forceItemPlayer.isSpectator()) {
             return "";
         }

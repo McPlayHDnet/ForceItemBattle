@@ -78,7 +78,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
 
     private void performCommand(GamePreset gamePreset, CommandSender player, String[] args) {
         boolean teamsConfigured = this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM);
-        int rosterSize = this.plugin.getGamemanager().forceItemPlayerMap().size();
+        int rosterSize = this.plugin.getRoster().players().size();
 
         RoundStart start = gamePreset != null
                 ? RoundStart.fromPreset(gamePreset, teamsConfigured, rosterSize)
@@ -98,13 +98,12 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
 
         this.applyTeams(plan.teams());
 
-        this.plugin.getTimerManager().setTimeLeft(plan.durationSeconds());
-        this.plugin.getGamemanager().setGameDuration(plan.durationSeconds());
+        this.plugin.getRoundClock().startRound(plan.durationSeconds());
         this.plugin.getGamemanager().setJokerAmount(jokersAmount);
         this.plugin.getGamemanager().initializeMaterials();
 
         // Teams and force items are assigned by now, so the roster is frozen from here on.
-        this.plugin.getGamemanager().setCurrentGameState(GameState.STARTING);
+        this.plugin.getRoundPhase().moveTo(GameState.STARTING);
 
         new BukkitRunnable() {
 
@@ -147,7 +146,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
                 }
 
                 Bukkit.getOnlinePlayers().forEach(player -> {
-                    ForceItemPlayer forceItemPlayer = plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+                    ForceItemPlayer forceItemPlayer = plugin.getRoster().get(player.getUniqueId());
                     if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
                         return;
                     }

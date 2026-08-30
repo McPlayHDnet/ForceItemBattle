@@ -18,14 +18,14 @@ public class CommandFixSkips extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (!this.plugin.getGamemanager().roundRunning()) {
+        if (!this.plugin.getRoundPhase().roundRunning()) {
             player.sendMessage(Text.of("<red>You can only use this during the game."));
             return;
         }
 
         boolean silent = args.length > 0 && args[0].equalsIgnoreCase("-silent");
 
-        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        ForceItemPlayer forceItemPlayer = this.plugin.getRoster().get(player.getUniqueId());
 
         int remainingJokers = forceItemPlayer.activeJokers();
         if (remainingJokers == 0) {

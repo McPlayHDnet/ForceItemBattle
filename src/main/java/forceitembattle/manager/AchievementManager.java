@@ -1,5 +1,6 @@
 package forceitembattle.manager;
 
+import forceitembattle.model.Standings;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.AchievementMode;
 import forceitembattle.achievements.AchievementScope;
@@ -90,7 +91,7 @@ public class AchievementManager implements Manager {
     public void handleEvent(Player player, Event event, Trigger trigger) {
         UUID uuid = player.getUniqueId();
 
-        if (!plugin.getGamemanager().roundRunning()) {
+        if (!plugin.getRoundPhase().roundRunning()) {
             return;
         }
 
@@ -98,7 +99,7 @@ public class AchievementManager implements Manager {
             return;
         }
 
-        ForceItemPlayer forceItemPlayer = plugin.getGamemanager().getForceItemPlayer(uuid);
+        ForceItemPlayer forceItemPlayer = this.plugin.getRoster().get(uuid);
         if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
             return;
         }
@@ -328,7 +329,7 @@ public class AchievementManager implements Manager {
     }
 
     public void checkGameEndAchievements() {
-        if (!plugin.getGamemanager().isEndGame()) {
+        if (!plugin.getRoundPhase().isEndGame()) {
             return;
         }
 
@@ -336,8 +337,8 @@ public class AchievementManager implements Manager {
             return;
         }
 
-        for (UUID uuid : plugin.getGamemanager().forceItemPlayerMap().keySet()) {
-            ForceItemPlayer fip = plugin.getGamemanager().getForceItemPlayer(uuid);
+        for (UUID uuid : this.plugin.getRoster().players().keySet()) {
+            ForceItemPlayer fip = this.plugin.getRoster().get(uuid);
             if (fip == null || fip.isSpectator()) {
                 continue;
             }
@@ -399,17 +400,16 @@ public class AchievementManager implements Manager {
      * Ties for 1st count as a win.
      */
     private boolean didWin(ForceItemPlayer fip, boolean teamGame) {
-        var gamemanager = plugin.getGamemanager();
         if (teamGame && fip.currentTeam() != null) {
-            List<Team> teams = gamemanager.forceItemPlayerMap().values().stream()
+            List<Team> teams = plugin.getRoster().players().values().stream()
                     .map(ForceItemPlayer::currentTeam)
                     .filter(Objects::nonNull)
                     .distinct()
                     .toList();
-            Integer place = gamemanager.calculatePlaces(teams).get(fip.currentTeam());
+            Integer place = Standings.ofTeams(teams).get(fip.currentTeam());
             return place != null && place == 1;
         }
-        Integer place = gamemanager.calculatePlaces(gamemanager.forceItemPlayerMap()).get(fip);
+        Integer place = Standings.ofPlayers(plugin.getRoster().players()).get(fip);
         return place != null && place == 1;
     }
 
@@ -428,7 +428,7 @@ public class AchievementManager implements Manager {
         if (playerMap != null && playerMap.get(achievement) != null) {
             return playerMap.get(achievement);
         }
-        ForceItemPlayer fip = plugin.getGamemanager().getForceItemPlayer(uuid);
+        ForceItemPlayer fip = this.plugin.getRoster().get(uuid);
         if (fip != null && fip.currentTeam() != null) {
             Map<Achievements, AchievementProgressTracker> teamMap = teamProgress.get(fip.currentTeam());
             if (teamMap != null) {

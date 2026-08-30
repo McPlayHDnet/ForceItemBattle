@@ -40,11 +40,17 @@ public class TimerManager implements Manager {
     private final ForceItemBattle forceItemBattle;
     @Getter
     private final Map<UUID, BossBar> bossBar = new HashMap<>();
-    private final RoundClock clock = new RoundClock();
+    /**
+     * Driven here, owned by the plugin. This manager still ticks it once a second and renders what
+     * it reports; it no longer holds the only reference, which is what let
+     * {@code ItemDifficultiesManager} stop reaching through this class for the time.
+     */
+    private final RoundClock clock;
     private BukkitTask timerTask;
 
-    public TimerManager(ForceItemBattle forceItemBattle) {
+    public TimerManager(ForceItemBattle forceItemBattle, RoundClock clock) {
         this.forceItemBattle = forceItemBattle;
+        this.clock = clock;
         if (this.forceItemBattle.getConfig().contains("timer.time")) {
             this.clock.setSecondsLeft(this.forceItemBattle.getConfig().getInt("timer.time"));
         }
@@ -85,8 +91,8 @@ public class TimerManager implements Manager {
     public void sendActionBar() {
         for (Player player : Bukkit.getOnlinePlayers()) {
 
-            if (!this.forceItemBattle.getGamemanager().roundRunning()) {
-                if (this.forceItemBattle.getGamemanager().isPausedGame()) {
+            if (!this.forceItemBattle.getRoundPhase().roundRunning()) {
+                if (this.forceItemBattle.getRoundPhase().isPausedGame()) {
                     Title timeLeftTitle = Title.title(Component.empty(), Text.of("<red>Game is paused!"),
                             Title.Times.times(Duration.ofMillis(0), Duration.ofMillis(1000), Duration.ofMillis(500)));
                     player.showTitle(timeLeftTitle);
@@ -96,8 +102,8 @@ public class TimerManager implements Manager {
                 continue;
             }
 
-            ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager()
-                    .getForceItemPlayer(player.getUniqueId());
+            ForceItemPlayer forceItemPlayer = this.forceItemBattle.getRoster()
+                    .get(player.getUniqueId());
 
             if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
                 player.sendActionBar(Text.of("<gradient:#fcef64:#fcc44b:#f44c7d><b>"
@@ -149,7 +155,7 @@ public class TimerManager implements Manager {
             @Override
             public void run() {
                 sendActionBar();
-                if (!forceItemBattle.getGamemanager().roundRunning()) {
+                if (!forceItemBattle.getRoundPhase().roundRunning()) {
                     forceItemBattle.getTabListManager().clearFooter();
                     return;
                 }

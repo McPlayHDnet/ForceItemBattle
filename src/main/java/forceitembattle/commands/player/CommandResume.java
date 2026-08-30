@@ -23,7 +23,7 @@ public class CommandResume extends CustomCommand {
             return;
         }
 
-        if (!this.plugin.getGamemanager().isPausedGame()) {
+        if (!this.plugin.getRoundPhase().isPausedGame()) {
             player.sendMessage(Text.of("<red>The timer is not paused!"));
             return;
         }

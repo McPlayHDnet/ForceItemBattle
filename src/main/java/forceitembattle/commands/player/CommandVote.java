@@ -20,7 +20,7 @@ public class CommandVote extends CustomCommand implements CustomTabCompleter {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (!this.plugin.getGamemanager().roundRunning()) {
+        if (!this.plugin.getRoundPhase().roundRunning()) {
             player.sendMessage(Text.of("<red>You can only use this mid-game!"));
             return;
         }

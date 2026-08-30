@@ -1,5 +1,6 @@
 package forceitembattle.listener;
 
+import forceitembattle.model.RoundPhase;
 import forceitembattle.manager.ScoreboardManager;
 import forceitembattle.manager.TeamsManager;
 import forceitembattle.manager.TimerManager;
@@ -35,7 +36,9 @@ import org.bukkit.inventory.ItemStack;
 
 @RequiredArgsConstructor
 public class PlayerLifecycleListener implements Listener {
+    private final Roster roster;
     private final FIBServiceClient fibService;
+    private final RoundPhase roundPhase;
     private final Gamemanager gamemanager;
     private final ScoreboardManager scoreboardManager;
     private final GameSettings settings;
@@ -46,15 +49,15 @@ public class PlayerLifecycleListener implements Listener {
         Player player = event.getPlayer();
         Gamemanager gamemanager = this.gamemanager;
 
-        boolean onRoster = gamemanager.forceItemPlayerExist(player.getUniqueId());
-        Admission admission = Roster.admit(onRoster, gamemanager.getCurrentGameState());
+        boolean onRoster = this.roster.contains(player.getUniqueId());
+        Admission admission = Roster.admit(onRoster, this.roundPhase.state());
 
         if (onRoster) {
-            gamemanager.getForceItemPlayer(player.getUniqueId()).setPlayer(player);
+            this.roster.get(player.getUniqueId()).setPlayer(player);
         } else if (admission.joinsRoster()) {
             ForceItemPlayer forceItemPlayer = new ForceItemPlayer(player, null, 0, 0);
             forceItemPlayer.setSpectator(admission.isSpectating());
-            gamemanager.addPlayer(player, forceItemPlayer);
+            this.roster.add(player.getUniqueId(), forceItemPlayer);
         }
 
         switch (admission) {
@@ -129,16 +132,16 @@ public class PlayerLifecycleListener implements Listener {
     public void onPlayerQuit(PlayerQuitEvent playerQuitEvent) {
         playerQuitEvent.quitMessage(Text.of("<red>« <yellow>" + playerQuitEvent.getPlayer().getName() + " <red>ragequit"));
 
-        if (Roster.releasesSpotOnQuit(this.gamemanager.getCurrentGameState())) {
-            ForceItemPlayer fibPlayer = this.gamemanager.getForceItemPlayer(playerQuitEvent.getPlayer().getUniqueId());
+        if (Roster.releasesSpotOnQuit(this.roundPhase.state())) {
+            ForceItemPlayer fibPlayer = this.roster.get(playerQuitEvent.getPlayer().getUniqueId());
             if (fibPlayer != null && fibPlayer.isInTeam()) {
                 this.teamManager.leave(fibPlayer);
             }
 
-            this.gamemanager.removePlayer(playerQuitEvent.getPlayer());
+            this.roster.remove(playerQuitEvent.getPlayer().getUniqueId());
         }
 
-        if (this.gamemanager.roundRunning()) {
+        if (this.roundPhase.roundRunning()) {
             playerQuitEvent.getPlayer().getPassengers().forEach(Entity::remove);
         }
     }
@@ -146,7 +149,7 @@ public class PlayerLifecycleListener implements Listener {
     @EventHandler
     public void onDeath(PlayerDeathEvent event) {
         Player player = event.getEntity();
-        ForceItemPlayer gamePlayer = this.gamemanager.getForceItemPlayer(player.getUniqueId());
+        ForceItemPlayer gamePlayer = this.roster.get(player.getUniqueId());
         String plainDeathMessage = PlainTextComponentSerializer.plainText().serialize(Objects.requireNonNull(event.deathMessage()));
         String plainPlayerName = PlainTextComponentSerializer.plainText().serialize(player.name());
 
@@ -156,7 +159,7 @@ public class PlayerLifecycleListener implements Listener {
             event.getDrops().removeIf(Gamemanager::isBackpack);
         }
 
-        if (this.gamemanager.roundRunning() && this.settings.isSettingEnabled(GameSetting.STATS)) {
+        if (this.roundPhase.roundRunning() && this.settings.isSettingEnabled(GameSetting.STATS)) {
             this.fibService.statistics()
                     .recordPlayerCounter(player.getUniqueId(), gamePlayer, PlayerCounter.DEATHS, 1);
         }
@@ -167,12 +170,12 @@ public class PlayerLifecycleListener implements Listener {
 
     @EventHandler
     public void onRespawn(PlayerRespawnEvent event) {
-        if (!this.gamemanager.roundRunning()) {
+        if (!this.roundPhase.roundRunning()) {
             return;
         }
 
         Player player = event.getPlayer();
-        ForceItemPlayer forceItemPlayer = this.gamemanager.getForceItemPlayer(player.getUniqueId());
+        ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());
         Boolean keepInventory = player.getWorld().getGameRuleValue(GameRules.KEEP_INVENTORY);
         if (keepInventory == null || !keepInventory) {
             player.getInventory().addItem(new ItemStack(Material.STONE_AXE));

@@ -1,6 +1,6 @@
 package forceitembattle.listener;
 
-import forceitembattle.manager.Gamemanager;
+import forceitembattle.model.RoundPhase;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.settings.GameSetting;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
 
 @RequiredArgsConstructor
 public class PvPListener implements Listener {
-    private final Gamemanager gamemanager;
+    private final RoundPhase roundPhase;
     private final GameSettings settings;
     @EventHandler
     public void onTntIgnited(EntitySpawnEvent e) {
@@ -60,7 +60,7 @@ public class PvPListener implements Listener {
 
     @EventHandler
     public void onEntityDamage(EntityDamageEvent event) {
-        if (!this.gamemanager.roundRunning()) {
+        if (!this.roundPhase.roundRunning()) {
             event.setCancelled(true);
         }
 
@@ -85,7 +85,7 @@ public class PvPListener implements Listener {
 
     @EventHandler
     public void onEntityTarget(EntityTargetLivingEntityEvent event) {
-        if (this.gamemanager.isPausedGame() && event.getTarget() instanceof Player) {
+        if (this.roundPhase.isPausedGame() && event.getTarget() instanceof Player) {
             event.setCancelled(true);
         }
     }

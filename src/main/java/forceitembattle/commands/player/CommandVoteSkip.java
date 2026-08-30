@@ -17,7 +17,7 @@ public class CommandVoteSkip extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (!this.plugin.getGamemanager().roundRunning()) {
+        if (!this.plugin.getRoundPhase().roundRunning()) {
             player.sendMessage(Text.of("<red>You can only use this mid-game!"));
             return;
         }
@@ -27,7 +27,7 @@ public class CommandVoteSkip extends CustomCommand {
             return;
         }
 
-        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        ForceItemPlayer forceItemPlayer = this.plugin.getRoster().get(player.getUniqueId());
 
         if (forceItemPlayer.activeJokers() == 0) {
             player.sendMessage(Text.of("<red>You dont have any jokers to vote!"));

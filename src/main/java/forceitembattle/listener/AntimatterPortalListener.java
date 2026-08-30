@@ -1,6 +1,6 @@
 package forceitembattle.listener;
 
-import forceitembattle.manager.Gamemanager;
+import forceitembattle.model.RoundPhase;
 import forceitembattle.manager.AntimatterPortalManager;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.Dimension;
@@ -39,7 +39,7 @@ import org.bukkit.inventory.ItemStack;
 @RequiredArgsConstructor
 public class AntimatterPortalListener implements Listener {
     private final AntimatterPortalManager antimatterPortalManager;
-    private final Gamemanager gamemanager;
+    private final RoundPhase roundPhase;
     /**
      * Players currently being sent through, so the move handler does not fire again mid-teleport.
      */
@@ -75,7 +75,7 @@ public class AntimatterPortalListener implements Listener {
         event.setCancelled(true);
 
         Player player = event.getPlayer();
-        if (!this.gamemanager.roundRunning() && !this.gamemanager.isEndGame()) {
+        if (!this.roundPhase.roundRunning() && !this.roundPhase.isEndGame()) {
             return;
         }
 

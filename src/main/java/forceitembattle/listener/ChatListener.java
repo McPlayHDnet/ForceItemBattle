@@ -1,5 +1,6 @@
 package forceitembattle.listener;
 
+import forceitembattle.model.Roster;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.settings.GameSettings;
@@ -25,6 +26,7 @@ public class ChatListener implements Listener {
      * collaborators are named below; this is the one thing left that is genuinely a plugin.
      */
     private final ForceItemBattle plugin;
+    private final Roster roster;
     private final Gamemanager gamemanager;
     private final GameSettings settings;
     @EventHandler
@@ -46,7 +48,7 @@ public class ChatListener implements Listener {
             return;
         }
 
-        ForceItemPlayer fibPlayer = this.gamemanager.getForceItemPlayer(player.getUniqueId());
+        ForceItemPlayer fibPlayer = this.roster.get(player.getUniqueId());
 
         if (CommandShout.isShouting(player)) {
             Bukkit.broadcast(Text.of(

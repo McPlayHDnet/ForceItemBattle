@@ -11,6 +11,9 @@ import forceitembattle.service.PlayerStatsWrite;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameState;
 import forceitembattle.model.RoundSetup;
+import forceitembattle.model.RoundPhase;
+import forceitembattle.model.Roster;
+import forceitembattle.model.Standings;
 import forceitembattle.model.ScoreOwner;
 import forceitembattle.gui.ItemBuilder;
 import forceitembattle.model.Team;
@@ -55,7 +58,7 @@ public class Gamemanager implements Manager {
     public static final NamespacedKey BACKPACK_KEY = new NamespacedKey("fib", "backpack");
     private static final Material JOKER_MATERIAL = Material.BARRIER;
     private final ForceItemBattle forceItemBattle;
-    private final Map<UUID, ForceItemPlayer> forceItemPlayerMap;
+    private final Roster roster;
     /** End-of-game result screens, keyed by player / by team. Paged: page → slot → stack. */
     private final Map<UUID, Map<Integer, Map<Integer, ItemStack>>> savedInventory = new HashMap<>();
     private final Map<Team, Map<Integer, Map<Integer, ItemStack>>> savedInventoryTeam = new HashMap<>();
@@ -67,18 +70,10 @@ public class Gamemanager implements Manager {
     @Getter
     private final MatchHistoryReporter matchHistory;
 
-    @Setter
-    @Getter
-    public GameState currentGameState;
+    private final RoundPhase roundPhase;
     @Getter
     @Setter
     private long gameStartTime;
-    /**
-     * Total game duration (seconds).
-     */
-    @Getter
-    @Setter
-    private int gameDuration;
 
     /**
      * Jokers configured for the current round.
@@ -99,32 +94,13 @@ public class Gamemanager implements Manager {
     @Getter
     private final Deque<Material> forcedItemQueue = new ArrayDeque<>();
 
-    public Gamemanager(ForceItemBattle forceItemBattle) {
+    public Gamemanager(ForceItemBattle forceItemBattle, Roster roster, RoundPhase roundPhase) {
         this.forceItemBattle = forceItemBattle;
-        this.currentGameState = GameState.PRE_GAME;
+        this.roster = roster;
+        this.roundPhase = roundPhase;
 
-        this.forceItemPlayerMap = new HashMap<>();
+
         this.matchHistory = new MatchHistoryReporter(forceItemBattle);
-    }
-
-    private static <T> Map<T, Integer> calculatePlaces(List<T> entities, ToIntFunction<T> score) {
-        List<T> sorted = entities.stream()
-                .sorted(Comparator.comparingInt(score).reversed())
-                .toList();
-
-        Map<T, Integer> placesMap = new LinkedHashMap<>();
-
-        int place = 0;
-        Integer previousScore = null;
-        for (T entity : sorted) {
-            int currentScore = score.applyAsInt(entity);
-            if (previousScore == null || currentScore != previousScore) {
-                place++;
-            }
-            placesMap.put(entity, place);
-            previousScore = currentScore;
-        }
-        return placesMap;
     }
 
     /**
@@ -166,7 +142,7 @@ public class Gamemanager implements Manager {
                 }
             }
         } else {
-            for (ForceItemPlayer forceItemPlayer : this.forceItemPlayerMap.values()) {
+            for (ForceItemPlayer forceItemPlayer : this.roster.players().values()) {
                 if (forceItemPlayer.isSpectator()) {
                     continue;
                 }
@@ -233,13 +209,7 @@ public class Gamemanager implements Manager {
         return Boolean.TRUE.equals(itemStack.getItemMeta().getPersistentDataContainer().get(BACKPACK_KEY, PersistentDataType.BOOLEAN));
     }
 
-    public void addPlayer(Player player, ForceItemPlayer forceItemPlayer) {
-        this.forceItemPlayerMap.put(player.getUniqueId(), forceItemPlayer);
-    }
 
-    public void removePlayer(Player player) {
-        this.forceItemPlayerMap.remove(player.getUniqueId());
-    }
 
     public Material generateMaterial() {
         Material forced = this.forcedItemQueue.poll();
@@ -273,7 +243,7 @@ public class Gamemanager implements Manager {
         long now = System.currentTimeMillis();
 
         // Everyone starts the round un-equipped; applyStartSetup flips this back per player.
-        this.forceItemPlayerMap.values().forEach(forceItemPlayer -> forceItemPlayer.setStartSetupApplied(false));
+        this.roster.players().values().forEach(forceItemPlayer -> forceItemPlayer.setStartSetupApplied(false));
 
         // In run mode everyone shares one seeded pair; otherwise each owner gets their own.
         MaterialPair shared = runMode ? this.nextMaterials(true) : null;
@@ -288,27 +258,12 @@ public class Gamemanager implements Manager {
         //     also NPE'd on anyone online without a roster entry.
         //   - the team half drew a fresh pair for every member and let the last one win, so a pair
         //     of players burned two draws to be handed one item.
-        this.activeScoreOwners().forEach(owner -> {
+        this.roster.activeScoreOwners().forEach(owner -> {
             MaterialPair pair = runMode ? shared : this.nextMaterials(false);
             owner.startRound(pair.current(), pair.next(), now);
         });
     }
 
-    /**
-     * Every score owner playing this round, each appearing once: one per solo player, one per team
-     * however many members it has. Spectators hold no stake in a round and are left out.
-     *
-     * <p>The de-duplication is the point. Anything that acts on "the thing that scores" -- dealing
-     * the opening pair, skipping the whole server's item -- has to run once per owner, and the
-     * roster hands out one entry per player.
-     */
-    public List<ScoreOwner> activeScoreOwners() {
-        return this.forceItemPlayerMap.values().stream()
-                .filter(forceItemPlayer -> !forceItemPlayer.isSpectator())
-                .map(ForceItemPlayer::scoreOwner)
-                .distinct()
-                .toList();
-    }
 
     /**
      * Moves whoever this find belongs to onto their next item.
@@ -326,7 +281,7 @@ public class Gamemanager implements Manager {
             // Once per owner. The team branch this replaces ran per member, which advanced a
             // two-player team twice: the queued item was skipped over and current and next both
             // ended up holding nextMaterial.
-            this.activeScoreOwners().forEach(owner -> owner.advance(nextMaterial, now));
+            this.roster.activeScoreOwners().forEach(owner -> owner.advance(nextMaterial, now));
             return;
         }
 
@@ -365,7 +320,7 @@ public class Gamemanager implements Manager {
      * it runs once per non-spectator, so the initiator would pay a joker for each of them.
      */
     public void forceSkipItem(Player player) {
-        if (!forceItemPlayerExist(player.getUniqueId())) {
+        if (!this.roster.contains(player.getUniqueId())) {
             return;
         }
 
@@ -376,7 +331,7 @@ public class Gamemanager implements Manager {
         // Everyone gets the same replacement pair, so this is one pair handed to every owner.
         // Spectators are already out of activeScoreOwners(), which is what keeps a countdown
         // joiner -- who holds no team -- from NPE-ing every skip for the rest of the round.
-        this.activeScoreOwners().forEach(owner -> owner.assignMaterials(pair.current(), pair.next()));
+        this.roster.activeScoreOwners().forEach(owner -> owner.assignMaterials(pair.current(), pair.next()));
     }
 
     public void giveSpectatorItems(Player player) {
@@ -404,7 +359,7 @@ public class Gamemanager implements Manager {
      * mode with an empty inventory and no jokers, unable to play the round they are scored in.
      */
     public void applyStartSetup(Player player) {
-        ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
+        ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());
 
         if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
             PlayerOutfitter.toSpectator(player);
@@ -417,7 +372,7 @@ public class Gamemanager implements Manager {
 
         GameContext context = GameContext.of(this.forceItemBattle.getSettings(), forceItemPlayer);
 
-        this.sendStartSummary(player, this.gameDuration / 60, this.jokerAmount);
+        this.sendStartSummary(player, this.forceItemBattle.getRoundClock().totalSeconds() / 60, this.jokerAmount);
 
         // A solo player owns their own pool, so it is set here. A team's is set once for the whole
         // team by distributeTeamJokers, and setting it per member would just overwrite it.
@@ -426,7 +381,7 @@ public class Gamemanager implements Manager {
         }
 
         PlayerOutfitter.toPlayer(player,
-                RoundSetup.jokersOnHotbar(forceItemPlayer, context, this.jokerAmount, this.isStarting()));
+                RoundSetup.jokersOnHotbar(forceItemPlayer, context, this.jokerAmount, this.roundPhase.isStarting()));
 
         if (context.backpackEnabled()) {
             if (forceItemPlayer.isInTeam()) {
@@ -495,7 +450,7 @@ public class Gamemanager implements Manager {
         this.forceItemBattle.getRandomEventManager().startGame();
         this.forceItemBattle.getAchievementManager().resetProgress();
         this.forceItemBattle.getItemDifficultiesManager().resetUnlockAnnouncements();
-        this.setCurrentGameState(GameState.MID_GAME);
+        this.roundPhase.moveTo(GameState.MID_GAME);
         this.forceItemBattle.getScoreboardManager().updateAllPlayers();
     }
 
@@ -529,21 +484,21 @@ public class Gamemanager implements Manager {
     }
 
     public void finishGame() {
-        this.setCurrentGameState(GameState.END_GAME);
+        this.roundPhase.moveTo(GameState.END_GAME);
         this.forceItemBattle.getAchievementManager().checkGameEndAchievements();
 
         boolean statsEnabled = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.STATS);
         Map<ForceItemPlayer, Integer> placesMap = statsEnabled
-                ? this.calculatePlaces(this.sortByValue(this.forceItemPlayerMap(), false))
+                ? Standings.ofPlayers(this.roster.players())
                 : null;
         Map<Team, Integer> teamPlaces = (statsEnabled
                 && this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM))
-                ? this.calculatePlaces(this.forceItemBattle.getTeamManager().getTeams())
+                ? Standings.ofTeams(this.forceItemBattle.getTeamManager().getTeams())
                 : null;
 
         Bukkit.getOnlinePlayers().forEach(player -> {
             try {
-                ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
+                ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());
                 player.setHealth(20);
                 player.setSaturation(20);
                 player.getInventory().clear();
@@ -582,10 +537,10 @@ public class Gamemanager implements Manager {
         });
 
         if (statsEnabled) {
-            this.matchHistory.submit(placesMap, teamPlaces, this.gameDuration,
+            this.matchHistory.submit(placesMap, teamPlaces, this.forceItemBattle.getRoundClock().totalSeconds(),
                     this::evaluateCollectionAchievements);
             for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-                ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(onlinePlayer.getUniqueId());
+                ForceItemPlayer forceItemPlayer = this.roster.get(onlinePlayer.getUniqueId());
                 if (forceItemPlayer != null && !forceItemPlayer.isSpectator()) {
                     this.forceItemBattle.getAchievementManager().evaluateGlobalAchievements(onlinePlayer);
                 }
@@ -618,42 +573,13 @@ public class Gamemanager implements Manager {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> b, LinkedHashMap::new));
     }
 
-    public Map<ForceItemPlayer, Integer> calculatePlaces(Map<UUID, ForceItemPlayer> playerMap) {
-        return calculatePlaces(new ArrayList<>(playerMap.values()), ForceItemPlayer::currentScore);
-    }
 
-    public Map<Team, Integer> calculatePlaces(List<Team> teams) {
-        return calculatePlaces(teams, Team::getCurrentScore);
-    }
 
-    public boolean forceItemPlayerExist(UUID uuid) {
-        return this.forceItemPlayerMap.get(uuid) != null;
-    }
 
-    public ForceItemPlayer getForceItemPlayer(UUID uuid) {
-        return this.forceItemPlayerMap.get(uuid);
-    }
 
-    public Map<UUID, ForceItemPlayer> forceItemPlayerMap() {
-        return this.forceItemPlayerMap;
-    }
 
-    public boolean isPreGame() {
-        return this.getCurrentGameState() == GameState.PRE_GAME;
-    }
 
-    /**
-     * True from the moment {@code /start} begins its countdown until the game actually flips to
-     * MID_GAME. During this window teams and force items have already been assigned, so the roster
-     * is frozen: anyone joining is a spectator for the round, and anyone leaving keeps their spot.
-     */
-    public boolean isStarting() {
-        return this.getCurrentGameState() == GameState.STARTING;
-    }
 
-    public boolean isPausedGame() {
-        return this.getCurrentGameState() == GameState.PAUSED_GAME;
-    }
 
     /**
      * Begin a pause: flip state and record when it started, so its duration can be subtracted from
@@ -662,7 +588,7 @@ public class Gamemanager implements Manager {
      */
     public void pauseGame() {
         this.matchHistory.onPaused();
-        this.setCurrentGameState(GameState.PAUSED_GAME);
+        this.roundPhase.moveTo(GameState.PAUSED_GAME);
         this.clearMobTargets();
     }
 
@@ -671,7 +597,7 @@ public class Gamemanager implements Manager {
      * sees a found-set that includes the round just played rather than trailing it by a game.
      */
     private void evaluateCollectionAchievements() {
-        for (ForceItemPlayer participant : this.forceItemPlayerMap.values()) {
+        for (ForceItemPlayer participant : this.roster.players().values()) {
             if (participant.isSpectator()) {
                 continue;
             }
@@ -707,42 +633,10 @@ public class Gamemanager implements Manager {
      */
     public void resumeGame() {
         this.matchHistory.onResumed();
-        this.setCurrentGameState(GameState.MID_GAME);
+        this.roundPhase.moveTo(GameState.MID_GAME);
     }
 
-    /**
-     * The round is running right now: the clock is ticking and play is live.
-     *
-     * <p>Excludes a pause, which is what almost every gameplay gate wants — you cannot find an
-     * item, spend a joker or vote to skip while the game is halted.
-     *
-     * <p>Named for what it means rather than for the enum constant it happens to compare against.
-     * The old {@code isMidGame()} is gone rather than kept as an alias: it read as "the round is
-     * happening", which is what {@link #roundInProgress()} means, and fifty-one call sites had to
-     * be read one at a time to find out which of the two each of them intended.
-     */
-    public boolean roundRunning() {
-        return this.getCurrentGameState().roundRunning();
-    }
 
-    /**
-     * The round has started and has not finished, whether or not it is paused.
-     *
-     * <p>The distinction this pair exists to make. {@code PAUSED_GAME} is a sibling of
-     * {@code MID_GAME} rather than a flag on it, so a bare {@code isMidGame()} silently means "and
-     * not while paused" — a decision fifty-one call sites were making by omission, none of them
-     * recording whether they meant it.
-     *
-     * <p><b>A pause stops this plugin's clock, not the world's.</b> Blocks still tick, primed TNT
-     * still detonates, lava still flows and fire still spreads. Anything guarding the world rather
-     * than gating play wants this predicate, not {@link #roundRunning()}.
-     */
-    public boolean roundInProgress() {
-        return this.getCurrentGameState().roundInProgress();
-    }
 
-    public boolean isEndGame() {
-        return this.getCurrentGameState() == GameState.END_GAME;
-    }
 
 }

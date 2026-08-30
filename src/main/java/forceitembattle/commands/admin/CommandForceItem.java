@@ -31,7 +31,7 @@ public class CommandForceItem extends CustomCommand implements CustomTabComplete
     public void onPlayerCommand(Player player, String label, String[] args) {
         if (!requireOp(player)) return;
 
-        if (!this.plugin.getGamemanager().roundRunning()) {
+        if (!this.plugin.getRoundPhase().roundRunning()) {
             player.sendMessage(Text.of("<red>The game is not running. Start it first with /start"));
             return;
         }
@@ -52,7 +52,7 @@ public class CommandForceItem extends CustomCommand implements CustomTabComplete
             row.add(material);
         }
 
-        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        ForceItemPlayer forceItemPlayer = this.plugin.getRoster().get(player.getUniqueId());
         if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
             player.sendMessage(Text.of("<red>You need to be an active player to force an item"));
             return;

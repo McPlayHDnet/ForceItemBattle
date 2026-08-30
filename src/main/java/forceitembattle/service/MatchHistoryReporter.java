@@ -126,7 +126,7 @@ public class MatchHistoryReporter {
                        Runnable onPersisted) {
         GameSettings settings = this.plugin.getSettings();
         boolean teamMode = settings.isSettingEnabled(GameSetting.TEAM);
-        Map<UUID, ForceItemPlayer> roster = this.plugin.getGamemanager().forceItemPlayerMap();
+        Map<UUID, ForceItemPlayer> roster = this.plugin.getRoster().players();
 
         FibMatchSubmitRequestDto request = new FibMatchSubmitRequestDto()
                 .startedAt(Instant.ofEpochMilli(this.startedAtMillis).atOffset(ZoneOffset.UTC))

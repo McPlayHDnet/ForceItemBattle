@@ -110,7 +110,7 @@ public class WanderingTraderManager implements Manager {
         BukkitRunnable bukkitRunnable = new BukkitRunnable() {
             @Override
             public void run() {
-                if (!plugin.getGamemanager().roundRunning()) {
+                if (!plugin.getRoundPhase().roundRunning()) {
                     return;
                 }
 
@@ -198,7 +198,7 @@ public class WanderingTraderManager implements Manager {
                     return;
                 }
 
-                if (plugin.getGamemanager().isPausedGame()) {
+                if (plugin.getRoundPhase().isPausedGame()) {
                     return; // the trader's lifetime freezes while the game is paused
                 }
 
@@ -246,7 +246,7 @@ public class WanderingTraderManager implements Manager {
     }
 
     private void announce(ActiveTrader trader) {
-        this.plugin.getGamemanager().forceItemPlayerMap().values().forEach(forceItemPlayer -> {
+        this.plugin.getRoster().players().values().forEach(forceItemPlayer -> {
             Player player = forceItemPlayer.player();
 
             player.sendMessage(Text.of(Prefix.POSITION + "<gray>The " + trader.getKind().coloredName()

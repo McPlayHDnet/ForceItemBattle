@@ -1,5 +1,6 @@
 package forceitembattle.manager;
 
+import forceitembattle.model.Roster;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.util.Scheduler;
@@ -15,6 +16,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 
 public class VoteSkipManager implements Manager {
+    private final Roster roster;
     private final Gamemanager gamemanager;
     private final ItemDifficultiesManager itemDifficultiesManager;
     private final Set<UUID> yesVotes = new HashSet<>();
@@ -26,7 +28,8 @@ public class VoteSkipManager implements Manager {
     private Material votedMaterial;
     private ForceItemPlayer initiator;
 
-    public VoteSkipManager(Gamemanager gamemanager, ItemDifficultiesManager itemDifficultiesManager) {
+    public VoteSkipManager(Roster roster, Gamemanager gamemanager, ItemDifficultiesManager itemDifficultiesManager) {
+        this.roster = roster;
         this.gamemanager = gamemanager;
         this.itemDifficultiesManager = itemDifficultiesManager;
     }
@@ -44,7 +47,7 @@ public class VoteSkipManager implements Manager {
         this.yesVotes.clear();
         this.noVotes.clear();
         this.yesVotes.add(initiator.getUniqueId());
-        this.initiator = this.gamemanager.getForceItemPlayer(initiator.getUniqueId());
+        this.initiator = this.roster.get(initiator.getUniqueId());
         this.votedMaterial = this.initiator.activeMaterial();
 
         String materialName = CustomMaterials.nameOf(this.votedMaterial);
@@ -78,7 +81,7 @@ public class VoteSkipManager implements Manager {
             player.sendMessage(Text.of("<gray>You voted for <red><b>NO</b><gray>!"));
         }
 
-        int totalPlayers = this.gamemanager.forceItemPlayerMap().size();
+        int totalPlayers = this.roster.players().size();
         int totalVotes = this.yesVotes.size() + this.noVotes.size();
 
         if (totalVotes >= totalPlayers) {

@@ -1,7 +1,9 @@
 package forceitembattle.listener;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.Gamemanager;
+import forceitembattle.model.RoundPhase;
+import forceitembattle.model.Roster;
+import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.ProtectionManager;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.ProtectionVerdict;
@@ -40,7 +42,8 @@ import org.bukkit.event.player.PlayerBucketEmptyEvent;
 public class ProtectionListener implements Listener {
     /** Still needed for {@code new NamespacedKey(plugin, ...)}, which is Bukkit API, not a sibling. */
     private final ForceItemBattle plugin;
-    private final Gamemanager gamemanager;
+    private final Roster roster;
+    private final RoundPhase roundPhase;
     private final ProtectionManager protectionManager;
     private final List<CreatureSpawnEvent.SpawnReason> blockedSpawnReasons = List.of(
             CreatureSpawnEvent.SpawnReason.BUILD_WITHER
@@ -67,11 +70,11 @@ public class ProtectionListener implements Listener {
      * rather than refusing the action, where the gap was.
      */
     private boolean roundInProgress() {
-        return this.gamemanager.roundInProgress();
+        return this.roundPhase.roundInProgress();
     }
 
     private ForceItemPlayer forceItemPlayer(Player player) {
-        return this.gamemanager.getForceItemPlayer(player.getUniqueId());
+        return this.roster.get(player.getUniqueId());
     }
 
     @EventHandler

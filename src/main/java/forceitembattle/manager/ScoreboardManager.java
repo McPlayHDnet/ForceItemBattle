@@ -38,13 +38,12 @@ public class ScoreboardManager implements Manager {
     }
 
     public void updateForPlayer(Player viewer) {
-        Gamemanager gameManager = plugin.getGamemanager();
         GameSettings settings = plugin.getSettings();
         Scoreboard board = viewer.getScoreboard();
 
         board.getTeams().forEach(Team::unregister);
 
-        List<ForceItemPlayer> fibPlayers = gameManager.forceItemPlayerMap().values()
+        List<ForceItemPlayer> fibPlayers = plugin.getRoster().players().values()
                 .stream()
                 .sorted(Comparator.comparingInt(p -> {
                     forceitembattle.model.Team team = p.currentTeam();

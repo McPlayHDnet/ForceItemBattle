@@ -1,7 +1,8 @@
 package forceitembattle.listener;
 
+import forceitembattle.model.RoundPhase;
+import forceitembattle.model.Roster;
 import forceitembattle.manager.AntimatterPortalManager;
-import forceitembattle.manager.Gamemanager;
 import forceitembattle.service.FIBServiceClient;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.event.AntimatterTeleporterUseEvent;
@@ -35,9 +36,10 @@ import org.jetbrains.annotations.Nullable;
 
 @RequiredArgsConstructor
 public class PortalListener implements Listener {
+    private final Roster roster;
     private final AntimatterPortalManager antimatterPortalManager;
     private final FIBServiceClient fibService;
-    private final Gamemanager gamemanager;
+    private final RoundPhase roundPhase;
     private final GameSettings settings;
     private final Map<UUID, List<TeleporterLocation>> playerTeleporterLocations = new HashMap<>();
     private final Map<UUID, Location> playerEndLocations = new HashMap<>();
@@ -48,7 +50,7 @@ public class PortalListener implements Listener {
     public void onMove(PlayerMoveEvent playerMoveEvent) {
         Player player = playerMoveEvent.getPlayer();
 
-        if (!this.gamemanager.roundRunning() && !this.gamemanager.isEndGame()) {
+        if (!this.roundPhase.roundRunning() && !this.roundPhase.isEndGame()) {
             return;
         }
         Location playerLocation = player.getLocation();
@@ -73,7 +75,7 @@ public class PortalListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onPortalEvent(PlayerPortalEvent playerPortalEvent) {
         Player player = playerPortalEvent.getPlayer();
-        if (!this.gamemanager.roundRunning()) {
+        if (!this.roundPhase.roundRunning()) {
             return;
         }
 
@@ -86,10 +88,10 @@ public class PortalListener implements Listener {
     }
 
     private void teleportPlayerRandomly(Player player) {
-        boolean midGame = this.gamemanager.roundRunning();
+        boolean midGame = this.roundPhase.roundRunning();
 
         if (midGame && this.settings.isSettingEnabled(GameSetting.STATS)) {
-            ForceItemPlayer fip = this.gamemanager.getForceItemPlayer(player.getUniqueId());
+            ForceItemPlayer fip = this.roster.get(player.getUniqueId());
             this.fibService.statistics().recordPlayerCounter(
                     player.getUniqueId(), fip, PlayerCounter.ANTIMATTER_TELEPORTER_ENTRIES, 1);
         }
@@ -143,7 +145,7 @@ public class PortalListener implements Listener {
 
     @EventHandler
     public void onChangedWorld(PlayerChangedWorldEvent event) {
-        if (!this.gamemanager.roundRunning() && !this.gamemanager.isEndGame()) {
+        if (!this.roundPhase.roundRunning() && !this.roundPhase.isEndGame()) {
             return;
         }
         Player player = event.getPlayer();

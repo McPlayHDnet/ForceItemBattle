@@ -77,7 +77,7 @@ public class TeamsManager implements Manager {
     }
 
     public void autoTeams() {
-        List<ForceItemPlayer> playersWithoutTeam = this.forceItemBattle.getGamemanager().forceItemPlayerMap().values().stream()
+        List<ForceItemPlayer> playersWithoutTeam = this.forceItemBattle.getRoster().players().values().stream()
                 .filter(player -> player.currentTeam() == null)
                 .collect(Collectors.toList());
 
@@ -333,7 +333,7 @@ public class TeamsManager implements Manager {
     }
 
     public void clearAllTeams() {
-        this.forceItemBattle.getGamemanager().forceItemPlayerMap().values().forEach(players -> {
+        this.forceItemBattle.getRoster().players().values().forEach(players -> {
             if (players.currentTeam() != null) {
                 players.setCurrentTeam(null);
                 // null, not the plain name: any display name at all makes the client skip the

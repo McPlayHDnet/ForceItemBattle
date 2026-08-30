@@ -1,5 +1,6 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.model.Standings;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.settings.GameSetting;
@@ -61,7 +62,7 @@ public class CommandResult extends CustomCommand {
 
             new FinishInventory(
                     this.plugin,
-                    this.plugin.getGamemanager().getForceItemPlayer(uuid),
+                    this.plugin.getRoster().get(uuid),
                     team,
                     null,
                     false
@@ -76,17 +77,17 @@ public class CommandResult extends CustomCommand {
 
     private void showNextPlayer(Player player) {
         if (!this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-            if (this.plugin.getGamemanager().forceItemPlayerMap().isEmpty() || this.place == 0) {
+            if (this.plugin.getRoster().players().isEmpty() || this.place == 0) {
                 player.sendMessage("No more players left.");
                 return;
             }
 
-            Map<UUID, ForceItemPlayer> sortedMapDesc = this.plugin.getGamemanager().sortByValue(this.plugin.getGamemanager().forceItemPlayerMap().entrySet().stream().filter(entry -> !entry.getValue().isSpectator()).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new)), false);
+            Map<UUID, ForceItemPlayer> sortedMapDesc = Standings.sortedByScore(this.plugin.getRoster().players().entrySet().stream().filter(entry -> !entry.getValue().isSpectator()).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new)), false);
             if (this.place == -1) {
                 this.place = sortedMapDesc.size();
             }
 
-            Map<ForceItemPlayer, Integer> placesMap = this.plugin.getGamemanager().calculatePlaces(sortedMapDesc);
+            Map<ForceItemPlayer, Integer> placesMap = Standings.ofPlayers(sortedMapDesc);
 
             ForceItemPlayer currentPlayer = sortedMapDesc.values().toArray(new ForceItemPlayer[0])[this.place - 1];
             int currentPlace = placesMap.get(currentPlayer);
@@ -100,12 +101,12 @@ public class CommandResult extends CustomCommand {
             this.place--;
 
         } else {
-            if (this.plugin.getGamemanager().forceItemPlayerMap().isEmpty() || this.place == 0) {
+            if (this.plugin.getRoster().players().isEmpty() || this.place == 0) {
                 player.sendMessage("No more teams left.");
                 return;
             }
 
-            Map<Team, Integer> placesMap = this.plugin.getGamemanager().calculatePlaces(this.plugin.getTeamManager().getTeams());
+            Map<Team, Integer> placesMap = Standings.ofTeams(this.plugin.getTeamManager().getTeams());
             if (this.place == -1) {
                 this.place = placesMap.size();
             }

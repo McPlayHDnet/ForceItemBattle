@@ -1,6 +1,6 @@
 package forceitembattle.listener;
 
-import forceitembattle.manager.Gamemanager;
+import forceitembattle.model.RoundPhase;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -11,10 +11,10 @@ import org.bukkit.event.player.PlayerDropItemEvent;
 
 @RequiredArgsConstructor
 public class PreGameLockListener implements Listener {
-    private final Gamemanager gamemanager;
+    private final RoundPhase roundPhase;
     @EventHandler
     public void onEntityPickup(EntityPickupItemEvent event) {
-        if (this.gamemanager.roundRunning()) {
+        if (this.roundPhase.roundRunning()) {
             return;
         }
         event.setCancelled(true);
@@ -22,7 +22,7 @@ public class PreGameLockListener implements Listener {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        if (this.gamemanager.roundRunning()) {
+        if (this.roundPhase.roundRunning()) {
             return;
         }
         event.setCancelled(true);
@@ -30,7 +30,7 @@ public class PreGameLockListener implements Listener {
 
     @EventHandler
     public void onInventoryDrag(InventoryDragEvent event) {
-        if (this.gamemanager.roundRunning()) {
+        if (this.roundPhase.roundRunning()) {
             return;
         }
         event.setCancelled(true);
@@ -38,7 +38,7 @@ public class PreGameLockListener implements Listener {
 
     @EventHandler
     public void onPlayerDropItem(PlayerDropItemEvent event) {
-        if (this.gamemanager.roundRunning()) {
+        if (this.roundPhase.roundRunning()) {
             return;
         }
         event.setCancelled(true);

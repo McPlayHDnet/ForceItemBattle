@@ -37,11 +37,11 @@ public class CommandPosition extends CustomCommand implements CustomTabCompleter
             return;
         }
 
-        if (!this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
+        if (!this.plugin.getRoster().contains(player.getUniqueId())) {
             return;
         }
 
-        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        ForceItemPlayer forceItemPlayer = this.plugin.getRoster().get(player.getUniqueId());
         if (forceItemPlayer.isSpectator()) return;
 
         if (args.length < 1 || args[0].equalsIgnoreCase("list")) {

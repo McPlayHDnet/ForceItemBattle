@@ -1,11 +1,8 @@
-package forceitembattle.manager;
+package forceitembattle.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
-import forceitembattle.ForceItemBattle;
-import forceitembattle.model.ForceItemPlayer;
-import forceitembattle.model.Team;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -17,12 +14,15 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 /**
- * Finishing places. The ranking feeds both the /result reveal and the {@code placement} / {@code won}
- * fields written to match history, so a tie handled wrongly here shows up as a wrong winner.
+ * Finishing places. The ranking feeds both the /result reveal and the {@code placement} /
+ * {@code won} fields written to match history, so a tie handled wrongly here shows up as a wrong
+ * winner.
+ *
+ * <p>This used to build a whole {@code Gamemanager} to ask who came first, because that is where
+ * the ranking lived. It is a pure function over a collection and a score, and now it looks like
+ * one.
  */
-class PlacementTest {
-
-    private final Gamemanager gamemanager = new Gamemanager(mock(ForceItemBattle.class));
+class StandingsTest {
 
     private static ForceItemPlayer player(String seed, int score) {
         Player bukkit = mock(Player.class);
@@ -45,7 +45,7 @@ class PlacementTest {
         ForceItemPlayer high = player("b", 9);
         ForceItemPlayer mid = player("c", 5);
 
-        Map<ForceItemPlayer, Integer> places = gamemanager.calculatePlaces(roster(low, high, mid));
+        Map<ForceItemPlayer, Integer> places = Standings.ofPlayers(roster(low, high, mid));
 
         assertEquals(1, places.get(high));
         assertEquals(2, places.get(mid));
@@ -62,7 +62,7 @@ class PlacementTest {
         ForceItemPlayer alsoFirst = player("b", 9);
         ForceItemPlayer third = player("c", 2);
 
-        Map<ForceItemPlayer, Integer> places = gamemanager.calculatePlaces(roster(first, alsoFirst, third));
+        Map<ForceItemPlayer, Integer> places = Standings.ofPlayers(roster(first, alsoFirst, third));
 
         assertEquals(1, places.get(first));
         assertEquals(1, places.get(alsoFirst));
@@ -74,7 +74,7 @@ class PlacementTest {
         ForceItemPlayer a = player("a", 0);
         ForceItemPlayer b = player("b", 0);
 
-        Map<ForceItemPlayer, Integer> places = gamemanager.calculatePlaces(roster(a, b));
+        Map<ForceItemPlayer, Integer> places = Standings.ofPlayers(roster(a, b));
 
         assertEquals(1, places.get(a));
         assertEquals(1, places.get(b));
@@ -87,7 +87,7 @@ class PlacementTest {
         Team tiedRunnerUp = new Team(3, Material.STONE, 4, 0);
 
         Map<Team, Integer> places =
-                gamemanager.calculatePlaces(List.of(runnerUp, winner, tiedRunnerUp));
+                Standings.ofTeams(List.of(runnerUp, winner, tiedRunnerUp));
 
         assertEquals(1, places.get(winner));
         assertEquals(2, places.get(runnerUp));
@@ -100,7 +100,7 @@ class PlacementTest {
         ForceItemPlayer high = player("b", 9);
 
         List<ForceItemPlayer> descending =
-                new ArrayList<>(gamemanager.sortByValue(roster(low, high), false).values());
+                new ArrayList<>(Standings.sortedByScore(roster(low, high), false).values());
 
         assertEquals(high, descending.get(0));
         assertEquals(low, descending.get(1));
@@ -112,7 +112,7 @@ class PlacementTest {
         ForceItemPlayer high = player("b", 9);
 
         List<ForceItemPlayer> ascending =
-                new ArrayList<>(gamemanager.sortByValue(roster(low, high), true).values());
+                new ArrayList<>(Standings.sortedByScore(roster(low, high), true).values());
 
         assertEquals(low, ascending.get(0));
         assertEquals(high, ascending.get(1));

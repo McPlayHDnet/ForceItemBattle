@@ -1,8 +1,10 @@
 package forceitembattle.listener;
 
+import forceitembattle.manager.Gamemanager;
+import forceitembattle.model.RoundPhase;
+import forceitembattle.model.Roster;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.gui.InventoryBuilder;
-import forceitembattle.manager.Gamemanager;
 import forceitembattle.model.ForceItemPlayer;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
@@ -28,10 +30,11 @@ import org.bukkit.inventory.SmithingInventory;
 
 @RequiredArgsConstructor
 public class ItemsListener implements Listener {
-    private final Gamemanager gamemanager;
+    private final Roster roster;
+    private final RoundPhase roundPhase;
     @EventHandler
     public void onInteract(PlayerInteractEvent event) {
-        if (!this.gamemanager.roundRunning()) {
+        if (!this.roundPhase.roundRunning()) {
             return;
         }
 
@@ -39,7 +42,7 @@ public class ItemsListener implements Listener {
             return;
         }
 
-        ForceItemPlayer forceItemPlayer = this.gamemanager.getForceItemPlayer(event.getPlayer().getUniqueId());
+        ForceItemPlayer forceItemPlayer = this.roster.get(event.getPlayer().getUniqueId());
         ItemStack clickedItem = event.getItem();
 
         checkItemFound(event.getPlayer(), forceItemPlayer, clickedItem);
@@ -49,7 +52,7 @@ public class ItemsListener implements Listener {
     public void onFoundItemInInventory(InventoryClickEvent inventoryClickEvent) {
         Player player = (Player) inventoryClickEvent.getWhoClicked();
 
-        if (!this.gamemanager.roundRunning()) {
+        if (!this.roundPhase.roundRunning()) {
             return;
         }
 
@@ -64,7 +67,7 @@ public class ItemsListener implements Listener {
             return; //prevents from getting the needed item onClick inside any custom GUI
         }
 
-        ForceItemPlayer forceItemPlayer = this.gamemanager.getForceItemPlayer(player.getUniqueId());
+        ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());
         ItemStack clickedItem = inventoryClickEvent.getCurrentItem();
 
         checkItemFound(player, forceItemPlayer, clickedItem);
@@ -76,11 +79,11 @@ public class ItemsListener implements Listener {
         if (!(entityPickupItemEvent.getEntity() instanceof Player player)) {
             return;
         }
-        if (!this.gamemanager.roundRunning()) {
+        if (!this.roundPhase.roundRunning()) {
             return;
         }
 
-        ForceItemPlayer forceItemPlayer = this.gamemanager.getForceItemPlayer(player.getUniqueId());
+        ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());
         ItemStack pickedItem = entityPickupItemEvent.getItem().getItemStack();
 
         checkItemFound(player, forceItemPlayer, pickedItem);
@@ -106,11 +109,11 @@ public class ItemsListener implements Listener {
             return;
         }
 
-        if (!this.gamemanager.roundRunning()) {
+        if (!this.roundPhase.roundRunning()) {
             return;
         }
 
-        ForceItemPlayer forceItemPlayer = this.gamemanager.getForceItemPlayer(player.getUniqueId());
+        ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());
         checkItemFound(player, forceItemPlayer, clickedItem);
     }
 
@@ -126,14 +129,14 @@ public class ItemsListener implements Listener {
 
     private void onCraft(InventoryClickEvent inventoryClickEvent) {
         Player player = (Player) inventoryClickEvent.getWhoClicked();
-        if (!this.gamemanager.roundRunning()) {
+        if (!this.roundPhase.roundRunning()) {
             return;
         }
 
         boolean isValidShiftClick = inventoryClickEvent.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY && player.getInventory().firstEmpty() >= 0;
 
         if (isValidShiftClick || inventoryClickEvent.getAction() == InventoryAction.PICKUP_ALL) {
-            ForceItemPlayer forceItemPlayer = this.gamemanager.getForceItemPlayer(player.getUniqueId());
+            ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());
             ItemStack clickedItem = inventoryClickEvent.getCurrentItem();
 
             checkItemFound(player, forceItemPlayer, clickedItem);
@@ -144,11 +147,11 @@ public class ItemsListener implements Listener {
     public void onConsume(PlayerItemConsumeEvent playerItemConsumeEvent) {
         Player player = playerItemConsumeEvent.getPlayer();
 
-        if (!this.gamemanager.roundRunning()) {
+        if (!this.roundPhase.roundRunning()) {
             return;
         }
 
-        ForceItemPlayer forceItemPlayer = this.gamemanager.getForceItemPlayer(player.getUniqueId());
+        ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());
         ItemStack clickedItem = playerItemConsumeEvent.getItem();
 
         checkItemFound(player, forceItemPlayer, clickedItem);

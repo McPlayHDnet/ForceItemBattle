@@ -17,7 +17,7 @@ public class CommandStopTimer extends CustomCommand {
     public void onPlayerCommand(Player player, String label, String[] args) {
         if (!requireOp(player)) return;
 
-        if (!this.plugin.getGamemanager().roundRunning()) {
+        if (!this.plugin.getRoundPhase().roundRunning()) {
             player.sendMessage(Text.of("<red>The game is not running. Start it first with /start"));
             return;
         }

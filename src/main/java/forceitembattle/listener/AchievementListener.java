@@ -1,8 +1,9 @@
 package forceitembattle.listener;
 
+import forceitembattle.model.RoundPhase;
+import forceitembattle.model.Roster;
 import forceitembattle.manager.AchievementManager;
 import forceitembattle.manager.BackpackManager;
-import forceitembattle.manager.Gamemanager;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Scheduler;
 import forceitembattle.achievements.Achievements;
@@ -45,9 +46,10 @@ import org.bukkit.inventory.Inventory;
 
 @RequiredArgsConstructor
 public class AchievementListener implements Listener {
+    private final Roster roster;
     private final AchievementManager achievementManager;
     private final BackpackManager backpackManager;
-    private final Gamemanager gamemanager;
+    private final RoundPhase roundPhase;
     private final GameSettings settings;
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
@@ -62,7 +64,7 @@ public class AchievementListener implements Listener {
     public void onPlayerQuit(PlayerQuitEvent event) {
         // Free memory once a player leaves, but only outside a running game so
         // team-completion checks still see their data mid-round.
-        if (!this.gamemanager.roundRunning()) {
+        if (!this.roundPhase.roundRunning()) {
             this.achievementManager.getAchievementStorage()
                     .unloadPlayer(event.getPlayer().getUniqueId());
         }
@@ -127,7 +129,7 @@ public class AchievementListener implements Listener {
     @EventHandler
     public void onAchievementGrant(PlayerGrantAchievementEvent event) {
         Player player = event.getPlayer();
-        ForceItemPlayer forceItemPlayer = this.gamemanager.getForceItemPlayer(player.getUniqueId());
+        ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());
         Achievements achievement = event.getAchievement();
 
         if (forceItemPlayer == null || !forceItemPlayer.isSpectator()) {
@@ -204,7 +206,7 @@ public class AchievementListener implements Listener {
 
         Advancement advancement = event.getAdvancement();
 
-        ForceItemPlayer forceItemPlayer = this.gamemanager.getForceItemPlayer(event.getPlayer().getUniqueId());
+        ForceItemPlayer forceItemPlayer = this.roster.get(event.getPlayer().getUniqueId());
         if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
             event.message(null);
             return;

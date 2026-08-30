@@ -83,7 +83,7 @@ public class SettingsInventory extends InventoryBuilder {
             this.setItem(slotIndex, new ItemBuilder(gameSetting.defaultMaterial()).setDisplayName(settingDisplayName).setLore(gameSetting.descriptionLore()).getItemStack(), inventoryClickEvent -> {
 
                 if (gameSetting == GameSetting.TEAM) {
-                    if (plugin.getGamemanager().forceItemPlayerMap().size() < 4) {
+                    if (this.plugin.getRoster().players().size() < 4) {
                         this.getPlayer().sendMessage(Text.of("<red>There are not enough players online"));
                         this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);
                         return;

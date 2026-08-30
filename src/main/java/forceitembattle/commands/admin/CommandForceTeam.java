@@ -26,7 +26,7 @@ public class CommandForceTeam extends CustomCommand {
         }
 
 
-        if (!this.plugin.getGamemanager().isPreGame()) {
+        if (!this.plugin.getRoundPhase().isPreGame()) {
             player.sendMessage(Text.of("<red>The game already started"));
             return;
         }
@@ -44,7 +44,7 @@ public class CommandForceTeam extends CustomCommand {
             return;
         }
 
-        ForceItemPlayer first = this.plugin.getGamemanager().getForceItemPlayer(player1.getUniqueId());
+        ForceItemPlayer first = this.plugin.getRoster().get(player1.getUniqueId());
 
         if (args.length == 3) {
             Player player2 = Bukkit.getPlayer(args[2]);
@@ -54,7 +54,7 @@ public class CommandForceTeam extends CustomCommand {
                 return;
             }
 
-            ForceItemPlayer second = this.plugin.getGamemanager().getForceItemPlayer(player2.getUniqueId());
+            ForceItemPlayer second = this.plugin.getRoster().get(player2.getUniqueId());
             this.plugin.getTeamManager().create(first, second, teamName);
             player.sendMessage(Text.of("<dark_aqua>Successfully created team <green>" + teamName));
         } else {

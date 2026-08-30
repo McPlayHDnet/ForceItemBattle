@@ -297,11 +297,16 @@ public class ItemDifficultiesManager implements Manager {
     }
 
     private int roundSeconds() {
-        return this.plugin.getGamemanager().getGameDuration();
+        return this.plugin.getRoundClock().totalSeconds();
     }
 
+    /**
+     * The third copy of this subtraction, now retired. It read a duration off the game manager and
+     * a remaining time off the timer manager — one of the two edges that made this class and
+     * {@code TimerManager} mutually dependent, for arithmetic the clock can do itself.
+     */
     private int elapsedSeconds() {
-        return roundSeconds() - this.plugin.getTimerManager().getTimeLeft();
+        return this.plugin.getRoundClock().elapsedSeconds();
     }
 
     public Material generateRandomMaterial() {
