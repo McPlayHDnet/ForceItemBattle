@@ -20,6 +20,10 @@ java {
 
 repositories {
     maven {
+        name = "PaperMC"
+        url = uri("https://repo.papermc.io/repository/maven-public/")
+    }
+    maven {
         name = "CodeMC"
         url = uri("https://repo.codemc.io/repository/maven-public/")
     }
@@ -35,6 +39,23 @@ repositories {
     }
 }
 
+/**
+ * Keep the paperweight server artifact off the test classpath.
+ *
+ * MockBukkit and paperweight both provide a server implementation, and with both present the real
+ * Paper classes win -- booting MockBukkit then dies on
+ * "RegistryKeyImpl[key=minecraft:attribute] points to a registry that is not available yet",
+ * which is the same attribute registry HeadlessBoundaryTest has been pinning since pass 1.
+ *
+ * This limits the server dependency to compileOnly, which is where a plugin wants it anyway. The
+ * documented cost is that NMS behaviour is unavailable in tests; this plugin imports no
+ * net.minecraft or craftbukkit types at all, so it costs nothing here. If that ever changes, those
+ * paths stay the harness's job rather than the unit suite's.
+ */
+paperweight {
+    addServerDependencyTo = configurations.named(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME).map { setOf(it) }
+}
+
 dependencies {
     paperweight.paperDevBundle("26.2.build.+")
     implementation("org.apache.commons:commons-text:1.13.1")
@@ -44,6 +65,14 @@ dependencies {
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.3")
     testImplementation("org.mockito:mockito-core:5.14.2")
+    // Artifact tracks the exact Paper API version: mockbukkit-v${paper.api.version}. The 26.2
+    // branch is what makes the listener and inventory layers reachable at all -- MockBukkit hands
+    // out real ItemStacks, which is the wall HeadlessBoundaryTest has been pinning all along.
+    // Declared BEFORE the plain API so MockBukkit's classes win where they overlap.
+    testImplementation("org.mockbukkit.mockbukkit:mockbukkit-v26.2:4.116.1")
+    // MockBukkit's POM declares no Paper API -- the consumer supplies it. paperweight now puts the
+    // server artifact on compileOnly only (see the paperweight block above), so tests need this.
+    testImplementation("io.papermc.paper:paper-api:26.2.build.121-stable")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
@@ -61,6 +90,19 @@ tasks {
 
     test {
         useJUnitPlatform()
+
+        // A fresh JVM per test class.
+        //
+        // Paper 26's Material is registry-backed, and the registry is global static state that can
+        // only be established once per JVM. A class that touches Material without a server leaves
+        // it half-initialised, and MockBukkit cannot then take over -- the symptom is
+        // "STONE isn't an item" in a test that passes when run on its own. The reverse also bites:
+        // a server left registered by one class makes HeadlessBoundaryTest's assertions stop
+        // throwing, so it silently stops guarding the boundary it exists to guard.
+        //
+        // Forking costs a second or so per class and buys tests that mean the same thing however
+        // they are ordered.
+        forkEvery = 1
 
         // Byte Buddy, which Mockito uses to mock Bukkit interfaces, does not yet recognise Java 25,
         // so it needs this to instrument the Player type hierarchy.

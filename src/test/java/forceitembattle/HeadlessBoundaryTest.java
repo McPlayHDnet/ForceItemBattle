@@ -38,22 +38,22 @@ class HeadlessBoundaryTest {
     }
 
     /**
-     * A second wall, found the hard way while trying to test {@code Rarity}.
+     * The second wall, and where it went.
      *
-     * <p>{@link org.bukkit.Sound} is {@code Registry}-backed on modern Paper, and the registry only
-     * exists on a running server. So any enum holding a {@code Sound} constant cannot be
-     * class-initialised here — the failure is a {@code NoClassDefFoundError} on
-     * {@code org.bukkit.Registry}, one frame removed from the thing you were actually testing,
-     * which makes it easy to misread as a build problem.
+     * <p>{@link org.bukkit.Sound} is {@code Registry}-backed, so class-initialising anything
+     * holding a {@code Sound} constant used to throw {@code NoClassDefFoundError} on
+     * {@code org.bukkit.Registry} — one frame removed from whatever was actually under test, which
+     * made it easy to misread as a build problem. {@code model/Rarity} was the casualty: its
+     * read/write symmetry was expressible but not assertable.
      *
-     * <p>Concretely: {@code model/Rarity} pairs each rarity's stat mapping with the sound it plays,
-     * so the read/write symmetry of that table is not assertable headless even though the mapping
-     * itself is now pure. Splitting the sound out to reach it would be letting the test harness
-     * design the module.
+     * <p>Adopting MockBukkit put the plain Paper API on the test classpath, and that moved this
+     * wall. {@code RarityTest} exists again as a result. Kept as an assertion rather than deleted
+     * because it is the thing that would silently regress if the Paper API ever left the test
+     * classpath again — the symptom would reappear far from the cause.
      */
     @Test
-    void aRegistryBackedEnumConstantStillNeedsARunningServer() {
-        assertThrows(Throwable.class, () -> org.bukkit.Sound.BLOCK_BEACON_ACTIVATE.getKey());
+    void aRegistryBackedEnumConstantIsNowReachable() {
+        assertNotNull(org.bukkit.Sound.BLOCK_BEACON_ACTIVATE);
     }
 
     /**
