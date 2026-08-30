@@ -7,6 +7,7 @@ import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GamePreset;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameState;
+import forceitembattle.model.RoundStart;
 import forceitembattle.util.Text;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -76,27 +77,29 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
     }
 
     private void performCommand(GamePreset gamePreset, CommandSender player, String[] args) {
-        int durationMinutes = (gamePreset != null ? gamePreset.getCountdown() : Integer.parseInt(args[0]));
-        int durationSeconds = durationMinutes * 60;
-        int jokersAmount = (gamePreset != null ? gamePreset.getJokers() : (Integer.parseInt(args[1])));
+        boolean teamsConfigured = this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM);
+        int rosterSize = this.plugin.getGamemanager().forceItemPlayerMap().size();
 
-        if (gamePreset == null && jokersAmount > 64) {
-            player.sendMessage(Text.of("<red>The maximum amount of jokers is 64."));
+        RoundStart start = gamePreset != null
+                ? RoundStart.fromPreset(gamePreset, teamsConfigured, rosterSize)
+                : RoundStart.fromArguments(Integer.parseInt(args[0]), Integer.parseInt(args[1]),
+                        teamsConfigured, rosterSize);
+
+        if (start instanceof RoundStart.Refused refused) {
+            player.sendMessage(Text.of(switch (refused.refusal()) {
+                case TOO_MANY_JOKERS -> "<red>The maximum amount of jokers is " + RoundStart.MAX_JOKERS + ".";
+            }));
             return;
         }
 
-        if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-            if (plugin.getGamemanager().forceItemPlayerMap().size() < 4) {
-                Bukkit.broadcast(Text.of("<red>There are not enough players online to enable teams"));
-                this.plugin.getSettings().setSettingEnabled(GameSetting.TEAM, false);
-                this.plugin.getTeamManager().clearAllTeams();
-            } else {
-                this.plugin.getTeamManager().autoTeams();
-            }
-        }
+        RoundStart.Planned plan = (RoundStart.Planned) start;
+        int durationMinutes = plan.durationMinutes();
+        int jokersAmount = plan.jokers();
 
-        this.plugin.getTimerManager().setTimeLeft(durationSeconds);
-        this.plugin.getGamemanager().setGameDuration(durationSeconds);
+        this.applyTeams(plan.teams());
+
+        this.plugin.getTimerManager().setTimeLeft(plan.durationSeconds());
+        this.plugin.getGamemanager().setGameDuration(plan.durationSeconds());
         this.plugin.getGamemanager().setJokerAmount(jokersAmount);
         this.plugin.getGamemanager().initializeMaterials();
 
@@ -136,7 +139,10 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
             }
 
             private void showTeams() {
-                if (!plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+                // The decision, not the setting. These agree only because applyTeams wrote the
+                // setting off on the TOO_FEW_PLAYERS path; asking the plan means the reveal no
+                // longer depends on that write having happened first.
+                if (plan.teams() != RoundStart.Teams.BUILD) {
                     return;
                 }
 
@@ -176,6 +182,22 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
                 return subTitle;
             }
         }.runTaskTimer(this.plugin, 0L, 20L);
+    }
+
+    /**
+     * The only place teams are touched by {@code /start}. Every branch here is an effect; which one
+     * runs was decided by {@link RoundStart}.
+     */
+    private void applyTeams(RoundStart.Teams teams) {
+        switch (teams) {
+            case BUILD -> this.plugin.getTeamManager().autoTeams();
+            case TOO_FEW_PLAYERS -> {
+                Bukkit.broadcast(Text.of("<red>There are not enough players online to enable teams"));
+                this.plugin.getSettings().setSettingEnabled(GameSetting.TEAM, false);
+                this.plugin.getTeamManager().clearAllTeams();
+            }
+            case NONE -> { }
+        }
     }
 
     @Override
