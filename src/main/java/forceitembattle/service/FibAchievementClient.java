@@ -10,6 +10,9 @@ import de.threeseconds.openapi.fibservice.client.model.FibPlayerAchievementsDto;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
+import forceitembattle.model.AchievementUnlock;
+import forceitembattle.model.LeaderboardEntry;
+import java.util.Set;
 
 /**
  * Achievement domain of FIBService. Wraps {@link FibAchievementControllerApi} and
@@ -30,7 +33,7 @@ public class FibAchievementClient {
         return achievementApi.getPlayerAchievements(playerUuid);
     }
 
-    public void getPlayerAchievementsAsync(UUID playerUuid, Consumer<FibPlayerAchievementsDto> onSuccess, Consumer<ApiException> onError) {
+    void getPlayerAchievementsAsync(UUID playerUuid, Consumer<FibPlayerAchievementsDto> onSuccess, Consumer<ApiException> onError) {
         executor.runAsync(() -> achievementApi.getPlayerAchievements(playerUuid), onSuccess, onError);
     }
 
@@ -77,11 +80,33 @@ public class FibAchievementClient {
         return achievementApi.getAchievementLeaderboard(limit);
     }
 
-    public void getAchievementLeaderboardAsync(int limit, Consumer<List<FibAchievementLeaderboardEntryDto>> onSuccess) {
+    void getAchievementLeaderboardAsync(int limit, Consumer<List<FibAchievementLeaderboardEntryDto>> onSuccess) {
         getAchievementLeaderboardAsync(limit, onSuccess, executor::logError);
     }
 
-    public void getAchievementLeaderboardAsync(int limit, Consumer<List<FibAchievementLeaderboardEntryDto>> onSuccess, Consumer<ApiException> onError) {
+    void getAchievementLeaderboardAsync(int limit, Consumer<List<FibAchievementLeaderboardEntryDto>> onSuccess, Consumer<ApiException> onError) {
         executor.runAsync(() -> achievementApi.getAchievementLeaderboard(limit), onSuccess, onError);
+    }
+
+    // --- the read side, in the game's words --------------------------------------------------
+
+    /** Every unlock this player holds, including the same achievement unlocked more than once. */
+    public void unlocks(UUID playerUuid, Consumer<List<AchievementUnlock>> onSuccess,
+                        Consumer<ApiException> onError) {
+        executor.runAsync(() -> achievementApi.getPlayerAchievements(playerUuid),
+                dto -> onSuccess.accept(ReadModel.unlocks(dto)), onError);
+    }
+
+    /** Just the ids, which is all the storage cache keeps. */
+    public void unlockedIds(UUID playerUuid, Consumer<Set<String>> onSuccess,
+                            Consumer<ApiException> onError) {
+        executor.runAsync(() -> achievementApi.getPlayerAchievements(playerUuid),
+                dto -> onSuccess.accept(ReadModel.unlockedIds(dto)), onError);
+    }
+
+    public void achievementLeaderboard(int limit, Consumer<List<LeaderboardEntry>> onSuccess,
+                                       Consumer<ApiException> onError) {
+        executor.runAsync(() -> achievementApi.getAchievementLeaderboard(limit),
+                dtos -> onSuccess.accept(ReadModel.achievementLeaderboard(dtos)), onError);
     }
 }

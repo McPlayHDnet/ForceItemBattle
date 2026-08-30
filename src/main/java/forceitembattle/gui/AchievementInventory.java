@@ -1,11 +1,10 @@
 package forceitembattle.gui;
 
-import de.threeseconds.openapi.fibservice.client.model.FibAchievementDto;
-import de.threeseconds.openapi.fibservice.client.model.FibPlayerAchievementsDto;
-import de.threeseconds.openapi.fibservice.client.model.FibPlayerIdentityDto;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.AchievementScope;
 import forceitembattle.achievements.Achievements;
+import forceitembattle.model.AchievementUnlock;
+import forceitembattle.model.PlayerIdentity;
 import forceitembattle.achievements.CollectionRule;
 import forceitembattle.collection.CollectedItem;
 import forceitembattle.achievements.global.GlobalRule;
@@ -39,7 +38,7 @@ public class AchievementInventory extends InventoryBuilder {
     private final List<Achievements> entries;
     private int currentPage;
     // achievementId -> its unlock records (SOLO/TEAM), fetched from the service for display.
-    private Map<String, List<FibAchievementDto>> unlocks = new HashMap<>();
+    private Map<String, List<AchievementUnlock>> unlocks = new HashMap<>();
     // Only fetched for the GLOBAL scope; null until it lands.
     private GlobalStats globalStats;
     // Found-set for the COLLECTION page's progress bars; null until loaded.
@@ -62,9 +61,9 @@ public class AchievementInventory extends InventoryBuilder {
         // Pull the full unlock records (mode + teammate + unlockedAt) from the service — the local
         // cache only holds ids — and refresh once they arrive. Each record carries its teammate's
         // name, so this one round trip is everything the menu needs.
-        this.plugin.getFibService().achievements().getPlayerAchievementsAsync(playerUUID,
-                dto -> {
-                    this.unlocks = indexByAchievementId(dto);
+        this.plugin.getFibService().achievements().unlocks(playerUUID,
+                loaded -> {
+                    this.unlocks = indexByAchievementId(loaded);
                     this.updateInventory();
                 },
                 error -> {
@@ -91,12 +90,11 @@ public class AchievementInventory extends InventoryBuilder {
         this.addClickHandler(inventoryClickEvent -> inventoryClickEvent.setCancelled(true));
     }
 
-    private Map<String, List<FibAchievementDto>> indexByAchievementId(FibPlayerAchievementsDto dto) {
-        Map<String, List<FibAchievementDto>> map = new HashMap<>();
-        if (dto != null && dto.getAchievements() != null) {
-            for (FibAchievementDto entry : dto.getAchievements()) {
-                map.computeIfAbsent(entry.getAchievementId(), key -> new ArrayList<>()).add(entry);
-            }
+    /** An achievement can be unlocked more than once — solo, and once per teammate. */
+    private Map<String, List<AchievementUnlock>> indexByAchievementId(List<AchievementUnlock> unlocks) {
+        Map<String, List<AchievementUnlock>> map = new HashMap<>();
+        for (AchievementUnlock entry : unlocks) {
+            map.computeIfAbsent(entry.achievementId(), key -> new ArrayList<>()).add(entry);
         }
         return map;
     }
@@ -160,7 +158,7 @@ public class AchievementInventory extends InventoryBuilder {
             int slotIndex = i - startIndex + 9;
             Achievements achievement = this.entries.get(i);
 
-            List<FibAchievementDto> unlockRecords = this.unlocks.get(achievement.name());
+            List<AchievementUnlock> unlockRecords = this.unlocks.get(achievement.name());
             boolean isCompleted = isCompleted(achievement, cachedIds);
 
             Material displayMaterial = isCompleted ? Material.LIME_DYE : Material.GRAY_DYE;
@@ -176,13 +174,14 @@ public class AchievementInventory extends InventoryBuilder {
             if (isCompleted) {
                 lore.add("<green>Completed!");
                 if (unlockRecords != null) {
-                    for (FibAchievementDto entry : unlockRecords) {
-                        if ("TEAM".equalsIgnoreCase(String.valueOf(entry.getMode()))) {
-                            lore.add("<dark_gray>» <aqua>Team <dark_gray>◆ <gray>with <yellow>" + teammateName(entry.getTeammate()));
+                    for (AchievementUnlock entry : unlockRecords) {
+                        if (entry.inTeam()) {
+                            lore.add("<dark_gray>» <aqua>Team <dark_gray>◆ <gray>with <yellow>"
+                                    + PlayerIdentity.displayName(entry.teammate(), "Unknown"));
                         } else {
                             lore.add("<dark_gray>» <aqua>Solo");
                         }
-                        String when = formatWhen(entry.getUnlockedAt());
+                        String when = formatWhen(entry.unlockedAt());
                         if (when != null) {
                             lore.add("<dark_gray>» <gray>" + when);
                         }
@@ -217,7 +216,7 @@ public class AchievementInventory extends InventoryBuilder {
     }
 
     private boolean isCompleted(Achievements achievement, Set<String> cachedIds) {
-        List<FibAchievementDto> records = this.unlocks.get(achievement.name());
+        List<AchievementUnlock> records = this.unlocks.get(achievement.name());
         return (records != null && !records.isEmpty()) || cachedIds.contains(achievement.name());
     }
 
@@ -293,13 +292,6 @@ public class AchievementInventory extends InventoryBuilder {
                 + " <yellow>" + pct + "%";
     }
 
-    private String teammateName(FibPlayerIdentityDto teammate) {
-        if (teammate == null || teammate.getUuid() == null) {
-            return "Unknown";
-        }
-        String name = teammate.getName();
-        return name != null ? name : teammate.getUuid().toString().substring(0, 8);
-    }
 
     private String formatWhen(OffsetDateTime when) {
         if (when == null) {

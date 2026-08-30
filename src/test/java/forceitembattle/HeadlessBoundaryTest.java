@@ -38,6 +38,25 @@ class HeadlessBoundaryTest {
     }
 
     /**
+     * A second wall, found the hard way while trying to test {@code Rarity}.
+     *
+     * <p>{@link org.bukkit.Sound} is {@code Registry}-backed on modern Paper, and the registry only
+     * exists on a running server. So any enum holding a {@code Sound} constant cannot be
+     * class-initialised here — the failure is a {@code NoClassDefFoundError} on
+     * {@code org.bukkit.Registry}, one frame removed from the thing you were actually testing,
+     * which makes it easy to misread as a build problem.
+     *
+     * <p>Concretely: {@code model/Rarity} pairs each rarity's stat mapping with the sound it plays,
+     * so the read/write symmetry of that table is not assertable headless even though the mapping
+     * itself is now pure. Splitting the sound out to reach it would be letting the test harness
+     * design the module.
+     */
+    @Test
+    void aRegistryBackedEnumConstantStillNeedsARunningServer() {
+        assertThrows(Throwable.class, () -> org.bukkit.Sound.BLOCK_BEACON_ACTIVATE.getKey());
+    }
+
+    /**
      * The wall is narrower than "ItemStack": it is the <em>constructor</em>, which reaches for the
      * attribute registry. Mocking one is fine, so code that only ever calls {@code getType()} on a
      * stack handed to it is reachable here — which is what lets the achievement handlers be tested

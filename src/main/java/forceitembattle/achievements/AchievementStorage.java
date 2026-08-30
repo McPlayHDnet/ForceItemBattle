@@ -1,8 +1,6 @@
 package forceitembattle.achievements;
 
-import de.threeseconds.openapi.fibservice.client.model.FibAchievementDto;
 import forceitembattle.util.Scheduler;
-import de.threeseconds.openapi.fibservice.client.model.FibPlayerAchievementsDto;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.service.FIBServiceClient;
 import forceitembattle.service.FibAchievementClient;
@@ -45,9 +43,9 @@ public class AchievementStorage {
             return;
         }
 
-        achievementClient().getPlayerAchievementsAsync(playerUUID,
-                dto -> {
-                    cache.computeIfAbsent(playerUUID, key -> ConcurrentHashMap.newKeySet()).addAll(extractIds(dto));
+        achievementClient().unlockedIds(playerUUID,
+                ids -> {
+                    cache.computeIfAbsent(playerUUID, key -> ConcurrentHashMap.newKeySet()).addAll(ids);
                     loaded.add(playerUUID);
                     if (onLoaded != null) {
                         onLoaded.run();
@@ -62,17 +60,6 @@ public class AchievementStorage {
                 });
     }
 
-    private Set<String> extractIds(FibPlayerAchievementsDto dto) {
-        Set<String> ids = ConcurrentHashMap.newKeySet();
-        if (dto != null && dto.getAchievements() != null) {
-            for (FibAchievementDto achievement : dto.getAchievements()) {
-                if (achievement.getAchievementId() != null) {
-                    ids.add(achievement.getAchievementId());
-                }
-            }
-        }
-        return ids;
-    }
 
     public void unloadPlayer(UUID playerUUID) {
         cache.remove(playerUUID);

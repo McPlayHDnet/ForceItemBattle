@@ -1,9 +1,6 @@
 package forceitembattle.model;
 
-import de.threeseconds.openapi.fibservice.client.model.FibRaritiesDto;
-import de.threeseconds.openapi.fibservice.client.model.FibRaritiesUpdateRequestDto;
-import java.util.function.Function;
-import java.util.function.UnaryOperator;
+import java.util.function.ToLongFunction;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -13,19 +10,19 @@ public enum Rarity {
 
     RARE("<blue><b>RARE</b></blue>", "<blue>Rare",
             Sound.BLOCK_BEACON_ACTIVATE, 1f, 1.5f, false,
-            b -> b.rareAdd(1L), FibRaritiesDto::getRare),
+            new RarityCounts(1, 0, 0, 0, 0), RarityCounts::rare),
     EPIC("<dark_purple><b>EPIC</b></dark_purple>", "<dark_purple>Epic",
             Sound.BLOCK_BEACON_POWER_SELECT, 1f, 1f, false,
-            b -> b.epicAdd(1L), FibRaritiesDto::getEpic),
+            new RarityCounts(0, 1, 0, 0, 0), RarityCounts::epic),
     LEGENDARY("<gold><b>LEGENDARY</b></gold>", "<gold>Legendary",
             Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 0f, true,
-            b -> b.legendaryAdd(1L), FibRaritiesDto::getLegendary),
+            new RarityCounts(0, 0, 1, 0, 0), RarityCounts::legendary),
     RNGESUS("<gradient:#E41EBC:#9A4992><b>RNGESUS</b></gradient>", "<gradient:#E41EBC:#9A4992>RNGesus</gradient>",
             Sound.ENTITY_ENDER_DRAGON_DEATH, 0.3f, 1f, true,
-            b -> b.rngesusAdd(1L), FibRaritiesDto::getRngesus),
+            new RarityCounts(0, 0, 0, 1, 0), RarityCounts::rngesus),
     EXTRAORDINARY("<gradient:#73FF00:#14C8FF><b>EXTRAORDINARY</b></gradient>", "<gradient:#73FF00:#14C8FF>Extraordinary</gradient>",
             Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 0f, false,
-            b -> b.extraordinaryAdd(1L), FibRaritiesDto::getExtraordinary);
+            new RarityCounts(0, 0, 0, 0, 1), RarityCounts::extraordinary);
 
     /** Shouty, bold — the found-item announcement. */
     private final String label;
@@ -37,19 +34,20 @@ public enum Rarity {
     private final float volume;
     private final float pitch;
     private final boolean broadcast;
-    private final UnaryOperator<FibRaritiesUpdateRequestDto> statContribution;
-    private final Function<FibRaritiesDto, Long> statAccessor;
+    /** This rarity as a delta of one, which is what recording a find adds. */
+    private final RarityCounts increment;
+    private final ToLongFunction<RarityCounts> statAccessor;
 
     Rarity(String label, String displayName, Sound sound, float volume, float pitch, boolean broadcast,
-           UnaryOperator<FibRaritiesUpdateRequestDto> statContribution,
-           Function<FibRaritiesDto, Long> statAccessor) {
+           RarityCounts increment,
+           ToLongFunction<RarityCounts> statAccessor) {
         this.label = label;
         this.displayName = displayName;
         this.sound = sound;
         this.volume = volume;
         this.pitch = pitch;
         this.broadcast = broadcast;
-        this.statContribution = statContribution;
+        this.increment = increment;
         this.statAccessor = statAccessor;
     }
 
@@ -82,24 +80,35 @@ public enum Rarity {
         }
     }
 
-    public FibRaritiesUpdateRequestDto toRaritiesUpdate() {
-        return statContribution.apply(new FibRaritiesUpdateRequestDto());
+    /**
+     * One of this rarity, for the stats writer to add.
+     *
+     * <p>Pass 1 left this class holding two generated imports, reasoning that moving only the write
+     * mapping would split a cohesive table across two files. That reasoning was right and the
+     * conclusion has been overtaken: both mappings are now expressed in {@link RarityCounts}, so
+     * the table is still whole and reads and writes are finally the same vocabulary. Turning a
+     * delta into the request the service wants is {@code FibStatisticsClient}'s job, which is the
+     * only caller and sits behind the seam.
+     */
+    public RarityCounts asIncrement() {
+        return increment;
     }
 
     /**
-     * How many of this rarity the given stats hold. Zero when the stats or the
-     * field are absent.
+     * How many of this rarity the given stats hold. Zero when the stats are absent.
+     *
+     * <p>The read half now goes through {@link RarityCounts} rather than a generated type. Pass 1
+     * declined to move only the write half because that would have split a cohesive table across
+     * two files; moving the read half does not — the table stays whole here, and only the type it
+     * reads through changed. Absent fields became zero inside the record, so the null-per-field
+     * dance is gone from this method.
      */
-    public long count(@Nullable FibRaritiesDto rarities) {
-        if (rarities == null) {
-            return 0;
-        }
-        Long value = this.statAccessor.apply(rarities);
-        return value != null ? value : 0;
+    public long count(@Nullable RarityCounts rarities) {
+        return rarities == null ? 0 : this.statAccessor.applyAsLong(rarities);
     }
 
     /** Total back-to-backs across every rarity. */
-    public static long total(@Nullable FibRaritiesDto rarities) {
+    public static long total(@Nullable RarityCounts rarities) {
         long total = 0;
         for (Rarity rarity : values()) {
             total += rarity.count(rarities);

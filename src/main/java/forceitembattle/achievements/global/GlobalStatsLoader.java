@@ -1,6 +1,6 @@
 package forceitembattle.achievements.global;
 
-import de.threeseconds.openapi.fibservice.client.model.FibPlayerStatsDto;
+import forceitembattle.model.GlobalPlayerStats;
 import forceitembattle.util.Scheduler;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.model.StatsView;
@@ -31,7 +31,7 @@ public class GlobalStatsLoader {
 
         AtomicReference<StatsView> solo = new AtomicReference<>();
         AtomicReference<StatsView> team = new AtomicReference<>();
-        AtomicReference<FibPlayerStatsDto> player = new AtomicReference<>();
+        AtomicReference<GlobalPlayerStats> player = new AtomicReference<>();
         AtomicBoolean playerDone = new AtomicBoolean();
         AtomicBoolean soloDone = new AtomicBoolean();
         AtomicBoolean teamDone = new AtomicBoolean();
@@ -51,9 +51,9 @@ public class GlobalStatsLoader {
             Scheduler.runSync(() -> onLoaded.accept(stats));
         };
 
-        statistics.getSoloStatisticsAsync(playerUuid,
-                stats -> {
-                    solo.set(StatsView.of(stats));
+        statistics.soloStats(playerUuid,
+                view -> {
+                    solo.set(view);
                     soloDone.set(true);
                     maybeDeliver.run();
                 },
@@ -62,9 +62,9 @@ public class GlobalStatsLoader {
                     maybeDeliver.run();
                 });
 
-        statistics.getPlayerCombinedTeamStatsAsync(playerUuid,
-                stats -> {
-                    team.set(StatsView.of(stats));
+        statistics.combinedTeamStats(playerUuid,
+                view -> {
+                    team.set(view);
                     teamDone.set(true);
                     maybeDeliver.run();
                 },
@@ -73,7 +73,7 @@ public class GlobalStatsLoader {
                     maybeDeliver.run();
                 });
 
-        statistics.getPlayerStatsAsync(playerUuid,
+        statistics.playerStats(playerUuid,
                 stats -> {
                     player.set(stats);
                     playerDone.set(true);

@@ -1,7 +1,5 @@
 package forceitembattle.collection;
 
-import de.threeseconds.openapi.fibservice.client.model.FibCollectionRarityDto;
-import de.threeseconds.openapi.fibservice.client.model.FibItemRarityDto;
 import forceitembattle.ForceItemBattle;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,9 +31,8 @@ public class ItemRarityLoader {
         }
         this.loading = true;
 
-        this.plugin.getFibService().matchHistory().getCollectionRarityAsync(
-                dto -> {
-                    ItemRarity rarity = convert(dto);
+        this.plugin.getFibService().matchHistory().itemRarity(
+                rarity -> {
                     this.cache.put(rarity);
                     deliver(rarity);
                 },
@@ -52,13 +49,4 @@ public class ItemRarityLoader {
         waiting.forEach(consumer -> consumer.accept(rarity));
     }
 
-    private static ItemRarity convert(FibCollectionRarityDto dto) {
-        Map<String, Long> counts = new HashMap<>();
-        if (dto.getItems() != null) {
-            for (FibItemRarityDto item : dto.getItems()) {
-                counts.put(item.getItemName(), item.getPlayerCount() != null ? item.getPlayerCount() : 0L);
-            }
-        }
-        return new ItemRarity(counts, dto.getTotalPlayers() != null ? dto.getTotalPlayers() : 0L);
-    }
 }

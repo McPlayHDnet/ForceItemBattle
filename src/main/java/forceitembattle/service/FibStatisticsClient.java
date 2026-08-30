@@ -22,6 +22,12 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
+import forceitembattle.model.DuoLeaderboardEntry;
+import forceitembattle.model.GlobalPlayerStats;
+import forceitembattle.model.LeaderboardEntry;
+import de.threeseconds.openapi.fibservice.client.model.FibRaritiesUpdateRequestDto;
+import forceitembattle.model.RarityCounts;
+import forceitembattle.model.StatsView;
 
 /**
  * Statistics domain of FIBService: solo, team, member, combined, and leaderboard.
@@ -74,8 +80,8 @@ public class FibStatisticsClient {
     /** A back-to-back of this rarity, attributed to the acting player. */
     public void recordRarity(UUID self, @Nullable ForceItemPlayer actor, Rarity rarity) {
         PlayerStatsWrite.record(this, self, actor,
-                () -> new FibSoloStatisticsUpdateRequestDto().raritiesAdd(rarity.toRaritiesUpdate()),
-                () -> new FibTeamMemberStatsUpdateRequestDto().raritiesAdd(rarity.toRaritiesUpdate()));
+                () -> new FibSoloStatisticsUpdateRequestDto().raritiesAdd(raritiesUpdate(rarity)),
+                () -> new FibTeamMemberStatsUpdateRequestDto().raritiesAdd(raritiesUpdate(rarity)));
     }
 
     /**
@@ -222,11 +228,11 @@ public class FibStatisticsClient {
         return api.getSoloStatistics(playerUuid);
     }
 
-    public void getSoloStatisticsAsync(UUID playerUuid, Consumer<FibSoloStatisticsDto> onSuccess) {
+    void getSoloStatisticsAsync(UUID playerUuid, Consumer<FibSoloStatisticsDto> onSuccess) {
         getSoloStatisticsAsync(playerUuid, onSuccess, executor::logError);
     }
 
-    public void getSoloStatisticsAsync(UUID playerUuid, Consumer<FibSoloStatisticsDto> onSuccess, Consumer<ApiException> onError) {
+    void getSoloStatisticsAsync(UUID playerUuid, Consumer<FibSoloStatisticsDto> onSuccess, Consumer<ApiException> onError) {
         executor.runAsync(() -> api.getSoloStatistics(playerUuid), onSuccess, onError);
     }
 
@@ -268,11 +274,11 @@ public class FibStatisticsClient {
         return api.getTeamStatistics(playerUuid, teammateUuid);
     }
 
-    public void getTeamStatisticsAsync(UUID playerUuid, UUID teammateUuid, Consumer<FibTeamStatisticsDto> onSuccess) {
+    void getTeamStatisticsAsync(UUID playerUuid, UUID teammateUuid, Consumer<FibTeamStatisticsDto> onSuccess) {
         getTeamStatisticsAsync(playerUuid, teammateUuid, onSuccess, executor::logError);
     }
 
-    public void getTeamStatisticsAsync(UUID playerUuid, UUID teammateUuid, Consumer<FibTeamStatisticsDto> onSuccess, Consumer<ApiException> onError) {
+    void getTeamStatisticsAsync(UUID playerUuid, UUID teammateUuid, Consumer<FibTeamStatisticsDto> onSuccess, Consumer<ApiException> onError) {
         executor.runAsync(() -> api.getTeamStatistics(playerUuid, teammateUuid), onSuccess, onError);
     }
 
@@ -365,11 +371,11 @@ public class FibStatisticsClient {
         return api.getPlayerCombinedTeamStats(playerUuid);
     }
 
-    public void getPlayerCombinedTeamStatsAsync(UUID playerUuid, Consumer<FibPlayerCombinedTeamStatsDto> onSuccess) {
+    void getPlayerCombinedTeamStatsAsync(UUID playerUuid, Consumer<FibPlayerCombinedTeamStatsDto> onSuccess) {
         getPlayerCombinedTeamStatsAsync(playerUuid, onSuccess, executor::logError);
     }
 
-    public void getPlayerCombinedTeamStatsAsync(UUID playerUuid, Consumer<FibPlayerCombinedTeamStatsDto> onSuccess, Consumer<ApiException> onError) {
+    void getPlayerCombinedTeamStatsAsync(UUID playerUuid, Consumer<FibPlayerCombinedTeamStatsDto> onSuccess, Consumer<ApiException> onError) {
         executor.runAsync(() -> api.getPlayerCombinedTeamStats(playerUuid), onSuccess, onError);
     }
 
@@ -377,11 +383,11 @@ public class FibStatisticsClient {
         return api.getSoloLeaderboard(category, limit);
     }
 
-    public void getSoloLeaderboardAsync(String category, int limit, Consumer<List<FibLeaderboardEntryDto>> onSuccess) {
+    void getSoloLeaderboardAsync(String category, int limit, Consumer<List<FibLeaderboardEntryDto>> onSuccess) {
         getSoloLeaderboardAsync(category, limit, onSuccess, executor::logError);
     }
 
-    public void getSoloLeaderboardAsync(String category, int limit, Consumer<List<FibLeaderboardEntryDto>> onSuccess, Consumer<ApiException> onError) {
+    void getSoloLeaderboardAsync(String category, int limit, Consumer<List<FibLeaderboardEntryDto>> onSuccess, Consumer<ApiException> onError) {
         executor.runAsync(() -> api.getSoloLeaderboard(category, limit), onSuccess, onError);
     }
 
@@ -389,11 +395,11 @@ public class FibStatisticsClient {
         return api.getTeamLeaderboard(category, limit);
     }
 
-    public void getTeamLeaderboardAsync(String category, int limit, Consumer<List<FibTeamLeaderboardEntryDto>> onSuccess) {
+    void getTeamLeaderboardAsync(String category, int limit, Consumer<List<FibTeamLeaderboardEntryDto>> onSuccess) {
         getTeamLeaderboardAsync(category, limit, onSuccess, executor::logError);
     }
 
-    public void getTeamLeaderboardAsync(String category, int limit, Consumer<List<FibTeamLeaderboardEntryDto>> onSuccess, Consumer<ApiException> onError) {
+    void getTeamLeaderboardAsync(String category, int limit, Consumer<List<FibTeamLeaderboardEntryDto>> onSuccess, Consumer<ApiException> onError) {
         executor.runAsync(() -> api.getTeamLeaderboard(category, limit), onSuccess, onError);
     }
 
@@ -401,11 +407,11 @@ public class FibStatisticsClient {
         return api.getCombinedTeamLeaderboard(category, limit);
     }
 
-    public void getCombinedTeamLeaderboardAsync(String category, int limit, Consumer<List<FibLeaderboardEntryDto>> onSuccess) {
+    void getCombinedTeamLeaderboardAsync(String category, int limit, Consumer<List<FibLeaderboardEntryDto>> onSuccess) {
         getCombinedTeamLeaderboardAsync(category, limit, onSuccess, executor::logError);
     }
 
-    public void getCombinedTeamLeaderboardAsync(String category, int limit, Consumer<List<FibLeaderboardEntryDto>> onSuccess, Consumer<ApiException> onError) {
+    void getCombinedTeamLeaderboardAsync(String category, int limit, Consumer<List<FibLeaderboardEntryDto>> onSuccess, Consumer<ApiException> onError) {
         executor.runAsync(() -> api.getCombinedTeamLeaderboard(category, limit), onSuccess, onError);
     }
 
@@ -413,11 +419,11 @@ public class FibStatisticsClient {
         return api.getPlayerStats(playerUuid);
     }
 
-    public void getPlayerStatsAsync(UUID playerUuid, Consumer<FibPlayerStatsDto> onSuccess) {
+    void getPlayerStatsAsync(UUID playerUuid, Consumer<FibPlayerStatsDto> onSuccess) {
         getPlayerStatsAsync(playerUuid, onSuccess, executor::logError);
     }
 
-    public void getPlayerStatsAsync(UUID playerUuid, Consumer<FibPlayerStatsDto> onSuccess, Consumer<ApiException> onError) {
+    void getPlayerStatsAsync(UUID playerUuid, Consumer<FibPlayerStatsDto> onSuccess, Consumer<ApiException> onError) {
         executor.runAsync(() -> api.getPlayerStats(playerUuid), onSuccess, onError);
     }
 
@@ -437,5 +443,74 @@ public class FibStatisticsClient {
             api.deletePlayerStats(playerUuid);
             return null;
         }, result -> onSuccess.run(), onError);
+    }
+
+    // --- the read side, in the game's words --------------------------------------------------
+    //
+    // Everything above returns generated types and is reached only from inside service/. These
+    // return the domain read model, and are what every GUI and command calls. The split is the
+    // point of the seam: a regenerated client changes the methods above and nothing else.
+
+    public void soloStats(UUID playerUuid, Consumer<StatsView> onSuccess, Consumer<ApiException> onError) {
+        executor.runAsync(() -> api.getSoloStatistics(playerUuid),
+                dto -> onSuccess.accept(ReadModel.soloStats(dto)), onError);
+    }
+
+    public void teamStats(UUID playerUuid, UUID teammateUuid, Consumer<StatsView> onSuccess,
+                          Consumer<ApiException> onError) {
+        executor.runAsync(() -> api.getTeamStatistics(playerUuid, teammateUuid),
+                dto -> onSuccess.accept(ReadModel.teamStats(dto)), onError);
+    }
+
+    public void combinedTeamStats(UUID playerUuid, Consumer<StatsView> onSuccess,
+                                  Consumer<ApiException> onError) {
+        executor.runAsync(() -> api.getPlayerCombinedTeamStats(playerUuid),
+                dto -> onSuccess.accept(ReadModel.combinedTeamStats(dto)), onError);
+    }
+
+    public void playerStats(UUID playerUuid, Consumer<GlobalPlayerStats> onSuccess,
+                            Consumer<ApiException> onError) {
+        executor.runAsync(() -> api.getPlayerStats(playerUuid),
+                dto -> onSuccess.accept(ReadModel.playerStats(dto)), onError);
+    }
+
+    public void soloLeaderboard(String category, int limit, Consumer<List<LeaderboardEntry>> onSuccess,
+                                Consumer<ApiException> onError) {
+        executor.runAsync(() -> api.getSoloLeaderboard(category, limit),
+                dtos -> onSuccess.accept(ReadModel.leaderboard(dtos)), onError);
+    }
+
+    public void combinedTeamLeaderboard(String category, int limit,
+                                        Consumer<List<LeaderboardEntry>> onSuccess,
+                                        Consumer<ApiException> onError) {
+        executor.runAsync(() -> api.getCombinedTeamLeaderboard(category, limit),
+                dtos -> onSuccess.accept(ReadModel.leaderboard(dtos)), onError);
+    }
+
+    public void duoLeaderboard(String category, int limit,
+                               Consumer<List<DuoLeaderboardEntry>> onSuccess,
+                               Consumer<ApiException> onError) {
+        executor.runAsync(() -> api.getTeamLeaderboard(category, limit),
+                dtos -> onSuccess.accept(ReadModel.duoLeaderboard(dtos)), onError);
+    }
+
+    /**
+     * A rarity delta as the generated request wants it. The mirror of {@code ReadModel.rarities}.
+     *
+     * <p>Only non-zero fields are set, which keeps the request body byte-identical to the one the
+     * enum used to build for itself: a delta carries a single one, and sending four explicit zeros
+     * alongside it would be a different payload for the same meaning.
+     */
+    private static FibRaritiesUpdateRequestDto raritiesUpdate(Rarity rarity) {
+        RarityCounts counts = rarity.asIncrement();
+        FibRaritiesUpdateRequestDto request = new FibRaritiesUpdateRequestDto();
+
+        if (counts.rare() != 0) request.rareAdd(counts.rare());
+        if (counts.epic() != 0) request.epicAdd(counts.epic());
+        if (counts.legendary() != 0) request.legendaryAdd(counts.legendary());
+        if (counts.rngesus() != 0) request.rngesusAdd(counts.rngesus());
+        if (counts.extraordinary() != 0) request.extraordinaryAdd(counts.extraordinary());
+
+        return request;
     }
 }
