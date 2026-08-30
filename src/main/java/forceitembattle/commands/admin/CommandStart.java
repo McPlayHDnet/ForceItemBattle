@@ -54,11 +54,16 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
             }
 
             GamePreset gamePreset = this.plugin.getSettings().getGamePreset(args[0]);
-            this.plugin.getGamemanager().setCurrentGamePreset(gamePreset);
+            this.plugin.getSettings().getRuleset().usePreset(gamePreset);
             this.performCommand(gamePreset, sender, args);
 
         } else if (args.length == 2) {
             try {
+                // Clears whatever the last round used. Without this a preset outlives its round:
+                // it was only ever set, never reset, so `/start speedrun` followed by `/start 90 3`
+                // played the second round on speedrun's settings. Production hides it because
+                // scheduleReset restarts the JVM between rounds; a session that plays two does not.
+                this.plugin.getSettings().getRuleset().usePreset(null);
                 this.performCommand(null, sender, args);
 
             } catch (NumberFormatException e) {

@@ -4,7 +4,6 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.model.Dimension;
 import forceitembattle.model.GameContext;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.settings.GamePreset;
 import forceitembattle.service.FIBServiceClient;
 import forceitembattle.service.FibStatisticsClient;
 import forceitembattle.service.MatchHistoryReporter;
@@ -71,8 +70,6 @@ public class Gamemanager implements Manager {
     @Setter
     @Getter
     public GameState currentGameState;
-    @Setter
-    private GamePreset currentGamePreset;
     @Getter
     @Setter
     private long gameStartTime;
@@ -105,7 +102,6 @@ public class Gamemanager implements Manager {
     public Gamemanager(ForceItemBattle forceItemBattle) {
         this.forceItemBattle = forceItemBattle;
         this.currentGameState = GameState.PRE_GAME;
-        this.currentGamePreset = null;
 
         this.forceItemPlayerMap = new HashMap<>();
         this.matchHistory = new MatchHistoryReporter(forceItemBattle);
@@ -716,7 +712,4 @@ public class Gamemanager implements Manager {
         return this.getCurrentGameState() == GameState.END_GAME;
     }
 
-    public GamePreset currentGamePreset() {
-        return currentGamePreset;
-    }
 }

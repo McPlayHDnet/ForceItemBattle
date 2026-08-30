@@ -5,16 +5,34 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
 import org.bukkit.Bukkit;
 import org.bukkit.GameRules;
+import lombok.Getter;
 import org.bukkit.configuration.ConfigurationSection;
 
+/**
+ * The plugin's configuration: loading it, the preset catalogue, and the Bukkit side effects two
+ * settings carry.
+ *
+ * <p>Which value a setting has is no longer decided here — that is {@link Ruleset}, which owns the
+ * active preset and therefore the path every read and write resolves to. This class used to ask
+ * {@code plugin.getGamemanager().currentGamePreset()} on every read, a cycle that kept both modules
+ * unbuildable in isolation.
+ */
 public class GameSettings {
 
     private final ForceItemBattle plugin;
+
+    /**
+     * The settings in force for the current round. Public so {@code /start} can point it at a
+     * preset; everything else goes through the delegating accessors below.
+     */
+    @Getter
+    private final Ruleset ruleset;
 
     private final ConcurrentSkipListMap<String, GamePreset> gamePresetMap;
 
     public GameSettings(ForceItemBattle plugin) {
         this.plugin = plugin;
+        this.ruleset = new Ruleset(new BukkitConfigSource(plugin));
         this.gamePresetMap = new ConcurrentSkipListMap<>(String.CASE_INSENSITIVE_ORDER);
 
         this.plugin.getConfig().addDefault("timer.time", 0);
@@ -54,16 +72,22 @@ public class GameSettings {
     }
 
     public boolean isSettingEnabledInPreset(GamePreset gamePreset, GameSetting gameSetting) {
-        return this.plugin.getConfig().getBoolean("presets." + gamePreset.getPresetName() + "." + gameSetting.configPath());
+        return this.ruleset.enabledIn(gamePreset, gameSetting);
     }
 
     public boolean isSettingEnabled(GameSetting gameSetting) {
-        if (this.plugin.getGamemanager().currentGamePreset() != null) {
-            return this.isSettingEnabledInPreset(this.plugin.getGamemanager().currentGamePreset(), gameSetting);
-        }
-        return this.plugin.getConfig().getBoolean(gameSetting.configPath());
+        return this.ruleset.enabled(gameSetting);
     }
 
+    /**
+     * Writes a setting, and applies the two that are also world state.
+     *
+     * <p>The gamerule side effects stay here rather than moving into {@link Ruleset}: they are
+     * Bukkit, and keeping them out is what lets the value rules be read without a server. The write
+     * itself now lands wherever {@link #isSettingEnabled} would read from — see the note on
+     * {@link Ruleset#pathFor} for the asymmetry that used to make this a no-op during a preset
+     * round.
+     */
     public void setSettingEnabled(GameSetting gameSetting, boolean enabled) {
         if (gameSetting == GameSetting.KEEP_INVENTORY)
             Bukkit.getWorlds().forEach(worlds -> worlds.setGameRule(GameRules.KEEP_INVENTORY, enabled));
@@ -72,35 +96,34 @@ public class GameSettings {
             // 3 is the default random tick speed. 40 is much faster version
             Bukkit.getWorlds().forEach(worlds -> worlds.setGameRule(GameRules.RANDOM_TICK_SPEED, enabled ? 40 : 3));
 
-
-        this.plugin.getConfig().set(gameSetting.configPath(), enabled);
-        this.plugin.saveConfig();
+        this.ruleset.setEnabled(gameSetting, enabled);
     }
 
     public void setSettingValue(GameSetting gameSetting, Integer value) {
         if (gameSetting.defaultValue() instanceof Integer) {
-            this.plugin.getConfig().set(gameSetting.configPath(), value);
+            this.ruleset.setValue(gameSetting, value);
         }
     }
 
     public int getSettingValue(GameSetting gameSetting) {
-        if (this.plugin.getGamemanager().currentGamePreset() != null) {
-            return this.getSettingValueInPreset(this.plugin.getGamemanager().currentGamePreset(), gameSetting);
-        }
-        return this.plugin.getConfig().getInt(gameSetting.configPath());
+        return this.ruleset.value(gameSetting);
     }
 
     public int getSettingValueInPreset(GamePreset gamePreset, GameSetting gameSetting) {
-        return this.plugin.getConfig().getInt("presets." + gamePreset.getPresetName() + "." + gameSetting.configPath());
+        return this.ruleset.valueIn(gamePreset, gameSetting);
     }
 
     public QuickieMode getQuickieMode() {
         return QuickieMode.fromOrdinal(this.getSettingValue(GameSetting.QUICKIE));
     }
 
+    /**
+     * <p>Read through {@link #getQuickieMode()}, which resolves the active preset, so the write has
+     * to as well — it went straight to the top-level path before and was therefore invisible during
+     * a preset round, exactly like {@code setSettingEnabled}.
+     */
     public void setQuickieMode(QuickieMode quickieMode) {
-        this.plugin.getConfig().set(GameSetting.QUICKIE.configPath(), quickieMode.ordinal());
-        this.plugin.saveConfig();
+        this.ruleset.setValue(GameSetting.QUICKIE, quickieMode.ordinal());
     }
 
     public void addGamePreset(GamePreset gamePreset) {
