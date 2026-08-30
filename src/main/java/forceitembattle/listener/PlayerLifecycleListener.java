@@ -5,7 +5,9 @@ import forceitembattle.util.Scheduler;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.service.PlayerCounter;
+import forceitembattle.model.Admission;
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.Roster;
 import forceitembattle.gui.ItemBuilder;
 import forceitembattle.util.Text;
 import java.util.Objects;
@@ -37,64 +39,24 @@ public class PlayerLifecycleListener implements Listener {
         Player player = event.getPlayer();
         Gamemanager gamemanager = this.plugin.getGamemanager();
 
-        // An existing roster entry always wins over the defaults below. Someone who disconnected
-        // during the countdown still owns their team, their force item and their score, so they come
-        // back as the participant they were — never as a freshly created spectator.
-        if (gamemanager.forceItemPlayerExist(player.getUniqueId())) {
-            ForceItemPlayer forceItemPlayer = gamemanager.getForceItemPlayer(player.getUniqueId());
-            forceItemPlayer.setPlayer(player);
+        boolean onRoster = gamemanager.forceItemPlayerExist(player.getUniqueId());
+        Admission admission = Roster.admit(onRoster, gamemanager.getCurrentGameState());
 
-            if (gamemanager.isMidGame() || gamemanager.isPausedGame()) {
-                // No-op for anyone who was online when the countdown ended; the full round setup
-                // for anyone who was not.
-                gamemanager.applyStartSetup(player);
-
-                // Only players the timer has already ticked for have a bar. Someone who was offline
-                // for the whole countdown has none yet, and showBossBar(null) would throw here and
-                // abort the rest of the join.
-                BossBar bossBar = this.plugin.getTimerManager().getBossBar().get(player.getUniqueId());
-                if (bossBar != null) {
-                    player.showBossBar(bossBar);
-                }
-            } else if (gamemanager.isEndGame()) {
-                // Missed the result screen finishGame() handed out; give them the same one rather
-                // than resetting them to a lobby player and losing the score they are ranked on.
-                player.getInventory().clear();
-                player.setGameMode(GameMode.CREATIVE);
-                gamemanager.giveSpectatorItems(player);
-            }
-        } else if (gamemanager.isMidGame() || gamemanager.isPausedGame()) {
-            player.getInventory().clear();
-            player.setLevel(0);
-            player.setExp(0);
-            player.setGameMode(GameMode.SPECTATOR);
-
-        } else if (gamemanager.isStarting()) {
+        if (onRoster) {
+            gamemanager.getForceItemPlayer(player.getUniqueId()).setPlayer(player);
+        } else if (admission.joinsRoster()) {
             ForceItemPlayer forceItemPlayer = new ForceItemPlayer(player, null, 0, 0);
-            forceItemPlayer.setSpectator(true);
+            forceItemPlayer.setSpectator(admission.isSpectating());
             gamemanager.addPlayer(player, forceItemPlayer);
+        }
 
-            player.getInventory().clear();
-            player.setLevel(0);
-            player.setExp(0);
-            player.setGameMode(GameMode.SPECTATOR);
-        } else {
-
-            gamemanager.addPlayer(player, new ForceItemPlayer(player, null, 0, 0));
-
-            player.getInventory().clear();
-            player.setLevel(0);
-            player.setExp(0);
-            player.setHealth(20);
-            player.setFoodLevel(20);
-            player.setGameMode(GameMode.ADVENTURE);
-
-            player.getInventory().setItem(0, new ItemBuilder(Material.WRITTEN_BOOK)
-                    .setDisplayName("<dark_gray>» <dark_aqua>Collection")
-                    .addItemFlags(ItemFlag.values())
-                    .getItemStack());
-            player.getInventory().setItem(4, new ItemBuilder(Material.LIME_DYE).setDisplayName("<dark_gray>» <green>Achievements").getItemStack());
-            player.getInventory().setItem(8, new ItemBuilder(Material.ENDER_PEARL).setDisplayName("<dark_gray>» <gray>Spectate game").getItemStack());
+        switch (admission) {
+            case RETURNING_PARTICIPANT -> this.restoreParticipant(player);
+            case RESULT_SCREEN -> this.showResultScreen(player);
+            case LATE_SPECTATOR, COUNTDOWN_SPECTATOR -> this.makeSpectator(player);
+            case LOBBY -> this.outfitLobbyPlayer(player);
+            // Nothing to write; reattaching the player object above was the whole outcome.
+            case RECONNECTING_BEFORE_START -> { }
         }
 
         plugin.getScoreboardManager().setupForPlayer(player);
@@ -104,14 +66,63 @@ public class PlayerLifecycleListener implements Listener {
         event.joinMessage(Text.of("<green>» <yellow>" + player.getName() + " <green>joined"));
     }
 
+    /**
+     * A participant rejoining a running round.
+     *
+     * <p>{@code applyStartSetup} is a no-op for anyone who was online when the countdown ended and
+     * the full round setup for anyone who was not — {@code startSetupApplied} is what tells them
+     * apart, so this call is safe either way.
+     */
+    private void restoreParticipant(Player player) {
+        this.plugin.getGamemanager().applyStartSetup(player);
+
+        // Only players the timer has already ticked for have a bar. Someone who was offline for the
+        // whole countdown has none yet, and showBossBar(null) would throw here and abort the rest
+        // of the join.
+        BossBar bossBar = this.plugin.getTimerManager().getBossBar().get(player.getUniqueId());
+        if (bossBar != null) {
+            player.showBossBar(bossBar);
+        }
+    }
+
+    /**
+     * They missed the result screen {@code finishGame()} handed out; give them the same one rather
+     * than resetting them to a lobby player and losing the score they are ranked on.
+     */
+    private void showResultScreen(Player player) {
+        player.getInventory().clear();
+        player.setGameMode(GameMode.CREATIVE);
+        this.plugin.getGamemanager().giveSpectatorItems(player);
+    }
+
+    private void makeSpectator(Player player) {
+        player.getInventory().clear();
+        player.setLevel(0);
+        player.setExp(0);
+        player.setGameMode(GameMode.SPECTATOR);
+    }
+
+    private void outfitLobbyPlayer(Player player) {
+        player.getInventory().clear();
+        player.setLevel(0);
+        player.setExp(0);
+        player.setHealth(20);
+        player.setFoodLevel(20);
+        player.setGameMode(GameMode.ADVENTURE);
+
+        player.getInventory().setItem(0, new ItemBuilder(Material.WRITTEN_BOOK)
+                .setDisplayName("<dark_gray>» <dark_aqua>Collection")
+                .addItemFlags(ItemFlag.values())
+                .getItemStack());
+        player.getInventory().setItem(4, new ItemBuilder(Material.LIME_DYE).setDisplayName("<dark_gray>» <green>Achievements").getItemStack());
+        player.getInventory().setItem(8, new ItemBuilder(Material.ENDER_PEARL).setDisplayName("<dark_gray>» <gray>Spectate game").getItemStack());
+    }
+
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent playerQuitEvent) {
         playerQuitEvent.quitMessage(Text.of("<red>« <yellow>" + playerQuitEvent.getPlayer().getName() + " <red>ragequit"));
 
-        // Deliberately not during STARTING: once the countdown runs, teams and force items are
-        // already assigned, and dropping the player here would tear their team apart and cost them
-        // the round. They keep their spot and are restored on rejoin.
-        if (this.plugin.getGamemanager().isPreGame() || this.plugin.getGamemanager().isEndGame()) {
+        if (Roster.releasesSpotOnQuit(this.plugin.getGamemanager().getCurrentGameState())) {
             ForceItemPlayer fibPlayer = this.plugin.getGamemanager().getForceItemPlayer(playerQuitEvent.getPlayer().getUniqueId());
             if (fibPlayer != null && fibPlayer.isInTeam()) {
                 this.plugin.getTeamManager().leave(fibPlayer);
