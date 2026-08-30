@@ -57,14 +57,21 @@ public class GameSettings {
                 gamePreset.setJokers(configurationSection.getInt("jokers"));
                 gamePreset.setBackpackRows(configurationSection.getInt("backpackRows"));
 
-                configurationSection.getConfigurationSection("settings").getKeys(false).forEach(settingKeys -> {
-                    for (GameSetting gameSetting : GameSetting.values()) {
-                        if (gameSetting.configPath().equals(settingKeys)) {
-                            gamePreset.getGameSettings().add(gameSetting);
-                        }
+                // Read each setting out of the preset section by its own path.
+                //
+                // This used to compare configPath() against the bare keys under `settings:` --
+                // "settings.isTeamGame" against "isTeamGame" -- so it never matched once, and a
+                // loaded preset kept whatever GamePreset's constructor had put there. It was
+                // harmless only because nothing reads this list for a loaded preset: the editor
+                // always starts from a new GamePreset. It would have stopped being harmless the
+                // moment anyone added an edit-an-existing-preset flow.
+                gamePreset.getGameSettings().clear();
+                for (GameSetting gameSetting : GameSetting.values()) {
+                    if (gameSetting.defaultValue() instanceof Boolean
+                            && configurationSection.getBoolean(gameSetting.configPath())) {
+                        gamePreset.getGameSettings().add(gameSetting);
                     }
-
-                });
+                }
                 this.gamePresetMap.put(keys, gamePreset);
             });
         }
