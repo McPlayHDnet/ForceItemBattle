@@ -5,6 +5,8 @@ import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.Team;
 import forceitembattle.util.TeamPairing;
 import forceitembattle.util.Text;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -15,14 +17,26 @@ import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import lombok.Getter;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
 public class TeamsManager implements Manager {
 
-    private static final String LAST_PAIRINGS_PATH = "teams.lastPairings";
+    /**
+     * The pairing history gets its own file rather than a key in config.yml, and that is the whole
+     * point of it: config.yml is a deployed artifact here — it ships from the website repo because
+     * it carries the item descriptions — so anything the plugin writes into it is overwritten by
+     * the next deploy. The history lived under {@code teams.lastPairings} in config.yml for exactly
+     * one release, and every restart wiped it, which made the avoidance degrade to a plain shuffle
+     * without saying so. Nothing outside the plugin ever writes this file.
+     */
+    private static final String HISTORY_FILE = "team-history.yml";
+    private static final String PAIRINGS_PATH = "lastPairings";
+    private static final String LEGACY_CONFIG_PATH = "teams.lastPairings";
 
     private final ForceItemBattle forceItemBattle;
 
@@ -45,7 +59,21 @@ public class TeamsManager implements Manager {
 
     @Override
     public void enable() {
-        this.previousPairings.addAll(this.forceItemBattle.getConfig().getStringList(LAST_PAIRINGS_PATH));
+        this.previousPairings.addAll(this.loadPairings());
+        this.forceItemBattle.getLogger().info("Loaded " + this.previousPairings.size()
+                + " pairing(s) from the previous round; those teams will be avoided.");
+    }
+
+    private List<String> loadPairings() {
+        File file = new File(this.forceItemBattle.getDataFolder(), HISTORY_FILE);
+        if (file.isFile()) {
+            return YamlConfiguration.loadConfiguration(file).getStringList(PAIRINGS_PATH);
+        }
+
+        // Migration off the config.yml key. Only useful on the first boot after this change, and
+        // only on a server whose config.yml has not been redeployed since the last round — which is
+        // the failure this move exists to fix — but it costs one read and beats losing a round.
+        return this.forceItemBattle.getConfig().getStringList(LEGACY_CONFIG_PATH);
     }
 
     public void autoTeams() {
@@ -90,7 +118,20 @@ public class TeamsManager implements Manager {
             byId.put(player.player().getUniqueId(), player);
         }
 
-        if (this.previousPairings.isEmpty() || this.getMaxTeamSize() != 2 || byId.size() != players.size()) {
+        // Each of these means "pair them at random and hope"; say which one it was. Without this the
+        // symptom of a lost history is indistinguishable from bad luck, which is how the config.yml
+        // storage went three rounds unnoticed.
+        String skipReason = null;
+        if (this.previousPairings.isEmpty()) {
+            skipReason = "no pairings recorded from a previous round";
+        } else if (this.getMaxTeamSize() != 2) {
+            skipReason = "team size is " + this.getMaxTeamSize() + ", not 2";
+        } else if (byId.size() != players.size()) {
+            skipReason = "roster holds " + players.size() + " entries but only " + byId.size() + " usable players";
+        }
+
+        if (skipReason != null) {
+            this.forceItemBattle.getLogger().info("Building teams at random (" + skipReason + ").");
             List<ForceItemPlayer> shuffled = new ArrayList<>(players);
             Collections.shuffle(shuffled, this.random);
             return shuffled;
@@ -99,11 +140,30 @@ public class TeamsManager implements Manager {
         List<UUID> ordered = TeamPairing.orderAvoidingPairs(
                 new ArrayList<>(byId.keySet()), this.previousPairings, this.random);
 
+        int repeats = this.countRepeats(ordered);
+        if (repeats > 0) {
+            // Genuinely unavoidable at small player counts — two players have exactly one possible
+            // team — so this is a notice, not a failure.
+            this.forceItemBattle.getLogger().info("Could not avoid " + repeats + " of the previous round's "
+                    + this.previousPairings.size() + " pairing(s) with " + ordered.size() + " players.");
+        }
+
         List<ForceItemPlayer> result = new ArrayList<>(ordered.size());
         for (UUID id : ordered) {
             result.add(byId.get(id));
         }
         return result;
+    }
+
+    /** How many of the consecutive pairs in {@code ordered} repeat a team from the previous round. */
+    private int countRepeats(List<UUID> ordered) {
+        int repeats = 0;
+        for (int i = 0; i + 1 < ordered.size(); i += 2) {
+            if (this.previousPairings.contains(TeamPairing.pairKey(ordered.get(i), ordered.get(i + 1)))) {
+                repeats++;
+            }
+        }
+        return repeats;
     }
 
     private void rememberPairings() {
@@ -122,8 +182,18 @@ public class TeamsManager implements Manager {
             }
         }
 
-        this.forceItemBattle.getConfig().set(LAST_PAIRINGS_PATH, new ArrayList<>(this.previousPairings));
-        this.forceItemBattle.saveConfig();
+        File file = new File(this.forceItemBattle.getDataFolder(), HISTORY_FILE);
+        YamlConfiguration history = new YamlConfiguration();
+        history.set(PAIRINGS_PATH, new ArrayList<>(this.previousPairings));
+
+        try {
+            history.save(file);
+            this.forceItemBattle.getLogger().info("Stored " + this.previousPairings.size()
+                    + " pairing(s) to " + HISTORY_FILE + " for the next round.");
+        } catch (IOException e) {
+            this.forceItemBattle.getLogger().log(Level.SEVERE,
+                    "Failed to store team pairings to " + HISTORY_FILE + "; the next round will pair at random.", e);
+        }
     }
 
     public boolean alreadyInTeam(Team team, ForceItemPlayer player) {
