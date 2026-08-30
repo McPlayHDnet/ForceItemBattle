@@ -72,7 +72,13 @@ dependencies {
     testImplementation("org.mockbukkit.mockbukkit:mockbukkit-v26.2:4.116.1")
     // MockBukkit's POM declares no Paper API -- the consumer supplies it. paperweight now puts the
     // server artifact on compileOnly only (see the paperweight block above), so tests need this.
-    testImplementation("io.papermc.paper:paper-api:26.2.build.121-stable")
+    // Pinned to the build MockBukkit itself was compiled against (its gradle.properties says
+    // paper.api.full-version=26.2.build.111-stable). MockBukkit checks this at runtime and throws
+    // IncompatiblePaperVersionException on a mismatch, so bump the two together, never one alone.
+    // Note that MockBukkit reports the same "version mismatch" whenever its registry is simply not
+    // loaded -- i.e. when a test forgot to call MockBukkit.mock() -- so read that message as "no
+    // registry" first and as an actual version problem second.
+    testImplementation("io.papermc.paper:paper-api:26.2.build.111-stable")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
