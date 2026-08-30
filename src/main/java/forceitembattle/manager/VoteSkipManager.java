@@ -1,6 +1,5 @@
 package forceitembattle.manager;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.util.Scheduler;
@@ -16,8 +15,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 
 public class VoteSkipManager implements Manager {
-
-    private final ForceItemBattle plugin;
+    private final Gamemanager gamemanager;
+    private final ItemDifficultiesManager itemDifficultiesManager;
     private final Set<UUID> yesVotes = new HashSet<>();
     private final Set<UUID> noVotes = new HashSet<>();
     private final Random random = new Random();
@@ -27,8 +26,9 @@ public class VoteSkipManager implements Manager {
     private Material votedMaterial;
     private ForceItemPlayer initiator;
 
-    public VoteSkipManager(ForceItemBattle plugin) {
-        this.plugin = plugin;
+    public VoteSkipManager(Gamemanager gamemanager, ItemDifficultiesManager itemDifficultiesManager) {
+        this.gamemanager = gamemanager;
+        this.itemDifficultiesManager = itemDifficultiesManager;
     }
 
     @Override
@@ -44,11 +44,11 @@ public class VoteSkipManager implements Manager {
         this.yesVotes.clear();
         this.noVotes.clear();
         this.yesVotes.add(initiator.getUniqueId());
-        this.initiator = this.plugin.getGamemanager().getForceItemPlayer(initiator.getUniqueId());
+        this.initiator = this.gamemanager.getForceItemPlayer(initiator.getUniqueId());
         this.votedMaterial = this.initiator.activeMaterial();
 
         String materialName = CustomMaterials.nameOf(this.votedMaterial);
-        String unicodeMaterial = this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, this.votedMaterial);
+        String unicodeMaterial = this.itemDifficultiesManager.getUnicodeFromMaterial(true, this.votedMaterial);
 
         Bukkit.getOnlinePlayers().forEach(player -> {
             player.sendMessage(" ");
@@ -78,7 +78,7 @@ public class VoteSkipManager implements Manager {
             player.sendMessage(Text.of("<gray>You voted for <red><b>NO</b><gray>!"));
         }
 
-        int totalPlayers = this.plugin.getGamemanager().forceItemPlayerMap().size();
+        int totalPlayers = this.gamemanager.forceItemPlayerMap().size();
         int totalVotes = this.yesVotes.size() + this.noVotes.size();
 
         if (totalVotes >= totalPlayers) {
@@ -95,7 +95,7 @@ public class VoteSkipManager implements Manager {
         String voteLabel = (yes != 1 ? "votes" : "vote");
 
         String materialName = CustomMaterials.nameOf(this.votedMaterial);
-        String unicodeMaterial = this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, this.votedMaterial);
+        String unicodeMaterial = this.itemDifficultiesManager.getUnicodeFromMaterial(true, this.votedMaterial);
 
         boolean skipItem = false;
         boolean isTie = yes == no;
@@ -123,7 +123,7 @@ public class VoteSkipManager implements Manager {
         // The vote costs the initiator a joker whether or not it carried.
         this.initiator.spendJoker();
         if (skipItem) {
-            this.plugin.getGamemanager().forceSkipItem(this.initiator.player());
+            this.gamemanager.forceSkipItem(this.initiator.player());
         }
 
         this.votedMaterial = null;

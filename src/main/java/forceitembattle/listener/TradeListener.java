@@ -1,6 +1,5 @@
 package forceitembattle.listener;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.WanderingTraderManager;
 import forceitembattle.model.ActiveTrader;
 import forceitembattle.model.CustomMaterials;
@@ -19,15 +18,13 @@ import org.bukkit.inventory.MerchantInventory;
 
 @RequiredArgsConstructor
 public class TradeListener implements Listener {
-
-    private final ForceItemBattle plugin;
-
+    private final WanderingTraderManager wanderingTraderManager;
     @EventHandler(ignoreCancelled = true)
     public void onInteractTrader(PlayerInteractEntityEvent event) {
         if (event.getHand() != EquipmentSlot.HAND) return;
         if (!(event.getRightClicked() instanceof WanderingTrader entity)) return;
 
-        WanderingTraderManager manager = this.plugin.getWanderingTraderManager();
+        WanderingTraderManager manager = this.wanderingTraderManager;
         ActiveTrader trader = manager.getTrader(entity.getUniqueId());
         if (trader == null) return;
 
@@ -40,13 +37,13 @@ public class TradeListener implements Listener {
 
     @EventHandler
     public void onCloseTrader(InventoryCloseEvent event) {
-        this.plugin.getWanderingTraderManager().stopTrading(event.getPlayer().getUniqueId());
+        this.wanderingTraderManager.stopTrading(event.getPlayer().getUniqueId());
     }
 
     @EventHandler
     public void onPurchase(PlayerPurchaseEvent event) {
         Player player = event.getPlayer();
-        ActiveTrader trader = this.plugin.getWanderingTraderManager().traderOf(player.getUniqueId());
+        ActiveTrader trader = this.wanderingTraderManager.traderOf(player.getUniqueId());
 
         if (trader == null) return;
 

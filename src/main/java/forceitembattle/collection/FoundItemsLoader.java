@@ -1,6 +1,6 @@
 package forceitembattle.collection;
 
-import forceitembattle.ForceItemBattle;
+import forceitembattle.service.FIBServiceClient;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -17,11 +17,11 @@ import java.util.function.Consumer;
  */
 public class FoundItemsLoader {
 
-    private final ForceItemBattle plugin;
+    private final FIBServiceClient fibService;
     private final FoundItemsCache cache;
 
-    public FoundItemsLoader(ForceItemBattle plugin, FoundItemsCache cache) {
-        this.plugin = plugin;
+    public FoundItemsLoader(FIBServiceClient fibService, FoundItemsCache cache) {
+        this.fibService = fibService;
         this.cache = cache;
     }
 
@@ -32,7 +32,7 @@ public class FoundItemsLoader {
             return;
         }
 
-        this.plugin.getFibService().matchHistory().foundItems(playerUuid,
+        this.fibService.matchHistory().foundItems(playerUuid,
                 collected -> {
                     this.cache.put(playerUuid, collected);
                     onLoaded.accept(collected);

@@ -1,6 +1,6 @@
 package forceitembattle.collection;
 
-import forceitembattle.ForceItemBattle;
+import forceitembattle.service.FIBServiceClient;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -9,13 +9,13 @@ import java.util.function.Consumer;
 
 public class ItemRarityLoader {
 
-    private final ForceItemBattle plugin;
+    private final FIBServiceClient fibService;
     private final ItemRarityCache cache;
     private final List<Consumer<ItemRarity>> pending = new ArrayList<>();
     private boolean loading;
 
-    public ItemRarityLoader(ForceItemBattle plugin, ItemRarityCache cache) {
-        this.plugin = plugin;
+    public ItemRarityLoader(FIBServiceClient fibService, ItemRarityCache cache) {
+        this.fibService = fibService;
         this.cache = cache;
     }
 
@@ -31,7 +31,7 @@ public class ItemRarityLoader {
         }
         this.loading = true;
 
-        this.plugin.getFibService().matchHistory().itemRarity(
+        this.fibService.matchHistory().itemRarity(
                 rarity -> {
                     this.cache.put(rarity);
                     deliver(rarity);

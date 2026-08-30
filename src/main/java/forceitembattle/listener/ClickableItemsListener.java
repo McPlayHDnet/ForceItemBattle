@@ -1,6 +1,11 @@
 package forceitembattle.listener;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.manager.BackpackManager;
+import forceitembattle.manager.LocatorManager;
+import forceitembattle.manager.TimerManager;
+import forceitembattle.service.FIBServiceClient;
+import forceitembattle.settings.GameSettings;
 import forceitembattle.gui.AchievementCategoryInventory;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.gui.CollectionBookInventory;
@@ -63,8 +68,14 @@ public class ClickableItemsListener implements Listener {
             Material.SNOW,
             Material.SNOW_BLOCK
     );
-
+    /** Still needed: this listener opens four GUIs, and the GUI layer has not been swept. */
     private final ForceItemBattle plugin;
+    private final BackpackManager backpackManager;
+    private final FIBServiceClient fibService;
+    private final Gamemanager gamemanager;
+    private final LocatorManager locatorManager;
+    private final GameSettings settings;
+    private final TimerManager timerManager;
     private final Map<UUID, Long> lastBrushSweep = new HashMap<>();
 
     private boolean isSweepingTooFast(Player player) {
@@ -80,7 +91,7 @@ public class ClickableItemsListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH)
     public void onAfterGame(PlayerInteractEvent e) {
         Player player = e.getPlayer();
-        if (!this.plugin.getGamemanager().isEndGame()) {
+        if (!this.gamemanager.isEndGame()) {
             return;
         }
         if (e.getItem() == null) {
@@ -146,10 +157,10 @@ public class ClickableItemsListener implements Listener {
     @EventHandler
     public void onClick(PlayerInteractEvent e) { // triggered if a joker is used
         Player player = e.getPlayer();
-        if (!this.plugin.getGamemanager().roundRunning()) {
+        if (!this.gamemanager.roundRunning()) {
             return;
         }
-        if (!this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
+        if (!this.gamemanager.forceItemPlayerExist(player.getUniqueId())) {
             return;
         }
         if (e.getItem() == null) {
@@ -159,15 +170,15 @@ public class ClickableItemsListener implements Listener {
             return;
         }
 
-        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        ForceItemPlayer forceItemPlayer = this.gamemanager.getForceItemPlayer(player.getUniqueId());
 
         if (Gamemanager.isBackpack(e.getItem())) {
             // isInTeam(), not the setting: with the setting on and no team this passed and then
             // handed a null team to openTeamBackpack.
             if (forceItemPlayer.isInTeam()) {
-                this.plugin.getBackpackManager().openTeamBackpack(forceItemPlayer.currentTeam(), player);
+                this.backpackManager.openTeamBackpack(forceItemPlayer.currentTeam(), player);
             } else {
-                this.plugin.getBackpackManager().openPlayerBackpack(player);
+                this.backpackManager.openPlayerBackpack(player);
             }
             return;
         }
@@ -176,14 +187,14 @@ public class ClickableItemsListener implements Listener {
             new VaultInventory(this.plugin).open(player);
             player.getInventory().getItemInMainHand().setAmount(player.getInventory().getItemInMainHand().getAmount() - 1);
 
-            if (this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
-                this.plugin.getFibService().statistics().recordPlayerCounter(
+            if (this.settings.isSettingEnabled(GameSetting.STATS)) {
+                this.fibService.statistics().recordPlayerCounter(
                         player.getUniqueId(), forceItemPlayer, PlayerCounter.WHEELS_OF_FORTUNE_USED, 1);
             }
             return;
         }
 
-        Locator locator = this.plugin.getLocatorManager().getLocatorByItem(e.getItem());
+        Locator locator = this.locatorManager.getLocatorByItem(e.getItem());
         if (locator != null) {
             if (locator.getUse() == Locator.Use.BRUSH_GROUND) {
                 // A brush is still a brush: on something that can actually be brushed, stay out of
@@ -210,7 +221,7 @@ public class ClickableItemsListener implements Listener {
             } else {
                 e.setCancelled(true);
             }
-            this.plugin.getLocatorManager().locate(locator.getStructureId(), forceItemPlayer);
+            this.locatorManager.locate(locator.getStructureId(), forceItemPlayer);
             return;
         }
 
@@ -253,7 +264,7 @@ public class ClickableItemsListener implements Listener {
         if (!player.getInventory().contains(mat)) {
             player.getWorld().dropItemNaturally(player.getLocation(), CustomMaterials.itemStackOf(mat));
         }
-        this.plugin.getTimerManager().sendActionBar();
+        this.timerManager.sendActionBar();
 
         FoundItemEvent foundItemEvent = new FoundItemEvent(player);
         foundItemEvent.setFoundItem(new ItemStack(mat));
@@ -265,10 +276,10 @@ public class ClickableItemsListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH)
     public void onPreGame(PlayerInteractEvent e) {
         Player player = e.getPlayer();
-        if (!this.plugin.getGamemanager().isPreGame()) {
+        if (!this.gamemanager.isPreGame()) {
             return;
         }
-        if (!this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
+        if (!this.gamemanager.forceItemPlayerExist(player.getUniqueId())) {
             return;
         }
         if (e.getItem() == null) {
@@ -278,7 +289,7 @@ public class ClickableItemsListener implements Listener {
             return;
         }
 
-        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        ForceItemPlayer forceItemPlayer = this.gamemanager.getForceItemPlayer(player.getUniqueId());
 
         switch (e.getItem().getType()) {
             case LIME_DYE -> {

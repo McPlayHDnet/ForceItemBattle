@@ -1,6 +1,6 @@
 package forceitembattle.listener;
 
-import forceitembattle.ForceItemBattle;
+import forceitembattle.settings.GameSettings;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.settings.GameSetting;
 import lombok.RequiredArgsConstructor;
@@ -19,9 +19,8 @@ import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 
 @RequiredArgsConstructor
 public class GameRulesListener implements Listener {
-
-    private final ForceItemBattle plugin;
-
+    private final Gamemanager gamemanager;
+    private final GameSettings settings;
     @EventHandler
     public void onOffHand(PlayerSwapHandItemsEvent event) {
         if (Gamemanager.isBackpack(event.getMainHandItem()) ||
@@ -53,19 +52,19 @@ public class GameRulesListener implements Listener {
             return;
         }
         // Countdown counts as lobby here: no one should lose hunger before the game actually runs.
-        if (this.plugin.getGamemanager().isPreGame() || this.plugin.getGamemanager().isStarting()) {
+        if (this.gamemanager.isPreGame() || this.gamemanager.isStarting()) {
             event.setCancelled(true);
             return;
         }
 
-        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.FOOD)) {
+        if (!this.settings.isSettingEnabled(GameSetting.FOOD)) {
             event.setCancelled(true);
         }
     }
 
     @EventHandler
     public void onEntityTargetLivingEntity(EntityTargetLivingEntityEvent event) {
-        if (this.plugin.getGamemanager().roundRunning()) {
+        if (this.gamemanager.roundRunning()) {
             return;
         }
         if (event.getTarget() == null) {
@@ -80,7 +79,7 @@ public class GameRulesListener implements Listener {
 
     @EventHandler
     public void onMove(PlayerMoveEvent playerMoveEvent) {
-        if (this.plugin.getGamemanager().isPausedGame()) {
+        if (this.gamemanager.isPausedGame()) {
             Location from = playerMoveEvent.getFrom();
             Location to = playerMoveEvent.getTo();
 

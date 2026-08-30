@@ -1,6 +1,6 @@
 package forceitembattle.manager;
 
-import forceitembattle.ForceItemBattle;
+import forceitembattle.service.FIBServiceClient;
 import forceitembattle.collection.CollectionCategory;
 import forceitembattle.collection.FoundItemsCache;
 import forceitembattle.collection.FoundItemsLoader;
@@ -21,7 +21,7 @@ import org.bukkit.Material;
 @Getter
 public class CollectionManager implements Manager {
 
-    private final ForceItemBattle plugin;
+    private final ItemDifficultiesManager itemDifficultiesManager;
 
     private final FoundItemsCache foundItemsCache;
     private final FoundItemsLoader foundItemsLoader;
@@ -36,12 +36,12 @@ public class CollectionManager implements Manager {
     /** The catalogue split into display categories, sorted within each. Session-static. */
     private Map<CollectionCategory, List<Material>> collectionBuckets;
 
-    public CollectionManager(ForceItemBattle plugin) {
-        this.plugin = plugin;
+    public CollectionManager(ItemDifficultiesManager itemDifficultiesManager, FIBServiceClient fibService) {
+        this.itemDifficultiesManager = itemDifficultiesManager;
         this.foundItemsCache = new FoundItemsCache();
-        this.foundItemsLoader = new FoundItemsLoader(plugin, this.foundItemsCache);
+        this.foundItemsLoader = new FoundItemsLoader(fibService, this.foundItemsCache);
         this.itemRarityCache = new ItemRarityCache();
-        this.itemRarityLoader = new ItemRarityLoader(plugin, this.itemRarityCache);
+        this.itemRarityLoader = new ItemRarityLoader(fibService, this.itemRarityCache);
     }
 
     @Override
@@ -63,7 +63,7 @@ public class CollectionManager implements Manager {
      */
     public Set<String> getCollectionCatalogue() {
         if (this.collectionCatalogue == null) {
-            this.collectionCatalogue = this.plugin.getItemDifficultiesManager().getCollectableItems().stream()
+            this.collectionCatalogue = this.itemDifficultiesManager.getCollectableItems().stream()
                     .map(material -> material.getKey().asString())
                     .collect(Collectors.toUnmodifiableSet());
         }
@@ -80,7 +80,7 @@ public class CollectionManager implements Manager {
             for (CollectionCategory category : CollectionCategory.values()) {
                 buckets.put(category, new ArrayList<>());
             }
-            for (Material material : this.plugin.getItemDifficultiesManager().getCollectableItems()) {
+            for (Material material : this.itemDifficultiesManager.getCollectableItems()) {
                 buckets.get(CollectionCategory.categoryOf(material)).add(material);
             }
             buckets.values().forEach(list -> list.sort(Comparator.comparing(material -> material.getKey().asString())));

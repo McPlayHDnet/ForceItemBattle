@@ -1,5 +1,6 @@
 package forceitembattle.manager;
 
+import forceitembattle.settings.GameSettings;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.customrecipe.FakeRecipe;
 import forceitembattle.model.CustomMaterials;
@@ -23,13 +24,15 @@ import org.bukkit.inventory.ShapedRecipe;
 
 public class RecipeManager implements Manager {
 
+    private final GameSettings settings;
     public final HashMap<UUID, Boolean> ignoreCloseHandler;
     public final HashMap<UUID, Runnable> closeHandlers;
     private final ForceItemBattle forceItemBattle;
     private final HashMap<UUID, RecipeViewer> recipeViewerMap;
 
-    public RecipeManager(ForceItemBattle forceItemBattle) {
+    public RecipeManager(ForceItemBattle forceItemBattle, GameSettings settings) {
         this.forceItemBattle = forceItemBattle;
+        this.settings = settings;
         this.recipeViewerMap = new HashMap<>();
         this.ignoreCloseHandler = new HashMap<>();
         this.closeHandlers = new HashMap<>();
@@ -52,11 +55,11 @@ public class RecipeManager implements Manager {
 
         this.recipeViewerMap.put(player.getUniqueId(), recipeViewer);
 
-        new RecipeInventory(this.forceItemBattle, this.forceItemBattle.getRecipeManager().getRecipeViewer(player), player).open(player);
+        new RecipeInventory(this.forceItemBattle, this.getRecipeViewer(player), player).open(player);
     }
 
     public void initRecipes() {
-        final boolean easyRecipes = !this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.HARDER_TRACKERS);
+        final boolean easyRecipes = !this.settings.isSettingEnabled(GameSetting.HARDER_TRACKERS);
 
         NamespacedKey antimatterKey = new NamespacedKey("fib", "antimatter_locator");
         ShapedRecipe antimatterRecipe = new ShapedRecipe(antimatterKey, CustomMaterials.ANTIMATTER_LOCATOR.itemStack());

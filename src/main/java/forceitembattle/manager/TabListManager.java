@@ -1,6 +1,5 @@
 package forceitembattle.manager;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.ItemDifficultiesManager.State;
 import forceitembattle.model.ActiveTrader;
 import forceitembattle.model.Dimension;
@@ -32,11 +31,15 @@ import org.bukkit.entity.Player;
  * event's block is already gone on the tick its winner is announced.
  */
 public class TabListManager implements Manager {
-
-    private final ForceItemBattle plugin;
-
-    public TabListManager(ForceItemBattle plugin) {
-        this.plugin = plugin;
+    private final Gamemanager gamemanager;
+    private final ItemDifficultiesManager itemDifficultiesManager;
+    private final RandomEventManager randomEventManager;
+    private final WanderingTraderManager wanderingTraderManager;
+    public TabListManager(Gamemanager gamemanager, ItemDifficultiesManager itemDifficultiesManager, RandomEventManager randomEventManager, WanderingTraderManager wanderingTraderManager) {
+        this.gamemanager = gamemanager;
+        this.itemDifficultiesManager = itemDifficultiesManager;
+        this.randomEventManager = randomEventManager;
+        this.wanderingTraderManager = wanderingTraderManager;
     }
 
     /**
@@ -48,7 +51,7 @@ public class TabListManager implements Manager {
         String poolLine = buildPoolLine();
         String timeLine = buildTimeLine();
         String traderBlock = buildTraderBlock();
-        String eventBlock = this.plugin.getRandomEventManager().tabFooterBlock();
+        String eventBlock = this.randomEventManager.tabFooterBlock();
 
         for (Player player : Bukkit.getOnlinePlayers()) {
             String footer = "\n" + poolLine + buildJokerLine(player) + timeLine
@@ -70,7 +73,7 @@ public class TabListManager implements Manager {
     }
 
     private String buildPoolLine() {
-        ItemDifficultiesManager items = this.plugin.getItemDifficultiesManager();
+        ItemDifficultiesManager items = this.itemDifficultiesManager;
         List<State> active = items.getActiveStates();
 
         StringBuilder line = new StringBuilder("<gray>Pools ");
@@ -123,16 +126,16 @@ public class TabListManager implements Manager {
      * everyone's tab list forever rather than failing once and visibly.
      */
     private String clockIcon() {
-        String icon = this.plugin.getItemDifficultiesManager()
+        String icon = this.itemDifficultiesManager
                 .getUnicodeFromMaterial(true, Material.CLOCK);
         return "NULL".equals(icon) ? "" : "<reset><shadow:black:0.4>" + icon + "</shadow> ";
     }
 
     private String buildJokerLine(Player player) {
-        if (!this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
+        if (!this.gamemanager.forceItemPlayerExist(player.getUniqueId())) {
             return "";
         }
-        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        ForceItemPlayer forceItemPlayer = this.gamemanager.getForceItemPlayer(player.getUniqueId());
         if (forceItemPlayer.isSpectator()) {
             return "";
         }
@@ -142,7 +145,7 @@ public class TabListManager implements Manager {
     private String buildTraderBlock() {
         StringBuilder block = new StringBuilder();
 
-        for (ActiveTrader trader : this.plugin.getWanderingTraderManager().activeTraders()) {
+        for (ActiveTrader trader : this.wanderingTraderManager.activeTraders()) {
             block.append("\n\n").append(trader.getKind().boldColoredName()).append("\n")
                     .append(LocationFormat.xyz(trader.getLocation())).append("\n")
                     .append(TimeFormat.colored(trader.getTimer())).append("\n");

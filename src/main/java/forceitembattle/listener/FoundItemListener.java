@@ -1,6 +1,7 @@
 package forceitembattle.listener;
 
-import forceitembattle.ForceItemBattle;
+import forceitembattle.manager.FoundItemResolver;
+import forceitembattle.manager.Gamemanager;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.model.Find;
 import forceitembattle.model.ForceItemPlayer;
@@ -18,14 +19,13 @@ import org.bukkit.event.Listener;
  */
 @RequiredArgsConstructor
 public class FoundItemListener implements Listener {
-
-    public final ForceItemBattle plugin;
-
+    private final FoundItemResolver foundItemResolver;
+    private final Gamemanager gamemanager;
     @EventHandler
     public void onFoundItem(FoundItemEvent event) {
-        ForceItemPlayer finder = this.plugin.getGamemanager()
+        ForceItemPlayer finder = this.gamemanager
                 .getForceItemPlayer(event.getPlayer().getUniqueId());
 
-        this.plugin.getFoundItemResolver().resolve(Find.of(event, finder));
+        this.foundItemResolver.resolve(Find.of(event, finder));
     }
 }

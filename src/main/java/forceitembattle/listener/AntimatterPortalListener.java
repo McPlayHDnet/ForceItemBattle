@@ -1,6 +1,6 @@
 package forceitembattle.listener;
 
-import forceitembattle.ForceItemBattle;
+import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.AntimatterPortalManager;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.Dimension;
@@ -38,9 +38,8 @@ import org.bukkit.inventory.ItemStack;
  */
 @RequiredArgsConstructor
 public class AntimatterPortalListener implements Listener {
-
-    private final ForceItemBattle plugin;
-
+    private final AntimatterPortalManager antimatterPortalManager;
+    private final Gamemanager gamemanager;
     /**
      * Players currently being sent through, so the move handler does not fire again mid-teleport.
      */
@@ -56,7 +55,7 @@ public class AntimatterPortalListener implements Listener {
             return;
         }
 
-        AntimatterPortalManager portals = this.plugin.getAntimatterPortalManager();
+        AntimatterPortalManager portals = this.antimatterPortalManager;
         if (!portals.isPortalVault(block)) {
             return;
         }
@@ -76,7 +75,7 @@ public class AntimatterPortalListener implements Listener {
         event.setCancelled(true);
 
         Player player = event.getPlayer();
-        if (!this.plugin.getGamemanager().roundRunning() && !this.plugin.getGamemanager().isEndGame()) {
+        if (!this.gamemanager.roundRunning() && !this.gamemanager.isEndGame()) {
             return;
         }
 
@@ -111,7 +110,7 @@ public class AntimatterPortalListener implements Listener {
             return;
         }
 
-        AntimatterPortalManager portals = this.plugin.getAntimatterPortalManager();
+        AntimatterPortalManager portals = this.antimatterPortalManager;
         if (portals.isAntimatterWorld(player.getWorld())) {
             if (portals.isInReturnPortal(player)) {
                 travel(player, this::sendHome);
@@ -139,7 +138,7 @@ public class AntimatterPortalListener implements Listener {
     }
 
     private void sendToDepths(Player player, AntimatterPortalManager.ActivePortal portal) {
-        AntimatterPortalManager portals = this.plugin.getAntimatterPortalManager();
+        AntimatterPortalManager portals = this.antimatterPortalManager;
         Location depths = portals.depthsFor(player);
         if (depths == null) {
             // Recoverable more often than not: the manager refuses a Depths it cannot bring the
@@ -155,7 +154,7 @@ public class AntimatterPortalListener implements Listener {
     }
 
     private void sendHome(Player player) {
-        Location home = this.plugin.getAntimatterPortalManager().returnFor(player);
+        Location home = this.antimatterPortalManager.returnFor(player);
         if (home == null) {
             player.sendMessage(Text.of("<red>Nothing to return to — you did not arrive through a portal."));
             return;
@@ -166,7 +165,7 @@ public class AntimatterPortalListener implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onPortalTravel(PlayerPortalEvent event) {
-        if (!this.plugin.getAntimatterPortalManager().isAntimatterWorld(event.getFrom().getWorld())) {
+        if (!this.antimatterPortalManager.isAntimatterWorld(event.getFrom().getWorld())) {
             return;
         }
         if (event.getCause() != PlayerTeleportEvent.TeleportCause.END_PORTAL) {
@@ -190,7 +189,7 @@ public class AntimatterPortalListener implements Listener {
      */
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
-        this.plugin.getAntimatterPortalManager().hideForeignPortals(event.getPlayer());
+        this.antimatterPortalManager.hideForeignPortals(event.getPlayer());
     }
 
     @EventHandler

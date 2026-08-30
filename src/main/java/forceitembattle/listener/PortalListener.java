@@ -1,6 +1,9 @@
 package forceitembattle.listener;
 
-import forceitembattle.ForceItemBattle;
+import forceitembattle.manager.AntimatterPortalManager;
+import forceitembattle.manager.Gamemanager;
+import forceitembattle.service.FIBServiceClient;
+import forceitembattle.settings.GameSettings;
 import forceitembattle.event.AntimatterTeleporterUseEvent;
 import forceitembattle.model.Dimension;
 import forceitembattle.settings.GameSetting;
@@ -32,9 +35,10 @@ import org.jetbrains.annotations.Nullable;
 
 @RequiredArgsConstructor
 public class PortalListener implements Listener {
-
-    private final ForceItemBattle plugin;
-
+    private final AntimatterPortalManager antimatterPortalManager;
+    private final FIBServiceClient fibService;
+    private final Gamemanager gamemanager;
+    private final GameSettings settings;
     private final Map<UUID, List<TeleporterLocation>> playerTeleporterLocations = new HashMap<>();
     private final Map<UUID, Location> playerEndLocations = new HashMap<>();
 
@@ -44,7 +48,7 @@ public class PortalListener implements Listener {
     public void onMove(PlayerMoveEvent playerMoveEvent) {
         Player player = playerMoveEvent.getPlayer();
 
-        if (!this.plugin.getGamemanager().roundRunning() && !this.plugin.getGamemanager().isEndGame()) {
+        if (!this.gamemanager.roundRunning() && !this.gamemanager.isEndGame()) {
             return;
         }
         Location playerLocation = player.getLocation();
@@ -69,11 +73,11 @@ public class PortalListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onPortalEvent(PlayerPortalEvent playerPortalEvent) {
         Player player = playerPortalEvent.getPlayer();
-        if (!this.plugin.getGamemanager().roundRunning()) {
+        if (!this.gamemanager.roundRunning()) {
             return;
         }
 
-        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.HARD)) {
+        if (!this.settings.isSettingEnabled(GameSetting.HARD)) {
             player.sendMessage(Text.of("<red>Travelling to other dimensions is disabled!"));
             player.playSound(player.getLocation(), Sound.ENTITY_BLAZE_HURT, 1, 1);
             playerPortalEvent.setCanCreatePortal(false);
@@ -82,11 +86,11 @@ public class PortalListener implements Listener {
     }
 
     private void teleportPlayerRandomly(Player player) {
-        boolean midGame = this.plugin.getGamemanager().roundRunning();
+        boolean midGame = this.gamemanager.roundRunning();
 
-        if (midGame && this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
-            ForceItemPlayer fip = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-            this.plugin.getFibService().statistics().recordPlayerCounter(
+        if (midGame && this.settings.isSettingEnabled(GameSetting.STATS)) {
+            ForceItemPlayer fip = this.gamemanager.getForceItemPlayer(player.getUniqueId());
+            this.fibService.statistics().recordPlayerCounter(
                     player.getUniqueId(), fip, PlayerCounter.ANTIMATTER_TELEPORTER_ENTRIES, 1);
         }
 
@@ -139,12 +143,12 @@ public class PortalListener implements Listener {
 
     @EventHandler
     public void onChangedWorld(PlayerChangedWorldEvent event) {
-        if (!this.plugin.getGamemanager().roundRunning() && !this.plugin.getGamemanager().isEndGame()) {
+        if (!this.gamemanager.roundRunning() && !this.gamemanager.isEndGame()) {
             return;
         }
         Player player = event.getPlayer();
 
-        if (this.plugin.getAntimatterPortalManager().isAntimatterWorld(player.getWorld())) {
+        if (this.antimatterPortalManager.isAntimatterWorld(player.getWorld())) {
             return;
         }
 

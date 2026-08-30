@@ -1,6 +1,5 @@
 package forceitembattle.manager;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.ProtectionVerdict;
 import java.util.ArrayList;
@@ -30,19 +29,16 @@ public class ProtectionManager implements Manager {
 
     /** 15 blocks, squared. Anyone inside this is named in the operator notification. */
     private static final double WITNESS_RADIUS_SQUARED = 225;
-
-    private final ForceItemBattle plugin;
-
+    private final Gamemanager gamemanager;
     private final Map<Block, UUID> containerMap;
 
-    public ProtectionManager(ForceItemBattle plugin) {
-        this.plugin = plugin;
-
+    public ProtectionManager(Gamemanager gamemanager) {
+        this.gamemanager = gamemanager;
         this.containerMap = new HashMap<>();
     }
 
     public boolean isNearProtectedBed(@Nullable Player player, Location atLocation) {
-        for (var entry : this.plugin.getGamemanager().forceItemPlayerMap().entrySet()) {
+        for (var entry : this.gamemanager.forceItemPlayerMap().entrySet()) {
             if (player != null && entry.getKey().equals(player.getUniqueId())) {
                 continue;
             }
@@ -64,7 +60,7 @@ public class ProtectionManager implements Manager {
     }
 
     public ForceItemPlayer getContainerOwner(Block block) {
-        return this.plugin.getGamemanager().getForceItemPlayer(this.containerMap.get(block));
+        return this.gamemanager.getForceItemPlayer(this.containerMap.get(block));
     }
 
     public boolean canBreakContainer(@Nullable ForceItemPlayer player, Block block) {

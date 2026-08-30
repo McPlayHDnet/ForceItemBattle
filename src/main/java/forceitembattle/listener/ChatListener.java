@@ -1,6 +1,8 @@
 package forceitembattle.listener;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.manager.Gamemanager;
+import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Scheduler;
 import forceitembattle.commands.player.CommandShout;
 import forceitembattle.settings.GameSetting;
@@ -18,9 +20,13 @@ import org.bukkit.event.Listener;
 
 @RequiredArgsConstructor
 public class ChatListener implements Listener {
-
+    /**
+     * Still needed: this listener opens a GUI, and the GUI layer has not been swept. Its
+     * collaborators are named below; this is the one thing left that is genuinely a plugin.
+     */
     private final ForceItemBattle plugin;
-
+    private final Gamemanager gamemanager;
+    private final GameSettings settings;
     @EventHandler
     public void onChat(AsyncChatEvent event) {
         Player player = event.getPlayer();
@@ -34,13 +40,13 @@ public class ChatListener implements Listener {
             Scheduler.runSync(() -> {
                 GamePreset gamePreset = SettingsPresetsInventory.namingPhase.get(player.getUniqueId());
                 gamePreset.setPresetName(message);
-                new SettingsPresetsInventory(this.plugin, gamePreset, this.plugin.getSettings()).open(player);
+                new SettingsPresetsInventory(this.plugin, gamePreset, this.settings).open(player);
                 SettingsPresetsInventory.namingPhase.remove(player.getUniqueId());
             });
             return;
         }
 
-        ForceItemPlayer fibPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        ForceItemPlayer fibPlayer = this.gamemanager.getForceItemPlayer(player.getUniqueId());
 
         if (CommandShout.isShouting(player)) {
             Bukkit.broadcast(Text.of(
@@ -53,7 +59,7 @@ public class ChatListener implements Listener {
         // The TEAM setting was a third way of asking a question isInTeam() already answers, and
         // the null check beside it was there because the two could disagree.
         if (!fibPlayer.isInTeam()
-                || !this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM_CHAT)) {
+                || !this.settings.isSettingEnabled(GameSetting.TEAM_CHAT)) {
 
             Bukkit.broadcast(Text.of(
                     "<gold>" + player.getName() + " <dark_gray>» <white>" + message

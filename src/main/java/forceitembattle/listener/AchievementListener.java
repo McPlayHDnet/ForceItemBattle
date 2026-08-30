@@ -1,6 +1,9 @@
 package forceitembattle.listener;
 
-import forceitembattle.ForceItemBattle;
+import forceitembattle.manager.AchievementManager;
+import forceitembattle.manager.BackpackManager;
+import forceitembattle.manager.Gamemanager;
+import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Scheduler;
 import forceitembattle.achievements.Achievements;
 import forceitembattle.achievements.Trigger;
@@ -42,15 +45,16 @@ import org.bukkit.inventory.Inventory;
 
 @RequiredArgsConstructor
 public class AchievementListener implements Listener {
-
-    private final ForceItemBattle plugin;
-
+    private final AchievementManager achievementManager;
+    private final BackpackManager backpackManager;
+    private final Gamemanager gamemanager;
+    private final GameSettings settings;
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         // Warm the cache from the service ahead of any in-game achievement checks.
         UUID joiningUuid = event.getPlayer().getUniqueId();
-        this.plugin.getAchievementManager().getAchievementStorage()
-                .loadPlayer(joiningUuid, () -> this.plugin.getAchievementManager()
+        this.achievementManager.getAchievementStorage()
+                .loadPlayer(joiningUuid, () -> this.achievementManager
                         .evaluateGlobalAchievements(event.getPlayer()));
     }
 
@@ -58,8 +62,8 @@ public class AchievementListener implements Listener {
     public void onPlayerQuit(PlayerQuitEvent event) {
         // Free memory once a player leaves, but only outside a running game so
         // team-completion checks still see their data mid-round.
-        if (!this.plugin.getGamemanager().roundRunning()) {
-            this.plugin.getAchievementManager().getAchievementStorage()
+        if (!this.gamemanager.roundRunning()) {
+            this.achievementManager.getAchievementStorage()
                     .unloadPlayer(event.getPlayer().getUniqueId());
         }
     }
@@ -68,41 +72,41 @@ public class AchievementListener implements Listener {
     public void onItemObtain(FoundItemEvent event) {
         Player player = event.getPlayer();
 
-        this.plugin.getAchievementManager().handleEvent(player, event, Trigger.OBTAIN_ITEM);
-        this.plugin.getAchievementManager().handleEvent(player, event, Trigger.OBTAIN_ITEM_IN_TIME);
-        this.plugin.getAchievementManager().handleEvent(player, event, Trigger.BACK_TO_BACK);
-        this.plugin.getAchievementManager().handleEvent(player, event, Trigger.SKIP_ITEM);
-        this.plugin.getAchievementManager().handleEvent(player, event, Trigger.INVENTORY_FULL);
+        this.achievementManager.handleEvent(player, event, Trigger.OBTAIN_ITEM);
+        this.achievementManager.handleEvent(player, event, Trigger.OBTAIN_ITEM_IN_TIME);
+        this.achievementManager.handleEvent(player, event, Trigger.BACK_TO_BACK);
+        this.achievementManager.handleEvent(player, event, Trigger.SKIP_ITEM);
+        this.achievementManager.handleEvent(player, event, Trigger.INVENTORY_FULL);
     }
 
     @EventHandler
     public void onPlayerChangeDimension(PlayerChangedWorldEvent event) {
         Player player = event.getPlayer();
-        this.plugin.getAchievementManager().handleEvent(player, event, Trigger.VISIT);
+        this.achievementManager.handleEvent(player, event, Trigger.VISIT);
     }
 
     @EventHandler
     public void onChangeBiome(PlayerMoveEvent event) {
         Player player = event.getPlayer();
-        this.plugin.getAchievementManager().handleEvent(player, event, Trigger.VISIT);
+        this.achievementManager.handleEvent(player, event, Trigger.VISIT);
     }
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
         Player player = event.getPlayer();
-        this.plugin.getAchievementManager().handleEvent(player, event, Trigger.DYING);
+        this.achievementManager.handleEvent(player, event, Trigger.DYING);
     }
 
     @EventHandler
     public void onPlayerConsume(PlayerItemConsumeEvent event) {
         Player player = event.getPlayer();
-        this.plugin.getAchievementManager().handleEvent(player, event, Trigger.EATING);
+        this.achievementManager.handleEvent(player, event, Trigger.EATING);
     }
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
-        this.plugin.getAchievementManager().handleEvent(player, event, Trigger.BEEHIVE_HARVEST);
+        this.achievementManager.handleEvent(player, event, Trigger.BEEHIVE_HARVEST);
     }
 
     @EventHandler
@@ -111,19 +115,19 @@ public class AchievementListener implements Listener {
             return;
         }
 
-        this.plugin.getAchievementManager().handleEvent(player, event, Trigger.LOOT);
+        this.achievementManager.handleEvent(player, event, Trigger.LOOT);
     }
 
     @EventHandler
     public void onPlayerTrade(PlayerPurchaseEvent event) {
         Player player = event.getPlayer();
-        this.plugin.getAchievementManager().handleEvent(player, event, Trigger.TRADING);
+        this.achievementManager.handleEvent(player, event, Trigger.TRADING);
     }
 
     @EventHandler
     public void onAchievementGrant(PlayerGrantAchievementEvent event) {
         Player player = event.getPlayer();
-        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        ForceItemPlayer forceItemPlayer = this.gamemanager.getForceItemPlayer(player.getUniqueId());
         Achievements achievement = event.getAchievement();
 
         if (forceItemPlayer == null || !forceItemPlayer.isSpectator()) {
@@ -138,12 +142,12 @@ public class AchievementListener implements Listener {
 
     @EventHandler
     public void onWheelOfFortuneWin(WheelOfFortuneWinEvent event) {
-        this.plugin.getAchievementManager().handleEvent(event.getPlayer(), event, Trigger.WHEEL_OF_FORTUNE);
+        this.achievementManager.handleEvent(event.getPlayer(), event, Trigger.WHEEL_OF_FORTUNE);
     }
 
     @EventHandler
     public void onAntimatterTeleporterUse(AntimatterTeleporterUseEvent event) {
-        this.plugin.getAchievementManager().handleEvent(event.getPlayer(), event, Trigger.ANTIMATTER_TELEPORTER);
+        this.achievementManager.handleEvent(event.getPlayer(), event, Trigger.ANTIMATTER_TELEPORTER);
     }
 
     @EventHandler
@@ -152,20 +156,20 @@ public class AchievementListener implements Listener {
         // environment or another mob — no one to award in that case).
         Player killer = event.getEntity().getKiller();
         if (killer != null) {
-            this.plugin.getAchievementManager().handleEvent(killer, event, Trigger.MOB_DEATH);
+            this.achievementManager.handleEvent(killer, event, Trigger.MOB_DEATH);
         }
     }
 
     @EventHandler
     public void onLootGenerate(org.bukkit.event.world.LootGenerateEvent event) {
         if (event.getEntity() instanceof Player player) {
-            this.plugin.getAchievementManager().handleEvent(player, event, Trigger.LOOT);
+            this.achievementManager.handleEvent(player, event, Trigger.LOOT);
         }
     }
 
     @EventHandler
     public void onInventorySlotChange(PlayerInventorySlotChangeEvent event) {
-        this.plugin.getAchievementManager().handleEvent(event.getPlayer(), event, Trigger.INVENTORY_FULL);
+        this.achievementManager.handleEvent(event.getPlayer(), event, Trigger.INVENTORY_FULL);
     }
 
     @EventHandler
@@ -183,24 +187,24 @@ public class AchievementListener implements Listener {
             return;
         }
         // Reference-equality against the stored backpack instance; ignore other GUIs.
-        if (top != this.plugin.getBackpackManager().getBackpackForPlayer(player)) {
+        if (top != this.backpackManager.getBackpackForPlayer(player)) {
             return;
         }
         // Click/drag fire before the slot settles, so re-check on the next tick.
         Scheduler.runSync(() ->
-                this.plugin.getAchievementManager().handleEvent(player, event, Trigger.INVENTORY_FULL));
+                this.achievementManager.handleEvent(player, event, Trigger.INVENTORY_FULL));
     }
 
     @EventHandler
     public void onAdvancementGrant(PlayerAdvancementDoneEvent event) {
-        if (this.plugin.getSettings().isSettingEnabled(GameSetting.EVENT)) {
+        if (this.settings.isSettingEnabled(GameSetting.EVENT)) {
             event.message(null);
             return;
         }
 
         Advancement advancement = event.getAdvancement();
 
-        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(event.getPlayer().getUniqueId());
+        ForceItemPlayer forceItemPlayer = this.gamemanager.getForceItemPlayer(event.getPlayer().getUniqueId());
         if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
             event.message(null);
             return;

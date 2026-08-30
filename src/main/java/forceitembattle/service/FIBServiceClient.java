@@ -1,5 +1,6 @@
 package forceitembattle.service;
 
+import forceitembattle.achievements.global.GlobalStatsCache;
 import de.threeseconds.openapi.fibservice.client.api.FibAchievementControllerApi;
 import de.threeseconds.openapi.fibservice.client.api.FibCatalogueControllerApi;
 import de.threeseconds.openapi.fibservice.client.api.FibMatchControllerApi;
@@ -26,11 +27,11 @@ public class FIBServiceClient implements Manager {
     private final FibMatchHistoryClient matchHistory;
     private final FibCatalogueClient catalogue;
 
-    public FIBServiceClient(ForceItemBattle plugin) {
-        this(plugin, DEFAULT_BASE_URL);
+    public FIBServiceClient(ForceItemBattle plugin, GlobalStatsCache globalStatsCache) {
+        this(plugin, DEFAULT_BASE_URL, globalStatsCache);
     }
 
-    public FIBServiceClient(ForceItemBattle plugin, String baseUrl) {
+    public FIBServiceClient(ForceItemBattle plugin, String baseUrl, GlobalStatsCache globalStatsCache) {
         ApiClient client = new ApiClient();
         client.setBasePath(baseUrl);
         this.plugin = plugin;
@@ -38,7 +39,7 @@ public class FIBServiceClient implements Manager {
 
         this.executor = new ApiExecutor(plugin);
         this.statistics = new FibStatisticsClient(new FibStatisticsControllerApi(client), executor,
-                plugin.getAchievementManager().getGlobalStatsCache());
+                globalStatsCache);
         this.achievements = new FibAchievementClient(new FibAchievementControllerApi(client), executor);
         this.matchHistory = new FibMatchHistoryClient(new FibMatchControllerApi(client), executor, plugin);
         this.catalogue = new FibCatalogueClient(new FibCatalogueControllerApi(client), executor, plugin);

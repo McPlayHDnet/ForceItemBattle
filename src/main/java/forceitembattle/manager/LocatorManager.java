@@ -40,13 +40,16 @@ public class LocatorManager implements Manager {
     /** Close enough to spot something standing at the surface. */
     private static final int SURFACE_ARRIVAL_RADIUS = 70;   // blocks
 
+    /** Kept for {@code runTaskTimerAsynchronously}, which needs a Plugin. Not a service locator. */
     private final ForceItemBattle plugin;
+    private final PositionManager positionManager;
     private final Map<String, Locator> locators;
     private final Map<String, Location> locatedStructures;
     private final Map<UUID, Map<String, ActiveLocator>> activeLocators;
 
-    public LocatorManager(ForceItemBattle plugin) {
+    public LocatorManager(ForceItemBattle plugin, PositionManager positionManager) {
         this.plugin = plugin;
+        this.positionManager = positionManager;
         this.locators = new HashMap<>();
         this.locatedStructures = new HashMap<>();
         this.activeLocators = new HashMap<>();
@@ -172,11 +175,11 @@ public class LocatorManager implements Manager {
      */
     private void showTheWay(Locator locator, Player player, Location targetLocation, Location digSpot) {
         if (locator.getUse().leavesFootprints()) {
-            this.plugin.getPositionManager().playFootprintTrail(player, targetLocation, locator.getLineColor());
+            this.positionManager.playFootprintTrail(player, targetLocation, locator.getLineColor());
             return;
         }
-        this.plugin.getPositionManager().playParticleLine(player, targetLocation, locator.getLineColor());
-        this.plugin.getPositionManager().playSurfaceMarker(player, digSpot, locator.getLineColor());
+        this.positionManager.playParticleLine(player, targetLocation, locator.getLineColor());
+        this.positionManager.playSurfaceMarker(player, digSpot, locator.getLineColor());
     }
 
     // The surface block above the target, i.e. where the player has to dig down.
@@ -216,7 +219,7 @@ public class LocatorManager implements Manager {
                 // held up continuously by their own task instead — replaying them would be the
                 // pulse the ground trail is meant not to have.
                 if (!locator.getUse().leavesFootprints() && this.runs++ % RUNS_PER_LINE == 0) {
-                    LocatorManager.this.plugin.getPositionManager()
+                    LocatorManager.this.positionManager
                             .playParticleLine(player, targetLocation, locator.getLineColor());
                 }
 
@@ -230,8 +233,8 @@ public class LocatorManager implements Manager {
         // The persistent ground visual, cancelled together with the session: a beam over the dig
         // spot, or the footprint trail for a find that needs no digging.
         BukkitRunnable groundTask = locator.getUse().leavesFootprints()
-                ? this.plugin.getPositionManager().startFootprintTrail(player, targetLocation, locator.getLineColor())
-                : this.plugin.getPositionManager().startSurfaceMarker(player, digSpot, locator.getLineColor());
+                ? this.positionManager.startFootprintTrail(player, targetLocation, locator.getLineColor())
+                : this.positionManager.startSurfaceMarker(player, digSpot, locator.getLineColor());
 
         synchronized (this.activeLocators) {
             this.activeLocators

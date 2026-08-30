@@ -1,5 +1,6 @@
 package forceitembattle.model;
 
+import java.util.List;
 import java.util.Set;
 import org.bukkit.Material;
 
@@ -9,10 +10,24 @@ import org.bukkit.Material;
 public class MaterialCategory {
 
     // Wood type categories (for "Wait Wood?" achievement)
-    private static final Set<String> WOOD_TYPES = Set.of(
-            "OAK", "SPRUCE", "BIRCH", "JUNGLE", "ACACIA",
-            "DARK_OAK", "MANGROVE", "CHERRY", "PALE_OAK",
-            "CRIMSON", "WARPED"
+    /**
+     * Wood types, <b>longest first</b>, because {@link #getWoodCategory} returns the first one the
+     * material's name contains and {@code DARK_OAK_LOG} contains both {@code DARK_OAK} and
+     * {@code OAK}.
+     *
+     * <p>This was a {@code Set.of(...)}, whose iteration order is not merely unspecified but
+     * randomised per JVM. So {@code DARK_OAK_LOG} classified as {@code DARK_OAK} on some server
+     * runs and {@code OAK} on others — and on any run where it came back {@code OAK}, nothing
+     * produced {@code DARK_OAK} at all and the wood-collection achievement could not be completed.
+     * The same held for {@code PALE_OAK}. A test that walks one material per required category is
+     * what surfaced it; the ordering is now load-bearing, so keep the longest prefixes first.
+     */
+    private static final List<String> WOOD_TYPES = List.of(
+            "DARK_OAK", "PALE_OAK", "MANGROVE",
+            "CRIMSON",
+            "SPRUCE", "JUNGLE", "ACACIA", "CHERRY", "WARPED",
+            "BIRCH",
+            "OAK"
     );
 
     /**

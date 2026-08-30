@@ -38,9 +38,10 @@ import org.bukkit.event.player.PlayerBucketEmptyEvent;
  */
 @RequiredArgsConstructor
 public class ProtectionListener implements Listener {
-
+    /** Still needed for {@code new NamespacedKey(plugin, ...)}, which is Bukkit API, not a sibling. */
     private final ForceItemBattle plugin;
-
+    private final Gamemanager gamemanager;
+    private final ProtectionManager protectionManager;
     private final List<CreatureSpawnEvent.SpawnReason> blockedSpawnReasons = List.of(
             CreatureSpawnEvent.SpawnReason.BUILD_WITHER
     );
@@ -48,7 +49,7 @@ public class ProtectionListener implements Listener {
     private final AdminNotifier notifier = new AdminNotifier();
 
     private ProtectionManager protection() {
-        return this.plugin.getProtectionManager();
+        return this.protectionManager;
     }
 
     /**
@@ -66,11 +67,11 @@ public class ProtectionListener implements Listener {
      * rather than refusing the action, where the gap was.
      */
     private boolean roundInProgress() {
-        return this.plugin.getGamemanager().roundInProgress();
+        return this.gamemanager.roundInProgress();
     }
 
     private ForceItemPlayer forceItemPlayer(Player player) {
-        return this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        return this.gamemanager.getForceItemPlayer(player.getUniqueId());
     }
 
     @EventHandler

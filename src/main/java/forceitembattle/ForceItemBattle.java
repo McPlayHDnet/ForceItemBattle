@@ -102,7 +102,11 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public final class ForceItemBattle extends JavaPlugin {
 
+    /** Every manager, in construction order. Membership only — see {@link #lifecycleOrder()}. */
     private final List<Manager> managers = new ArrayList<>();
+
+    /** The lifecycle order, resolved once at boot so disable() reverses exactly what enable() ran. */
+    private List<Manager> lifecycle = List.of();
     @Getter
     private Gamemanager gamemanager;
     @Getter
@@ -171,9 +175,77 @@ public final class ForceItemBattle extends JavaPlugin {
         saveConfig();
     }
 
+    /**
+     * Records a manager for its lifecycle. <b>Does not decide when it is enabled</b> — that is
+     * {@link #lifecycleOrder()}, declared separately and deliberately.
+     *
+     * <p>These were one thing until now: the list was built as managers were constructed, so
+     * construction order <em>was</em> enable order and its reverse was disable order. That made a
+     * constructor dependency unfixable without moving a manager's lifecycle with it, and
+     * {@code CollectionManager} is the case that proved it — its loaders wanted
+     * {@code FIBServiceClient}, which was constructed later, and the only way to reach it was to
+     * move a manager whose {@code enable()} and {@code disable()} would have moved too.
+     *
+     * <p>Construction order is now free to follow dependencies. Lifecycle order is stated once,
+     * where it can be read and reasoned about.
+     */
     private <T extends Manager> T register(T manager) {
         this.managers.add(manager);
         return manager;
+    }
+
+    /**
+     * The order managers are enabled in, and — reversed — disabled in.
+     *
+     * <p>This is the order that was previously implicit in the construction sequence, preserved
+     * exactly. It is load-bearing: {@code TimerManager} starting its task earlier or saving its
+     * config later are live behaviour changes that no test would catch, which is why this is a
+     * list to be edited deliberately rather than a side effect of where a {@code new} happens to
+     * sit.
+     */
+    private List<Manager> lifecycleOrder() {
+        return List.of(
+                this.gamemanager,
+                this.timerManager,
+                this.backpackManager,
+                this.backToBackManager,
+                this.customItemManager,
+                this.itemDifficultiesManager,
+                this.recipeManager,
+                this.antimatterPortalManager,
+                this.positionManager,
+                this.teamManager,
+                this.tradingManager,
+                this.commandsManager,
+                this.achievementManager,
+                this.collectionManager,
+                this.locatorManager,
+                this.protectionManager,
+                this.wanderingTraderManager,
+                this.randomEventManager,
+                this.tabListManager,
+                this.voteSkipManager,
+                this.scoreboardManager,
+                this.fibService,
+                this.foundItemResolver);
+    }
+
+    /**
+     * Every registered manager appears in the lifecycle order exactly once.
+     *
+     * <p>The one hazard the split introduces: a manager constructed and registered but left out of
+     * {@link #lifecycleOrder()} would never be enabled, and nothing else would say so. This turns
+     * that into a boot failure, which is the same bargain {@code CommandsManager} already makes for
+     * an unregistered command.
+     */
+    private void verifyLifecycleCoversEveryManager(List<Manager> order) {
+        if (order.size() != this.managers.size() || !order.containsAll(this.managers)) {
+            List<Manager> missing = new ArrayList<>(this.managers);
+            missing.removeAll(order);
+            throw new IllegalStateException(
+                    "lifecycleOrder() must list every registered manager exactly once; missing: "
+                            + missing.stream().map(m -> m.getClass().getSimpleName()).toList());
+        }
     }
 
     @Override
@@ -189,22 +261,28 @@ public final class ForceItemBattle extends JavaPlugin {
         this.backToBackManager = register(new BackToBackManager(this));
         this.customItemManager = register(new CustomItemManager(this));
         this.itemDifficultiesManager = register(new ItemDifficultiesManager(this));
-        this.recipeManager = register(new RecipeManager(this));
+        this.recipeManager = register(new RecipeManager(this, this.settings));
         this.antimatterPortalManager = register(new AntimatterPortalManager(this));
         this.positionManager = register(new PositionManager(this));
         this.teamManager = register(new TeamsManager(this));
         this.tradingManager = register(new TradingManager(this));
         this.commandsManager = register(new CommandsManager(this));
         this.achievementManager = register(new AchievementManager(this));
-        this.collectionManager = register(new CollectionManager(this));
-        this.locatorManager = register(new LocatorManager(this));
-        this.protectionManager = register(new ProtectionManager(this));
+
+        // Constructed here rather than last: CollectionManager's loaders need it, and it needs
+        // AchievementManager's cache. Its enable()/disable() position is unchanged -- that is
+        // lifecycleOrder()'s business now, not this line's, which is the whole point of the split.
+        this.fibService = register(new FIBServiceClient(this, this.achievementManager.getGlobalStatsCache()));
+
+        this.collectionManager = register(
+                new CollectionManager(this.itemDifficultiesManager, this.fibService));
+        this.locatorManager = register(new LocatorManager(this, this.positionManager));
+        this.protectionManager = register(new ProtectionManager(this.gamemanager));
         this.wanderingTraderManager = register(new WanderingTraderManager(this));
         this.randomEventManager = register(new RandomEventManager(this));
-        this.tabListManager = register(new TabListManager(this));
-        this.voteSkipManager = register(new VoteSkipManager(this));
+        this.tabListManager = register(new TabListManager(this.gamemanager, this.itemDifficultiesManager, this.randomEventManager, this.wanderingTraderManager));
+        this.voteSkipManager = register(new VoteSkipManager(this.gamemanager, this.itemDifficultiesManager));
         this.scoreboardManager = register(new ScoreboardManager(this));
-        this.fibService = register(new FIBServiceClient(this));
 
         // Named dependencies rather than the plugin, so this one has to be built after all of them.
         // That ordering requirement is the cost of the explicitness, and it is why the managers
@@ -219,7 +297,11 @@ public final class ForceItemBattle extends JavaPlugin {
                 this.itemDifficultiesManager,
                 this.fibService));
 
-        this.managers.forEach(Manager::enable);
+        // Construction above follows dependencies; this follows the lifecycle. They are no longer
+        // the same list, which is what lets a manager take a sibling constructed before it.
+        this.lifecycle = this.lifecycleOrder();
+        this.verifyLifecycleCoversEveryManager(this.lifecycle);
+        this.lifecycle.forEach(Manager::enable);
 
         this.initListeners();
         this.initCommands();
@@ -348,22 +430,22 @@ public final class ForceItemBattle extends JavaPlugin {
 
     private void initListeners() {
         registerListeners(
-                new FoundItemListener(this),
-                new SettingsListener(this),
-                new RecipeListener(this),
-                new PvPListener(this),
-                new ProtectionListener(this),
-                new ClickableItemsListener(this),
-                new ItemsListener(this),
-                new PortalListener(this),
-                new AntimatterPortalListener(this),
-                new AchievementListener(this),
-                new PreGameLockListener(this),
-                new ChatListener(this),
-                new PlayerLifecycleListener(this),
-                new TradeListener(this),
+                new FoundItemListener(this.foundItemResolver, this.gamemanager),
+                new SettingsListener(this.settings),
+                new RecipeListener(this.recipeManager),
+                new PvPListener(this.gamemanager, this.settings),
+                new ProtectionListener(this, this.gamemanager, this.protectionManager),
+                new ClickableItemsListener(this, this.backpackManager, this.fibService, this.gamemanager, this.locatorManager, this.settings, this.timerManager),
+                new ItemsListener(this.gamemanager),
+                new PortalListener(this.antimatterPortalManager, this.fibService, this.gamemanager, this.settings),
+                new AntimatterPortalListener(this.antimatterPortalManager, this.gamemanager),
+                new AchievementListener(this.achievementManager, this.backpackManager, this.gamemanager, this.settings),
+                new PreGameLockListener(this.gamemanager),
+                new ChatListener(this, this.gamemanager, this.settings),
+                new PlayerLifecycleListener(this.fibService, this.gamemanager, this.scoreboardManager, this.settings, this.teamManager, this.timerManager),
+                new TradeListener(this.wanderingTraderManager),
                 new VillagerTradeListener(this),
-                new GameRulesListener(this),
+                new GameRulesListener(this.gamemanager, this.settings),
                 new GuiListener(this),
                 new JournalListener(this)
         );
@@ -417,8 +499,8 @@ public final class ForceItemBattle extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        for (int i = this.managers.size() - 1; i >= 0; i--) {
-            this.managers.get(i).disable();
+        for (int i = this.lifecycle.size() - 1; i >= 0; i--) {
+            this.lifecycle.get(i).disable();
         }
     }
 }

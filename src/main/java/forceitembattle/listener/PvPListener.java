@@ -1,6 +1,7 @@
 package forceitembattle.listener;
 
-import forceitembattle.ForceItemBattle;
+import forceitembattle.manager.Gamemanager;
+import forceitembattle.settings.GameSettings;
 import forceitembattle.settings.GameSetting;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.block.Block;
@@ -19,9 +20,8 @@ import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
 
 @RequiredArgsConstructor
 public class PvPListener implements Listener {
-
-    private final ForceItemBattle plugin;
-
+    private final Gamemanager gamemanager;
+    private final GameSettings settings;
     @EventHandler
     public void onTntIgnited(EntitySpawnEvent e) {
         if (isPvpEnabled()) {
@@ -60,7 +60,7 @@ public class PvPListener implements Listener {
 
     @EventHandler
     public void onEntityDamage(EntityDamageEvent event) {
-        if (!this.plugin.getGamemanager().roundRunning()) {
+        if (!this.gamemanager.roundRunning()) {
             event.setCancelled(true);
         }
 
@@ -85,13 +85,13 @@ public class PvPListener implements Listener {
 
     @EventHandler
     public void onEntityTarget(EntityTargetLivingEntityEvent event) {
-        if (this.plugin.getGamemanager().isPausedGame() && event.getTarget() instanceof Player) {
+        if (this.gamemanager.isPausedGame() && event.getTarget() instanceof Player) {
             event.setCancelled(true);
         }
     }
 
     private boolean isPvpEnabled() {
-        return this.plugin.getSettings().isSettingEnabled(GameSetting.PVP);
+        return this.settings.isSettingEnabled(GameSetting.PVP);
     }
 
     @EventHandler(ignoreCancelled = true)
