@@ -3,15 +3,17 @@ package forceitembattle.manager;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.RoundClock;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.FileLogger;
 import forceitembattle.util.Text;
+import forceitembattle.util.TimeFormat;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.OptionalInt;
 import java.util.UUID;
 import lombok.Getter;
-import lombok.Setter;
 import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
@@ -22,23 +24,29 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
+/**
+ * Drives the round clock once a second and renders it.
+ *
+ * <p>Everything here is presentation or plumbing: boss bars, action bars, titles, sounds, the
+ * per-second fan-out to the other managers, and persisting the remaining time across a restart.
+ * The rule — how much is left, and which seconds are worth announcing — is {@link RoundClock},
+ * which knows nothing about Bukkit and can be run a thousand seconds forward in a test.
+ */
 public class TimerManager implements Manager {
+
+    private static final Title.Times TIMES =
+            Title.Times.times(Duration.ofMillis(1000), Duration.ofMillis(1000), Duration.ofMillis(1000));
 
     private final ForceItemBattle forceItemBattle;
     @Getter
     private final Map<UUID, BossBar> bossBar = new HashMap<>();
-    /** Seconds until the game ends. */
-    @Setter
-    @Getter
-    private int timeLeft;
+    private final RoundClock clock = new RoundClock();
     private BukkitTask timerTask;
 
     public TimerManager(ForceItemBattle forceItemBattle) {
         this.forceItemBattle = forceItemBattle;
         if (this.forceItemBattle.getConfig().contains("timer.time")) {
-            this.timeLeft = this.forceItemBattle.getConfig().getInt("timer.time");
-        } else {
-            this.timeLeft = 0;
+            this.clock.setSecondsLeft(this.forceItemBattle.getConfig().getInt("timer.time"));
         }
     }
 
@@ -62,17 +70,16 @@ public class TimerManager implements Manager {
         this.forceItemBattle.saveConfig();
     }
 
-    public String formatSeconds(int inputSeconds) {
-        int seconds = inputSeconds % 60;
-        int minutes = (inputSeconds / 60) % 60;
-        int hours = inputSeconds / 60 / 60;
+    public int getTimeLeft() {
+        return this.clock.secondsLeft();
+    }
 
-        String time = "";
-        if (hours != 0) time += hours + "h ";
-        if (minutes != 0) time += minutes + "m ";
-        if (seconds != 0) time += seconds + "s";
+    public void setTimeLeft(int timeLeft) {
+        this.clock.setSecondsLeft(timeLeft);
+    }
 
-        return time;
+    public void save() {
+        this.forceItemBattle.getConfig().set("timer.time", this.clock.secondsLeft());
     }
 
     public void sendActionBar() {
@@ -80,8 +87,8 @@ public class TimerManager implements Manager {
 
             if (!this.forceItemBattle.getGamemanager().isMidGame()) {
                 if (this.forceItemBattle.getGamemanager().isPausedGame()) {
-                    Title.Times times = Title.Times.times(Duration.ofMillis(0), Duration.ofMillis(1000), Duration.ofMillis(500));
-                    Title timeLeftTitle = Title.title(Component.empty(), Text.of("<red>Game is paused!"), times);
+                    Title timeLeftTitle = Title.title(Component.empty(), Text.of("<red>Game is paused!"),
+                            Title.Times.times(Duration.ofMillis(0), Duration.ofMillis(1000), Duration.ofMillis(500)));
                     player.showTitle(timeLeftTitle);
 
                 }
@@ -89,143 +96,77 @@ public class TimerManager implements Manager {
                 continue;
             }
 
-            if (this.forceItemBattle.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
-                ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
+            ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager()
+                    .getForceItemPlayer(player.getUniqueId());
 
-                if (!forceItemPlayer.isSpectator()) {
-                    Material material = forceItemPlayer.activeMaterial();
-
-                    boolean teamMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM);
-                    boolean scoreShown = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.SCORE);
-                    String timeText = "<gradient:#fcef64:#fcc44b:#ff9e59><b>" + this.formatSeconds(this.getTimeLeft()) + "</b></gradient>";
-                    String scoreText = "";
-                    if (scoreShown) {
-                        // Only the label differs by mode; the number is the active score either way.
-                        scoreText = "<dark_gray>| <green>" + (teamMode ? "Team score: " : "Your score: ")
-                                + "<white>" + forceItemPlayer.activeScore();
-                    }
-
-                    player.sendActionBar(
-                            Text.of(
-                                    timeText + " " + scoreText
-                            )
-                    );
-
-                    String bossBarTitle = "<gradient:#6eee87:#5fc52e><b>" + CustomMaterials.nameOf(material) +
-                            " <reset><shadow:black:0.4>" + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(false, material) + "</shadow>";
-                    String chainBossTitle = null;
-
-                    if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.CHAIN)) {
-                        Material nextMaterial = forceItemPlayer.activeNextMaterial();
-                        chainBossTitle = "<gradient:#6eee87:#5fc52e><b>" + CustomMaterials.nameOf(nextMaterial) + " <reset><shadow:black:0.4>" + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(false, nextMaterial) + "</shadow>";
-                    }
-
-                    String finalBossBar = bossBarTitle + (chainBossTitle != null ? " <gray><b>➡</b> " + chainBossTitle : "");
-
-                    try {
-                        BossBar bar = this.bossBar.get(player.getUniqueId());
-                        bar.name(Text.of(finalBossBar));
-                        player.showBossBar(bar);
-                    } catch (NullPointerException e) {
-                        BossBar bar = BossBar.bossBar(Text.of(finalBossBar), 1, BossBar.Color.WHITE, BossBar.Overlay.NOTCHED_6);
-                        player.showBossBar(bar);
-                        this.bossBar.put(player.getUniqueId(), bar);
-                    }
-                } else {
-                    player.sendActionBar(Text.of("<gradient:#fcef64:#fcc44b:#f44c7d><b>" + this.formatSeconds(this.getTimeLeft()) + "</b> <dark_gray>| <gold>SPEC"));
-                }
-
-            } else {
-                player.sendActionBar(Text.of("<gradient:#fcef64:#fcc44b:#f44c7d><b>" + this.formatSeconds(this.getTimeLeft()) + "</b> <dark_gray>| <gold>SPEC"));
-
+            if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
+                player.sendActionBar(Text.of("<gradient:#fcef64:#fcc44b:#f44c7d><b>"
+                        + TimeFormat.humanised(this.getTimeLeft()) + "</b> <dark_gray>| <gold>SPEC"));
+                continue;
             }
+
+            this.sendPlayingHud(player, forceItemPlayer);
         }
     }
 
-    public void save() {
-        this.forceItemBattle.getConfig().set("timer.time", timeLeft);
+    /** The action bar and boss bar of someone actually hunting an item. */
+    private void sendPlayingHud(Player player, ForceItemPlayer forceItemPlayer) {
+        Material material = forceItemPlayer.activeMaterial();
+
+        String timeText = "<gradient:#fcef64:#fcc44b:#ff9e59><b>"
+                + TimeFormat.humanised(this.getTimeLeft()) + "</b></gradient>";
+        String scoreText = "";
+        if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.SCORE)) {
+            // Only the label differs by mode; the number is the active score either way. Whose
+            // score it is is a question about this player's score owner, not about the TEAM
+            // setting — a spectator-turned-player with no team would disagree with the setting.
+            scoreText = "<dark_gray>| <green>" + (forceItemPlayer.isInTeam() ? "Team score: " : "Your score: ")
+                    + "<white>" + forceItemPlayer.activeScore();
+        }
+
+        player.sendActionBar(Text.of(timeText + " " + scoreText));
+
+        String bossBarTitle = this.itemLabel(material);
+        if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.CHAIN)) {
+            bossBarTitle += " <gray><b>➡</b> " + this.itemLabel(forceItemPlayer.activeNextMaterial());
+        }
+
+        BossBar bar = this.bossBar.computeIfAbsent(player.getUniqueId(),
+                uuid -> BossBar.bossBar(Component.empty(), 1, BossBar.Color.WHITE, BossBar.Overlay.NOTCHED_6));
+        bar.name(Text.of(bossBarTitle));
+        player.showBossBar(bar);
+    }
+
+    private String itemLabel(Material material) {
+        return "<gradient:#6eee87:#5fc52e><b>" + CustomMaterials.nameOf(material)
+                + " <reset><shadow:black:0.4>"
+                + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(false, material)
+                + "</shadow>";
     }
 
     private void run() {
         this.timerTask = new BukkitRunnable() {
             @Override
             public void run() {
-
                 sendActionBar();
                 if (!forceItemBattle.getGamemanager().isMidGame()) {
                     forceItemBattle.getTabListManager().clearFooter();
                     return;
                 }
-                setTimeLeft(getTimeLeft() - 1);
-                forceItemBattle.getRandomEventManager().tick(getTimeLeft());
 
-                for (ItemDifficultiesManager.State unlockedPool :
-                        forceItemBattle.getItemDifficultiesManager().pollNewlyUnlockedStates()) {
-                    Bukkit.getOnlinePlayers().forEach(players -> {
-                        players.sendMessage(Text.of("<shadow:black:0><sprite:items:item/clock_00> <reset><gray>New item pool unlocked <dark_gray>» <" + unlockedPool.getColor() + ">" + unlockedPool.getDisplayName()));
-                        players.playSound(players.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_RESONATE, 1, 0.8f);
-                    });
-                }
+                OptionalInt milestone = clock.tick();
+
+                forceItemBattle.getRandomEventManager().tick(clock.secondsLeft());
+                announceUnlockedPools();
 
                 // Refresh the tab footer after the pool poll so its pool countdown
                 // flips to "active" on the same tick the unlock message is sent.
                 forceItemBattle.getTabListManager().update();
 
-                switch (getTimeLeft()) {
-                    case 300: {
-                        Title.Times times = Title.Times.times(Duration.ofMillis(1000), Duration.ofMillis(1000), Duration.ofMillis(1000));
-                        Title timeLeftTitle = Title.title(Component.empty(), Text.of("<red>5 minutes left"), times);
-                        Bukkit.getOnlinePlayers().forEach(
-                                players -> {
-                                    players.showTitle(timeLeftTitle);
-                                    players.playSound(players.getLocation(), Sound.BLOCK_NOTE_BLOCK_BIT, 1, 1);
-                                }
-                        );
-                        break;
-                    }
-                    case 60: {
-                        Title.Times times = Title.Times.times(Duration.ofMillis(1000), Duration.ofMillis(1000), Duration.ofMillis(1000));
-                        Title timeLeftTitle = Title.title(Component.empty(), Text.of("<red>1 minute left"), times);
-                        Bukkit.getOnlinePlayers().forEach(
-                                players -> {
-                                    players.showTitle(timeLeftTitle);
-                                    players.playSound(players.getLocation(), Sound.BLOCK_NOTE_BLOCK_BIT, 1, 1);
-                                }
-                        );
-                        break;
-                    }
-                    case 30, 10: {
-                        Title.Times times = Title.Times.times(Duration.ofMillis(1000), Duration.ofMillis(1000), Duration.ofMillis(1000));
-                        Title timeLeftTitle = Title.title(Component.empty(), Text.of("<red>" + getTimeLeft() + " seconds left"), times);
-                        Bukkit.getOnlinePlayers().forEach(
-                                players -> {
-                                    players.showTitle(timeLeftTitle);
-                                    players.playSound(players.getLocation(), Sound.BLOCK_NOTE_BLOCK_BIT, 1, 1);
-                                }
-                        );
-                        break;
-                    }
-                    case 5, 4, 3, 2, 1: {
-                        Title.Times times = Title.Times.times(Duration.ofMillis(1000), Duration.ofMillis(1000), Duration.ofMillis(1000));
-                        Title timeLeftTitle = Title.title(Text.of("<red>" + getTimeLeft()), Component.empty(), times);
-                        Bukkit.getOnlinePlayers().forEach(
-                                players -> {
-                                    players.showTitle(timeLeftTitle);
-                                    players.playSound(players.getLocation(), Sound.BLOCK_NOTE_BLOCK_BIT, 1, 1);
-                                }
-                        );
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                if (getTimeLeft() <= 0) {
-                    Title.Times times = Title.Times.times(Duration.ofMillis(1000), Duration.ofMillis(1000), Duration.ofMillis(1000));
-                    Title gameDoneTitle = Title.title(Component.empty(), Text.of("<white>» <gold>Force Item Battle is over! <white>«"), times);
-                    Bukkit.getOnlinePlayers().forEach(player -> {
-                        player.playSound(player, Sound.BLOCK_END_PORTAL_SPAWN, 1, 1);
-                        player.showTitle(gameDoneTitle);
-                    });
+                milestone.ifPresent(TimerManager.this::announceMilestone);
+
+                if (clock.expired()) {
+                    announceRoundOver();
                     forceItemBattle.getTabListManager().clearFooter();
                     forceItemBattle.getGamemanager().finishGame();
                     FileLogger.log("<< Force Item Battle is over >>");
@@ -235,4 +176,40 @@ public class TimerManager implements Manager {
         }.runTaskTimer(this.forceItemBattle, 20, 20);
     }
 
+    private void announceUnlockedPools() {
+        for (ItemDifficultiesManager.State unlockedPool :
+                this.forceItemBattle.getItemDifficultiesManager().pollNewlyUnlockedStates()) {
+            Bukkit.getOnlinePlayers().forEach(players -> {
+                players.sendMessage(Text.of("<shadow:black:0><sprite:items:item/clock_00> <reset><gray>New item pool unlocked <dark_gray>» <"
+                        + unlockedPool.getColor() + ">" + unlockedPool.getDisplayName()));
+                players.playSound(players.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_RESONATE, 1, 0.8f);
+            });
+        }
+    }
+
+    /**
+     * Renders one countdown milestone. The final five seconds put the bare number in the headline,
+     * because by then the number is the whole message; everything above that is a line of warning
+     * text under an empty headline.
+     */
+    private void announceMilestone(int secondsLeft) {
+        Title title = RoundClock.isFinalCountdown(secondsLeft)
+                ? Title.title(Text.of("<red>" + secondsLeft), Component.empty(), TIMES)
+                : Title.title(Component.empty(), Text.of("<red>" + TimeFormat.countdownPhrase(secondsLeft)), TIMES);
+
+        Bukkit.getOnlinePlayers().forEach(player -> {
+            player.showTitle(title);
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BIT, 1, 1);
+        });
+    }
+
+    private void announceRoundOver() {
+        Title gameDoneTitle = Title.title(Component.empty(),
+                Text.of("<white>» <gold>Force Item Battle is over! <white>«"), TIMES);
+
+        Bukkit.getOnlinePlayers().forEach(player -> {
+            player.playSound(player, Sound.BLOCK_END_PORTAL_SPAWN, 1, 1);
+            player.showTitle(gameDoneTitle);
+        });
+    }
 }

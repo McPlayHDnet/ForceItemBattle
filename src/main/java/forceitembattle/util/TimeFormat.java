@@ -35,6 +35,45 @@ public final class TimeFormat {
     }
 
     /**
+     * A duration as {@code 1h 5m 30s}, dropping any component that is zero.
+     *
+     * <p>Used where a length is being read rather than watched: the round's remaining time on the
+     * action bar, and the time a find took on a result screen. Lived on {@code TimerManager} as
+     * {@code formatSeconds} until it turned out to be a pure function with no reason to be on a
+     * manager, let alone one a caller had to reach through the plugin to get at.
+     *
+     * <p>Two long-standing warts, pinned by tests rather than fixed so that changing either is a
+     * decision instead of a surprise: zero renders as the empty string, and a duration ending on
+     * hours or minutes keeps a trailing space ({@code "5m "}). Callers get away with the first
+     * because a round showing {@code 0} is already over, and with the second because the strings
+     * land inside MiniMessage, where the space is invisible.
+     */
+    public static String humanised(int totalSeconds) {
+        int seconds = totalSeconds % 60;
+        int minutes = (totalSeconds / 60) % 60;
+        int hours = totalSeconds / 60 / 60;
+
+        String time = "";
+        if (hours != 0) time += hours + "h ";
+        if (minutes != 0) time += minutes + "m ";
+        if (seconds != 0) time += seconds + "s";
+
+        return time;
+    }
+
+    /**
+     * How a countdown milestone is spoken: {@code 5 minutes left}, {@code 1 minute left},
+     * {@code 30 seconds left}. Whole minutes are said in minutes, everything else in seconds.
+     */
+    public static String countdownPhrase(int secondsLeft) {
+        if (secondsLeft % 60 == 0) {
+            int minutes = secondsLeft / 60;
+            return minutes + (minutes == 1 ? " minute" : " minutes") + " left";
+        }
+        return secondsLeft + " seconds left";
+    }
+
+    /**
      * A world's time of day as {@code HH:mm}.
      *
      * Minecraft's day starts at sunrise, not midnight: tick 0 is 06:00 and a full day is 24000

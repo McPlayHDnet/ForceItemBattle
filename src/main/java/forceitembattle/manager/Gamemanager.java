@@ -12,6 +12,7 @@ import forceitembattle.service.MatchHistoryReporter;
 import forceitembattle.service.PlayerStatsWrite;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameState;
+import forceitembattle.model.RoundSetup;
 import forceitembattle.model.ScoreOwner;
 import forceitembattle.gui.ItemBuilder;
 import forceitembattle.model.Team;
@@ -39,7 +40,6 @@ import org.bukkit.GameRules;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.Sound;
 import org.bukkit.Statistic;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -405,8 +405,7 @@ public class Gamemanager implements Manager {
         ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
 
         if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
-            player.setGameMode(GameMode.SPECTATOR);
-            player.getInventory().clear();
+            PlayerOutfitter.toSpectator(player);
             return;
         }
         if (forceItemPlayer.isStartSetupApplied()) {
@@ -414,42 +413,22 @@ public class Gamemanager implements Manager {
         }
         forceItemPlayer.setStartSetupApplied(true);
 
+        GameContext context = GameContext.of(this.forceItemBattle.getSettings(), forceItemPlayer);
         boolean teamMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM);
 
         this.sendStartSummary(player, this.gameDuration / 60, this.jokerAmount);
 
-        player.setHealth(20);
-        player.setSaturation(20);
-        player.getInventory().clear();
-
-        if (!teamMode) {
+        // A solo player owns their own pool, so it is set here. A team's is set once for the whole
+        // team by distributeTeamJokers, and setting it per member would just overwrite it.
+        if (!forceItemPlayer.isInTeam()) {
             forceItemPlayer.scoreOwner().setJokers(this.jokerAmount);
-            if (!this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.RUN)) {
-                player.getInventory().setItem(4, getJokers(this.jokerAmount));
-            }
-        } else if (!this.isStarting() && forceItemPlayer.activeJokers() > 0) {
-            // At countdown end the whole roster is served by /start's distributeTeamJokers, which
-            // splits the pool across both members. A player rejoining later missed that split, so
-            // hand them what the team has left: the stack is only the button, the count that gates
-            // a skip lives on the team.
-            player.getInventory().setItem(4, getJokers(forceItemPlayer.activeJokers()));
         }
 
-        player.getInventory().addItem(new ItemStack(Material.STONE_AXE));
-        player.getInventory().addItem(new ItemStack(Material.STONE_PICKAXE));
-        player.getInventory().addItem(new ItemStack(Material.STONE_SHOVEL));
+        PlayerOutfitter.toPlayer(player,
+                RoundSetup.jokersOnHotbar(forceItemPlayer, context, this.jokerAmount, this.isStarting()));
 
-        player.setLevel(0);
-        player.setExp(0);
-        player.setWalkSpeed(0.2f);
-        player.setStatistic(Statistic.TIME_SINCE_REST, 72000); // 1hr = 3600 seconds * 20 ticks
-        player.getPassengers().forEach(Entity::remove);
-        player.getActivePotionEffects().forEach(potionEffect -> player.removePotionEffect(potionEffect.getType()));
-        player.setGameMode(GameMode.SURVIVAL);
-        player.playSound(player, Sound.BLOCK_END_PORTAL_SPAWN, 1, 1);
-
-        if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.BACKPACK)) {
-            if (teamMode) {
+        if (context.backpackEnabled()) {
+            if (forceItemPlayer.isInTeam()) {
                 this.forceItemBattle.getBackpackManager().createTeamBackpack(forceItemPlayer.currentTeam(), forceItemPlayer);
             } else {
                 this.forceItemBattle.getBackpackManager().createBackpack(forceItemPlayer);
@@ -542,24 +521,13 @@ public class Gamemanager implements Manager {
      */
     private void distributeTeamJokers(int jokersAmount) {
         this.forceItemBattle.getTeamManager().getTeams().forEach(team -> {
-            team.setRemainingJokers(jokersAmount);
-            int totalPlayers = team.getPlayers().size();
-            int jokerPerPlayer = jokersAmount / totalPlayers;
-            int remainingJoker = jokersAmount % totalPlayers;
+            team.setJokers(jokersAmount);
 
-            for (ForceItemPlayer teamPlayer : team.getPlayers()) {
-                int playerJoker = jokerPerPlayer;
+            List<ForceItemPlayer> members = team.members();
+            int[] shares = RoundSetup.splitJokers(jokersAmount, members.size());
 
-                if (remainingJoker > 0) {
-                    playerJoker++;
-                    remainingJoker--;
-                }
-
-                Player teamMember = teamPlayer.player();
-                if (teamMember == null || !teamMember.isOnline()) {
-                    continue;
-                }
-                teamMember.getInventory().setItem(4, getJokers(playerJoker));
+            for (int member = 0; member < members.size(); member++) {
+                PlayerOutfitter.giveJokerShare(members.get(member).player(), shares[member]);
             }
         });
     }

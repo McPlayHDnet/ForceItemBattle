@@ -1,0 +1,39 @@
+package forceitembattle;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.bukkit.Material;
+import org.junit.jupiter.api.Test;
+
+/**
+ * Where the headless test boundary sits, established by experiment.
+ *
+ * Most of the plugin turns out to be reachable without booting a server: the {@link Material} enum
+ * initialises, Bukkit interfaces mock (given {@code -Dnet.bytebuddy.experimental=true}, set on the
+ * test task — Byte Buddy does not yet recognise Java 25), and the whole plugin/manager graph mocks
+ * deeply enough that {@code ItemDifficultiesManager.enable()} registers all ~1,367 items.
+ *
+ * <p>{@link org.bukkit.inventory.ItemStack} is the wall. Its static init reaches for the attribute
+ * registry, which only exists on a running server, so everything that builds one — every GUI,
+ * ItemBuilder, the joker inventory handling — is out of reach here and has to be checked in a real
+ * game or under a harness like MockBukkit.
+ */
+class HeadlessBoundaryTest {
+
+    @Test
+    void materialEnumInitialisesHeadless() {
+        assertNotNull(Material.STONE);
+        assertTrue(Material.values().length > 100);
+    }
+
+    /**
+     * Documents the blocker rather than a behaviour. If this ever stops throwing, the GUI layer
+     * became testable — delete this test and the note above with it.
+     */
+    @Test
+    void itemStackStillNeedsARunningServer() {
+        assertThrows(Throwable.class, () -> new org.bukkit.inventory.ItemStack(Material.STONE));
+    }
+}

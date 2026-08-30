@@ -37,7 +37,8 @@ public class FIBServiceClient implements Manager {
         this.apiClient = client;
 
         this.executor = new ApiExecutor(plugin);
-        this.statistics = new FibStatisticsClient(new FibStatisticsControllerApi(client), executor, plugin);
+        this.statistics = new FibStatisticsClient(new FibStatisticsControllerApi(client), executor,
+                plugin.getAchievementManager().getGlobalStatsCache());
         this.achievements = new FibAchievementClient(new FibAchievementControllerApi(client), executor);
         this.matchHistory = new FibMatchHistoryClient(new FibMatchControllerApi(client), executor, plugin);
         this.catalogue = new FibCatalogueClient(new FibCatalogueControllerApi(client), executor, plugin);

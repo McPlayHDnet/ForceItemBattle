@@ -13,7 +13,6 @@ import de.threeseconds.openapi.fibservice.client.model.FibTeamStatisticsDto;
 import de.threeseconds.openapi.fibservice.client.model.FibTeamStatisticsUpdateRequestDto;
 import de.threeseconds.openapi.fibservice.client.model.FibPlayerStatsDto;
 import de.threeseconds.openapi.fibservice.client.model.FibPlayerStatsUpdateRequestDto;
-import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.global.GlobalStatsCache;
 import java.util.List;
 import java.util.UUID;
@@ -28,18 +27,24 @@ public class FibStatisticsClient {
 
     private final FibStatisticsControllerApi api;
     private final ApiExecutor executor;
-    private final ForceItemBattle plugin;
 
-    FibStatisticsClient(FibStatisticsControllerApi api, ApiExecutor executor, ForceItemBattle plugin) {
+    /**
+     * The cache a write invalidates. Held directly rather than fetched through the plugin: this is
+     * a service, and reaching from here into {@code AchievementManager} to find one field made the
+     * whole achievement subsystem look like a dependency of the stats transport. It is not — the
+     * only thing this needs is somewhere to say "that player's totals just changed".
+     */
+    private final GlobalStatsCache globalStats;
+
+    FibStatisticsClient(FibStatisticsControllerApi api, ApiExecutor executor, GlobalStatsCache globalStats) {
         this.api = api;
         this.executor = executor;
-        this.plugin = plugin;
+        this.globalStats = globalStats;
     }
 
     private void invalidateGlobal(UUID... playerUuids) {
-        GlobalStatsCache cache = this.plugin.getAchievementManager().getGlobalStatsCache();
         for (UUID playerUuid : playerUuids) {
-            cache.invalidate(playerUuid);
+            this.globalStats.invalidate(playerUuid);
         }
     }
 
@@ -149,7 +154,7 @@ public class FibStatisticsClient {
     }
 
     public void deleteAllTeamStatisticsForPlayerAsync(UUID playerUuid) {
-        this.plugin.getAchievementManager().getGlobalStatsCache().clear();
+        this.globalStats.clear();
         executor.runAsync(() -> {
             api.deleteAllTeamStatisticsForPlayer(playerUuid);
             return null;

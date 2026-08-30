@@ -2,19 +2,20 @@ package forceitembattle.listener;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.Gamemanager;
+import forceitembattle.manager.ProtectionManager;
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.ProtectionVerdict;
+import forceitembattle.util.AdminNotifier;
 import forceitembattle.util.Text;
-import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
 import org.bukkit.block.Container;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -28,6 +29,13 @@ import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
 
+/**
+ * Adapter for the protection rules: cancels what {@link ProtectionManager} refuses, plays the
+ * refusal sound, and tells the operators.
+ *
+ * <p>Nothing here decides anything. Every handler asks a question, and the only judgement it makes
+ * is how to word the answer.
+ */
 @RequiredArgsConstructor
 public class ProtectionListener implements Listener {
 
@@ -36,7 +44,20 @@ public class ProtectionListener implements Listener {
     private final List<CreatureSpawnEvent.SpawnReason> blockedSpawnReasons = List.of(
             CreatureSpawnEvent.SpawnReason.BUILD_WITHER
     );
-    private final List<String> sentMessages = new ArrayList<>();
+
+    private final AdminNotifier notifier = new AdminNotifier();
+
+    private ProtectionManager protection() {
+        return this.plugin.getProtectionManager();
+    }
+
+    private boolean isMidGame() {
+        return this.plugin.getGamemanager().isMidGame();
+    }
+
+    private ForceItemPlayer forceItemPlayer(Player player) {
+        return this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+    }
 
     @EventHandler
     public void onBlockEntitySpawn(CreatureSpawnEvent e) {
@@ -47,40 +68,31 @@ public class ProtectionListener implements Listener {
 
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
+        if (!this.isMidGame()) {
+            event.setCancelled(true);
+            return;
+        }
+
         Player player = event.getPlayer();
-        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-        if (!this.plugin.getGamemanager().isMidGame()) {
-            event.setCancelled(true);
+        Block block = event.getBlock();
+        ProtectionVerdict verdict = this.protection().mayBreak(player, this.forceItemPlayer(player), block);
+
+        if (verdict.denied()) {
+            this.refuse(event, player, switch (verdict) {
+                case NEAR_BED -> "break a block near bed";
+                default -> "break container";
+            }, block.getLocation());
             return;
         }
 
-        Block brokenBlock = event.getBlock();
-
-        if (this.plugin.getProtectionManager().isNearProtectedBed(player, brokenBlock.getLocation())) {
-            event.setCancelled(true);
-            player.playSound(player, Sound.ENTITY_VILLAGER_NO, 1, 1);
-            notify("<red>" + player.getName() + " <gray>tried to break a block near bed at <white>" + string(brokenBlock.getLocation()));
-            return;
-        }
-
-        if (brokenBlock.getState() instanceof Container) {
-            if (this.plugin.getProtectionManager().canBreakContainer(forceItemPlayer, event.getBlock())) {
-                this.plugin.getProtectionManager().breakContainer(event.getBlock());
-                return;
-            }
-
-            event.setCancelled(true);
-            player.playSound(player, Sound.ENTITY_VILLAGER_NO, 1, 1);
-            notify("<red>" + player.getName() + " <gray>tried to break container at <white>" + string(event.getBlock().getLocation()));
-            return;
-        }
+        // Whatever was just broken is no longer anyone's container. Harmless on a block that never
+        // was one, and it keeps the ownership map from holding entries for blocks that are gone.
+        this.protection().breakContainer(block);
     }
 
     @EventHandler
     public void onChestOpen(InventoryOpenEvent event) {
-        Player player = (Player) event.getPlayer();
-        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-        if (!this.plugin.getGamemanager().isMidGame()) {
+        if (!this.isMidGame()) {
             return;
         }
 
@@ -89,15 +101,12 @@ public class ProtectionListener implements Listener {
             return;
         }
 
+        Player player = (Player) event.getPlayer();
         Block block = inventoryLocation.getBlock();
-        if (this.plugin.getProtectionManager().canBreakContainer(forceItemPlayer, block)) {
-            return;
-        }
 
-        event.setCancelled(true);
-        player.playSound(player, Sound.ENTITY_VILLAGER_NO, 1, 1);
-        notify("<red>" + player.getName() + " <gray>tried to open a container at <white>" + string(block.getLocation()));
-        return;
+        if (!this.protection().canBreakContainer(this.forceItemPlayer(player), block)) {
+            this.refuse(event, player, "open a container", block.getLocation());
+        }
     }
 
     @EventHandler
@@ -106,69 +115,65 @@ public class ProtectionListener implements Listener {
             event.setCancelled(true);
             return;
         }
-        if (!this.plugin.getGamemanager().isMidGame()) {
+        if (!this.isMidGame()) {
             event.setCancelled(true);
             return;
         }
 
         Player player = event.getPlayer();
-        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
+        Block block = event.getBlock();
+        ForceItemPlayer placer = this.forceItemPlayer(player);
+        ProtectionVerdict verdict = this.protection().mayPlace(player, placer, block);
 
-        if (this.plugin.getProtectionManager().isNearProtectedBed(event.getPlayer(), event.getBlock().getLocation())) {
-            event.setCancelled(true);
-            player.playSound(player, Sound.ENTITY_VILLAGER_NO, 1, 1);
-            notify("<red>" + player.getName() + " <gray>tried to place a block near bed at <white>" + string(event.getBlock().getLocation()));
+        if (verdict.denied()) {
+            this.refuse(event, player, switch (verdict) {
+                case NEAR_BED -> "place a block near bed";
+                default -> "place a hopper below a container";
+            }, block.getLocation());
             return;
         }
 
-        if (event.getBlock().getType() == Material.HOPPER) {
-            if (!this.plugin.getProtectionManager().canBreakContainer(forceItemPlayer, event.getBlock().getRelative(BlockFace.UP))) {
-                event.setCancelled(true);
-                player.playSound(player, Sound.ENTITY_VILLAGER_NO, 1, 1);
-                notify("<red>" + player.getName() + " <gray>tried to place a hopper below a container at <white>" + string(event.getBlock().getLocation()));
-                return;
-            }
+        if (block.getState() instanceof Container) {
+            this.protection().protectContainer(placer, block);
         }
-
-        if (event.getBlock().getState() instanceof Container) {
-            this.plugin.getProtectionManager().protectContainer(forceItemPlayer, event.getBlock());
-        }
-        return;
     }
 
     @EventHandler
     public void onPiston(BlockPistonExtendEvent e) {
-        if (this.plugin.getGamemanager().isMidGame()) {
-            e.setCancelled(true);
-            for (Player player : getPlayersNearby(e.getBlock().getLocation())) {
-                player.sendMessage(Text.of(
-                        "<red>Pistons are disabled."
-                ));
-            }
-
-            notify("<red>" + playersNearby(e.getBlock().getLocation()) + " <gray> near an extending piston at <white>" + string(e.getBlock().getLocation()));
+        if (!this.isMidGame()) {
+            return;
         }
+
+        e.setCancelled(true);
+
+        Location location = e.getBlock().getLocation();
+        for (Player player : this.protection().witnesses(location)) {
+            player.sendMessage(Text.of("<red>Pistons are disabled."));
+        }
+
+        this.notifier.notifyOps("<red>" + this.protection().witnessNames(location)
+                + " <gray> near an extending piston at <white>" + format(location));
     }
 
     @EventHandler
     public void onBlockExplode(EntityExplodeEvent event) {
-        if (this.plugin.getGamemanager().isMidGame()) {
-            boolean removed = event.blockList().removeIf(this::isBlockProtected);
+        if (!this.isMidGame()) {
+            return;
+        }
 
-            if (removed) {
-                notify("<red>explosion <gray>tried to break protected blocks at <white>" + string(event.getLocation()) + " <gray>[nearby: " + playersNearby(event.getLocation()) + "]");
-            }
+        if (event.blockList().removeIf(this.protection()::isProtectedFromNature)) {
+            this.reportExplosion(event.getLocation());
         }
     }
 
     @EventHandler
     public void onEntityExplode(BlockExplodeEvent event) {
-        if (this.plugin.getGamemanager().isMidGame()) {
-            boolean removed = event.blockList().removeIf(this::isBlockProtected);
+        if (!this.isMidGame()) {
+            return;
+        }
 
-            if (removed) {
-                notify("<red>explosion <gray>tried to break protected blocks at <white>" + string(event.getBlock().getLocation()) + " <gray>[nearby: " + playersNearby(event.getBlock().getLocation()) + "]");
-            }
+        if (event.blockList().removeIf(this.protection()::isProtectedFromNature)) {
+            this.reportExplosion(event.getBlock().getLocation());
         }
     }
 
@@ -178,10 +183,8 @@ public class ProtectionListener implements Listener {
             return;
         }
 
-        if (this.plugin.getGamemanager().isMidGame()) {
-            if (isBlockProtected(e.getToBlock())) {
-                e.setCancelled(true);
-            }
+        if (this.isMidGame() && this.protection().isProtectedFromNature(e.getToBlock())) {
+            e.setCancelled(true);
         }
     }
 
@@ -191,74 +194,36 @@ public class ProtectionListener implements Listener {
             return;
         }
 
-        if (this.plugin.getGamemanager().isMidGame()) {
-            if (isBlockProtected(e.getBlockClicked())) {
-                e.setCancelled(true);
-                e.getPlayer().playSound(e.getPlayer(), Sound.ENTITY_VILLAGER_NO, 1, 1);
-                notify("<red>" + e.getPlayer().getName() + " <gray>tried to place a lava bucket near protected block at <white>" + string(e.getBlockClicked().getLocation()));
-            }
+        if (this.isMidGame() && this.protection().isProtectedFromNature(e.getBlockClicked())) {
+            this.refuse(e, e.getPlayer(), "place a lava bucket near protected block",
+                    e.getBlockClicked().getLocation());
         }
     }
 
     @EventHandler
     public void onBurn(BlockBurnEvent e) {
-        if (this.plugin.getGamemanager().isMidGame()) {
-            if (isBlockProtected(e.getBlock())) {
-                e.setCancelled(true);
-            }
+        if (this.isMidGame() && this.protection().isProtectedFromNature(e.getBlock())) {
+            e.setCancelled(true);
         }
     }
 
-    private void notify(String msg) {
-        if (sentMessages.contains(msg)) {
-            return;
-        }
-        sentMessages.add(msg);
-
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            if (player.isOp()) {
-                player.sendMessage(Text.of(msg));
-            }
-        }
+    /**
+     * The shape every refusal takes: stop it, tell the player with a sound, tell the operators what
+     * was attempted. Five handlers wrote these three lines out individually.
+     */
+    private void refuse(Cancellable event, Player player, String attempt, Location location) {
+        event.setCancelled(true);
+        player.playSound(player, Sound.ENTITY_VILLAGER_NO, 1, 1);
+        this.notifier.notifyOps("<red>" + player.getName() + " <gray>tried to " + attempt
+                + " at <white>" + format(location));
     }
 
-    private String string(Location location) {
+    private void reportExplosion(Location location) {
+        this.notifier.notifyOps("<red>explosion <gray>tried to break protected blocks at <white>"
+                + format(location) + " <gray>[nearby: " + this.protection().witnessNames(location) + "]");
+    }
+
+    private static String format(Location location) {
         return location.getBlockX() + ", " + location.getBlockY() + ", " + location.getBlockZ();
     }
-
-    private List<Player> getPlayersNearby(Location location) {
-        List<Player> players = new ArrayList<>();
-
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            if (!player.getWorld().equals(location.getWorld())) {
-                continue;
-            }
-
-            if (player.getLocation().distanceSquared(location) < 225) {
-                players.add(player);
-            }
-        }
-        return players;
-    }
-
-    private String playersNearby(Location location) {
-        StringBuilder builder = new StringBuilder();
-
-        for (Player player : getPlayersNearby(location)) {
-            builder.append(player.getName()).append(", ");
-        }
-
-        if (builder.isEmpty()) {
-            return "nobody";
-        }
-
-        return builder.substring(0, builder.length() - 2);
-    }
-
-    private boolean isBlockProtected(Block block) {
-        return !this.plugin.getProtectionManager().canBreakContainer(null, block)
-                || this.plugin.getProtectionManager().isNearProtectedBed(null, block.getLocation());
-    }
-
-
 }

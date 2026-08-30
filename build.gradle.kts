@@ -41,6 +41,10 @@ dependencies {
     implementation("de.threeseconds:FIBServiceClient:1.0.3")
     // paperweight.foliaDevBundle("1.20.4-R0.1-SNAPSHOT")
     // paperweight.devBundle("com.example.paperfork", "1.20.4-R0.1-SNAPSHOT")
+
+    testImplementation("org.junit.jupiter:junit-jupiter:5.11.3")
+    testImplementation("org.mockito:mockito-core:5.14.2")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks {
@@ -53,6 +57,27 @@ tasks {
     }
     javadoc {
         options.encoding = Charsets.UTF_8.name() // We want UTF-8 for everything
+    }
+
+    test {
+        useJUnitPlatform()
+
+        // Byte Buddy, which Mockito uses to mock Bukkit interfaces, does not yet recognise Java 25,
+        // so it needs this to instrument the Player type hierarchy.
+        systemProperty("net.bytebuddy.experimental", "true")
+
+        // Mockito's inline mock maker self-attaches as an agent by default and warns that this will
+        // stop working. Attaching it explicitly from the test classpath silences that.
+        doFirst {
+            classpath.files
+                .firstOrNull { it.name.startsWith("mockito-core") }
+                ?.let { jvmArgs("-javaagent:${it.absolutePath}") }
+        }
+
+        testLogging {
+            events("failed")
+            showStandardStreams = false
+        }
     }
 
     shadowJar {

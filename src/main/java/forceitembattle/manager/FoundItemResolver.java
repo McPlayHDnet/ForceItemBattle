@@ -1,6 +1,5 @@
 package forceitembattle.manager;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.model.BackToBack;
 import forceitembattle.model.BackToBackProbability;
 import forceitembattle.model.CustomMaterials;
@@ -13,8 +12,10 @@ import forceitembattle.model.Rarity;
 import forceitembattle.service.FIBServiceClient;
 import forceitembattle.service.FibStatisticsClient;
 import forceitembattle.service.PlayerStatsWrite;
+import forceitembattle.settings.GameSettings;
 import forceitembattle.util.GameBroadcast;
 import forceitembattle.util.Text;
+import forceitembattle.util.TimeFormat;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
@@ -50,10 +51,26 @@ import org.bukkit.entity.Player;
  * adapter that unwraps a Bukkit event into a {@link Find}; everything a find <em>means</em> is
  * here.
  */
+/**
+ * <h2>On the constructor</h2>
+ *
+ * Eight collaborators is a lot, and that is the honest width of a find: it announces, scores,
+ * advances, writes stats, refreshes a scoreboard, checks a chain and notifies a running event.
+ * Taking a {@code ForceItemBattle} instead made the same fan-out reach through one field, where it
+ * measured nothing and could grow without anyone noticing. If this list gets longer, that is the
+ * signal it should have been all along.
+ */
 @RequiredArgsConstructor
 public class FoundItemResolver implements Manager {
 
-    private final ForceItemBattle plugin;
+    private final GameSettings settings;
+    private final Gamemanager gamemanager;
+    private final ScoreboardManager scoreboardManager;
+    private final BackToBackManager backToBackManager;
+    private final RandomEventManager randomEventManager;
+    private final TimerManager timerManager;
+    private final ItemDifficultiesManager itemDifficultiesManager;
+    private final FIBServiceClient fibService;
 
     /**
      * Resolves one find, start to finish.
@@ -63,7 +80,7 @@ public class FoundItemResolver implements Manager {
      */
     public void resolve(Find find) {
         ForceItemPlayer finder = find.finder();
-        GameContext context = GameContext.of(this.plugin, finder);
+        GameContext context = GameContext.of(this.settings, finder);
         FindOutcome outcome = FindOutcome.of(find, context, System.currentTimeMillis());
 
         if (outcome.announces()) {
@@ -74,20 +91,20 @@ public class FoundItemResolver implements Manager {
             score(find, context);
         }
 
-        this.plugin.getGamemanager().advanceMaterials(finder, context);
+        this.gamemanager.advanceMaterials(finder, context);
 
         if (outcome.recordsStats()) {
             recordStats(find, outcome, context);
         }
 
-        this.plugin.getScoreboardManager().updateAllPlayers();
-        this.plugin.getBackToBackManager().handleAfterFind(finder, context);
-        this.plugin.getRandomEventManager().handleFoundItem(find);
+        this.scoreboardManager.updateAllPlayers();
+        this.backToBackManager.handleAfterFind(finder, context);
+        this.randomEventManager.handleFoundItem(find);
     }
 
     private void announce(Find find, GameContext context) {
         String action = find.skipped() ? "skipped" : "found";
-        String unicode = this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, find.material());
+        String unicode = this.itemDifficultiesManager.getUnicodeFromMaterial(true, find.material());
 
         Component message = Text.of(String.format(
                 "<green>%s <gray>%s <reset><shadow:black:0.4>%s</shadow> <gold>%s",
@@ -102,7 +119,7 @@ public class FoundItemResolver implements Manager {
         BackToBack backToBack = new BackToBack(find.backToBack());
 
         if (find.backToBack()) {
-            BackToBackProbability probability = this.plugin.getBackToBackManager().calculateProbability(finder);
+            BackToBackProbability probability = this.backToBackManager.calculateProbability(finder);
             backToBack.setPercentage(probability.percentage());
             backToBack.setRarity(probability.formatted());
             backToBack.setRarityType(probability.rarity());
@@ -114,7 +131,7 @@ public class FoundItemResolver implements Manager {
 
         ForceItem forceItem = new ForceItem(
                 find.material(),
-                this.plugin.getTimerManager().formatSeconds(this.plugin.getTimerManager().getTimeLeft()),
+                TimeFormat.humanised(this.timerManager.getTimeLeft()),
                 System.currentTimeMillis(),
                 backToBack,
                 find.skipped(),
@@ -124,11 +141,11 @@ public class FoundItemResolver implements Manager {
         finder.squad().forEach(member ->
                 member.player().playSound(member.player().getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1));
 
-        this.plugin.getGamemanager().evaluateLead();
+        this.gamemanager.evaluateLead();
     }
 
     private void trackRarity(ForceItemPlayer finder, Rarity rarity) {
-        FibStatisticsClient statistics = this.plugin.getFibService().statistics();
+        FibStatisticsClient statistics = this.fibService.statistics();
         var raritiesUpdate = rarity.toRaritiesUpdate();
 
         PlayerStatsWrite.record(statistics, finder.player().getUniqueId(), finder,
@@ -139,7 +156,7 @@ public class FoundItemResolver implements Manager {
     private void recordStats(Find find, FindOutcome outcome, GameContext context) {
         ForceItemPlayer finder = find.finder();
         Player player = find.player();
-        FibStatisticsClient statistics = this.plugin.getFibService().statistics();
+        FibStatisticsClient statistics = this.fibService.statistics();
         Material material = find.material();
         String itemName = material.name();
 

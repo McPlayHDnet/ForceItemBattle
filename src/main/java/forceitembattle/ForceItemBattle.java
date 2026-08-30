@@ -204,8 +204,20 @@ public final class ForceItemBattle extends JavaPlugin {
         this.tabListManager = register(new TabListManager(this));
         this.voteSkipManager = register(new VoteSkipManager(this));
         this.scoreboardManager = register(new ScoreboardManager(this));
-        this.foundItemResolver = register(new FoundItemResolver(this));
         this.fibService = register(new FIBServiceClient(this));
+
+        // Named dependencies rather than the plugin, so this one has to be built after all of them.
+        // That ordering requirement is the cost of the explicitness, and it is why the managers
+        // above still take the plugin: most are constructed before their collaborators exist.
+        this.foundItemResolver = register(new FoundItemResolver(
+                this.settings,
+                this.gamemanager,
+                this.scoreboardManager,
+                this.backToBackManager,
+                this.randomEventManager,
+                this.timerManager,
+                this.itemDifficultiesManager,
+                this.fibService));
 
         this.managers.forEach(Manager::enable);
 
