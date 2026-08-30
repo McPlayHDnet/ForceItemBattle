@@ -44,7 +44,7 @@ public class PortalListener implements Listener {
     public void onMove(PlayerMoveEvent playerMoveEvent) {
         Player player = playerMoveEvent.getPlayer();
 
-        if (!this.plugin.getGamemanager().isMidGame() && !this.plugin.getGamemanager().isEndGame()) {
+        if (!this.plugin.getGamemanager().roundRunning() && !this.plugin.getGamemanager().isEndGame()) {
             return;
         }
         Location playerLocation = player.getLocation();
@@ -69,7 +69,7 @@ public class PortalListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onPortalEvent(PlayerPortalEvent playerPortalEvent) {
         Player player = playerPortalEvent.getPlayer();
-        if (!this.plugin.getGamemanager().isMidGame()) {
+        if (!this.plugin.getGamemanager().roundRunning()) {
             return;
         }
 
@@ -82,7 +82,7 @@ public class PortalListener implements Listener {
     }
 
     private void teleportPlayerRandomly(Player player) {
-        boolean midGame = this.plugin.getGamemanager().isMidGame();
+        boolean midGame = this.plugin.getGamemanager().roundRunning();
 
         if (midGame && this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
             ForceItemPlayer fip = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
@@ -139,7 +139,7 @@ public class PortalListener implements Listener {
 
     @EventHandler
     public void onChangedWorld(PlayerChangedWorldEvent event) {
-        if (!this.plugin.getGamemanager().isMidGame() && !this.plugin.getGamemanager().isEndGame()) {
+        if (!this.plugin.getGamemanager().roundRunning() && !this.plugin.getGamemanager().isEndGame()) {
             return;
         }
         Player player = event.getPlayer();

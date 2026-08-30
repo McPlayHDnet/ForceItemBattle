@@ -34,7 +34,7 @@ public class ItemsListener implements Listener {
 
     @EventHandler
     public void onInteract(PlayerInteractEvent event) {
-        if (!this.plugin.getGamemanager().isMidGame()) {
+        if (!this.plugin.getGamemanager().roundRunning()) {
             return;
         }
 
@@ -52,7 +52,7 @@ public class ItemsListener implements Listener {
     public void onFoundItemInInventory(InventoryClickEvent inventoryClickEvent) {
         Player player = (Player) inventoryClickEvent.getWhoClicked();
 
-        if (!this.plugin.getGamemanager().isMidGame()) {
+        if (!this.plugin.getGamemanager().roundRunning()) {
             return;
         }
 
@@ -79,7 +79,7 @@ public class ItemsListener implements Listener {
         if (!(entityPickupItemEvent.getEntity() instanceof Player player)) {
             return;
         }
-        if (!this.plugin.getGamemanager().isMidGame()) {
+        if (!this.plugin.getGamemanager().roundRunning()) {
             return;
         }
 
@@ -109,7 +109,7 @@ public class ItemsListener implements Listener {
             return;
         }
 
-        if (!this.plugin.getGamemanager().isMidGame()) {
+        if (!this.plugin.getGamemanager().roundRunning()) {
             return;
         }
 
@@ -129,7 +129,7 @@ public class ItemsListener implements Listener {
 
     private void onCraft(InventoryClickEvent inventoryClickEvent) {
         Player player = (Player) inventoryClickEvent.getWhoClicked();
-        if (!this.plugin.getGamemanager().isMidGame()) {
+        if (!this.plugin.getGamemanager().roundRunning()) {
             return;
         }
 
@@ -147,7 +147,7 @@ public class ItemsListener implements Listener {
     public void onConsume(PlayerItemConsumeEvent playerItemConsumeEvent) {
         Player player = playerItemConsumeEvent.getPlayer();
 
-        if (!this.plugin.getGamemanager().isMidGame()) {
+        if (!this.plugin.getGamemanager().roundRunning()) {
             return;
         }
 

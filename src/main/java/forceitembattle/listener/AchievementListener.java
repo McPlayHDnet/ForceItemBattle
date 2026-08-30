@@ -58,7 +58,7 @@ public class AchievementListener implements Listener {
     public void onPlayerQuit(PlayerQuitEvent event) {
         // Free memory once a player leaves, but only outside a running game so
         // team-completion checks still see their data mid-round.
-        if (!this.plugin.getGamemanager().isMidGame()) {
+        if (!this.plugin.getGamemanager().roundRunning()) {
             this.plugin.getAchievementManager().getAchievementStorage()
                     .unloadPlayer(event.getPlayer().getUniqueId());
         }

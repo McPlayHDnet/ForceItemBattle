@@ -131,7 +131,7 @@ public class PlayerLifecycleListener implements Listener {
             this.plugin.getGamemanager().removePlayer(playerQuitEvent.getPlayer());
         }
 
-        if (this.plugin.getGamemanager().isMidGame()) {
+        if (this.plugin.getGamemanager().roundRunning()) {
             playerQuitEvent.getPlayer().getPassengers().forEach(Entity::remove);
         }
     }
@@ -149,7 +149,7 @@ public class PlayerLifecycleListener implements Listener {
             event.getDrops().removeIf(Gamemanager::isBackpack);
         }
 
-        if (this.plugin.getGamemanager().isMidGame() && this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
+        if (this.plugin.getGamemanager().roundRunning() && this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
             this.plugin.getFibService().statistics()
                     .recordPlayerCounter(player.getUniqueId(), gamePlayer, PlayerCounter.DEATHS, 1);
         }
@@ -160,7 +160,7 @@ public class PlayerLifecycleListener implements Listener {
 
     @EventHandler
     public void onRespawn(PlayerRespawnEvent event) {
-        if (!this.plugin.getGamemanager().isMidGame()) {
+        if (!this.plugin.getGamemanager().roundRunning()) {
             return;
         }
 

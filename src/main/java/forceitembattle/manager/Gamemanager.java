@@ -710,8 +710,35 @@ public class Gamemanager implements Manager {
         this.setCurrentGameState(GameState.MID_GAME);
     }
 
-    public boolean isMidGame() {
-        return this.getCurrentGameState() == GameState.MID_GAME;
+    /**
+     * The round is running right now: the clock is ticking and play is live.
+     *
+     * <p>Excludes a pause, which is what almost every gameplay gate wants — you cannot find an
+     * item, spend a joker or vote to skip while the game is halted.
+     *
+     * <p>Named for what it means rather than for the enum constant it happens to compare against.
+     * The old {@code isMidGame()} is gone rather than kept as an alias: it read as "the round is
+     * happening", which is what {@link #roundInProgress()} means, and fifty-one call sites had to
+     * be read one at a time to find out which of the two each of them intended.
+     */
+    public boolean roundRunning() {
+        return this.getCurrentGameState().roundRunning();
+    }
+
+    /**
+     * The round has started and has not finished, whether or not it is paused.
+     *
+     * <p>The distinction this pair exists to make. {@code PAUSED_GAME} is a sibling of
+     * {@code MID_GAME} rather than a flag on it, so a bare {@code isMidGame()} silently means "and
+     * not while paused" — a decision fifty-one call sites were making by omission, none of them
+     * recording whether they meant it.
+     *
+     * <p><b>A pause stops this plugin's clock, not the world's.</b> Blocks still tick, primed TNT
+     * still detonates, lava still flows and fire still spreads. Anything guarding the world rather
+     * than gating play wants this predicate, not {@link #roundRunning()}.
+     */
+    public boolean roundInProgress() {
+        return this.getCurrentGameState().roundInProgress();
     }
 
     public boolean isEndGame() {

@@ -30,7 +30,7 @@ public class CommandAskTrade extends CustomCommand {
             player.sendMessage(Text.of(NO_PERMISSION));
             return;
         }
-        if (!this.plugin.getGamemanager().isMidGame()) {
+        if (!this.plugin.getGamemanager().roundRunning()) {
 
             return;
         }

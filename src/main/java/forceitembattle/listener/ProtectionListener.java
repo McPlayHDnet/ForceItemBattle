@@ -51,8 +51,22 @@ public class ProtectionListener implements Listener {
         return this.plugin.getProtectionManager();
     }
 
-    private boolean isMidGame() {
-        return this.plugin.getGamemanager().isMidGame();
+    /**
+     * Protection applies for as long as the round does, pause included.
+     *
+     * <p>This asked {@code isMidGame()} until the state predicates were separated, which meant
+     * every gate below switched off the moment someone typed {@code /pause}. A pause stops this
+     * plugin's clock and freezes the players; it does not stop the world. Primed TNT still
+     * detonates, lava still flows, fire still spreads and pistons — disabled for the whole round by
+     * {@link #onPiston} — started working again.
+     *
+     * <p>The two handlers that cancel outright when the round is not running ({@code onBlockBreak},
+     * {@code onBlockPlace}) were never affected: they refuse everything outside a running round,
+     * which already covered a pause. It is the six that {@code return} early, skipping the check
+     * rather than refusing the action, where the gap was.
+     */
+    private boolean roundInProgress() {
+        return this.plugin.getGamemanager().roundInProgress();
     }
 
     private ForceItemPlayer forceItemPlayer(Player player) {
@@ -68,7 +82,7 @@ public class ProtectionListener implements Listener {
 
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
-        if (!this.isMidGame()) {
+        if (!this.roundInProgress()) {
             event.setCancelled(true);
             return;
         }
@@ -92,7 +106,7 @@ public class ProtectionListener implements Listener {
 
     @EventHandler
     public void onChestOpen(InventoryOpenEvent event) {
-        if (!this.isMidGame()) {
+        if (!this.roundInProgress()) {
             return;
         }
 
@@ -115,7 +129,7 @@ public class ProtectionListener implements Listener {
             event.setCancelled(true);
             return;
         }
-        if (!this.isMidGame()) {
+        if (!this.roundInProgress()) {
             event.setCancelled(true);
             return;
         }
@@ -140,7 +154,7 @@ public class ProtectionListener implements Listener {
 
     @EventHandler
     public void onPiston(BlockPistonExtendEvent e) {
-        if (!this.isMidGame()) {
+        if (!this.roundInProgress()) {
             return;
         }
 
@@ -157,7 +171,7 @@ public class ProtectionListener implements Listener {
 
     @EventHandler
     public void onBlockExplode(EntityExplodeEvent event) {
-        if (!this.isMidGame()) {
+        if (!this.roundInProgress()) {
             return;
         }
 
@@ -168,7 +182,7 @@ public class ProtectionListener implements Listener {
 
     @EventHandler
     public void onEntityExplode(BlockExplodeEvent event) {
-        if (!this.isMidGame()) {
+        if (!this.roundInProgress()) {
             return;
         }
 
@@ -183,7 +197,7 @@ public class ProtectionListener implements Listener {
             return;
         }
 
-        if (this.isMidGame() && this.protection().isProtectedFromNature(e.getToBlock())) {
+        if (this.roundInProgress() && this.protection().isProtectedFromNature(e.getToBlock())) {
             e.setCancelled(true);
         }
     }
@@ -194,7 +208,7 @@ public class ProtectionListener implements Listener {
             return;
         }
 
-        if (this.isMidGame() && this.protection().isProtectedFromNature(e.getBlockClicked())) {
+        if (this.roundInProgress() && this.protection().isProtectedFromNature(e.getBlockClicked())) {
             this.refuse(e, e.getPlayer(), "place a lava bucket near protected block",
                     e.getBlockClicked().getLocation());
         }
@@ -202,7 +216,7 @@ public class ProtectionListener implements Listener {
 
     @EventHandler
     public void onBurn(BlockBurnEvent e) {
-        if (this.isMidGame() && this.protection().isProtectedFromNature(e.getBlock())) {
+        if (this.roundInProgress() && this.protection().isProtectedFromNature(e.getBlock())) {
             e.setCancelled(true);
         }
     }

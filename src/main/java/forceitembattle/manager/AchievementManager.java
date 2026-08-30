@@ -90,7 +90,7 @@ public class AchievementManager implements Manager {
     public void handleEvent(Player player, Event event, Trigger trigger) {
         UUID uuid = player.getUniqueId();
 
-        if (!plugin.getGamemanager().isMidGame()) {
+        if (!plugin.getGamemanager().roundRunning()) {
             return;
         }
 

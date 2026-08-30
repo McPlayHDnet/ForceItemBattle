@@ -76,7 +76,7 @@ public class AntimatterPortalListener implements Listener {
         event.setCancelled(true);
 
         Player player = event.getPlayer();
-        if (!this.plugin.getGamemanager().isMidGame() && !this.plugin.getGamemanager().isEndGame()) {
+        if (!this.plugin.getGamemanager().roundRunning() && !this.plugin.getGamemanager().isEndGame()) {
             return;
         }
 

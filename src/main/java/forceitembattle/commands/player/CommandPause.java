@@ -23,7 +23,7 @@ public class CommandPause extends CustomCommand {
             return;
         }
 
-        if (!this.plugin.getGamemanager().isMidGame()) {
+        if (!this.plugin.getGamemanager().roundRunning()) {
             player.sendMessage(Text.of("<red>The timer is already paused."));
             return;
         }

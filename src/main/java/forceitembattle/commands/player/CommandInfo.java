@@ -40,7 +40,7 @@ public class CommandInfo extends CustomCommand implements CustomTabCompleter {
             }
             item = new ItemStack(material);
 
-        } else if (this.plugin.getGamemanager().isMidGame()) {
+        } else if (this.plugin.getGamemanager().roundRunning()) {
             if (this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
                 ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
                 if (forceItemPlayer.isSpectator()) {

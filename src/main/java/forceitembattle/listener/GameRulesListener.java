@@ -65,7 +65,7 @@ public class GameRulesListener implements Listener {
 
     @EventHandler
     public void onEntityTargetLivingEntity(EntityTargetLivingEntityEvent event) {
-        if (this.plugin.getGamemanager().isMidGame()) {
+        if (this.plugin.getGamemanager().roundRunning()) {
             return;
         }
         if (event.getTarget() == null) {

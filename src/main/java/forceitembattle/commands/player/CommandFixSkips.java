@@ -18,7 +18,7 @@ public class CommandFixSkips extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (!this.plugin.getGamemanager().isMidGame()) {
+        if (!this.plugin.getGamemanager().roundRunning()) {
             player.sendMessage(Text.of("<red>You can only use this during the game."));
             return;
         }

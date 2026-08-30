@@ -16,7 +16,7 @@ public class PreGameLockListener implements Listener {
 
     @EventHandler
     public void onEntityPickup(EntityPickupItemEvent event) {
-        if (this.plugin.getGamemanager().isMidGame()) {
+        if (this.plugin.getGamemanager().roundRunning()) {
             return;
         }
         event.setCancelled(true);
@@ -24,7 +24,7 @@ public class PreGameLockListener implements Listener {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        if (this.plugin.getGamemanager().isMidGame()) {
+        if (this.plugin.getGamemanager().roundRunning()) {
             return;
         }
         event.setCancelled(true);
@@ -32,7 +32,7 @@ public class PreGameLockListener implements Listener {
 
     @EventHandler
     public void onInventoryDrag(InventoryDragEvent event) {
-        if (this.plugin.getGamemanager().isMidGame()) {
+        if (this.plugin.getGamemanager().roundRunning()) {
             return;
         }
         event.setCancelled(true);
@@ -40,7 +40,7 @@ public class PreGameLockListener implements Listener {
 
     @EventHandler
     public void onPlayerDropItem(PlayerDropItemEvent event) {
-        if (this.plugin.getGamemanager().isMidGame()) {
+        if (this.plugin.getGamemanager().roundRunning()) {
             return;
         }
         event.setCancelled(true);

@@ -22,7 +22,7 @@ public class CommandInfoWiki extends CustomCommand {
         ItemStack item = player.getInventory().getItemInMainHand();
         ;
 
-        if (this.plugin.getGamemanager().isMidGame()) {
+        if (this.plugin.getGamemanager().roundRunning()) {
             if (this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
                 ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
                 if (forceItemPlayer.isSpectator()) {

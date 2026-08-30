@@ -146,7 +146,7 @@ public class ClickableItemsListener implements Listener {
     @EventHandler
     public void onClick(PlayerInteractEvent e) { // triggered if a joker is used
         Player player = e.getPlayer();
-        if (!this.plugin.getGamemanager().isMidGame()) {
+        if (!this.plugin.getGamemanager().roundRunning()) {
             return;
         }
         if (!this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {

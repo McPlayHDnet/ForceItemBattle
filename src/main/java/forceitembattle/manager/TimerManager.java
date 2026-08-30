@@ -85,7 +85,7 @@ public class TimerManager implements Manager {
     public void sendActionBar() {
         for (Player player : Bukkit.getOnlinePlayers()) {
 
-            if (!this.forceItemBattle.getGamemanager().isMidGame()) {
+            if (!this.forceItemBattle.getGamemanager().roundRunning()) {
                 if (this.forceItemBattle.getGamemanager().isPausedGame()) {
                     Title timeLeftTitle = Title.title(Component.empty(), Text.of("<red>Game is paused!"),
                             Title.Times.times(Duration.ofMillis(0), Duration.ofMillis(1000), Duration.ofMillis(500)));
@@ -149,7 +149,7 @@ public class TimerManager implements Manager {
             @Override
             public void run() {
                 sendActionBar();
-                if (!forceItemBattle.getGamemanager().isMidGame()) {
+                if (!forceItemBattle.getGamemanager().roundRunning()) {
                     forceItemBattle.getTabListManager().clearFooter();
                     return;
                 }

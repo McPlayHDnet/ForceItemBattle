@@ -110,7 +110,7 @@ public class WanderingTraderManager implements Manager {
         BukkitRunnable bukkitRunnable = new BukkitRunnable() {
             @Override
             public void run() {
-                if (!plugin.getGamemanager().isMidGame()) {
+                if (!plugin.getGamemanager().roundRunning()) {
                     return;
                 }
 

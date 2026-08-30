@@ -38,7 +38,7 @@ public class SpecialTrader implements RandomEvent {
         }
 
         Scheduler.runLaterSync(() -> {
-            if (!this.plugin.getGamemanager().isMidGame()) {
+            if (!this.plugin.getGamemanager().roundRunning()) {
                 return;
             }
             this.attemptSpawn(attempt + 1);
