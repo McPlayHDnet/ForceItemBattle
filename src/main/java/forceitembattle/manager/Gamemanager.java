@@ -299,7 +299,7 @@ public class Gamemanager implements Manager {
      * the opening pair, skipping the whole server's item -- has to run once per owner, and the
      * roster hands out one entry per player.
      */
-    private List<ScoreOwner> activeScoreOwners() {
+    public List<ScoreOwner> activeScoreOwners() {
         return this.forceItemPlayerMap.values().stream()
                 .filter(forceItemPlayer -> !forceItemPlayer.isSpectator())
                 .map(ForceItemPlayer::scoreOwner)

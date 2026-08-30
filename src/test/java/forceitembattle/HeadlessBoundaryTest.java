@@ -36,4 +36,22 @@ class HeadlessBoundaryTest {
     void itemStackStillNeedsARunningServer() {
         assertThrows(Throwable.class, () -> new org.bukkit.inventory.ItemStack(Material.STONE));
     }
+
+    /**
+     * The wall is narrower than "ItemStack": it is the <em>constructor</em>, which reaches for the
+     * attribute registry. Mocking one is fine, so code that only ever calls {@code getType()} on a
+     * stack handed to it is reachable here — which is what lets the achievement handlers be tested
+     * against a {@code FoundItemEvent}, since that event carries a stack rather than a Material.
+     *
+     * <p>Worth keeping straight: this does not make the GUI layer testable. Those classes
+     * <em>build</em> stacks, and no amount of mocking helps with that.
+     */
+    @Test
+    void anItemStackCanStillBeMocked() {
+        org.bukkit.inventory.ItemStack stack =
+                org.mockito.Mockito.mock(org.bukkit.inventory.ItemStack.class);
+        org.mockito.Mockito.when(stack.getType()).thenReturn(Material.STONE);
+
+        assertNotNull(stack.getType());
+    }
 }

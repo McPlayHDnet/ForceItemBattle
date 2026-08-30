@@ -15,6 +15,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -30,30 +31,46 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
     public void onPlayerCommand(Player player, String label, String[] args) {
         if (!requireOp(player)) return;
 
+        this.start(player, args);
+    }
+
+    /**
+     * Starting a round needs no player: it acts on the roster, not on whoever asked.
+     *
+     * <p>Overridden because the base class refuses console senders, which meant a server owner
+     * could not start a round from the console or RCON — and neither could a test. Nothing below
+     * touches the sender except to report back.
+     */
+    @Override
+    public void onConsoleCommand(CommandSender sender, String label, String[] args) {
+        this.start(sender, args);
+    }
+
+    private void start(CommandSender sender, String[] args) {
         if (args.length == 1) {
             if (this.plugin.getSettings().getGamePreset(args[0]) == null) {
-                player.sendMessage(Text.of("<yellow>" + args[0] + " <red>does not exist in presets."));
+                sender.sendMessage(Text.of("<yellow>" + args[0] + " <red>does not exist in presets."));
                 return;
             }
 
             GamePreset gamePreset = this.plugin.getSettings().getGamePreset(args[0]);
             this.plugin.getGamemanager().setCurrentGamePreset(gamePreset);
-            this.performCommand(gamePreset, player, args);
+            this.performCommand(gamePreset, sender, args);
 
         } else if (args.length == 2) {
             try {
-                this.performCommand(null, player, args);
+                this.performCommand(null, sender, args);
 
             } catch (NumberFormatException e) {
-                player.sendMessage(Text.of("<red>Usage: /start <time in min> <jokers>"));
-                player.sendMessage(Text.of("<red><time> and <jokers> have to be numbers"));
+                sender.sendMessage(Text.of("<red>Usage: /start <time in min> <jokers>"));
+                sender.sendMessage(Text.of("<red><time> and <jokers> have to be numbers"));
             }
         } else {
-            player.sendMessage(Text.of("<red>Usage: /start <time in min> <jokers>"));
+            sender.sendMessage(Text.of("<red>Usage: /start <time in min> <jokers>"));
         }
     }
 
-    private void performCommand(GamePreset gamePreset, Player player, String[] args) {
+    private void performCommand(GamePreset gamePreset, CommandSender player, String[] args) {
         int durationMinutes = (gamePreset != null ? gamePreset.getCountdown() : Integer.parseInt(args[0]));
         int durationSeconds = durationMinutes * 60;
         int jokersAmount = (gamePreset != null ? gamePreset.getJokers() : (Integer.parseInt(args[1])));

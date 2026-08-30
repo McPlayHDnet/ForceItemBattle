@@ -4,6 +4,7 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.AchievementMode;
 import forceitembattle.achievements.AchievementScope;
 import forceitembattle.achievements.AchievementStorage;
+import forceitembattle.achievements.AchievementWorld;
 import forceitembattle.achievements.Achievements;
 import forceitembattle.achievements.global.GlobalStatsCache;
 import forceitembattle.achievements.global.GlobalStatsLoader;
@@ -40,6 +41,12 @@ import org.bukkit.event.Event;
 public class AchievementManager implements Manager {
 
     private final ForceItemBattle plugin;
+
+    /**
+     * What a handler is allowed to ask about the round. Built once here because this manager is the
+     * only caller of {@code check}, and deliberately not the plugin: see {@link AchievementWorld}.
+     */
+    private final AchievementWorld world;
     private final Map<UUID, Map<Achievements, AchievementProgressTracker>> playerProgress = new HashMap<>();
     private final Map<Team, Map<Achievements, AchievementProgressTracker>> teamProgress = new HashMap<>();
     private final AchievementStorage storage;
@@ -53,6 +60,7 @@ public class AchievementManager implements Manager {
 
     public AchievementManager(ForceItemBattle plugin) {
         this.plugin = plugin;
+        this.world = new PluginAchievementWorld(plugin);
         this.storage = new AchievementStorage(plugin);
         this.globalStatsCache = new GlobalStatsCache();
         this.globalStatsLoader = new GlobalStatsLoader(plugin, this.globalStatsCache);
@@ -135,7 +143,7 @@ public class AchievementManager implements Manager {
             AchievementHandler<AchievementProgressTracker> typedHandler =
                     (AchievementHandler<AchievementProgressTracker>) handler;
 
-            if (typedHandler.check(event, tracker, forceItemPlayer, plugin)) {
+            if (typedHandler.check(event, tracker, forceItemPlayer, this.world)) {
                 grantAchievement(player, achievement, useTeamProgress, forceItemPlayer);
             }
         }

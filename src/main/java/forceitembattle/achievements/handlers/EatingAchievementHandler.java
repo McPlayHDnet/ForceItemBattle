@@ -1,6 +1,6 @@
 package forceitembattle.achievements.handlers;
 
-import forceitembattle.ForceItemBattle;
+import forceitembattle.achievements.AchievementWorld;
 import forceitembattle.achievements.Trigger;
 import forceitembattle.achievements.progress.SimpleAchievementProgress;
 import forceitembattle.model.CustomItem;
@@ -27,7 +27,7 @@ public class EatingAchievementHandler implements AchievementHandler<SimpleAchiev
     }
 
     @Override
-    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin) {
+    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer, AchievementWorld world) {
         if (!(event instanceof PlayerItemConsumeEvent consumeEvent)) {
             return false;
         }

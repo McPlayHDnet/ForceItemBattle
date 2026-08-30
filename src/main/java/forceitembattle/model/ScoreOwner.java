@@ -83,6 +83,14 @@ public interface ScoreOwner {
     /** Credits a found item: one point, and the item onto this owner's found-list. */
     void record(ForceItem forceItem);
 
+    /**
+     * Everything this owner has found this round, in the order it came in. Unmodifiable.
+     *
+     * <p>Includes skips — a skipped item is still recorded, with {@code usedSkip()} set — so a
+     * caller asking "how many items has this owner actually collected" has to filter them out.
+     */
+    List<ForceItem> foundItems();
+
     /** Everyone this owner's item and score belong to. */
     List<ForceItemPlayer> members();
 }

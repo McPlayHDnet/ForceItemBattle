@@ -1,6 +1,6 @@
 package forceitembattle.achievements.handlers;
 
-import forceitembattle.ForceItemBattle;
+import forceitembattle.achievements.AchievementWorld;
 import forceitembattle.achievements.Trigger;
 import forceitembattle.achievements.progress.CounterAchievementProgress;
 import forceitembattle.event.FoundItemEvent;
@@ -29,7 +29,7 @@ public class CounterAchievementHandler implements AchievementHandler<CounterAchi
     }
 
     @Override
-    public boolean check(Event event, CounterAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin) {
+    public boolean check(Event event, CounterAchievementProgress progress, ForceItemPlayer forceItemPlayer, AchievementWorld world) {
         if (!(event instanceof FoundItemEvent foundEvent)) {
             return false;
         }
@@ -49,7 +49,7 @@ public class CounterAchievementHandler implements AchievementHandler<CounterAchi
 
         Material itemType = foundEvent.getFoundItem().getType();
 
-        if (dimension != null && !plugin.getItemDifficultiesManager().getItemsIn(dimension).contains(itemType)) {
+        if (dimension != null && !world.itemsIn(dimension).contains(itemType)) {
             if (requireConsecutive) {
                 progress.consecutiveCount = 0;
             }

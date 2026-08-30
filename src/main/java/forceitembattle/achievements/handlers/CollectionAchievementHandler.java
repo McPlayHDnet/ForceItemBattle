@@ -1,6 +1,6 @@
 package forceitembattle.achievements.handlers;
 
-import forceitembattle.ForceItemBattle;
+import forceitembattle.achievements.AchievementWorld;
 import forceitembattle.achievements.Trigger;
 import forceitembattle.achievements.progress.CollectionAchievementProgress;
 import forceitembattle.event.FoundItemEvent;
@@ -113,7 +113,7 @@ public class CollectionAchievementHandler<T> implements AchievementHandler<Colle
     }
 
     @Override
-    public boolean check(Event event, CollectionAchievementProgress<T> progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin) {
+    public boolean check(Event event, CollectionAchievementProgress<T> progress, ForceItemPlayer forceItemPlayer, AchievementWorld world) {
         T item = extractor.extract(event, forceItemPlayer, progress);
         if (item != null) {
             progress.collected.add(item);

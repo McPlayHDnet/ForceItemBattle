@@ -127,7 +127,8 @@ public class SoloScore implements ScoreOwner {
         }
     }
 
-    List<ForceItem> foundItems() {
+    @Override
+    public List<ForceItem> foundItems() {
         return Collections.unmodifiableList(this.foundItems);
     }
 }

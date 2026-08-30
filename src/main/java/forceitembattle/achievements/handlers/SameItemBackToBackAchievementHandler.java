@@ -1,6 +1,6 @@
 package forceitembattle.achievements.handlers;
 
-import forceitembattle.ForceItemBattle;
+import forceitembattle.achievements.AchievementWorld;
 import forceitembattle.achievements.Trigger;
 import forceitembattle.achievements.progress.SameItemBackToBackAchievementProgress;
 import forceitembattle.event.FoundItemEvent;
@@ -41,7 +41,7 @@ public class SameItemBackToBackAchievementHandler implements AchievementHandler<
     }
 
     @Override
-    public boolean check(Event event, SameItemBackToBackAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin) {
+    public boolean check(Event event, SameItemBackToBackAchievementProgress progress, ForceItemPlayer forceItemPlayer, AchievementWorld world) {
         if (!(event instanceof FoundItemEvent foundEvent)) {
             return false;
         }

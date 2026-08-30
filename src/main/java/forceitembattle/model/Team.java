@@ -120,6 +120,11 @@ public class Team implements ScoreOwner {
         return Collections.unmodifiableList(foundItems);
     }
 
+    @Override
+    public List<ForceItem> foundItems() {
+        return this.getFoundItems();
+    }
+
     // --- ScoreOwner -----------------------------------------------------------------------
     // Delegation onto the fields above. The Lombok accessors stay exactly as they were, because
     // the places that address a team *as a team* (Gamemanager's team branches, CommandForceItem,
