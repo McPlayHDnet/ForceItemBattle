@@ -4,6 +4,8 @@ import de.threeseconds.openapi.fibservice.client.api.FibAchievementControllerApi
 import de.threeseconds.openapi.fibservice.client.invoker.ApiException;
 import de.threeseconds.openapi.fibservice.client.model.FibAchievementLeaderboardEntryDto;
 import de.threeseconds.openapi.fibservice.client.model.FibAchievementUnlockRequestDto;
+import forceitembattle.achievements.AchievementMode;
+import javax.annotation.Nullable;
 import de.threeseconds.openapi.fibservice.client.model.FibPlayerAchievementsDto;
 import java.util.List;
 import java.util.UUID;
@@ -35,6 +37,24 @@ public class FibAchievementClient {
     public void unlockAchievementAsync(UUID playerUuid, String achievementId, FibAchievementUnlockRequestDto request) {
         executor.runAsync(() -> achievementApi.unlockAchievement(playerUuid, achievementId, request), result -> {
         }, executor::logError);
+    }
+
+    /**
+     * Unlocks an achievement in the game's own terms.
+     *
+     * <p>The generated request carries the mode as its own enum and expects the teammate only on a
+     * team unlock — two details the achievement subsystem had to know purely because it was the one
+     * building the request. It now says what happened and leaves the shape to this.
+     */
+    public void unlockAsync(UUID playerUuid, String achievementId, AchievementMode mode,
+                            @Nullable UUID teammateUuid) {
+        boolean team = mode == AchievementMode.TEAM;
+
+        this.unlockAchievementAsync(playerUuid, achievementId, new FibAchievementUnlockRequestDto()
+                .mode(team
+                        ? FibAchievementUnlockRequestDto.ModeEnum.TEAM
+                        : FibAchievementUnlockRequestDto.ModeEnum.SOLO)
+                .teammateUuid(team ? teammateUuid : null));
     }
 
     public void removeAchievementAsync(UUID playerUuid, String achievementId) {

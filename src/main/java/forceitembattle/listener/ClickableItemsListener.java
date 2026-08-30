@@ -8,9 +8,7 @@ import forceitembattle.manager.Gamemanager;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.Dimension;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.service.FIBServiceClient;
-import forceitembattle.service.FibStatisticsClient;
-import forceitembattle.service.PlayerStatsWrite;
+import forceitembattle.service.PlayerCounter;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.gui.ItemBuilder;
 import forceitembattle.model.Locator;
@@ -177,10 +175,8 @@ public class ClickableItemsListener implements Listener {
             player.getInventory().getItemInMainHand().setAmount(player.getInventory().getItemInMainHand().getAmount() - 1);
 
             if (this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
-                FibStatisticsClient helper = this.plugin.getFibService().statistics();
-                PlayerStatsWrite.record(helper, player.getUniqueId(), forceItemPlayer,
-                        () -> FIBServiceClient.soloUpdate().wheelOfFortuneUsesAdd(1L),
-                        () -> FIBServiceClient.memberUpdate().wheelOfFortuneUsesAdd(1L));
+                this.plugin.getFibService().statistics().recordPlayerCounter(
+                        player.getUniqueId(), forceItemPlayer, PlayerCounter.WHEELS_OF_FORTUNE_USED, 1);
             }
             return;
         }

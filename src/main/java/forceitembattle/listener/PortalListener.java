@@ -4,9 +4,7 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.event.AntimatterTeleporterUseEvent;
 import forceitembattle.model.Dimension;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.service.FIBServiceClient;
-import forceitembattle.service.FibStatisticsClient;
-import forceitembattle.service.PlayerStatsWrite;
+import forceitembattle.service.PlayerCounter;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.util.Text;
 import java.util.ArrayList;
@@ -87,11 +85,9 @@ public class PortalListener implements Listener {
         boolean midGame = this.plugin.getGamemanager().isMidGame();
 
         if (midGame && this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
-            FibStatisticsClient helper = this.plugin.getFibService().statistics();
             ForceItemPlayer fip = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-            PlayerStatsWrite.record(helper, player.getUniqueId(), fip,
-                    () -> FIBServiceClient.soloUpdate().enteredAntimatterTeleporterAdd(1L),
-                    () -> FIBServiceClient.memberUpdate().enteredAntimatterTeleporterAdd(1L));
+            this.plugin.getFibService().statistics().recordPlayerCounter(
+                    player.getUniqueId(), fip, PlayerCounter.ANTIMATTER_TELEPORTER_ENTRIES, 1);
         }
 
         Location existingLocation = this.findExistingLocation(player);

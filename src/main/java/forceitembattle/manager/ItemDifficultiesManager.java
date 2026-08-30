@@ -32,14 +32,6 @@ import org.bukkit.configuration.ConfigurationSection;
 
 public class ItemDifficultiesManager implements Manager {
 
-    /**
-     * Rounds at or above this length use fixed minute marks for the MID/LATE unlocks instead of
-     * percentages, so a long game doesn't hold the later pools back for half an hour.
-     */
-    private static final int FIXED_SCHEDULE_MIN_MINUTES = 50;
-    private static final int FIXED_MID_UNLOCK_MINUTES = 5;
-    private static final int FIXED_LATE_UNLOCK_MINUTES = 15;
-
     private static final Random RANDOM = new Random();
 
     private final ForceItemBattle plugin;
@@ -58,10 +50,10 @@ public class ItemDifficultiesManager implements Manager {
     private final Set<State> announcedUnlockedStates = EnumSet.noneOf(State.class);
 
     /**
-     * When each pool opens, as a percentage of the round's total duration. Per-round state, so it
-     * belongs to the manager and not to the {@link State} enum constants.
+     * When each pool opens. Per-round state, so it belongs to the manager and not to the
+     * {@link State} enum constants — but the arithmetic behind it is {@link UnlockSchedule}'s.
      */
-    private final Map<State, Double> unlockPercentages = new EnumMap<>(State.class);
+    private UnlockSchedule unlockSchedule = UnlockSchedule.percentageBased();
 
     /** Materials per pool, derived from {@link #itemRegistry} once at enable. */
     private final Map<State, List<Material>> itemsByState = new EnumMap<>(State.class);
@@ -101,35 +93,18 @@ public class ItemDifficultiesManager implements Manager {
         loadDescriptions();
     }
 
-    /**
-     * Percentage-based unlock points, used for any round short enough that fixed minute marks would
-     * put a pool past the end of the game.
-     */
+    /** Resets to the percentage-based schedule. */
     public void useDefaultUnlockSchedule() {
-        setUnlockSchedule(0, 11.11, 28.88);
+        this.applySchedule(UnlockSchedule.percentageBased());
     }
 
-    /**
-     * Picks the unlock schedule for a round of {@code durationMinutes}.
-     *
-     * Long rounds get fixed marks — MID at 5 minutes, LATE at 15 — because on a 90-minute game the
-     * percentage schedule would hold LATE back for 26 minutes. Below that threshold the percentages
-     * keep the three pools spread across the round instead of bunched at the start.
-     */
+    /** Picks the unlock schedule for a round of {@code durationMinutes}. */
     public void configureUnlockSchedule(int durationMinutes) {
-        if (durationMinutes >= FIXED_SCHEDULE_MIN_MINUTES) {
-            setUnlockSchedule(0,
-                    (FIXED_MID_UNLOCK_MINUTES / (double) durationMinutes) * 100,
-                    (FIXED_LATE_UNLOCK_MINUTES / (double) durationMinutes) * 100);
-        } else {
-            useDefaultUnlockSchedule();
-        }
+        this.applySchedule(UnlockSchedule.forRound(durationMinutes));
     }
 
-    private void setUnlockSchedule(double early, double mid, double late) {
-        unlockPercentages.put(State.EARLY, early);
-        unlockPercentages.put(State.MID, mid);
-        unlockPercentages.put(State.LATE, late);
+    private void applySchedule(UnlockSchedule schedule) {
+        this.unlockSchedule = schedule;
         invalidateAvailablePool();
     }
 
@@ -294,32 +269,13 @@ public class ItemDifficultiesManager implements Manager {
         announcedUnlockedStates.clear();
     }
 
-    private boolean quickieAllows(QuickieMode quickieMode, State state) {
-        return switch (quickieMode) {
-            case DISABLED -> true;
-            case EARLY -> state == State.EARLY;
-            case EARLY_MID -> state == State.EARLY || state == State.MID;
-        };
-    }
-
     /**
      * Item pools currently active this tick: permitted by the current quickie mode
      * and unlocked by elapsed time. Returned in unlock order (EARLY → LATE).
      */
     public List<State> getActiveStates() {
-        int elapsedTime = elapsedMinutes();
-        QuickieMode quickieMode = this.plugin.getSettings().getQuickieMode();
-
-        List<State> active = new ArrayList<>();
-        for (State state : State.VALUES) {
-            if (!quickieAllows(quickieMode, state)) {
-                continue;
-            }
-            if (elapsedTime >= unlockMinutes(state)) {
-                active.add(state);
-            }
-        }
-        return active;
+        return this.unlockSchedule.activeAt(
+                elapsedSeconds() / 60, roundSeconds(), this.plugin.getSettings().getQuickieMode());
     }
 
     /**
@@ -327,18 +283,8 @@ public class ItemDifficultiesManager implements Manager {
      * permitted pools are already active (e.g. capped by the current quickie mode).
      */
     public State getNextState() {
-        int elapsedTime = elapsedMinutes();
-        QuickieMode quickieMode = this.plugin.getSettings().getQuickieMode();
-
-        for (State state : State.VALUES) {
-            if (!quickieAllows(quickieMode, state)) {
-                continue;
-            }
-            if (unlockMinutes(state) > elapsedTime) {
-                return state;
-            }
-        }
-        return null;
+        return this.unlockSchedule.nextAfter(
+                elapsedSeconds() / 60, roundSeconds(), this.plugin.getSettings().getQuickieMode());
     }
 
     /**
@@ -346,28 +292,16 @@ public class ItemDifficultiesManager implements Manager {
      * on the same tick {@link #pollNewlyUnlockedStates()} announces that pool.
      */
     public int secondsUntilNextPool() {
-        State next = getNextState();
-        if (next == null) {
-            return -1;
-        }
-        int elapsedSeconds = this.plugin.getGamemanager().getGameDuration() - this.plugin.getTimerManager().getTimeLeft();
-        return Math.max(0, unlockMinutes(next) * 60 - elapsedSeconds);
+        return this.unlockSchedule.secondsUntilNext(
+                elapsedSeconds(), roundSeconds(), this.plugin.getSettings().getQuickieMode());
     }
 
-    private int elapsedMinutes() {
-        int timeLeft = this.plugin.getTimerManager().getTimeLeft();
-        int totalDuration = this.plugin.getGamemanager().getGameDuration();
-        return (totalDuration - timeLeft) / 60;
+    private int roundSeconds() {
+        return this.plugin.getGamemanager().getGameDuration();
     }
 
-    /**
-     * The minute mark this pool opens at, for the current round's duration. Every caller that needs
-     * an unlock time goes through here, so the schedule is only defined once.
-     */
-    private int unlockMinutes(State state) {
-        int totalDuration = this.plugin.getGamemanager().getGameDuration();
-        double percentage = this.unlockPercentages.getOrDefault(state, 0d);
-        return (int) Math.round((totalDuration * (percentage / 100)) / 60);
+    private int elapsedSeconds() {
+        return roundSeconds() - this.plugin.getTimerManager().getTimeLeft();
     }
 
     public Material generateRandomMaterial() {
@@ -393,30 +327,14 @@ public class ItemDifficultiesManager implements Manager {
      * {@link #getAvailableItems()} already hands back a filtered list.
      */
     private void filterDisabledItems(Collection<Material> items) {
-        items.removeIf(material -> {
-            ItemDefinition def = itemRegistry.get(material);
-            if (def == null) return false;
+        GameSettings settings = this.plugin.getSettings();
+        boolean hard = settings.isSettingEnabled(GameSetting.HARD);
+        boolean extreme = settings.isSettingEnabled(GameSetting.EXTREME);
+        boolean end = settings.isSettingEnabled(GameSetting.END);
 
-            // HARD subsumes EXTREME: dropping it takes the extreme items with it, so the
-            // EXTREME setting only has anything left to do while HARD is on.
-            if (!plugin.getSettings().isSettingEnabled(GameSetting.HARD)) {
-                if (def.hasAnyTag(ItemTag.NETHER, ItemTag.EXTREME)) {
-                    return true;
-                }
-            } else if (!plugin.getSettings().isSettingEnabled(GameSetting.EXTREME)) {
-                if (def.hasTag(ItemTag.EXTREME)) {
-                    return true;
-                }
-            }
-
-            if (!plugin.getSettings().isSettingEnabled(GameSetting.END)) {
-                if (def.hasTag(ItemTag.END)) {
-                    return true;
-                }
-            }
-
-            return false;
-        });
+        // Read once rather than three times per item: this walks all ~1,367 registered materials.
+        items.removeIf(material ->
+                PoolExclusions.isExcluded(itemRegistry.get(material), hard, extreme, end));
     }
 
     public boolean itemInAllLists(Material material) {

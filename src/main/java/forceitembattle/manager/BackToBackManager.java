@@ -195,35 +195,16 @@ public class BackToBackManager implements Manager {
             return;
         }
 
-        FibStatisticsClient statistics = this.plugin.getFibService().statistics();
-        Player player = forceItemPlayer.player();
-
-        if (!context.teamGame()) {
-            statistics.updateSoloStatisticsAsync(
-                    player.getUniqueId(),
-                    FIBServiceClient.soloUpdate().highestB2BStreak(forceItemPlayer.backToBackStreak())
-            );
-            return;
-        }
-
         Team team = forceItemPlayer.currentTeam();
-        if (team == null) {
-            return;
-        }
 
-        ForceItemPlayer teammate = forceItemPlayer.teammate().orElse(null);
-        if (teammate == null) {
-            return;
-        }
-
-        // The b2b streak is a shared team stat — record the shared peak for BOTH members.
-        int teamStreak = team.getBackToBackStreak();
-        statistics.updateMemberStatisticsAsync(
-                player.getUniqueId(), teammate.player().getUniqueId(), player.getUniqueId(),
-                FIBServiceClient.memberUpdate().highestB2BStreak(teamStreak));
-        statistics.updateMemberStatisticsAsync(
-                player.getUniqueId(), teammate.player().getUniqueId(), teammate.player().getUniqueId(),
-                FIBServiceClient.memberUpdate().highestB2BStreak(teamStreak));
+        // The b2b streak is a shared team stat, so the peak recorded in a team game is the team's,
+        // not this player's -- and it lands on both members. The stats client knows that; this only
+        // has to say which two numbers are in play.
+        this.plugin.getFibService().statistics().recordBackToBackPeak(
+                forceItemPlayer,
+                context.teamGame() && team != null,
+                forceItemPlayer.backToBackStreak(),
+                team == null ? 0 : team.getBackToBackStreak());
     }
 
     private String formatPercent(double probabilityPercent) {

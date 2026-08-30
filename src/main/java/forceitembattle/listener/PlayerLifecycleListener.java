@@ -4,9 +4,7 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.util.Scheduler;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.service.FIBServiceClient;
-import forceitembattle.service.FibStatisticsClient;
-import forceitembattle.service.PlayerStatsWrite;
+import forceitembattle.service.PlayerCounter;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.gui.ItemBuilder;
 import forceitembattle.util.Text;
@@ -143,10 +141,8 @@ public class PlayerLifecycleListener implements Listener {
         }
 
         if (this.plugin.getGamemanager().isMidGame() && this.plugin.getSettings().isSettingEnabled(GameSetting.STATS)) {
-            FibStatisticsClient helper = plugin.getFibService().statistics();
-            PlayerStatsWrite.record(helper, player.getUniqueId(), gamePlayer,
-                    () -> FIBServiceClient.soloUpdate().deathsAdd(1L),
-                    () -> FIBServiceClient.memberUpdate().deathsAdd(1L));
+            this.plugin.getFibService().statistics()
+                    .recordPlayerCounter(player.getUniqueId(), gamePlayer, PlayerCounter.DEATHS, 1);
         }
 
         // Skip the death screen entirely; nobody sits out a round here.

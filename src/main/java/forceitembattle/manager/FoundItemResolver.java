@@ -145,53 +145,19 @@ public class FoundItemResolver implements Manager {
     }
 
     private void trackRarity(ForceItemPlayer finder, Rarity rarity) {
-        FibStatisticsClient statistics = this.fibService.statistics();
-        var raritiesUpdate = rarity.toRaritiesUpdate();
-
-        PlayerStatsWrite.record(statistics, finder.player().getUniqueId(), finder,
-                () -> FIBServiceClient.soloUpdate().raritiesAdd(raritiesUpdate),
-                () -> FIBServiceClient.memberUpdate().raritiesAdd(raritiesUpdate));
+        this.fibService.statistics().recordRarity(finder.player().getUniqueId(), finder, rarity);
     }
 
     private void recordStats(Find find, FindOutcome outcome, GameContext context) {
         ForceItemPlayer finder = find.finder();
-        Player player = find.player();
-        FibStatisticsClient statistics = this.fibService.statistics();
-        Material material = find.material();
-        String itemName = material.name();
-
         finder.setItemStreak(outcome.newItemStreak());
 
-        // The shared team row carries the streak; in solo it rides along on the solo update below.
-        if (context.teamGame() && !find.skipped()) {
-            finder.teammate().ifPresent(teammate -> statistics.updateTeamStatisticsAsync(
-                    player.getUniqueId(),
-                    teammate.player().getUniqueId(),
-                    FIBServiceClient.teamUpdate().longestItemStreak(finder.itemStreak())));
-        }
-
-        long timeSpentMs = outcome.timeSpentMs();
-        PlayerStatsWrite.record(statistics, player.getUniqueId(), finder,
-                () -> {
-                    var soloUpdate = FIBServiceClient.soloUpdate()
-                            .totalItemsFoundAdd(1L)
-                            .itemCountsAdd(Map.of(itemName, 1L));
-                    if (!find.skipped()) {
-                        soloUpdate.longestItemStreak(finder.itemStreak());
-                    }
-                    if (timeSpentMs > 0) {
-                        soloUpdate.totalTimeSpentOnItemsAdd(timeSpentMs);
-                    }
-                    return soloUpdate;
-                },
-                () -> {
-                    var memberUpdate = FIBServiceClient.memberUpdate()
-                            .totalItemsFoundAdd(1L)
-                            .itemCountsAdd(Map.of(itemName, 1L));
-                    if (timeSpentMs > 0) {
-                        memberUpdate.totalTimeSpentOnItemsAdd(timeSpentMs);
-                    }
-                    return memberUpdate;
-                });
+        this.fibService.statistics().recordFind(
+                finder,
+                context.teamGame(),
+                find.material().name(),
+                find.skipped(),
+                finder.itemStreak(),
+                outcome.timeSpentMs());
     }
 }

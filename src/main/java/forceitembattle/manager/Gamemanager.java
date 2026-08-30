@@ -1,6 +1,5 @@
 package forceitembattle.manager;
 
-import de.threeseconds.openapi.fibservice.client.model.FibPlayerStatsUpdateRequestDto;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.model.Dimension;
 import forceitembattle.model.GameContext;
@@ -436,21 +435,7 @@ public class Gamemanager implements Manager {
         }
 
         if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.STATS)) {
-            FibStatisticsClient helper = this.forceItemBattle.getFibService().statistics();
-            if (!teamMode) {
-                helper.updateSoloStatisticsAsync(player.getUniqueId(), FIBServiceClient.soloUpdate().gamesPlayedAdd(1));
-                return;
-            }
-            Team currentTeam = forceItemPlayer.currentTeam();
-            if (currentTeam != null && currentTeam.isPrimaryWriter(forceItemPlayer)) {
-                // Both teammates write the same normalized team row, so only the primary side sends
-                // gamesPlayed — otherwise every game counts twice.
-                forceItemPlayer.teammate().ifPresent(teammate -> helper.updateTeamStatisticsAsync(
-                        player.getUniqueId(),
-                        teammate.player().getUniqueId(),
-                        FIBServiceClient.teamUpdate().gamesPlayedAdd(1)
-                ));
-            }
+            this.forceItemBattle.getFibService().statistics().recordGameStarted(forceItemPlayer);
         }
     }
 
@@ -574,55 +559,19 @@ public class Gamemanager implements Manager {
                 }
 
                 if (statsEnabled && forceItemPlayer != null && !forceItemPlayer.isSpectator()) {
-                    FibStatisticsClient helper = this.forceItemBattle.getFibService().statistics();
-                    long distance = (long) this.calculateDistance(forceItemPlayer.player());
                     Team currentTeam = forceItemPlayer.currentTeam();
 
-                    // Hoisted: the solo branch, the team branch and the win-streak write all need it.
+                    // Who came first is this class's business; which rows that lands on is not.
                     boolean won = currentTeam == null
                             ? Integer.valueOf(1).equals(placesMap.get(forceItemPlayer))
                             : (teamPlaces != null && Integer.valueOf(1).equals(teamPlaces.get(currentTeam)));
 
-                    // This player's own travel: their solo row when solo, their member contribution
-                    // inside the team otherwise. highestScore rides along on the solo update only —
-                    // in a team game the score belongs to the shared team row written below.
-                    PlayerStatsWrite.record(helper, player.getUniqueId(), forceItemPlayer,
-                            () -> {
-                                var soloUpdate = FIBServiceClient.soloUpdate()
-                                        .blocksTravelledAdd(distance)
-                                        .highestScore((long) forceItemPlayer.activeScore());
-                                if (won) {
-                                    soloUpdate.gamesWonAdd(1);
-                                }
-                                return soloUpdate;
-                            },
-                            () -> FIBServiceClient.memberUpdate().blocksTravelledAdd(distance));
-
-                    if (currentTeam != null) {
-                        // Shared team stats. highestScore is a max-set (safe from both sides);
-                        // gamesWon must count once, so only the primary side sends it.
-                        forceItemPlayer.teammate().ifPresent(teammate -> {
-                            var teamUpdate = FIBServiceClient.teamUpdate()
-                                    .highestScore((long) forceItemPlayer.activeScore());
-                            if (won && currentTeam.isPrimaryWriter(forceItemPlayer)) {
-                                teamUpdate.gamesWonAdd(1);
-                            }
-                            helper.updateTeamStatisticsAsync(
-                                    player.getUniqueId(), teammate.player().getUniqueId(), teamUpdate);
-                        });
-                    }
-
-                    // Win streak. Player-scoped, so this is unlike every other write above:
-                    //   - losers report too — a LOSS is what resets the streak
-                    //   - no lower-UUID dedupe — both members of a winning team each own a streak,
-                    //     so both send their own WIN
-                    helper.recordGameOutcomeAsync(
-                            player.getUniqueId(),
-                            new FibPlayerStatsUpdateRequestDto()
-                                    .outcome(won
-                                            ? FibPlayerStatsUpdateRequestDto.OutcomeEnum.WIN
-                                            : FibPlayerStatsUpdateRequestDto.OutcomeEnum.LOSS)
-                                    .playerName(player.getName()));
+                    this.forceItemBattle.getFibService().statistics().recordRoundFinished(
+                            forceItemPlayer,
+                            player.getName(),
+                            forceItemPlayer.activeScore(),
+                            (long) this.calculateDistance(forceItemPlayer.player()),
+                            won);
                 }
             } catch (Exception exception) {
                 this.forceItemBattle.getLogger().warning(

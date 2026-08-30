@@ -2,7 +2,6 @@ package forceitembattle.achievements;
 
 import de.threeseconds.openapi.fibservice.client.model.FibAchievementDto;
 import forceitembattle.util.Scheduler;
-import de.threeseconds.openapi.fibservice.client.model.FibAchievementUnlockRequestDto;
 import de.threeseconds.openapi.fibservice.client.model.FibPlayerAchievementsDto;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.service.FIBServiceClient;
@@ -114,11 +113,7 @@ public class AchievementStorage {
     public void addAchievement(UUID playerUUID, Achievements achievement, AchievementMode mode, UUID teammateUuid) {
         cache.computeIfAbsent(playerUUID, key -> ConcurrentHashMap.newKeySet()).add(achievement.name());
 
-        FibAchievementUnlockRequestDto request = FIBServiceClient.achievementUnlock()
-                .mode(mode == AchievementMode.TEAM ? FibAchievementUnlockRequestDto.ModeEnum.TEAM : FibAchievementUnlockRequestDto.ModeEnum.SOLO)
-                .teammateUuid(mode == AchievementMode.TEAM ? teammateUuid : null);
-
-        achievementClient().unlockAchievementAsync(playerUUID, achievement.name(), request);
+        achievementClient().unlockAsync(playerUUID, achievement.name(), mode, teammateUuid);
     }
 
     public void removeAchievement(UUID playerUUID, Achievements achievement) {
