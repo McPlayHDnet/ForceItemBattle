@@ -27,7 +27,6 @@ public class CommandFixSkips extends CustomCommand {
 
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
 
-        boolean usingTeams = this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM);
         int remainingJokers = forceItemPlayer.activeJokers();
         if (remainingJokers == 0) {
             if (!silent) {
@@ -40,13 +39,13 @@ public class CommandFixSkips extends CustomCommand {
         Inventory backpack = this.plugin.getBackpackManager().getBackpackForPlayer(player);
 
         backpack.remove(Gamemanager.getJokerMaterial());
-        if (usingTeams) {
-            for (ForceItemPlayer teammate : forceItemPlayer.currentTeam().getPlayers()) {
-                teammate.player().getInventory().remove(Gamemanager.getJokerMaterial());
-            }
 
-        } else {
-            player.getInventory().remove(Gamemanager.getJokerMaterial());
+        // Everyone the joker pool belongs to: the team in a team game, just this player otherwise.
+        // The branch this replaces asked the TEAM setting and then dereferenced currentTeam(), so
+        // a player with no team in a round configured for teams NPE'd here -- and onRespawn runs
+        // "/fixskips -silent", which made it a crash on respawn rather than on a command.
+        for (ForceItemPlayer member : forceItemPlayer.squad()) {
+            member.player().getInventory().remove(Gamemanager.getJokerMaterial());
         }
 
         if (player.getInventory().firstEmpty() == -1) {

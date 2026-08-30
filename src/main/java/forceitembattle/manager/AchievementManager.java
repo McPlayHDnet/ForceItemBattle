@@ -108,7 +108,7 @@ public class AchievementManager implements Manager {
 
         Map<Achievements, AchievementProgressTracker> teamProgressMap = null;
         Team team = null;
-        if (plugin.getSettings().isSettingEnabled(GameSetting.TEAM) && forceItemPlayer.currentTeam() != null) {
+        if (forceItemPlayer.isInTeam()) {
             team = forceItemPlayer.currentTeam();
             teamProgress.putIfAbsent(team, new HashMap<>());
             teamProgressMap = teamProgress.get(team);
@@ -152,7 +152,7 @@ public class AchievementManager implements Manager {
     private void grantAchievement(Player player, Achievements achievement,
                                   boolean isTeamAchievement, ForceItemPlayer forceItemPlayer) {
         Team team = forceItemPlayer.currentTeam();
-        boolean teamGame = plugin.getSettings().isSettingEnabled(GameSetting.TEAM) && team != null;
+        boolean teamGame = forceItemPlayer.isInTeam();
 
         if (!storage.hasAchievement(player.getUniqueId(), achievement)) {
             writeUnlock(player.getUniqueId(), player, achievement, team, teamGame);
@@ -336,8 +336,6 @@ public class AchievementManager implements Manager {
             return;
         }
 
-        boolean teamGameEnabled = plugin.getSettings().isSettingEnabled(GameSetting.TEAM);
-
         for (UUID uuid : plugin.getGamemanager().forceItemPlayerMap().keySet()) {
             ForceItemPlayer fip = plugin.getGamemanager().getForceItemPlayer(uuid);
             if (fip == null || fip.isSpectator()) {
@@ -345,7 +343,7 @@ public class AchievementManager implements Manager {
             }
 
             Team team = fip.currentTeam();
-            boolean teamGame = teamGameEnabled && team != null;
+            boolean teamGame = fip.isInTeam();
 
             // CHICOT — finish with no deaths.
             if (!storage.hasAchievement(uuid, Achievements.CHICOT)) {

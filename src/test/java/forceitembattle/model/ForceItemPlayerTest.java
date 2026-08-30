@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
 import java.util.UUID;
 import org.bukkit.Material;
 import org.junit.jupiter.api.Nested;
@@ -58,6 +59,25 @@ class ForceItemPlayerTest {
             assertEquals(3, player.activeJokers());
             assertEquals(7, player.activeScore());
             assertEquals(1_000L, player.activeItemAssignedAt());
+        }
+
+        /**
+         * The property thirteen call sites now depend on.
+         *
+         * <p>They used to ask {@code isSettingEnabled(TEAM)} and then dereference
+         * {@code currentTeam()}, which is fine right up until the two disagree — a player who
+         * joined during the countdown holds a roster spot and no team, so in a round configured for
+         * teams four of those sites threw. Whether this player has a team is a fact about the
+         * player. Nothing here can consult a setting, which is the whole point.
+         */
+        @Test
+        void aParticipantWithNoTeamIsSoloWhateverTheRoundWasConfiguredFor() {
+            ForceItemPlayer player = solo();
+
+            assertFalse(player.isInTeam());
+            assertNull(player.currentTeam());
+            assertEquals(List.of(player), player.squad());
+            assertTrue(player.teammate().isEmpty());
         }
 
         @Test

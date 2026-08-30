@@ -27,7 +27,10 @@ public class BackpackManager implements Manager {
     public Inventory getBackpackForPlayer(Player player) {
         ForceItemPlayer forceItemPlayer = this.forceItemBattle.getGamemanager().getForceItemPlayer(player.getUniqueId());
 
-        if (forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+        // Whether this player has a team, not whether the round was configured for them. With the
+        // setting on and no team -- a spectator who joined during the countdown -- the old check
+        // passed and then dereferenced a null team.
+        if (forceItemPlayer.isInTeam()) {
             return getTeamBackpack(forceItemPlayer.currentTeam());
         }
 
@@ -48,7 +51,7 @@ public class BackpackManager implements Manager {
                         null,
                         this.forceItemBattle.getConfig().getInt("settings.backpackRows") * 9,
                         Text.of("<dark_gray>» <gold>Backpack <dark_gray>● <gray>Menu")));
-        fibPlayer.player().getInventory().setItem(8, Gamemanager.createBackpack(fibPlayer, this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM)));
+        fibPlayer.player().getInventory().setItem(8, Gamemanager.createBackpack(fibPlayer, fibPlayer.isInTeam()));
     }
 
     public void createTeamBackpack(Team team, ForceItemPlayer fibPlayer) {
@@ -57,7 +60,7 @@ public class BackpackManager implements Manager {
                         null,
                         this.forceItemBattle.getConfig().getInt("settings.backpackRows") * 9,
                         Text.of("<dark_gray>» <gold>Backpack <dark_gray>● <gray>Menu")));
-        fibPlayer.player().getInventory().setItem(8, Gamemanager.createBackpack(fibPlayer, this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM)));
+        fibPlayer.player().getInventory().setItem(8, Gamemanager.createBackpack(fibPlayer, fibPlayer.isInTeam()));
     }
 
     public void openPlayerBackpack(Player player) {

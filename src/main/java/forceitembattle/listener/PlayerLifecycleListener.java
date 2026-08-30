@@ -112,11 +112,9 @@ public class PlayerLifecycleListener implements Listener {
         // already assigned, and dropping the player here would tear their team apart and cost them
         // the round. They keep their spot and are restored on rejoin.
         if (this.plugin.getGamemanager().isPreGame() || this.plugin.getGamemanager().isEndGame()) {
-            if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-                ForceItemPlayer fibPlayer = this.plugin.getGamemanager().getForceItemPlayer(playerQuitEvent.getPlayer().getUniqueId());
-                if (fibPlayer != null && fibPlayer.currentTeam() != null) {
-                    this.plugin.getTeamManager().leave(fibPlayer);
-                }
+            ForceItemPlayer fibPlayer = this.plugin.getGamemanager().getForceItemPlayer(playerQuitEvent.getPlayer().getUniqueId());
+            if (fibPlayer != null && fibPlayer.isInTeam()) {
+                this.plugin.getTeamManager().leave(fibPlayer);
             }
 
             this.plugin.getGamemanager().removePlayer(playerQuitEvent.getPlayer());
@@ -166,7 +164,7 @@ public class PlayerLifecycleListener implements Listener {
             player.performCommand("fixskips -silent");
         }
 
-        player.getInventory().setItem(8, Gamemanager.createBackpack(forceItemPlayer, this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)));
+        player.getInventory().setItem(8, Gamemanager.createBackpack(forceItemPlayer, forceItemPlayer.isInTeam()));
 
     }
 }

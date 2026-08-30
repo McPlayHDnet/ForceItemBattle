@@ -6,7 +6,7 @@ import forceitembattle.commands.player.CommandShout;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GamePreset;
 import forceitembattle.gui.SettingsPresetsInventory;
-import forceitembattle.model.Team;
+import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.util.Text;
 import io.papermc.paper.event.player.AsyncChatEvent;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +40,7 @@ public class ChatListener implements Listener {
             return;
         }
 
-        Team currentTeam = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId()).currentTeam();
+        ForceItemPlayer fibPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
 
         if (CommandShout.isShouting(player)) {
             Bukkit.broadcast(Text.of(
@@ -50,9 +50,10 @@ public class ChatListener implements Listener {
         }
 
         // No team chat active -> global.
-        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)
-                || !this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM_CHAT)
-                || currentTeam == null) {
+        // The TEAM setting was a third way of asking a question isInTeam() already answers, and
+        // the null check beside it was there because the two could disagree.
+        if (!fibPlayer.isInTeam()
+                || !this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM_CHAT)) {
 
             Bukkit.broadcast(Text.of(
                     "<gold>" + player.getName() + " <dark_gray>» <white>" + message
@@ -63,8 +64,10 @@ public class ChatListener implements Listener {
         String teamMessage = "<green>Team</green> <gray>| <gold>" + player.getName() +
                 " <dark_gray>» <white>" + message;
 
-        currentTeam.getPlayers().forEach(fibPlayer -> {
-            Player p = fibPlayer.player();
+        // squad() is the people this player's item and score belong to, which in a team game is
+        // exactly the set team chat addresses.
+        fibPlayer.squad().forEach(member -> {
+            Player p = member.player();
             if (p != null && p.isOnline()) {
                 p.sendMessage(Text.of(teamMessage));
             }

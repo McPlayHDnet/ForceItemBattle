@@ -162,7 +162,9 @@ public class ClickableItemsListener implements Listener {
         ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
 
         if (Gamemanager.isBackpack(e.getItem())) {
-            if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+            // isInTeam(), not the setting: with the setting on and no team this passed and then
+            // handed a null team to openTeamBackpack.
+            if (forceItemPlayer.isInTeam()) {
                 this.plugin.getBackpackManager().openTeamBackpack(forceItemPlayer.currentTeam(), player);
             } else {
                 this.plugin.getBackpackManager().openPlayerBackpack(player);

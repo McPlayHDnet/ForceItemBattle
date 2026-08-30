@@ -62,7 +62,7 @@ public class ScoreboardManager implements Manager {
                 team = board.registerNewTeam(teamName);
             }
 
-            if (settings.isSettingEnabled(GameSetting.TEAM) && fibPlayer.currentTeam() != null) {
+            if (fibPlayer.isInTeam()) {
                 team.prefix(Text.of(fibPlayer.currentTeam().getTeamDisplay() + " "));
             } else {
                 team.prefix(Text.of(""));
@@ -98,7 +98,7 @@ public class ScoreboardManager implements Manager {
     }
 
     private String getUniqueTeamName(GameSettings settings, ForceItemPlayer fibPlayer) {
-        if (!settings.isSettingEnabled(GameSetting.TEAM) || fibPlayer.currentTeam() == null) {
+        if (!fibPlayer.isInTeam()) {
             return "P_" + fibPlayer.player().getUniqueId().toString().substring(0, 10);
         }
         return "T_" + fibPlayer.currentTeam().getTeamId();

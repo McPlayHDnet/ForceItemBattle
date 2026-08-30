@@ -142,6 +142,13 @@ public class Gamemanager implements Manager {
      *
      * Spectators are skipped, matching who gets written as a participant at submit time -- otherwise a
      * spectator sitting on 0 could create a phantom tie in a one-player game.
+     *
+     * <p><b>The one branch on the TEAM setting that is not a mistake.</b> Everywhere else the
+     * question "is this a team game?" is really "does this player have a team", and asks
+     * {@link ForceItemPlayer#isInTeam()}. Here the two halves produce genuinely different
+     * identities -- a team id and a player UUID -- which the match history compares across calls to
+     * detect a lead change, so collapsing them onto the score owner would need an identity the
+     * reporter understands before it could be a rename. Left as it is deliberately.
      */
     private Object currentSoleLeader() {
         Object best = null;
@@ -409,7 +416,6 @@ public class Gamemanager implements Manager {
         forceItemPlayer.setStartSetupApplied(true);
 
         GameContext context = GameContext.of(this.forceItemBattle.getSettings(), forceItemPlayer);
-        boolean teamMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM);
 
         this.sendStartSummary(player, this.gameDuration / 60, this.jokerAmount);
 
