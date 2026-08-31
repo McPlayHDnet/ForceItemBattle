@@ -24,10 +24,12 @@ package forceitembattle.model;
  * spared because {@code scheduleReset} restarts the JVM between rounds and everyone rejoins into
  * PRE_GAME; a server that plays two rounds in one session is not.
  *
- * <p>Left as it is deliberately. Giving a late spectator an entry would put them inside
- * {@code forceItemPlayerMap().size()}, which is what {@code /start} counts to decide whether four
- * players are present for teams — so it would change when teams get built. That is a decision about
- * the game, not something a refactor gets to make on the way past.
+ * <p><b>This is intended, not an oversight.</b> Someone who arrives mid-round is a spectator for
+ * that round and holds no place in it, so having no roster entry is the accurate representation.
+ * Giving them one would also put them inside {@code players().size()}, which is what {@code /start}
+ * counts to decide whether four players are present for teams — it would change when teams get
+ * built. Do not "even this up" with {@link #COUNTDOWN_SPECTATOR}: that one holds an entry because
+ * the roster froze around it while it was already there, which is a different situation.
  */
 public enum Admission {
 
