@@ -1,4 +1,4 @@
-package forceitembattle.model;
+package forceitembattle.model.stats;
 
 /**
  * The player-scoped stat row: the figures that are neither solo nor team, but the player's across

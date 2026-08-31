@@ -2,9 +2,9 @@ package forceitembattle.commands.player;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
-import forceitembattle.model.DuoLeaderboardEntry;
-import forceitembattle.model.LeaderboardEntry;
-import forceitembattle.model.PlayerIdentity;
+import forceitembattle.model.stats.DuoLeaderboardEntry;
+import forceitembattle.model.stats.LeaderboardEntry;
+import forceitembattle.model.stats.PlayerIdentity;
 import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.service.FibStatisticsClient;
 import forceitembattle.util.Text;

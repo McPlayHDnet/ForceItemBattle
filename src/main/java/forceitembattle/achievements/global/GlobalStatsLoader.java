@@ -1,9 +1,9 @@
 package forceitembattle.achievements.global;
 
-import forceitembattle.model.GlobalPlayerStats;
+import forceitembattle.model.stats.GlobalPlayerStats;
 import forceitembattle.util.Scheduler;
 import forceitembattle.ForceItemBattle;
-import forceitembattle.model.StatsView;
+import forceitembattle.model.stats.StatsView;
 import forceitembattle.service.FibStatisticsClient;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;

@@ -1,4 +1,4 @@
-package forceitembattle.model;
+package forceitembattle.model.stats;
 
 /**
  * How many times one item has been found. The service names items as strings; turning that into a

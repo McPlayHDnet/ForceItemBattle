@@ -1,4 +1,4 @@
-package forceitembattle.model;
+package forceitembattle.model.stats;
 
 import javax.annotation.Nullable;
 

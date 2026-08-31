@@ -1,8 +1,8 @@
 package forceitembattle.achievements.global;
 
-import forceitembattle.model.GlobalPlayerStats;
+import forceitembattle.model.stats.GlobalPlayerStats;
 import forceitembattle.model.Rarity;
-import forceitembattle.model.StatsView;
+import forceitembattle.model.stats.StatsView;
 import java.util.function.ToLongFunction;
 import lombok.Getter;
 

@@ -1,7 +1,7 @@
 package forceitembattle.achievements.global;
 
-import forceitembattle.model.GlobalPlayerStats;
-import forceitembattle.model.StatsView;
+import forceitembattle.model.stats.GlobalPlayerStats;
+import forceitembattle.model.stats.StatsView;
 import org.jetbrains.annotations.Nullable;
 
 public record GlobalStatSources(

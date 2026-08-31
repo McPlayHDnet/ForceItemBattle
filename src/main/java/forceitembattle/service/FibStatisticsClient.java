@@ -22,12 +22,12 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
-import forceitembattle.model.DuoLeaderboardEntry;
-import forceitembattle.model.GlobalPlayerStats;
-import forceitembattle.model.LeaderboardEntry;
+import forceitembattle.model.stats.DuoLeaderboardEntry;
+import forceitembattle.model.stats.GlobalPlayerStats;
+import forceitembattle.model.stats.LeaderboardEntry;
 import de.threeseconds.openapi.fibservice.client.model.FibRaritiesUpdateRequestDto;
 import forceitembattle.model.RarityCounts;
-import forceitembattle.model.StatsView;
+import forceitembattle.model.stats.StatsView;
 
 /**
  * Statistics domain of FIBService: solo, team, member, combined, and leaderboard.

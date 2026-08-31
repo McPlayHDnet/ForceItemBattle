@@ -1,4 +1,4 @@
-package forceitembattle.model;
+package forceitembattle.model.stats;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

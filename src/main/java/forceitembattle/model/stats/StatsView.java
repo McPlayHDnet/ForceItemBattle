@@ -1,5 +1,7 @@
-package forceitembattle.model;
+package forceitembattle.model.stats;
 
+import forceitembattle.model.Rarity;
+import forceitembattle.model.RarityCounts;
 import java.util.List;
 import org.jetbrains.annotations.Nullable;
 

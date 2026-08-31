@@ -10,8 +10,8 @@ import de.threeseconds.openapi.fibservice.client.model.FibPlayerAchievementsDto;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
-import forceitembattle.model.AchievementUnlock;
-import forceitembattle.model.LeaderboardEntry;
+import forceitembattle.model.stats.AchievementUnlock;
+import forceitembattle.model.stats.LeaderboardEntry;
 import java.util.Set;
 
 /**
