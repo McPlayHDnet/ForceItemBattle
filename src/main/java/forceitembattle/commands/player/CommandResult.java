@@ -14,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import java.util.stream.Collectors;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -50,36 +51,60 @@ public final class CommandResult extends CustomCommand {
         }
 
         if (args.length == 1) {
-            UUID uuid = null;
-            Team team = null;
-            if (!this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-                try {
-                    uuid = UUID.fromString(args[0]);
-                } catch (IllegalArgumentException e) {
-                    player.sendMessage(Text.of("<red>Invalid UUID."));
+            if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+                Team team = this.teamAt(args[0]);
+                if (team == null) {
+                    player.sendMessage(Text.of("<red>Invalid team."));
                     return;
                 }
-            } else {
-                try {
-                    team = this.plugin.getTeamManager().getTeams().get(Integer.parseInt(args[0].replace("#", "")) - 1);
-                } catch (IllegalArgumentException e) {
-                    player.sendMessage(Text.of("<red>Invalid team."));
-                }
+                new FinishInventory(this.plugin, null, team, null, false).open(player);
+                return;
             }
 
-            new FinishInventory(
-                    this.plugin,
-                    this.plugin.getRoster().get(uuid),
-                    team,
-                    null,
-                    false
-            ).open(player);
+            UUID uuid;
+            try {
+                uuid = UUID.fromString(args[0]);
+            } catch (IllegalArgumentException e) {
+                player.sendMessage(Text.of("<red>Invalid UUID."));
+                return;
+            }
+
+            ForceItemPlayer target = this.plugin.getRoster().get(uuid);
+            if (target == null) {
+                player.sendMessage(Text.of("<red>Nobody with that id played this round."));
+                return;
+            }
+
+            new FinishInventory(this.plugin, target, null, null, false).open(player);
             return;
         }
 
         if (args.length == 0 && player.isOp()) {
             showNextPlayer(player);
         }
+    }
+
+    /**
+     * The team {@code argument} names, or null when it names none.
+     *
+     * <p>Both halves of this used to be wrong. The lookup ran inside a
+     * {@code catch (IllegalArgumentException)}, which catches the {@code NumberFormatException}
+     * from bad text but <em>not</em> the {@code IndexOutOfBoundsException} from
+     * {@code List.get()} — so {@code /result #99} threw out of the command. And the catch that did
+     * fire had no {@code return} after it, so a failed parse fell through to open a result screen
+     * with nothing to show.
+     */
+    @Nullable
+    private Team teamAt(String argument) {
+        int index;
+        try {
+            index = Integer.parseInt(argument.replace("#", "")) - 1;
+        } catch (NumberFormatException e) {
+            return null;
+        }
+
+        List<Team> teams = this.plugin.getTeamManager().getTeams();
+        return index >= 0 && index < teams.size() ? teams.get(index) : null;
     }
 
     private void showNextPlayer(Player player) {
