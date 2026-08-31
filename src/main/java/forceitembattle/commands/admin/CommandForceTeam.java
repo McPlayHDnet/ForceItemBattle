@@ -8,7 +8,7 @@ import forceitembattle.util.Text;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-public class CommandForceTeam extends CustomCommand {
+public final class CommandForceTeam extends CustomCommand {
 
     public CommandForceTeam(ForceItemBattle plugin) {
         super(plugin, "forceteam");

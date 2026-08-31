@@ -11,7 +11,6 @@ import forceitembattle.commands.admin.CommandSkip;
 import forceitembattle.commands.admin.CommandStart;
 import forceitembattle.commands.admin.CommandStopTimer;
 import forceitembattle.commands.player.CommandAchievement;
-import forceitembattle.commands.player.CommandAskTrade;
 import forceitembattle.commands.player.CommandBed;
 import forceitembattle.commands.player.CommandBp;
 import forceitembattle.commands.player.CommandCollection;
@@ -71,7 +70,6 @@ import forceitembattle.manager.RecipeManager;
 import forceitembattle.manager.ScoreboardManager;
 import forceitembattle.manager.TabListManager;
 import forceitembattle.manager.TeamsManager;
-import forceitembattle.manager.TradingManager;
 import forceitembattle.manager.VoteSkipManager;
 import forceitembattle.service.FIBServiceClient;
 import forceitembattle.settings.GameSetting;
@@ -160,9 +158,6 @@ public final class ForceItemBattle extends JavaPlugin {
     @Setter
     private TeamsManager teamManager;
     @Getter
-    @Setter
-    private TradingManager tradingManager;
-    @Getter
     private AchievementManager achievementManager;
     @Getter
     private CollectionManager collectionManager;
@@ -224,7 +219,6 @@ public final class ForceItemBattle extends JavaPlugin {
                 this.antimatterPortalManager,
                 this.positionManager,
                 this.teamManager,
-                this.tradingManager,
                 this.commandsManager,
                 this.achievementManager,
                 this.collectionManager,
@@ -272,7 +266,6 @@ public final class ForceItemBattle extends JavaPlugin {
         this.antimatterPortalManager = register(new AntimatterPortalManager(this));
         this.positionManager = register(new PositionManager(this));
         this.teamManager = register(new TeamsManager(this));
-        this.tradingManager = register(new TradingManager(this));
         this.commandsManager = register(new CommandsManager(this));
         this.achievementManager = register(new AchievementManager(this));
 
@@ -377,10 +370,6 @@ public final class ForceItemBattle extends JavaPlugin {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    public void scheduleReset() {
-        scheduleReset(null);
     }
 
     public void scheduleReset(Long seed) {
@@ -489,7 +478,6 @@ public final class ForceItemBattle extends JavaPlugin {
         commands.registerCommand(new CommandPing(this));
         commands.registerCommand(new CommandHelp(this));
         commands.registerCommand(new CommandTeams(this));
-        commands.registerCommand(new CommandAskTrade(this));
         commands.registerCommand(new CommandFixSkips(this));
         commands.registerCommand(new CommandAchievement(this));
         commands.registerCommand(new CommandSpectate(this));

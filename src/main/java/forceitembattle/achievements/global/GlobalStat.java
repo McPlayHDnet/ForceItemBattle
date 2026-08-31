@@ -44,11 +44,6 @@ public enum GlobalStat {
         return sources -> readView(sources.solo(), fromView) + readView(sources.team(), fromView);
     }
 
-    /** Bests and per-round streaks: the global value is the better of the two modes, never their sum. */
-    private static ToLongFunction<GlobalStatSources> max(ToLongFunction<StatsView> fromView) {
-        return sources -> Math.max(readView(sources.solo(), fromView), readView(sources.team(), fromView));
-    }
-
     /** Genuinely mode-independent: read straight off the player-scoped row. */
     private static ToLongFunction<GlobalStatSources> player(ToLongFunction<GlobalPlayerStats> fromPlayer) {
         return sources -> sources.player() == null ? 0L : fromPlayer.applyAsLong(sources.player());

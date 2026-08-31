@@ -6,10 +6,11 @@ import forceitembattle.model.Dimension;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.Text;
 import org.bukkit.Bukkit;
+import org.bukkit.World;
 import org.bukkit.GameRules;
 import org.bukkit.entity.Player;
 
-public class CommandPause extends CustomCommand {
+public final class CommandPause extends CustomCommand {
 
     public CommandPause(ForceItemBattle plugin) {
         super(plugin, "pause");
@@ -28,8 +29,13 @@ public class CommandPause extends CustomCommand {
             return;
         }
         Bukkit.broadcast(Text.of("<gold>The game has been paused!"));
-        Dimension.OVERWORLD.world().setGameRule(GameRules.ADVANCE_TIME, false);
-        Dimension.OVERWORLD.world().setGameRule(GameRules.ADVANCE_WEATHER, false);
+
+        World overworld = Dimension.OVERWORLD.world();
+        if (overworld != null) {
+            overworld.setGameRule(GameRules.ADVANCE_TIME, false);
+            overworld.setGameRule(GameRules.ADVANCE_WEATHER, false);
+        }
+
         this.plugin.getGamemanager().pauseGame();
     }
 }

@@ -42,11 +42,16 @@ public class CommandsManager implements Manager {
      *
      * The command list is maintained twice — the {@code bukkitPluginYaml} block in build.gradle.kts
      * and {@code initCommands()} — and only one direction of drift was caught: registering an
-     * executor for a name that isn't declared throws above. The other direction was silent, which is
-     * how {@code asktrade} sat in plugin.yml with no executor behind it while the class that looked
-     * like it owned that name was actually called {@code trade}. A declared command with no executor
-     * still exists to the server: it tab-completes, passes the "unknown command" check, and then
-     * does nothing but print its usage line.
+     * executor for a name that isn't declared throws above. The other direction was silent, and the
+     * two lists live in different files with nothing compiling either against the other, so a name
+     * that reaches only one of them is one edit away.
+     *
+     * <p>The case that prompted this check was a command declared in plugin.yml under one name
+     * while the {@link CustomCommand} meant to own it answered to another, leaving the declared
+     * name unclaimed. Both have since gone with the player-trading feature, so the example no
+     * longer exists — the failure shape does. A declared command with no executor still exists to
+     * the server: it tab-completes, passes the "unknown command" check, and then does nothing but
+     * print its usage line.
      */
     public void warnAboutUnboundCommands() {
         for (String name : this.plugin.getDescription().getCommands().keySet()) {

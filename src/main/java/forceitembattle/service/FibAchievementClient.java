@@ -6,7 +6,6 @@ import de.threeseconds.openapi.fibservice.client.model.FibAchievementLeaderboard
 import de.threeseconds.openapi.fibservice.client.model.FibAchievementUnlockRequestDto;
 import forceitembattle.achievements.AchievementMode;
 import javax.annotation.Nullable;
-import de.threeseconds.openapi.fibservice.client.model.FibPlayerAchievementsDto;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -27,14 +26,6 @@ public class FibAchievementClient {
     FibAchievementClient(FibAchievementControllerApi achievementApi, ApiExecutor executor) {
         this.achievementApi = achievementApi;
         this.executor = executor;
-    }
-
-    public FibPlayerAchievementsDto getPlayerAchievements(UUID playerUuid) throws ApiException {
-        return achievementApi.getPlayerAchievements(playerUuid);
-    }
-
-    void getPlayerAchievementsAsync(UUID playerUuid, Consumer<FibPlayerAchievementsDto> onSuccess, Consumer<ApiException> onError) {
-        executor.runAsync(() -> achievementApi.getPlayerAchievements(playerUuid), onSuccess, onError);
     }
 
     public void unlockAchievementAsync(UUID playerUuid, String achievementId, FibAchievementUnlockRequestDto request) {
@@ -74,14 +65,6 @@ public class FibAchievementClient {
             return null;
         }, result -> {
         }, executor::logError);
-    }
-
-    public List<FibAchievementLeaderboardEntryDto> getAchievementLeaderboard(int limit) throws ApiException {
-        return achievementApi.getAchievementLeaderboard(limit);
-    }
-
-    void getAchievementLeaderboardAsync(int limit, Consumer<List<FibAchievementLeaderboardEntryDto>> onSuccess) {
-        getAchievementLeaderboardAsync(limit, onSuccess, executor::logError);
     }
 
     void getAchievementLeaderboardAsync(int limit, Consumer<List<FibAchievementLeaderboardEntryDto>> onSuccess, Consumer<ApiException> onError) {

@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.bukkit.entity.Player;
 
-public class CommandLeaderboard extends CustomCommand implements CustomTabCompleter {
+public final class CommandLeaderboard extends CustomCommand implements CustomTabCompleter {
 
     private static final int TOP_LIMIT = 10;
 

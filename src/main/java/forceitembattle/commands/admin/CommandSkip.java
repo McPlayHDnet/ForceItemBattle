@@ -6,7 +6,7 @@ import forceitembattle.util.Text;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-public class CommandSkip extends CustomCommand {
+public final class CommandSkip extends CustomCommand {
 
     public CommandSkip(ForceItemBattle plugin) {
         super(plugin, "skip");

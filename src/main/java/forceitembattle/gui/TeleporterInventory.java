@@ -7,7 +7,7 @@ import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 
-public class TeleporterInventory extends InventoryBuilder {
+public final class TeleporterInventory extends InventoryBuilder {
 
     private final ForceItemBattle plugin;
 

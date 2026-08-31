@@ -19,7 +19,6 @@ import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
-import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.GameRules;
 import org.bukkit.Material;
@@ -47,13 +46,13 @@ public class PlayerLifecycleListener implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        Gamemanager gamemanager = this.gamemanager;
 
         boolean onRoster = this.roster.contains(player.getUniqueId());
         Admission admission = Roster.admit(onRoster, this.roundPhase.state());
 
-        if (onRoster) {
-            this.roster.get(player.getUniqueId()).setPlayer(player);
+        ForceItemPlayer existing = this.roster.get(player.getUniqueId());
+        if (existing != null) {
+            existing.setPlayer(player);
         } else if (admission.joinsRoster()) {
             ForceItemPlayer forceItemPlayer = new ForceItemPlayer(player, null, 0, 0);
             forceItemPlayer.setSpectator(admission.isSpectating());
@@ -185,7 +184,11 @@ public class PlayerLifecycleListener implements Listener {
             player.performCommand("fixskips -silent");
         }
 
-        player.getInventory().setItem(8, Gamemanager.createBackpack(forceItemPlayer, forceItemPlayer.isInTeam()));
+        // A mid-round joiner holds no roster entry and no backpack, so there is nothing to put
+        // in slot 8 for them.
+        if (forceItemPlayer != null) {
+            player.getInventory().setItem(8, Gamemanager.createBackpack(forceItemPlayer, forceItemPlayer.isInTeam()));
+        }
 
     }
 }

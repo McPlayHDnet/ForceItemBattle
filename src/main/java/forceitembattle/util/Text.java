@@ -10,10 +10,6 @@ public final class Text {
     private Text() {
     }
 
-    public static MiniMessage mm() {
-        return MINI_MESSAGE;
-    }
-
     public static Component of(String miniMessage) {
         return MINI_MESSAGE.deserialize(miniMessage);
     }

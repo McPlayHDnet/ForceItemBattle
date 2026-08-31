@@ -5,7 +5,7 @@ import forceitembattle.commands.CustomCommand;
 import forceitembattle.util.Text;
 import org.bukkit.entity.Player;
 
-public class CommandHelp extends CustomCommand {
+public final class CommandHelp extends CustomCommand {
 
     public CommandHelp(ForceItemBattle plugin) {
         super(plugin, "help");

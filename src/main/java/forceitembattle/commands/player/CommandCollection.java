@@ -18,7 +18,7 @@ import org.bukkit.entity.Player;
  * <p>The book fills itself: {@link CollectionBookInventory} kicks off the read-through load and
  * repaints when it lands, so this just resolves the target and opens.
  */
-public class CommandCollection extends CustomCommand implements CustomTabCompleter {
+public final class CommandCollection extends CustomCommand implements CustomTabCompleter {
 
     public CommandCollection(ForceItemBattle plugin) {
         super(plugin, "collection");

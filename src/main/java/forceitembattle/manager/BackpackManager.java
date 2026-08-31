@@ -3,7 +3,6 @@ package forceitembattle.manager;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.Team;
-import forceitembattle.settings.GameSetting;
 import forceitembattle.util.Text;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,8 +28,9 @@ public class BackpackManager implements Manager {
 
         // Whether this player has a team, not whether the round was configured for them. With the
         // setting on and no team -- a spectator who joined during the countdown -- the old check
-        // passed and then dereferenced a null team.
-        if (forceItemPlayer.isInTeam()) {
+        // passed and then dereferenced a null team. No roster entry at all is the same answer:
+        // someone who arrived mid-round gets their own backpack, not a team's.
+        if (forceItemPlayer != null && forceItemPlayer.isInTeam()) {
             return getTeamBackpack(forceItemPlayer.currentTeam());
         }
 

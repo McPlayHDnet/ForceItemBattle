@@ -15,7 +15,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-public class CommandInfo extends CustomCommand implements CustomTabCompleter {
+public final class CommandInfo extends CustomCommand implements CustomTabCompleter {
 
     private static final List<String> MATERIALS = Arrays.stream(Material.values())
             .map(CustomMaterials::idOf)
@@ -41,14 +41,8 @@ public class CommandInfo extends CustomCommand implements CustomTabCompleter {
             item = new ItemStack(material);
 
         } else if (this.plugin.getRoundPhase().roundRunning()) {
-            if (this.plugin.getRoster().contains(player.getUniqueId())) {
-                ForceItemPlayer forceItemPlayer = this.plugin.getRoster().get(player.getUniqueId());
-                if (forceItemPlayer.isSpectator()) {
-                    player.sendMessage(Text.of("<red>You are not playing, type /info [item] to get information about an item"));
-                    return;
-                }
-                item = new ItemStack(forceItemPlayer.activeMaterial());
-            } else {
+            ForceItemPlayer forceItemPlayer = this.plugin.getRoster().get(player.getUniqueId());
+            if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
                 player.sendMessage(Text.of("<red>You are not playing, type /info [item] to get information about an item"));
             }
         }

@@ -158,10 +158,14 @@ public class ItemsListener implements Listener {
     }
 
     private void checkItemFound(Player player, ForceItemPlayer forceItemPlayer, ItemStack item) {
-        Material currentItem = forceItemPlayer.activeMaterial();
-        if (item == null) {
+        // Null means no roster entry, which means they arrived after the countdown froze the
+        // roster: a spectator for this round, with no force item to match against. Every caller
+        // here reads the roster directly, so this is the one place it has to be handled.
+        if (forceItemPlayer == null || item == null) {
             return;
         }
+
+        Material currentItem = forceItemPlayer.activeMaterial();
 
         if (Gamemanager.isBackpack(item)) return;
 

@@ -10,18 +10,13 @@ import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameContext;
 import forceitembattle.model.Rarity;
 import forceitembattle.service.FIBServiceClient;
-import forceitembattle.service.FibStatisticsClient;
-import forceitembattle.service.PlayerStatsWrite;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.util.GameBroadcast;
 import forceitembattle.util.Text;
 import forceitembattle.util.TimeFormat;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
-import org.bukkit.Material;
 import org.bukkit.Sound;
-import org.bukkit.entity.Player;
 
 /**
  * What happens when a player obtains their force item.
@@ -74,6 +69,13 @@ public class FoundItemResolver implements Manager {
      * already owned, which is how a back-to-back chain runs.
      */
     public void resolve(Find find) {
+        // The event permits a find with no stack, and Find carries that through as a null
+        // material. Nothing below can do anything with one: it is announced by name, recorded by
+        // name, and stored on the found-list.
+        if (find.material() == null) {
+            return;
+        }
+
         ForceItemPlayer finder = find.finder();
         GameContext context = GameContext.of(this.settings, finder);
         FindOutcome outcome = FindOutcome.of(find, context, System.currentTimeMillis());

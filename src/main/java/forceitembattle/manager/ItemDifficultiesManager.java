@@ -26,7 +26,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import lombok.Getter;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 
@@ -354,6 +354,17 @@ public class ItemDifficultiesManager implements Manager {
         return this.descriptionItems.get(material) != null;
     }
 
+    /**
+     * Turns {@code &}-prefixed colour codes into the section-sign form, the way the deprecated
+     * {@code ChatColor.translateAlternateColorCodes} did. Still a legacy string because both
+     * callers want one: {@code /info} sends it straight to the player, and {@code ItemsInventory}
+     * hands it to {@code setLoreLegacy}.
+     */
+    private static String translateAmpersandCodes(String line) {
+        return LegacyComponentSerializer.legacySection()
+                .serialize(LegacyComponentSerializer.legacyAmpersand().deserialize(line));
+    }
+
     public List<String> getDescriptionItemLines(Material material) {
         if (!isItemInDescriptionList(material)) {
             return new ArrayList<>();
@@ -366,7 +377,7 @@ public class ItemDifficultiesManager implements Manager {
         return this.descriptionItems.get(material)
                 .lines()
                 .stream()
-                .map(line -> ChatColor.translateAlternateColorCodes('&', line))
+                .map(ItemDifficultiesManager::translateAmpersandCodes)
                 .toList();
     }
 

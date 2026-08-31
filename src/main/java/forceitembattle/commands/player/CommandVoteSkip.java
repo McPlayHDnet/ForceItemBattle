@@ -7,7 +7,7 @@ import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.util.Text;
 import org.bukkit.entity.Player;
 
-public class CommandVoteSkip extends CustomCommand {
+public final class CommandVoteSkip extends CustomCommand {
 
 
     public CommandVoteSkip(ForceItemBattle plugin) {
@@ -28,6 +28,10 @@ public class CommandVoteSkip extends CustomCommand {
         }
 
         ForceItemPlayer forceItemPlayer = this.plugin.getRoster().get(player.getUniqueId());
+        if (forceItemPlayer == null) {
+            player.sendMessage(Text.of("<red>You are not playing."));
+            return;
+        }
 
         if (forceItemPlayer.activeJokers() == 0) {
             player.sendMessage(Text.of("<red>You dont have any jokers to vote!"));

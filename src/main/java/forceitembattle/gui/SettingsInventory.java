@@ -10,7 +10,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 
-public class SettingsInventory extends InventoryBuilder {
+public final class SettingsInventory extends InventoryBuilder {
 
     private final ForceItemBattle plugin;
     private final GamePreset gamePreset;
@@ -136,9 +136,6 @@ public class SettingsInventory extends InventoryBuilder {
                     if (gameSetting == GameSetting.BACKPACKSIZE) {
                         amount = gamePreset.getBackpackRows();
                         itemBuilder = new ItemBuilder(Material.STONE_BUTTON).setAmount(amount).setDisplayName(enabledPrefix + " <yellow>" + amount + " <gray>" + (amount == 1 ? "row" : "rows"));
-                    } else if (gameSetting == GameSetting.TRADING_COOLDOWN) {
-                        amount = gamePreset.getTradingCooldown();
-                        itemBuilder = new ItemBuilder(Material.STONE_BUTTON).setAmount(amount).setDisplayName(enabledPrefix + " <yellow>" + amount + " <gray>" + (amount == 1 ? "minute" : "minutes"));
                     }
 
                 } else {
@@ -184,7 +181,11 @@ public class SettingsInventory extends InventoryBuilder {
                     }
 
                 } else if (inventoryClickEvent.getCurrentItem().getType() == Material.STONE_BUTTON) {
-                    if (!plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK) || !plugin.getSettings().isSettingEnabled(GameSetting.TRADING)) {
+                    // BACKPACKSIZE is the only stone-button setting left. The gate used to also
+                    // require TRADING, which meant backpack rows could not be adjusted unless
+                    // player trading happened to be on -- two unrelated settings, and trading is
+                    // gone now.
+                    if (!plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK)) {
                         this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);
                         return;
                     }
@@ -205,27 +206,7 @@ public class SettingsInventory extends InventoryBuilder {
                         } else {
                             plugin.getSettings().setSettingValue(gameSetting, backpackSize);
                         }
-
-                    } else if (gameSetting == GameSetting.TRADING_COOLDOWN) {
-                        int tradingCooldown = inventoryClickEvent.getCurrentItem().getAmount();
-
-                        if (inventoryClickEvent.isLeftClick() && tradingCooldown < 5) {
-                            tradingCooldown += 1;
-                        } else if (inventoryClickEvent.isRightClick() && tradingCooldown > 1) {
-                            tradingCooldown -= 1;
-                        } else {
-                            this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);
-                            return;
-                        }
-                        this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
-                        if (gamePreset != null) {
-                            gamePreset.setTradingCooldown(tradingCooldown);
-                        } else {
-                            plugin.getSettings().setSettingValue(gameSetting, tradingCooldown);
-                        }
                     }
-
-
                 }
 
             });

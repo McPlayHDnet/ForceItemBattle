@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-public class CommandResult extends CustomCommand {
+public final class CommandResult extends CustomCommand {
 
     public int place;
     /** Match the reveal counter belongs to — a new match restarts the paging from last place. */

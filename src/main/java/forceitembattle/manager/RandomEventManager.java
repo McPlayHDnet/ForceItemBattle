@@ -2,7 +2,6 @@ package forceitembattle.manager;
 
 import forceitembattle.ForceItemBattle;
 import forceitembattle.model.Find;
-import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.randomevents.RandomEvent;
 import forceitembattle.randomevents.RandomEvents;
 import forceitembattle.settings.GameSetting;

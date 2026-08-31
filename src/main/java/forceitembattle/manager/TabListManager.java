@@ -135,11 +135,8 @@ public class TabListManager implements Manager {
     }
 
     private String buildJokerLine(Player player) {
-        if (!this.roster.contains(player.getUniqueId())) {
-            return "";
-        }
         ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());
-        if (forceItemPlayer.isSpectator()) {
+        if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
             return "";
         }
         return "\n<gray>Jokers · <aqua>" + forceItemPlayer.activeJokers();

@@ -12,7 +12,6 @@ import static org.mockito.Mockito.when;
 import forceitembattle.achievements.handlers.CollectionAchievementHandler;
 import forceitembattle.achievements.handlers.InventoryFullAchievementHandler;
 import forceitembattle.achievements.progress.CollectionAchievementProgress;
-import forceitembattle.achievements.progress.SimpleAchievementProgress;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.MaterialCategory;
 import java.util.LinkedHashMap;

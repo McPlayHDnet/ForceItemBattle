@@ -26,7 +26,7 @@ import org.bukkit.inventory.SmithingTrimRecipe;
 import org.bukkit.inventory.SmokingRecipe;
 import org.bukkit.inventory.StonecuttingRecipe;
 
-public class RecipeInventory extends InventoryBuilder {
+public final class RecipeInventory extends InventoryBuilder {
 
     public static final int NEXT_RECIPE_ITEM_SLOT = 8;
     public static final int PREVIOUS_RECIPE_ITEM_SLOT = 0;
@@ -127,7 +127,7 @@ public class RecipeInventory extends InventoryBuilder {
                         this.setItem(slot, this.choiceWithLore(materialChoice, recipeViewer));
 
                     } else if (choice != null) {
-                        this.setItem(slot, new ItemStack(choice.getItemStack()));
+                        this.setItem(slot, firstStackOf(choice));
                     }
                     charIndex++;
                 }
@@ -140,7 +140,7 @@ public class RecipeInventory extends InventoryBuilder {
                 if (recipeChoice instanceof RecipeChoice.MaterialChoice materialChoice) {
                     ingredients.add(this.choiceWithLore(materialChoice, recipeViewer));
                 } else if (recipeChoice != null) {
-                    ingredients.add(new ItemStack(recipeChoice.getItemStack()));
+                    ingredients.add(firstStackOf(recipeChoice));
                 }
             }
 
@@ -157,9 +157,9 @@ public class RecipeInventory extends InventoryBuilder {
 
         }
         if (recipeViewer.recipe() instanceof SmithingTrimRecipe smithing) {
-            ingredients.add(smithing.getBase().getItemStack());
-            ingredients.add(smithing.getTemplate().getItemStack());
-            ingredients.add(smithing.getAddition().getItemStack());
+            ingredients.add(firstStackOf(smithing.getBase()));
+            ingredients.add(firstStackOf(smithing.getTemplate()));
+            ingredients.add(firstStackOf(smithing.getAddition()));
 
             int index = 0;
             for (ItemStack ingredient : ingredients) {
@@ -168,9 +168,9 @@ public class RecipeInventory extends InventoryBuilder {
             }
 
         } else if (recipeViewer.recipe() instanceof SmithingTransformRecipe smithing) {
-            ingredients.add(smithing.getBase().getItemStack());
-            ingredients.add(smithing.getTemplate().getItemStack());
-            ingredients.add(smithing.getAddition().getItemStack());
+            ingredients.add(firstStackOf(smithing.getBase()));
+            ingredients.add(firstStackOf(smithing.getTemplate()));
+            ingredients.add(firstStackOf(smithing.getAddition()));
 
             int index = 0;
             for (ItemStack ingredient : ingredients) {
@@ -180,8 +180,8 @@ public class RecipeInventory extends InventoryBuilder {
 
         } else if (recipeViewer.recipe() instanceof SmithingRecipe smithing) {
             // A smithing recipe that isn't a transform or trim: no template to show.
-            ingredients.add(smithing.getAddition().getItemStack());
-            ingredients.add(smithing.getBase().getItemStack());
+            ingredients.add(firstStackOf(smithing.getAddition()));
+            ingredients.add(firstStackOf(smithing.getBase()));
 
             int index = 0;
             for (ItemStack ingredient : ingredients) {
@@ -190,13 +190,13 @@ public class RecipeInventory extends InventoryBuilder {
             }
         }
         if (recipeViewer.recipe() instanceof MerchantRecipe merchant) {
-            ItemStack fixed = new ItemStack(merchant.getResult().getType(), 1, (byte) 0);
+            ItemStack fixed = new ItemStack(merchant.getResult().getType(), 1);
             ingredients.add(fixed);
 
             this.setItem(OTHER_FIRST_ITEM_SLOT, fixed);
         }
         if (recipeViewer.recipe() instanceof StonecuttingRecipe stonecutting) {
-            ItemStack fixed = new ItemStack(stonecutting.getInput());
+            ItemStack fixed = firstStackOf(stonecutting.getInputChoice());
             ingredients.add(fixed);
 
             this.setItem(OTHER_FIRST_ITEM_SLOT, fixed);
@@ -289,6 +289,26 @@ public class RecipeInventory extends InventoryBuilder {
         } else {
             return null;
         }
+    }
+
+    /**
+     * The stack a recipe choice is drawn as: its first alternative.
+     *
+     * <p>Replaces {@code RecipeChoice.getItemStack()}, which Paper deprecated "for compatibility
+     * only" — it is the same behaviour, spelled out. An {@code ExactChoice} carries stacks and hands
+     * back a clone of the first; a {@code MaterialChoice} carries materials and builds one. The
+     * deprecated method also stamped {@code Short.MAX_VALUE} durability on a multi-material choice,
+     * which is legacy damage-value signalling and does nothing here — every multi-material choice
+     * this GUI draws goes through choiceWithLore instead, which cycles the alternatives.
+     */
+    private static ItemStack firstStackOf(RecipeChoice choice) {
+        if (choice instanceof RecipeChoice.ExactChoice exact) {
+            return exact.getChoices().get(0).clone();
+        }
+        if (choice instanceof RecipeChoice.MaterialChoice material) {
+            return new ItemStack(material.getChoices().get(0));
+        }
+        return new ItemStack(Material.AIR);
     }
 
     private ItemStack choiceWithLore(RecipeChoice.MaterialChoice materialChoice, RecipeViewer recipeViewer) {

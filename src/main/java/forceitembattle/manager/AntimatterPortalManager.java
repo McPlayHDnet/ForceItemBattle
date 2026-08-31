@@ -15,6 +15,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import io.papermc.paper.registry.RegistryAccess;
+import io.papermc.paper.registry.RegistryKey;
 import org.bukkit.Registry;
 import org.bukkit.Sound;
 import org.bukkit.World;
@@ -28,7 +30,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.generator.structure.GeneratedStructure;
 import org.bukkit.generator.structure.Structure;
 import org.bukkit.generator.structure.StructurePiece;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.BoundingBox;
@@ -62,6 +63,16 @@ public class AntimatterPortalManager implements Manager {
      * hide state lives only in memory.
      */
     private static final String PORTAL_TAG = "fib_antimatter_portal";
+
+    /**
+     * The structure registry. {@code Registry.STRUCTURE} is deprecated in favour of
+     * {@link RegistryAccess}; looked up per call rather than held in a field, because a manager is
+     * constructed before the server is fully up.
+     */
+    private static Registry<Structure> structureRegistry() {
+        return RegistryAccess.registryAccess().getRegistry(RegistryKey.STRUCTURE);
+    }
+
 
     private static final NamespacedKey ANTIMATTER_DIMENSION = new NamespacedKey("fib", "antimatter");
     private static final NamespacedKey DEPTHS_STRUCTURE = new NamespacedKey("fib", "antimatter_depths");
@@ -278,7 +289,7 @@ public class AntimatterPortalManager implements Manager {
             return null;
         }
 
-        Structure depths = Registry.STRUCTURE.get(DEPTHS_STRUCTURE);
+        Structure depths = structureRegistry().get(DEPTHS_STRUCTURE);
         if (depths == null) {
             this.plugin.getLogger().warning("Structure " + DEPTHS_STRUCTURE + " is not registered.");
             return null;
@@ -372,7 +383,7 @@ public class AntimatterPortalManager implements Manager {
         int chunkZ = structureLocation.getBlockZ() >> 4;
 
         for (GeneratedStructure generated : world.getStructures(chunkX, chunkZ)) {
-            if (!DEPTHS_STRUCTURE.equals(Registry.STRUCTURE.getKey(generated.getStructure()))) {
+            if (!DEPTHS_STRUCTURE.equals(structureRegistry().getKey(generated.getStructure()))) {
                 continue;
             }
             for (StructurePiece piece : generated.getPieces()) {

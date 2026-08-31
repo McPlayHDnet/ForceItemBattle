@@ -8,7 +8,7 @@ import java.util.List;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
-public class CommandBed extends CustomCommand {
+public final class CommandBed extends CustomCommand {
 
     public CommandBed(ForceItemBattle plugin) {
         super(plugin, "bed");

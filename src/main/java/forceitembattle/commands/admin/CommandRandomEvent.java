@@ -8,7 +8,7 @@ import forceitembattle.util.Text;
 import java.util.List;
 import org.bukkit.entity.Player;
 
-public class CommandRandomEvent extends CustomCommand implements CustomTabCompleter {
+public final class CommandRandomEvent extends CustomCommand implements CustomTabCompleter {
 
     public CommandRandomEvent(ForceItemBattle plugin) {
         super(plugin, "randomevent");

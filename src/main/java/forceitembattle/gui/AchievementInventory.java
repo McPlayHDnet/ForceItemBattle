@@ -25,7 +25,7 @@ import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.inventory.ItemStack;
 
-public class AchievementInventory extends InventoryBuilder {
+public final class AchievementInventory extends InventoryBuilder {
 
     private static final DateTimeFormatter WHEN_FORMAT = DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm");
     private static final int BAR_WIDTH = 24;

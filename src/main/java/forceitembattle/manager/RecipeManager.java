@@ -5,7 +5,6 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.customrecipe.FakeRecipe;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.gui.ItemBuilder;
 import forceitembattle.gui.RecipeInventory;
 import forceitembattle.gui.RecipeViewer;
 import forceitembattle.util.Text;
@@ -89,7 +88,7 @@ public class RecipeManager implements Manager {
         NamespacedKey totemKey = new NamespacedKey("fib", "totem_of_antimatter");
         ShapedRecipe totemRecipe = new ShapedRecipe(totemKey, CustomMaterials.TOTEM_OF_ANTIMATTER.itemStack());
         totemRecipe.shape(" E ", "QGQ", " Q ");
-        totemRecipe.setIngredient('E', new RecipeChoice.ExactChoice(CustomMaterials.EYE_OF_ANTIMATTER.itemStack()));
+        totemRecipe.setIngredient('E', RecipeChoice.exactChoice(CustomMaterials.EYE_OF_ANTIMATTER.itemStack()));
         totemRecipe.setIngredient('G', Material.GLOWSTONE);
         totemRecipe.setIngredient('Q', Material.QUARTZ);
 

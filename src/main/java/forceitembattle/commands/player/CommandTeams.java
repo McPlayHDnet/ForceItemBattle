@@ -8,7 +8,7 @@ import forceitembattle.util.Text;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-public class CommandTeams extends CustomCommand {
+public final class CommandTeams extends CustomCommand {
 
     public CommandTeams(ForceItemBattle plugin) {
         super(plugin, "teams");
@@ -28,15 +28,22 @@ public class CommandTeams extends CustomCommand {
             return;
         }
 
+        // Resolved once, and required. Everything below hands it to TeamsManager, which
+        // dereferences it without checking -- and a player with no roster entry is possible even
+        // in PRE_GAME if the roster has not caught up with them yet.
+        ForceItemPlayer self = this.plugin.getRoster().get(player.getUniqueId());
+        if (self == null) {
+            player.sendMessage(Text.of("<red>You are not in this round."));
+            return;
+        }
+
         if (args.length == 1) {
             if (args[0].equalsIgnoreCase("leave")) {
-                ForceItemPlayer forceItemPlayer = this.plugin.getRoster().get(player.getUniqueId());
-                this.plugin.getTeamManager().leave(forceItemPlayer);
+                this.plugin.getTeamManager().leave(self);
                 return;
             }
             if (args[0].equalsIgnoreCase("list")) {
-                ForceItemPlayer forceItemPlayer = this.plugin.getRoster().get(player.getUniqueId());
-                this.plugin.getTeamManager().showTeamList(forceItemPlayer);
+                this.plugin.getTeamManager().showTeamList(self);
                 return;
             }
             this.sendHelpMessage(player);
@@ -44,39 +51,34 @@ public class CommandTeams extends CustomCommand {
         }
 
         if (args.length == 2) {
-            if (args[0].equalsIgnoreCase("invite")) {
-                if (Bukkit.getPlayer(args[1]) == null) {
-                    player.sendMessage(Text.of("<yellow>" + args[1] + " <red>is not online"));
-                    return;
-                }
-                ForceItemPlayer inviter = this.plugin.getRoster().get(player.getUniqueId());
-                ForceItemPlayer invitee = this.plugin.getRoster().get(Bukkit.getPlayer(args[1]).getUniqueId());
-                this.plugin.getTeamManager().invite(inviter, invitee);
+            if (!args[0].equalsIgnoreCase("invite")
+                    && !args[0].equalsIgnoreCase("accept")
+                    && !args[0].equalsIgnoreCase("decline")) {
+                this.sendHelpMessage(player);
                 return;
             }
 
-            if (args[0].equalsIgnoreCase("accept")) {
-                if (Bukkit.getPlayer(args[1]) == null) {
-                    player.sendMessage(Text.of("<yellow>" + args[1] + " <red>is not online"));
-                    return;
-                }
-                ForceItemPlayer inviter = this.plugin.getRoster().get(player.getUniqueId());
-                ForceItemPlayer invitee = this.plugin.getRoster().get(Bukkit.getPlayer(args[1]).getUniqueId());
-                this.plugin.getTeamManager().accept(inviter, invitee);
+            // Looked up once. Each branch used to call Bukkit.getPlayer(args[1]) a second time
+            // after null-checking the first call, so the check guarded a different object than
+            // the one dereferenced.
+            Player target = Bukkit.getPlayer(args[1]);
+            if (target == null) {
+                player.sendMessage(Text.of("<yellow>" + args[1] + " <red>is not online"));
                 return;
             }
 
-            if (args[0].equalsIgnoreCase("decline")) {
-                if (Bukkit.getPlayer(args[1]) == null) {
-                    player.sendMessage(Text.of("<yellow>" + args[1] + " <red>is not online"));
-                    return;
-                }
-                ForceItemPlayer inviter = this.plugin.getRoster().get(player.getUniqueId());
-                ForceItemPlayer invitee = this.plugin.getRoster().get(Bukkit.getPlayer(args[1]).getUniqueId());
-                this.plugin.getTeamManager().decline(inviter, invitee);
+            ForceItemPlayer other = this.plugin.getRoster().get(target.getUniqueId());
+            if (other == null) {
+                player.sendMessage(Text.of("<yellow>" + target.getName() + " <red>is not in this round."));
                 return;
             }
-            this.sendHelpMessage(player);
+
+            switch (args[0].toLowerCase()) {
+                case "invite" -> this.plugin.getTeamManager().invite(self, other);
+                case "accept" -> this.plugin.getTeamManager().accept(self, other);
+                case "decline" -> this.plugin.getTeamManager().decline(self, other);
+                default -> this.sendHelpMessage(player);
+            }
             return;
         }
 

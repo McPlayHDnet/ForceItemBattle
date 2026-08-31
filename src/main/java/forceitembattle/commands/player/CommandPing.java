@@ -5,7 +5,7 @@ import forceitembattle.commands.CustomCommand;
 import forceitembattle.util.Text;
 import org.bukkit.entity.Player;
 
-public class CommandPing extends CustomCommand {
+public final class CommandPing extends CustomCommand {
 
     public CommandPing(ForceItemBattle plugin) {
         super(plugin, "ping");

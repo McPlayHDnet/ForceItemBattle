@@ -3,14 +3,13 @@ package forceitembattle.commands.player;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.manager.Gamemanager;
-import forceitembattle.settings.GameSetting;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.util.Text;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
-public class CommandFixSkips extends CustomCommand {
+public final class CommandFixSkips extends CustomCommand {
     public CommandFixSkips(ForceItemBattle plugin) {
         super(plugin, "fixskips");
         setDescription("Fix skips");
@@ -26,6 +25,12 @@ public class CommandFixSkips extends CustomCommand {
         boolean silent = args.length > 0 && args[0].equalsIgnoreCase("-silent");
 
         ForceItemPlayer forceItemPlayer = this.plugin.getRoster().get(player.getUniqueId());
+        if (forceItemPlayer == null) {
+            if (!silent) {
+                player.sendMessage(Text.of("<red>You are not playing."));
+            }
+            return;
+        }
 
         int remainingJokers = forceItemPlayer.activeJokers();
         if (remainingJokers == 0) {

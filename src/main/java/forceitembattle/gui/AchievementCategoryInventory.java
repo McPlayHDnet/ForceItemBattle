@@ -11,7 +11,7 @@ import java.util.UUID;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 
-public class AchievementCategoryInventory extends InventoryBuilder {
+public final class AchievementCategoryInventory extends InventoryBuilder {
 
     /** One tile per displayed scope. Scope, slot and icon travel together so they cannot drift apart. */
     private record Tile(AchievementScope scope, int slot, Material icon) {

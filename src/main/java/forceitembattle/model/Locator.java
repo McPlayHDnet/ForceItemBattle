@@ -3,7 +3,6 @@ package forceitembattle.model;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.bukkit.Color;
-import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
 @Getter
@@ -25,10 +24,6 @@ public class Locator {
 
     private final Color lineColor;
     private final String bossBarGradient;
-
-    public Material getLocatorMaterial() {
-        return this.locatorItem.getMaterial();
-    }
 
     /**
      * Whether this stack is this locator's item. Locators whose material is theirs alone accept any

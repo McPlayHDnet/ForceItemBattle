@@ -5,12 +5,12 @@ import forceitembattle.model.CustomMaterials;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.util.Text;
-import org.apache.commons.lang3.text.WordUtils;
+import org.apache.commons.text.WordUtils;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-public class CommandInfoWiki extends CustomCommand {
+public final class CommandInfoWiki extends CustomCommand {
 
     public CommandInfoWiki(ForceItemBattle plugin) {
         super(plugin, "infowiki");
@@ -20,17 +20,10 @@ public class CommandInfoWiki extends CustomCommand {
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
         ItemStack item = player.getInventory().getItemInMainHand();
-        ;
 
         if (this.plugin.getRoundPhase().roundRunning()) {
-            if (this.plugin.getRoster().contains(player.getUniqueId())) {
-                ForceItemPlayer forceItemPlayer = this.plugin.getRoster().get(player.getUniqueId());
-                if (forceItemPlayer.isSpectator()) {
-                    player.sendMessage(Text.of("<red>You are not playing."));
-                    return;
-                }
-                item = new ItemStack(forceItemPlayer.activeMaterial());
-            } else {
+            ForceItemPlayer forceItemPlayer = this.plugin.getRoster().get(player.getUniqueId());
+            if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
                 player.sendMessage(Text.of("<red>You are not playing."));
                 return;
             }

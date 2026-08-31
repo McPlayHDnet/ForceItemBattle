@@ -3,7 +3,6 @@ package forceitembattle.achievements.handlers;
 import forceitembattle.achievements.AchievementWorld;
 import forceitembattle.achievements.Trigger;
 import forceitembattle.achievements.progress.SimpleAchievementProgress;
-import forceitembattle.event.FoundItemEvent;
 import forceitembattle.model.ForceItemPlayer;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;

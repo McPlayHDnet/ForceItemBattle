@@ -23,7 +23,7 @@ import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
-public class CommandStats extends CustomCommand implements CustomTabCompleter {
+public final class CommandStats extends CustomCommand implements CustomTabCompleter {
 
     private static final long RESET_CONFIRM_TIMEOUT_MS = 30_000L;
 

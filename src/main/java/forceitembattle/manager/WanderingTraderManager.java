@@ -20,7 +20,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -37,8 +36,10 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.WanderingTrader;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.MenuType;
 import org.bukkit.inventory.Merchant;
 import org.bukkit.inventory.MerchantRecipe;
+import org.bukkit.inventory.view.MerchantView;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.Nullable;
@@ -313,14 +314,6 @@ public class WanderingTraderManager implements Manager {
         return recipe;
     }
 
-    private MerchantRecipe specialOffer(ItemStack result) {
-        MerchantRecipe recipe = new MerchantRecipe(result, SPECIAL_MAX_USES);
-        recipe.addIngredient(new ItemStack(Material.EMERALD, 1));
-        recipe.setExperienceReward(false);
-        recipe.setPriceMultiplier(0.0F);
-        return recipe;
-    }
-
     /**
      * A vanilla level-30 table roll. Treasure is excluded, so no mending — a table wouldn't give it.
      */
@@ -358,8 +351,18 @@ public class WanderingTraderManager implements Manager {
         return this.traders.values();
     }
 
-    public Merchant createMerchantFor(Player player, ActiveTrader trader) {
-        Merchant merchant = Bukkit.createMerchant(Text.of("<dark_gray>» " + trader.getKind().coloredName()));
+    /**
+     * This player's own view of {@code trader}, with their own use counts.
+     *
+     * <p>Returns a view rather than a {@link Merchant} because the title moved: it used to be a
+     * parameter of {@code Bukkit.createMerchant}, which Paper deprecated, and now belongs to the
+     * builder. The merchant itself is untitled and virtual — one per call, so no two players ever
+     * share one. That is also why the old {@code openMerchant(merchant, force = true)} needed the
+     * force flag for a case that could not arise here, and why {@code checkReachable} is left
+     * alone: Paper documents it as having no effect on a virtual merchant.
+     */
+    public MerchantView createMerchantViewFor(Player player, ActiveTrader trader) {
+        Merchant merchant = Bukkit.createMerchant();
 
         List<MerchantRecipe> templates = trader.getRecipes();
         List<MerchantRecipe> recipes = new ArrayList<>();
@@ -373,7 +376,11 @@ public class WanderingTraderManager implements Manager {
         merchant.setRecipes(recipes);
 
         this.tradingPlayers.put(player.getUniqueId(), trader.getUuid());
-        return merchant;
+
+        return MenuType.MERCHANT.builder()
+                .merchant(merchant)
+                .title(Text.of("<dark_gray>» " + trader.getKind().coloredName()))
+                .build(player);
     }
 
     private MerchantRecipe copyOf(MerchantRecipe source) {

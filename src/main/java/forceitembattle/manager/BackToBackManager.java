@@ -8,8 +8,6 @@ import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameContext;
 import forceitembattle.model.Rarity;
 import forceitembattle.model.Team;
-import forceitembattle.service.FIBServiceClient;
-import forceitembattle.service.FibStatisticsClient;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.GameBroadcast;
 import forceitembattle.util.InventorySearch;

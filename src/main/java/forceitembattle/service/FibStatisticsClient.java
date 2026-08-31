@@ -224,20 +224,8 @@ public class FibStatisticsClient {
         }
     }
 
-    public FibSoloStatisticsDto getSoloStatistics(UUID playerUuid) throws ApiException {
-        return api.getSoloStatistics(playerUuid);
-    }
-
-    void getSoloStatisticsAsync(UUID playerUuid, Consumer<FibSoloStatisticsDto> onSuccess) {
-        getSoloStatisticsAsync(playerUuid, onSuccess, executor::logError);
-    }
-
     void getSoloStatisticsAsync(UUID playerUuid, Consumer<FibSoloStatisticsDto> onSuccess, Consumer<ApiException> onError) {
         executor.runAsync(() -> api.getSoloStatistics(playerUuid), onSuccess, onError);
-    }
-
-    public FibSoloStatisticsDto updateSoloStatistics(UUID playerUuid, FibSoloStatisticsUpdateRequestDto request) throws ApiException {
-        return api.updateSoloStatistics(playerUuid, request);
     }
 
     public void updateSoloStatisticsAsync(UUID playerUuid, FibSoloStatisticsUpdateRequestDto request) {
@@ -250,18 +238,6 @@ public class FibStatisticsClient {
         executor.runAsync(() -> api.updateSoloStatistics(playerUuid, request), onSuccess, onError);
     }
 
-    public void deleteSoloStatistics(UUID playerUuid) throws ApiException {
-        api.deleteSoloStatistics(playerUuid);
-    }
-
-    public void deleteSoloStatisticsAsync(UUID playerUuid) {
-        executor.runAsync(() -> {
-            api.deleteSoloStatistics(playerUuid);
-            return null;
-        }, result -> {
-        }, executor::logError);
-    }
-
     public void deleteSoloStatisticsAsync(UUID playerUuid, Runnable onSuccess, Consumer<ApiException> onError) {
         invalidateGlobal(playerUuid);
         executor.runAsync(() -> {
@@ -270,36 +246,8 @@ public class FibStatisticsClient {
         }, result -> onSuccess.run(), onError);
     }
 
-    public FibTeamStatisticsDto getTeamStatistics(UUID playerUuid, UUID teammateUuid) throws ApiException {
-        return api.getTeamStatistics(playerUuid, teammateUuid);
-    }
-
-    void getTeamStatisticsAsync(UUID playerUuid, UUID teammateUuid, Consumer<FibTeamStatisticsDto> onSuccess) {
-        getTeamStatisticsAsync(playerUuid, teammateUuid, onSuccess, executor::logError);
-    }
-
     void getTeamStatisticsAsync(UUID playerUuid, UUID teammateUuid, Consumer<FibTeamStatisticsDto> onSuccess, Consumer<ApiException> onError) {
         executor.runAsync(() -> api.getTeamStatistics(playerUuid, teammateUuid), onSuccess, onError);
-    }
-
-    public List<FibTeamStatisticsDto> getAllTeamStatisticsForPlayer(UUID playerUuid) throws ApiException {
-        return api.getAllTeamStatisticsForPlayer(playerUuid);
-    }
-
-    public void getAllTeamStatisticsForPlayerAsync(UUID playerUuid, Consumer<List<FibTeamStatisticsDto>> onSuccess) {
-        executor.runAsync(() -> api.getAllTeamStatisticsForPlayer(playerUuid), onSuccess, executor::logError);
-    }
-
-    public List<UUID> getTeammatesForPlayer(UUID playerUuid) throws ApiException {
-        return api.getTeammatesForPlayer(playerUuid);
-    }
-
-    public void getTeammatesForPlayerAsync(UUID playerUuid, Consumer<List<UUID>> onSuccess) {
-        executor.runAsync(() -> api.getTeammatesForPlayer(playerUuid), onSuccess, executor::logError);
-    }
-
-    public FibTeamStatisticsDto updateTeamStatistics(UUID playerUuid, UUID teammateUuid, FibTeamStatisticsUpdateRequestDto request) throws ApiException {
-        return api.updateTeamStatistics(playerUuid, teammateUuid, request);
     }
 
     public void updateTeamStatisticsAsync(UUID playerUuid, UUID teammateUuid, FibTeamStatisticsUpdateRequestDto request) {
@@ -312,49 +260,11 @@ public class FibStatisticsClient {
         executor.runAsync(() -> api.updateTeamStatistics(playerUuid, teammateUuid, request), onSuccess, onError);
     }
 
-    public void deleteTeamStatistics(UUID playerUuid, UUID teammateUuid) throws ApiException {
-        api.deleteTeamStatistics(playerUuid, teammateUuid);
-    }
-
-    public void deleteTeamStatisticsAsync(UUID playerUuid, UUID teammateUuid) {
-        invalidateGlobal(playerUuid);
-        executor.runAsync(() -> {
-            api.deleteTeamStatistics(playerUuid, teammateUuid);
-            return null;
-        }, result -> {
-        }, executor::logError);
-    }
-
-    public void deleteAllTeamStatisticsForPlayer(UUID playerUuid) throws ApiException {
-        api.deleteAllTeamStatisticsForPlayer(playerUuid);
-    }
-
-    public void deleteAllTeamStatisticsForPlayerAsync(UUID playerUuid) {
-        this.globalStats.clear();
-        executor.runAsync(() -> {
-            api.deleteAllTeamStatisticsForPlayer(playerUuid);
-            return null;
-        }, result -> {
-        }, executor::logError);
-    }
-
     public void deleteAllTeamStatisticsForPlayerAsync(UUID playerUuid, Runnable onSuccess, Consumer<ApiException> onError) {
         executor.runAsync(() -> {
             api.deleteAllTeamStatisticsForPlayer(playerUuid);
             return null;
         }, result -> onSuccess.run(), onError);
-    }
-
-    public FibTeamMemberStatsDto getMemberStatistics(UUID playerUuid, UUID teammateUuid, UUID memberUuid) throws ApiException {
-        return api.getMemberStatistics(playerUuid, teammateUuid, memberUuid);
-    }
-
-    public void getMemberStatisticsAsync(UUID playerUuid, UUID teammateUuid, UUID memberUuid, Consumer<FibTeamMemberStatsDto> onSuccess) {
-        executor.runAsync(() -> api.getMemberStatistics(playerUuid, teammateUuid, memberUuid), onSuccess, executor::logError);
-    }
-
-    public FibTeamMemberStatsDto updateMemberStatistics(UUID playerUuid, UUID teammateUuid, UUID memberUuid, FibTeamMemberStatsUpdateRequestDto request) throws ApiException {
-        return api.updateMemberStatistics(playerUuid, teammateUuid, memberUuid, request);
     }
 
     public void updateMemberStatisticsAsync(UUID playerUuid, UUID teammateUuid, UUID memberUuid, FibTeamMemberStatsUpdateRequestDto request) {
@@ -367,60 +277,20 @@ public class FibStatisticsClient {
         executor.runAsync(() -> api.updateMemberStatistics(playerUuid, teammateUuid, memberUuid, request), onSuccess, onError);
     }
 
-    public FibPlayerCombinedTeamStatsDto getPlayerCombinedTeamStats(UUID playerUuid) throws ApiException {
-        return api.getPlayerCombinedTeamStats(playerUuid);
-    }
-
-    void getPlayerCombinedTeamStatsAsync(UUID playerUuid, Consumer<FibPlayerCombinedTeamStatsDto> onSuccess) {
-        getPlayerCombinedTeamStatsAsync(playerUuid, onSuccess, executor::logError);
-    }
-
     void getPlayerCombinedTeamStatsAsync(UUID playerUuid, Consumer<FibPlayerCombinedTeamStatsDto> onSuccess, Consumer<ApiException> onError) {
         executor.runAsync(() -> api.getPlayerCombinedTeamStats(playerUuid), onSuccess, onError);
-    }
-
-    public List<FibLeaderboardEntryDto> getSoloLeaderboard(String category, int limit) throws ApiException {
-        return api.getSoloLeaderboard(category, limit);
-    }
-
-    void getSoloLeaderboardAsync(String category, int limit, Consumer<List<FibLeaderboardEntryDto>> onSuccess) {
-        getSoloLeaderboardAsync(category, limit, onSuccess, executor::logError);
     }
 
     void getSoloLeaderboardAsync(String category, int limit, Consumer<List<FibLeaderboardEntryDto>> onSuccess, Consumer<ApiException> onError) {
         executor.runAsync(() -> api.getSoloLeaderboard(category, limit), onSuccess, onError);
     }
 
-    public List<FibTeamLeaderboardEntryDto> getTeamLeaderboard(String category, int limit) throws ApiException {
-        return api.getTeamLeaderboard(category, limit);
-    }
-
-    void getTeamLeaderboardAsync(String category, int limit, Consumer<List<FibTeamLeaderboardEntryDto>> onSuccess) {
-        getTeamLeaderboardAsync(category, limit, onSuccess, executor::logError);
-    }
-
     void getTeamLeaderboardAsync(String category, int limit, Consumer<List<FibTeamLeaderboardEntryDto>> onSuccess, Consumer<ApiException> onError) {
         executor.runAsync(() -> api.getTeamLeaderboard(category, limit), onSuccess, onError);
     }
 
-    public List<FibLeaderboardEntryDto> getCombinedTeamLeaderboard(String category, int limit) throws ApiException {
-        return api.getCombinedTeamLeaderboard(category, limit);
-    }
-
-    void getCombinedTeamLeaderboardAsync(String category, int limit, Consumer<List<FibLeaderboardEntryDto>> onSuccess) {
-        getCombinedTeamLeaderboardAsync(category, limit, onSuccess, executor::logError);
-    }
-
     void getCombinedTeamLeaderboardAsync(String category, int limit, Consumer<List<FibLeaderboardEntryDto>> onSuccess, Consumer<ApiException> onError) {
         executor.runAsync(() -> api.getCombinedTeamLeaderboard(category, limit), onSuccess, onError);
-    }
-
-    public FibPlayerStatsDto getPlayerStats(UUID playerUuid) throws ApiException {
-        return api.getPlayerStats(playerUuid);
-    }
-
-    void getPlayerStatsAsync(UUID playerUuid, Consumer<FibPlayerStatsDto> onSuccess) {
-        getPlayerStatsAsync(playerUuid, onSuccess, executor::logError);
     }
 
     void getPlayerStatsAsync(UUID playerUuid, Consumer<FibPlayerStatsDto> onSuccess, Consumer<ApiException> onError) {
@@ -435,14 +305,6 @@ public class FibStatisticsClient {
     public void recordGameOutcomeAsync(UUID playerUuid, FibPlayerStatsUpdateRequestDto request, Consumer<FibPlayerStatsDto> onSuccess, Consumer<ApiException> onError) {
         invalidateGlobal(playerUuid);
         executor.runAsync(() -> api.recordGameOutcome(playerUuid, request), onSuccess, onError);
-    }
-
-    public void deletePlayerStatsAsync(UUID playerUuid, Runnable onSuccess, Consumer<ApiException> onError) {
-        invalidateGlobal(playerUuid);
-        executor.runAsync(() -> {
-            api.deletePlayerStats(playerUuid);
-            return null;
-        }, result -> onSuccess.run(), onError);
     }
 
     // --- the read side, in the game's words --------------------------------------------------

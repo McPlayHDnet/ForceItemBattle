@@ -223,9 +223,9 @@ class ForceItemPlayerTest {
         void aSoloPlayerOwnsTheirOwnScore() {
             ForceItemPlayer player = solo();
 
-            assertSame(player.scoreOwner(), player.scoreOwner());
             assertFalse(player.scoreOwner() instanceof Team);
             assertEquals(1, player.scoreOwner().members().size());
+            assertSame(player, player.scoreOwner().members().get(0));
         }
 
         @Test

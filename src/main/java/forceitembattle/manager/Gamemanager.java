@@ -4,38 +4,28 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.model.Dimension;
 import forceitembattle.model.GameContext;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.service.FIBServiceClient;
-import forceitembattle.service.FibStatisticsClient;
 import forceitembattle.service.MatchHistoryReporter;
-import forceitembattle.service.PlayerStatsWrite;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameState;
 import forceitembattle.model.RoundSetup;
 import forceitembattle.model.RoundPhase;
 import forceitembattle.model.Roster;
 import forceitembattle.model.Standings;
-import forceitembattle.model.ScoreOwner;
 import forceitembattle.gui.ItemBuilder;
 import forceitembattle.model.Team;
-import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Text;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.function.ToIntFunction;
-import java.util.stream.Collectors;
+import net.kyori.adventure.text.Component;
 import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.GameRules;
 import org.bukkit.Location;
@@ -485,6 +475,11 @@ public class Gamemanager implements Manager {
                 ? Standings.ofTeams(this.forceItemBattle.getTeamManager().getTeams())
                 : null;
 
+        // Resolved once rather than per player: it is the same world every iteration, and
+        // Dimension.world() is nullable.
+        World overworld = Dimension.OVERWORLD.world();
+        Location resultSpawn = overworld == null ? null : overworld.getSpawnLocation();
+
         Bukkit.getOnlinePlayers().forEach(player -> {
             try {
                 ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());
@@ -493,15 +488,17 @@ public class Gamemanager implements Manager {
                 player.getInventory().clear();
                 player.setLevel(0);
                 player.setExp(0);
-                player.teleport(Dimension.OVERWORLD.world().getSpawnLocation());
+                if (resultSpawn != null) {
+                    player.teleport(resultSpawn);
+                }
                 player.setGameMode(GameMode.CREATIVE);
                 player.getPassengers().forEach(Entity::remove);
-                player.setPlayerListName(player.getName());
+                player.playerListName(Component.text(player.getName()));
 
                 this.giveSpectatorItems(player);
 
                 if (player.isOp()) {
-                    player.sendMessage(ChatColor.RED + "Use /result to see the results from every player");
+                    player.sendMessage(Text.of("<red>Use /result to see the results from every player"));
                 }
 
                 if (statsEnabled && forceItemPlayer != null && !forceItemPlayer.isSpectator()) {
@@ -549,26 +546,6 @@ public class Gamemanager implements Manager {
 
         return (int) Math.round((double) distance / 100);
     }
-
-    public Map<UUID, ForceItemPlayer> sortByValue(Map<UUID, ForceItemPlayer> unsortMap, final boolean order) {
-        Comparator<Map.Entry<UUID, ForceItemPlayer>> comparator =
-                Comparator.comparingInt((Map.Entry<UUID, ForceItemPlayer> e) -> e.getValue().currentScore())
-                        .thenComparing(Map.Entry::getKey);
-        if (!order) {
-            comparator = comparator.reversed();
-        }
-        return unsortMap.entrySet().stream()
-                .sorted(comparator)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> b, LinkedHashMap::new));
-    }
-
-
-
-
-
-
-
-
 
     /**
      * Begin a pause: flip state and record when it started, so its duration can be subtracted from

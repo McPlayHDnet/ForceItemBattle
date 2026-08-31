@@ -20,7 +20,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
-public class CommandStart extends CustomCommand implements CustomTabCompleter {
+public final class CommandStart extends CustomCommand implements CustomTabCompleter {
 
     public CommandStart(ForceItemBattle plugin) {
         super(plugin, "start");

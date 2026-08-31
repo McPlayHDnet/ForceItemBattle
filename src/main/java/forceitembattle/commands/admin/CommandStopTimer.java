@@ -5,7 +5,7 @@ import forceitembattle.commands.CustomCommand;
 import forceitembattle.util.Text;
 import org.bukkit.entity.Player;
 
-public class CommandStopTimer extends CustomCommand {
+public final class CommandStopTimer extends CustomCommand {
 
     public CommandStopTimer(ForceItemBattle plugin) {
         super(plugin, "stoptimer");

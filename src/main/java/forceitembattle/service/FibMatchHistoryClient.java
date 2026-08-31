@@ -2,7 +2,6 @@ package forceitembattle.service;
 
 import de.threeseconds.openapi.fibservice.client.api.FibMatchControllerApi;
 import de.threeseconds.openapi.fibservice.client.invoker.ApiException;
-import de.threeseconds.openapi.fibservice.client.model.FibCollectionRarityDto;
 import de.threeseconds.openapi.fibservice.client.model.FibFoundItemStatsDto;
 import de.threeseconds.openapi.fibservice.client.model.FibMatchSubmitRequestDto;
 import forceitembattle.ForceItemBattle;
@@ -52,16 +51,8 @@ public class FibMatchHistoryClient {
         }, onError);
     }
 
-    void getFoundItemStatsAsync(UUID playerUuid, Consumer<List<FibFoundItemStatsDto>> onSuccess) {
-        getFoundItemStatsAsync(playerUuid, onSuccess, executor::logError);
-    }
-
     void getFoundItemStatsAsync(UUID playerUuid, Consumer<List<FibFoundItemStatsDto>> onSuccess, Consumer<ApiException> onError) {
         executor.runAsync(() -> api.getFoundItemStats(playerUuid), onSuccess, onError);
-    }
-
-    void getCollectionRarityAsync(Consumer<FibCollectionRarityDto> onSuccess, Consumer<ApiException> onError) {
-        executor.runAsync(api::getCollectionRarity, onSuccess, onError);
     }
 
     private void invalidateParticipants(FibMatchSubmitRequestDto request) {

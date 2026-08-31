@@ -5,7 +5,7 @@ import forceitembattle.commands.CustomCommand;
 import forceitembattle.gui.ItemsInventory;
 import org.bukkit.entity.Player;
 
-public class CommandItems extends CustomCommand {
+public final class CommandItems extends CustomCommand {
 
     public CommandItems(ForceItemBattle plugin) {
         super(plugin, "items");

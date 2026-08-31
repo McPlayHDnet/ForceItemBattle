@@ -14,7 +14,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
-public class CommandAchievement extends CustomCommand implements CustomTabCompleter {
+public final class CommandAchievement extends CustomCommand implements CustomTabCompleter {
 
     public CommandAchievement(ForceItemBattle plugin) {
         super(plugin, "achievements");

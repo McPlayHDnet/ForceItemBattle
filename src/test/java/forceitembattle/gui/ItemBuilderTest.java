@@ -131,15 +131,6 @@ class ItemBuilderTest {
         }
     }
 
-    @Test
-    void theMaterialCanBeSwappedAfterConstruction() {
-        ItemStack stack = new ItemBuilder(Material.STONE)
-                .setMaterial(Material.DIRT)
-                .getItemStack();
-
-        assertEquals(Material.DIRT, stack.getType());
-    }
-
     /** Wrapping an existing stack keeps it rather than copying, which the menus rely on. */
     @Test
     void anExistingStackIsWrappedNotReplaced() {

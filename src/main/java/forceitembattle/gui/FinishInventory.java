@@ -25,7 +25,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
-public class FinishInventory extends InventoryBuilder {
+public final class FinishInventory extends InventoryBuilder {
 
     private static final int NEXT_PAGE_SLOT = 35;
     private static final int PREVIOUS_PAGE_SLOT = 27;
@@ -67,18 +67,22 @@ public class FinishInventory extends InventoryBuilder {
                 public void run() {
                     placedItems++;
 
-                    if (startSlot == 53) {
-                        if ((targetTeam != null && targetTeam.getFoundItems().size() > 35) || targetPlayer.foundItems().size() > 35) {
-                            pages.put(pagesAmount, new HashMap<>(slots));
-                            pagesAmount++;
-                            startSlot = FIRST_ITEM_SLOT;
-                            slots.clear();
+                    // Exactly one of targetTeam / targetPlayer is set, so this is the found-list
+                    // either way. It used to be written out twice, and the paging condition read
+                    // `(team != null && team.size() > 35) || player.foundItems().size() > 35` --
+                    // which, for a team holding 35 or 36 items, short-circuited into the player
+                    // half and dereferenced the null.
+                    List<ForceItem> items = (targetTeam != null ? targetTeam.getFoundItems() : targetPlayer.foundItems());
 
-                            setItems(9, 53, GuiItems.filler());
-                        }
+                    if (startSlot == 53 && items.size() > 35) {
+                        pages.put(pagesAmount, new HashMap<>(slots));
+                        pagesAmount++;
+                        startSlot = FIRST_ITEM_SLOT;
+                        slots.clear();
+
+                        setItems(9, 53, GuiItems.filler());
                     }
 
-                    List<ForceItem> items = (targetTeam != null ? targetTeam.getFoundItems() : targetPlayer.foundItems());
                     if (items.isEmpty()) {
                         setItem(startSlot, GuiItems.noItemsFound());
                         placedItems = -1;

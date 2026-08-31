@@ -10,7 +10,7 @@ import java.util.List;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 
-public class PresetMenuInventory extends InventoryBuilder {
+public final class PresetMenuInventory extends InventoryBuilder {
 
     public PresetMenuInventory(ForceItemBattle forceItemBattle, GameSettings gameSettings) {
         super(9 * 5, Text.of("<dark_gray>» <dark_aqua>Settings <dark_gray>● <gray>Presets"));

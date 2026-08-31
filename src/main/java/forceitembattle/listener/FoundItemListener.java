@@ -28,6 +28,13 @@ public class FoundItemListener implements Listener {
         ForceItemPlayer finder = this.roster
                 .get(event.getPlayer().getUniqueId());
 
+        // No roster entry means whoever fired this is not in the round -- someone who joined
+        // after the countdown froze the roster. There is no score to credit, and every step of
+        // the resolver reads the finder.
+        if (finder == null) {
+            return;
+        }
+
         this.foundItemResolver.resolve(Find.of(event, finder));
     }
 }

@@ -18,7 +18,7 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
-public class VaultInventory extends InventoryBuilder {
+public final class VaultInventory extends InventoryBuilder {
 
     private final ForceItemBattle plugin;
 

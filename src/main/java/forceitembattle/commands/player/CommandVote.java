@@ -10,7 +10,7 @@ import java.util.List;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-public class CommandVote extends CustomCommand implements CustomTabCompleter {
+public final class CommandVote extends CustomCommand implements CustomTabCompleter {
 
 
     public CommandVote(ForceItemBattle plugin) {

@@ -6,7 +6,7 @@ import forceitembattle.util.Text;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 
-public class CommandSpectate extends CustomCommand {
+public final class CommandSpectate extends CustomCommand {
 
     public CommandSpectate(ForceItemBattle plugin) {
         super(plugin, "spectate");

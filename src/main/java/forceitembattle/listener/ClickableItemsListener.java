@@ -163,9 +163,6 @@ public class ClickableItemsListener implements Listener {
         if (!this.roundPhase.roundRunning()) {
             return;
         }
-        if (!this.roster.contains(player.getUniqueId())) {
-            return;
-        }
         if (e.getItem() == null) {
             return;
         }
@@ -174,6 +171,9 @@ public class ClickableItemsListener implements Listener {
         }
 
         ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());
+        if (forceItemPlayer == null) {
+            return;
+        }
 
         if (Gamemanager.isBackpack(e.getItem())) {
             // isInTeam(), not the setting: with the setting on and no team this passed and then
@@ -253,15 +253,20 @@ public class ClickableItemsListener implements Listener {
         int jokersLeft = forceItemPlayer.spendJoker();
 
         ItemStack stack = player.getInventory().getItem(foundSlot);
+        if (stack == null) {
+            return;
+        }
+
         if (stack.getAmount() > 1) {
             // In a team game the pool is shared, so this player's stack only loses the one they
             // just spent; solo, the stack size *is* the remaining count.
             stack.setAmount(forceItemPlayer.isInTeam() ? stack.getAmount() - 1 : jokersLeft);
+            player.getInventory().setItem(foundSlot, stack);
         } else {
-            stack.setType(Material.AIR);
+            // Was stack.setType(AIR), which Paper deprecated outright -- clearing the slot is
+            // what it meant.
+            player.getInventory().setItem(foundSlot, null);
         }
-
-        player.getInventory().setItem(foundSlot, stack);
 
         player.getInventory().addItem(CustomMaterials.itemStackOf(mat));
         if (!player.getInventory().contains(mat)) {
@@ -282,9 +287,6 @@ public class ClickableItemsListener implements Listener {
         if (!this.roundPhase.isPreGame()) {
             return;
         }
-        if (!this.roster.contains(player.getUniqueId())) {
-            return;
-        }
         if (e.getItem() == null) {
             return;
         }
@@ -293,6 +295,9 @@ public class ClickableItemsListener implements Listener {
         }
 
         ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());
+        if (forceItemPlayer == null) {
+            return;
+        }
 
         switch (e.getItem().getType()) {
             case LIME_DYE -> {

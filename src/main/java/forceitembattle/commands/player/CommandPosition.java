@@ -18,7 +18,7 @@ import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
-public class CommandPosition extends CustomCommand implements CustomTabCompleter {
+public final class CommandPosition extends CustomCommand implements CustomTabCompleter {
 
     public CommandPosition(ForceItemBattle plugin) {
         super(plugin, "pos");
@@ -37,12 +37,10 @@ public class CommandPosition extends CustomCommand implements CustomTabCompleter
             return;
         }
 
-        if (!this.plugin.getRoster().contains(player.getUniqueId())) {
+        ForceItemPlayer forceItemPlayer = this.plugin.getRoster().get(player.getUniqueId());
+        if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
             return;
         }
-
-        ForceItemPlayer forceItemPlayer = this.plugin.getRoster().get(player.getUniqueId());
-        if (forceItemPlayer.isSpectator()) return;
 
         if (args.length < 1 || args[0].equalsIgnoreCase("list")) {
             Scheduler.runAsync(() -> sendAllPositions(player)); // Async because Location#distance takes some time.

@@ -32,7 +32,7 @@ public class TradeListener implements Listener {
         event.setCancelled(true);
 
         Player player = event.getPlayer();
-        player.openMerchant(manager.createMerchantFor(player, trader), true);
+        player.openInventory(manager.createMerchantViewFor(player, trader));
     }
 
     @EventHandler

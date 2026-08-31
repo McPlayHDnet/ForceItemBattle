@@ -164,7 +164,4 @@ public class MaterialCategory {
                 "CRIMSON", "WARPED", "BAMBOO");
     }
 
-    public static int getRequiredWoodCategoriesCount() {
-        return getAllWoodCategories().size();
-    }
 }

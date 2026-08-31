@@ -11,7 +11,7 @@ import lombok.Setter;
 public class GamePreset {
 
     private String presetName;
-    private int countdown, jokers, backpackRows, tradingCooldown;
+    private int countdown, jokers, backpackRows;
     private List<GameSetting> gameSettings;
 
     public GamePreset() {

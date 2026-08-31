@@ -25,7 +25,7 @@ import org.bukkit.Sound;
  * buckets and the collection from the cached loader, so this can't disagree with the achievement
  * or with the book's counts.
  */
-public class CollectionDexInventory extends InventoryBuilder {
+public final class CollectionDexInventory extends InventoryBuilder {
 
     private static final int ITEMS_PER_PAGE = 36;
     private static final DateTimeFormatter DATE_FORMAT =

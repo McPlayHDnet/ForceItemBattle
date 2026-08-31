@@ -8,7 +8,7 @@ import java.util.List;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
-public class CommandSpawn extends CustomCommand {
+public final class CommandSpawn extends CustomCommand {
 
     public CommandSpawn(ForceItemBattle plugin) {
         super(plugin, "spawn");

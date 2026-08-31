@@ -20,7 +20,7 @@ import org.bukkit.Sound;
  * The collection is loaded once here (cached) and re-used for every category count; the category
  * page is a cache hit off the same load, so the whole book costs one read.
  */
-public class CollectionBookInventory extends InventoryBuilder {
+public final class CollectionBookInventory extends InventoryBuilder {
 
     // Usable slots (rows 2-5), avoiding the top border row and the bottom control row.
     private static final int[] CONTENT_SLOTS = {

@@ -13,7 +13,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
-public class CommandFixLocate extends CustomCommand implements TabCompleter {
+public final class CommandFixLocate extends CustomCommand implements TabCompleter {
 
     public CommandFixLocate(ForceItemBattle plugin) {
         super(plugin, "fixlocate");

@@ -2,10 +2,8 @@ package forceitembattle.achievements;
 
 import forceitembattle.util.Scheduler;
 import forceitembattle.ForceItemBattle;
-import forceitembattle.service.FIBServiceClient;
 import forceitembattle.service.FibAchievementClient;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -24,10 +22,6 @@ public class AchievementStorage {
 
     private FibAchievementClient achievementClient() {
         return plugin.getFibService().achievements();
-    }
-
-    public void loadPlayer(UUID playerUUID) {
-        loadPlayer(playerUUID, null);
     }
 
     /**
@@ -78,10 +72,6 @@ public class AchievementStorage {
     public Set<String> getPlayerAchievements(UUID playerUUID) {
         Set<String> achievements = cache.get(playerUUID);
         return achievements != null ? achievements : Collections.emptySet();
-    }
-
-    public Map<UUID, Set<String>> getAllAchievements() {
-        return new HashMap<>(cache);
     }
 
     /**

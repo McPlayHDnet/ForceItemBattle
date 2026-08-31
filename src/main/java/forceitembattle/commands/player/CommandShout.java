@@ -8,7 +8,7 @@ import java.util.Set;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-public class CommandShout extends CustomCommand {
+public final class CommandShout extends CustomCommand {
 
     private static final Set<Player> shoutingPlayers = new HashSet<>();
 

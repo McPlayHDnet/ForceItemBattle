@@ -6,7 +6,7 @@ import forceitembattle.settings.GameSetting;
 import forceitembattle.util.Text;
 import org.bukkit.entity.Player;
 
-public class CommandBp extends CustomCommand {
+public final class CommandBp extends CustomCommand {
 
     public CommandBp(ForceItemBattle plugin) {
         super(plugin, "bp");

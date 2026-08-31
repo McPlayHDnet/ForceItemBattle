@@ -65,19 +65,9 @@ dependencies {
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.3")
     testImplementation("org.mockito:mockito-core:5.14.2")
-    // Artifact tracks the exact Paper API version: mockbukkit-v${paper.api.version}. The 26.2
-    // branch is what makes the listener and inventory layers reachable at all -- MockBukkit hands
-    // out real ItemStacks, which is the wall HeadlessBoundaryTest has been pinning all along.
-    // Declared BEFORE the plain API so MockBukkit's classes win where they overlap.
     testImplementation("org.mockbukkit.mockbukkit:mockbukkit-v26.2:4.116.1")
     // MockBukkit's POM declares no Paper API -- the consumer supplies it. paperweight now puts the
     // server artifact on compileOnly only (see the paperweight block above), so tests need this.
-    // Pinned to the build MockBukkit itself was compiled against (its gradle.properties says
-    // paper.api.full-version=26.2.build.111-stable). MockBukkit checks this at runtime and throws
-    // IncompatiblePaperVersionException on a mismatch, so bump the two together, never one alone.
-    // Note that MockBukkit reports the same "version mismatch" whenever its registry is simply not
-    // loaded -- i.e. when a test forgot to call MockBukkit.mock() -- so read that message as "no
-    // registry" first and as an actual version problem second.
     testImplementation("io.papermc.paper:paper-api:26.2.build.111-stable")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
@@ -89,6 +79,7 @@ tasks {
         // Set the release flag. This configures what version bytecode the compiler will emit, as well as what JDK APIs are usable.
         // See https://openjdk.java.net/jeps/247 for more information.
         options.release = 25
+        options.compilerArgs.add("-Xlint:all")
     }
     javadoc {
         options.encoding = Charsets.UTF_8.name() // We want UTF-8 for everything
@@ -98,16 +89,6 @@ tasks {
         useJUnitPlatform()
 
         // A fresh JVM per test class.
-        //
-        // Paper 26's Material is registry-backed, and the registry is global static state that can
-        // only be established once per JVM. A class that touches Material without a server leaves
-        // it half-initialised, and MockBukkit cannot then take over -- the symptom is
-        // "STONE isn't an item" in a test that passes when run on its own. The reverse also bites:
-        // a server left registered by one class makes HeadlessBoundaryTest's assertions stop
-        // throwing, so it silently stops guarding the boundary it exists to guard.
-        //
-        // Forking costs a second or so per class and buys tests that mean the same thing however
-        // they are ordered.
         forkEvery = 1
 
         // Byte Buddy, which Mockito uses to mock Bukkit interfaces, does not yet recognise Java 25,
@@ -175,7 +156,6 @@ bukkitPluginYaml {
     commands.register("ping")
     commands.register("stoptimer")
     commands.register("teams")
-    commands.register("trade")
     commands.register("shout")
     commands.register("fixskips")
     commands.register("achievements")

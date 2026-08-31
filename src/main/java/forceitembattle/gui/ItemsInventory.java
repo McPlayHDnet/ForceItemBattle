@@ -12,7 +12,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 
-public class ItemsInventory extends InventoryBuilder {
+public final class ItemsInventory extends InventoryBuilder {
 
     private static final int FIRST_CONTENT_SLOT = 9;
     private static final int FIRST_FILTER_SLOT = 2;

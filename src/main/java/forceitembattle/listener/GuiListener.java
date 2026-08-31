@@ -4,8 +4,8 @@ import forceitembattle.ForceItemBattle;
 import forceitembattle.util.Scheduler;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.gui.InventoryBuilder;
+import forceitembattle.gui.SettingsInventory;
 import lombok.RequiredArgsConstructor;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -37,12 +37,10 @@ public class GuiListener implements Listener {
             }
         }
 
-        if (movedItem != null) {
-            if (!event.getView().getTitle().equals("§8» §3Settings §8● §7Menu")) {
-                if (Gamemanager.isBackpack(movedItem)) {
-                    event.setCancelled(true);
-                    return;
-                }
+        if (movedItem != null && !(event.getInventory().getHolder() instanceof SettingsInventory)) {
+            if (Gamemanager.isBackpack(movedItem)) {
+                event.setCancelled(true);
+                return;
             }
         }
 
@@ -56,7 +54,7 @@ public class GuiListener implements Listener {
 
     @EventHandler
     public void onClose(InventoryCloseEvent inventoryCloseEvent) {
-        if (!(inventoryCloseEvent.getPlayer() instanceof Player player)) {
+        if (!(inventoryCloseEvent.getPlayer() instanceof Player)) {
             return;
         }
 

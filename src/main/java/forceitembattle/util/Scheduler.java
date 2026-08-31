@@ -39,12 +39,4 @@ public final class Scheduler {
         return Bukkit.getScheduler().runTaskLater(plugin, runnable, delay);
     }
 
-    public static BukkitTask runTimerAsync(Runnable runnable, long delay, long period) {
-        return Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, runnable, delay, period);
-    }
-
-    public static BukkitTask runTimerSync(Runnable runnable, long delay, long period) {
-        return Bukkit.getScheduler().runTaskTimer(plugin, runnable, delay, period);
-    }
-
 }

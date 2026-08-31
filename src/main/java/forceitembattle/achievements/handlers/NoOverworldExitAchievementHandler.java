@@ -10,7 +10,6 @@ import org.bukkit.event.player.PlayerChangedWorldEvent;
 
 public class NoOverworldExitAchievementHandler implements AchievementHandler<SimpleAchievementProgress> {
 
-    private static final String OVERWORLD = "world";
 
     @Override
     public Trigger getTrigger() {

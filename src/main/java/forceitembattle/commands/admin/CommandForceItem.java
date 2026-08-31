@@ -18,7 +18,7 @@ import org.bukkit.entity.Player;
  * optionally queue a whole row of upcoming items.
 **/
 
-public class CommandForceItem extends CustomCommand implements CustomTabCompleter {
+public final class CommandForceItem extends CustomCommand implements CustomTabCompleter {
 
     public CommandForceItem(ForceItemBattle plugin) {
         super(plugin, "forceitem");

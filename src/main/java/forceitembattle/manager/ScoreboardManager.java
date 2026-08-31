@@ -3,7 +3,6 @@ package forceitembattle.manager;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ActiveTrader;
-import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.util.Text;

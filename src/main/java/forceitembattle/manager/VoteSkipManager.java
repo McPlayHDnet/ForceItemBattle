@@ -43,12 +43,20 @@ public class VoteSkipManager implements Manager {
     }
 
     public void startVoting(Player initiator) {
+        ForceItemPlayer starter = this.roster.get(initiator.getUniqueId());
+        if (starter == null) {
+            // Not in the round, so there is no item of theirs to vote on. /voteskip already
+            // refuses this; the guard is here because the vote state is set below and a throw
+            // half-way would leave voteInProgress stuck on for the rest of the round.
+            return;
+        }
+
         this.voteInProgress = true;
         this.yesVotes.clear();
         this.noVotes.clear();
         this.yesVotes.add(initiator.getUniqueId());
-        this.initiator = this.roster.get(initiator.getUniqueId());
-        this.votedMaterial = this.initiator.activeMaterial();
+        this.initiator = starter;
+        this.votedMaterial = starter.activeMaterial();
 
         String materialName = CustomMaterials.nameOf(this.votedMaterial);
         String unicodeMaterial = this.itemDifficultiesManager.getUnicodeFromMaterial(true, this.votedMaterial);

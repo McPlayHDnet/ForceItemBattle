@@ -54,17 +54,11 @@ public class ForceItemPlayer {
      */
     @Setter
     private boolean startSetupApplied;
-    @Setter
-    private boolean lastItemWasSkipped;
-    @Setter
-    private Material lastSkippedMaterial;
 
     public ForceItemPlayer(Player player, Material currentMaterial, int remainingJokers, int currentScore) {
         this.player = player;
         this.own = new SoloScore(this, currentMaterial, remainingJokers, currentScore);
         this.scoreOwner = this.own;
-        this.lastItemWasSkipped = false;
-        this.lastSkippedMaterial = null;
     }
 
     public Player player() {
@@ -73,10 +67,6 @@ public class ForceItemPlayer {
 
     public List<ForceItem> foundItems() {
         return own.foundItems();
-    }
-
-    public void addFoundItemToList(ForceItem forceItem) {
-        own.addFoundItem(forceItem);
     }
 
     // --- plain family: this player's own values, team or not -------------------------------
@@ -109,20 +99,12 @@ public class ForceItemPlayer {
     // Package-private on purpose: outside model/ there is no reason to write a player's own
     // values, since everything now addresses the ScoreOwner. These remain for the model's tests.
 
-    void setCurrentMaterial(Material currentMaterial) {
-        own.setCurrentMaterial(currentMaterial);
-    }
-
     void setNextMaterial(Material nextMaterial) {
         own.setNextMaterial(nextMaterial);
     }
 
     void setPreviousMaterial(Material previousMaterial) {
         own.setPreviousMaterial(previousMaterial);
-    }
-
-    void setRemainingJokers(int remainingJokers) {
-        own.setRemainingJokers(remainingJokers);
     }
 
     void setCurrentScore(int currentScore) {
@@ -237,14 +219,6 @@ public class ForceItemPlayer {
 
     public boolean isStartSetupApplied() {
         return startSetupApplied;
-    }
-
-    public boolean isLastItemWasSkipped() {
-        return lastItemWasSkipped;
-    }
-
-    public Material getLastSkippedMaterial() {
-        return lastSkippedMaterial;
     }
 
 }

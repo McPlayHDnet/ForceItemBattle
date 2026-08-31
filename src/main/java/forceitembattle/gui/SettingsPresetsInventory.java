@@ -12,7 +12,7 @@ import java.util.UUID;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 
-public class SettingsPresetsInventory extends InventoryBuilder {
+public final class SettingsPresetsInventory extends InventoryBuilder {
 
     public static HashMap<UUID, GamePreset> namingPhase = new HashMap<>();
 

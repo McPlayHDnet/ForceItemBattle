@@ -47,9 +47,13 @@ public class GameSettings {
             this.plugin.getConfig().createSection("presets");
         }
 
-        if (this.plugin.getConfig().isConfigurationSection("presets")) {
-            this.plugin.getConfig().getConfigurationSection("presets").getKeys(false).forEach(keys -> {
-                ConfigurationSection configurationSection = this.plugin.getConfig().getConfigurationSection("presets").getConfigurationSection(keys);
+        ConfigurationSection presets = this.plugin.getConfig().getConfigurationSection("presets");
+        if (presets != null) {
+            presets.getKeys(false).forEach(keys -> {
+                ConfigurationSection configurationSection = presets.getConfigurationSection(keys);
+                if (configurationSection == null) {
+                    return;
+                }
                 GamePreset gamePreset = new GamePreset();
                 gamePreset.setPresetName(keys);
                 gamePreset.setCountdown(configurationSection.getInt("countdown"));
@@ -110,10 +114,6 @@ public class GameSettings {
 
     public int getSettingValue(GameSetting gameSetting) {
         return this.ruleset.value(gameSetting);
-    }
-
-    public int getSettingValueInPreset(GamePreset gamePreset, GameSetting gameSetting) {
-        return this.ruleset.valueIn(gamePreset, gameSetting);
     }
 
     public QuickieMode getQuickieMode() {

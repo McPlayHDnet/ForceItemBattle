@@ -14,7 +14,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
-public class CommandReset extends CustomCommand implements CustomTabCompleter {
+public final class CommandReset extends CustomCommand implements CustomTabCompleter {
 
     public CommandReset(ForceItemBattle plugin) {
         super(plugin, "reset");
