@@ -1,5 +1,6 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.commands.Precondition;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.util.Text;
@@ -13,6 +14,11 @@ public final class CommandSpawn extends CustomCommand {
     public CommandSpawn(ForceItemBattle plugin) {
         super(plugin, "spawn");
         setDescription("Teleport to the spawn location");
+    }
+
+    @Override
+    protected List<Precondition> preconditions() {
+        return List.of();
     }
 
     @Override

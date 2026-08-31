@@ -1,5 +1,6 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.commands.Precondition;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.model.stats.DuoLeaderboardEntry;
@@ -30,6 +31,11 @@ public final class CommandLeaderboard extends CustomCommand implements CustomTab
         super(plugin, "top");
         setUsage("[solo|duo|teams|achievements] [stat]");
         setDescription("Show the stat leaderboards");
+    }
+
+    @Override
+    protected List<Precondition> preconditions() {
+        return List.of();
     }
 
     @Override

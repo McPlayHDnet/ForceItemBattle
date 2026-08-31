@@ -1,5 +1,9 @@
 package forceitembattle.commands.player;
 
+import static forceitembattle.commands.Precondition.ROUND_RUNNING;
+import static forceitembattle.commands.Precondition.OP_WHEN_EVENT;
+import forceitembattle.commands.Precondition;
+import java.util.List;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.model.Dimension;
@@ -18,16 +22,13 @@ public final class CommandPause extends CustomCommand {
     }
 
     @Override
-    public void onPlayerCommand(Player player, String label, String[] args) {
-        if (this.plugin.getSettings().isSettingEnabled(GameSetting.EVENT) && !player.isOp()) {
-            player.sendMessage(Text.of("<red>You don't have permission to use this command."));
-            return;
-        }
+    protected List<Precondition> preconditions() {
+        return List.of(OP_WHEN_EVENT,
+                ROUND_RUNNING.refusing("<red>The timer is already paused."));
+    }
 
-        if (!this.plugin.getRoundPhase().roundRunning()) {
-            player.sendMessage(Text.of("<red>The timer is already paused."));
-            return;
-        }
+    @Override
+    public void onPlayerCommand(Player player, String label, String[] args) {
         Bukkit.broadcast(Text.of("<gold>The game has been paused!"));
 
         World overworld = Dimension.OVERWORLD.world();

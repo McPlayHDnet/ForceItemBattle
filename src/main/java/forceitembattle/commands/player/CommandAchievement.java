@@ -1,5 +1,6 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.commands.Precondition;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.global.GlobalStat;
 import forceitembattle.gui.AchievementCategoryInventory;
@@ -23,6 +24,11 @@ public final class CommandAchievement extends CustomCommand implements CustomTab
     }
 
     @Override
+    protected List<Precondition> preconditions() {
+        return List.of();
+    }
+
+    @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
         if (args.length == 0) {
             player.sendMessage(Text.of(
@@ -42,11 +48,6 @@ public final class CommandAchievement extends CustomCommand implements CustomTab
             default -> player.sendMessage(Text.of(
                     "<red>Unknown subcommand. Use: list, grant, revoke, reset, or progress"));
         }
-    }
-
-    private void requireOp(Player player, Runnable action) {
-        if (!requireOp(player)) return;
-        action.run();
     }
 
     private void handleListCommand(Player player, String[] args) {

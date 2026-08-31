@@ -1,5 +1,6 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.commands.Precondition;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
@@ -41,6 +42,11 @@ public final class CommandStats extends CustomCommand implements CustomTabComple
     }
 
     @Override
+    protected List<Precondition> preconditions() {
+        return List.of();
+    }
+
+    @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
         if (args.length == 0) {
             sendUsage(player);
@@ -51,7 +57,7 @@ public final class CommandStats extends CustomCommand implements CustomTabComple
             case "solo" -> handleSolo(player, args);
             case "team" -> handleTeam(player, args);
             case "duo" -> handleDuo(player, args);
-            case "reset" -> handleReset(player, args);
+            case "reset" -> requireOp(player, () -> handleReset(player, args));
             default -> sendUsage(player);
         }
     }
@@ -145,7 +151,6 @@ public final class CommandStats extends CustomCommand implements CustomTabComple
     }
 
     private void handleReset(Player player, String[] args) {
-        if (!requireOp(player)) return;
 
         if (args.length >= 2 && args[1].equalsIgnoreCase("confirm")) {
             confirmReset(player);

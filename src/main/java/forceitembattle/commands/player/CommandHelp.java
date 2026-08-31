@@ -1,5 +1,7 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.commands.Precondition;
+import java.util.List;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.util.Text;
@@ -13,6 +15,11 @@ public final class CommandHelp extends CustomCommand {
 
     private void msg(Player player, String message) {
         player.sendMessage(Text.of(message));
+    }
+
+    @Override
+    protected List<Precondition> preconditions() {
+        return List.of();
     }
 
     @Override

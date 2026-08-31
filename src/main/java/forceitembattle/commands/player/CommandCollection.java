@@ -1,5 +1,6 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.commands.Precondition;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
@@ -25,6 +26,11 @@ public final class CommandCollection extends CustomCommand implements CustomTabC
 
         setUsage("[player]");
         setDescription("Show your collection book");
+    }
+
+    @Override
+    protected List<Precondition> preconditions() {
+        return List.of();
     }
 
     @Override

@@ -1,5 +1,7 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.commands.Precondition;
+import java.util.List;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.commands.CustomCommand;
@@ -15,6 +17,11 @@ public final class CommandInfoWiki extends CustomCommand {
     public CommandInfoWiki(ForceItemBattle plugin) {
         super(plugin, "infowiki");
         setDescription("Get wiki info link for your current item");
+    }
+
+    @Override
+    protected List<Precondition> preconditions() {
+        return List.of();
     }
 
     @Override

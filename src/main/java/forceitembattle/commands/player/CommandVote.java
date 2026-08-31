@@ -1,5 +1,7 @@
 package forceitembattle.commands.player;
 
+import static forceitembattle.commands.Precondition.ROUND_RUNNING;
+import forceitembattle.commands.Precondition;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
@@ -19,17 +21,13 @@ public final class CommandVote extends CustomCommand implements CustomTabComplet
     }
 
     @Override
+    protected List<Precondition> preconditions() {
+        return List.of(ROUND_RUNNING.refusing("<red>You can only use this mid-game!"),
+                Precondition.setting(GameSetting.RUN, "<red>You can only use vote when the battle `RUN` mode is enabled!"));
+    }
+
+    @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (!this.plugin.getRoundPhase().roundRunning()) {
-            player.sendMessage(Text.of("<red>You can only use this mid-game!"));
-            return;
-        }
-
-        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.RUN)) {
-            player.sendMessage(Text.of("<red>You can only use vote when the battle `RUN` mode is enabled!"));
-            return;
-        }
-
         if (args.length == 0) {
             player.sendMessage(Text.of("<gray>Usage: <yellow>/vote <green>yes</green>|<red>no</red>"));
             return;
@@ -44,15 +42,13 @@ public final class CommandVote extends CustomCommand implements CustomTabComplet
         switch (action) {
             case "yes" -> this.plugin.getVoteSkipManager().castVote(player, true);
             case "no" -> this.plugin.getVoteSkipManager().castVote(player, false);
-            case "cancel" -> {
-                if (!requireOp(player)) return;
-
+            case "cancel" -> requireOp(player, () -> {
                 this.plugin.getVoteSkipManager().cancelVote();
                 player.sendMessage(Text.of("<gray>You cancelled the vote."));
                 Bukkit.getOnlinePlayers().forEach(p ->
                         p.sendMessage(Text.of("<red><b>The vote has been cancelled by an operator!</b>"))
                 );
-            }
+            });
             default ->
                     player.sendMessage(Text.of("<red>Invalid vote option. Use <yellow>/vote yes</yellow> or <yellow>/vote no</yellow>."));
         }

@@ -1,5 +1,8 @@
 package forceitembattle.commands.player;
 
+import static forceitembattle.commands.Precondition.ROUND_RUNNING;
+import forceitembattle.commands.Precondition;
+import java.util.List;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.settings.GameSetting;
@@ -16,17 +19,13 @@ public final class CommandVoteSkip extends CustomCommand {
     }
 
     @Override
+    protected List<Precondition> preconditions() {
+        return List.of(ROUND_RUNNING.refusing("<red>You can only use this mid-game!"),
+                Precondition.setting(GameSetting.RUN, "<red>You can only start a vote when the battle `RUN` mode is enabled!"));
+    }
+
+    @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (!this.plugin.getRoundPhase().roundRunning()) {
-            player.sendMessage(Text.of("<red>You can only use this mid-game!"));
-            return;
-        }
-
-        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.RUN)) {
-            player.sendMessage(Text.of("<red>You can only start a vote when the battle `RUN` mode is enabled!"));
-            return;
-        }
-
         ForceItemPlayer forceItemPlayer = this.plugin.getRoster().get(player.getUniqueId());
         if (forceItemPlayer == null) {
             player.sendMessage(Text.of("<red>You are not playing."));

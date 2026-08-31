@@ -53,6 +53,12 @@ class CommandStartTest {
         when(this.plugin.getRoster()).thenReturn(new Roster());
 
         this.command = new CommandStart(this.plugin);
+        // The op gate is declared, so it is evaluated in onCommand -- which needs the context that
+        // CommandsManager supplies at bootstrap.
+        // Cast because setContext is package-private on CustomCommand, and a package-private
+        // member is not inherited into CommandStart's package.
+        ((CustomCommand) this.command).setContext(new CommandContext(
+                new forceitembattle.model.RoundPhase(), this.ruleset, new Roster()));
     }
 
     @AfterEach
@@ -119,15 +125,17 @@ class CommandStartTest {
     }
 
     /**
-     * A non-op is refused before any of the above is even considered. {@code /start} is op-gated
-     * inside the command, not by a permission node.
+     * A non-op is refused before any of the above is even considered. {@code /start} declares
+     * {@link Precondition#OP}, so the gate is evaluated in {@code onCommand} and the body is never
+     * entered — which is why this goes through the real entry point rather than calling
+     * {@code onPlayerCommand} directly.
      */
     @Test
     void aNonOpCannotStartARound() {
         PlayerMock player = this.server.addPlayer("Understudy2");
         player.setOp(false);
 
-        this.command.onPlayerCommand(player, "start", new String[]{"90", "3"});
+        this.command.onCommand(player, null, "start", new String[]{"90", "3"});
 
         assertTold(player, "You don't have permission to use this command.");
         assertNull(this.ruleset.preset());

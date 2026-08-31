@@ -1,5 +1,6 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.commands.Precondition;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
@@ -26,6 +27,11 @@ public final class CommandInfo extends CustomCommand implements CustomTabComplet
         super(plugin, "info");
         setUsage("[item]");
         setDescription("Get information about an item");
+    }
+
+    @Override
+    protected List<Precondition> preconditions() {
+        return List.of();
     }
 
     @Override

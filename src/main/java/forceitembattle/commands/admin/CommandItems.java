@@ -1,5 +1,8 @@
 package forceitembattle.commands.admin;
 
+import static forceitembattle.commands.Precondition.OP;
+import forceitembattle.commands.Precondition;
+import java.util.List;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.gui.ItemsInventory;
@@ -14,8 +17,12 @@ public final class CommandItems extends CustomCommand {
     }
 
     @Override
+    protected List<Precondition> preconditions() {
+        return List.of(OP);
+    }
+
+    @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (!requireOp(player)) return;
         new ItemsInventory(this.plugin, player).open(player);
     }
 }

@@ -1,5 +1,7 @@
 package forceitembattle.commands.player;
 
+import static forceitembattle.commands.Precondition.OP_WHEN_EVENT;
+import forceitembattle.commands.Precondition;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
@@ -26,17 +28,13 @@ public final class CommandPosition extends CustomCommand implements CustomTabCom
     }
 
     @Override
+    protected List<Precondition> preconditions() {
+        return List.of(OP_WHEN_EVENT,
+                Precondition.setting(GameSetting.POSITIONS, "<red>Positions are disabled in this round!"));
+    }
+
+    @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (this.plugin.getSettings().isSettingEnabled(GameSetting.EVENT) && !player.isOp()) {
-            player.sendMessage(Text.of("<red>You don't have permission to use this command."));
-            return;
-        }
-
-        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.POSITIONS)) {
-            player.sendMessage(Text.of("<red>Positions are disabled in this round!"));
-            return;
-        }
-
         ForceItemPlayer forceItemPlayer = this.plugin.getRoster().get(player.getUniqueId());
         if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
             return;

@@ -1,5 +1,8 @@
 package forceitembattle.commands.player;
 
+import static forceitembattle.commands.Precondition.ROUND_RUNNING;
+import forceitembattle.commands.Precondition;
+import java.util.List;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.manager.Gamemanager;
@@ -16,12 +19,12 @@ public final class CommandFixSkips extends CustomCommand {
     }
 
     @Override
-    public void onPlayerCommand(Player player, String label, String[] args) {
-        if (!this.plugin.getRoundPhase().roundRunning()) {
-            player.sendMessage(Text.of("<red>You can only use this during the game."));
-            return;
-        }
+    protected List<Precondition> preconditions() {
+        return List.of(ROUND_RUNNING.refusing("<red>You can only use this during the game."));
+    }
 
+    @Override
+    public void onPlayerCommand(Player player, String label, String[] args) {
         boolean silent = args.length > 0 && args[0].equalsIgnoreCase("-silent");
 
         ForceItemPlayer forceItemPlayer = this.plugin.getRoster().get(player.getUniqueId());

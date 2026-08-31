@@ -1,5 +1,7 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.commands.Precondition;
+import java.util.List;
 import forceitembattle.model.Standings;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
@@ -27,6 +29,11 @@ public final class CommandResult extends CustomCommand {
         setDescription("Show the next player's result");
 
         this.place = -1;
+    }
+
+    @Override
+    protected List<Precondition> preconditions() {
+        return List.of();
     }
 
     @Override

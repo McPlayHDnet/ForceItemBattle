@@ -1,5 +1,6 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.commands.Precondition;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.model.Locator;
@@ -19,6 +20,11 @@ public final class CommandFixLocate extends CustomCommand implements TabComplete
         super(plugin, "fixlocate");
         setUsage("[name|all]");
         setDescription("Dismiss your active locator boss bars and lines");
+    }
+
+    @Override
+    protected List<Precondition> preconditions() {
+        return List.of();
     }
 
     @Override

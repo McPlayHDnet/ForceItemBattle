@@ -1,5 +1,7 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.commands.Precondition;
+import java.util.List;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.util.Text;
@@ -19,6 +21,11 @@ public final class CommandShout extends CustomCommand {
 
     public static boolean isShouting(Player player) {
         return shoutingPlayers.contains(player);
+    }
+
+    @Override
+    protected List<Precondition> preconditions() {
+        return List.of();
     }
 
     @Override

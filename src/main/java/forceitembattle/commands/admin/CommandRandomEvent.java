@@ -1,5 +1,8 @@
 package forceitembattle.commands.admin;
 
+import static forceitembattle.commands.Precondition.OP;
+import static forceitembattle.commands.Precondition.ROUND_RUNNING;
+import forceitembattle.commands.Precondition;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
@@ -17,14 +20,12 @@ public final class CommandRandomEvent extends CustomCommand implements CustomTab
     }
 
     @Override
+    protected List<Precondition> preconditions() {
+        return List.of(OP, ROUND_RUNNING);
+    }
+
+    @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (!requireOp(player)) return;
-
-        if (!this.plugin.getRoundPhase().roundRunning()) {
-            player.sendMessage(Text.of("<red>The game is not running. Start it first with /start"));
-            return;
-        }
-
         if (args.length != 1) {
             msgUsage(player);
             player.sendMessage(Text.of("<gray>Events <dark_gray>» <yellow>" + String.join("<gray>, <yellow>", RandomEvents.ids())));

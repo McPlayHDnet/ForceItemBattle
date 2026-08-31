@@ -1,5 +1,9 @@
 package forceitembattle.commands.admin;
 
+import static forceitembattle.commands.Precondition.OP;
+import static forceitembattle.commands.Precondition.PRE_GAME;
+import forceitembattle.commands.Precondition;
+import java.util.List;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.settings.GameSetting;
@@ -17,20 +21,14 @@ public final class CommandForceTeam extends CustomCommand {
     }
 
     @Override
+    protected List<Precondition> preconditions() {
+        return List.of(OP,
+                Precondition.setting(GameSetting.TEAM, "<red>Teams are not enabled!"),
+                PRE_GAME);
+    }
+
+    @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (!requireOp(player)) return;
-
-        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-            player.sendMessage(Text.of("<red>Teams are not enabled!"));
-            return;
-        }
-
-
-        if (!this.plugin.getRoundPhase().isPreGame()) {
-            player.sendMessage(Text.of("<red>The game already started"));
-            return;
-        }
-
         if (args.length < 2 || args.length > 3) {
             msgUsage(player);
             return;

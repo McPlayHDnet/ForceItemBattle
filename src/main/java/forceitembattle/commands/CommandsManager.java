@@ -28,6 +28,11 @@ public class CommandsManager implements Manager {
             throw new IllegalArgumentException("Command " + name + " does not exist in plugin.yml");
         }
 
+        customCommand.setContext(new CommandContext(
+                this.plugin.getRoundPhase(),
+                this.plugin.getSettings().getRuleset(),
+                this.plugin.getRoster()));
+
         command.setExecutor(customCommand);
         if (customCommand instanceof TabCompleter tabCompleter) {
             command.setTabCompleter(tabCompleter);

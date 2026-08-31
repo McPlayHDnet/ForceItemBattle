@@ -1,5 +1,7 @@
 package forceitembattle.commands.admin;
 
+import static forceitembattle.commands.Precondition.OP;
+import forceitembattle.commands.Precondition;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
@@ -24,9 +26,12 @@ public final class CommandReset extends CustomCommand implements CustomTabComple
     }
 
     @Override
-    public void onPlayerCommand(Player player, String label, String[] args) {
-        if (!requireOp(player)) return;
+    protected List<Precondition> preconditions() {
+        return List.of(OP);
+    }
 
+    @Override
+    public void onPlayerCommand(Player player, String label, String[] args) {
         // Resolve the forced seed BEFORE kicking anyone, so an invalid biome
         // aborts cleanly without disrupting the server. null => random world.
         Long seed = null;

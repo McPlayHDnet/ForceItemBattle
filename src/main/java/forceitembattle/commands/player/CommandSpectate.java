@@ -1,5 +1,7 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.commands.Precondition;
+import java.util.List;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.util.Text;
@@ -11,6 +13,11 @@ public final class CommandSpectate extends CustomCommand {
     public CommandSpectate(ForceItemBattle plugin) {
         super(plugin, "spectate");
         setDescription("Toggle gamemode spectator");
+    }
+
+    @Override
+    protected List<Precondition> preconditions() {
+        return List.of();
     }
 
     @Override

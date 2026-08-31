@@ -1,5 +1,7 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.commands.Precondition;
+import java.util.List;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.util.Text;
@@ -10,6 +12,11 @@ public final class CommandPing extends CustomCommand {
     public CommandPing(ForceItemBattle plugin) {
         super(plugin, "ping");
         setDescription("Check your ping");
+    }
+
+    @Override
+    protected List<Precondition> preconditions() {
+        return List.of();
     }
 
     @Override

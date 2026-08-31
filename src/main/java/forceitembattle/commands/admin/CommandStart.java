@@ -1,5 +1,7 @@
 package forceitembattle.commands.admin;
 
+import static forceitembattle.commands.Precondition.OP;
+import forceitembattle.commands.Precondition;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
@@ -29,9 +31,12 @@ public final class CommandStart extends CustomCommand implements CustomTabComple
     }
 
     @Override
-    public void onPlayerCommand(Player player, String label, String[] args) {
-        if (!requireOp(player)) return;
+    protected List<Precondition> preconditions() {
+        return List.of(OP);
+    }
 
+    @Override
+    public void onPlayerCommand(Player player, String label, String[] args) {
         this.start(player, args);
     }
 
