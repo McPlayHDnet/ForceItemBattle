@@ -46,19 +46,14 @@ import org.bukkit.entity.Player;
  *   <li>The running random event gets its look last, so it sees a settled world.</li>
  * </ol>
  *
- * <p>This used to live in {@code FoundItemListener}'s method body, where the ordering was
- * expressed only by the sequence of nine calls and documented nowhere. The listener is now the
- * adapter that unwraps a Bukkit event into a {@link Find}; everything a find <em>means</em> is
- * here.
- */
-/**
+ * <p>{@code FoundItemListener} is now the adapter that unwraps a Bukkit event into a
+ * {@link Find}; everything a find <em>means</em> is here.
+ *
  * <h2>On the constructor</h2>
  *
- * Eight collaborators is a lot, and that is the honest width of a find: it announces, scores,
- * advances, writes stats, refreshes a scoreboard, checks a chain and notifies a running event.
- * Taking a {@code ForceItemBattle} instead made the same fan-out reach through one field, where it
- * measured nothing and could grow without anyone noticing. If this list gets longer, that is the
- * signal it should have been all along.
+ * <p>Eight collaborators is a lot, and that is the honest width of a find. Taking a
+ * {@code ForceItemBattle} instead made the same fan-out reach through one field, where it measured
+ * nothing and could grow unnoticed. If this list gets longer, that is the signal it always was.
  */
 @RequiredArgsConstructor
 public class FoundItemResolver implements Manager {

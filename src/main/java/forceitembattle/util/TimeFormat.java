@@ -38,9 +38,7 @@ public final class TimeFormat {
      * A duration as {@code 1h 5m 30s}, dropping any component that is zero.
      *
      * <p>Used where a length is being read rather than watched: the round's remaining time on the
-     * action bar, and the time a find took on a result screen. Lived on {@code TimerManager} as
-     * {@code formatSeconds} until it turned out to be a pure function with no reason to be on a
-     * manager, let alone one a caller had to reach through the plugin to get at.
+     * action bar, and the time a find took on a result screen.
      *
      * <p>Two long-standing warts, pinned by tests rather than fixed so that changing either is a
      * decision instead of a surprise: zero renders as the empty string, and a duration ending on

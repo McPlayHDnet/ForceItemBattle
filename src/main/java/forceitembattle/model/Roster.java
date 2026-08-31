@@ -8,23 +8,10 @@ import javax.annotation.Nullable;
 
 /**
  * Who holds a place in the current round: the roll itself, and the rules for arriving and leaving.
+ * See {@code CONTEXT.md § Roster} for the admission table and the freeze rule.
  *
- * <h2>Why the map lives here now</h2>
- *
- * <p>It was {@code Gamemanager.forceItemPlayerMap}, and an earlier pass left it there on the
- * grounds that moving it would relocate call sites without concentrating anything. That was the
- * wrong reading, and measuring the dependency graph is what showed it: of the twenty edges pointing
- * <em>into</em> {@code Gamemanager} from the managers it was mutually entangled with, eleven were
- * asking for this map and seven for the round's phase. Nobody depended on {@code Gamemanager} for
- * what it <em>does</em> — they depended on it for two pieces of state it happened to hold, and
- * holding them is what made seven dependency cycles.
- *
- * <p>So this is not a tidying move. It is the one that makes the graph acyclic: a module every
- * other module needs has to depend on nothing, and this depends on nothing — no Bukkit, no plugin,
- * no managers. Keep it that way.
- *
- * <p>The roster is frozen once {@code /start} begins its countdown. Someone joining after that is a
- * spectator for the round; someone leaving keeps their spot and their assignment.
+ * <p>This depends on nothing — no Bukkit, no plugin, no managers — and that is what makes the
+ * manager graph acyclic. Keep it that way.
  */
 public final class Roster {
 
@@ -71,12 +58,7 @@ public final class Roster {
     }
 
     /**
-     * What an arriving player becomes.
-     *
-     * <p>An existing roster entry always wins. Someone who disconnected during the countdown still
-     * owns their team, their force item and their score, so they come back as the participant they
-     * were and never as a freshly created spectator — that precedence is the first thing this
-     * method encodes and the easiest thing to lose when it is written as a nested if.
+     * What an arriving player becomes. An existing roster entry always wins over every default.
      *
      * @param onRoster whether this player already holds a place in the current round
      * @param state    where the round is
@@ -100,13 +82,9 @@ public final class Roster {
     }
 
     /**
-     * Whether a player leaving now gives up their place.
-     *
-     * <p>Deliberately false during STARTING: once the countdown runs, teams and force items are
-     * already assigned, and dropping the player would tear their team apart and cost them the
-     * round. They keep their spot and are restored on rejoin as a
-     * {@link Admission#RETURNING_PARTICIPANT}. This is the mirror of {@code admit}'s
-     * roster-entry-wins rule and belongs beside it.
+     * Whether a player leaving now gives up their place. Deliberately false during STARTING: teams
+     * and force items are already assigned by then, so they keep their spot and come back as a
+     * {@link Admission#RETURNING_PARTICIPANT}. The mirror of {@code admit}, and belongs beside it.
      */
     public static boolean releasesSpotOnQuit(GameState state) {
         return state == GameState.PRE_GAME || state == GameState.END_GAME;

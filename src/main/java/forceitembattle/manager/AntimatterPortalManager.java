@@ -200,9 +200,7 @@ public class AntimatterPortalManager implements Manager {
         return true;
     }
 
-    /**
-     * The portal {@code player} owns that they are currently standing in, or null.
-     */
+    /** The portal {@code player} owns that they are currently standing in, or null. */
     @Nullable
     public ActivePortal portalPlayerIsStandingIn(Player player) {
         List<ActivePortal> portals = this.portalsByOwner.get(player.getUniqueId());
@@ -217,32 +215,24 @@ public class AntimatterPortalManager implements Manager {
         return null;
     }
 
-    /**
-     * Whether this player is standing in the return portal of their own Depths.
-     */
+    /** Whether this player is standing in the return portal of their own Depths. */
     public boolean isInReturnPortal(Player player) {
         ActivePortal portal = this.returnPortalByPlayer.get(player.getUniqueId());
         return portal != null && portal.region().contains(player.getLocation().toVector());
     }
 
-    /**
-     * Remembers where to put this player when they come back out of the Depths.
-     */
+    /** Remembers where to put this player when they come back out of the Depths. */
     public void rememberReturn(Player player, ActivePortal portal) {
         this.returnByPlayer.put(player.getUniqueId(), portal.returnSpot());
     }
 
-    /**
-     * Where this player came into the Depths from, or null if they never used a portal.
-     */
+    /** Where this player came into the Depths from, or null if they never used a portal. */
     @Nullable
     public Location returnFor(Player player) {
         return this.returnByPlayer.get(player.getUniqueId());
     }
 
-    /**
-     * Whether this world is the antimatter dimension.
-     */
+    /** Whether this world is the antimatter dimension. */
     public boolean isAntimatterWorld(World world) {
         return world.getKey().equals(ANTIMATTER_DIMENSION);
     }
@@ -497,9 +487,7 @@ public class AntimatterPortalManager implements Manager {
         return null;
     }
 
-    /**
-     * Works out where the portal surface goes from the vault that opens it.
-     */
+    /** Works out where the portal surface goes from the vault that opens it. */
     @Nullable
     private Frame frameOf(Block vaultBlock) {
         if (!(vaultBlock.getBlockData() instanceof Directional directional)) {
@@ -586,9 +574,7 @@ public class AntimatterPortalManager implements Manager {
                 .orElse(null);
     }
 
-    /**
-     * A portal surface standing in the world, owned by whoever opened it.
-     */
+    /** A portal surface standing in the world, owned by whoever opened it. */
     public record ActivePortal(Location centre, BoundingBox region, ItemDisplay display,
                               Location returnSpot) {
     }

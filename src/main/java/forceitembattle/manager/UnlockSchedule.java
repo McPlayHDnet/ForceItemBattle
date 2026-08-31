@@ -9,18 +9,11 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * When each item pool opens during a round.
+ * When each item pool opens during a round — see {@code CONTEXT.md § Item Pool}.
  *
- * <h2>Why this is its own object</h2>
- *
- * The schedule is the subtlest thing {@link ItemDifficultiesManager} does — two different policies
- * chosen by round length, percentages that have to be turned into minute marks, and a quickie mode
- * that can cap the whole thing — and it was reachable only through a manager holding 1,382 lines of
- * item data, which in turn needed a mocked plugin, timer and game manager to answer "is MID open
- * yet?". None of that is a property of the question.
- *
- * <p>Everything here takes the clock as arguments rather than reading it. The manager still owns
- * the clock, the settings and the items; this owns only the arithmetic.
+ * <p>Everything here takes the clock as arguments rather than reading it. {@link
+ * ItemDifficultiesManager} still owns the clock, the settings and the items; this owns only the
+ * arithmetic, which is what makes it answerable without a plugin.
  */
 public final class UnlockSchedule {
 

@@ -285,8 +285,7 @@ public class AchievementManager implements Manager {
                 if (!achievement.getCollectionRule().isMet(found.keySet(), catalogue)) {
                     continue;
                 }
-                // Recorded SOLO with no teammate, like the GLOBAL unlocks: a lifetime collection
-                // spans both modes, so the unlock's mode is meaningless.
+                // Recorded SOLO with no teammate, for the same reason the GLOBAL unlocks are.
                 writeUnlock(uuid, player, achievement, null, false);
             }
             checkMetaTiers(uuid, player);
@@ -312,9 +311,7 @@ public class AchievementManager implements Manager {
         }
     }
 
-    /**
-     * The other member of a (two-player) team, or null if none can be resolved.
-     */
+    /** The other member of a (two-player) team, or null if none can be resolved. */
     private UUID teammateOf(UUID memberUuid, Team team) {
         if (team == null) {
             return null;
@@ -395,10 +392,7 @@ public class AchievementManager implements Manager {
                 && simpleProgress.count > 0;
     }
 
-    /**
-     * True if the player (solo) or their team (teams) finished in 1st place.
-     * Ties for 1st count as a win.
-     */
+    /** True if the player (solo) or their team (teams) finished in 1st place. Ties for 1st count as a win. */
     private boolean didWin(ForceItemPlayer fip, boolean teamGame) {
         if (teamGame && fip.currentTeam() != null) {
             List<Team> teams = plugin.getRoster().players().values().stream()

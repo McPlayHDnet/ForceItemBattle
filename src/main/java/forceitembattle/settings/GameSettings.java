@@ -12,10 +12,9 @@ import org.bukkit.configuration.ConfigurationSection;
  * The plugin's configuration: loading it, the preset catalogue, and the Bukkit side effects two
  * settings carry.
  *
- * <p>Which value a setting has is no longer decided here — that is {@link Ruleset}, which owns the
- * active preset and therefore the path every read and write resolves to. This class used to ask
- * {@code plugin.getGamemanager().currentGamePreset()} on every read, a cycle that kept both modules
- * unbuildable in isolation.
+ * <p>Which value a setting has is not decided here — that is {@link Ruleset}, which owns the
+ * active preset and therefore the path every read and write resolves to. See
+ * {@code CONTEXT.md § Ruleset}.
  */
 public class GameSettings {
 
@@ -57,14 +56,11 @@ public class GameSettings {
                 gamePreset.setJokers(configurationSection.getInt("jokers"));
                 gamePreset.setBackpackRows(configurationSection.getInt("backpackRows"));
 
-                // Read each setting out of the preset section by its own path.
-                //
-                // This used to compare configPath() against the bare keys under `settings:` --
-                // "settings.isTeamGame" against "isTeamGame" -- so it never matched once, and a
-                // loaded preset kept whatever GamePreset's constructor had put there. It was
-                // harmless only because nothing reads this list for a loaded preset: the editor
-                // always starts from a new GamePreset. It would have stopped being harmless the
-                // moment anyone added an edit-an-existing-preset flow.
+                // Read each setting out of the preset section by its own path. This used to
+                // compare configPath() against the bare keys under `settings:` and so never
+                // matched once -- harmless only because nothing reads this list for a loaded
+                // preset today, and not harmless at all the moment an edit-an-existing-preset
+                // flow exists.
                 gamePreset.getGameSettings().clear();
                 for (GameSetting gameSetting : GameSetting.values()) {
                     if (gameSetting.defaultValue() instanceof Boolean
@@ -125,9 +121,8 @@ public class GameSettings {
     }
 
     /**
-     * <p>Read through {@link #getQuickieMode()}, which resolves the active preset, so the write has
-     * to as well — it went straight to the top-level path before and was therefore invisible during
-     * a preset round, exactly like {@code setSettingEnabled}.
+     * Read through {@link #getQuickieMode()}, which resolves the active preset, so the write has to
+     * as well — see the note on {@link Ruleset#pathFor}.
      */
     public void setQuickieMode(QuickieMode quickieMode) {
         this.ruleset.setValue(GameSetting.QUICKIE, quickieMode.ordinal());

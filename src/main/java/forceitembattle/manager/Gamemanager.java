@@ -112,19 +112,14 @@ public class Gamemanager implements Manager {
     }
 
     /**
-     * Identity of the unique highest scorer, or null when the top score is shared. Team mode keys on
-     * team id, solo on player UUID; the two never mix within a game, since the mode can't change
-     * mid-match.
+     * Identity of the unique highest scorer, or null when the top score is shared. Team mode keys
+     * on team id, solo on player UUID; the two never mix within a game.
      *
-     * Spectators are skipped, matching who gets written as a participant at submit time -- otherwise a
-     * spectator sitting on 0 could create a phantom tie in a one-player game.
+     * <p>Spectators are skipped, matching who gets written as a participant at submit time --
+     * otherwise a spectator sitting on 0 could create a phantom tie in a one-player game.
      *
-     * <p><b>The one branch on the TEAM setting that is not a mistake.</b> Everywhere else the
-     * question "is this a team game?" is really "does this player have a team", and asks
-     * {@link ForceItemPlayer#isInTeam()}. Here the two halves produce genuinely different
-     * identities -- a team id and a player UUID -- which the match history compares across calls to
-     * detect a lead change, so collapsing them onto the score owner would need an identity the
-     * reporter understands before it could be a rename. Left as it is deliberately.
+     * <p><b>The one branch on the TEAM setting that is not a mistake</b>, and
+     * {@code CONTEXT.md § Round Phase} says why. Left as it is deliberately.
      */
     private Object currentSoleLeader() {
         Object best = null;
@@ -248,16 +243,11 @@ public class Gamemanager implements Manager {
         // In run mode everyone shares one seeded pair; otherwise each owner gets their own.
         MaterialPair shared = runMode ? this.nextMaterials(true) : null;
 
-        // One pass over the roster, one pair per score owner. The team and solo halves of this used
-        // to be written out separately and had drifted apart in two ways worth naming, because both
-        // are fixed by the collapse rather than by anything clever:
-        //
-        //   - the solo half walked Bukkit.getOnlinePlayers() instead of the roster, so a player who
-        //     disconnected during the countdown -- who keeps their spot by design, see isStarting()
-        //     -- was never dealt an item, and rejoined hunting whatever they held last round. It
-        //     also NPE'd on anyone online without a roster entry.
-        //   - the team half drew a fresh pair for every member and let the last one win, so a pair
-        //     of players burned two draws to be handed one item.
+        // One pass over the roster, one pair per score owner. Written as separate team and solo
+        // halves once, and they had drifted: the solo half walked getOnlinePlayers() rather than
+        // the roster, so a player who disconnected during the countdown was never dealt an item;
+        // the team half drew a fresh pair per member and let the last one win. Both fixed by the
+        // collapse -- keep it one pass.
         this.roster.activeScoreOwners().forEach(owner -> {
             MaterialPair pair = runMode ? shared : this.nextMaterials(false);
             owner.startRound(pair.current(), pair.next(), now);
@@ -352,11 +342,10 @@ public class Gamemanager implements Manager {
      * gamesPlayed write. Spectators are put into spectator mode instead. Safe to call more than
      * once — {@link ForceItemPlayer#isStartSetupApplied()} makes every call after the first a no-op.
      *
-     * This lives here rather than inside /start because the countdown-end pass only walks the
-     * players who happen to be online at that instant. Someone who disconnected during the countdown
-     * is still a participant — their team and force item were assigned before the countdown even
-     * began — so the exact same setup has to run when they come back, or they rejoin in ADVENTURE
-     * mode with an empty inventory and no jokers, unable to play the round they are scored in.
+     * <p>Here rather than inside /start because the countdown-end pass only walks the players
+     * online at that instant. Someone who disconnected during the countdown is still a participant,
+     * so the same setup has to run when they come back — otherwise they rejoin in ADVENTURE mode
+     * with an empty inventory, unable to play the round they are scored in.
      */
     public void applyStartSetup(Player player) {
         ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());

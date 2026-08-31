@@ -4,13 +4,11 @@ import java.util.List;
 import org.bukkit.Material;
 
 /**
- * What a player starts a round holding.
+ * What a player starts a round holding — see {@code CONTEXT.md § Round Setup}.
  *
- * <p>These are rules, not effects: they answer in counts and materials and write nothing. The
- * writing is {@code PlayerOutfitter}'s job. Keeping them apart is what makes them testable at all
- * — the joker arithmetic used to be computed inside the loop that called {@code setItem}, which
- * put it behind {@code ItemStack} and therefore behind a running server, as
- * {@code HeadlessBoundaryTest} records.
+ * <p>These are rules, not effects: they answer in counts and materials and write nothing.
+ * {@code PlayerOutfitter} does the writing. Keeping them apart is what makes them testable at all,
+ * since an inventory write puts a rule behind a running server — see {@code HeadlessBoundaryTest}.
  */
 public final class RoundSetup {
 

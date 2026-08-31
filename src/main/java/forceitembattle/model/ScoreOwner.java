@@ -6,26 +6,11 @@ import org.bukkit.Material;
 
 /**
  * Whoever owns the score a find is credited to: the {@link Team} in a team game, the player
- * themselves when solo.
+ * themselves when solo. See {@code CONTEXT.md § Score Owner}, which also records what deliberately
+ * stayed out of this interface.
  *
- * <p>The name is the codebase's own — {@code recordFoundItem} has always described its job as
- * "credits a found item to whoever owns the score". This interface is that sentence made into a
- * type.
- *
- * <h2>Why this exists</h2>
- *
- * The item, the score, the joker pool and the found-list used to be declared on both
- * {@link ForceItemPlayer} and {@link Team}, and six {@code active*} accessors picked between them
- * with {@code currentTeam != null ? team.x : this.x}. That worked, and was tested in both
- * directions, but it left every caller responsible for choosing the right accessor family — and, as
- * the old class javadoc put it, "a mistake either way is silent". One interface, chosen once when
- * the round assigns a team, replaces that discipline with a type.
- *
- * <p><b>Deliberately not here: {@code backToBackStreak}.</b> It looks like the same duplication and
- * is not. In a team game {@link forceitembattle.manager.BackToBackManager} keeps the player's streak
- * <em>and</em> the team's, and reads both for different purposes: the team's sets the probability of
- * the chain, the player's is what gets reported to their own solo stat row. Two live values that
- * happen to share a name. Folding them together would silently change both.
+ * <p>Chosen once, when the round assigns a team, so no caller has to pick between two families of
+ * accessor — a mistake either way used to be silent.
  */
 public interface ScoreOwner {
 

@@ -1823,22 +1823,13 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.YELLOW_WOOL, State.EARLY);
     }
 
-    /**
-     * Tags that describe item properties/requirements.
-     * An item can have multiple tags.
-     */
+    /** Tags that describe item properties/requirements. An item can have multiple tags. */
     public enum ItemTag {
-        /**
-         * Item requires nether access to obtain
-         */
+        /** Item requires nether access to obtain */
         NETHER,
-        /**
-         * Item requires end access to obtain
-         */
+        /** Item requires end access to obtain */
         END,
-        /**
-         * Item is extremely hard/unrealistic to obtain in 45 minutes
-         */
+        /** Item is extremely hard/unrealistic to obtain in 45 minutes */
         EXTREME
     }
 
@@ -1864,9 +1855,7 @@ public class ItemDifficultiesManager implements Manager {
         }
     }
 
-    /**
-     * Defines an item with its game state (when it unlocks) and tags (requirements/properties).
-     */
+    /** Defines an item with its game state (when it unlocks) and tags (requirements/properties). */
     public record ItemDefinition(Material material, State state, Set<ItemTag> tags) {
         public ItemDefinition(Material material, State state, ItemTag... tags) {
             this(material, state, tags.length == 0 ? Set.of() : EnumSet.copyOf(Arrays.asList(tags)));

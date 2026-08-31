@@ -77,9 +77,7 @@ public enum CustomMaterials {
     @Nullable
     private final String displayNameOverride;
 
-    /**
-     * Datapack loot table defining this item, or null when a plain rename is enough.
-     */
+    /** Datapack loot table defining this item, or null when a plain rename is enough. */
     @Nullable
     private final NamespacedKey itemLootTable;
 
@@ -142,9 +140,7 @@ public enum CustomMaterials {
         return this.color != null ? "<dark_gray>» " + this.color + this.itemName : null;
     }
 
-    /**
-     * A fresh stack of this custom item.
-     */
+    /** A fresh stack of this custom item. */
     public ItemStack itemStack() {
         if (this.prototype != null) {
             return this.prototype.clone();
@@ -167,9 +163,7 @@ public enum CustomMaterials {
         return itemBuilder.getItemStack();
     }
 
-    /**
-     * A fresh stack of this custom item, {@code amount} of them.
-     */
+    /** A fresh stack of this custom item, {@code amount} of them. */
     public ItemStack itemStack(int amount) {
         ItemStack itemStack = this.itemStack();
         itemStack.setAmount(amount);
@@ -226,9 +220,7 @@ public enum CustomMaterials {
         return BY_ID.get(id.toLowerCase());
     }
 
-    /**
-     * Custom name if the material is one of ours, plain vanilla name otherwise.
-     */
+    /** Custom name if the material is one of ours, plain vanilla name otherwise. */
     public static String nameOf(Material material) {
         CustomMaterials custom = byMaterial(material);
         return custom != null
@@ -236,9 +228,7 @@ public enum CustomMaterials {
                 : WordUtils.capitalizeFully(material.name().replace("_", " "));
     }
 
-    /**
-     * The /info id if the material is one of ours, the lowercase material name otherwise.
-     */
+    /** The /info id if the material is one of ours, the lowercase material name otherwise. */
     public static String idOf(Material material) {
         CustomMaterials custom = byMaterial(material);
         return custom != null ? custom.getId() : material.name().toLowerCase();

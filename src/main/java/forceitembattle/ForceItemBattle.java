@@ -117,9 +117,7 @@ public final class ForceItemBattle extends JavaPlugin {
     @Getter
     private final Roster roster = new Roster();
 
-    /**
-     * Where the round is. Like the roster: constructed before every manager, depending on none.
-     */
+    /** Where the round is. Like the roster: constructed before every manager, depending on none. */
     @Getter
     private final RoundPhase roundPhase = new RoundPhase();
 
@@ -199,17 +197,8 @@ public final class ForceItemBattle extends JavaPlugin {
 
     /**
      * Records a manager for its lifecycle. <b>Does not decide when it is enabled</b> — that is
-     * {@link #lifecycleOrder()}, declared separately and deliberately.
-     *
-     * <p>These were one thing until now: the list was built as managers were constructed, so
-     * construction order <em>was</em> enable order and its reverse was disable order. That made a
-     * constructor dependency unfixable without moving a manager's lifecycle with it, and
-     * {@code CollectionManager} is the case that proved it — its loaders wanted
-     * {@code FIBServiceClient}, which was constructed later, and the only way to reach it was to
-     * move a manager whose {@code enable()} and {@code disable()} would have moved too.
-     *
-     * <p>Construction order is now free to follow dependencies. Lifecycle order is stated once,
-     * where it can be read and reasoned about.
+     * {@link #lifecycleOrder()}, declared separately and deliberately. Why the two are separate
+     * lists is in {@code CONTEXT.md § Manager Lifecycle}.
      */
     private <T extends Manager> T register(T manager) {
         this.managers.add(manager);
@@ -219,11 +208,9 @@ public final class ForceItemBattle extends JavaPlugin {
     /**
      * The order managers are enabled in, and — reversed — disabled in.
      *
-     * <p>This is the order that was previously implicit in the construction sequence, preserved
-     * exactly. It is load-bearing: {@code TimerManager} starting its task earlier or saving its
-     * config later are live behaviour changes that no test would catch, which is why this is a
-     * list to be edited deliberately rather than a side effect of where a {@code new} happens to
-     * sit.
+     * <p><b>Load-bearing.</b> {@code TimerManager} starting its task earlier or saving its config
+     * later are live behaviour changes no test would catch, which is why this is a list edited
+     * deliberately rather than a side effect of where a {@code new} happens to sit.
      */
     private List<Manager> lifecycleOrder() {
         return List.of(
@@ -253,12 +240,10 @@ public final class ForceItemBattle extends JavaPlugin {
     }
 
     /**
-     * Every registered manager appears in the lifecycle order exactly once.
-     *
-     * <p>The one hazard the split introduces: a manager constructed and registered but left out of
-     * {@link #lifecycleOrder()} would never be enabled, and nothing else would say so. This turns
-     * that into a boot failure, which is the same bargain {@code CommandsManager} already makes for
-     * an unregistered command.
+     * Every registered manager appears in the lifecycle order exactly once. A manager registered
+     * but left out of {@link #lifecycleOrder()} would never be enabled and nothing else would say
+     * so, hence the boot failure — the same bargain {@code CommandsManager} makes for an
+     * unregistered command.
      */
     private void verifyLifecycleCoversEveryManager(List<Manager> order) {
         if (order.size() != this.managers.size() || !order.containsAll(this.managers)) {

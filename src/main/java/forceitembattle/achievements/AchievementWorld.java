@@ -11,25 +11,11 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 
 /**
- * Everything an achievement rule is allowed to ask about the round it is running in.
+ * Everything an achievement rule is allowed to ask about the round it is running in. See
+ * {@code CONTEXT.md § Achievement World} for why it is this and not the plugin.
  *
- * <h2>Why this is not the plugin</h2>
- *
- * <p>{@code check} used to take a {@link forceitembattle.ForceItemBattle}, which made the real
- * interface of every achievement rule "all 23 managers". Measured, 17 of the 22 handlers never
- * touched it and the other five between them called <em>six methods</em>. The parameter existed
- * because that was the shape every constructor already had, and it cost the whole package its test
- * surface: exercising a rule that computes nothing but arithmetic over a progress tracker meant
- * standing up a plugin.
- *
- * <p>Handlers are stateless strategies held on the {@code Achievements} enum, so they cannot be
- * given collaborators at construction — that would depend on class-load order, and the javadoc on
- * {@link forceitembattle.achievements.handlers.AchievementHandler} has always said so. Passing a
- * narrow world at call time is the shape that respects the constraint without handing out the
- * plugin.
- *
- * <p>Two adapters justify the seam: {@code PluginAchievementWorld} over the live managers, and a
- * literal in tests.
+ * <p>Widen it by one named question when a rule needs something new. Two adapters:
+ * {@code PluginAchievementWorld} over the live managers, and a literal in tests.
  */
 public interface AchievementWorld {
 
@@ -44,13 +30,7 @@ public interface AchievementWorld {
      */
     int secondsLeft();
 
-    /**
-     * How far into the round we are.
-     *
-     * <p>A default rather than a field on each caller because two handlers used to subtract these
-     * two numbers themselves, out of two different managers, and a comment in a third place noted
-     * it was "mirroring" the same calculation elsewhere. One subtraction, one place.
-     */
+    /** How far into the round we are. One subtraction, one place — see the class note. */
     default int elapsedSeconds() {
         return this.roundDuration() - this.secondsLeft();
     }

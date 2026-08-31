@@ -4,15 +4,12 @@ import java.util.OptionalInt;
 import java.util.Set;
 
 /**
- * How much of the round is left, and which seconds are worth announcing.
+ * How much of the round is left, and which seconds are worth announcing. See
+ * {@code CONTEXT.md § Round Clock}.
  *
- * <p>The single most load-bearing rule in the game — when the round ends — used to live inside a
- * {@code BukkitRunnable} alongside the boss bars, the action bars, the titles and the sounds, so
- * the only way to find out whether it counted correctly was to play a round and wait. Nothing here
- * touches Bukkit; {@code TimerManager} drives it once a second and renders whatever it reports.
- *
- * <p>Not thread-safe, and does not need to be: the timer task is a synchronous Bukkit task, so
- * every call arrives on the main thread.
+ * <p>Nothing here touches Bukkit; {@code TimerManager} drives it once a second and renders whatever
+ * it reports. Not thread-safe and does not need to be — the timer task is a synchronous Bukkit
+ * task, so every call arrives on the main thread.
  */
 public final class RoundClock {
 
@@ -27,13 +24,7 @@ public final class RoundClock {
 
     /**
      * The round's full length. Held here because everything that wants it wants it <em>with</em>
-     * the time remaining — to work out how far in we are.
-     *
-     * <p>That subtraction was written out by hand in three places: two achievement handlers, each
-     * reaching a game manager and a timer manager for the two halves, and a comment in
-     * {@code ItemDifficultiesManager} noting it was "mirroring" them. It is {@link #elapsedSeconds}
-     * now. Keeping the two numbers together is also what let the round's duration stop living on
-     * {@code Gamemanager}, which is what two of the last dependency cycles were made of.
+     * the time remaining, to work out how far in we are — that is {@link #elapsedSeconds}.
      */
     private int totalSeconds;
 

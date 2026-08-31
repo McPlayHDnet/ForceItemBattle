@@ -55,15 +55,10 @@ public class MatchHistoryReporter {
     private boolean linkShared;
 
     /**
-     * Wall-clock intervals during which the game was paused, as [start, end] millis pairs.
-     *
-     * Item times are wall-clock deltas between hand-ins, so a pause between two hand-ins would
-     * otherwise be counted as time spent finding — a 22-minute pause turned one item into a 30-minute
-     * "timesink" that never happened. Recording the pause intervals lets submit time subtract the
-     * pause overlap from each item's window, so seconds_taken reflects play time, not wall time.
-     *
-     * A pause in progress is held in pauseStartedAt until it is resumed and the closed interval is
-     * appended here.
+     * Wall-clock intervals during which the game was paused, as [start, end] millis pairs, so that
+     * submit time can subtract the pause overlap from each item's window and {@code seconds_taken}
+     * reflects play time rather than wall time. A pause in progress is held in
+     * {@code pauseStartedAt} until it is resumed and the closed interval is appended here.
      */
     private final List<long[]> pauseIntervals = new ArrayList<>();
 
