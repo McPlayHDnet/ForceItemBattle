@@ -1,6 +1,9 @@
 package forceitembattle.listener;
 
+import forceitembattle.gui.InventoryBuilder;
 import forceitembattle.manager.Gamemanager;
+import forceitembattle.manager.PlayerOutfitter;
+import forceitembattle.model.MenuItem;
 import forceitembattle.model.RoundPhase;
 import forceitembattle.model.Roster;
 import forceitembattle.ForceItemBattle;
@@ -17,7 +20,6 @@ import forceitembattle.model.Dimension;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.service.PlayerCounter;
 import forceitembattle.model.ForceItemPlayer;
-import forceitembattle.gui.ItemBuilder;
 import forceitembattle.model.Locator;
 import forceitembattle.gui.TeleporterInventory;
 import forceitembattle.util.Prefix;
@@ -91,42 +93,50 @@ public class ClickableItemsListener implements Listener {
         return action == Action.RIGHT_CLICK_BLOCK || action == Action.RIGHT_CLICK_AIR;
     }
 
+    /**
+     * Every menu button, in every phase.
+     *
+     * <p>Was two handlers with identical preambles, one per phase, each switching on raw
+     * {@link Material}. Two things came out of that arrangement and both are gone. Anything that
+     * looked like a button was one, so a grass block held to build with teleported you and a
+     * spyglass dropped you into spectator mode; the identification is now a marker and never
+     * consults the material. And {@code ENDER_EYE} meant "play this round" before a round and
+     * "teleport to the End" after one, a collision only visible if you read both halves of this
+     * file at once; they are two constants now and the marker tells them apart.
+     *
+     * <p>The phase check is the table's, not this method's: a button that is not live in the
+     * current phase is not a button right now.
+     */
     @EventHandler(priority = EventPriority.HIGH)
-    public void onAfterGame(PlayerInteractEvent e) {
+    public void onMenuButton(PlayerInteractEvent e) {
         Player player = e.getPlayer();
-        if (!this.roundPhase.isEndGame()) {
-            return;
-        }
-        if (e.getItem() == null) {
-            return;
-        }
         if (!isRightClick(e.getAction())) {
             return;
         }
 
-        switch (e.getItem().getType()) {
-            case LIME_DYE -> {
-                e.setCancelled(true);
-                player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
-                Scheduler.runSync(() ->
-                        new AchievementCategoryInventory(this.plugin, player.getName(), player.getUniqueId()).open(player));
-            }
-            case WRITTEN_BOOK -> {
-                e.setCancelled(true);
-                player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
-                Scheduler.runSync(() ->
-                        new CollectionBookInventory(this.plugin, player.getName(), player.getUniqueId()).open(player));
-            }
-            case COMPASS -> {
-                e.setCancelled(true);
-                player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
-                Scheduler.runSync(() -> new TeleporterInventory(this.plugin).open(player));
-            }
-            case GRASS_BLOCK -> teleportToDimension(e, player, Dimension.OVERWORLD, this.plugin::getSpawnLocation);
-            case NETHERRACK  -> teleportToDimension(e, player, Dimension.NETHER,
+        MenuItem menuItem = PlayerOutfitter.buttonOf(e.getItem());
+        if (menuItem == null || !menuItem.isLiveIn(this.roundPhase.state())) {
+            return;
+        }
+
+        e.setCancelled(true);
+
+        switch (menuItem) {
+            case ACHIEVEMENTS, RESULT_ACHIEVEMENTS -> openMenu(player, () ->
+                    new AchievementCategoryInventory(this.plugin, player.getName(), player.getUniqueId()));
+            case COLLECTION, RESULT_COLLECTION -> openMenu(player, () ->
+                    new CollectionBookInventory(this.plugin, player.getName(), player.getUniqueId()));
+            case TELEPORTER -> openMenu(player, () -> new TeleporterInventory(this.plugin));
+            case TO_OVERWORLD -> teleportToDimension(e, player, Dimension.OVERWORLD, this.plugin::getSpawnLocation);
+            case TO_NETHER -> teleportToDimension(e, player, Dimension.NETHER,
                     () -> new Location(Dimension.NETHER.world(), 0, 70, 0));
-            case SPYGLASS -> {
-                e.setCancelled(true);
+            case TO_END -> teleportToDimension(e, player, Dimension.END, () -> {
+                World end = Objects.requireNonNull(Dimension.END.world());
+                Location location = new Location(end, 0, 0, 0);
+                location.setY(end.getHighestBlockYAt(location) + 1);
+                return location;
+            });
+            case SPECTATE_RESULT -> {
                 if (player.getGameMode() == GameMode.SPECTATOR) {
                     player.sendMessage(Text.of("<gray>You are <red>no longer<gray> spectating."));
                     player.setGameMode(GameMode.CREATIVE);
@@ -135,13 +145,36 @@ public class ClickableItemsListener implements Listener {
                     player.setGameMode(GameMode.SPECTATOR);
                 }
             }
-            case ENDER_EYE   -> teleportToDimension(e, player, Dimension.END, () -> {
-                World end = Objects.requireNonNull(Dimension.END.world());
-                Location location = new Location(end, 0, 0, 0);
-                location.setY(end.getHighestBlockYAt(location) + 1);
-                return location;
-            });
+            case SPECTATE_ROUND -> setPlaying(player, false);
+            case PLAY_ROUND -> setPlaying(player, true);
         }
+    }
+
+    /**
+     * Opting into or out of the round about to start, and flipping slot 8 to the other button.
+     *
+     * <p>The roster entry is fetched here rather than gated on by the table: it is the only pair of
+     * buttons that needs one, and "you cannot opt in or out of a round you hold no place in" is
+     * this button's own rule rather than a property of being a menu item.
+     */
+    private void setPlaying(Player player, boolean playing) {
+        ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());
+        if (forceItemPlayer == null) {
+            return;
+        }
+
+        player.playSound(player.getLocation(), Sound.BLOCK_PISTON_CONTRACT, 1, 1);
+        forceItemPlayer.setSpectator(!playing);
+        player.sendMessage(Text.of(playing
+                ? "<dark_aqua>You will <green>play <dark_aqua>this round now."
+                : "<dark_aqua>You will <green>spectate <dark_aqua>this round now."));
+
+        PlayerOutfitter.setButton(player, playing ? MenuItem.SPECTATE_ROUND : MenuItem.PLAY_ROUND);
+    }
+
+    private void openMenu(Player player, Supplier<InventoryBuilder> menu) {
+        player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
+        Scheduler.runSync(() -> menu.get().open(player));
     }
 
     private void teleportToDimension(PlayerInteractEvent e, Player player, Dimension dimension,
@@ -281,51 +314,4 @@ public class ClickableItemsListener implements Listener {
         Bukkit.getPluginManager().callEvent(foundItemEvent);
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
-    public void onPreGame(PlayerInteractEvent e) {
-        Player player = e.getPlayer();
-        if (!this.roundPhase.isPreGame()) {
-            return;
-        }
-        if (e.getItem() == null) {
-            return;
-        }
-        if (!isRightClick(e.getAction())) {
-            return;
-        }
-
-        ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());
-        if (forceItemPlayer == null) {
-            return;
-        }
-
-        switch (e.getItem().getType()) {
-            case LIME_DYE -> {
-                e.setCancelled(true);
-                player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
-                Scheduler.runSync(() ->
-                        new AchievementCategoryInventory(this.plugin, player.getName(), player.getUniqueId()).open(player));
-            }
-            case WRITTEN_BOOK -> {
-                e.setCancelled(true);
-                player.playSound(player.getLocation(), Sound.BLOCK_BARREL_OPEN, 1, 1);
-                Scheduler.runSync(() ->
-                        new CollectionBookInventory(this.plugin, player.getName(), player.getUniqueId()).open(player));
-            }
-            case ENDER_PEARL -> {
-                e.setCancelled(true);
-                player.playSound(player.getLocation(), Sound.BLOCK_PISTON_CONTRACT, 1, 1);
-                forceItemPlayer.setSpectator(true);
-                player.sendMessage(Text.of("<dark_aqua>You will <green>spectate <dark_aqua>this round now."));
-                player.getInventory().setItem(8, new ItemBuilder(Material.ENDER_EYE).setDisplayName("<dark_gray>» <gray>Play game").getItemStack());
-            }
-            case ENDER_EYE -> {
-                e.setCancelled(true);
-                player.playSound(player.getLocation(), Sound.BLOCK_PISTON_CONTRACT, 1, 1);
-                forceItemPlayer.setSpectator(false);
-                player.sendMessage(Text.of("<dark_aqua>You will <green>play <dark_aqua>this round now."));
-                player.getInventory().setItem(8, new ItemBuilder(Material.ENDER_PEARL).setDisplayName("<dark_gray>» <gray>Spectate game").getItemStack());
-            }
-        }
-    }
 }

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import forceitembattle.model.GameState;
 import forceitembattle.model.RoundSetup;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -243,7 +244,7 @@ class PlayerOutfitterTest {
         void theyWaitInAdventureModeAndFed() {
             PlayerMock player = dirty("Newcomer");
 
-            PlayerOutfitter.toLobby(player);
+            PlayerOutfitter.toLobby(player, GameState.PRE_GAME);
 
             assertEquals(GameMode.ADVENTURE, player.getGameMode());
             assertEquals(20.0, player.getHealth());
@@ -256,7 +257,7 @@ class PlayerOutfitterTest {
         void theyGetTheLobbyButtons() {
             PlayerMock player = dirty("Newcomer");
 
-            PlayerOutfitter.toLobby(player);
+            PlayerOutfitter.toLobby(player, GameState.PRE_GAME);
 
             assertEquals(Material.WRITTEN_BOOK, inSlot(player, 0));
             assertEquals(Material.LIME_DYE, inSlot(player, 4));
@@ -274,7 +275,7 @@ class PlayerOutfitterTest {
             PlayerMock lobby = dirty("Newcomer");
             PlayerMock result = dirty("Understudy1");
 
-            PlayerOutfitter.toLobby(lobby);
+            PlayerOutfitter.toLobby(lobby, GameState.PRE_GAME);
             PlayerOutfitter.toResultScreen(result, null);
 
             assertEquals(Material.LIME_DYE, inSlot(lobby, 4));
@@ -290,13 +291,28 @@ class PlayerOutfitterTest {
          * records what it currently does so the change is visible when it comes.
          */
         @Test
-        void theSpectateButtonIsHandedOutRegardlessOfPhase() {
-            PlayerMock player = dirty("Newcomer");
+        void theSpectateButtonIsOfferedBeforeARoundAndNotAfterOne() {
+            PlayerMock beforeARound = dirty("Newcomer");
+            PlayerMock afterOne = dirty("Latecomer");
 
-            PlayerOutfitter.toLobby(player);
+            PlayerOutfitter.toLobby(beforeARound, GameState.PRE_GAME);
+            PlayerOutfitter.toLobby(afterOne, GameState.END_GAME);
 
-            assertNotNull(player.getInventory().getItem(8));
-            assertEquals(Material.ENDER_PEARL, inSlot(player, 8));
+            assertNotNull(beforeARound.getInventory().getItem(8));
+            assertEquals(Material.ENDER_PEARL, inSlot(beforeARound, 8));
+            assertEquals(Material.AIR, inSlot(afterOne, 8),
+                    "there is nothing to opt out of once the round is over");
+        }
+
+        /** The rest of the lobby bar is unaffected: only slot 8 was ever phase-dependent. */
+        @Test
+        void theOtherLobbyButtonsSurviveIntoTheResultScreenPhase() {
+            PlayerMock player = dirty("Latecomer");
+
+            PlayerOutfitter.toLobby(player, GameState.END_GAME);
+
+            assertEquals(Material.WRITTEN_BOOK, inSlot(player, 0));
+            assertEquals(Material.LIME_DYE, inSlot(player, 4));
         }
     }
 

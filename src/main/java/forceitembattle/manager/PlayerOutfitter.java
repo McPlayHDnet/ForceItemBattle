@@ -1,6 +1,8 @@
 package forceitembattle.manager;
 
 import forceitembattle.gui.ItemBuilder;
+import forceitembattle.model.GameState;
+import forceitembattle.model.MenuItem;
 import forceitembattle.model.RoundSetup;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -14,6 +16,8 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 
 /**
  * Puts a player into one of the states a round holds them in.
@@ -111,7 +115,7 @@ public final class PlayerOutfitter {
         player.setGameMode(GameMode.CREATIVE);
         player.playerListName(Component.text(player.getName()));
 
-        giveResultScreenItems(player);
+        giveOpeningBar(player, MenuItem.Menu.RESULT, GameState.END_GAME);
     }
 
     /**
@@ -141,7 +145,7 @@ public final class PlayerOutfitter {
      * only answered by the {@code PRE_GAME} click handler, so at {@code END_GAME} it is a dead
      * button. Left exactly as it was on purpose — see {@code CONTEXT.md § Player Outfitting}.
      */
-    public static void toLobby(Player player) {
+    public static void toLobby(Player player, GameState phase) {
         player.getInventory().clear();
         player.setLevel(0);
         player.setExp(0);
@@ -149,14 +153,7 @@ public final class PlayerOutfitter {
         player.setFoodLevel(20);
         player.setGameMode(GameMode.ADVENTURE);
 
-        player.getInventory().setItem(0, new ItemBuilder(Material.WRITTEN_BOOK)
-                .setDisplayName("<dark_gray>» <dark_aqua>Collection")
-                .addItemFlags(ItemFlag.values())
-                .getItemStack());
-        player.getInventory().setItem(4, new ItemBuilder(Material.LIME_DYE)
-                .setDisplayName("<dark_gray>» <green>Achievements").getItemStack());
-        player.getInventory().setItem(8, new ItemBuilder(Material.ENDER_PEARL)
-                .setDisplayName("<dark_gray>» <gray>Spectate game").getItemStack());
+        giveOpeningBar(player, MenuItem.Menu.LOBBY, phase);
     }
 
     /** Hands one team member their share of the pool. Offline members are skipped. */
@@ -168,28 +165,63 @@ public final class PlayerOutfitter {
     }
 
     /**
-     * The result screen's buttons.
+     * Lays out every opening button live in {@code phase}, in the slots the table names.
      *
-     * <p>Was {@code Gamemanager.giveSpectatorItems}, public only so the rejoin path could reach it
-     * from another package, and named for spectators although everyone on the result screen is
-     * handed it — the winner included.
+     * <p>Replaces two hand-written blocks — the result screen's, which was
+     * {@code Gamemanager.giveSpectatorItems} (public only so the rejoin path could reach it from
+     * another package, and named for spectators although everyone on that screen is handed it, the
+     * winner included), and the lobby's, which lived in the join listener.
      */
-    private static void giveResultScreenItems(Player player) {
-        player.getInventory().setItem(1, new ItemBuilder(Material.LIME_DYE)
-                .setDisplayName("<dark_gray>» <green>Achievements").getItemStack());
-        player.getInventory().setItem(2, new ItemBuilder(Material.WRITTEN_BOOK)
-                .setDisplayName("<dark_gray>» <dark_aqua>Collection")
+    private static void giveOpeningBar(Player player, MenuItem.Menu menu, GameState phase) {
+        for (MenuItem menuItem : MenuItem.openingBar(menu, phase)) {
+            setButton(player, menuItem);
+        }
+    }
+
+    /**
+     * Puts one button in its slot.
+     *
+     * <p>Public because the spectate toggle needs it: opting out of a round replaces slot 8 with
+     * {@code PLAY_ROUND} and opting back in reverses that, and the click handler used to build
+     * those stacks itself with an inline {@code ItemBuilder}. A reader that writes items is a
+     * second writer, which is the arrangement this candidate exists to end.
+     */
+    public static void setButton(Player player, MenuItem menuItem) {
+        player.getInventory().setItem(menuItem.slot(), buttonStack(menuItem));
+    }
+
+    /**
+     * One button as a stack: its material, its label, and the marker that makes it findable.
+     *
+     * <p>{@code ItemFlag.values()} goes on every button rather than only the written book, which is
+     * where it used to live alone. A menu button is decoration and should never show mechanical
+     * tooltip text; for the other seven materials there is nothing to hide, so the widening is
+     * invisible in play and removes a column that would have existed for one constant.
+     */
+    private static ItemStack buttonStack(MenuItem menuItem) {
+        return new ItemBuilder(menuItem.material())
+                .setDisplayName(menuItem.label())
                 .addItemFlags(ItemFlag.values())
-                .getItemStack());
-        player.getInventory().setItem(3, new ItemBuilder(Material.COMPASS)
-                .setDisplayName("<dark_gray>» <yellow>Teleporter").getItemStack());
-        player.getInventory().setItem(5, new ItemBuilder(Material.GRASS_BLOCK)
-                .setDisplayName("<dark_gray>» <dark_green>Overworld").getItemStack());
-        player.getInventory().setItem(6, new ItemBuilder(Material.NETHERRACK)
-                .setDisplayName("<dark_gray>» <red>Nether").getItemStack());
-        player.getInventory().setItem(7, new ItemBuilder(Material.ENDER_EYE)
-                .setDisplayName("<dark_gray>» <dark_purple>End").getItemStack());
-        player.getInventory().setItem(8, new ItemBuilder(Material.SPYGLASS)
-                .setDisplayName("<dark_gray>» <green>Spectate").getItemStack());
+                .setPersistentData(MenuItem.markerKey(), PersistentDataType.STRING, menuItem.name())
+                .getItemStack();
+    }
+
+    /**
+     * The button this stack is, or {@code null} if it is not one.
+     *
+     * <p>The whole of the reader's identification step. It never looks at the material, which is
+     * the point: an item that merely looks like a button is not one, however it was obtained.
+     */
+    @Nullable
+    public static MenuItem buttonOf(@Nullable ItemStack itemStack) {
+        if (itemStack == null) {
+            return null;
+        }
+        ItemMeta itemMeta = itemStack.getItemMeta();
+        if (itemMeta == null) {
+            return null;
+        }
+        return MenuItem.byMarker(itemMeta.getPersistentDataContainer()
+                .get(MenuItem.markerKey(), PersistentDataType.STRING));
     }
 }

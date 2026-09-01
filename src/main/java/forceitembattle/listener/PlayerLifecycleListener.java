@@ -63,7 +63,7 @@ public class PlayerLifecycleListener implements Listener {
             case RETURNING_PARTICIPANT -> this.restoreParticipant(player);
             case RESULT_SCREEN -> this.showResultScreen(player);
             case LATE_SPECTATOR, COUNTDOWN_SPECTATOR -> PlayerOutfitter.toSpectator(player);
-            case LOBBY -> PlayerOutfitter.toLobby(player);
+            case LOBBY -> PlayerOutfitter.toLobby(player, this.roundPhase.state());
             // Nothing to write, and deliberately so. Reattaching the player object above was the
             // whole outcome: quitting in PRE_GAME releases your roster spot, so the only way to
             // reach this arm is to quit during the countdown and return before it ends -- and
