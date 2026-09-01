@@ -97,35 +97,9 @@ public class MaterialCategory {
             return false;
         }
 
-        if (name.contains("STONE") || name.contains("COBBLESTONE")) {
-            return true;
-        }
-
-        if (name.contains("DEEPSLATE")) {
-            return true;
-        }
-
-        if (name.contains("BLACKSTONE")) {
-            return true;
-        }
-
-        if (name.contains("ANDESITE")) {
-            return true;
-        }
-
-        if (name.contains("DIORITE")) {
-            return true;
-        }
-
-        if (name.contains("GRANITE")) {
-            return true;
-        }
-
-        if (name.contains("TUFF")) {
-            return true;
-        }
-
-        return false;
+        return name.contains("STONE") || name.contains("COBBLESTONE") || name.contains("DEEPSLATE")
+                || name.contains("BLACKSTONE") || name.contains("ANDESITE") || name.contains("DIORITE")
+                || name.contains("GRANITE") || name.contains("TUFF");
     }
 
     public static boolean isTool(Material material) {

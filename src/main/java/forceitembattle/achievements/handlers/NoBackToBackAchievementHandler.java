@@ -2,12 +2,11 @@ package forceitembattle.achievements.handlers;
 
 import forceitembattle.achievements.AchievementWorld;
 import forceitembattle.achievements.Trigger;
-import forceitembattle.achievements.progress.SimpleAchievementProgress;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.model.ForceItemPlayer;
 import org.bukkit.event.Event;
 
-public class NoBackToBackAchievementHandler implements AchievementHandler<SimpleAchievementProgress> {
+public class NoBackToBackAchievementHandler extends TallyAchievementHandler {
 
     @Override
     public Trigger getTrigger() {
@@ -15,15 +14,7 @@ public class NoBackToBackAchievementHandler implements AchievementHandler<Simple
     }
 
     @Override
-    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer, AchievementWorld world) {
-        if (event instanceof FoundItemEvent foundEvent && foundEvent.isBackToBack()) {
-            progress.count++;
-        }
-        return false; // evaluated at game end, never mid-game
-    }
-
-    @Override
-    public SimpleAchievementProgress createProgress() {
-        return new SimpleAchievementProgress();
+    protected boolean matches(Event event, ForceItemPlayer forceItemPlayer, AchievementWorld world) {
+        return event instanceof FoundItemEvent foundEvent && foundEvent.isBackToBack();
     }
 }

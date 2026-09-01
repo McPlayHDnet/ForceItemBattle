@@ -2,22 +2,15 @@ package forceitembattle.achievements.handlers;
 
 import forceitembattle.achievements.AchievementWorld;
 import forceitembattle.achievements.Trigger;
-import forceitembattle.achievements.progress.SimpleAchievementProgress;
 import forceitembattle.model.ForceItemPlayer;
 import org.bukkit.Material;
-import org.bukkit.entity.EntityType;
 import org.bukkit.event.Event;
 import org.bukkit.event.entity.EntityDeathEvent;
 
-public class RareMobDropAchievementHandler implements AchievementHandler<SimpleAchievementProgress> {
-
-    private final int targetAmount;
+public class RareMobDropAchievementHandler extends CountingAchievementHandler {
 
     public RareMobDropAchievementHandler(int targetAmount) {
-        if (targetAmount < 1) {
-            throw new IllegalArgumentException("targetAmount must be at least 1");
-        }
-        this.targetAmount = targetAmount;
+        super(targetAmount);
     }
 
     @Override
@@ -26,35 +19,22 @@ public class RareMobDropAchievementHandler implements AchievementHandler<SimpleA
     }
 
     @Override
-    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer, AchievementWorld world) {
+    protected boolean matches(Event event, ForceItemPlayer forceItemPlayer, AchievementWorld world) {
         if (!(event instanceof EntityDeathEvent deathEvent)) {
             return false;
         }
 
-        EntityType type = deathEvent.getEntityType();
-        Material rareDrop;
-        if (type == EntityType.WITHER_SKELETON) {
-            rareDrop = Material.WITHER_SKELETON_SKULL;
-        } else if (type == EntityType.DROWNED) {
-            rareDrop = Material.TRIDENT;
-        } else {
+        Material rareDrop = switch (deathEvent.getEntityType()) {
+            case WITHER_SKELETON -> Material.WITHER_SKELETON_SKULL;
+            case DROWNED -> Material.TRIDENT;
+            default -> null;
+        };
+        if (rareDrop == null) {
             return false;
         }
 
         // The mob must have actually rolled the rare drop this death.
-        boolean dropped = deathEvent.getDrops().stream()
-                .anyMatch(stack -> stack.getType() == rareDrop);
-        if (!dropped) {
-            return false;
-        }
-
-        progress.count++;
-        return progress.count >= targetAmount;
-    }
-
-    @Override
-    public SimpleAchievementProgress createProgress() {
-        return new SimpleAchievementProgress();
+        return deathEvent.getDrops().stream().anyMatch(stack -> stack.getType() == rareDrop);
     }
 
     @Override

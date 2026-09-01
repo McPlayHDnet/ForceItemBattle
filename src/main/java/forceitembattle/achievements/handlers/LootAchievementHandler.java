@@ -53,12 +53,7 @@ public class LootAchievementHandler implements AchievementHandler<SimpleAchievem
 
         if (neededItem) {
             Material needed = forceItemPlayer.activeMaterial();
-            for (ItemStack item : loot) {
-                if (item != null && item.getType() == needed) {
-                    return true;
-                }
-            }
-            return false;
+            return loot.stream().anyMatch(item -> item != null && item.getType() == needed);
         }
 
         if (customItem != null) {

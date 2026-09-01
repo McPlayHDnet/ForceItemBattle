@@ -33,6 +33,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 @RequiredArgsConstructor
@@ -62,7 +63,8 @@ public class PortalListener implements Listener {
         Location playerLocation = player.getLocation();
         Collection<ArmorStand> armorStands = playerLocation.getWorld().getEntitiesByClass(ArmorStand.class);
         for (ArmorStand armorStand : armorStands) {
-            if (armorStand.getEquipment().getHelmet() != null && armorStand.getEquipment().getHelmet().getType() == Material.SNOWBALL) {
+            ItemStack helmet = armorStand.getEquipment().getHelmet();
+            if (helmet != null && helmet.getType() == Material.SNOWBALL) {
                 Location armorStandLocation = armorStand.getLocation();
 
                 double distanceSquared = playerLocation.distanceSquared(armorStandLocation);
@@ -113,10 +115,8 @@ public class PortalListener implements Listener {
 
         World world = player.getWorld();
 
-        // 5000..15000 blocks out on each axis, sign picked separately. Deliberately the same range
-        // the End scatter uses in onChangedWorld.
-        int xOffset = random.nextBoolean() ? random.nextInt(10_001) + 5000 : -(random.nextInt(10_001) + 5000);
-        int zOffset = random.nextBoolean() ? random.nextInt(10_001) + 5000 : -(random.nextInt(10_001) + 5000);
+        int xOffset = randomAxisOffset();
+        int zOffset = randomAxisOffset();
 
         Location currentLocation = player.getLocation();
         Location newLocation = new Location(world, currentLocation.getX() + xOffset, currentLocation.getY(), currentLocation.getZ() + zOffset);
@@ -170,9 +170,8 @@ public class PortalListener implements Listener {
                 return;
             }
 
-            // Same 5000..15000 range as the antimatter teleporter above.
-            int xOffset = random.nextBoolean() ? random.nextInt(10_001) + 5000 : -(random.nextInt(10_001) + 5000);
-            int zOffset = random.nextBoolean() ? random.nextInt(10_001) + 5000 : -(random.nextInt(10_001) + 5000);
+            int xOffset = randomAxisOffset();
+            int zOffset = randomAxisOffset();
 
             Location currentLocation = player.getLocation();
             Location newLocation = new Location(player.getWorld(), currentLocation.getX() + xOffset, currentLocation.getY(), currentLocation.getZ() + zOffset);
@@ -181,6 +180,15 @@ public class PortalListener implements Listener {
 
             player.teleport(newLocation);
         }
+    }
+
+    /**
+     * 5000..15000 blocks out on one axis, sign picked separately. Shared by the antimatter
+     * teleporter's scatter and the End scatter, which have always used the same range.
+     */
+    private int randomAxisOffset() {
+        int magnitude = random.nextInt(10_001) + 5000;
+        return random.nextBoolean() ? magnitude : -magnitude;
     }
 
     private record TeleporterLocation(Location portalLocation, Location destinationLocation) {

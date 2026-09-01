@@ -3,6 +3,7 @@ package forceitembattle.commands.player;
 import static forceitembattle.commands.Precondition.PRE_GAME;
 import forceitembattle.commands.Precondition;
 import java.util.List;
+import java.util.Set;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.settings.GameSetting;
@@ -12,6 +13,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 public final class CommandTeams extends CustomCommand {
+
+    /** The subcommands that take a player name as their second argument. */
+    private static final Set<String> TARGETED_SUBCOMMANDS = Set.of("invite", "accept", "decline");
 
     public CommandTeams(ForceItemBattle plugin) {
         super(plugin, "teams");
@@ -49,9 +53,7 @@ public final class CommandTeams extends CustomCommand {
         }
 
         if (args.length == 2) {
-            if (!args[0].equalsIgnoreCase("invite")
-                    && !args[0].equalsIgnoreCase("accept")
-                    && !args[0].equalsIgnoreCase("decline")) {
+            if (!TARGETED_SUBCOMMANDS.contains(args[0].toLowerCase())) {
                 this.sendHelpMessage(player);
                 return;
             }

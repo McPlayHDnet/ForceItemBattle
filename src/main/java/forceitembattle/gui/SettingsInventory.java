@@ -102,20 +102,7 @@ public final class SettingsInventory extends InventoryBuilder {
                 }
 
                 this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
-                if (gamePreset != null) {
-                    if (gamePreset.getGameSettings().contains(gameSetting))
-                        gamePreset.getGameSettings().remove(gameSetting);
-                    else gamePreset.getGameSettings().add(gameSetting);
-                } else {
-                    plugin.getSettings().setSettingEnabled(gameSetting, !plugin.getSettings().isSettingEnabled(gameSetting));
-                    if (gameSetting == GameSetting.TEAM) {
-                        if (plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-                            Bukkit.broadcast(Text.of("<red>Teams are now enabled. <dark_gray>» <white>/teams"));
-                        } else {
-                            Bukkit.broadcast(Text.of("<red>Teams are now disabled."));
-                        }
-                    }
-                }
+                toggleSetting(gamePreset, gameSetting);
 
             });
 
@@ -165,20 +152,7 @@ public final class SettingsInventory extends InventoryBuilder {
 
                 if (inventoryClickEvent.getCurrentItem().getType() == Material.LIME_DYE || inventoryClickEvent.getCurrentItem().getType() == Material.RED_DYE) {
                     this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
-                    if (gamePreset != null) {
-                        if (gamePreset.getGameSettings().contains(gameSetting))
-                            gamePreset.getGameSettings().remove(gameSetting);
-                        else gamePreset.getGameSettings().add(gameSetting);
-                    } else {
-                        plugin.getSettings().setSettingEnabled(gameSetting, !plugin.getSettings().isSettingEnabled(gameSetting));
-                        if (gameSetting == GameSetting.TEAM) {
-                            if (plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-                                Bukkit.broadcast(Text.of("<red>Teams are now enabled. <dark_gray>» <white>/teams"));
-                            } else {
-                                Bukkit.broadcast(Text.of("<red>Teams are now disabled."));
-                            }
-                        }
-                    }
+                    toggleSetting(gamePreset, gameSetting);
 
                 } else if (inventoryClickEvent.getCurrentItem().getType() == Material.STONE_BUTTON) {
                     // BACKPACKSIZE is the only stone-button setting.
@@ -210,5 +184,25 @@ public final class SettingsInventory extends InventoryBuilder {
         }
     }
 
+    /**
+     * Flips a boolean setting, on the preset being edited when there is one and on the live settings
+     * otherwise. Both the name row and the status row below it toggle, so both call this.
+     */
+    private void toggleSetting(GamePreset gamePreset, GameSetting gameSetting) {
+        if (gamePreset != null) {
+            if (gamePreset.getGameSettings().contains(gameSetting)) {
+                gamePreset.getGameSettings().remove(gameSetting);
+            } else {
+                gamePreset.getGameSettings().add(gameSetting);
+            }
+            return;
+        }
 
+        plugin.getSettings().setSettingEnabled(gameSetting, !plugin.getSettings().isSettingEnabled(gameSetting));
+        if (gameSetting == GameSetting.TEAM) {
+            Bukkit.broadcast(plugin.getSettings().isSettingEnabled(GameSetting.TEAM)
+                    ? Text.of("<red>Teams are now enabled. <dark_gray>» <white>/teams")
+                    : Text.of("<red>Teams are now disabled."));
+        }
+    }
 }

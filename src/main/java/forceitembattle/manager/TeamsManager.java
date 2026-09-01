@@ -94,7 +94,7 @@ public class TeamsManager implements Manager {
             }
         }
 
-        for (ForceItemPlayer player : new ArrayList<>(ordered.subList(next, ordered.size()))) {
+        for (ForceItemPlayer player : ordered.subList(next, ordered.size())) {
             Team singlePlayerTeam = new Team(this.teams.size() + 1, null, 0, 0, player);
             this.teams.add(singlePlayerTeam);
 

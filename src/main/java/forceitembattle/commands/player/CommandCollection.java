@@ -6,7 +6,6 @@ import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.gui.CollectionBookInventory;
 import forceitembattle.util.Text;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.bukkit.Bukkit;
@@ -14,7 +13,7 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
 /**
- * Opens the collection book — your own, or another player's.
+ * Opens the collection book â€” your own, or another player's.
  *
  * <p>The book fills itself: {@link CollectionBookInventory} kicks off the read-through load and
  * repaints when it lands, so this just resolves the target and opens.
@@ -51,7 +50,7 @@ public final class CommandCollection extends CustomCommand implements CustomTabC
 
     /**
      * Online exact match first, then the offline cache. Deliberately not
-     * {@code Bukkit.getOfflinePlayer(name)} — that can block on a Mojang lookup for an unknown name.
+     * {@code Bukkit.getOfflinePlayer(name)} â€” that can block on a Mojang lookup for an unknown name.
      */
     private UUID resolvePlayer(String name) {
         Player online = Bukkit.getPlayerExact(name);
@@ -67,12 +66,9 @@ public final class CommandCollection extends CustomCommand implements CustomTabC
 
     @Override
     public List<String> onTabComplete(Player player, String label, String[] args) {
-        List<String> completions = new ArrayList<>();
-        if (args.length == 1) {
-            for (Player online : Bukkit.getOnlinePlayers()) {
-                completions.add(online.getName());
-            }
+        if (args.length != 1) {
+            return List.of();
         }
-        return completions;
+        return Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();
     }
 }

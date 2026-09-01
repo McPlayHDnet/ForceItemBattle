@@ -2,22 +2,18 @@ package forceitembattle.achievements.handlers;
 
 import forceitembattle.achievements.AchievementWorld;
 import forceitembattle.achievements.Trigger;
-import forceitembattle.achievements.progress.SimpleAchievementProgress;
 import forceitembattle.model.CustomItem;
 import forceitembattle.model.ForceItemPlayer;
 import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 
-public class EatingAchievementHandler implements AchievementHandler<SimpleAchievementProgress> {
+public class EatingAchievementHandler extends CountingAchievementHandler {
 
-    private final int targetAmount;
+    /** Null means any consumable counts. */
     private final CustomItem requiredItem;
 
     public EatingAchievementHandler(int targetAmount, CustomItem requiredItem) {
-        if (targetAmount < 1) {
-            throw new IllegalArgumentException("targetAmount must be at least 1");
-        }
-        this.targetAmount = targetAmount;
+        super(targetAmount);
         this.requiredItem = requiredItem;
     }
 
@@ -27,21 +23,8 @@ public class EatingAchievementHandler implements AchievementHandler<SimpleAchiev
     }
 
     @Override
-    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer, AchievementWorld world) {
-        if (!(event instanceof PlayerItemConsumeEvent consumeEvent)) {
-            return false;
-        }
-
-        if (requiredItem != null && !requiredItem.matches(consumeEvent.getItem())) {
-            return false;
-        }
-
-        progress.count++;
-        return progress.count >= targetAmount;
-    }
-
-    @Override
-    public SimpleAchievementProgress createProgress() {
-        return new SimpleAchievementProgress();
+    protected boolean matches(Event event, ForceItemPlayer forceItemPlayer, AchievementWorld world) {
+        return event instanceof PlayerItemConsumeEvent consumeEvent
+                && (requiredItem == null || requiredItem.matches(consumeEvent.getItem()));
     }
 }

@@ -1,5 +1,6 @@
 package forceitembattle.model;
 
+import java.util.Arrays;
 import java.util.function.ToLongFunction;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
@@ -95,10 +96,6 @@ public enum Rarity {
 
     /** Total back-to-backs across every rarity. */
     public static long total(@Nullable RarityCounts rarities) {
-        long total = 0;
-        for (Rarity rarity : values()) {
-            total += rarity.count(rarities);
-        }
-        return total;
+        return Arrays.stream(values()).mapToLong(rarity -> rarity.count(rarities)).sum();
     }
 }

@@ -21,8 +21,8 @@ public class GamePreset {
         this.backpackRows = 3;
         this.gameSettings = new ArrayList<>();
         for (GameSetting gameSettings : GameSetting.values()) {
-            if (gameSettings.defaultValue() instanceof Boolean b) {
-                if (b) this.gameSettings.add(gameSettings);
+            if (gameSettings.defaultValue() instanceof Boolean b && b) {
+                this.gameSettings.add(gameSettings);
             }
         }
     }

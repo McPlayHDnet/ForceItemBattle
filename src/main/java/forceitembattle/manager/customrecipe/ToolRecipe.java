@@ -24,13 +24,9 @@ public class ToolRecipe extends ShapelessRecipe {
     }
 
     public ItemStack getStationDisplay() {
-        ItemBuilder displayItem = new ItemBuilder(Material.STONE_PICKAXE);
+        ItemStack base = stationDisplay != null ? stationDisplay.clone() : new ItemStack(Material.STONE_PICKAXE);
 
-        if (stationDisplay != null) {
-            displayItem = new ItemBuilder(stationDisplay.clone());
-        }
-
-        return displayItem
+        return new ItemBuilder(base)
                 .addEnchantment(Enchantment.FORTUNE, 1)
                 .addItemFlag(ItemFlag.HIDE_ENCHANTS)
                 .setDisplayNameLegacy("&fHow to get item:")

@@ -5,6 +5,7 @@ import forceitembattle.achievements.AchievementScope;
 import forceitembattle.achievements.Achievements;
 import forceitembattle.util.Text;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -51,17 +52,11 @@ public final class AchievementCategoryInventory extends InventoryBuilder {
         for (Tile tile : TILES) {
             AchievementScope scope = tile.scope();
 
-            int total = 0;
-            int done = 0;
-            for (Achievements achievement : Achievements.values()) {
-                if (achievement.getScope() != scope) {
-                    continue;
-                }
-                total++;
-                if (cachedIds.contains(achievement.name())) {
-                    done++;
-                }
-            }
+            List<Achievements> scoped = Arrays.stream(Achievements.values())
+                    .filter(achievement -> achievement.getScope() == scope)
+                    .toList();
+            int total = scoped.size();
+            int done = (int) scoped.stream().filter(achievement -> cachedIds.contains(achievement.name())).count();
 
             List<String> lore = new ArrayList<>();
             lore.add("");

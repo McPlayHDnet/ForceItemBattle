@@ -11,7 +11,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -62,7 +61,7 @@ public final class CommandReset extends CustomCommand implements CustomTabComple
                 : "\n<gray>Forced Biome: <yellow>" + prettify(forcedBiome);
 
         String kickMessage =
-                "<dark_gray>» <gold><b>ForceItemBattle</b> <dark_gray>«" +
+                "<dark_gray>Â» <gold><b>ForceItemBattle</b> <dark_gray>Â«" +
                         "\n" +
                         "<red>The world is being reset!" +
                         forcedLine +
@@ -81,13 +80,7 @@ public final class CommandReset extends CustomCommand implements CustomTabComple
         if (pool == null || !pool.isAvailable()) return Collections.emptyList();
 
         String prefix = args[0].toLowerCase(Locale.ROOT);
-        List<String> suggestions = new ArrayList<>();
-        for (String group : pool.groups()) {
-            if (group.startsWith(prefix)) {
-                suggestions.add(group);
-            }
-        }
-        return suggestions;
+        return pool.groups().stream().filter(group -> group.startsWith(prefix)).toList();
     }
 
     /** "old_growth_pine_taiga" -> "Old Growth Pine Taiga". */

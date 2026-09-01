@@ -20,13 +20,7 @@ public record CollectionRule(double requiredFraction) {
 
     /** How many catalogue items the player has -- extras outside the catalogue don't count. */
     public int collectedCount(Set<String> foundItemKeys, Set<String> catalogueKeys) {
-        int collected = 0;
-        for (String key : catalogueKeys) {
-            if (foundItemKeys.contains(key)) {
-                collected++;
-            }
-        }
-        return collected;
+        return (int) catalogueKeys.stream().filter(foundItemKeys::contains).count();
     }
 
     public boolean isMet(Set<String> foundItemKeys, Set<String> catalogueKeys) {

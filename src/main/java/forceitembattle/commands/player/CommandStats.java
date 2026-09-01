@@ -352,19 +352,19 @@ public final class CommandStats extends CustomCommand implements CustomTabComple
                     completions.add("confirm");
                 }
             } else {
-                for (Player p : Bukkit.getOnlinePlayers()) {
-                    completions.add(p.getName());
-                }
+                completions.addAll(onlinePlayerNames());
             }
         } else if (args.length == 3
                 && (args[0].equalsIgnoreCase("duo")
                 || (args[0].equalsIgnoreCase("reset") && player.isOp()
                 && (args[1].equalsIgnoreCase("solo") || args[1].equalsIgnoreCase("team"))))) {
-            for (Player p : Bukkit.getOnlinePlayers()) {
-                completions.add(p.getName());
-            }
+            completions.addAll(onlinePlayerNames());
         }
 
         return completions;
+    }
+
+    private static List<String> onlinePlayerNames() {
+        return Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();
     }
 }

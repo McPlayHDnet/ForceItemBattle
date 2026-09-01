@@ -9,7 +9,6 @@ import forceitembattle.model.stats.PlayerIdentity;
 import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.service.FibStatisticsClient;
 import forceitembattle.util.Text;
-import java.util.ArrayList;
 import java.util.List;
 import org.bukkit.entity.Player;
 
@@ -126,7 +125,7 @@ public final class CommandLeaderboard extends CustomCommand implements CustomTab
     private void showAchievementLeaderboard(Player player) {
         this.plugin.getFibService().achievements().achievementLeaderboard(TOP_LIMIT, entries -> {
             player.sendMessage(" ");
-            player.sendMessage(Text.of("<dark_gray>» <gold><b>Leaderboard</b> <dark_gray>● <green>Achievements <dark_gray>«"));
+            player.sendMessage(Text.of("<dark_gray>Â» <gold><b>Leaderboard</b> <dark_gray>â— <green>Achievements <dark_gray>Â«"));
             player.sendMessage(" ");
 
             if (entries.isEmpty()) {
@@ -145,8 +144,8 @@ public final class CommandLeaderboard extends CustomCommand implements CustomTab
 
     private void sendHeader(Player player, String title, String category) {
         player.sendMessage(" ");
-        player.sendMessage(Text.of("<dark_gray>» <gold><b>" + title + "</b> <dark_gray>● <green>"
-                + formatCategoryName(category) + " <dark_gray>«"));
+        player.sendMessage(Text.of("<dark_gray>Â» <gold><b>" + title + "</b> <dark_gray>â— <green>"
+                + formatCategoryName(category) + " <dark_gray>Â«"));
         player.sendMessage(" ");
     }
 
@@ -157,8 +156,8 @@ public final class CommandLeaderboard extends CustomCommand implements CustomTab
             case 3 -> "<dark_gray>";
             default -> "<white>";
         };
-        player.sendMessage(Text.of("  <dark_gray>● " + color + rank + "<white>. <green>"
-                + name + " <dark_gray>» <dark_aqua>" + value + suffix));
+        player.sendMessage(Text.of("  <dark_gray>â— " + color + rank + "<white>. <green>"
+                + name + " <dark_gray>Â» <dark_aqua>" + value + suffix));
     }
 
     private String suffixFor(String category) {
@@ -192,13 +191,13 @@ public final class CommandLeaderboard extends CustomCommand implements CustomTab
     @Override
     public List<String> onTabComplete(Player player, String label, String[] args) {
         if (args.length == 1) {
-            return new ArrayList<>(SCOPES);
+            return SCOPES;
         }
         // "achievements" takes no category, so offer nothing for its second argument.
         if (args.length == 2 && SCOPES.contains(args[0].toLowerCase())
                 && !args[0].equalsIgnoreCase("achievements")) {
-            return new ArrayList<>(CATEGORIES);
+            return CATEGORIES;
         }
-        return new ArrayList<>();
+        return List.of();
     }
 }

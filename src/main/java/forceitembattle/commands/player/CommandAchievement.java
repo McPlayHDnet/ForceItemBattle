@@ -9,8 +9,10 @@ import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.util.Text;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -109,14 +111,9 @@ public final class CommandAchievement extends CustomCommand implements CustomTab
         }
 
         OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
-        String achievementName = args[2].toUpperCase();
 
-        Achievements achievement;
-        try {
-            achievement = Achievements.valueOf(achievementName);
-        } catch (IllegalArgumentException e) {
-            player.sendMessage(Text.of(
-                    "<red>Achievement <yellow>" + achievementName + " <red>does not exist!"));
+        Achievements achievement = parseAchievement(player, args[2]);
+        if (achievement == null) {
             return;
         }
 
@@ -134,14 +131,9 @@ public final class CommandAchievement extends CustomCommand implements CustomTab
         }
 
         OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
-        String achievementName = args[2].toUpperCase();
 
-        Achievements achievement;
-        try {
-            achievement = Achievements.valueOf(achievementName);
-        } catch (IllegalArgumentException e) {
-            player.sendMessage(Text.of(
-                    "<red>Achievement <yellow>" + achievementName + " <red>does not exist!"));
+        Achievements achievement = parseAchievement(player, args[2]);
+        if (achievement == null) {
             return;
         }
 
@@ -191,12 +183,8 @@ public final class CommandAchievement extends CustomCommand implements CustomTab
             return;
         }
 
-        Achievements achievement;
-        try {
-            achievement = Achievements.valueOf(achievementArg.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            player.sendMessage(Text.of(
-                    "<red>Achievement <yellow>" + achievementArg.toUpperCase() + " <red>does not exist!"));
+        Achievements achievement = parseAchievement(player, achievementArg);
+        if (achievement == null) {
             return;
         }
 
@@ -249,30 +237,32 @@ public final class CommandAchievement extends CustomCommand implements CustomTab
         return List.of();
     }
 
+    /**
+     * The constant the argument names, or null after telling the player it does not exist. Every
+     * subcommand that takes an achievement argument refuses the same way.
+     */
+    @Nullable
+    private Achievements parseAchievement(Player player, String argument) {
+        String achievementName = argument.toUpperCase();
+        try {
+            return Achievements.valueOf(achievementName);
+        } catch (IllegalArgumentException exception) {
+            player.sendMessage(Text.of(
+                    "<red>Achievement <yellow>" + achievementName + " <red>does not exist!"));
+            return null;
+        }
+    }
+
     private List<String> filter(List<String> options, String typed) {
         String prefix = typed.toLowerCase();
-        List<String> matches = new ArrayList<>();
-        for (String option : options) {
-            if (option.toLowerCase().startsWith(prefix)) {
-                matches.add(option);
-            }
-        }
-        return matches;
+        return options.stream().filter(option -> option.toLowerCase().startsWith(prefix)).toList();
     }
 
     private List<String> achievementNames() {
-        List<String> names = new ArrayList<>();
-        for (Achievements achievement : Achievements.values()) {
-            names.add(achievement.name());
-        }
-        return names;
+        return Arrays.stream(Achievements.values()).map(Enum::name).toList();
     }
 
     private List<String> onlinePlayerNames() {
-        List<String> names = new ArrayList<>();
-        for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-            names.add(onlinePlayer.getName());
-        }
-        return names;
+        return Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();
     }
 }

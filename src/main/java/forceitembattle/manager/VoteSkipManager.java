@@ -108,16 +108,9 @@ public class VoteSkipManager implements Manager {
         String materialName = CustomMaterials.nameOf(this.votedMaterial);
         String unicodeMaterial = this.itemDifficultiesManager.getUnicodeFromMaterial(true, this.votedMaterial);
 
-        boolean skipItem = false;
         boolean isTie = yes == no;
+        boolean skipItem = yes > no || (isTie && random.nextBoolean());
 
-        if (yes > no) {
-            skipItem = true;
-        } else if (isTie) {
-            skipItem = random.nextBoolean();
-        }
-
-        boolean finalSkipItem = skipItem;
         Bukkit.getOnlinePlayers().forEach(player -> {
             player.sendMessage(" ");
             player.sendMessage(Text.of("<gray>The skip voting has been ended."));
@@ -127,7 +120,7 @@ public class VoteSkipManager implements Manager {
             if (isTie) {
                 player.sendMessage(Text.of("<gray>It was a tie! Choosing randomly..."));
             }
-            player.sendMessage(Text.of("<dark_gray>» <reset>" + unicodeMaterial + " <gold>" + materialName + " <gray>is " + (finalSkipItem ? "now" : "not") + " skipped."));
+            player.sendMessage(Text.of("<dark_gray>» <reset>" + unicodeMaterial + " <gold>" + materialName + " <gray>is " + (skipItem ? "now" : "not") + " skipped."));
             player.sendMessage(" ");
         });
 

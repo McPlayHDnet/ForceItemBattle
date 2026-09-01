@@ -5,7 +5,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.DyeColor;
@@ -64,7 +64,7 @@ public class Team implements ScoreOwner {
 
     private DyeColor getRandomColor() {
         DyeColor[] colors = DyeColor.values();
-        return colors[new Random().nextInt(colors.length)];
+        return colors[ThreadLocalRandom.current().nextInt(colors.length)];
     }
 
     private String colorToHex() {

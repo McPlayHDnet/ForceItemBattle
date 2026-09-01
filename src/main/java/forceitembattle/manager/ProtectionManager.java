@@ -43,15 +43,15 @@ public class ProtectionManager implements Manager {
             }
 
             Player p = Bukkit.getPlayer(entry.getKey());
-            if (p == null || p.getRespawnLocation() == null || p.getRespawnLocation().getWorld() != atLocation.getWorld()) {
+            Location respawnLocation = p == null ? null : p.getRespawnLocation();
+            if (respawnLocation == null || respawnLocation.getWorld() != atLocation.getWorld()) {
                 continue;
             }
 
             // 3 block protection radius, squared.
-            if (p.getRespawnLocation().distanceSquared(atLocation) < 9) {
-                if (atLocation.getBlockY() >= p.getRespawnLocation().getBlockY()) {
-                    return true;
-                }
+            if (respawnLocation.distanceSquared(atLocation) < 9
+                    && atLocation.getBlockY() >= respawnLocation.getBlockY()) {
+                return true;
             }
         }
 

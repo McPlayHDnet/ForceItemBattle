@@ -9,6 +9,7 @@ import forceitembattle.util.LocationFormat;
 import forceitembattle.util.Text;
 import forceitembattle.util.TimeFormat;
 import java.util.List;
+import java.util.stream.Collectors;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -69,17 +70,11 @@ public class TabListManager implements Manager {
         List<State> active = items.getActiveStates();
 
         StringBuilder line = new StringBuilder("<gray>Pools ");
-        if (active.isEmpty()) {
-            line.append("—");
-        } else {
-            for (int i = 0; i < active.size(); i++) {
-                State state = active.get(i);
-                if (i > 0) {
-                    line.append("<gray>, ");
-                }
-                line.append("<").append(state.getColor()).append(">").append(state.getDisplayName());
-            }
-        }
+        line.append(active.isEmpty()
+                ? "—"
+                : active.stream()
+                        .map(state -> "<" + state.getColor() + ">" + state.getDisplayName())
+                        .collect(Collectors.joining("<gray>, ")));
 
         int secondsLeft = items.secondsUntilNextPool();
         if (secondsLeft >= 0) {
@@ -127,15 +122,11 @@ public class TabListManager implements Manager {
     }
 
     private String buildTraderBlock() {
-        StringBuilder block = new StringBuilder();
-
-        for (ActiveTrader trader : this.wanderingTraderManager.activeTraders()) {
-            block.append("\n\n").append(trader.getKind().boldColoredName()).append("\n")
-                    .append(LocationFormat.xyz(trader.getLocation())).append("\n")
-                    .append(TimeFormat.colored(trader.getTimer())).append("\n");
-        }
-
-        return block.toString();
+        return this.wanderingTraderManager.activeTraders().stream()
+                .map(trader -> "\n\n" + trader.getKind().boldColoredName() + "\n"
+                        + LocationFormat.xyz(trader.getLocation()) + "\n"
+                        + TimeFormat.colored(trader.getTimer()) + "\n")
+                .collect(Collectors.joining());
     }
 
 }

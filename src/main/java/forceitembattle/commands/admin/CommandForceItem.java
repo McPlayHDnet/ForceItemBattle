@@ -14,6 +14,7 @@ import forceitembattle.util.Text;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
@@ -80,11 +81,9 @@ public final class CommandForceItem extends CustomCommand implements CustomTabCo
         StringBuilder confirmation = new StringBuilder("<gray>Forced item <dark_gray>» <green>"
                 + CustomMaterials.nameOf(current));
         if (row.size() > 1) {
-            List<String> upcoming = new ArrayList<>();
-            for (Material material : row.subList(1, row.size())) {
-                upcoming.add(CustomMaterials.nameOf(material));
-            }
-            confirmation.append(" <gray>then <white>").append(String.join("<gray>, <white>", upcoming));
+            confirmation.append(" <gray>then <white>").append(row.subList(1, row.size()).stream()
+                    .map(CustomMaterials::nameOf)
+                    .collect(Collectors.joining("<gray>, <white>")));
         }
         player.sendMessage(Text.of(confirmation.toString()));
     }

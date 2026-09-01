@@ -27,12 +27,12 @@ import forceitembattle.model.stats.PlayerIdentity;
 import forceitembattle.model.RarityCounts;
 import forceitembattle.model.stats.StatsView;
 import forceitembattle.model.stats.TeamMemberStats;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 
 /**
@@ -46,6 +46,14 @@ import javax.annotation.Nullable;
 final class ReadModel {
 
     private ReadModel() {
+    }
+
+    /**
+     * Every list the vendor hands back is nullable and every one of them maps element-wise onto a
+     * game-side record, so the null-to-empty decision lives here rather than once per translation.
+     */
+    private static <D, T> List<T> mapped(@Nullable List<D> dtos, Function<D, T> mapper) {
+        return dtos == null ? List.of() : dtos.stream().map(mapper).toList();
     }
 
     private static long value(@Nullable Long boxed) {
@@ -71,25 +79,13 @@ final class ReadModel {
     }
 
     static List<ItemCount> itemCounts(@Nullable List<FibItemCountDto> dtos) {
-        List<ItemCount> items = new ArrayList<>();
-        if (dtos != null) {
-            for (FibItemCountDto dto : dtos) {
-                items.add(new ItemCount(dto.getItemName(), value(dto.getCount())));
-            }
-        }
-        return List.copyOf(items);
+        return mapped(dtos, dto -> new ItemCount(dto.getItemName(), value(dto.getCount())));
     }
 
     static List<TeamMemberStats> memberStats(@Nullable List<FibTeamMemberStatsDto> dtos) {
-        List<TeamMemberStats> members = new ArrayList<>();
-        if (dtos != null) {
-            for (FibTeamMemberStatsDto dto : dtos) {
-                members.add(new TeamMemberStats(identity(dto.getMember()),
-                        value(dto.getTotalItemsFound()), value(dto.getDeaths()),
-                        value(dto.getBlocksTravelled())));
-            }
-        }
-        return List.copyOf(members);
+        return mapped(dtos, dto -> new TeamMemberStats(identity(dto.getMember()),
+                value(dto.getTotalItemsFound()), value(dto.getDeaths()),
+                value(dto.getBlocksTravelled())));
     }
 
     static GlobalPlayerStats playerStats(@Nullable FibPlayerStatsDto dto) {
@@ -147,51 +143,28 @@ final class ReadModel {
     // --- leaderboards ------------------------------------------------------------------------
 
     static List<LeaderboardEntry> leaderboard(@Nullable List<FibLeaderboardEntryDto> dtos) {
-        List<LeaderboardEntry> rows = new ArrayList<>();
-        if (dtos != null) {
-            for (FibLeaderboardEntryDto dto : dtos) {
-                rows.add(new LeaderboardEntry(value(dto.getRank()), identity(dto.getPlayer()),
-                        value(dto.getValue())));
-            }
-        }
-        return List.copyOf(rows);
+        return mapped(dtos, dto -> new LeaderboardEntry(value(dto.getRank()), identity(dto.getPlayer()),
+                value(dto.getValue())));
     }
 
     static List<DuoLeaderboardEntry> duoLeaderboard(@Nullable List<FibTeamLeaderboardEntryDto> dtos) {
-        List<DuoLeaderboardEntry> rows = new ArrayList<>();
-        if (dtos != null) {
-            for (FibTeamLeaderboardEntryDto dto : dtos) {
-                rows.add(new DuoLeaderboardEntry(value(dto.getRank()), identity(dto.getPlayer1()),
-                        identity(dto.getPlayer2()), value(dto.getValue())));
-            }
-        }
-        return List.copyOf(rows);
+        return mapped(dtos, dto -> new DuoLeaderboardEntry(value(dto.getRank()), identity(dto.getPlayer1()),
+                identity(dto.getPlayer2()), value(dto.getValue())));
     }
 
     static List<LeaderboardEntry> achievementLeaderboard(
             @Nullable List<FibAchievementLeaderboardEntryDto> dtos) {
-        List<LeaderboardEntry> rows = new ArrayList<>();
-        if (dtos != null) {
-            for (FibAchievementLeaderboardEntryDto dto : dtos) {
-                rows.add(new LeaderboardEntry(value(dto.getRank()), identity(dto.getPlayer()),
-                        value(dto.getCount())));
-            }
-        }
-        return List.copyOf(rows);
+        return mapped(dtos, dto -> new LeaderboardEntry(value(dto.getRank()), identity(dto.getPlayer()),
+                value(dto.getCount())));
     }
 
     // --- achievements ------------------------------------------------------------------------
 
     static List<AchievementUnlock> unlocks(@Nullable FibPlayerAchievementsDto dto) {
-        List<AchievementUnlock> unlocks = new ArrayList<>();
-        if (dto != null && dto.getAchievements() != null) {
-            for (FibAchievementDto entry : dto.getAchievements()) {
-                unlocks.add(new AchievementUnlock(entry.getAchievementId(),
+        return mapped(dto == null ? null : dto.getAchievements(),
+                entry -> new AchievementUnlock(entry.getAchievementId(),
                         entry.getMode() == null ? null : String.valueOf(entry.getMode()),
                         identity(entry.getTeammate()), entry.getUnlockedAt()));
-            }
-        }
-        return List.copyOf(unlocks);
     }
 
     // --- collection --------------------------------------------------------------------------

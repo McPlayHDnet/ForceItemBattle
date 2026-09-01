@@ -161,33 +161,21 @@ public final class RecipeInventory extends InventoryBuilder {
             ingredients.add(firstStackOf(smithing.getTemplate()));
             ingredients.add(firstStackOf(smithing.getAddition()));
 
-            int index = 0;
-            for (ItemStack ingredient : ingredients) {
-                this.setItem(OTHER_FIRST_ITEM_SLOT + index, ingredient);
-                index++;
-            }
+            this.placeSequentially(OTHER_FIRST_ITEM_SLOT, ingredients);
 
         } else if (recipeViewer.recipe() instanceof SmithingTransformRecipe smithing) {
             ingredients.add(firstStackOf(smithing.getBase()));
             ingredients.add(firstStackOf(smithing.getTemplate()));
             ingredients.add(firstStackOf(smithing.getAddition()));
 
-            int index = 0;
-            for (ItemStack ingredient : ingredients) {
-                this.setItem(SMITHING_FIRST_ITEM_SLOT + index, ingredient);
-                index++;
-            }
+            this.placeSequentially(SMITHING_FIRST_ITEM_SLOT, ingredients);
 
         } else if (recipeViewer.recipe() instanceof SmithingRecipe smithing) {
             // A smithing recipe that isn't a transform or trim: no template to show.
             ingredients.add(firstStackOf(smithing.getAddition()));
             ingredients.add(firstStackOf(smithing.getBase()));
 
-            int index = 0;
-            for (ItemStack ingredient : ingredients) {
-                this.setItem(SMITHING_FIRST_ITEM_SLOT + index, ingredient);
-                index++;
-            }
+            this.placeSequentially(SMITHING_FIRST_ITEM_SLOT, ingredients);
         }
         if (recipeViewer.recipe() instanceof MerchantRecipe merchant) {
             ItemStack fixed = new ItemStack(merchant.getResult().getType(), 1);
@@ -252,43 +240,38 @@ public final class RecipeInventory extends InventoryBuilder {
         });
     }
 
+    /** Lays stacks out in consecutive slots from {@code firstSlot}. */
+    private void placeSequentially(int firstSlot, List<ItemStack> stacks) {
+        for (int i = 0; i < stacks.size(); i++) {
+            this.setItem(firstSlot + i, stacks.get(i));
+        }
+    }
+
     private static String materialName(Material type) {
         return CustomMaterials.nameOf(type);
     }
 
     public static ItemStack getStationItem(Recipe recipe) {
+        // ToolRecipe first: it extends ShapelessRecipe, and it brings its own display stack rather
+        // than a station material.
         if (recipe instanceof ToolRecipe toolRecipe) {
             return toolRecipe.getStationDisplay();
-
-        } else if (recipe instanceof ShapedRecipe) {
-            return new ItemStack(Material.CRAFTING_TABLE);
-
-        } else if (recipe instanceof ShapelessRecipe) {
-            return new ItemStack(Material.CRAFTING_TABLE);
-
-        } else if (recipe instanceof FurnaceRecipe) {
-            return new ItemStack(Material.FURNACE);
-
-        } else if (recipe instanceof SmithingRecipe) {
-            return new ItemStack(Material.SMITHING_TABLE);
-
-        } else if (recipe instanceof SmokingRecipe) {
-            return new ItemStack(Material.SMOKER);
-
-        } else if (recipe instanceof BlastingRecipe) {
-            return new ItemStack(Material.BLAST_FURNACE);
-
-        } else if (recipe instanceof CampfireRecipe) {
-            return new ItemStack(Material.CAMPFIRE);
-
-        } else if (recipe instanceof StonecuttingRecipe) {
-            return new ItemStack(Material.STONECUTTER);
-
-        } else if (recipe instanceof MerchantRecipe) {
-            return new ItemStack(Material.VILLAGER_SPAWN_EGG);
-        } else {
-            return null;
         }
+
+        Material station = switch (recipe) {
+            case ShapedRecipe ignored -> Material.CRAFTING_TABLE;
+            case ShapelessRecipe ignored -> Material.CRAFTING_TABLE;
+            case FurnaceRecipe ignored -> Material.FURNACE;
+            case SmithingRecipe ignored -> Material.SMITHING_TABLE;
+            case SmokingRecipe ignored -> Material.SMOKER;
+            case BlastingRecipe ignored -> Material.BLAST_FURNACE;
+            case CampfireRecipe ignored -> Material.CAMPFIRE;
+            case StonecuttingRecipe ignored -> Material.STONECUTTER;
+            case MerchantRecipe ignored -> Material.VILLAGER_SPAWN_EGG;
+            default -> null;
+        };
+
+        return station == null ? null : new ItemStack(station);
     }
 
     /**

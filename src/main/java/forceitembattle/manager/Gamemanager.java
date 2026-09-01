@@ -15,6 +15,7 @@ import forceitembattle.gui.ItemBuilder;
 import forceitembattle.model.Team;
 import forceitembattle.util.Text;
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
@@ -480,13 +481,10 @@ public class Gamemanager implements Manager {
 
     /** Blocks travelled this round, summed over every distance statistic Bukkit tracks (all in cm). */
     private int calculateDistance(Player player) {
-        int distance = 0;
-
-        for (Statistic statistics : Statistic.values()) {
-            if (statistics.name().contains("CM")) {
-                distance += player.getStatistic(statistics);
-            }
-        }
+        int distance = Arrays.stream(Statistic.values())
+                .filter(statistic -> statistic.name().contains("CM"))
+                .mapToInt(player::getStatistic)
+                .sum();
 
         return (int) Math.round((double) distance / 100);
     }

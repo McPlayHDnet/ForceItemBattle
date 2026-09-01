@@ -1,6 +1,6 @@
 package forceitembattle.model;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -139,13 +139,9 @@ public enum MenuItem {
      * {@code state}. The menu decides which buttons and where; the phase drops the inert ones.
      */
     public static List<MenuItem> openingBar(Menu menu, GameState state) {
-        List<MenuItem> bar = new ArrayList<>();
-        for (MenuItem menuItem : values()) {
-            if (menuItem.openingButton && menuItem.menu == menu && menuItem.isLiveIn(state)) {
-                bar.add(menuItem);
-            }
-        }
-        return bar;
+        return Arrays.stream(values())
+                .filter(menuItem -> menuItem.openingButton && menuItem.menu == menu && menuItem.isLiveIn(state))
+                .toList();
     }
 
     /**

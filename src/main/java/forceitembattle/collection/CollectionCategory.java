@@ -4,6 +4,7 @@ import forceitembattle.gui.ItemBuilder;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.MaterialCategory;
 import java.util.function.Predicate;
+import lombok.Getter;
 import org.bukkit.Material;
 
 /**
@@ -41,8 +42,8 @@ public enum CollectionCategory {
     CUSTOM_ITEMS("Custom Items", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYTcwMjE2YmFmMWI5Njc1ZjgwNWRmZGY5NWRiMDQzYWZlNmY4ODFjODJiMjU5MzdlNDZiMTUwNjhlOGYzZTg4MiJ9fX0=", material -> CustomMaterials.byMaterial(material) != null),
     OTHER("Other", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOWMwYjFjZmNhMmM2ZmJhZmI1NjNlZTdlYWI4NTVlNDhlNzNlZjk0MTU1ZTllMDczZmYzZTBhOTQ4NDBjMGYwNSJ9fX0=", material -> true);
 
-    private final String displayName;
-    private final String headTexture;
+    @Getter private final String displayName;
+    @Getter private final String headTexture;
     private final Predicate<Material> matcher;
 
     CollectionCategory(String displayName, String headTexture, Predicate<Material> matcher) {
@@ -271,14 +272,6 @@ public enum CollectionCategory {
                  "SADDLE", "CARROT_ON_A_STICK", "WARPED_FUNGUS_ON_A_STICK" -> true;
             default -> false;
         };
-    }
-
-    public String getDisplayName() {
-        return this.displayName;
-    }
-
-    public String getHeadTexture() {
-        return this.headTexture;
     }
 
     public ItemBuilder head() {

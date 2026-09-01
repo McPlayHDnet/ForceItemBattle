@@ -221,8 +221,9 @@ public class AchievementListener implements Listener {
             String plainAdvancement = PlainTextComponentSerializer.plainText().serialize(advancement.displayName());
             String plainAdvancementDescription = PlainTextComponentSerializer.plainText().serialize(Objects.requireNonNull(advancement.getDisplay()).description());
 
-            String advancementType = advancement.getDisplay().frame() == AdvancementDisplay.Frame.CHALLENGE ? "has completed the challenge" : "has made the advancement";
-            String advancementTypeColor = advancement.getDisplay().frame() == AdvancementDisplay.Frame.CHALLENGE ? "<dark_purple>" : "<green>";
+            boolean challenge = advancement.getDisplay().frame() == AdvancementDisplay.Frame.CHALLENGE;
+            String advancementType = challenge ? "has completed the challenge" : "has made the advancement";
+            String advancementTypeColor = challenge ? "<dark_purple>" : "<green>";
 
             event.message(Text.of("<dark_gray>[<yellow>⭐<dark_gray>] <gold>" + event.getPlayer().getName() + " <gray>" + advancementType + " <hover:show_text:'" + advancementTypeColor + plainAdvancement + "<newline>" + advancementTypeColor + plainAdvancementDescription + "'>" + advancementTypeColor + plainAdvancement + "</hover>"));
         } else {

@@ -2,31 +2,23 @@ package forceitembattle.achievements.handlers;
 
 import forceitembattle.achievements.AchievementWorld;
 import forceitembattle.achievements.Trigger;
-import forceitembattle.achievements.progress.SimpleAchievementProgress;
 import forceitembattle.model.Dimension;
 import forceitembattle.model.ForceItemPlayer;
 import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 
-public class NoOverworldExitAchievementHandler implements AchievementHandler<SimpleAchievementProgress> {
-
+public class NoOverworldExitAchievementHandler extends TallyAchievementHandler {
 
     @Override
     public Trigger getTrigger() {
         return Trigger.VISIT;
     }
 
+    /** Entering the nether or the end is what counts as leaving the overworld. */
     @Override
-    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer, AchievementWorld world) {
-        if (event instanceof PlayerChangedWorldEvent worldEvent && !Dimension.isOverworld(worldEvent.getPlayer())) {
-            progress.count++; // entered the nether/end = left the overworld
-        }
-        return false; // evaluated at game end
-    }
-
-    @Override
-    public SimpleAchievementProgress createProgress() {
-        return new SimpleAchievementProgress();
+    protected boolean matches(Event event, ForceItemPlayer forceItemPlayer, AchievementWorld world) {
+        return event instanceof PlayerChangedWorldEvent worldEvent
+                && !Dimension.isOverworld(worldEvent.getPlayer());
     }
 
     @Override

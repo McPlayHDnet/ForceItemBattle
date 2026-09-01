@@ -54,16 +54,13 @@ public class GuiListener implements Listener {
 
     @EventHandler
     public void onClose(InventoryCloseEvent inventoryCloseEvent) {
-        if (!(inventoryCloseEvent.getPlayer() instanceof Player)) {
+        if (!(inventoryCloseEvent.getPlayer() instanceof Player player)) {
             return;
         }
 
-        if (inventoryCloseEvent.getInventory().getHolder() instanceof InventoryBuilder inventoryBuilder) {
-
-            if (inventoryBuilder.handleClose(inventoryCloseEvent)) {
-                Scheduler.runSync(() -> inventoryBuilder.open((Player) inventoryCloseEvent.getPlayer()));
-                return;
-            }
+        if (inventoryCloseEvent.getInventory().getHolder() instanceof InventoryBuilder inventoryBuilder
+                && inventoryBuilder.handleClose(inventoryCloseEvent)) {
+            Scheduler.runSync(() -> inventoryBuilder.open(player));
         }
     }
 }
