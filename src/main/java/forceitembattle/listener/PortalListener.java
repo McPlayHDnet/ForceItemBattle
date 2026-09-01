@@ -7,6 +7,7 @@ import forceitembattle.service.FIBServiceClient;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.event.AntimatterTeleporterUseEvent;
 import forceitembattle.model.Dimension;
+import forceitembattle.model.Landing;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.service.PlayerCounter;
 import forceitembattle.model.ForceItemPlayer;
@@ -41,6 +42,15 @@ public class PortalListener implements Listener {
     private final FIBServiceClient fibService;
     private final RoundPhase roundPhase;
     private final GameSettings settings;
+    /**
+     * Where each player's scatters have already sent them, so a second trip through the same
+     * portal — or a second visit to the End — lands in the same place rather than somewhere new.
+     *
+     * <p>Neither is ever cleared, and that is safe rather than lucky: {@code scheduleReset}
+     * restarts the JVM between rounds, so a map cannot carry a destination from one round into the
+     * next. It is the same reprieve {@code CONTEXT.md} records for LATE_SPECTATOR. Worth stating,
+     * because "memo that outlives a round" reads like a leak every time somebody meets it.
+     */
     private final Map<UUID, List<TeleporterLocation>> playerTeleporterLocations = new HashMap<>();
     private final Map<UUID, Location> playerEndLocations = new HashMap<>();
 
@@ -108,8 +118,11 @@ public class PortalListener implements Listener {
 
         World world = player.getWorld();
 
-        int xOffset = random.nextBoolean() ? random.nextInt(5001) + 5000 : -(random.nextInt(5001) + 5000);
-        int zOffset = random.nextBoolean() ? random.nextInt(5001) + 5000 : -(random.nextInt(5001) + 5000);
+        // 5000..15000 blocks out on each axis, sign picked separately. Deliberately the same range
+        // the End scatter uses in onChangedWorld -- the two used to disagree (this one went half as
+        // far) with nothing recording why, and the answer was that nothing had decided it.
+        int xOffset = random.nextBoolean() ? random.nextInt(10_001) + 5000 : -(random.nextInt(10_001) + 5000);
+        int zOffset = random.nextBoolean() ? random.nextInt(10_001) + 5000 : -(random.nextInt(10_001) + 5000);
 
         Location currentLocation = player.getLocation();
         Location newLocation = new Location(world, currentLocation.getX() + xOffset, currentLocation.getY(), currentLocation.getZ() + zOffset);
@@ -117,11 +130,15 @@ public class PortalListener implements Listener {
 
         Location blockLocation = newLocation.clone().subtract(0, 1, 0);
         Block block = blockLocation.getBlock();
-        if (!block.getType().isBlock()) {
+        if (Landing.needsFloor(block.getType())) {
             block.setType(Material.STONE);
         }
 
-        playerTeleporterLocations.get(player.getUniqueId()).add(new TeleporterLocation(currentLocation, newLocation));
+        // computeIfAbsent, not get: the list happens to exist here only because
+        // findExistingLocation ran first and created it, which is an ordering rule between two
+        // methods that nothing states and nothing enforces.
+        playerTeleporterLocations.computeIfAbsent(player.getUniqueId(), k -> new ArrayList<>())
+                .add(new TeleporterLocation(currentLocation, newLocation));
 
         // A teleporter this player hasn't used before this round — counts as distinct.
         if (midGame) {
@@ -160,6 +177,7 @@ public class PortalListener implements Listener {
                 return;
             }
 
+            // Same 5000..15000 range as the antimatter teleporter above.
             int xOffset = random.nextBoolean() ? random.nextInt(10_001) + 5000 : -(random.nextInt(10_001) + 5000);
             int zOffset = random.nextBoolean() ? random.nextInt(10_001) + 5000 : -(random.nextInt(10_001) + 5000);
 
