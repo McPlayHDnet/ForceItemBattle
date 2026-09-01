@@ -30,7 +30,11 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.world.LootGenerateEvent;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.loot.LootTable;
+import org.bukkit.persistence.PersistentDataType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -264,6 +268,63 @@ class AchievementsTest {
         when(event.getEntityType()).thenReturn(EntityType.ZOMBIE);
         when(event.getDrops()).thenReturn(new ArrayList<>());
         return event;
+    }
+
+    // --- LOOT achievements are bound to a loot table by name ----------------------------------
+
+    /**
+     * LEGENDARY shipped bound to {@code fib:antimatter_depths_legendary}, a table that has never
+     * existed. {@code LootAchievementHandler} rejects any event whose table key differs, so the
+     * achievement could not fire at all — players looted the legendary templates and got nothing.
+     *
+     * <p>The five legendary items are entries in the storage chest's table
+     * ({@code FIB_Worldgen/data/fib/loot_table/antimatter_depths_storage.json}), each carrying the
+     * {@code fib:fib_item = legendary_template} marker the handler matches on. This drives the real
+     * handler with a real tagged stack so a wrong key fails here rather than in a report from a
+     * player who already lost the unlock.
+     */
+    @Test
+    void legendaryFiresForTheStorageTableThatActuallyHoldsTheLegendaryItems() {
+        assertTrue(fires(Achievements.LEGENDARY, "fib:antimatter_depths_storage", legendaryTemplate()),
+                "LEGENDARY did not fire for the storage table that holds the legendary items");
+    }
+
+    @Test
+    void legendaryIgnoresTheSameItemFromAnotherTable() {
+        assertFalse(fires(Achievements.LEGENDARY, "fib:antimatter_depths_treasure", legendaryTemplate()),
+                "LEGENDARY should only count its own table");
+    }
+
+    @Test
+    void legendaryIgnoresAnUntaggedItemFromItsOwnTable() {
+        assertFalse(fires(Achievements.LEGENDARY, "fib:antimatter_depths_storage",
+                        new ItemStack(Material.DIAMOND)),
+                "LEGENDARY should require the legendary_template marker");
+    }
+
+    /** A legendary template as the datapack's set_custom_data function produces it. */
+    private ItemStack legendaryTemplate() {
+        ItemStack stack = new ItemStack(Material.PAPER);
+        ItemMeta meta = stack.getItemMeta();
+        meta.getPersistentDataContainer().set(
+                NamespacedKey.fromString("fib:fib_item"), PersistentDataType.STRING, "legendary_template");
+        stack.setItemMeta(meta);
+        return stack;
+    }
+
+    /** Drives the achievement's own handler with a loot event from the named table. */
+    @SuppressWarnings("unchecked")
+    private boolean fires(Achievements achievement, String lootTableKey, ItemStack... loot) {
+        LootTable table = mock(LootTable.class);
+        when(table.getKey()).thenReturn(NamespacedKey.fromString(lootTableKey));
+
+        LootGenerateEvent event = mock(LootGenerateEvent.class);
+        when(event.getLootTable()).thenReturn(table);
+        when(event.getLoot()).thenReturn(new ArrayList<>(List.of(loot)));
+
+        AchievementHandler<AchievementProgressTracker> handler =
+                (AchievementHandler<AchievementProgressTracker>) achievement.getHandler();
+        return handler.check(event, handler.createProgress(), this.participant, this.achievementWorld);
     }
 
     /**

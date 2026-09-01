@@ -198,7 +198,7 @@ public enum Achievements {
     // LOOT achievements
     LEGENDARY("Legendary", "Find a Legendary item in the Antimatter Depths",
             new LootAchievementHandler(1,
-                    NamespacedKey.fromString("fib:antimatter_depths_legendary"),
+                    NamespacedKey.fromString("fib:antimatter_depths_storage"),
                     CustomItem.customData("fib:fib_item", "legendary_template"), false)),
 
     FIFTEEN_MULT("+15 Mult", "Find Gros Michel inside the Antimatter Depths",
