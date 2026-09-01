@@ -44,10 +44,15 @@ public final class CommandInfoWiki extends CustomCommand {
             return;
         }
 
+        // capitalizeFully covers the item name and nothing else. It used to close after the whole
+        // string: it lowercased the slug CustomMaterials.wikiSlugOf had just built -- so every
+        // multi-word item linked to a broken page, minecraft.wiki being case-sensitive past the
+        // first letter -- and turned "Click here" into "click Here".
         player.sendMessage(Text.of(
-                "<gray>Check out the minecraft wiki for <green>" + WordUtils.capitalizeFully(item.getType().name().toLowerCase().replace("_", " ")
-                        + " <click:open_url:https://minecraft.wiki/" + CustomMaterials.wikiSlugOf(item.getType()) + "><white>[<aqua>Click here<white>]"))
-        );
+                "<gray>Check out the minecraft wiki for <green>"
+                        + WordUtils.capitalizeFully(item.getType().name().toLowerCase().replace("_", " "))
+                        + " <click:open_url:https://minecraft.wiki/" + CustomMaterials.wikiSlugOf(item.getType())
+                        + "><white>[<aqua>Click here<white>]"));
 
     }
 }

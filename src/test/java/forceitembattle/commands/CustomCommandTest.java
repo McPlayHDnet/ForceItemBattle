@@ -4,6 +4,7 @@ import static forceitembattle.commands.Precondition.OP;
 import static forceitembattle.commands.Precondition.OP_WHEN_EVENT;
 import static forceitembattle.commands.Precondition.PARTICIPANT;
 import static forceitembattle.commands.Precondition.ROUND_RUNNING;
+import static forceitembattle.commands.CommandTestSupport.contextWith;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -11,15 +12,10 @@ import static org.mockito.Mockito.mock;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameState;
-import forceitembattle.model.RoundPhase;
 import forceitembattle.model.Roster;
-import forceitembattle.settings.ConfigSource;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.settings.Ruleset;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import org.bukkit.command.CommandSender;
@@ -57,39 +53,6 @@ class CustomCommandTest {
     @AfterEach
     void tearDown() {
         MockBukkit.unmock();
-    }
-
-    /** A ruleset over a plain map, so a test can say which settings are on. */
-    private static CommandContext contextWith(GameState state, Roster roster, GameSetting... enabled) {
-        Map<String, Object> values = new HashMap<>();
-        for (GameSetting setting : enabled) {
-            values.put(setting.configPath(), true);
-        }
-        RoundPhase phase = new RoundPhase();
-        phase.moveTo(state);
-        return new CommandContext(phase, new Ruleset(new MapConfig(values)), roster);
-    }
-
-    private record MapConfig(Map<String, Object> values) implements ConfigSource {
-        @Override
-        public boolean getBoolean(String path) {
-            return Boolean.TRUE.equals(this.values.get(path));
-        }
-
-        @Override
-        public int getInt(String path) {
-            Object value = this.values.get(path);
-            return value instanceof Integer number ? number : 0;
-        }
-
-        @Override
-        public void set(String path, Object value) {
-            this.values.put(path, value);
-        }
-
-        @Override
-        public void save() {
-        }
     }
 
     /** Records what reached it, so the test can ask which path ran. */
