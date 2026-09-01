@@ -25,12 +25,10 @@ import forceitembattle.model.ScoreOwner;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-import net.kyori.adventure.text.Component;
 import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
 import org.bukkit.GameRules;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -39,10 +37,8 @@ import org.bukkit.Statistic;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
@@ -292,19 +288,6 @@ public class Gamemanager implements Manager {
         this.roster.activeScoreOwners().forEach(owner -> owner.assignMaterials(pair.current(), pair.next()));
     }
 
-    public void giveSpectatorItems(Player player) {
-        player.getInventory().setItem(1, new ItemBuilder(Material.LIME_DYE).setDisplayName("<dark_gray>» <green>Achievements").getItemStack());
-        player.getInventory().setItem(2, new ItemBuilder(Material.WRITTEN_BOOK)
-                .setDisplayName("<dark_gray>» <dark_aqua>Collection")
-                .addItemFlags(ItemFlag.values())
-                .getItemStack());
-        player.getInventory().setItem(3, new ItemBuilder(Material.COMPASS).setDisplayName("<dark_gray>» <yellow>Teleporter").getItemStack());
-        player.getInventory().setItem(5, new ItemBuilder(Material.GRASS_BLOCK).setDisplayName("<dark_gray>» <dark_green>Overworld").getItemStack());
-        player.getInventory().setItem(6, new ItemBuilder(Material.NETHERRACK).setDisplayName("<dark_gray>» <red>Nether").getItemStack());
-        player.getInventory().setItem(7, new ItemBuilder(Material.ENDER_EYE).setDisplayName("<dark_gray>» <dark_purple>End").getItemStack());
-        player.getInventory().setItem(8, new ItemBuilder(Material.SPYGLASS).setDisplayName("<dark_gray>» <green>Spectate").getItemStack());
-    }
-
     /**
      * Applies one player's round setup: gamemode, jokers, starting tools, backpack and the
      * gamesPlayed write. Spectators are put into spectator mode instead. Safe to call more than
@@ -487,19 +470,8 @@ public class Gamemanager implements Manager {
         Bukkit.getOnlinePlayers().forEach(player -> {
             try {
                 ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());
-                player.setHealth(20);
-                player.setSaturation(20);
-                player.getInventory().clear();
-                player.setLevel(0);
-                player.setExp(0);
-                if (resultSpawn != null) {
-                    player.teleport(resultSpawn);
-                }
-                player.setGameMode(GameMode.CREATIVE);
-                player.getPassengers().forEach(Entity::remove);
-                player.playerListName(Component.text(player.getName()));
 
-                this.giveSpectatorItems(player);
+                PlayerOutfitter.toResultScreen(player, resultSpawn);
 
                 if (player.isOp()) {
                     player.sendMessage(Text.of("<red>Use /result to see the results from every player"));

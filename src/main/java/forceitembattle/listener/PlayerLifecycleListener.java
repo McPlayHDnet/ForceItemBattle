@@ -10,18 +10,19 @@ import forceitembattle.util.Scheduler;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.service.PlayerCounter;
+import forceitembattle.manager.PlayerOutfitter;
 import forceitembattle.model.Admission;
+import forceitembattle.model.Dimension;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.Roster;
-import forceitembattle.gui.ItemBuilder;
 import forceitembattle.util.Text;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
-import org.bukkit.GameMode;
 import org.bukkit.GameRules;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -30,7 +31,6 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
-import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 
 @RequiredArgsConstructor
@@ -62,9 +62,14 @@ public class PlayerLifecycleListener implements Listener {
         switch (admission) {
             case RETURNING_PARTICIPANT -> this.restoreParticipant(player);
             case RESULT_SCREEN -> this.showResultScreen(player);
-            case LATE_SPECTATOR, COUNTDOWN_SPECTATOR -> this.makeSpectator(player);
-            case LOBBY -> this.outfitLobbyPlayer(player);
-            // Nothing to write; reattaching the player object above was the whole outcome.
+            case LATE_SPECTATOR, COUNTDOWN_SPECTATOR -> PlayerOutfitter.toSpectator(player);
+            case LOBBY -> PlayerOutfitter.toLobby(player);
+            // Nothing to write, and deliberately so. Reattaching the player object above was the
+            // whole outcome: quitting in PRE_GAME releases your roster spot, so the only way to
+            // reach this arm is to quit during the countdown and return before it ends -- and
+            // applyStartSetup will outfit them when it does. Writing a state here would be undone
+            // seconds later, and toLobby would put lobby buttons in the hands of someone who is
+            // about to be a participant.
             case RECONNECTING_BEFORE_START -> { }
         }
 
@@ -97,34 +102,21 @@ public class PlayerLifecycleListener implements Listener {
     /**
      * They missed the result screen {@code finishGame()} handed out; give them the same one rather
      * than resetting them to a lobby player and losing the score they are ranked on.
+     *
+     * <p>"The same one" is now literally the same body. This used to be a thinner copy — clear,
+     * creative, buttons — and the four things it left out were exactly the four a rejoiner still
+     * carries: {@code RESULT_SCREEN} is only reachable by quitting <em>during</em> the round and
+     * returning after it ended, so {@code finishGame} never touched them and they arrive on the
+     * result screen with the health, mount, level and coloured tab name they disconnected with.
+     *
+     * <p>The destination is resolved here rather than inside the outfitter, which takes decided
+     * values only. It is the world spawn, matching {@code finishGame} — not
+     * {@code ForceItemBattle.getSpawnLocation()}, which is a different, configured place, and
+     * sending a rejoiner there would leave them somewhere the rest of the room is not.
      */
     private void showResultScreen(Player player) {
-        player.getInventory().clear();
-        player.setGameMode(GameMode.CREATIVE);
-        this.gamemanager.giveSpectatorItems(player);
-    }
-
-    private void makeSpectator(Player player) {
-        player.getInventory().clear();
-        player.setLevel(0);
-        player.setExp(0);
-        player.setGameMode(GameMode.SPECTATOR);
-    }
-
-    private void outfitLobbyPlayer(Player player) {
-        player.getInventory().clear();
-        player.setLevel(0);
-        player.setExp(0);
-        player.setHealth(20);
-        player.setFoodLevel(20);
-        player.setGameMode(GameMode.ADVENTURE);
-
-        player.getInventory().setItem(0, new ItemBuilder(Material.WRITTEN_BOOK)
-                .setDisplayName("<dark_gray>» <dark_aqua>Collection")
-                .addItemFlags(ItemFlag.values())
-                .getItemStack());
-        player.getInventory().setItem(4, new ItemBuilder(Material.LIME_DYE).setDisplayName("<dark_gray>» <green>Achievements").getItemStack());
-        player.getInventory().setItem(8, new ItemBuilder(Material.ENDER_PEARL).setDisplayName("<dark_gray>» <gray>Spectate game").getItemStack());
+        World overworld = Dimension.OVERWORLD.world();
+        PlayerOutfitter.toResultScreen(player, overworld == null ? null : overworld.getSpawnLocation());
     }
 
     @EventHandler
