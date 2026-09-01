@@ -77,8 +77,8 @@ public final class CommandFixLocate extends CustomCommand implements TabComplete
         for (Map.Entry<String, Locator> entry : active.entrySet()) {
             Locator locator = entry.getValue();
             player.sendMessage(Text.of("<dark_gray>  • <dark_aqua>" + locator.getStructureName()
-                    + " <click:run_command:'/fixlocate " + entry.getKey() + "'>"
-                    + "<hover:show_text:'<gray>Dismiss <dark_aqua>" + locator.getStructureName() + "'>"
+                    + " <click:run_command:'/fixlocate " + Text.tagArgument(entry.getKey()) + "'>"
+                    + "<hover:show_text:'<gray>Dismiss <dark_aqua>" + Text.tagArgument(locator.getStructureName()) + "'>"
                     + "<red>[✖ Dismiss]</red></hover></click>"));
         }
 

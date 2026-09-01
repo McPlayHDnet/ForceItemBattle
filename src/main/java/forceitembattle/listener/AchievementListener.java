@@ -142,7 +142,7 @@ public class AchievementListener implements Listener {
             player.playSound(player, Sound.BLOCK_AMETHYST_BLOCK_RESONATE, 1, 1);
             Bukkit.getOnlinePlayers().forEach(players -> {
                 players.sendMessage(Component.empty());
-                players.sendMessage(Text.of("<dark_gray>[<yellow>❋<dark_gray>] <gold>" + player.getName() + " <gray>has made the achievement <hover:show_text:'<dark_aqua>" + achievement.getTitle() + "<newline><gray>" + achievement.getDescription() + "'><dark_aqua>[" + achievement.getTitle() + "]</hover>"));
+                players.sendMessage(Text.of("<dark_gray>[<yellow>❋<dark_gray>] <gold>" + player.getName() + " <gray>has made the achievement <hover:show_text:'<dark_aqua>" + Text.tagArgument(achievement.getTitle()) + "<newline><gray>" + Text.tagArgument(achievement.getDescription()) + "'><dark_aqua>[" + achievement.getTitle() + "]</hover>"));
                 players.sendMessage(Component.empty());
             });
         }
@@ -225,7 +225,7 @@ public class AchievementListener implements Listener {
             String advancementType = challenge ? "has completed the challenge" : "has made the advancement";
             String advancementTypeColor = challenge ? "<dark_purple>" : "<green>";
 
-            event.message(Text.of("<dark_gray>[<yellow>⭐<dark_gray>] <gold>" + event.getPlayer().getName() + " <gray>" + advancementType + " <hover:show_text:'" + advancementTypeColor + plainAdvancement + "<newline>" + advancementTypeColor + plainAdvancementDescription + "'>" + advancementTypeColor + plainAdvancement + "</hover>"));
+            event.message(Text.of("<dark_gray>[<yellow>⭐<dark_gray>] <gold>" + event.getPlayer().getName() + " <gray>" + advancementType + " <hover:show_text:'" + advancementTypeColor + Text.tagArgument(plainAdvancement) + "<newline>" + advancementTypeColor + Text.tagArgument(plainAdvancementDescription) + "'>" + advancementTypeColor + plainAdvancement + "</hover>"));
         } else {
             event.message(null);
         }

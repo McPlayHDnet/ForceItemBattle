@@ -14,6 +14,7 @@ import forceitembattle.achievements.progress.AchievementProgressTracker;
 import forceitembattle.event.AntimatterTeleporterUseEvent;
 import forceitembattle.event.WheelOfFortuneWinEvent;
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.util.Text;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,6 +29,7 @@ import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.world.LootGenerateEvent;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.inventory.ItemStack;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -262,5 +264,31 @@ class AchievementsTest {
         when(event.getEntityType()).thenReturn(EntityType.ZOMBIE);
         when(event.getDrops()).thenReturn(new ArrayList<>());
         return event;
+    }
+
+    /**
+     * Every title and description has to survive the unlock announcement, which embeds both inside a
+     * single-quoted {@code <hover:show_text:'...'>} argument. An apostrophe there closes the argument
+     * early and MiniMessage then dumps the entire raw markup into chat as literal text — the whole
+     * line, not just the hover. "That's a Rock, Jim" and "It's so empty" shipped doing exactly that.
+     *
+     * <p>This runs over the table rather than those two constants so the next title with an
+     * apostrophe — or a backslash, or a {@code <} — fails here instead of in chat.
+     */
+    @Test
+    void everyAchievementAnnouncementRendersWithoutLeakingMarkup() {
+        for (Achievements achievement : Achievements.values()) {
+            String announcement = "<gray>has made the achievement <hover:show_text:'<dark_aqua>"
+                    + Text.tagArgument(achievement.getTitle()) + "<newline><gray>"
+                    + Text.tagArgument(achievement.getDescription()) + "'><dark_aqua>["
+                    + achievement.getTitle() + "]</hover>";
+
+            String rendered = PlainTextComponentSerializer.plainText().serialize(Text.of(announcement));
+
+            assertFalse(rendered.contains("<hover:"),
+                    achievement.name() + " leaked its markup into chat: " + rendered);
+            assertEquals("has made the achievement [" + achievement.getTitle() + "]", rendered,
+                    achievement.name() + " did not render as plain text");
+        }
     }
 }

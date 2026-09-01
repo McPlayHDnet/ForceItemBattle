@@ -255,7 +255,7 @@ public class MatchHistoryReporter {
         Scheduler.runLaterSync(() -> Bukkit.getOnlinePlayers().forEach(player -> {
             player.sendMessage(" ");
             player.sendMessage(Text.of("<gray>The match has concluded — see the full breakdown:"));
-            player.sendMessage(Text.of("<dark_gray>» <click:open_url:'" + matchUrl
+            player.sendMessage(Text.of("<dark_gray>» <click:open_url:'" + Text.tagArgument(matchUrl)
                     + "'><hover:show_text:'<gray>Opens the match stats in your browser'>"
                     + "<dark_gray>[<aqua><b>View Match Stats</b><dark_gray>]</hover></click>"));
             player.sendMessage(" ");
