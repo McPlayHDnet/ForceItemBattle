@@ -27,7 +27,6 @@ import org.bukkit.Sound;
  */
 public final class CollectionDexInventory extends InventoryBuilder {
 
-    private static final int ITEMS_PER_PAGE = 36;
     private static final DateTimeFormatter DATE_FORMAT =
             DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH).withZone(ZoneId.systemDefault());
 
@@ -61,7 +60,7 @@ public final class CollectionDexInventory extends InventoryBuilder {
     private final UUID playerUUID;
     private final CollectionCategory category;
     private final List<Material> items;
-    private int currentPage;
+    private final GridPaging paging = new GridPaging();
     private Filter filter = Filter.ALL;
     private Sort sort = Sort.COLLECTED_FIRST;
     private Map<String, CollectedItem> collected;
@@ -76,7 +75,6 @@ public final class CollectionDexInventory extends InventoryBuilder {
         this.playerName = playerName;
         this.playerUUID = playerUUID;
         this.category = category;
-        this.currentPage = 0;
         // Pre-bucketed and pre-sorted once by the manager; just read this category's list.
         this.items = this.plugin.getCollectionManager().getCollectionBuckets()
                 .getOrDefault(category, List.of());
@@ -189,10 +187,6 @@ public final class CollectionDexInventory extends InventoryBuilder {
         return hints;
     }
 
-    private int totalPages(int visibleCount) {
-        return Math.max(1, (int) Math.ceil((double) visibleCount / ITEMS_PER_PAGE));
-    }
-
     private void updateInventory() {
         this.getInventory().clear();
 
@@ -224,7 +218,7 @@ public final class CollectionDexInventory extends InventoryBuilder {
                     this.getPlayer().playSound(this.getPlayer(), Sound.UI_BUTTON_CLICK, 1, 1);
                     Filter[] filters = Filter.values();
                     this.filter = filters[(this.filter.ordinal() + 1) % filters.length];
-                    this.currentPage = 0;
+                    this.paging.reset();
                     this.updateInventory();
                 });
 
@@ -236,7 +230,7 @@ public final class CollectionDexInventory extends InventoryBuilder {
                     this.getPlayer().playSound(this.getPlayer(), Sound.UI_BUTTON_CLICK, 1, 1);
                     Sort[] sorts = Sort.values();
                     this.sort = sorts[(this.sort.ordinal() + 1) % sorts.length];
-                    this.currentPage = 0;
+                    this.paging.reset();
                     this.updateInventory();
                 });
 
@@ -246,38 +240,9 @@ public final class CollectionDexInventory extends InventoryBuilder {
                     new CollectionBookInventory(this.plugin, this.playerName, this.playerUUID).open(this.getPlayer());
                 });
 
-        int totalPages = this.totalPages(visible.size());
-        if (totalPages > 1) {
-            boolean hasPrevious = this.currentPage > 0;
-            boolean hasNext = this.currentPage < totalPages - 1;
+        this.paging.draw(this, visible.size(), this::updateInventory);
 
-            this.setItem(45, GuiItems.pageBack(hasPrevious),
-                    inventoryClickEvent -> {
-                        if (hasPrevious) {
-                            this.getPlayer().playSound(this.getPlayer(), Sound.ITEM_BOOK_PAGE_TURN, 1, 1);
-                            this.currentPage--;
-                            this.updateInventory();
-                        } else {
-                            this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);
-                        }
-                    });
-
-            this.setItem(53, GuiItems.pageForward(hasNext),
-                    inventoryClickEvent -> {
-                        if (hasNext) {
-                            this.getPlayer().playSound(this.getPlayer(), Sound.ITEM_BOOK_PAGE_TURN, 1, 1);
-                            this.currentPage++;
-                            this.updateInventory();
-                        } else {
-                            this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);
-                        }
-                    });
-        }
-
-        int startIndex = this.currentPage * ITEMS_PER_PAGE;
-        int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, visible.size());
-        for (int i = startIndex; i < endIndex; i++) {
-            int slotIndex = i - startIndex + 9;
+        this.paging.forEachOnPage(visible.size(), (i, slotIndex) -> {
             Material material = visible.get(i);
             CollectedItem stats = statsOf(material);
             boolean found = stats != null;
@@ -305,6 +270,6 @@ public final class CollectionDexInventory extends InventoryBuilder {
                     .setDisplayName((found ? "<green>" : "<gray>") + displayName(material))
                     .setLore(lore)
                     .getItemStack());
-        }
+        });
     }
 }

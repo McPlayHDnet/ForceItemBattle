@@ -60,6 +60,7 @@ import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.ItemDifficultiesManager;
 import forceitembattle.manager.LocatorManager;
 import forceitembattle.manager.Manager;
+import forceitembattle.model.ResultCeremony;
 import forceitembattle.model.RoundClock;
 import forceitembattle.model.RoundPhase;
 import forceitembattle.model.Roster;
@@ -125,6 +126,13 @@ public final class ForceItemBattle extends JavaPlugin {
      */
     @Getter
     private final RoundClock roundClock = new RoundClock();
+
+    /**
+     * The end-of-round reveal. Owned here rather than by a manager for the same reason as the
+     * roster and the phase: it depends on nothing, so nothing depends on a manager to reach it.
+     */
+    @Getter
+    private final ResultCeremony resultCeremony = new ResultCeremony();
     @Getter
     private Gamemanager gamemanager;
     @Getter

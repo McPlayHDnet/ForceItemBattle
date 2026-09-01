@@ -18,6 +18,10 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.stream.Collectors;
+import forceitembattle.model.ResultCeremony;
+import forceitembattle.model.ScoreOwner;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -49,9 +53,6 @@ public class Gamemanager implements Manager {
     private static final Material JOKER_MATERIAL = Material.BARRIER;
     private final ForceItemBattle forceItemBattle;
     private final Roster roster;
-    /** End-of-game result screens, keyed by player / by team. Paged: page → slot → stack. */
-    private final Map<UUID, Map<Integer, Map<Integer, ItemStack>>> savedInventory = new HashMap<>();
-    private final Map<Team, Map<Integer, Map<Integer, ItemStack>>> savedInventoryTeam = new HashMap<>();
 
     /**
      * Match telemetry. Owns everything that only exists to be reported: the match id, lead changes,
@@ -268,29 +269,6 @@ public class Gamemanager implements Manager {
         forceItemPlayer.scoreOwner().advance(this.generateMaterial(), now);
     }
 
-    /** Stores the paged result screen for a finished player or team. */
-    public void saveResultPages(@Nullable ForceItemPlayer forceItemPlayer, @Nullable Team team,
-                                Map<Integer, Map<Integer, ItemStack>> pages) {
-        if (team != null) {
-            this.savedInventoryTeam.put(team, pages);
-        } else if (forceItemPlayer != null) {
-            this.savedInventory.put(forceItemPlayer.player().getUniqueId(), pages);
-        }
-    }
-
-    /** The stored result screen, or null if that player/team never finished a game. */
-    @Nullable
-    public Map<Integer, Map<Integer, ItemStack>> getResultPages(@Nullable ForceItemPlayer forceItemPlayer,
-                                                                @Nullable Team team) {
-        if (team != null) {
-            return this.savedInventoryTeam.get(team);
-        }
-        if (forceItemPlayer != null) {
-            return this.savedInventory.get(forceItemPlayer.player().getUniqueId());
-        }
-        return null;
-    }
-
     /**
      * Replaces the current item for the whole server with a freshly generated one — what /voteskip
      * does when the vote carries, and what /skip does as an admin override.
@@ -462,6 +440,32 @@ public class Gamemanager implements Manager {
         block.getRelative(BlockFace.UP).setType(Material.AIR);
     }
 
+    /**
+     * The reveal order, worst-placed first.
+     *
+     * <p>A third standings call rather than a reuse of the stats one, deliberately: that one keeps
+     * spectators, leaves ties in map order, and is not computed at all when STATS is off.
+     */
+    private List<ResultCeremony.Reveal> revealOrder() {
+        if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+            return ResultCeremony.orderFrom(
+                    Standings.ofTeams(this.forceItemBattle.getTeamManager().getTeams()));
+        }
+
+        Map<UUID, ForceItemPlayer> contenders = this.roster.players().entrySet().stream()
+                .filter(entry -> !entry.getValue().isSpectator())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a,
+                        LinkedHashMap::new));
+
+        // A solo player is not a Score Owner; the SoloScore behind them is. Converted here rather
+        // than inside the ceremony so the step is visible at the one place it happens.
+        Map<ScoreOwner, Integer> byOwner = new LinkedHashMap<>();
+        Standings.ofPlayers(Standings.sortedByScore(contenders, false))
+                .forEach((forceItemPlayer, place) -> byOwner.put(forceItemPlayer.scoreOwner(), place));
+
+        return ResultCeremony.orderFrom(byOwner);
+    }
+
     public void finishGame() {
         this.roundPhase.moveTo(GameState.END_GAME);
         this.forceItemBattle.getAchievementManager().checkGameEndAchievements();
@@ -521,6 +525,12 @@ public class Gamemanager implements Manager {
                         "Failed to finish round for " + player.getName() + ": " + exception.getMessage());
             }
         });
+
+        // The reveal walks its own ordering, not the stats one: spectators are excluded and ties
+        // break on UUID so two tied players are dealt out the same way every time. The stats maps
+        // above do neither, and are null when STATS is off -- see CONTEXT.md § Result Ceremony.
+        this.forceItemBattle.getResultCeremony().beginFor(
+                this.matchHistory.getMatchId(), this.revealOrder());
 
         if (statsEnabled) {
             this.matchHistory.submit(placesMap, teamPlaces, this.forceItemBattle.getRoundClock().totalSeconds(),

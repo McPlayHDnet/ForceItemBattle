@@ -36,7 +36,7 @@ public final class AchievementInventory extends InventoryBuilder {
     private final AchievementScope scope;
     /** Only the achievements of this scope, in declaration order. Paging is over this, not values(). */
     private final List<Achievements> entries;
-    private int currentPage;
+    private final GridPaging paging = new GridPaging();
     // achievementId -> its unlock records (SOLO/TEAM), fetched from the service for display.
     private Map<String, List<AchievementUnlock>> unlocks = new HashMap<>();
     // Only fetched for the GLOBAL scope; null until it lands.
@@ -51,7 +51,6 @@ public final class AchievementInventory extends InventoryBuilder {
         this.playerName = playerName;
         this.playerUUID = playerUUID;
         this.scope = scope;
-        this.currentPage = 0;
         this.entries = Arrays.stream(Achievements.values())
                 .filter(achievement -> achievement.getScope() == scope)
                 .toList();
@@ -99,10 +98,6 @@ public final class AchievementInventory extends InventoryBuilder {
         return map;
     }
 
-    private int totalPages(int objectsPerPage) {
-        return Math.max(1, (int) Math.ceil((double) this.entries.size() / objectsPerPage));
-    }
-
     private void updateInventory() {
         this.getInventory().clear();
 
@@ -114,10 +109,6 @@ public final class AchievementInventory extends InventoryBuilder {
         Set<String> cachedIds = this.plugin.getAchievementManager()
                 .getAchievementStorage().getPlayerAchievements(this.playerUUID);
 
-        int itemsPerPage = 36;
-        int startIndex = this.currentPage * itemsPerPage;
-        int endIndex = Math.min(startIndex + itemsPerPage, this.entries.size());
-
         this.setItem(49, GuiItems.back(),
                 inventoryClickEvent -> {
                     this.getPlayer().playSound(this.getPlayer(), Sound.UI_BUTTON_CLICK, 1, 1);
@@ -125,37 +116,9 @@ public final class AchievementInventory extends InventoryBuilder {
                             .open(this.getPlayer());
                 });
 
-        if (this.entries.size() > itemsPerPage) {
-            boolean hasPrevious = this.currentPage > 0;
-            boolean hasNext = this.currentPage < this.totalPages(itemsPerPage) - 1;
+        this.paging.draw(this, this.entries.size(), this::updateInventory);
 
-            this.setItem(45, GuiItems.pageBack(hasPrevious),
-                    inventoryClickEvent -> {
-                        if (hasPrevious) {
-                            this.getPlayer().playSound(this.getPlayer(), Sound.ITEM_BOOK_PAGE_TURN, 1, 1);
-                            this.currentPage--;
-                            this.updateInventory();
-                        } else {
-                            this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);
-                        }
-                    }
-            );
-
-            this.setItem(53, GuiItems.pageForward(hasNext),
-                    inventoryClickEvent -> {
-                        if (hasNext) {
-                            this.getPlayer().playSound(this.getPlayer(), Sound.ITEM_BOOK_PAGE_TURN, 1, 1);
-                            this.currentPage++;
-                            this.updateInventory();
-                        } else {
-                            this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);
-                        }
-                    }
-            );
-        }
-
-        for (int i = startIndex; i < endIndex; i++) {
-            int slotIndex = i - startIndex + 9;
+        this.paging.forEachOnPage(this.entries.size(), (i, slotIndex) -> {
             Achievements achievement = this.entries.get(i);
 
             List<AchievementUnlock> unlockRecords = this.unlocks.get(achievement.name());
@@ -212,7 +175,7 @@ public final class AchievementInventory extends InventoryBuilder {
             } else {
                 this.setItem(slotIndex, stack);
             }
-        }
+        });
     }
 
     private boolean isCompleted(Achievements achievement, Set<String> cachedIds) {
