@@ -125,7 +125,7 @@ public final class CommandLeaderboard extends CustomCommand implements CustomTab
     private void showAchievementLeaderboard(Player player) {
         this.plugin.getFibService().achievements().achievementLeaderboard(TOP_LIMIT, entries -> {
             player.sendMessage(" ");
-            player.sendMessage(Text.of("<dark_gray>Â» <gold><b>Leaderboard</b> <dark_gray>â— <green>Achievements <dark_gray>Â«"));
+            player.sendMessage(Text.of("<dark_gray>» <gold><b>Leaderboard</b> <dark_gray>● <green>Achievements <dark_gray>«"));
             player.sendMessage(" ");
 
             if (entries.isEmpty()) {
@@ -144,8 +144,8 @@ public final class CommandLeaderboard extends CustomCommand implements CustomTab
 
     private void sendHeader(Player player, String title, String category) {
         player.sendMessage(" ");
-        player.sendMessage(Text.of("<dark_gray>Â» <gold><b>" + title + "</b> <dark_gray>â— <green>"
-                + formatCategoryName(category) + " <dark_gray>Â«"));
+        player.sendMessage(Text.of("<dark_gray>» <gold><b>" + title + "</b> <dark_gray>● <green>"
+                + formatCategoryName(category) + " <dark_gray>«"));
         player.sendMessage(" ");
     }
 
@@ -156,8 +156,8 @@ public final class CommandLeaderboard extends CustomCommand implements CustomTab
             case 3 -> "<dark_gray>";
             default -> "<white>";
         };
-        player.sendMessage(Text.of("  <dark_gray>â— " + color + rank + "<white>. <green>"
-                + name + " <dark_gray>Â» <dark_aqua>" + value + suffix));
+        player.sendMessage(Text.of("  <dark_gray>● " + color + rank + "<white>. <green>"
+                + name + " <dark_gray>» <dark_aqua>" + value + suffix));
     }
 
     private String suffixFor(String category) {

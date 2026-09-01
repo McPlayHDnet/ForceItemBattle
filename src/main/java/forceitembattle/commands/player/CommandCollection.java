@@ -13,7 +13,7 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
 /**
- * Opens the collection book â€” your own, or another player's.
+ * Opens the collection book — your own, or another player's.
  *
  * <p>The book fills itself: {@link CollectionBookInventory} kicks off the read-through load and
  * repaints when it lands, so this just resolves the target and opens.
@@ -50,7 +50,7 @@ public final class CommandCollection extends CustomCommand implements CustomTabC
 
     /**
      * Online exact match first, then the offline cache. Deliberately not
-     * {@code Bukkit.getOfflinePlayer(name)} â€” that can block on a Mojang lookup for an unknown name.
+     * {@code Bukkit.getOfflinePlayer(name)} — that can block on a Mojang lookup for an unknown name.
      */
     private UUID resolvePlayer(String name) {
         Player online = Bukkit.getPlayerExact(name);

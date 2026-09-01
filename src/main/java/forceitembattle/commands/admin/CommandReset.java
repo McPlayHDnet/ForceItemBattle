@@ -61,7 +61,7 @@ public final class CommandReset extends CustomCommand implements CustomTabComple
                 : "\n<gray>Forced Biome: <yellow>" + prettify(forcedBiome);
 
         String kickMessage =
-                "<dark_gray>Â» <gold><b>ForceItemBattle</b> <dark_gray>Â«" +
+                "<dark_gray>» <gold><b>ForceItemBattle</b> <dark_gray>«" +
                         "\n" +
                         "<red>The world is being reset!" +
                         forcedLine +
