@@ -1,8 +1,10 @@
 package forceitembattle.model;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
@@ -23,14 +25,44 @@ public final class Roster {
         return this.players.get(uuid);
     }
 
-    /** Whether this UUID holds a place in the current round. */
+    /** Whether this UUID holds a place in the current round, spectating or not. */
     public boolean contains(UUID uuid) {
         return this.players.containsKey(uuid);
     }
 
-    /** Everyone on the roster, spectators included. */
+    /**
+     * Whoever is <em>playing</em> this round under this UUID.
+     *
+     * <p>Empty covers both shapes of "watching rather than playing": someone who took the spectate
+     * toggle keeps a roster entry with the flag set, and someone who connected after the countdown
+     * froze the roster holds no entry at all. Callers cannot tell those apart and do not need to —
+     * which is the whole point, because the pair was previously written out at thirteen sites as
+     * {@code x == null || x.isSpectator()} and one of them had the polarity the other way round.
+     */
+    public Optional<ForceItemPlayer> participant(UUID uuid) {
+        return Optional.ofNullable(this.players.get(uuid)).filter(Roster::isPlaying);
+    }
+
+    /**
+     * The same rule for a caller that already holds the entry rather than a UUID.
+     *
+     * <p>Exists because {@code PlayerStatsWrite} receives a {@code ForceItemPlayer} as a parameter,
+     * so it has nothing to look up. Static and null-tolerant so both halves of the rule live here
+     * rather than half here and half at that call site.
+     */
+    public static boolean isPlaying(@Nullable ForceItemPlayer forceItemPlayer) {
+        return forceItemPlayer != null && !forceItemPlayer.isSpectator();
+    }
+
+    /**
+     * Everyone on the roster, spectators included. Unmodifiable.
+     *
+     * <p>A view rather than a copy: {@code ScoreboardManager} reads this on every find, so a
+     * defensive copy would allocate a map per scoreboard update. Nothing adds or removes through
+     * here — {@link #add} and {@link #remove} are the writers.
+     */
     public Map<UUID, ForceItemPlayer> players() {
-        return this.players;
+        return Collections.unmodifiableMap(this.players);
     }
 
     public void add(UUID uuid, ForceItemPlayer forceItemPlayer) {

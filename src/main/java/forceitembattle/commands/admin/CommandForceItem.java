@@ -1,5 +1,6 @@
 package forceitembattle.commands.admin;
 
+import static forceitembattle.commands.Precondition.PARTICIPANT;
 import static forceitembattle.commands.Precondition.OP;
 import static forceitembattle.commands.Precondition.ROUND_RUNNING;
 import forceitembattle.commands.Precondition;
@@ -32,7 +33,8 @@ public final class CommandForceItem extends CustomCommand implements CustomTabCo
 
     @Override
     protected List<Precondition> preconditions() {
-        return List.of(OP, ROUND_RUNNING);
+        return List.of(OP, ROUND_RUNNING,
+                PARTICIPANT.refusing("<red>You need to be an active player to force an item"));
     }
 
     @Override
@@ -53,11 +55,9 @@ public final class CommandForceItem extends CustomCommand implements CustomTabCo
             row.add(material);
         }
 
-        ForceItemPlayer forceItemPlayer = this.plugin.getRoster().get(player.getUniqueId());
-        if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
-            player.sendMessage(Text.of("<red>You need to be an active player to force an item"));
-            return;
-        }
+        // Present because PARTICIPANT is declared above; the gate already refused anyone else.
+        ForceItemPlayer forceItemPlayer =
+                this.plugin.getRoster().participant(player.getUniqueId()).orElseThrow();
 
         Gamemanager gamemanager = this.plugin.getGamemanager();
 

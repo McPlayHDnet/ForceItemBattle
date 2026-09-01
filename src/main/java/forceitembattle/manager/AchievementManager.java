@@ -1,5 +1,6 @@
 package forceitembattle.manager;
 
+import forceitembattle.model.Roster;
 import forceitembattle.model.Standings;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.AchievementMode;
@@ -99,8 +100,8 @@ public class AchievementManager implements Manager {
             return;
         }
 
-        ForceItemPlayer forceItemPlayer = this.plugin.getRoster().get(uuid);
-        if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
+        ForceItemPlayer forceItemPlayer = this.plugin.getRoster().participant(uuid).orElse(null);
+        if (forceItemPlayer == null) {
             return;
         }
 
@@ -334,11 +335,12 @@ public class AchievementManager implements Manager {
             return;
         }
 
-        for (UUID uuid : this.plugin.getRoster().players().keySet()) {
-            ForceItemPlayer fip = this.plugin.getRoster().get(uuid);
-            if (fip == null || fip.isSpectator()) {
+        for (ForceItemPlayer fip : this.plugin.getRoster().players().values()) {
+            if (!Roster.isPlaying(fip)) {
                 continue;
             }
+
+            UUID uuid = fip.player().getUniqueId();
 
             Team team = fip.currentTeam();
             boolean teamGame = fip.isInTeam();

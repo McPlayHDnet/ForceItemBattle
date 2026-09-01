@@ -352,7 +352,7 @@ class CustomCommandTest {
 
         @Test
         void theAdminCommands() {
-            assertGates(new forceitembattle.commands.admin.CommandForceItem(this.plugin), "OP, ROUND_RUNNING");
+            assertGates(new forceitembattle.commands.admin.CommandForceItem(this.plugin), "OP, ROUND_RUNNING, PARTICIPANT");
             assertGates(new forceitembattle.commands.admin.CommandForceTeam(this.plugin), "OP, setting(TEAM), PRE_GAME");
             assertGates(new forceitembattle.commands.admin.CommandItems(this.plugin), "OP");
             assertGates(new forceitembattle.commands.admin.CommandRandomEvent(this.plugin), "OP, ROUND_RUNNING");

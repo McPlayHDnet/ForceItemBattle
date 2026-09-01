@@ -29,11 +29,14 @@ public final class CommandInfoWiki extends CustomCommand {
         ItemStack item = player.getInventory().getItemInMainHand();
 
         if (this.plugin.getRoundPhase().roundRunning()) {
-            ForceItemPlayer forceItemPlayer = this.plugin.getRoster().get(player.getUniqueId());
-            if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
+            ForceItemPlayer forceItemPlayer =
+                    this.plugin.getRoster().participant(player.getUniqueId()).orElse(null);
+            if (forceItemPlayer == null) {
                 player.sendMessage(Text.of("<red>You are not playing."));
                 return;
             }
+            // During a round the wiki link is for the force item, not the held one.
+            item = new ItemStack(forceItemPlayer.activeMaterial());
         }
 
         if (item.getType() == Material.AIR) {

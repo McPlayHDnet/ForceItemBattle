@@ -316,9 +316,9 @@ public class Gamemanager implements Manager {
      * with an empty inventory, unable to play the round they are scored in.
      */
     public void applyStartSetup(Player player) {
-        ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());
+        ForceItemPlayer forceItemPlayer = this.roster.participant(player.getUniqueId()).orElse(null);
 
-        if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
+        if (forceItemPlayer == null) {
             PlayerOutfitter.toSpectator(player);
             return;
         }

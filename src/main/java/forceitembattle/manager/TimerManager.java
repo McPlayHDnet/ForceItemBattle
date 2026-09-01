@@ -1,5 +1,6 @@
 package forceitembattle.manager;
 
+import forceitembattle.model.Roster;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ForceItemPlayer;
@@ -103,9 +104,10 @@ public class TimerManager implements Manager {
             }
 
             ForceItemPlayer forceItemPlayer = this.forceItemBattle.getRoster()
-                    .get(player.getUniqueId());
+                    .participant(player.getUniqueId())
+                    .orElse(null);
 
-            if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
+            if (forceItemPlayer == null) {
                 player.sendActionBar(Text.of("<gradient:#fcef64:#fcc44b:#f44c7d><b>"
                         + TimeFormat.humanised(this.getTimeLeft()) + "</b> <dark_gray>| <gold>SPEC"));
                 continue;

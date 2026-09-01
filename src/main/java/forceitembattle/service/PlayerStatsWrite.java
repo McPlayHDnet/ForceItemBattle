@@ -1,5 +1,6 @@
 package forceitembattle.service;
 
+import forceitembattle.model.Roster;
 import de.threeseconds.openapi.fibservice.client.model.FibSoloStatisticsUpdateRequestDto;
 import de.threeseconds.openapi.fibservice.client.model.FibTeamMemberStatsUpdateRequestDto;
 import forceitembattle.model.ForceItemPlayer;
@@ -46,7 +47,7 @@ public final class PlayerStatsWrite {
         // Nothing to attribute. Both shapes of "watching rather than playing" land here: someone who
         // took the spectate toggle in the lobby keeps a roster entry with the flag set, while someone
         // who connected after the round began has no roster entry at all.
-        if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
+        if (!Roster.isPlaying(forceItemPlayer)) {
             return;
         }
 

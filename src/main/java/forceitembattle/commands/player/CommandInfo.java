@@ -47,10 +47,15 @@ public final class CommandInfo extends CustomCommand implements CustomTabComplet
             item = new ItemStack(material);
 
         } else if (this.plugin.getRoundPhase().roundRunning()) {
-            ForceItemPlayer forceItemPlayer = this.plugin.getRoster().get(player.getUniqueId());
-            if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
+            ForceItemPlayer forceItemPlayer =
+                    this.plugin.getRoster().participant(player.getUniqueId()).orElse(null);
+            if (forceItemPlayer == null) {
                 player.sendMessage(Text.of("<red>You are not playing, type /info [item] to get information about an item"));
+                return;
             }
+            // With no argument during a round, /info describes the force item being hunted -- not
+            // whatever happens to be in hand.
+            item = new ItemStack(forceItemPlayer.activeMaterial());
         }
 
         if (item.getType() == Material.AIR) {

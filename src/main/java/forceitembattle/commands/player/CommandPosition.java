@@ -1,5 +1,6 @@
 package forceitembattle.commands.player;
 
+import forceitembattle.model.Roster;
 import static forceitembattle.commands.Precondition.OP_WHEN_EVENT;
 import forceitembattle.commands.Precondition;
 import forceitembattle.ForceItemBattle;
@@ -35,8 +36,8 @@ public final class CommandPosition extends CustomCommand implements CustomTabCom
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        ForceItemPlayer forceItemPlayer = this.plugin.getRoster().get(player.getUniqueId());
-        if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
+        // Silently, as before: /pos from a spectator is a no-op rather than a refusal.
+        if (this.plugin.getRoster().participant(player.getUniqueId()).isEmpty()) {
             return;
         }
 

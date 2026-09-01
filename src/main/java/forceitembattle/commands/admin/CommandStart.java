@@ -151,8 +151,9 @@ public final class CommandStart extends CustomCommand implements CustomTabComple
                 }
 
                 Bukkit.getOnlinePlayers().forEach(player -> {
-                    ForceItemPlayer forceItemPlayer = plugin.getRoster().get(player.getUniqueId());
-                    if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
+                    ForceItemPlayer forceItemPlayer =
+                            plugin.getRoster().participant(player.getUniqueId()).orElse(null);
+                    if (forceItemPlayer == null) {
                         return;
                     }
 
