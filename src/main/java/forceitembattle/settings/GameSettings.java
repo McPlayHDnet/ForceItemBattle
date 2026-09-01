@@ -12,9 +12,8 @@ import org.bukkit.configuration.ConfigurationSection;
  * The plugin's configuration: loading it, the preset catalogue, and the Bukkit side effects two
  * settings carry.
  *
- * <p>Which value a setting has is not decided here — that is {@link Ruleset}, which owns the
- * active preset and therefore the path every read and write resolves to. See
- * {@code CONTEXT.md § Ruleset}.
+ * <p>Which value a setting has is not decided here — that is {@link Ruleset}, which owns the active
+ * preset and therefore the path every read and write resolves to.
  */
 public class GameSettings {
 
@@ -60,11 +59,7 @@ public class GameSettings {
                 gamePreset.setJokers(configurationSection.getInt("jokers"));
                 gamePreset.setBackpackRows(configurationSection.getInt("backpackRows"));
 
-                // Read each setting out of the preset section by its own path. This used to
-                // compare configPath() against the bare keys under `settings:` and so never
-                // matched once -- harmless only because nothing reads this list for a loaded
-                // preset today, and not harmless at all the moment an edit-an-existing-preset
-                // flow exists.
+                // By configPath(), not the bare keys under `settings:` — those never match.
                 gamePreset.getGameSettings().clear();
                 for (GameSetting gameSetting : GameSetting.values()) {
                     if (gameSetting.defaultValue() instanceof Boolean
@@ -87,20 +82,16 @@ public class GameSettings {
     }
 
     /**
-     * Writes a setting, and applies the two that are also world state.
-     *
-     * <p>The gamerule side effects stay here rather than moving into {@link Ruleset}: they are
-     * Bukkit, and keeping them out is what lets the value rules be read without a server. The write
-     * itself now lands wherever {@link #isSettingEnabled} would read from — see the note on
-     * {@link Ruleset#pathFor} for the asymmetry that used to make this a no-op during a preset
-     * round.
+     * Writes a setting, and applies the two that are also world state. The gamerule side effects stay
+     * here rather than in {@link Ruleset}: keeping Bukkit out is what lets the value rules be read
+     * without a server.
      */
     public void setSettingEnabled(GameSetting gameSetting, boolean enabled) {
         if (gameSetting == GameSetting.KEEP_INVENTORY)
             Bukkit.getWorlds().forEach(worlds -> worlds.setGameRule(GameRules.KEEP_INVENTORY, enabled));
 
         if (gameSetting == GameSetting.FASTER_RANDOM_TICK)
-            // 3 is the default random tick speed. 40 is much faster version
+            // 3 is vanilla's random tick speed.
             Bukkit.getWorlds().forEach(worlds -> worlds.setGameRule(GameRules.RANDOM_TICK_SPEED, enabled ? 40 : 3));
 
         this.ruleset.setEnabled(gameSetting, enabled);
@@ -120,10 +111,7 @@ public class GameSettings {
         return QuickieMode.fromOrdinal(this.getSettingValue(GameSetting.QUICKIE));
     }
 
-    /**
-     * Read through {@link #getQuickieMode()}, which resolves the active preset, so the write has to
-     * as well — see the note on {@link Ruleset#pathFor}.
-     */
+    /** Read through {@link #getQuickieMode()}, which resolves the active preset, so this must too. */
     public void setQuickieMode(QuickieMode quickieMode) {
         this.ruleset.setValue(GameSetting.QUICKIE, quickieMode.ordinal());
     }

@@ -6,14 +6,11 @@ import forceitembattle.manager.ItemDifficultiesManager.ItemTag;
 /**
  * Which registered items the current settings keep out of the generation pool.
  *
- * <p>Three booleans and a tag set, and the interaction between the first two is the whole reason
- * this is worth naming: <b>HARD subsumes EXTREME</b>. Turning HARD off removes the nether items and
- * the extreme ones together, so the EXTREME setting only has anything left to decide while HARD is
- * on. Written as nested conditionals inside a {@code removeIf} on a settings-reading manager, that
- * relationship was easy to read past and impossible to check.
+ * <p><b>HARD subsumes EXTREME.</b> Turning HARD off removes the nether items and the extreme ones
+ * together, so the EXTREME setting only has anything left to decide while HARD is on.
  *
- * <p>The website mirrors this rule in {@code vendor-pool.mjs} so its item index matches the
- * deployed server. If the logic here changes, that changes too.
+ * <p>The website mirrors this rule in {@code vendor-pool.mjs} so its item index matches the deployed
+ * server. If the logic here changes, that changes too.
  */
 final class PoolExclusions {
 

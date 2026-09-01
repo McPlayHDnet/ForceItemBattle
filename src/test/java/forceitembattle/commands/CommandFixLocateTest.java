@@ -34,7 +34,7 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
  *
  * <p>The interesting part is what happens with no argument, because the answer depends on how many
  * locators are running: exactly one is dismissed outright, and several produce a picker instead of
- * a guess. Dismissing an arbitrary one of several is the failure mode, and it is silent â€” the
+ * a guess. Dismissing an arbitrary one of several is the failure mode, and it is silent — the
  * player sees a locator go away and cannot tell it was the wrong one.
  *
  * <p>The picker's own buttons run {@code /fixlocate <id>}, so the explicit form is the same code

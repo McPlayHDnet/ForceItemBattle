@@ -81,28 +81,14 @@ public enum Rarity {
     }
 
     /**
-     * One of this rarity, for the stats writer to add.
-     *
-     * <p>Pass 1 left this class holding two generated imports, reasoning that moving only the write
-     * mapping would split a cohesive table across two files. That reasoning was right and the
-     * conclusion has been overtaken: both mappings are now expressed in {@link RarityCounts}, so
-     * the table is still whole and reads and writes are finally the same vocabulary. Turning a
-     * delta into the request the service wants is {@code FibStatisticsClient}'s job, which is the
-     * only caller and sits behind the seam.
+     * One of this rarity, for the stats writer to add. Turning the delta into the request the service
+     * wants is {@code FibStatisticsClient}'s job, behind the seam.
      */
     public RarityCounts asIncrement() {
         return increment;
     }
 
-    /**
-     * How many of this rarity the given stats hold. Zero when the stats are absent.
-     *
-     * <p>The read half now goes through {@link RarityCounts} rather than a generated type. Pass 1
-     * declined to move only the write half because that would have split a cohesive table across
-     * two files; moving the read half does not — the table stays whole here, and only the type it
-     * reads through changed. Absent fields became zero inside the record, so the null-per-field
-     * dance is gone from this method.
-     */
+    /** How many of this rarity the given stats hold. Zero when the stats are absent. */
     public long count(@Nullable RarityCounts rarities) {
         return rarities == null ? 0 : this.statAccessor.applyAsLong(rarities);
     }

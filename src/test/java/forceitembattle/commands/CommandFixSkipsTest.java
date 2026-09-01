@@ -163,8 +163,8 @@ class CommandFixSkipsTest {
     class InATeam {
 
         /**
-         * The crash this command's comment records: a player with no team, in a round configured
-         * for teams, used to dereference {@code currentTeam()} here — on respawn.
+         * A player with no team in a round configured for teams. Branching on the setting rather
+         * than on {@code isInTeam()} dereferences a null team here — on respawn.
          */
         @Test
         void aPlayerWithoutATeamDoesNotThrow() {

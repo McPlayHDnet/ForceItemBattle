@@ -24,11 +24,9 @@ import org.bukkit.inventory.ItemStack;
  * A ten-minute scoring race. Every non-skipped find (back-to-backs included) scores by pool tier
  * — Early 1, Mid 2, Late 3 — and the top scorer at the end takes the Wheels.
  *
- * Unlike the other events it resolves on its own clock rather than on a find, so it holds the
- * active slot the whole time and concludes from {@link #tick()}. Scoring keys on the
- * {@link ScoreOwner} the game itself uses, so teammates share a tally and a solo player has their
- * own without this class deciding which is which. The countdown is driven by the manager's
- * per-second tick, which runs mid-game only, so it freezes during pause.
+ * <p>Unlike the other events it resolves on its own clock rather than on a find, so it holds the
+ * active slot the whole time and concludes from {@link #tick()}. That countdown is driven by the
+ * manager's mid-game-only tick, so it freezes during a pause.
  */
 @RequiredArgsConstructor
 public class PointHunt implements RandomEvent {
@@ -51,8 +49,9 @@ public class PointHunt implements RandomEvent {
     private final ForceItemBattle plugin;
 
     /**
-     * Points this round, keyed by {@link ScoreOwner}. Identity keys — an owner is the live
-     * per-round instance, reused for the whole round, and neither implementation overrides equals.
+     * Keyed by {@link ScoreOwner}, so teammates share a tally and a solo player has their own.
+     * Identity keys: an owner is the live per-round instance and neither implementation overrides
+     * equals.
      */
     private final Map<ScoreOwner, Integer> points = new LinkedHashMap<>();
 
@@ -91,8 +90,6 @@ public class PointHunt implements RandomEvent {
             return false; // not a pool item (custom/unregistered) — no points
         }
 
-        // Teammates share one tally, a solo player has their own — which is exactly what a score
-        // owner is. This used to be an Object holding either a Team or a ForceItemPlayer.
         this.points.merge(find.finder().scoreOwner(), pointsFor(state), Integer::sum);
         return false; // Point Hunt only ends on its own clock
     }
@@ -107,9 +104,8 @@ public class PointHunt implements RandomEvent {
     }
 
     /**
-     * How long the hunt has left, for the tab footer. Scores are deliberately not shown — the hunt
-     * is a race you play by finding items faster, not by watching a board, and the footer already
-     * carries pools, jokers and any trader.
+     * Time only. Scores are deliberately not shown: the hunt is a race you play by finding items
+     * faster, not by watching a board.
      */
     @Override
     public String tabFooterBlock() {
@@ -168,8 +164,7 @@ public class PointHunt implements RandomEvent {
             }
         }
 
-        // The payout is a score-owner question and is answered above without asking. The label is
-        // not: a team has a name and a colour, and a solo winner has neither.
+        // The payout is a score-owner question; the label is not — a team has a name and a colour.
         return winner instanceof Team team
                 ? team.getTeamDisplay()
                 : "<green>" + members.getFirst().player().getName();

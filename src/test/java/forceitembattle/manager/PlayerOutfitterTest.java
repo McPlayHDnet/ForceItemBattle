@@ -28,17 +28,11 @@ import org.mockbukkit.mockbukkit.world.WorldMock;
  * {@link PlayerOutfitter}: what each of the four round states actually writes.
  *
  * <p>{@code PlayerLifecycleListenerTest} owns which state an arriving player is put into; this owns
- * what being in one means. The split matters because the bug that prompted this work was a wiring
- * bug â€” the listener called three lines where it should have called a body â€” and a test of the
- * bodies alone would have passed throughout.
+ * what being in one means.
  *
- * <p>Written now rather than later because candidate 5 rewrites the item half of {@link
- * PlayerOutfitter#toLobby} and {@code toResultScreen} into a table lookup. These are the assertions
- * that will say whether the table produces the same hotbar the five hand-written blocks did.
- *
- * <p>Every state is asserted from a deliberately dirty player: hurt, mounted, levelled, carrying
- * loot and wearing a coloured tab name. Starting from a fresh {@code PlayerMock} would let a state
- * that writes nothing at all pass every assertion.
+ * <p>Every state is asserted from a deliberately dirty player: hurt, mounted, levelled, carrying loot
+ * and wearing a coloured tab name. Starting from a fresh {@code PlayerMock} would let a state that
+ * writes nothing at all pass every assertion.
  */
 class PlayerOutfitterTest {
 
@@ -55,8 +49,6 @@ class PlayerOutfitterTest {
     void tearDown() {
         MockBukkit.unmock();
     }
-
-    // --- fixtures ---------------------------------------------------------------------------
 
     /** Someone in the state a round leaves you in, so a no-op cannot pass for a reset. */
     private PlayerMock dirty(String name) {
@@ -107,8 +99,8 @@ class PlayerOutfitterTest {
         }
 
         /**
-         * The joker slot rule the class documents: slot 4 is written before the tools, because
-         * {@code addItem} fills the first free slot and would otherwise take it.
+         * Slot 4 is written before the tools, because {@code addItem} fills the first free slot and
+         * would otherwise take it.
          */
         @Test
         void theJokersLandInSlotFourAndTheToolsGoElsewhere() {
@@ -144,11 +136,6 @@ class PlayerOutfitterTest {
             assertFalse(player.getInventory().contains(Material.DIRT));
         }
 
-        /**
-         * The level reset is the half that used to be missing here. {@code toSpectator} and the
-         * listener's own {@code makeSpectator} were the same state written twice, and only the
-         * listener's copy zeroed the level bar.
-         */
         @Test
         void theirLevelBarIsClearedToo() {
             PlayerMock player = dirty("Understudy1");
@@ -197,7 +184,6 @@ class PlayerOutfitterTest {
         }
 
         /**
-         * No world, no teleport. The adapter takes the destination as decided elsewhere and
          * {@code Dimension.OVERWORLD.world()} is nullable, so null has to mean "leave them" rather
          * than throw halfway through outfitting them.
          */
@@ -265,10 +251,8 @@ class PlayerOutfitterTest {
         }
 
         /**
-         * The lobby hotbar is not the result screen's, and the overlap is what makes candidate 5
-         * worth doing: both put Achievements and Collection on the bar, in different slots, as
-         * different materials in one case. Pinned so the table that replaces them has to say
-         * whether that was deliberate.
+         * The lobby hotbar is not the result screen's: both carry Achievements and Collection, in
+         * different slots.
          */
         @Test
         void itIsADifferentBarFromTheResultScreens() {
@@ -284,11 +268,9 @@ class PlayerOutfitterTest {
         }
 
         /**
-         * The dead button, pinned as it stands. A player reaching the lobby state at
-         * {@code END_GAME} â€” which happens, because {@code END_GAME} shares the {@code LOBBY}
-         * admission with {@code PRE_GAME} â€” is handed a spectate pearl that only the
-         * {@code PRE_GAME} click handler answers. Candidate 5 is where that gets decided; this
-         * records what it currently does so the change is visible when it comes.
+         * A player reaching the lobby state at {@code END_GAME} — which happens, because
+         * {@code END_GAME} shares the {@code LOBBY} admission with {@code PRE_GAME} — gets no
+         * spectate pearl, since only the {@code PRE_GAME} click handler would answer it.
          */
         @Test
         void theSpectateButtonIsOfferedBeforeARoundAndNotAfterOne() {

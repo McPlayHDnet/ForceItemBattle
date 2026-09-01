@@ -7,25 +7,19 @@ import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 
-/**
- * Decides who plays with whom, avoiding pairings that already happened last round.
- */
+/** Decides who plays with whom, avoiding pairings that already happened last round. */
 public final class TeamPairing {
 
     /**
-     * Ceiling on explored branches. Unreachable at realistic player counts; it is here so a
-     * pathological forbidden set degrades into an unavoidable repeat instead of hanging the /start
-     * command on the main thread.
+     * Unreachable at realistic player counts; it is here so a pathological forbidden set degrades
+     * into an unavoidable repeat instead of hanging /start on the main thread.
      */
     private static final int MAX_BRANCHES = 50_000;
 
     private TeamPairing() {
     }
 
-    /**
-     * Order-independent identity for one pairing, so {@code {a,b}} and {@code {b,a}} are the same
-     * entry however the two players happened to be ordered when the team was built.
-     */
+    /** Order-independent, so {@code {a,b}} and {@code {b,a}} are the same entry. */
     public static String pairKey(UUID first, UUID second) {
         String a = first.toString();
         String b = second.toString();
@@ -36,13 +30,9 @@ public final class TeamPairing {
      * Shuffles {@code ids} into an order whose consecutive pairs (indices 0-1, 2-3, …) contain no
      * pairing listed in {@code forbidden}.
      *
-     * <p>Falls back to a plain shuffle when no such order exists — with an odd number of players, or
-     * a forbidden set covering every remaining option, some repeat can be unavoidable, and building
-     * teams anyway beats refusing to start the game. Callers that want to say so can compare the
-     * result against {@code forbidden} themselves.
-     *
-     * <p>With an odd count the last entry is left over and becomes a one-player team; which player
-     * that is stays random.
+     * <p>Falls back to a plain shuffle when no such order exists: some repeat can be unavoidable, and
+     * building teams anyway beats refusing to start the game. With an odd count the last entry is
+     * left over and becomes a one-player team.
      */
     public static List<UUID> orderAvoidingPairs(List<UUID> ids, Set<String> forbidden, Random random) {
         List<UUID> pool = new ArrayList<>(ids);
@@ -79,8 +69,7 @@ public final class TeamPairing {
         for (int index = 0; index < remaining.size(); index++) {
             candidates.add(index);
         }
-        // Shuffled, so that when several partners are allowed the choice between them stays random
-        // rather than settling on whoever the pool happened to list first.
+        // So that when several partners are allowed the choice between them stays random.
         Collections.shuffle(candidates, random);
 
         for (int index : candidates) {

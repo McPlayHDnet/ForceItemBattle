@@ -31,18 +31,15 @@ import org.bukkit.inventory.ItemStack;
  * Turns a Totem of Antimatter placed in an Antimatter Depths portal vault into an open portal, and
  * walks its owner through when they step into it.
  *
- * <p>The vanilla vault interaction is cancelled rather than used. A vault can only eject loot — it
- * has no "unlocked" hook to hang the portal off — and letting it run would also mean its own
- * per-player unlock bookkeeping deciding who may open a portal, on top of ours. Cancelling and
- * consuming the totem here keeps one source of truth for both the cost and the ownership.
+ * <p>The vanilla vault interaction is cancelled rather than used: a vault has no "unlocked" hook to
+ * hang the portal off, and letting it run would put its own per-player unlock bookkeeping in charge
+ * of who may open a portal, on top of ours.
  */
 @RequiredArgsConstructor
 public class AntimatterPortalListener implements Listener {
     private final AntimatterPortalManager antimatterPortalManager;
     private final RoundPhase roundPhase;
-    /**
-     * Players currently being sent through, so the move handler does not fire again mid-teleport.
-     */
+    /** Players being sent through, so the move handler does not fire again mid-teleport. */
     private final Set<UUID> travelling = ConcurrentHashMap.newKeySet();
 
     @EventHandler
@@ -62,16 +59,14 @@ public class AntimatterPortalListener implements Listener {
 
         ItemStack held = event.getItem();
         if (!CustomMaterials.TOTEM_OF_ANTIMATTER.matches(held)) {
-            // Stop the vault taking anything else, and say why — a vault with the wrong key in hand
-            // gives no feedback at all otherwise.
+            // A vault with the wrong key in hand gives no feedback at all otherwise.
             event.setCancelled(true);
             event.getPlayer().sendMessage(
                     Text.of("<dark_purple>This portal needs a <light_purple>Totem of Antimatter<dark_purple>."));
             return;
         }
 
-        // From here the vault must not run: it would consume the totem on its own terms and eject
-        // its loot table instead of opening anything.
+        // The vault must not run: it would consume the totem on its own terms and eject its loot.
         event.setCancelled(true);
 
         Player player = event.getPlayer();
@@ -85,9 +80,9 @@ public class AntimatterPortalListener implements Listener {
     }
 
     /**
-     * Writes the reduced stack back explicitly rather than mutating the one the event handed us —
-     * whether that stack is a live mirror of the inventory slot or a copy is an implementation
-     * detail, and a totem silently surviving its own portal would be an easy exploit.
+     * Writes the reduced stack back explicitly rather than mutating the one the event handed us:
+     * whether that is a live mirror of the slot or a copy is an implementation detail, and a totem
+     * surviving its own portal is an easy exploit.
      */
     private void consumeOneFromMainHand(Player player) {
         ItemStack hand = player.getInventory().getItemInMainHand();
@@ -125,8 +120,8 @@ public class AntimatterPortalListener implements Listener {
     }
 
     /**
-     * Runs a teleport with the player flagged, so the move events the teleport itself generates
-     * cannot re-enter and bounce them straight back out again.
+     * Flags the player, so the move events the teleport itself generates cannot re-enter and bounce
+     * them straight back out.
      */
     private void travel(Player player, java.util.function.Consumer<Player> destination) {
         this.travelling.add(player.getUniqueId());
@@ -141,8 +136,8 @@ public class AntimatterPortalListener implements Listener {
         AntimatterPortalManager portals = this.antimatterPortalManager;
         Location depths = portals.depthsFor(player);
         if (depths == null) {
-            // Recoverable more often than not: the manager refuses a Depths it cannot bring the
-            // player home from, and having claimed that one it hands out a different one next time.
+            // Usually recoverable: the manager refuses a Depths it cannot bring the player home from,
+            // and having claimed that one it hands out a different one next time.
             player.sendMessage(Text.of("<dark_purple>The Depths would not take you. "
                     + "<gray>Step through again — if it keeps failing, tell eltobito."));
             return;
@@ -183,10 +178,7 @@ public class AntimatterPortalListener implements Listener {
         }
     }
 
-    /**
-     * A portal is hidden from everyone but its owner at the moment it is spawned, which cannot
-     * cover players who were not online then.
-     */
+    /** Portals are hidden at spawn time, which cannot cover players who were not online then. */
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         this.antimatterPortalManager.hideForeignPortals(event.getPlayer());

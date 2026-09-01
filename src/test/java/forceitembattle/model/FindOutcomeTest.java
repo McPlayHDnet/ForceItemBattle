@@ -11,10 +11,9 @@ import org.junit.jupiter.api.Test;
 /**
  * The four rules that decide what a find is worth.
  *
- * <p>These used to be inline guards spread through {@code FoundItemListener.onFoundItem}, reachable
- * only by playing a round. Every one of them fails silently when it fails — a find that does not
- * score, or a streak that survives a skip, looks exactly like one that worked — which is why they
- * are pinned individually rather than through the pipeline that applies them.
+ * <p>Every one fails silently when it fails — a find that does not score, or a streak that survives a
+ * skip, looks exactly like one that worked — so they are pinned individually rather than through the
+ * pipeline that applies them.
  */
 class FindOutcomeTest {
 

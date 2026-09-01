@@ -12,23 +12,16 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * Catalogue domain of FIBService: publishes what the game DEFINES, as opposed to what players have
- * done.
+ * Catalogue domain of FIBService: publishes what the game <em>defines</em>, so consumers can turn
+ * "412 collected" into "412 of 900" without keeping their own copy of the item pool or achievement
+ * list. The plugin stays the single source of truth for both; the service is only a mirror.
  *
- * Everything else this plugin sends is an event -- "this happened". This is the one place it sends
- * a definition -- "this exists" -- so that consumers can turn "412 collected" into "412 of 900"
- * without keeping their own copy of the item pool or the achievement list. The plugin stays the
- * single source of truth for both; the service is only a mirror.
+ * <p>Neither list is rebuilt here — items come straight from
+ * {@code CollectionManager#getCollectionCatalogue()} and achievements from the enum. Re-deriving
+ * either creates a second definition that can silently disagree with what players see in game.
  *
- * Neither list is rebuilt here. Items come straight from
- * {@code CollectionManager#getCollectionCatalogue()} -- the exact set the collection book renders,
- * being the early/mid/late pools minus everything tagged extreme -- and achievements from the enum
- * itself. Re-deriving either would create a second definition that could silently disagree with
- * what players see in game, which is the whole thing this is meant to prevent.
- *
- * Pushed on enable and fire-and-forget: a failed publish leaves the previous catalogue in place,
- * which is the right outcome. A stale denominator is a cosmetic problem; a missing one breaks every
- * completion percentage on the site.
+ * <p>Pushed on enable and fire-and-forget: a failed publish leaves the previous catalogue in place,
+ * and a stale denominator is cosmetic where a missing one breaks every completion percentage.
  */
 public class FibCatalogueClient {
 
@@ -51,8 +44,8 @@ public class FibCatalogueClient {
     public void publishItemsAsync(Consumer<ApiException> onError) {
         List<String> items = new ArrayList<>(this.plugin.getCollectionManager().getCollectionCatalogue());
         if (items.isEmpty()) {
-            // The service rejects an empty catalogue, and rightly so -- it would zero every
-            // denominator. Catch it here too so the log names the real cause rather than an HTTP 400.
+            // The service rejects an empty catalogue anyway; caught here so the log names the real
+            // cause rather than an HTTP 400.
             this.plugin.getLogger().warning("[FIBService] Item catalogue is empty; skipping publish");
             return;
         }
@@ -67,9 +60,8 @@ public class FibCatalogueClient {
         List<FibCatalogueAchievementSubmitDto> achievements = new ArrayList<>();
         for (Achievements achievement : Achievements.values()) {
             achievements.add(new FibCatalogueAchievementSubmitDto()
-                    // name() and not an ordinal or a display string: the constant name is the
-                    // identifier the unlock rows use, so the catalogue joins straight to them.
-                    // Renaming a constant breaks that join.
+                    // name(), not an ordinal or display string: it is the identifier the unlock rows
+                    // use, so renaming a constant breaks that join.
                     .achievementId(achievement.name())
                     .title(achievement.getTitle())
                     .description(achievement.getDescription())

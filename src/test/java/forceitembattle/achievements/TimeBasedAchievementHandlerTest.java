@@ -14,15 +14,7 @@ import forceitembattle.model.Team;
 import org.bukkit.Material;
 import org.junit.jupiter.api.Test;
 
-/**
- * {@link TimeBasedAchievementHandler}, which is where the seam paid for itself twice: the round
- * clock it used to assemble out of two managers, and the EARLY_BIRD rule it used to write out once
- * per team and once per roster.
- *
- * <p>None of this was reachable before. The handler took a {@code ForceItemBattle}, so asking
- * "is this player the first to collect?" meant a game manager, a timer manager and a team manager,
- * all mocked, before the first assertion.
- */
+/** {@link TimeBasedAchievementHandler}: the round clock rules and EARLY_BIRD. */
 class TimeBasedAchievementHandlerTest {
 
     /** EARLY_BIRD: one item, no other constraint. */
@@ -73,12 +65,8 @@ class TimeBasedAchievementHandlerTest {
     }
 
     /**
-     * The behaviour this candidate deliberately changed.
-     *
-     * <p>A skip is not a collect, and the team half of the old branch filtered skips out. The solo
-     * half did not — it asked only whether a rival's found-list was empty — so in a solo round one
-     * rival skipping their opening item locked EARLY_BIRD out for everybody, permanently and
-     * silently. Collapsing both halves onto the team rule is what fixes it.
+     * A skip is not a collect. Counting a rival's found-list without filtering skips lets one rival
+     * skipping their opening item lock EARLY_BIRD out for everybody, permanently and silently.
      */
     @Test
     void aRivalWhoOnlySkippedDoesNotBlockIt() {

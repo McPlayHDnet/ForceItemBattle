@@ -89,10 +89,7 @@ class ScoreOwnerTest {
             });
         }
 
-        /**
-         * The bug the per-member loop used to cause, stated as the reason advance is called once
-         * per owner: a second application throws away the queued item rather than advancing again.
-         */
+        /** Why advance is called once per owner and not once per member. */
         @Test
         void applyingItTwiceSkipsTheQueuedItemRatherThanAdvancingTwice() {
             bothImplementations(owner -> {

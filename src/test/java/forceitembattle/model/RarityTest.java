@@ -7,17 +7,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 /**
- * That a rarity reads back what it writes.
- *
- * <p>Twice deferred, now possible. Candidate 6 made both halves of the table speak
- * {@link RarityCounts} so the symmetry became expressible — and then it could not be asserted,
- * because {@code Rarity} holds {@code Sound} constants, {@code Sound} is registry-backed, and
- * class-initialising it threw {@code NoClassDefFoundError: org.bukkit.Registry}. That was recorded
- * in {@code HeadlessBoundaryTest} as a second wall.
- *
- * <p>Adding the plain Paper API to the test classpath for MockBukkit moved that wall. The
- * assertion below is the one this table has wanted since pass 1: the write mapping and the read
- * mapping are the same table, so one of a rarity must read back as exactly one of it.
+ * That a rarity reads back what it writes: the write mapping and the read mapping are the same table,
+ * so one of a rarity must read back as exactly one of it.
  */
 class RarityTest {
 

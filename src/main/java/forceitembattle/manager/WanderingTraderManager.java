@@ -162,8 +162,7 @@ public class WanderingTraderManager implements Manager {
         entity.setAI(false);
         entity.setGravity(true);
 
-        // The wandering trader stays anonymous. The special one is worth walking to, so it says
-        // what it is from a distance.
+        // The wandering trader stays anonymous; the special one is worth walking to.
         if (kind == TraderKind.SPECIAL) {
             entity.customName(Text.of(kind.boldColoredName()));
             entity.setCustomNameVisible(true);
@@ -174,8 +173,8 @@ public class WanderingTraderManager implements Manager {
             case SPECIAL -> this.specialRecipes();
         };
 
-        // The entity is only a marker: right-clicking it is intercepted and each player is handed
-        // their own merchant, so nobody ever opens this recipe list. It is the template.
+        // Only a template: right-clicking the entity is intercepted and each player is handed their
+        // own merchant, so nobody ever opens this recipe list.
         entity.setRecipes(recipes);
 
         ActiveTrader trader = new ActiveTrader(entity.getUniqueId(), kind, location, recipes);
@@ -209,10 +208,9 @@ public class WanderingTraderManager implements Manager {
     }
 
     /**
-     * Replays the trader direction line for players who (re-)enter the spawn area. The one-shot
-     * line on spawn is long gone by the time someone walks back to spawn to look for the trader.
-     * Zone membership is tracked continuously, so a trader spawning while a player already stands
-     * at spawn does not ping them twice (the announce line covers that moment).
+     * Replays the direction line for players who (re-)enter the spawn area, since the one-shot line
+     * on spawn is long gone by then. Zone membership is tracked continuously, so a trader spawning
+     * while a player already stands at spawn does not ping them twice.
      */
     private void rePingTradersNearSpawn() {
         World world = Dimension.OVERWORLD.world();
@@ -265,9 +263,7 @@ public class WanderingTraderManager implements Manager {
         }
     }
 
-    /**
-     * Vanilla's offers, normalised to a single-item price and unlimited uses, plus the wheel.
-     */
+    /** Vanilla's offers, normalised to a single-item price and unlimited uses, plus the wheel. */
     private List<MerchantRecipe> wanderingRecipes(WanderingTrader entity) {
         List<MerchantRecipe> recipes = new ArrayList<>(entity.getRecipes());
 
@@ -284,9 +280,7 @@ public class WanderingTraderManager implements Manager {
         return recipes;
     }
 
-    /**
-     * Five one-emerald offers, rolled once at spawn so everyone sees the same trader.
-     */
+    /** Five one-emerald offers, rolled once at spawn so everyone sees the same trader. */
     private List<MerchantRecipe> specialRecipes() {
         List<MerchantRecipe> recipes = new ArrayList<>();
 
@@ -314,9 +308,7 @@ public class WanderingTraderManager implements Manager {
         return recipe;
     }
 
-    /**
-     * A vanilla level-30 table roll. Treasure is excluded, so no mending — a table wouldn't give it.
-     */
+    /** A vanilla level-30 table roll. Treasure is excluded, so no mending — a table would not give it. */
     private ItemStack enchanted(ItemStack itemStack) {
         RegistryKeySet<Enchantment> tableEnchantments = RegistryAccess.registryAccess()
                 .getRegistry(RegistryKey.ENCHANTMENT)
@@ -330,9 +322,6 @@ public class WanderingTraderManager implements Manager {
         return this.traders.get(entityUuid);
     }
 
-    /**
-     * The trader whose merchant this player currently has open, if any.
-     */
     @Nullable
     public ActiveTrader traderOf(UUID playerUuid) {
         UUID traderUuid = this.tradingPlayers.get(playerUuid);
@@ -352,14 +341,10 @@ public class WanderingTraderManager implements Manager {
     }
 
     /**
-     * This player's own view of {@code trader}, with their own use counts.
-     *
-     * <p>Returns a view rather than a {@link Merchant} because the title moved: it used to be a
-     * parameter of {@code Bukkit.createMerchant}, which Paper deprecated, and now belongs to the
-     * builder. The merchant itself is untitled and virtual — one per call, so no two players ever
-     * share one. That is also why the old {@code openMerchant(merchant, force = true)} needed the
-     * force flag for a case that could not arise here, and why {@code checkReachable} is left
-     * alone: Paper documents it as having no effect on a virtual merchant.
+     * This player's own view of {@code trader}, with their own use counts. Returns a view rather than
+     * a {@link Merchant} because the title belongs to the builder now, not to the deprecated
+     * {@code Bukkit.createMerchant}. The merchant is virtual — one per call, never shared — so
+     * {@code checkReachable} is left alone: Paper documents it as having no effect on those.
      */
     public MerchantView createMerchantViewFor(Player player, ActiveTrader trader) {
         Merchant merchant = Bukkit.createMerchant();

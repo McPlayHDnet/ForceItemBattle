@@ -56,9 +56,8 @@ public final class CommandTeams extends CustomCommand {
                 return;
             }
 
-            // Looked up once. Each branch used to call Bukkit.getPlayer(args[1]) a second time
-            // after null-checking the first call, so the check guarded a different object than
-            // the one dereferenced.
+            // Looked up once: a second getPlayer call per branch would guard one object and
+            // dereference another.
             Player target = Bukkit.getPlayer(args[1]);
             if (target == null) {
                 player.sendMessage(Text.of("<yellow>" + args[1] + " <red>is not online"));

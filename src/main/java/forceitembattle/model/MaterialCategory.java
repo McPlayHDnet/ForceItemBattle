@@ -4,23 +4,14 @@ import java.util.List;
 import java.util.Set;
 import org.bukkit.Material;
 
-/**
- * Categorizes materials by type, independently of the ItemDifficultiesManager's state system.
- */
+/** Categorises materials by type, independently of the ItemDifficultiesManager's state system. */
 public class MaterialCategory {
 
-    // Wood type categories (for "Wait Wood?" achievement)
     /**
-     * Wood types, <b>longest first</b>, because {@link #getWoodCategory} returns the first one the
-     * material's name contains and {@code DARK_OAK_LOG} contains both {@code DARK_OAK} and
-     * {@code OAK}.
-     *
-     * <p>This was a {@code Set.of(...)}, whose iteration order is not merely unspecified but
-     * randomised per JVM. So {@code DARK_OAK_LOG} classified as {@code DARK_OAK} on some server
-     * runs and {@code OAK} on others — and on any run where it came back {@code OAK}, nothing
-     * produced {@code DARK_OAK} at all and the wood-collection achievement could not be completed.
-     * The same held for {@code PALE_OAK}. A test that walks one material per required category is
-     * what surfaced it; the ordering is now load-bearing, so keep the longest prefixes first.
+     * Wood types, <b>longest first</b> — load-bearing. {@link #getWoodCategory} returns the first one
+     * the material's name contains, and {@code DARK_OAK_LOG} contains both {@code DARK_OAK} and
+     * {@code OAK}. A {@code Set} here randomises per JVM, so {@code DARK_OAK} stops being produced
+     * at all on some runs and the wood-collection achievement becomes uncompletable.
      */
     private static final List<String> WOOD_TYPES = List.of(
             "DARK_OAK", "PALE_OAK", "MANGROVE",
@@ -61,9 +52,7 @@ public class MaterialCategory {
         return false;
     }
 
-    /**
-     * The wood type of a material (e.g. "OAK", "SPRUCE"), or null if it is not a wood type.
-     */
+    /** The wood type of a material, e.g. "OAK", or null if it is not one. */
     public static String getWoodCategory(Material material) {
         if (!isWoodType(material)) {
             return null;
@@ -84,9 +73,7 @@ public class MaterialCategory {
         return null;
     }
 
-    /**
-     * Every stone type and its variants (polished, bricks, tiles, cracked, chiseled, ...).
-     */
+    /** Every stone type and its variants (polished, bricks, tiles, cracked, chiselled, …). */
     public static boolean isStoneType(Material material) {
         String name = material.name();
 

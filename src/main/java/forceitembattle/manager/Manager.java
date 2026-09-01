@@ -4,8 +4,7 @@ package forceitembattle.manager;
  * A stateful subsystem with a lifecycle, built in {@code ForceItemBattle.onEnable()}.
  *
  * <p>Construction order and lifecycle order are two different lists — see
- * {@code CONTEXT.md § Manager Lifecycle}, which also records why several managers still take the
- * plugin and reach through it rather than naming their collaborators.
+ * {@code ForceItemBattle.lifecycleOrder()}.
  */
 public interface Manager {
 

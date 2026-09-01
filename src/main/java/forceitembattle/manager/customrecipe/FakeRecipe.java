@@ -294,10 +294,8 @@ public enum FakeRecipe {
     /**
      * The recipe to show for this item, honouring HARDER_TRACKERS.
      *
-     * <p>Most entries have no {@code _HARD} sibling — either the setting does not touch them
-     * (suspicious stew, concrete, …) or it no longer does (the antimatter locator). Those are used
-     * whatever the setting says, so the plain entry is remembered and only overruled by a matching
-     * {@code _HARD} one.
+     * <p>Most entries have no {@code _HARD} sibling and are used whatever the setting says, so the
+     * plain entry is remembered and only overruled by a matching {@code _HARD} one.
      */
     @Nullable
     public static FakeRecipe forItem(ItemStack item, ForceItemBattle plugin) {

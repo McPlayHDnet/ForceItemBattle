@@ -20,13 +20,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-/**
- * The unlock schedule and the generation-pool cache.
- *
- * Both moved this session: the schedule used to be mutable fields on the {@link State} enum
- * constants (JVM-global, written directly by /start), and the pool was rebuilt from ~1,367 items on
- * every read. These tests exist mostly so that the second one — a cache — cannot go stale unnoticed.
- */
+/** The unlock schedule and the generation-pool cache, which must not go stale unnoticed. */
 class ItemPoolTest {
     private ItemDifficultiesManager items;
     private final RoundClock roundClock = new RoundClock();
@@ -56,13 +50,7 @@ class ItemPoolTest {
         items.enable();
     }
 
-    /**
-     * Puts the clock at {@code elapsedMinutes} into a round of {@code durationMinutes}.
-     *
-     * <p>A real {@link RoundClock} rather than two mocked managers: the round's length and the time
-     * remaining used to live on different objects, so saying "we are twenty minutes in" meant
-     * stubbing a game manager and a timer manager to agree with each other.
-     */
+    /** Puts the clock at {@code elapsedMinutes} into a round of {@code durationMinutes}. */
     private void clock(int durationMinutes, int elapsedMinutes) {
         roundClock.startRound(durationMinutes * 60);
         roundClock.setSecondsLeft(durationMinutes * 60 - elapsedMinutes * 60);

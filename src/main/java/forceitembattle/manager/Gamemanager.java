@@ -50,10 +50,6 @@ public class Gamemanager implements Manager {
     private final ForceItemBattle forceItemBattle;
     private final Roster roster;
 
-    /**
-     * Match telemetry. Owns everything that only exists to be reported: the match id, lead changes,
-     * pause intervals, and the submit/link-broadcast flow.
-     */
     @Getter
     private final MatchHistoryReporter matchHistory;
 
@@ -63,20 +59,16 @@ public class Gamemanager implements Manager {
     private long gameStartTime;
 
     /**
-     * Jokers configured for the current round.
-     *
-     * Kept here rather than only in /start's local scope because a player who reconnects after the
-     * countdown ended still has to be equipped, and by then the command's frame is long gone.
+     * Jokers configured for the current round. Kept here rather than in /start's local scope because
+     * a player who reconnects after the countdown ended still has to be equipped.
      */
     @Getter
     @Setter
     private int jokerAmount;
 
     /**
-     * Dev/testing override queue. When non-empty, {@link #generateMaterial()} and
-     * {@link #generateSeededMaterial()} return the queued materials in order before
-     * falling back to random generation. Populated by the /forceitem command and
-     * cleared at the start of every game.
+     * Dev/testing override queue: when non-empty, material generation returns these in order before
+     * falling back to random. Populated by /forceitem, cleared at the start of every game.
      */
     @Getter
     private final Deque<Material> forcedItemQueue = new ArrayDeque<>();
@@ -90,23 +82,16 @@ public class Gamemanager implements Manager {
         this.matchHistory = new MatchHistoryReporter(forceItemBattle);
     }
 
-    /**
-     * Re-evaluates who is in front and records a lead change if the sole leader's identity moved.
-     * Called from the one place a score can change.
-     */
     public void evaluateLead() {
         this.matchHistory.recordStandings(this.currentSoleLeader());
     }
 
     /**
-     * Identity of the unique highest scorer, or null when the top score is shared. Team mode keys
-     * on team id, solo on player UUID; the two never mix within a game.
+     * Identity of the unique highest scorer, or null when the top score is shared. Team mode keys on
+     * team id, solo on player UUID; the two never mix within a game.
      *
-     * <p>Spectators are skipped, matching who gets written as a participant at submit time --
+     * <p>Spectators are skipped, matching who gets written as a participant at submit time —
      * otherwise a spectator sitting on 0 could create a phantom tie in a one-player game.
-     *
-     * <p><b>The one branch on the TEAM setting that is not a mistake</b>, and
-     * {@code CONTEXT.md § Round Phase} says why. Left as it is deliberately.
      */
     private Object currentSoleLeader() {
         Object best = null;
@@ -230,11 +215,9 @@ public class Gamemanager implements Manager {
         // In run mode everyone shares one seeded pair; otherwise each owner gets their own.
         MaterialPair shared = runMode ? this.nextMaterials(true) : null;
 
-        // One pass over the roster, one pair per score owner. Written as separate team and solo
-        // halves once, and they had drifted: the solo half walked getOnlinePlayers() rather than
-        // the roster, so a player who disconnected during the countdown was never dealt an item;
-        // the team half drew a fresh pair per member and let the last one win. Both fixed by the
-        // collapse -- keep it one pass.
+        // One pass over the roster, one pair per score owner — keep it that way. Walking online
+        // players instead misses anyone who disconnected during the countdown, and drawing per team
+        // member rather than per owner lets the last member's pair win.
         this.roster.activeScoreOwners().forEach(owner -> {
             MaterialPair pair = runMode ? shared : this.nextMaterials(false);
             owner.startRound(pair.current(), pair.next(), now);
@@ -243,21 +226,17 @@ public class Gamemanager implements Manager {
 
 
     /**
-     * Moves whoever this find belongs to onto their next item.
-     *
-     * <p>Run mode is the one distinction left here, and it is a real one: everybody races for the
-     * same seeded item, so one find advances the whole server. Otherwise only the finder's own
-     * owner moves. Team versus solo no longer appears — it is the owner's business, not this
-     * method's.
+     * Moves whoever this find belongs to onto their next item. In run mode everybody races for the
+     * same seeded item, so one find advances the whole server; otherwise only the finder's owner
+     * moves. Team versus solo is the owner's business, not this method's.
      */
     public void advanceMaterials(ForceItemPlayer forceItemPlayer, GameContext context) {
         long now = System.currentTimeMillis();
 
         if (context.runMode()) {
             Material nextMaterial = this.generateSeededMaterial();
-            // Once per owner. The team branch this replaces ran per member, which advanced a
-            // two-player team twice: the queued item was skipped over and current and next both
-            // ended up holding nextMaterial.
+            // Once per owner, not per member: advancing a two-player team twice skips the queued item
+            // and leaves current and next both holding nextMaterial.
             this.roster.activeScoreOwners().forEach(owner -> owner.advance(nextMaterial, now));
             return;
         }
@@ -269,9 +248,9 @@ public class Gamemanager implements Manager {
      * Replaces the current item for the whole server with a freshly generated one — what /voteskip
      * does when the vote carries, and what /skip does as an admin override.
      *
-     * Charging a joker is <em>not</em> part of this: the only caller that costs one (the vote)
-     * spends it itself, on the initiator. Do not charge one inside the per-player loop below —
-     * it runs once per non-spectator, so the initiator would pay a joker for each of them.
+     * <p>Charging a joker is <em>not</em> part of this: the only caller that costs one spends it
+     * itself, on the initiator. Do not charge one inside the loop below — it runs once per
+     * non-spectator, so the initiator would pay a joker for each of them.
      */
     public void forceSkipItem(Player player) {
         if (!this.roster.contains(player.getUniqueId())) {
@@ -282,21 +261,16 @@ public class Gamemanager implements Manager {
 
         MaterialPair pair = this.nextMaterials(runMode);
 
-        // Everyone gets the same replacement pair, so this is one pair handed to every owner.
-        // Spectators are already out of activeScoreOwners(), which is what keeps a countdown
-        // joiner -- who holds no team -- from NPE-ing every skip for the rest of the round.
+        // Spectators are already out of activeScoreOwners(), which is what keeps a countdown joiner
+        // — who holds no team — from NPE-ing every skip for the rest of the round.
         this.roster.activeScoreOwners().forEach(owner -> owner.assignMaterials(pair.current(), pair.next()));
     }
 
     /**
-     * Applies one player's round setup: gamemode, jokers, starting tools, backpack and the
-     * gamesPlayed write. Spectators are put into spectator mode instead. Safe to call more than
-     * once — {@link ForceItemPlayer#isStartSetupApplied()} makes every call after the first a no-op.
-     *
-     * <p>Here rather than inside /start because the countdown-end pass only walks the players
-     * online at that instant. Someone who disconnected during the countdown is still a participant,
-     * so the same setup has to run when they come back — otherwise they rejoin in ADVENTURE mode
-     * with an empty inventory, unable to play the round they are scored in.
+     * Applies one player's round setup. Spectators are put into spectator mode instead. Safe to call
+     * more than once — {@link ForceItemPlayer#isStartSetupApplied()} makes every call after the first
+     * a no-op, which is what lets someone who disconnected during the countdown be set up on rejoin
+     * rather than landing in ADVENTURE mode with an empty inventory.
      */
     public void applyStartSetup(Player player) {
         ForceItemPlayer forceItemPlayer = this.roster.participant(player.getUniqueId()).orElse(null);
@@ -357,11 +331,8 @@ public class Gamemanager implements Manager {
     }
 
     /**
-     * Everything that has to happen the instant /start's countdown reaches zero: the round's
-     * identity, the world reset, per-player setup, and the flip to MID_GAME.
-     *
-     * Both halves of a round's lifecycle belong here: /start only parses arguments and runs the
-     * countdown, then hands over. Keep orchestration out of the command.
+     * Everything that has to happen the instant /start's countdown reaches zero. /start only parses
+     * arguments and runs the countdown, then hands over — keep orchestration out of the command.
      */
     public void startGame(int durationMinutes, int jokersAmount) {
         this.setGameStartTime(System.currentTimeMillis());
@@ -395,11 +366,9 @@ public class Gamemanager implements Manager {
     }
 
     /**
-     * Splits the round's joker pool across each team's members.
-     *
-     * The share is computed for the whole team either way, so the split stays stable; a member who
-     * is offline right now simply gets no stack here and is handed the team's remaining pool by
-     * {@link #applyStartSetup(Player)} when they rejoin.
+     * Splits the round's joker pool across each team's members. The share is computed for the whole
+     * team either way, so the split stays stable; an offline member gets no stack here and is handed
+     * the team's remaining pool by {@link #applyStartSetup(Player)} on rejoin.
      */
     private void distributeTeamJokers(int jokersAmount) {
         this.forceItemBattle.getTeamManager().getTeams().forEach(team -> {
@@ -424,10 +393,8 @@ public class Gamemanager implements Manager {
     }
 
     /**
-     * The reveal order, worst-placed first.
-     *
-     * <p>A third standings call rather than a reuse of the stats one, deliberately: that one keeps
-     * spectators, leaves ties in map order, and is not computed at all when STATS is off.
+     * The reveal order, worst-placed first. Deliberately not a reuse of the stats standings: that one
+     * keeps spectators, leaves ties in map order, and is not computed at all when STATS is off.
      */
     private List<ResultCeremony.Reveal> revealOrder() {
         if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM)) {
@@ -440,8 +407,7 @@ public class Gamemanager implements Manager {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a,
                         LinkedHashMap::new));
 
-        // A solo player is not a Score Owner; the SoloScore behind them is. Converted here rather
-        // than inside the ceremony so the step is visible at the one place it happens.
+        // A solo player is not a ScoreOwner; the SoloScore behind them is.
         Map<ScoreOwner, Integer> byOwner = new LinkedHashMap<>();
         Standings.ofPlayers(Standings.sortedByScore(contenders, false))
                 .forEach((forceItemPlayer, place) -> byOwner.put(forceItemPlayer.scoreOwner(), place));
@@ -462,8 +428,6 @@ public class Gamemanager implements Manager {
                 ? Standings.ofTeams(this.forceItemBattle.getTeamManager().getTeams())
                 : null;
 
-        // Resolved once rather than per player: it is the same world every iteration, and
-        // Dimension.world() is nullable.
         World overworld = Dimension.OVERWORLD.world();
         Location resultSpawn = overworld == null ? null : overworld.getSpawnLocation();
 
@@ -480,7 +444,6 @@ public class Gamemanager implements Manager {
                 if (statsEnabled && forceItemPlayer != null && !forceItemPlayer.isSpectator()) {
                     Team currentTeam = forceItemPlayer.currentTeam();
 
-                    // Who came first is this class's business; which rows that lands on is not.
                     boolean won = currentTeam == null
                             ? Integer.valueOf(1).equals(placesMap.get(forceItemPlayer))
                             : (teamPlaces != null && Integer.valueOf(1).equals(teamPlaces.get(currentTeam)));
@@ -498,9 +461,8 @@ public class Gamemanager implements Manager {
             }
         });
 
-        // The reveal walks its own ordering, not the stats one: spectators are excluded and ties
-        // break on UUID so two tied players are dealt out the same way every time. The stats maps
-        // above do neither, and are null when STATS is off -- see CONTEXT.md § Result Ceremony.
+        // Its own ordering, not the stats one: spectators excluded, ties broken on UUID so they are
+        // dealt out the same way every time. The stats maps do neither and are null when STATS is off.
         this.forceItemBattle.getResultCeremony().beginFor(
                 this.matchHistory.getMatchId(), this.revealOrder());
 
@@ -530,9 +492,8 @@ public class Gamemanager implements Manager {
     }
 
     /**
-     * Begin a pause: flip state and record when it started, so its duration can be subtracted from
-     * item times on resume. Called by /pause instead of setting the state directly, so the timing
-     * bookkeeping cannot be bypassed.
+     * Called by /pause instead of setting the state directly, so the interval bookkeeping that
+     * {@link #resumeGame()} subtracts from item times cannot be bypassed.
      */
     public void pauseGame() {
         this.matchHistory.onPaused();
@@ -557,13 +518,9 @@ public class Gamemanager implements Manager {
     }
 
     /**
-     * Drop every mob's aggro at the moment of pause.
-     *
-     * Cancelling target-acquisition (in the entity-target listener) stops mobs locking on DURING the
-     * pause, but a mob already chasing a player when /pause runs keeps its target and keeps pathing —
-     * and lands its hit the instant the game resumes. Clearing targets here makes the pause actually
-     * calm: mobs already tracking a player let go, and the listener keeps them from re-acquiring
-     * until resume. Together they give "no aggro while paused, no free hit on unpause".
+     * Drops every mob's aggro at the moment of pause. The entity-target listener stops mobs locking
+     * on <em>during</em> the pause, but one already chasing a player keeps its target and lands its
+     * hit the instant the game resumes. Both halves are needed.
      */
     private void clearMobTargets() {
         Bukkit.getWorlds().forEach(world ->
@@ -575,9 +532,8 @@ public class Gamemanager implements Manager {
     }
 
     /**
-     * End a pause: close the open interval and flip state back. The closed [start, end] is kept so
-     * that any item whose find-window straddled this pause has the paused span removed from its
-     * seconds_taken at submit time.
+     * Closes the open pause interval. The closed [start, end] is kept so an item whose find-window
+     * straddled the pause has that span removed from its seconds_taken at submit time.
      */
     public void resumeGame() {
         this.matchHistory.onResumed();

@@ -25,8 +25,8 @@ import org.mockbukkit.mockbukkit.world.WorldMock;
  * {@code /bed} and {@code /spawn}: the two teleports, which are the same command twice.
  *
  * <p>They differ only in where they read the destination from and what they say when there isn't
- * one. Everything else â€” the null guard, and the dismount-teleport-remount dance around
- * passengers â€” is duplicated between them line for line, so it is tested once per command
+ * one. Everything else — the null guard, and the dismount-teleport-remount dance around
+ * passengers — is duplicated between them line for line, so it is tested once per command
  * deliberately: the pair is exactly the shape where a fix lands in one copy and not the other.
  *
  * <p>The passenger dance is the substance. Bukkit will not teleport a vehicle's rider along with

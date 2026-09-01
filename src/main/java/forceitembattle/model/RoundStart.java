@@ -3,11 +3,9 @@ package forceitembattle.model;
 import forceitembattle.settings.GamePreset;
 
 /**
- * What a round is going to be, decided before anything is written: duration, jokers, and what has
- * to happen to teams — or a refusal naming which rule refused. See {@code CONTEXT.md § Round Start}.
- *
- * <p>Decides in numbers and names; one adapter turns them into effects. Nothing here touches Bukkit,
- * the plugin, the settings or the team manager.
+ * What a round is going to be, decided before anything is written: duration, jokers, and what has to
+ * happen to teams — or a refusal naming which rule refused. Decides in numbers and names; one adapter
+ * turns them into effects. Nothing here touches Bukkit, the plugin, the settings or the team manager.
  */
 public sealed interface RoundStart {
 
@@ -17,7 +15,6 @@ public sealed interface RoundStart {
     /** Teams need four players. Why {@code Invoke-RoundTest.ps1} runs four bots for team mode. */
     int MIN_PLAYERS_FOR_TEAMS = 4;
 
-    /** A round that is going to happen. */
     record Planned(int durationMinutes, int jokers, Teams teams) implements RoundStart {
 
         public int durationSeconds() {
@@ -25,7 +22,6 @@ public sealed interface RoundStart {
         }
     }
 
-    /** A round that is not, and the rule that said so. */
     record Refused(Refusal refusal) implements RoundStart {
     }
 
@@ -35,16 +31,13 @@ public sealed interface RoundStart {
 
     /** What has to happen to teams before the countdown runs. */
     enum Teams {
-        /** Not a team round. Nothing to do. */
         NONE,
 
-        /** A team round with enough players: build them. */
         BUILD,
 
         /**
-         * A team round with too few players. The setting is turned off and any teams cleared —
-         * load-bearing rather than tidiness, and the reason a round writes to config. See
-         * {@code CONTEXT.md § Round Start}.
+         * Too few players. The setting is turned <em>off</em> and any teams cleared — load-bearing
+         * rather than tidiness, and the reason a round writes to config.
          */
         TOO_FEW_PLAYERS
     }

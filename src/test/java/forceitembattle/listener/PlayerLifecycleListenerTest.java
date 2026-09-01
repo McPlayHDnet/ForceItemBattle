@@ -32,24 +32,11 @@ import org.junit.jupiter.api.Test;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
 
 /**
- * {@link PlayerLifecycleListener}: that an arriving player is put into the state their
- * {@link Admission} says they are in.
+ * That an arriving player is put into the state their {@link Admission} says they are in.
+ * {@code RosterTest} pins the admission table itself; this pins the half that acts on the answer.
  *
- * <p>{@code RosterTest} already pins the admission table exhaustively â€” which of the six outcomes
- * two facts produce. Nothing pinned the half that <em>acts</em> on the answer, and that is where
- * the bug is: the rule is right and the wiring is not. It is the same shape as the {@code /infowiki}
- * regression, where {@code wikiSlugOf} had a careful test and its only caller did not.
- *
- * <p>{@link ResultScreen} is the failing half. A player reaching {@code RESULT_SCREEN} is by
- * definition someone {@code finishGame} never touched â€” quitting at {@code END_GAME} releases your
- * roster spot, so the only way to arrive here is to have quit <em>during</em> the round and come
- * back after it ended. Every reset {@code finishGame} performs is therefore still owed to them, and
- * {@code showResultScreen} performs three of them.
- *
- * <p>The spectator items are deliberately not asserted here. They are handed out through a
- * collaborator that is a mock in this test, so an assertion on them would fail for a reason that
- * has nothing to do with the wiring. {@code PlayerOutfitterTest} owns the contents of each state;
- * this owns which state is entered.
+ * <p>Menu items are deliberately not asserted: they are handed out through a collaborator that is a
+ * mock here. {@code PlayerOutfitterTest} owns the contents of each state; this owns which is entered.
  */
 class PlayerLifecycleListenerTest extends ListenerTestBase {
 
@@ -76,14 +63,10 @@ class PlayerLifecycleListenerTest extends ListenerTestBase {
                 timerManager);
     }
 
-    // --- fixtures ---------------------------------------------------------------------------
-
     /**
      * Someone arriving in the state a round leaves you in: hurt, mounted, wearing the coloured tab
-     * name the scoreboard gave them, and standing wherever they logged out.
-     *
-     * <p>Every one of those is something {@code finishGame} clears, which is what makes them the
-     * observable difference between the two copies of the result-screen state.
+     * name the scoreboard gave them, and standing wherever they logged out. Every one of those is
+     * something {@code finishGame} clears.
      */
     private PlayerMock arrivingMidRoundShaped(String name) {
         PlayerMock player = player(name);
@@ -119,11 +102,10 @@ class PlayerLifecycleListenerTest extends ListenerTestBase {
         assertEquals(spawn.getBlockZ(), actual.getBlockZ(), "z");
     }
 
-    // --- the tests --------------------------------------------------------------------------
-
     /**
-     * The bug. Each of these five is a line {@code finishGame} runs and {@code showResultScreen}
-     * does not, so each fails until the two copies are one body.
+     * A player reaching {@code RESULT_SCREEN} is by definition someone {@code finishGame} never
+     * touched — quitting at {@code END_GAME} releases your roster spot, so the only way here is to
+     * have quit <em>during</em> the round. Every reset {@code finishGame} performs is still owed.
      */
     @Nested
     class ResultScreen {
@@ -168,7 +150,6 @@ class PlayerLifecycleListenerTest extends ListenerTestBase {
                     "the colour has to go, not just the letters match");
         }
 
-        /** Everyone else on this screen was gathered at spawn. They should not be alone at 400,-400. */
         @Test
         void theyAreBroughtToTheResultSpawn() {
             PlayerMock player = arrivingMidRoundShaped("Understudy1");
@@ -180,14 +161,9 @@ class PlayerLifecycleListenerTest extends ListenerTestBase {
         }
 
         /**
-         * The ordering this move uncovered, pinned on its own because it is not a rejoin bug at
-         * all â€” it was in {@code finishGame}, so it hit every player in every round.
-         *
-         * <p>Bukkit will not teleport an entity that is carrying a passenger: {@code teleport}
-         * returns false and does nothing. {@code finishGame} teleported first and dismounted
-         * afterwards, so anyone who ended a round with something riding them silently stayed
-         * where they were. The fixture mounts a pig for exactly this reason; without one the
-         * assertion above passes either way.
+         * Bukkit will not teleport an entity carrying a passenger — {@code teleport} returns false
+         * and does nothing — so dismount has to come first. The fixture mounts a pig for exactly this
+         * reason; without one the assertion above passes either way.
          */
         @Test
         void beingMountedDoesNotStrandThemWhereTheRoundEnded() {
@@ -200,12 +176,7 @@ class PlayerLifecycleListenerTest extends ListenerTestBase {
             assertAtWorldSpawn(player);
         }
 
-        /**
-         * The fifth. I had this one filed under "already works" until the test ran â€” the reveal
-         * being that {@code showResultScreen} is even thinner than reading it suggests: it clears
-         * the inventory but not the level bar above it, so a rejoiner keeps the XP they died with
-         * while everyone beside them was zeroed.
-         */
+        /** Clearing the inventory does not clear the level bar above it. */
         @Test
         void theirLevelIsReset() {
             PlayerMock player = arrivingMidRoundShaped("Understudy1");
@@ -215,8 +186,6 @@ class PlayerLifecycleListenerTest extends ListenerTestBase {
 
             assertEquals(0, player.getLevel());
         }
-
-        // --- what already works, pinned so the reconcile does not cost it -------------------
 
         @Test
         void theyAreInCreative() {
@@ -228,10 +197,7 @@ class PlayerLifecycleListenerTest extends ListenerTestBase {
             assertEquals(GameMode.CREATIVE, player.getGameMode());
         }
 
-        /**
-         * Cleared of what they were carrying, not left empty: the result screen's own buttons go
-         * in straight after, so "empty" is the wrong question to ask.
-         */
+        /** Cleared, not left empty: the result screen's own buttons go in straight after. */
         @Test
         void theRoundsLootDoesNotComeWithThem() {
             PlayerMock player = arrivingMidRoundShaped("Understudy1");
@@ -244,10 +210,6 @@ class PlayerLifecycleListenerTest extends ListenerTestBase {
         }
     }
 
-    /**
-     * The other arms, pinned as they stand. These are not the bug; they are here so the move that
-     * follows cannot quietly redirect one admission to another state.
-     */
     @Nested
     class TheOtherAdmissions {
 
@@ -285,9 +247,7 @@ class PlayerLifecycleListenerTest extends ListenerTestBase {
 
         /**
          * {@code END_GAME} shares the {@code LOBBY} arm with {@code PRE_GAME}, so someone who never
-         * played this round gets lobby treatment while the result screen is still up. That is the
-         * branch carrying candidate 5's dead {@code ENDER_PEARL}; it is pinned as it stands so the
-         * outfitting move does not change it by accident.
+         * played this round gets lobby treatment while the result screen is still up.
          */
         @Test
         void andSoIsAStrangerArrivingOnTheResultScreen() {
@@ -299,11 +259,7 @@ class PlayerLifecycleListenerTest extends ListenerTestBase {
             assertEquals(GameMode.ADVENTURE, player.getGameMode());
         }
 
-        /**
-         * Reconnecting during the countdown deliberately writes nothing: {@code applyStartSetup}
-         * outfits them when the countdown ends, and putting lobby buttons in the hands of someone
-         * about to play would only have to be undone.
-         */
+        /** Deliberately writes nothing: {@code applyStartSetup} outfits them when the countdown ends. */
         @Test
         void reconnectingDuringTheCountdownIsLeftAlone() {
             phase(GameState.STARTING);

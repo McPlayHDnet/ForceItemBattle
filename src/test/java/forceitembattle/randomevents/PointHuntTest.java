@@ -9,12 +9,7 @@ import forceitembattle.util.Text;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.junit.jupiter.api.Test;
 
-/**
- * The Point Hunt tab-footer block: how long the hunt has left.
- *
- * The hunt used to run blind — no way to tell how much of the ten minutes remained until the
- * winner was announced.
- */
+/** The Point Hunt tab-footer block: how long the hunt has left. */
 class PointHuntTest {
 
     private static String rendered(PointHunt hunt) {

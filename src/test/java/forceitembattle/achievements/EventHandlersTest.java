@@ -219,9 +219,8 @@ class EventHandlersTest {
     }
 
     /**
-     * Every handler ignores an event it was not written for. That guard is 22 hand-written
-     * {@code instanceof} checks — the follow-up this pass deliberately did not take, since typing
-     * the event on the handler would make a wrong pairing a compile error instead.
+     * Every handler ignores an event it was not written for. The guard is a hand-written
+     * {@code instanceof} check per handler, so nothing but this makes a wrong pairing visible.
      */
     @Test
     void aHandlerIgnoresAnEventItWasNotWrittenFor() {

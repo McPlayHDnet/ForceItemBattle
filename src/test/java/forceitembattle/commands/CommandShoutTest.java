@@ -21,7 +21,7 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
  *
  * <p>Two forms in one command and they do not interact: with a message it broadcasts once and
  * leaves shout mode exactly as it was; with no argument it flips the mode and says nothing to
- * anybody else. Conflating them â€” having the one-shot form also turn the mode on â€” is the mistake
+ * anybody else. Conflating them — having the one-shot form also turn the mode on — is the mistake
  * the shape invites, so both directions are asserted.
  *
  * <p>The mode itself lives in a {@code static Set<Player>} on the command class, which is why

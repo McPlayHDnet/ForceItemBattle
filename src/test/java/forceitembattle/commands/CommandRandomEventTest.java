@@ -30,7 +30,7 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
  *
  * <p>Small, and worth covering for one reason: it is the only way to put a random event into a
  * known state, so the round-test harness and every manual check of an event start here. What it
- * has to get right is that an unknown name is refused before {@code trigger} is reached â€” and that
+ * has to get right is that an unknown name is refused before {@code trigger} is reached — and that
  * a refusal from the manager, which owns the "one event at a time" rule, reaches the player rather
  * than being swallowed into a silent no-op.
  */

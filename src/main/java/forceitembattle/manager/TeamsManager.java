@@ -27,12 +27,9 @@ import org.bukkit.entity.Player;
 public class TeamsManager implements Manager {
 
     /**
-     * The pairing history gets its own file rather than a key in config.yml, and that is the whole
-     * point of it: config.yml is a deployed artifact here — it ships from the website repo because
-     * it carries the item descriptions — so anything the plugin writes into it is overwritten by
-     * the next deploy. The history lived under {@code teams.lastPairings} in config.yml for exactly
-     * one release, and every restart wiped it, which made the avoidance degrade to a plain shuffle
-     * without saying so. Nothing outside the plugin ever writes this file.
+     * Its own file rather than a key in config.yml: config.yml is a deployed artifact here — it ships
+     * from the website repo because it carries the item descriptions — so anything the plugin writes
+     * into it is overwritten by the next deploy, silently degrading the avoidance to a shuffle.
      */
     private static final String HISTORY_FILE = "team-history.yml";
     private static final String PAIRINGS_PATH = "lastPairings";
@@ -70,9 +67,8 @@ public class TeamsManager implements Manager {
             return YamlConfiguration.loadConfiguration(file).getStringList(PAIRINGS_PATH);
         }
 
-        // Migration off the config.yml key. Only useful on the first boot after this change, and
-        // only on a server whose config.yml has not been redeployed since the last round — which is
-        // the failure this move exists to fix — but it costs one read and beats losing a round.
+        // Migration off the config.yml key: useful only on the first boot after this change, but it
+        // costs one read and beats losing a round.
         return this.forceItemBattle.getConfig().getStringList(LEGACY_CONFIG_PATH);
     }
 
@@ -86,8 +82,7 @@ public class TeamsManager implements Manager {
         int teamSizeLimit = this.getMaxTeamSize();
         int next = 0;
         while (ordered.size() - next >= teamSizeLimit) {
-            // Copied out of the ordering rather than kept as a subList view: Team holds on to what it
-            // is given, and a chain of views over a list we still index into is a trap for later edits.
+            // Copied, not a subList view: Team holds on to what it is given.
             List<ForceItemPlayer> teamPlayers = new ArrayList<>(ordered.subList(next, next + teamSizeLimit));
             next += teamSizeLimit;
 
@@ -118,9 +113,8 @@ public class TeamsManager implements Manager {
             byId.put(player.player().getUniqueId(), player);
         }
 
-        // Each of these means "pair them at random and hope"; say which one it was. Without this the
-        // symptom of a lost history is indistinguishable from bad luck, which is how the config.yml
-        // storage went three rounds unnoticed.
+        // Each of these means "pair at random and hope"; say which. Otherwise a lost history is
+        // indistinguishable from bad luck.
         String skipReason = null;
         if (this.previousPairings.isEmpty()) {
             skipReason = "no pairings recorded from a previous round";
@@ -142,8 +136,7 @@ public class TeamsManager implements Manager {
 
         int repeats = this.countRepeats(ordered);
         if (repeats > 0) {
-            // Genuinely unavoidable at small player counts — two players have exactly one possible
-            // team — so this is a notice, not a failure.
+            // Unavoidable at small player counts, so a notice rather than a failure.
             this.forceItemBattle.getLogger().info("Could not avoid " + repeats + " of the previous round's "
                     + this.previousPairings.size() + " pairing(s) with " + ordered.size() + " players.");
         }
@@ -155,7 +148,6 @@ public class TeamsManager implements Manager {
         return result;
     }
 
-    /** How many of the consecutive pairs in {@code ordered} repeat a team from the previous round. */
     private int countRepeats(List<UUID> ordered) {
         int repeats = 0;
         for (int i = 0; i + 1 < ordered.size(); i += 2) {
@@ -275,11 +267,9 @@ public class TeamsManager implements Manager {
         if (second != null) this.addToTeam(team, second);
 
         this.teams.add(team);
-        // Never set a playerListName here. The tab list is rendered by ScoreboardManager's
-        // scoreboard team (prefix = team display, suffix = current force item), and the client
-        // only applies that prefix/suffix to players who have NO tab-list display name of their
-        // own — giving one member a name makes them skip the team formatting entirely, so the two
-        // halves of a team render differently.
+        // Never set a playerListName here: the client only applies ScoreboardManager's team
+        // prefix/suffix to players who have no tab-list display name of their own, so naming one
+        // member makes the two halves of a team render differently.
         this.forceItemBattle.getScoreboardManager().updateAllPlayers();
 
         String message = "<dark_aqua>You are now in team <green>" + name + " <dark_aqua>with <yellow>";
@@ -337,8 +327,7 @@ public class TeamsManager implements Manager {
             if (players.currentTeam() != null) {
                 players.setCurrentTeam(null);
                 // null, not the plain name: any display name at all makes the client skip the
-                // scoreboard prefix/suffix, which would cost these players their force-item suffix
-                // in tab for the rest of the session.
+                // scoreboard prefix/suffix for the rest of the session.
                 players.player().playerListName(null);
             }
         });

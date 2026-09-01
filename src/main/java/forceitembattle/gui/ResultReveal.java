@@ -24,22 +24,14 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
 /**
- * One owner's turn in the ceremony, dealt out item by item.
+ * One owner's turn in the ceremony, dealt out item by item. Builds the pages; {@link ResultScreen}
+ * renders ones already built.
  *
- * <p>Was half of {@code FinishInventory}, behind a {@code firstTime} boolean that switched between
- * two disjoint bodies: this one, which <em>builds</em> the pages, and {@link ResultScreen}, which
- * renders pages already built. Nothing was shared between the two branches except the border.
- *
- * <h2>Two callbacks, not one</h2>
- *
- * <p>{@code onPagesBuilt} fires when the last item lands and the ticker cancels. {@code
- * onRevealComplete} fires five seconds later, after the title. They are deliberately separate:
- * collapsing them would move the archive write to the later moment, and anyone clicking the
- * {@code [Inventory]} link during the title would open an empty screen.
- *
- * <p>The pages leave through a callback rather than being written here, so this class never touches
- * shared state — {@code FinishInventory} used to reach into {@code Gamemanager} and store them
- * itself.
+ * <p>Two callbacks, deliberately not one: {@code onPagesBuilt} fires when the last item lands, and
+ * {@code onRevealComplete} five seconds later, after the title. Collapsing them moves the archive
+ * write to the later moment, so anyone clicking the {@code [Inventory]} link during the title opens
+ * an empty screen. The pages leave through a callback rather than being written here, so this class
+ * never touches shared state.
  */
 public final class ResultReveal extends InventoryBuilder {
 

@@ -16,20 +16,13 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 
 /**
- * Owns the player-list footer. Composes a compact permanent block (active item
- * pools with a countdown to the next unlock, and remaining jokers) plus, while one
- * is alive, the wandering trader's location and despawn timer — rendered in its
- * original standalone style.
- * <p>
- * This is the single writer of the footer; {@link WanderingTraderManager} only exposes
- * trader state and never touches it. Refreshed once per second from {@link TimerManager}'s
- * tick, after the pool-unlock poll, so the pool countdown flips to "active" on the exact
- * tick the unlock message is announced.
- * <p>
- * A running random event contributes its own block, rendered by the event rather than
- * here — this class owns only when and to whom the footer is pushed. The same tick
- * ordering applies: the event's clock is advanced before this runs, so a concluding
- * event's block is already gone on the tick its winner is announced.
+ * The single writer of the player-list footer; {@link WanderingTraderManager} and the random events
+ * only expose state and never touch it.
+ *
+ * <p>Refreshed once per second from {@link TimerManager}'s tick, <em>after</em> the pool-unlock poll
+ * and after the event clock advances. That ordering is what makes the pool countdown flip to
+ * "active" on the exact tick the unlock is announced, and a concluding event's block disappear on
+ * the tick its winner is.
  */
 public class TabListManager implements Manager {
     private final Roster roster;
@@ -45,11 +38,7 @@ public class TabListManager implements Manager {
         this.wanderingTraderManager = wanderingTraderManager;
     }
 
-    /**
-     * Recomputes and pushes the footer to every online player. Pool and trader info
-     * is global; the joker line is per-player (team-aware). Call once per second
-     * while mid-game.
-     */
+    /** Pool and trader info is global; the joker line is per-player. Call once per second mid-game. */
     public void update() {
         String poolLine = buildPoolLine();
         String timeLine = buildTimeLine();
@@ -63,7 +52,7 @@ public class TabListManager implements Manager {
         }
     }
 
-    /** Clears the footer for everyone. Used pre-game, while paused, and once over. */
+    /** Used pre-game, while paused, and once over. */
     public void clearFooter() {
         for (Player player : Bukkit.getOnlinePlayers()) {
             player.sendPlayerListFooter(Component.empty());
@@ -103,12 +92,8 @@ public class TabListManager implements Manager {
     }
 
     /**
-     * The overworld's time of day, with a day/night marker.
-     *
-     * Always the overworld, whichever dimension the reader is standing in: the nether and end have
-     * no day cycle, so a player checking whether it is safe to go back up wants the surface clock,
-     * not their own. Colour follows day/night as well as the word does, but the word is what makes
-     * it readable to someone who does not know Minecraft's clock off by heart.
+     * Always the overworld, whichever dimension the reader is standing in: the nether and end have no
+     * day cycle, so a player checking whether it is safe to go back up wants the surface clock.
      */
     private String buildTimeLine() {
         World world = Dimension.OVERWORLD.world();
@@ -124,9 +109,8 @@ public class TabListManager implements Manager {
     }
 
     /**
-     * The clock glyph from the resourcepack font, or nothing when the icon map is missing —
-     * {@code getUnicodeFromMaterial} falls back to the literal string "NULL", which would sit in
-     * everyone's tab list forever rather than failing once and visibly.
+     * Nothing when the icon map is missing: {@code getUnicodeFromMaterial} falls back to the literal
+     * string "NULL", which would sit in everyone's tab list forever.
      */
     private String clockIcon() {
         String icon = this.itemDifficultiesManager

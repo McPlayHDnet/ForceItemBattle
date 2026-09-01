@@ -51,13 +51,10 @@ public enum CollectionCategory {
         this.matcher = matcher;
     }
 
-    /**
-     * First category (declaration order) whose predicate accepts the material; OTHER catches the rest.
-     */
+    /** First category in declaration order whose predicate accepts the material. */
     public static CollectionCategory categoryOf(Material material) {
-        // Custom items win regardless of their base material's category, even though CUSTOM_ITEMS is
-        // declared last (so it renders last in the book). Their vanilla material would otherwise be
-        // claimed by an earlier category (nether star -> mob drops, torchflower -> flowers, ...).
+        // Custom items win despite CUSTOM_ITEMS being declared last (so it renders last in the book).
+        // Their vanilla material would otherwise be claimed earlier: nether star -> mob drops, etc.
         if (CustomMaterials.byMaterial(material) != null) {
             return CUSTOM_ITEMS;
         }
@@ -74,21 +71,17 @@ public enum CollectionCategory {
     }
 
     private static boolean isArmorItem(Material material) {
-        // Covers wolf/horse/nautilus armor, which MaterialCategory.isArmor (helmet/chestplate/
-        // leggings/boots only) does not.
+        // The suffix covers wolf/horse/nautilus armour, which MaterialCategory.isArmor does not.
         return MaterialCategory.isArmor(material) || material.name().endsWith("_ARMOR");
     }
 
     private static boolean isFoodItem(Material material) {
         return switch (material.name()) {
-            // Not edible, so MaterialCategory.isFood misses it -- but it is a melon slice and belongs
-            // with the food, not wherever a substring predicate happens to land it.
+            // Not edible, so MaterialCategory.isFood misses these.
             case "POPPED_CHORUS_FRUIT", "CAKE", "SUGAR", "GLISTERING_MELON_SLICE" -> true;
             default -> MaterialCategory.isFood(material);
         };
     }
-
-    // Book-only extensions of the achievement-shared MaterialCategory predicates.
 
     private static boolean isGlass(Material material) {
         String name = material.name();
@@ -109,8 +102,8 @@ public enum CollectionCategory {
         if (name.equals("PRISMARINE_SHARD") || name.equals("PRISMARINE_CRYSTALS")) {
             return false; // guardian drops -> Mob Drops, not stone blocks
         }
-        // isStoneType stays as-is for the achievement (excludes sandstone). The book adds sandstone
-        // and all brick blocks (clay bricks, mud bricks, etc.). Nether/End bricks are claimed earlier.
+        // isStoneType excludes sandstone for the achievement; the book adds it and all brick blocks.
+        // Nether/End bricks are claimed earlier.
         return MaterialCategory.isStoneType(material)
                 || name.contains("SANDSTONE") || name.contains("BRICK") || name.contains("PRISMARINE")
                 || name.contains("SULFUR") || name.contains("CINNABAR") || name.equals("RESIN_BLOCK");
@@ -141,8 +134,6 @@ public enum CollectionCategory {
             default -> false;
         };
     }
-
-    // Book-only predicates; the achievement-shared ones live in MaterialCategory.
 
     // Specific on purpose -- must NOT grab NETHER_WART/NETHER_SPROUTS (plants), crimson/warped wood,
     // or MAGMA_CREAM (a mob drop). QUARTZ blocks land here; raw QUARTZ / NETHER_QUARTZ_ORE earlier.

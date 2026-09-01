@@ -19,12 +19,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * What may be broken, placed and opened during a round, and who was standing nearby when something
- * tried not to be.
- *
- * <p>These are the rules; {@code ProtectionListener} is the adapter that cancels events and says
- * so. The rules lived in the listener until the break, piston, explosion, lava and burn handlers
- * had each assembled their own version of "is this block protected" — which is one question, asked
- * five ways.
+ * tried not to be. These are the rules; {@code ProtectionListener} is the adapter that cancels
+ * events and says so.
  */
 public class ProtectionManager implements Manager {
 
@@ -81,27 +77,22 @@ public class ProtectionManager implements Manager {
     }
 
     /**
-     * Whether these two share a container's ownership.
-     *
-     * <p>This is the score owner's membership and nothing else, which is what {@code squad()}
-     * returns: the team in a team game, the player alone in solo. It used to check the TEAM setting
-     * and then read {@code currentTeam().getPlayers()} — which threw whenever the setting was on
-     * and the breaker had no team, the same mismatch between "team mode" and "on a team" that the
-     * score owner exists to settle.
+     * The score owner's membership and nothing else. Checking the TEAM setting and then reading
+     * {@code currentTeam().getPlayers()} throws whenever the setting is on and the breaker has no
+     * team — the mismatch between "team mode" and "on a team" that the score owner settles.
      */
     public boolean areTeammates(ForceItemPlayer breaker, ForceItemPlayer owner) {
         return breaker.squad().contains(owner);
     }
 
     /**
-     * Whether this may be broken. Pass {@code null} for both actors when nothing is behind the
-     * break — fire, lava, an explosion — which owns nothing and is refused by every rule.
+     * Whether this may be broken. Pass {@code null} for both actors when nothing is behind the break
+     * — fire, lava, an explosion — which owns nothing and is refused by every rule.
      *
-     * <p><b>Two actors, on purpose.</b> The bed rule keys on the {@link Player}, because what it
-     * compares against is respawn locations and it must not protect you from your own bed. The
-     * container rule keys on the roster entry, because ownership and teammates are a score-owner
-     * question. They are usually the same person and are not always both known: someone with no
-     * roster entry still has a respawn point.
+     * <p>Two actors, on purpose: the bed rule keys on the {@link Player} because it compares respawn
+     * locations and must not protect you from your own bed, while the container rule keys on the
+     * roster entry because ownership is a score-owner question. Both are not always known — someone
+     * with no roster entry still has a respawn point.
      */
     public ProtectionVerdict mayBreak(@Nullable Player actor, @Nullable ForceItemPlayer breaker, Block block) {
         if (this.isNearProtectedBed(actor, block.getLocation())) {
@@ -114,9 +105,7 @@ public class ProtectionManager implements Manager {
     }
 
     /**
-     * Whether this may be placed here.
-     *
-     * <p>The hopper rule is a container rule wearing a different hat: a hopper under someone else's
+     * The hopper rule is a container rule wearing a different hat: a hopper under someone else's
      * chest drains it, so placing one is refused exactly where breaking the chest above would be.
      */
     public ProtectionVerdict mayPlace(@Nullable Player actor, @Nullable ForceItemPlayer placer, Block block) {
@@ -130,17 +119,14 @@ public class ProtectionManager implements Manager {
         return ProtectionVerdict.ALLOWED;
     }
 
-    /**
-     * Whether a block is shielded from something with no player behind it. The single question the
-     * explosion, lava and burn handlers each used to assemble for themselves.
-     */
+    /** Whether a block is shielded from something with no player behind it. */
     public boolean isProtectedFromNature(Block block) {
         return this.mayBreak(null, null, block).denied();
     }
 
     /**
-     * Everyone close enough to a location to have caused what happened there, for the operator
-     * notification. The radius is generous on purpose: it is naming suspects, not proving anything.
+     * Everyone close enough to have caused what happened there, for the operator notification. The
+     * radius is generous on purpose: it names suspects, it does not prove anything.
      */
     public List<Player> witnesses(Location location) {
         List<Player> nearby = new ArrayList<>();

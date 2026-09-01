@@ -181,10 +181,7 @@ public final class SettingsInventory extends InventoryBuilder {
                     }
 
                 } else if (inventoryClickEvent.getCurrentItem().getType() == Material.STONE_BUTTON) {
-                    // BACKPACKSIZE is the only stone-button setting left. The gate used to also
-                    // require TRADING, which meant backpack rows could not be adjusted unless
-                    // player trading happened to be on -- two unrelated settings, and trading is
-                    // gone now.
+                    // BACKPACKSIZE is the only stone-button setting.
                     if (!plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK)) {
                         this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);
                         return;

@@ -45,27 +45,19 @@ public class ItemDifficultiesManager implements Manager {
     private Map<Material, String> smallIconUnicodes;
     private Map<Material, String> bigIconUnicodes;
 
-    // Item pools (states) already announced as unlocked this game, so each pool is
-    // only reported once. Cleared per game via resetUnlockAnnouncements().
+    /** Pools already announced this game, so each is only reported once. */
     private final Set<State> announcedUnlockedStates = EnumSet.noneOf(State.class);
 
-    /**
-     * When each pool opens. Per-round state, so it belongs to the manager and not to the
-     * {@link State} enum constants — but the arithmetic behind it is {@link UnlockSchedule}'s.
-     */
+    /** Per-round state, so it belongs to the manager and not to the {@link State} constants. */
     private UnlockSchedule unlockSchedule = UnlockSchedule.percentageBased();
 
     /** Materials per pool, derived from {@link #itemRegistry} once at enable. */
     private final Map<State, List<Material>> itemsByState = new EnumMap<>(State.class);
 
     /**
-     * The generation pool for the current tick: every unlocked item minus the ones the current
-     * settings exclude.
-     *
-     * Cached against {@link PoolKey} because a rebuild walks all ~1,367 registered items and
-     * re-reads three settings per item, while {@link #getAvailableItems()} is called on every item
-     * generation, every back-to-back probability, and once per candidate material when the /items
-     * menu paints — uncached, that last one is an O(n²) scan for a single GUI open.
+     * The generation pool for the current tick. Cached against {@link PoolKey} because a rebuild
+     * walks all ~1,367 registered items, while {@link #getAvailableItems()} is called once per
+     * candidate material when the /items menu paints — uncached that is an O(n²) scan per GUI open.
      */
     private List<Material> availablePool;
     private Set<Material> availablePoolIndex;
@@ -93,12 +85,10 @@ public class ItemDifficultiesManager implements Manager {
         loadDescriptions();
     }
 
-    /** Resets to the percentage-based schedule. */
     public void useDefaultUnlockSchedule() {
         this.applySchedule(UnlockSchedule.percentageBased());
     }
 
-    /** Picks the unlock schedule for a round of {@code durationMinutes}. */
     public void configureUnlockSchedule(int durationMinutes) {
         this.applySchedule(UnlockSchedule.forRound(durationMinutes));
     }
@@ -192,19 +182,15 @@ public class ItemDifficultiesManager implements Manager {
     }
 
     /**
-     * The items a force item can currently be drawn from: every unlocked pool, minus what the
-     * current settings exclude.
-     *
-     * Cached — see {@link #availablePool} — and unmodifiable: the returned list is the live pool
-     * every other reader shares this tick, so a caller that needs to sort or shuffle must copy
-     * first. An in-place edit fails loudly rather than corrupting it for everyone.
+     * The items a force item can currently be drawn from. Unmodifiable and shared: this is the live
+     * pool every other reader has this tick, so a caller that needs to sort or shuffle must copy.
      */
     public List<Material> getAvailableItems() {
         refreshAvailablePool();
         return this.availablePool;
     }
 
-    /** Whether {@code material} is in the current generation pool. O(1), unlike scanning the list. */
+    /** O(1), unlike scanning the list. */
     public boolean itemInList(Material material) {
         refreshAvailablePool();
         return this.availablePoolIndex.contains(material);
@@ -243,11 +229,8 @@ public class ItemDifficultiesManager implements Manager {
     }
 
     /**
-     * Returns the item pools (states) that have just become available this tick —
-     * unlocked by elapsed time and permitted by the current quickie mode — and
-     * haven't been announced yet. Each returned state is marked announced, so a
-     * pool is only ever reported once per game. EARLY is the baseline start pool
-     * and is never announced.
+     * Pools that became available this tick and have not been announced yet. Each returned state is
+     * marked announced, so a pool is only ever reported once per game.
      */
     public List<State> pollNewlyUnlockedStates() {
         announcedUnlockedStates.add(State.EARLY); // baseline pool, never announced
@@ -261,35 +244,26 @@ public class ItemDifficultiesManager implements Manager {
         return newlyUnlocked;
     }
 
-    /**
-     * Clears the per-game record of which pools have been announced, so unlocks
-     * are announced again next round. Call at the start of each game.
-     */
+    /** Call at the start of each game, so unlocks are announced again. */
     public void resetUnlockAnnouncements() {
         announcedUnlockedStates.clear();
     }
 
-    /**
-     * Item pools currently active this tick: permitted by the current quickie mode
-     * and unlocked by elapsed time. Returned in unlock order (EARLY → LATE).
-     */
+    /** Pools active this tick, in unlock order (EARLY → LATE). */
     public List<State> getActiveStates() {
         return this.unlockSchedule.activeAt(
                 elapsedSeconds() / 60, roundSeconds(), this.plugin.getSettings().getQuickieMode());
     }
 
-    /**
-     * The next pool scheduled to unlock, or {@code null} when none remain — all
-     * permitted pools are already active (e.g. capped by the current quickie mode).
-     */
+    /** The next pool to unlock, or {@code null} when every permitted pool is already active. */
     public State getNextState() {
         return this.unlockSchedule.nextAfter(
                 elapsedSeconds() / 60, roundSeconds(), this.plugin.getSettings().getQuickieMode());
     }
 
     /**
-     * Seconds until the next pool unlocks, or {@code -1} when none remain. Reaches 0
-     * on the same tick {@link #pollNewlyUnlockedStates()} announces that pool.
+     * Seconds until the next pool unlocks, or {@code -1} when none remain. Reaches 0 on the same tick
+     * {@link #pollNewlyUnlockedStates()} announces that pool.
      */
     public int secondsUntilNextPool() {
         return this.unlockSchedule.secondsUntilNext(
@@ -300,11 +274,6 @@ public class ItemDifficultiesManager implements Manager {
         return this.plugin.getRoundClock().totalSeconds();
     }
 
-    /**
-     * The third copy of this subtraction, now retired. It read a duration off the game manager and
-     * a remaining time off the timer manager — one of the two edges that made this class and
-     * {@code TimerManager} mutually dependent, for arithmetic the clock can do itself.
-     */
     private int elapsedSeconds() {
         return this.plugin.getRoundClock().elapsedSeconds();
     }
@@ -327,10 +296,7 @@ public class ItemDifficultiesManager implements Manager {
         return items.get(random.nextInt(items.size()));
     }
 
-    /**
-     * Filter out items based on game settings. Applied once when the pool is built, not per draw —
-     * {@link #getAvailableItems()} already hands back a filtered list.
-     */
+    /** Applied once when the pool is built, not per draw. */
     private void filterDisabledItems(Collection<Material> items) {
         GameSettings settings = this.plugin.getSettings();
         boolean hard = settings.isSettingEnabled(GameSetting.HARD);
@@ -355,10 +321,8 @@ public class ItemDifficultiesManager implements Manager {
     }
 
     /**
-     * Turns {@code &}-prefixed colour codes into the section-sign form, the way the deprecated
-     * {@code ChatColor.translateAlternateColorCodes} did. Still a legacy string because both
-     * callers want one: {@code /info} sends it straight to the player, and {@code ItemsInventory}
-     * hands it to {@code setLoreLegacy}.
+     * {@code &}-prefixed colour codes to the section-sign form, as the deprecated
+     * {@code ChatColor.translateAlternateColorCodes} did. Stays a legacy string: both callers want one.
      */
     private static String translateAmpersandCodes(String line) {
         return LegacyComponentSerializer.legacySection()
@@ -1834,20 +1798,16 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.YELLOW_WOOL, State.EARLY);
     }
 
-    /** Tags that describe item properties/requirements. An item can have multiple tags. */
     public enum ItemTag {
-        /** Item requires nether access to obtain */
         NETHER,
-        /** Item requires end access to obtain */
         END,
-        /** Item is extremely hard/unrealistic to obtain in 45 minutes */
+        /** Extremely hard or unrealistic to obtain in 45 minutes. */
         EXTREME
     }
 
     /**
-     * The three item pools, in unlock order. Carries only its own identity — label and colour.
-     * A pool's contents and the point in the round it opens at are per-game facts and stay on
-     * {@link ItemDifficultiesManager}; keep mutable state off these constants.
+     * The three item pools, in unlock order. A pool's contents and the point it opens at are
+     * per-game facts and stay on {@link ItemDifficultiesManager} — keep mutable state off these.
      */
     @Getter
     public enum State {
@@ -1866,7 +1826,6 @@ public class ItemDifficultiesManager implements Manager {
         }
     }
 
-    /** Defines an item with its game state (when it unlocks) and tags (requirements/properties). */
     public record ItemDefinition(Material material, State state, Set<ItemTag> tags) {
         public ItemDefinition(Material material, State state, ItemTag... tags) {
             this(material, state, tags.length == 0 ? Set.of() : EnumSet.copyOf(Arrays.asList(tags)));

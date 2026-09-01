@@ -10,22 +10,9 @@ import org.bukkit.entity.Player;
 /**
  * Tells the operators about something suspicious, without saying the same thing over and over.
  *
- * <h2>Why this is a window and not a set</h2>
- *
- * The rule this replaces kept every message it had ever sent in an {@code ArrayList} and skipped
- * anything already in it. Two things followed, neither intended:
- *
- * <ul>
- *   <li>The list never shrank. Messages carry player names and block coordinates, so the number of
- *       distinct strings is effectively unbounded, and it grew for the life of the server.</li>
- *   <li>A message was shown <em>once, ever</em>. The second time somebody mined at another player's
- *       bed on the same block, nobody was told — including in a later round on the same server.</li>
- * </ul>
- *
- * <p>The intent was plainly "do not spam", not "mention it once and never again", so this keeps the
- * anti-spam behaviour and drops the permanence: a repeat is suppressed for a minute, then reported
- * again. Expired entries are pruned as they are passed, so the map stays the size of what is
- * actually happening rather than of everything that ever has.
+ * <p>A window rather than a set of everything ever sent: a repeat is suppressed for a minute and
+ * then reported again. Messages carry player names and coordinates, so a permanent set both grows
+ * unbounded and silently swallows the second occurrence of anything, rounds later included.
  */
 public final class AdminNotifier {
 
@@ -45,10 +32,8 @@ public final class AdminNotifier {
     }
 
     /**
-     * Whether this message should go out now, recording it as sent when so.
-     *
-     * <p>Separate from the sending because this is the whole rule, and reaching Bukkit to check it
-     * would put it behind a running server.
+     * Whether this message should go out now, recording it as sent when so. Separate from the
+     * sending so the rule can be tested without a running server.
      */
     public boolean claim(String message) {
         long now = this.clock.getAsLong();
@@ -85,7 +70,7 @@ public final class AdminNotifier {
         }
     }
 
-    /** How many messages are currently being suppressed. Exposed so a test can pin the pruning. */
+    /** Exposed so a test can pin the pruning. */
     int trackedMessages() {
         return this.lastSent.size();
     }

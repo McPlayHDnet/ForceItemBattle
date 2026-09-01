@@ -100,10 +100,7 @@ class CommandResultTest {
             when(teamManager.getTeams()).thenReturn(List.of(mock(Team.class)));
         }
 
-        /**
-         * The catch used to have no {@code return}, so a failed parse fell straight through into a
-         * result screen built from two nulls.
-         */
+        /** A failed parse must not fall through into a result screen built from two nulls. */
         @Test
         void textThatIsNotANumberIsRefused() {
             assertTold(run("#banana"), "Invalid team.");

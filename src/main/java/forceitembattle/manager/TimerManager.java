@@ -28,10 +28,8 @@ import org.bukkit.scheduler.BukkitTask;
 /**
  * Drives the round clock once a second and renders it.
  *
- * <p>Everything here is presentation or plumbing: boss bars, action bars, titles, sounds, the
- * per-second fan-out to the other managers, and persisting the remaining time across a restart.
- * The rule — how much is left, and which seconds are worth announcing — is {@link RoundClock},
- * which knows nothing about Bukkit and can be run a thousand seconds forward in a test.
+ * <p>Everything here is presentation or plumbing. The rule — how much is left, and which seconds are
+ * worth announcing — is {@link RoundClock}, which knows nothing about Bukkit.
  */
 public class TimerManager implements Manager {
 
@@ -41,11 +39,7 @@ public class TimerManager implements Manager {
     private final ForceItemBattle forceItemBattle;
     @Getter
     private final Map<UUID, BossBar> bossBar = new HashMap<>();
-    /**
-     * Driven here, owned by the plugin. This manager still ticks it once a second and renders what
-     * it reports; it no longer holds the only reference, which is what let
-     * {@code ItemDifficultiesManager} stop reaching through this class for the time.
-     */
+    /** Driven here, owned by the plugin, so nothing has to reach through this class for the time. */
     private final RoundClock clock;
     private BukkitTask timerTask;
 
@@ -117,7 +111,6 @@ public class TimerManager implements Manager {
         }
     }
 
-    /** The action bar and boss bar of someone actually hunting an item. */
     private void sendPlayingHud(Player player, ForceItemPlayer forceItemPlayer) {
         Material material = forceItemPlayer.activeMaterial();
 
@@ -125,9 +118,8 @@ public class TimerManager implements Manager {
                 + TimeFormat.humanised(this.getTimeLeft()) + "</b></gradient>";
         String scoreText = "";
         if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.SCORE)) {
-            // Only the label differs by mode; the number is the active score either way. Whose
-            // score it is is a question about this player's score owner, not about the TEAM
-            // setting — a spectator-turned-player with no team would disagree with the setting.
+            // isInTeam(), not the TEAM setting: a spectator-turned-player holds no team and would
+            // disagree with it.
             scoreText = "<dark_gray>| <green>" + (forceItemPlayer.isInTeam() ? "Team score: " : "Your score: ")
                     + "<white>" + forceItemPlayer.activeScore();
         }
@@ -167,8 +159,8 @@ public class TimerManager implements Manager {
                 forceItemBattle.getRandomEventManager().tick(clock.secondsLeft());
                 announceUnlockedPools();
 
-                // Refresh the tab footer after the pool poll so its pool countdown
-                // flips to "active" on the same tick the unlock message is sent.
+                // After the pool poll, so the footer countdown flips to "active" on the same tick the
+                // unlock message is sent.
                 forceItemBattle.getTabListManager().update();
 
                 milestone.ifPresent(TimerManager.this::announceMilestone);
@@ -195,11 +187,7 @@ public class TimerManager implements Manager {
         }
     }
 
-    /**
-     * Renders one countdown milestone. The final five seconds put the bare number in the headline,
-     * because by then the number is the whole message; everything above that is a line of warning
-     * text under an empty headline.
-     */
+    /** The final five seconds put the bare number in the headline; above that, warning text. */
     private void announceMilestone(int secondsLeft) {
         Title title = RoundClock.isFinalCountdown(secondsLeft)
                 ? Title.title(Text.of("<red>" + secondsLeft), Component.empty(), TIMES)

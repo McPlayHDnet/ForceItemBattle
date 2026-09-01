@@ -58,11 +58,7 @@ public class ClickableItemsListener implements Listener {
      */
     private static final long BRUSH_SWEEP_COOLDOWN_MS = 1500L;
 
-    /**
-     * Ground loose enough to sweep for a find. Stone, wood and the like give the brush nothing to
-     * read, so the locator only answers on soil — both snows count, since a layer of it is what
-     * covers the ground you would be standing on.
-     */
+    /** Ground loose enough to sweep. Both snows count: a layer of it covers ground you would stand on. */
     private static final Set<Material> SWEEPABLE_GROUND = Set.of(
             Material.GRASS_BLOCK,
             Material.SAND,
@@ -72,7 +68,7 @@ public class ClickableItemsListener implements Listener {
             Material.SNOW,
             Material.SNOW_BLOCK
     );
-    /** Still needed: this listener opens four GUIs, and the GUI layer has not been swept. */
+    /** Still needed: this listener opens four GUIs, which take the plugin. */
     private final ForceItemBattle plugin;
     private final Roster roster;
     private final BackpackManager backpackManager;
@@ -94,18 +90,9 @@ public class ClickableItemsListener implements Listener {
     }
 
     /**
-     * Every menu button, in every phase.
-     *
-     * <p>Was two handlers with identical preambles, one per phase, each switching on raw
-     * {@link Material}. Two things came out of that arrangement and both are gone. Anything that
-     * looked like a button was one, so a grass block held to build with teleported you and a
-     * spyglass dropped you into spectator mode; the identification is now a marker and never
-     * consults the material. And {@code ENDER_EYE} meant "play this round" before a round and
-     * "teleport to the End" after one, a collision only visible if you read both halves of this
-     * file at once; they are two constants now and the marker tells them apart.
-     *
-     * <p>The phase check is the table's, not this method's: a button that is not live in the
-     * current phase is not a button right now.
+     * Every menu button, in every phase. Identification is by marker and never consults the material,
+     * so an item that merely looks like a button is not one. The phase check belongs to the table:
+     * a button not live in the current phase is not a button right now.
      */
     @EventHandler(priority = EventPriority.HIGH)
     public void onMenuButton(PlayerInteractEvent e) {
@@ -151,11 +138,9 @@ public class ClickableItemsListener implements Listener {
     }
 
     /**
-     * Opting into or out of the round about to start, and flipping slot 8 to the other button.
-     *
-     * <p>The roster entry is fetched here rather than gated on by the table: it is the only pair of
-     * buttons that needs one, and "you cannot opt in or out of a round you hold no place in" is
-     * this button's own rule rather than a property of being a menu item.
+     * Opting into or out of the round about to start, and flipping slot 8 to the other button. The
+     * roster entry is fetched here rather than gated on by the table: this is the only pair of
+     * buttons that needs one.
      */
     private void setPlaying(Player player, boolean playing) {
         ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());
@@ -233,8 +218,7 @@ public class ClickableItemsListener implements Listener {
         Locator locator = this.locatorManager.getLocatorByItem(e.getItem());
         if (locator != null) {
             if (locator.getUse() == Locator.Use.BRUSH_GROUND) {
-                // A brush is still a brush: on something that can actually be brushed, stay out of
-                // the way and let the player dig their sherd out.
+                // A brush is still a brush: on something brushable, let the player dig their sherd out.
                 if (e.getClickedBlock() != null && e.getClickedBlock().getState() instanceof BrushableBlock) {
                     return;
                 }
@@ -296,8 +280,6 @@ public class ClickableItemsListener implements Listener {
             stack.setAmount(forceItemPlayer.isInTeam() ? stack.getAmount() - 1 : jokersLeft);
             player.getInventory().setItem(foundSlot, stack);
         } else {
-            // Was stack.setType(AIR), which Paper deprecated outright -- clearing the slot is
-            // what it meant.
             player.getInventory().setItem(foundSlot, null);
         }
 

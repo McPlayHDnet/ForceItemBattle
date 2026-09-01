@@ -16,13 +16,10 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
 /**
  * {@link PvPListener}'s outermost gate: <b>nothing takes damage unless the round is running</b>.
  *
- * <p>This is what makes a pause genuinely safe, and it is the reason the pause gaps candidate 7
- * closed were never exploitable from inside. Players are pinned to their block by
+ * <p>This is what makes a pause genuinely safe. Players are pinned to their block by
  * {@code GameRulesListener}, locked out of every inventory action by {@code PreGameLockListener},
  * and — here — cannot be hurt at all. A player standing in lava when {@code /pause} is typed does
  * not burn, so a death during a pause cannot happen and nothing downstream has to cope with one.
- *
- * <p>Untested until now because it needs a real player and a real damage event.
  */
 class PvPListenerTest extends ListenerTestBase {
 

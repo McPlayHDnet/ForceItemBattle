@@ -27,22 +27,15 @@ import org.junit.jupiter.api.Test;
 /**
  * The contracts other repositories parse out of this one, enforced here rather than reviewed.
  *
- * <h2>Why this test is unlike every other test in this suite</h2>
- *
- * <p>It asserts on <em>source text</em>, which is normally a smell. Here the source text is the
- * interface: {@code website/scripts/vendor-pool.mjs} fetches two files of this plugin from GitHub
- * {@code main} and parses them with regular expressions to build the site's item index. There is no
- * endpoint, no artifact and no schema between the two repositories — the format of these files
- * <em>is</em> the API, and renaming a file or reformatting a line is a breaking change to a
- * consumer that cannot see this repository's compiler.
- *
- * <p>The failure mode is what makes it worth a test. The website's script only refuses outright
- * when it parses <em>zero</em> entries. A change that breaks <em>some</em> of them parses fine and
- * quietly drops items from the site, which nobody notices until someone goes looking for an item
- * that is missing.
+ * <p>It asserts on <em>source text</em> because here the source text is the interface:
+ * {@code website/scripts/vendor-pool.mjs} fetches two files of this plugin from GitHub {@code main}
+ * and parses them with regular expressions. There is no endpoint, artifact or schema between the two
+ * repositories, so renaming a file or reformatting a line is a breaking change to a consumer that
+ * cannot see this repository's compiler — and the consumer only refuses outright when it parses
+ * <em>zero</em> entries, so breaking <em>some</em> quietly drops items from the site.
  *
  * <p>The patterns below are copied verbatim from the consumer. When the consumer changes, change
- * them here in the same commit — that is the whole point of the file.
+ * them here in the same commit.
  */
 class CrossRepoContractTest {
 
@@ -71,8 +64,6 @@ class CrossRepoContractTest {
         return Files.readString(path, StandardCharsets.UTF_8);
     }
 
-    // --- the item pool ------------------------------------------------------------------------
-
     @Test
     void theItemPoolSourceIsWhereTheWebsiteLooksForIt() throws IOException {
         assertFalse(read(ITEM_MANAGER).isBlank());
@@ -92,13 +83,9 @@ class CrossRepoContractTest {
 
     /**
      * The check that matters: <b>what the game registers must equal what the website can parse</b>.
-     *
-     * <p>An earlier version of this test compared two regexes against each other and proved
-     * nothing — a deliberately broken call still matched, because {@code \s*} spans newlines in
-     * both Java and JavaScript. Comparing the parsed count against the <em>runtime</em> registry is
-     * the real invariant: a registration made through any shape the pattern cannot see (a constant
-     * instead of a literal, a loop, a helper method) registers in game and is silently absent from
-     * the site.
+     * Comparing against the <em>runtime</em> registry, not against a second regex — a registration
+     * made through any shape the pattern cannot see (a constant instead of a literal, a loop, a
+     * helper method) registers in game and is silently absent from the site.
      */
     @Test
     void thePoolTheGameRegistersIsThePoolTheWebsiteCanSee() throws IOException {
@@ -114,7 +101,6 @@ class CrossRepoContractTest {
                         + "vanishes from the site's item index without any error");
     }
 
-    /** Boots the item manager the way {@code ItemPoolTest} does and counts what it registered. */
     private int registeredAtRuntime() {
         ForceItemBattle plugin = mock(ForceItemBattle.class);
         GameSettings settings = mock(GameSettings.class);
@@ -130,8 +116,6 @@ class CrossRepoContractTest {
         items.enable();
         return items.getAllItems().size();
     }
-
-    // --- the custom items ---------------------------------------------------------------------
 
     @Test
     void theCustomItemSourceIsWhereTheWebsiteLooksForIt() throws IOException {
@@ -161,14 +145,10 @@ class CrossRepoContractTest {
                         + "would show their vanilla names instead");
     }
 
-    // --- the set that keeps two pool items named correctly --------------------------------------
-
     /**
-     * {@code SHARES_MATERIAL_WITH_POOL_ITEM} is read by the website so it does <em>not</em> rename
-     * a brush or a totem to its custom name — they are real force items in their own right. The
-     * consumer refuses to build if it parses this as empty, so a formatting change here is one of
-     * the few that fails loudly rather than quietly; it is pinned anyway because the pattern is
-     * sensitive to the {@code Set.of(} spelling and to the line break before it.
+     * The website reads {@code SHARES_MATERIAL_WITH_POOL_ITEM} so it does <em>not</em> rename a brush
+     * or a totem to its custom name. Pinned because the pattern is sensitive to the {@code Set.of(}
+     * spelling and to the line break before it.
      */
     @Test
     void theSharedMaterialSetStillParses() throws IOException {
@@ -186,19 +166,11 @@ class CrossRepoContractTest {
         assertEquals(Set.of("KILN_FIRED_BRUSH", "TOTEM_OF_ANTIMATTER"), parsed);
     }
 
-    // --- the wheel's hand-maintained copy --------------------------------------------------------
-
     /**
-     * The one contract with no parser behind it at all.
-     *
-     * <p>{@code wheel-backend/src/server/services/itemPool.js} keeps a hand-written
-     * {@code CUSTOM_OWNED_MATERIALS} set excluding the materials that custom items own outright, so
-     * they do not also appear in the wheel's common pool under their vanilla names. It is
-     * maintained by hand in another repository and guarded only by a {@code [WARNING]} log line.
-     *
-     * <p>The number it must contain is derivable here: every custom item except the two that share
-     * their material with a real pool item. If this fails, a custom item was added or removed and
-     * the wheel needs the same edit — that repository has no way to find out on its own.
+     * The one contract with no parser behind it. {@code wheel-backend/src/server/services/itemPool.js}
+     * keeps a hand-written {@code CUSTOM_OWNED_MATERIALS} set, maintained in another repository and
+     * guarded only by a {@code [WARNING]} log line. If this fails, a custom item was added or removed
+     * and the wheel needs the same edit — that repository has no way to find out on its own.
      */
     @Test
     void theWheelsExclusionListStillHasTheRightSize() {

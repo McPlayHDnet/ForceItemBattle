@@ -251,10 +251,7 @@ class CustomCommandTest {
     @Nested
     class Ordering {
 
-        /**
-         * The list is ordered and the first failure is what the sender is told. Each command kept
-         * the order its hand-written checks had, so migrating changed no wording.
-         */
+        /** The list is ordered and the first failure is what the sender is told. */
         @Test
         void theFirstFailingGateIsTheOneReported() {
             ProbeCommand command = probe(contextWith(GameState.PRE_GAME, new Roster()), OP, ROUND_RUNNING);

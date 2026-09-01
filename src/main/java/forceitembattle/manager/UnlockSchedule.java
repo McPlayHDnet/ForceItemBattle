@@ -9,11 +9,9 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * When each item pool opens during a round — see {@code CONTEXT.md § Item Pool}.
- *
- * <p>Everything here takes the clock as arguments rather than reading it. {@link
- * ItemDifficultiesManager} still owns the clock, the settings and the items; this owns only the
- * arithmetic, which is what makes it answerable without a plugin.
+ * When each item pool opens during a round. Everything here takes the clock as arguments rather than
+ * reading it — {@link ItemDifficultiesManager} owns the clock, the settings and the items; this owns
+ * only the arithmetic, which is what makes it answerable without a plugin.
  */
 public final class UnlockSchedule {
 
@@ -33,20 +31,15 @@ public final class UnlockSchedule {
         this.percentages.put(State.LATE, late);
     }
 
-    /**
-     * Percentage-based unlock points, used for any round short enough that fixed minute marks would
-     * put a pool past the end of the game.
-     */
+    /** For any round short enough that fixed minute marks would put a pool past the end of the game. */
     public static UnlockSchedule percentageBased() {
         return new UnlockSchedule(0, 11.11, 28.88);
     }
 
     /**
-     * The schedule for a round of {@code durationMinutes}.
-     *
-     * <p>Long rounds get fixed marks — MID at 5 minutes, LATE at 15 — because on a 90-minute game
-     * the percentage schedule would hold LATE back for 26 minutes. Below that threshold the
-     * percentages keep the three pools spread across the round instead of bunched at the start.
+     * Long rounds get fixed marks — MID at 5 minutes, LATE at 15 — because on a 90-minute game the
+     * percentage schedule would hold LATE back for 26 minutes. Below that threshold the percentages
+     * keep the three pools spread across the round instead of bunched at the start.
      */
     public static UnlockSchedule forRound(int durationMinutes) {
         if (durationMinutes < FIXED_SCHEDULE_MIN_MINUTES) {
@@ -57,19 +50,13 @@ public final class UnlockSchedule {
                 (FIXED_LATE_UNLOCK_MINUTES / (double) durationMinutes) * 100);
     }
 
-    /**
-     * The minute mark a pool opens at in a round of {@code durationSeconds}. Every caller that needs
-     * an unlock time goes through here, so the schedule is only defined once.
-     */
+    /** Every caller that needs an unlock time goes through here, so the schedule is defined once. */
     public int unlockMinute(State state, int durationSeconds) {
         double percentage = this.percentages.getOrDefault(state, 0d);
         return (int) Math.round((durationSeconds * (percentage / 100)) / 60);
     }
 
-    /**
-     * Pools active at this point in the round: permitted by the quickie mode and unlocked by
-     * elapsed time. Returned in unlock order (EARLY → LATE).
-     */
+    /** Pools active at this point in the round, in unlock order (EARLY → LATE). */
     public List<State> activeAt(int elapsedMinutes, int durationSeconds, QuickieMode quickieMode) {
         List<State> active = new ArrayList<>();
         for (State state : State.VALUES) {
@@ -81,8 +68,8 @@ public final class UnlockSchedule {
     }
 
     /**
-     * The next pool scheduled to open, or {@code null} when none remain — every permitted pool is
-     * already active, which is also what a capping quickie mode looks like from here.
+     * The next pool to open, or {@code null} when every permitted pool is already active — which is
+     * also what a capping quickie mode looks like from here.
      */
     @Nullable
     public State nextAfter(int elapsedMinutes, int durationSeconds, QuickieMode quickieMode) {
@@ -106,7 +93,6 @@ public final class UnlockSchedule {
         return Math.max(0, this.unlockMinute(next, durationSeconds) * 60 - elapsedSeconds);
     }
 
-    /** Whether the quickie mode lets this pool open at all. */
     static boolean allows(QuickieMode quickieMode, State state) {
         return switch (quickieMode) {
             case DISABLED -> true;

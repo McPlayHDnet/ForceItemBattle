@@ -29,7 +29,7 @@ public class PositionManager implements Manager {
     private static final long FOOTPRINT_REDRAW_TICKS = 10L;
     private static final int FOOTPRINT_COUNT = 12;
     private static final double FOOTPRINT_STRIDE = 1.4;
-    /** Sideways offset of each print from the walking line, alternating left and right. */
+    /** Sideways offset from the walking line, alternating left and right. */
     private static final double FOOTPRINT_STRIDE_WIDTH = 0.3;
     private static final float FOOTPRINT_DUST_SIZE = 0.7f;
     /** How far above and below the player's feet a step looks for ground. */
@@ -82,7 +82,7 @@ public class PositionManager implements Manager {
         new BukkitRunnable() {
             private static final double SPACING = 0.5;
             private static final double FLOW_STEP = 0.25;
-            /** Horizontal distance within which the line reveals the target's depth; equals the line's max reach. */
+            /** Horizontal distance within which the line reveals the target's depth. */
             private static final double DEPTH_REVEAL_DISTANCE = 50 * SPACING;
             int current = 0;
 
@@ -97,9 +97,8 @@ public class PositionManager implements Manager {
             }
 
             /**
-             * Guides horizontally towards the target's x/z while it is still far below, so the line
-             * doesn't dip into the ground long before the dig spot is reached. Only once close,
-             * the line angles down to signal where to dig.
+             * Aims level while the target is still far below, so the line does not dip into the
+             * ground long before the dig spot; it only angles down once close.
              */
             private Location aim(Location from) {
                 double dx = target.getX() - from.getX();
@@ -116,20 +115,15 @@ public class PositionManager implements Manager {
         }.runTaskTimer(this.plugin, 0L, 10L);
     }
 
-    /**
-     * Dusts a short-lived (~5s) line of footprints across the ground towards the target, as if
-     * someone had already walked it.
-     */
+    /** A short-lived (~5s) line of footprints across the ground towards the target. */
     public void playFootprintTrail(@NonNull Player player, @NonNull Location position, Color color) {
         if (player.getWorld() != position.getWorld()) return;
         this.createFootprintTrail(player, position, color, 10).runTaskTimer(this.plugin, 0L, FOOTPRINT_REDRAW_TICKS);
     }
 
     /**
-     * Starts a footprint trail (see {@link #playFootprintTrail}) that keeps redrawing until the
-     * returned task is cancelled by the caller. Dust only lives about a second, so the trail is
-     * laid again every redraw — often enough that it reads as standing there rather than blinking,
-     * and re-anchored on the player each time, so it always leads away from where they are now.
+     * A footprint trail that keeps redrawing until the returned task is cancelled. Re-anchored on the
+     * player each redraw, so it always leads away from where they are now.
      *
      * @return the trail task, or null when the player is in another world
      */
@@ -160,14 +154,12 @@ public class PositionManager implements Manager {
     }
 
     /**
-     * One full trail of prints, from the player's feet towards the target.
+     * One full trail of prints, from the player's feet towards the target. Each print snaps to
+     * whatever a walker would step on nearby rather than to the world surface — underground the
+     * surface is the roof of the cave, and the trail would be drawn in the ceiling.
      *
-     * <p>Each print is snapped to whatever a walker would step on near that spot rather than to the
-     * world surface: underground the surface is the roof of the cave, and the trail would be drawn
-     * in the ceiling. A step with no ground under it (a cliff edge, a gap) is simply skipped.
-     *
-     * <p>Reads blocks, so this only ever runs on the main thread — the async locator session
-     * schedules the task rather than drawing itself.
+     * <p>Reads blocks, so main thread only: the async locator session schedules the task rather than
+     * drawing itself.
      */
     private static void drawFootprintFrame(Player player, Location position, Particle.DustOptions dust) {
         Location from = player.getLocation();
@@ -207,7 +199,6 @@ public class PositionManager implements Manager {
         return null;
     }
 
-    /** One print: a small oval of dust, long side along the direction of travel. */
     private static void drawFootprint(Player player, double x, double y, double z,
                                       double forwardX, double forwardZ, Particle.DustOptions dust) {
         for (double[] offset : FOOTPRINT_SHAPE) {
@@ -220,9 +211,8 @@ public class PositionManager implements Manager {
     }
 
     /**
-     * Draws a short-lived (~5s) surface marker: a tall rising particle beam with ground rings,
-     * marking the exact spot to dig at. The location must be resolved upfront
-     * (e.g. highest surface block), as this only spawns particles.
+     * A short-lived (~5s) beam with ground rings marking the spot to dig at. The location must be
+     * resolved upfront — this only spawns particles.
      */
     public void playSurfaceMarker(@NonNull Player player, @NonNull Location surface, Color color) {
         if (player.getWorld() != surface.getWorld()) return;
@@ -230,8 +220,7 @@ public class PositionManager implements Manager {
     }
 
     /**
-     * Starts a persistent surface marker (see {@link #playSurfaceMarker}) that keeps redrawing
-     * until the returned task is cancelled by the caller.
+     * A surface marker that keeps redrawing until the returned task is cancelled.
      *
      * @return the marker task, or null when the player is in another world
      */

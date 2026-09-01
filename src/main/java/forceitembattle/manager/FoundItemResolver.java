@@ -19,36 +19,18 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.Sound;
 
 /**
- * What happens when a player obtains their force item.
+ * What happens when a player obtains their force item. {@code FoundItemListener} is the adapter that
+ * unwraps a Bukkit event into a {@link Find}; everything a find <em>means</em> is here.
  *
- * <h2>The order is the point</h2>
+ * <p>The order in {@link #resolve} is load-bearing. Two constraints hold it in place:
  *
- * Nine things happen on a find and several of them read state the others destroy, so the sequence
- * below is load-bearing rather than incidental:
- *
- * <ol>
- *   <li>{@link FindOutcome} is computed <b>first</b>. It measures how long the item took, which
- *       means reading the assignment stamp before step 5 overwrites it.</li>
- *   <li>The find is announced, unless a back-to-back is about to announce itself with better
- *       information.</li>
- *   <li>The point and the bell land on the score owner, and the lead is re-evaluated.</li>
- *   <li>The owner advances to its next item.</li>
- *   <li>Stats are written, using the elapsed time measured in step 1 — which is why it had to be
- *       measured there, since the advance has already overwritten the stamp by now.</li>
+ * <ul>
+ *   <li>{@link FindOutcome} is computed <b>first</b>, because it measures how long the item took and
+ *       the advance overwrites the assignment stamp it reads.</li>
  *   <li>The back-to-back check runs <b>after</b> the advance, because it asks whether the
- *       <em>new</em> item is already owned. Run it earlier and it inspects the item just found,
- *       which is owned by definition, and every find becomes a chain.</li>
- *   <li>The running random event gets its look last, so it sees a settled world.</li>
- * </ol>
- *
- * <p>{@code FoundItemListener} is now the adapter that unwraps a Bukkit event into a
- * {@link Find}; everything a find <em>means</em> is here.
- *
- * <h2>On the constructor</h2>
- *
- * <p>Eight collaborators is a lot, and that is the honest width of a find. Taking a
- * {@code ForceItemBattle} instead made the same fan-out reach through one field, where it measured
- * nothing and could grow unnoticed. If this list gets longer, that is the signal it always was.
+ *       <em>new</em> item is already owned. Earlier, it inspects the item just found — owned by
+ *       definition — and every find becomes a chain.</li>
+ * </ul>
  */
 @RequiredArgsConstructor
 public class FoundItemResolver implements Manager {
@@ -63,15 +45,12 @@ public class FoundItemResolver implements Manager {
     private final FIBServiceClient fibService;
 
     /**
-     * Resolves one find, start to finish.
-     *
-     * <p>Re-entrant by design: step 6 can schedule another find a tick later when the next item is
-     * already owned, which is how a back-to-back chain runs.
+     * Re-entrant by design: the back-to-back check can schedule another find a tick later when the
+     * next item is already owned, which is how a chain runs.
      */
     public void resolve(Find find) {
-        // The event permits a find with no stack, and Find carries that through as a null
-        // material. Nothing below can do anything with one: it is announced by name, recorded by
-        // name, and stored on the found-list.
+        // The event permits a find with no stack, which Find carries through as a null material.
+        // Nothing below can do anything with one — an item is announced and recorded by name.
         if (find.material() == null) {
             return;
         }
@@ -110,7 +89,6 @@ public class FoundItemResolver implements Manager {
         GameBroadcast.announce(message, find.finder(), context);
     }
 
-    /** The point, the bell for everyone it belongs to, and the lead re-check. */
     private void score(Find find, GameContext context) {
         ForceItemPlayer finder = find.finder();
         BackToBack backToBack = new BackToBack(find.backToBack());

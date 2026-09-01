@@ -10,13 +10,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
-/**
- * {@link RoundStart}: what a round is going to be, before anything is written.
- *
- * <p>Every assertion here used to require a running server and enough connected clients to move the
- * head-count across its threshold — the rules were inside {@code CommandStart}'s argument handler,
- * interleaved with broadcasts, a config write and three manager calls.
- */
+/** {@link RoundStart}: what a round is going to be, before anything is written. */
 class RoundStartTest {
 
     private static GamePreset preset(int countdown, int jokers) {

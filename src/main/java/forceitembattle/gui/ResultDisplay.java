@@ -9,10 +9,9 @@ import org.bukkit.entity.Player;
 /**
  * How a {@link ScoreOwner} is named on the result screens.
  *
- * <p>Presentation, so it lives here rather than on {@code ScoreOwner} or on the ceremony's
- * {@code Reveal}. {@code ScoreOwner} is a scoring type — {@code CONTEXT.md § Team} records that a
- * team's name and colour are the <em>social</em> half and have no solo counterpart — and giving it a
- * display name is how that split starts eroding. One branch, stated once, on the drawing side.
+ * <p>Presentation, so it lives here rather than on {@code ScoreOwner}, which is a scoring type — a
+ * team's name and colour are its social half and have no solo counterpart, and giving the interface
+ * a display name is how that split starts eroding.
  */
 final class ResultDisplay {
 
@@ -46,11 +45,8 @@ final class ResultDisplay {
     }
 
     /**
-     * The member who handed this item in, or null when it cannot be attributed.
-     *
-     * <p>Reads {@code members()} rather than a team's player list, so it is the same lookup for
-     * both kinds of owner. Whether it is <em>shown</em> is a different question — see
-     * {@link #attributesCollectors(ScoreOwner)}.
+     * The member who handed this item in, or null when it cannot be attributed. Whether it is
+     * <em>shown</em> is {@link #attributesCollectors(ScoreOwner)}.
      */
     static String collectorName(ScoreOwner owner, java.util.UUID collectedBy) {
         if (collectedBy == null) {
@@ -65,11 +61,8 @@ final class ResultDisplay {
     }
 
     /**
-     * Whether the screen names who collected each item.
-     *
-     * <p>More than one member is the actual condition — attribution exists because several people
-     * could have found it. It used to be written as "is this a team", which is the same thing only
-     * for as long as teams are the only owner with members to tell apart.
+     * Whether the screen names who collected each item. More than one member is the actual condition,
+     * not "is this a team" — those coincide only while teams are the sole owner with members.
      */
     static boolean attributesCollectors(ScoreOwner owner) {
         return owner.members().size() > 1;

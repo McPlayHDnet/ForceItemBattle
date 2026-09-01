@@ -26,9 +26,6 @@ import org.mockbukkit.mockbukkit.MockBukkit;
  * just before it. Either one broken puts items in the wrong bucket of the collection book, or
  * removes a whole category from it, and nothing else would say so.
  *
- * <p>This is the same shape of hazard as the wood-category bug found earlier in this pass — a
- * matcher table where order decides the answer and the ordering is a comment.
- *
  * <p>Needs a server, which was not obvious: {@code isFoodItem} asks {@code Material.isEdible()},
  * and on Paper 26 that resolves through the item registry. Without one, MockBukkit reports a
  * version mismatch — its guess at why its registry is empty — several frames from the actual cause.
@@ -45,7 +42,6 @@ class CollectionCategoryTest {
         MockBukkit.unmock();
     }
 
-    /** The MUST from the class javadoc, made a failure instead of a hope. */
     @Test
     void otherIsLast() {
         CollectionCategory[] values = CollectionCategory.values();
@@ -54,7 +50,6 @@ class CollectionCategoryTest {
                 "OTHER is the fallback; anything declared after it can never be reached");
     }
 
-    /** The second ordering rule, from the comment on {@code isUtility}. */
     @Test
     void theUtilityCatchAllSitsJustBeforeOther() {
         CollectionCategory[] values = CollectionCategory.values();
@@ -65,11 +60,9 @@ class CollectionCategoryTest {
     }
 
     /**
-     * Total: every material lands somewhere, so nothing can fall out of the book.
-     *
-     * <p>Legacy materials are skipped. They are pre-1.13 compatibility aliases, they need a live
-     * server to resolve at all ({@code Bukkit.getUnsafe()}), and the collection catalogue is built
-     * from the register table, which contains none of them.
+     * Every material lands somewhere, so nothing can fall out of the book. Legacy materials are
+     * skipped: pre-1.13 aliases that need {@code Bukkit.getUnsafe()} to resolve at all, and the
+     * catalogue is built from the register table, which contains none of them.
      */
     @Test
     void everyMaterialGetsACategory() {
@@ -82,11 +75,8 @@ class CollectionCategoryTest {
     }
 
     /**
-     * No category is unreachable.
-     *
-     * <p>The failure this catches: a category whose materials are all claimed by an earlier
-     * predicate can never be returned, so it renders as an empty page in the collection book while
-     * looking perfectly correct in the source. Only walking the whole material registry finds it.
+     * A category whose materials are all claimed by an earlier predicate can never be returned, so it
+     * renders as an empty page while looking correct in the source.
      */
     @Test
     void everyCategoryIsReachableBySomeMaterial() {
@@ -106,9 +96,8 @@ class CollectionCategoryTest {
     }
 
     /**
-     * A custom item beats whatever its base material would otherwise be sorted as — checked before
-     * the loop precisely because {@code CUSTOM_ITEMS} is declared late so it renders last in the
-     * book. Nether Star would be a mob drop; Torchflower would be a flower.
+     * A custom item beats whatever its base material would otherwise sort as — checked before the
+     * loop precisely because {@code CUSTOM_ITEMS} is declared late so it renders last in the book.
      */
     @Test
     void aCustomItemBeatsItsBaseMaterialsCategory() {
@@ -123,14 +112,9 @@ class CollectionCategoryTest {
     }
 
     /**
-     * The exception, and it is deliberate: two custom items share their material with a real force
-     * item. A brush and a totem are LATE/EXTREME pool items in their own right, so the Kiln-Fired
-     * Brush and the Totem of Antimatter ride alongside them rather than claiming the material —
-     * {@code CustomMaterials.BY_MATERIAL} excludes them for exactly this reason.
-     *
-     * <p>So the base material keeps its ordinary category, and the collection book files a brush
-     * under tools rather than swallowing it into the custom page. Asserting the opposite is what
-     * this test was written as first, and the code was right.
+     * The deliberate exception: two custom items share their material with a real force item, so
+     * {@code CustomMaterials.BY_MATERIAL} excludes them and the base material keeps its ordinary
+     * category — a brush is filed under tools, not swallowed into the custom page.
      */
     @Test
     void anItemSharingItsMaterialWithAPoolItemKeepsItsOwnCategory() {
@@ -159,10 +143,7 @@ class CollectionCategoryTest {
         assertEquals(CollectionCategory.DYES, CollectionCategory.categoryOf(Material.LIME_DYE));
     }
 
-    /**
-     * A bucket is utility, not "the liquid it holds" — the case the late catch-all exists for, and
-     * the one most likely to be captured by an earlier predicate if a category is added carelessly.
-     */
+    /** A bucket is utility, not "the liquid it holds" — the case the late catch-all exists for. */
     @Test
     void aBucketIsUtility() {
         assertEquals(CollectionCategory.UTILITY, CollectionCategory.categoryOf(Material.BUCKET));

@@ -33,9 +33,7 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
  * {@code /teams}: who the subcommands act on.
  *
  * <p>Every branch hands a {@link ForceItemPlayer} to {@code TeamsManager}, which dereferences it
- * without checking — so the command's job is to resolve two of them or refuse. It used to resolve
- * neither safely: each two-argument branch called {@code Bukkit.getPlayer(args[1])} a second time
- * after null-checking the first call, so the check guarded a different object than the one used.
+ * without checking — so the command's job is to resolve two of them or refuse.
  *
  * <p>The gates themselves (teams enabled, PRE_GAME) are declared preconditions and covered by
  * {@code CustomCommandTest}; these cover what happens once they hold.

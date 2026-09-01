@@ -6,27 +6,18 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 /**
- * Something that must hold before a {@link CustomCommand}'s body runs.
- *
- * <p>A command declares these in {@code preconditions()} and is only invoked when they all hold —
- * replacing a {@code protected boolean requireOp(Player)} that every subclass had to remember to
- * call, remember to invert correctly, and remember to act on. One of the thirteen sites got the
- * inversion wrong and ran its whole body for non-ops only; that is the failure this type exists to
- * make unrepresentable.
- *
- * <h2>Rules that live here and nowhere else</h2>
+ * Something that must hold before a {@link CustomCommand}'s body runs. A command declares these in
+ * {@code preconditions()} and is only invoked when they all hold.
  *
  * <ul>
  *   <li><b>The console.</b> {@link #OP} and {@link #OP_WHEN_EVENT} pass automatically for a
  *       non-player sender, because the console is implicitly op. Phase and setting gates evaluate
  *       normally. {@link #PARTICIPANT} refuses: the console holds no roster entry.</li>
- *   <li><b>Order matters.</b> {@code preconditions()} returns a {@code List}, evaluated in order,
- *       and the <em>first</em> failure is what the sender is told. Each command keeps the order its
- *       hand-written checks had, so migrating changed no wording.</li>
+ *   <li><b>Order matters.</b> The list is evaluated in order and the <em>first</em> failure is what
+ *       the sender is told.</li>
  *   <li><b>Subcommand gates are not here.</b> {@code CommandAchievement} and {@code CommandStats}
  *       gate individual subcommands off {@code args[0]}, which a command-level declaration cannot
- *       express; they use {@link CustomCommand#requireOp(Player, Runnable)} instead. Making
- *       subcommands first-class is a larger change and deliberately was not taken.</li>
+ *       express; they use {@link CustomCommand#requireOp(Player, Runnable)} instead.</li>
  * </ul>
  *
  * @see CommandContext
@@ -36,19 +27,12 @@ public sealed interface Precondition {
     /** Short identifier, for the pinned declaration table in the tests. */
     String label();
 
-    /** Whether this holds for {@code sender} right now. */
     boolean holds(CommandSender sender, CommandContext context);
 
     /** What the sender is told when it does not. MiniMessage. */
     String refusal();
 
-    /**
-     * The same precondition with different wording.
-     *
-     * <p>Exists because the same condition reads differently in different commands: {@code /pause}
-     * refuses a stopped round with "The timer is already paused", where {@code /skip} says "The
-     * game is not running. Start it first with /start". Both are better than one generic line.
-     */
+    /** The same precondition with different wording, since one condition reads differently per command. */
     default Precondition refusing(String refusal) {
         return new Reworded(this, refusal);
     }
@@ -61,13 +45,7 @@ public sealed interface Precondition {
             (sender, context) -> !(sender instanceof Player player) || player.isOp(),
             NO_PERMISSION);
 
-    /**
-     * Op-only while the EVENT setting is on, open otherwise.
-     *
-     * <p>The one conditional gate in the codebase, and it appears three times with the same
-     * setting: {@code /pause}, {@code /resume} and {@code /pos}. CLAUDE.md describes EVENT as
-     * "some commands are OP only", which is exactly this.
-     */
+    /** Op-only while the EVENT setting is on, open otherwise. */
     Precondition OP_WHEN_EVENT = new Named(
             "OP_WHEN_EVENT",
             (sender, context) -> !context.settingEnabled(GameSetting.EVENT)
@@ -87,17 +65,14 @@ public sealed interface Precondition {
             (sender, context) -> context.roundPhase().isPreGame(),
             "<red>The game already started");
 
-    /** The round is paused. */
     Precondition PAUSED = new Named(
             "PAUSED",
             (sender, context) -> context.roundPhase().isPausedGame(),
             "<red>The game is not paused.");
 
     /**
-     * The sender holds a place in this round and is not spectating.
-     *
-     * <p>Absent and spectating are one answer — see {@code CONTEXT.md § Roster} for why someone who
-     * joined mid-round holds no entry at all.
+     * The sender holds a place in this round and is not spectating. Absent and spectating are one
+     * answer: someone who joined mid-round holds no roster entry at all.
      */
     Precondition PARTICIPANT = new Named(
             "PARTICIPANT",
@@ -116,7 +91,6 @@ public sealed interface Precondition {
                 (sender, context) -> context.settingEnabled(setting), refusal);
     }
 
-    /** Evaluated for a sender, so a lambda can stay a lambda without naming the pair. */
     @FunctionalInterface
     interface Test {
         boolean holds(CommandSender sender, CommandContext context);

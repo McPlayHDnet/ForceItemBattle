@@ -41,11 +41,8 @@ public final class CommandStart extends CustomCommand implements CustomTabComple
     }
 
     /**
-     * Starting a round needs no player: it acts on the roster, not on whoever asked.
-     *
-     * <p>Overridden because the base class refuses console senders, which meant a server owner
-     * could not start a round from the console or RCON — and neither could a test. Nothing below
-     * touches the sender except to report back.
+     * Starting a round needs no player: it acts on the roster, not on whoever asked. Overridden
+     * because the base class refuses console senders, which rules out the console, RCON and tests.
      */
     @Override
     public void onConsoleCommand(CommandSender sender, String label, String[] args) {
@@ -65,10 +62,9 @@ public final class CommandStart extends CustomCommand implements CustomTabComple
 
         } else if (args.length == 2) {
             try {
-                // Clears whatever the last round used. Without this a preset outlives its round:
-                // it was only ever set, never reset, so `/start speedrun` followed by `/start 90 3`
-                // played the second round on speedrun's settings. Production hides it because
-                // scheduleReset restarts the JVM between rounds; a session that plays two does not.
+                // Clears whatever the last round used. Without this `/start speedrun` followed by
+                // `/start 90 3` plays the second round on speedrun's settings — hidden in production
+                // only because scheduleReset restarts the JVM between rounds.
                 this.plugin.getSettings().getRuleset().usePreset(null);
                 this.performCommand(null, sender, args);
 
@@ -143,9 +139,8 @@ public final class CommandStart extends CustomCommand implements CustomTabComple
             }
 
             private void showTeams() {
-                // The decision, not the setting. These agree only because applyTeams wrote the
-                // setting off on the TOO_FEW_PLAYERS path; asking the plan means the reveal no
-                // longer depends on that write having happened first.
+                // The decision, not the setting: asking the plan means this does not depend on
+                // applyTeams having written the setting off first.
                 if (plan.teams() != RoundStart.Teams.BUILD) {
                     return;
                 }
@@ -189,10 +184,7 @@ public final class CommandStart extends CustomCommand implements CustomTabComple
         }.runTaskTimer(this.plugin, 0L, 20L);
     }
 
-    /**
-     * The only place teams are touched by {@code /start}. Every branch here is an effect; which one
-     * runs was decided by {@link RoundStart}.
-     */
+    /** Every branch here is an effect; which one runs was decided by {@link RoundStart}. */
     private void applyTeams(RoundStart.Teams teams) {
         switch (teams) {
             case BUILD -> this.plugin.getTeamManager().autoTeams();

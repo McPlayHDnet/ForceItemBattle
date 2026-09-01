@@ -18,13 +18,8 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
 /**
  * {@link PreGameLockListener}: nothing moves unless the round is running.
  *
- * <p>Four handlers, one rule, and it is the other half of the pause story. Candidate 7 found that
- * six protection gates switched <em>off</em> during a pause while the world kept ticking; this is
- * why that was hard to exploit from inside — the players themselves are frozen out of every
- * inventory action for the whole pause.
- *
- * <p>The rule is deliberately {@code roundRunning()} and not {@code roundInProgress()}: a paused
- * round must stay locked, so this is one of the 41 sites where excluding the pause is the point.
+ * <p>Four handlers, one rule, and it is deliberately {@code roundRunning()} rather than
+ * {@code roundInProgress()}: a paused round must stay locked, so excluding the pause is the point.
  */
 class PreGameLockListenerTest extends ListenerTestBase {
 

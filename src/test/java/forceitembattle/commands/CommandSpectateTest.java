@@ -25,7 +25,7 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
  * branch and it only runs when the player <em>is</em> already spectating, so the command can take
  * you out of spectator but never put you in; run by anyone else it silently does nothing at all.
  * That is recorded here rather than corrected, because which of the two the server actually wants
- * is not a question the tests get to answer â€” the round-end flow puts players into spectator
+ * is not a question the tests get to answer — the round-end flow puts players into spectator
  * itself, so a one-way exit may well be the intent and the description the thing that is wrong.
  * If a real toggle is added, {@link #someoneNotSpectatingIsSilentlyIgnored} is the test that
  * changes.

@@ -12,38 +12,21 @@ import org.bukkit.NamespacedKey;
  * One button on a menu hotbar: what it is made of, what it says, which bar it belongs to and where,
  * and when it can be clicked.
  *
- * <p>Which material means which action in which phase is a table. It used to be written as five
- * blocks that had to agree by eye — two writers handing out stacks, two click handlers switching on
- * raw {@link Material}, and a third block inside one of those handlers rewriting a slot — with
- * nothing relating the columns. What that produced is recorded in {@code CONTEXT.md § Menu Items}.
+ * <p><b>This names actions; it does not perform them.</b> An enum constant is an answer and one
+ * adapter turns it into behaviour, which is what keeps this file free of {@code ItemStack},
+ * inventories and the plugin graph, and therefore testable. {@code PlayerOutfitter} writes a bar;
+ * {@code ClickableItemsListener} looks a button up and acts.
  *
- * <p><b>This names actions; it does not perform them.</b> The same split as {@link Admission}: an
- * enum constant is an answer, and one adapter turns the answer into behaviour. That is what keeps
- * this file free of {@code ItemStack}, inventories and the plugin graph, and therefore testable.
- * {@code PlayerOutfitter} writes a bar; {@code ClickableItemsListener} looks a button up and acts.
- *
- * <h2>Two columns, and which two</h2>
- *
- * <p><b>Where</b> a button sits is a property of its {@link Menu}, and <b>when</b> it can be
- * clicked is a property of the phase. Those look like the same column and are not, which cost a
- * wrong first attempt: it hung the slot off the phase, on the strength of Collection being slot 0
- * in the lobby and slot 2 on the result screen. That holds right up until a player who never joined
- * the round arrives at {@code END_GAME} — {@code END_GAME} shares the {@code LOBBY} admission with
- * {@code PRE_GAME} — and gets handed the lobby bar during the result screen. Keyed by phase, they
- * got the result screen's bar instead.
- *
- * <p>So: one slot per constant, fixed within its own bar; a set of phases saying when it answers a
- * click. The lobby bar at {@code END_GAME} then comes out as Collection and Achievements in their
- * lobby slots and no slot 8 at all, which is what fixed the dead spectate pearl without anyone
- * writing a phase check.
+ * <p><b>Where</b> a button sits belongs to its {@link Menu}; <b>when</b> it can be clicked belongs to
+ * the phase. These look like one column and are not — hanging the slot off the phase breaks as soon
+ * as a player who never joined the round reaches {@code END_GAME}, which shares the {@code LOBBY}
+ * admission with {@code PRE_GAME} and so is handed the lobby bar during the result screen.
  */
 public enum MenuItem {
 
-    /** Opens the collection book. On both bars, in different slots, clickable in both phases. */
     COLLECTION(Material.WRITTEN_BOOK, "<dark_gray>» <dark_aqua>Collection",
             Menu.LOBBY, 0, EnumSet.of(GameState.PRE_GAME, GameState.END_GAME)),
 
-    /** The result screen's copy of the same action, four slots to the left. */
     RESULT_COLLECTION(Material.WRITTEN_BOOK, "<dark_gray>» <dark_aqua>Collection",
             Menu.RESULT, 2, EnumSet.of(GameState.END_GAME)),
 
@@ -53,21 +36,14 @@ public enum MenuItem {
     RESULT_ACHIEVEMENTS(Material.LIME_DYE, "<dark_gray>» <green>Achievements",
             Menu.RESULT, 1, EnumSet.of(GameState.END_GAME)),
 
-    /**
-     * Opt out of the round about to start. The only lobby button that is not clickable at
-     * {@code END_GAME}: there is nothing to opt out of once a round has finished. It used to be
-     * handed out there anyway, and no handler answered it.
-     */
+    /** The only lobby button not clickable at {@code END_GAME}: nothing to opt out of by then. */
     SPECTATE_ROUND(Material.ENDER_PEARL, "<dark_gray>» <gray>Spectate game",
             Menu.LOBBY, 8, EnumSet.of(GameState.PRE_GAME)),
 
     /**
-     * Opt back into the round about to start: what slot 8 becomes once a player has opted out.
-     *
-     * <p>{@linkplain #isOpeningButton Not part of the opening bar} — the one thing slot and phase
-     * together cannot say. It really does live in slot 8 of the lobby bar, the same slot as
-     * {@link #SPECTATE_ROUND}, because it is that button flipped over; a bar derived from placement
-     * alone would write both into one slot and let declaration order pick the winner.
+     * What slot 8 becomes once a player has opted out. {@linkplain #isOpeningButton Not an opening
+     * button} — it shares slot 8 with {@link #SPECTATE_ROUND} because it is that button flipped over,
+     * and a bar derived from placement alone would let declaration order pick between them.
      */
     PLAY_ROUND(Material.ENDER_EYE, "<dark_gray>» <gray>Play game",
             Menu.LOBBY, 8, EnumSet.of(GameState.PRE_GAME), false),
@@ -83,9 +59,7 @@ public enum MenuItem {
 
     /**
      * Shares {@link Material#ENDER_EYE} with {@link #PLAY_ROUND} and means something unrelated.
-     * Harmless now because the reader never looks at the material: it reads {@link #markerKey()}
-     * and gets a constant. Before that it was a real collision, hidden only by the two handlers
-     * living in different halves of one file and never being read side by side.
+     * Harmless only because the reader dispatches on {@link #markerKey()}, never on the material.
      */
     TO_END(Material.ENDER_EYE, "<dark_gray>» <dark_purple>End",
             Menu.RESULT, 7, EnumSet.of(GameState.END_GAME)),
@@ -93,22 +67,16 @@ public enum MenuItem {
     SPECTATE_RESULT(Material.SPYGLASS, "<dark_gray>» <green>Spectate",
             Menu.RESULT, 8, EnumSet.of(GameState.END_GAME));
 
-    /** Which hotbar a button belongs to. One per player state that has one. */
+    /** Which hotbar a button belongs to. */
     public enum Menu {
-        /** Waiting for a round, whether or not a result screen is up for other players. */
         LOBBY,
-        /** The screen the round ends on. */
         RESULT
     }
 
     /**
      * Stamped into every button the plugin hands out, valued with the constant's {@link #name()}.
-     *
-     * <p>The reader consults this and nothing else. Dispatching on {@link Material} meant anything
-     * that looked like a button was one: a grass block a player was holding to build with
-     * teleported them, a spyglass they picked up dropped them into spectator mode, and an ender
-     * pearl before a round quietly took them out of it. A marker is how {@code CustomMaterials}
-     * already tells its custom items from the vanilla ones they share a material with.
+     * The reader consults this and nothing else — dispatching on {@link Material} meant anything that
+     * looked like a button was one, so a grass block held to build with teleported the player.
      */
     private static final NamespacedKey MARKER_KEY = new NamespacedKey("fib", "menu_item");
 
@@ -150,12 +118,10 @@ public enum MenuItem {
         return this.menu;
     }
 
-    /** Which hotbar slot this occupies on its own bar. */
     public int slot() {
         return this.slot;
     }
 
-    /** Whether a click on this does anything in {@code state}. */
     public boolean isLiveIn(GameState state) {
         return this.livePhases.contains(state);
     }
@@ -170,11 +136,7 @@ public enum MenuItem {
 
     /**
      * The bar as it is first handed out: every opening button on {@code menu} that is clickable in
-     * {@code state}.
-     *
-     * <p>Both arguments earn their place. The menu decides which buttons and where; the phase drops
-     * the ones that would be inert. The lobby bar is the only place the two differ — it is laid out
-     * in two phases, and at {@code END_GAME} the spectate pearl falls out of the answer on its own.
+     * {@code state}. The menu decides which buttons and where; the phase drops the inert ones.
      */
     public static List<MenuItem> openingBar(Menu menu, GameState state) {
         List<MenuItem> bar = new ArrayList<>();
@@ -187,10 +149,8 @@ public enum MenuItem {
     }
 
     /**
-     * The constant a marker value names, or {@code null} if it names nothing.
-     *
-     * <p>Null rather than an exception: a value left behind by a constant that has since been
-     * renamed should leave an inert item in someone's hand, not throw inside an event handler.
+     * The constant a marker value names. Null rather than an exception: a value left behind by a
+     * since-renamed constant should leave an inert item in someone's hand, not throw in a handler.
      */
     @Nullable
     public static MenuItem byMarker(@Nullable String marker) {

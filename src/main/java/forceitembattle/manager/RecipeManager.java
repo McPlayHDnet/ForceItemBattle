@@ -101,17 +101,12 @@ public class RecipeManager implements Manager {
      * Registers a recipe, replacing any earlier one under the same key.
      *
      * <p>{@link #initRecipes()} runs from {@code startGame()} on every round, and
-     * {@code Bukkit.addRecipe} throws {@code IllegalStateException: Duplicate recipe ignored} for a
-     * key that is already registered. Since {@code initRecipes()} is the first thing
-     * {@code startGame()} does, that used to abort the second round of a server session before any
-     * of it happened: no player setup, no state change to MID_GAME, no timer — everyone left
-     * standing in creative with no indication anything had gone wrong. It went unnoticed because
-     * {@code scheduleReset} restarts the JVM between rounds in production, which clears the
-     * registry the hard way.
+     * {@code Bukkit.addRecipe} throws {@code Duplicate recipe ignored} for a key already registered
+     * — which aborts the second round of a server session before anything else happens. Production
+     * never sees it because {@code scheduleReset} restarts the JVM between rounds.
      *
      * <p>Removing rather than skipping is deliberate: the tracker shapes depend on the
-     * HARDER_TRACKERS setting, which can be changed between rounds, so they have to be rebuilt from
-     * the current settings rather than left as whatever the last round registered.
+     * HARDER_TRACKERS setting, which can change between rounds, so they have to be rebuilt.
      */
     private void reRegister(NamespacedKey key, Recipe recipe) {
         Bukkit.removeRecipe(key);

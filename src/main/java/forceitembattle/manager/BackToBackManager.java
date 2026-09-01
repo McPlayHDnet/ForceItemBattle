@@ -30,10 +30,7 @@ public class BackToBackManager implements Manager {
 
     private final ForceItemBattle plugin;
 
-    /**
-     * Called after an item has been found and the next one assigned: decides whether
-     * the new item is already owned, updates every streak, and kicks off the chain.
-     */
+    /** Called after an item has been found <em>and the next one assigned</em>. */
     public void handleAfterFind(ForceItemPlayer forceItemPlayer, GameContext context) {
         if (context.runMode()) {
             return;
@@ -58,26 +55,20 @@ public class BackToBackManager implements Manager {
             team.setBackToBackStreak(team.getBackToBackStreak() + 1);
         }
 
-        // Report the running streak the instant it grows; the service keeps the max,
-        // so each chain's peak is captured. (Must come after the team-streak bump above —
-        // the reporter reads the shared team streak in team games.)
+        // The service keeps the max, so reporting on every growth captures each chain's peak. Must
+        // come after the team-streak bump above — the reporter reads it in team games.
         updateStreakStats(forceItemPlayer, context);
 
         triggerBackToBackEvent(forceItemPlayer, result, context);
     }
 
-    /**
-     * How improbable the player's current back-to-back was, with the display string
-     * and rarity that go with it.
-     */
     public BackToBackProbability calculateProbability(ForceItemPlayer forceItemPlayer) {
         Player player = forceItemPlayer.player();
         int totalItemsInPool = this.plugin.getItemDifficultiesManager().getAvailableItems().size();
         boolean backpackEnabled = this.plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK);
         boolean teamGame = forceItemPlayer.currentTeam() != null;
 
-        // Everything the owner of this streak already holds: both members' inventories in a team
-        // game, just this player's when solo.
+        // Everything the owner of this streak already holds — both members' inventories in a team.
         Set<Material> uniqueMaterials = new HashSet<>();
         for (ForceItemPlayer member : forceItemPlayer.squad()) {
             InventorySearch.collectUniqueMaterials(member.player().getInventory(), uniqueMaterials);
@@ -123,10 +114,7 @@ public class BackToBackManager implements Manager {
         }
     }
 
-    /**
-     * Whether the target material is already owned — by the player, their backpack,
-     * or (in team games) a teammate.
-     */
+    /** Whether the target material is already owned — by the player, their backpack, or a teammate. */
     private BackToBackResult check(ForceItemPlayer forceItemPlayer, Material targetMaterial, GameContext context) {
         if (forceItemPlayer.activePreviousMaterial() == targetMaterial) {
             return new BackToBackResult(true, null);
@@ -195,9 +183,8 @@ public class BackToBackManager implements Manager {
 
         Team team = forceItemPlayer.currentTeam();
 
-        // The b2b streak is a shared team stat, so the peak recorded in a team game is the team's,
-        // not this player's -- and it lands on both members. The stats client knows that; this only
-        // has to say which two numbers are in play.
+        // The peak recorded in a team game is the team's, not this player's, and lands on both
+        // members. The stats client owns that; this only says which two numbers are in play.
         this.plugin.getFibService().statistics().recordBackToBackPeak(
                 forceItemPlayer,
                 context.teamGame() && team != null,

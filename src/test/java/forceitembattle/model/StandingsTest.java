@@ -17,10 +17,6 @@ import org.mockito.Mockito;
  * Finishing places. The ranking feeds both the /result reveal and the {@code placement} /
  * {@code won} fields written to match history, so a tie handled wrongly here shows up as a wrong
  * winner.
- *
- * <p>This used to build a whole {@code Gamemanager} to ask who came first, because that is where
- * the ranking lived. It is a pure function over a collection and a score, and now it looks like
- * one.
  */
 class StandingsTest {
 

@@ -19,14 +19,9 @@ import org.junit.jupiter.params.provider.EnumSource;
 /**
  * {@link MenuItem}: the table itself, with no server anywhere near it.
  *
- * <p>This is the half of the candidate that the old arrangement had no room for. Which material
- * means which action in which phase was spread across five blocks in three files, so "do two
- * buttons want the same slot" and "is every button reachable" were questions you could only answer
- * by reading all five and holding them in your head. They are assertions now.
- *
- * <p>Headless on purpose, and the reason the table carries no behaviour: an action that opened a
- * GUI would drag {@code ItemStack} and the plugin graph in behind it, and this file would need
- * MockBukkit to ask arithmetic questions.
+ * <p>Headless on purpose, and the reason the table carries no behaviour: an action that opened a GUI
+ * would drag {@code ItemStack} and the plugin graph in behind it, and this file would need MockBukkit
+ * to ask arithmetic questions.
  */
 class MenuItemTest {
 
@@ -37,10 +32,7 @@ class MenuItemTest {
     @Nested
     class TheBars {
 
-        /**
-         * The check that the five hand-written blocks could not make. Two buttons on one bar in one
-         * slot means one silently wins by declaration order.
-         */
+        /** Two buttons on one bar in one slot means one silently wins by declaration order. */
         @Test
         void noTwoOpeningButtonsWantTheSameSlot() {
             for (Menu menu : Menu.values()) {
@@ -81,10 +73,8 @@ class MenuItemTest {
         }
 
         /**
-         * The fix, stated at the table rather than at the writer. A lobby player at
-         * {@code END_GAME} — which happens, because {@code END_GAME} shares the {@code LOBBY}
-         * admission with {@code PRE_GAME} — keeps the two buttons that still work and loses the one
-         * that never did.
+         * A lobby player at {@code END_GAME} — which happens, because {@code END_GAME} shares the
+         * {@code LOBBY} admission with {@code PRE_GAME} — keeps only the buttons that still work.
          */
         @Test
         void theLobbyBarLosesOnlyTheSpectateToggleOnceTheRoundIsOver() {
@@ -199,10 +189,8 @@ class MenuItemTest {
     class TheCollisionsTheTableMakesVisible {
 
         /**
-         * Two constants, one material, unrelated meanings: "play this round" before a round and
-         * "teleport to the End" after one. It was a genuine ambiguity while the reader dispatched
-         * on material and the two halves lived in different methods. The marker settles it, and
-         * this test is here so the pair stays visible rather than looking like a duplicate.
+         * Two constants, one material, unrelated meanings. Only safe because the reader dispatches on
+         * the marker; pinned so the pair stays visible rather than looking like a duplicate.
          */
         @Test
         void twoButtonsShareTheEnderEyeAndMeanDifferentThings() {
@@ -211,11 +199,7 @@ class MenuItemTest {
             assertFalse(MenuItem.TO_END.isLiveIn(GameState.PRE_GAME));
         }
 
-        /**
-         * Collection and Achievements exist twice, once per bar, in different slots. Recorded
-         * rather than merged: whether the two bars ought to agree on where they put them is a
-         * design question about the menus, not something a refactor gets to decide.
-         */
+        /** Collection and Achievements exist twice, once per bar, in different slots. */
         @Test
         void twoActionsExistOnceForEachBar() {
             assertEquals(MenuItem.COLLECTION.material(), MenuItem.RESULT_COLLECTION.material());

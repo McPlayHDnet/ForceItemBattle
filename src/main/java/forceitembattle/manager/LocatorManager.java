@@ -40,7 +40,7 @@ public class LocatorManager implements Manager {
     /** Close enough to spot something standing at the surface. */
     private static final int SURFACE_ARRIVAL_RADIUS = 70;   // blocks
 
-    /** Kept for {@code runTaskTimerAsynchronously}, which needs a Plugin. Not a service locator. */
+    /** Kept for {@code runTaskTimerAsynchronously}, which needs a Plugin. */
     private final ForceItemBattle plugin;
     private final PositionManager positionManager;
     private final Map<String, Locator> locators;
@@ -169,10 +169,6 @@ public class LocatorManager implements Manager {
         this.locatedStructures.put(locator.getStructureId(), targetLocation);
     }
 
-    /**
-     * Points the player at the find, the way this locator points: footprints along the ground, or
-     * a line through the air plus a beam over the spot to dig at.
-     */
     private void showTheWay(Locator locator, Player player, Location targetLocation, Location digSpot) {
         if (locator.getUse().leavesFootprints()) {
             this.positionManager.playFootprintTrail(player, targetLocation, locator.getLineColor());
@@ -182,7 +178,7 @@ public class LocatorManager implements Manager {
         this.positionManager.playSurfaceMarker(player, digSpot, locator.getLineColor());
     }
 
-    // The surface block above the target, i.e. where the player has to dig down.
+    /** The surface block above the target, i.e. where the player has to dig down. */
     private Location surfaceDigSpot(Location targetLocation) {
         World world = targetLocation.getWorld();
         if (world == null) {
@@ -197,13 +193,12 @@ public class LocatorManager implements Manager {
     private void startLocatorSession(Locator locator, Player player, Location targetLocation, Location digSpot) {
         UUID playerId = player.getUniqueId();
 
-        // Drop any previous session for this exact locator before opening a new one.
         this.clearLocator(playerId, locator.getStructureId());
 
         BossBar bar = BossBar.bossBar(Text.of(""), 1, BossBar.Color.WHITE, BossBar.Overlay.NOTCHED_6);
 
         BukkitRunnable task = new BukkitRunnable() {
-            /** Task runs between particle line replays; the boss bar itself updates every run. */
+            /** Runs between particle-line replays; the boss bar updates every run. */
             private static final int RUNS_PER_LINE = 30;
             private int runs = 0;
 
@@ -215,9 +210,8 @@ public class LocatorManager implements Manager {
                 bar.name(Text.of(bossBarTitle));
                 player.showBossBar(bar);
 
-                // The line is a one-off animation, so it is replayed now and then. Footprints are
-                // held up continuously by their own task instead — replaying them would be the
-                // pulse the ground trail is meant not to have.
+                // The line is a one-off animation, so it is replayed now and then. Footprints have
+                // their own continuous task — replaying them would give the trail a pulse.
                 if (!locator.getUse().leavesFootprints() && this.runs++ % RUNS_PER_LINE == 0) {
                     LocatorManager.this.positionManager
                             .playParticleLine(player, targetLocation, locator.getLineColor());
@@ -230,8 +224,7 @@ public class LocatorManager implements Manager {
             }
         };
 
-        // The persistent ground visual, cancelled together with the session: a beam over the dig
-        // spot, or the footprint trail for a find that needs no digging.
+        // The persistent ground visual, cancelled together with the session.
         BukkitRunnable groundTask = locator.getUse().leavesFootprints()
                 ? this.positionManager.startFootprintTrail(player, targetLocation, locator.getLineColor())
                 : this.positionManager.startSurfaceMarker(player, digSpot, locator.getLineColor());
@@ -245,7 +238,7 @@ public class LocatorManager implements Manager {
         task.runTaskTimerAsynchronously(this.plugin, 0L, 10L);
     }
 
-    // Removes a session from the tracking map without touching the boss bar.
+    /** Removes a session from the tracking map without touching the boss bar. */
     @Nullable
     private ActiveLocator removeSession(UUID playerId, String structureId) {
         synchronized (this.activeLocators) {
@@ -261,7 +254,6 @@ public class LocatorManager implements Manager {
         }
     }
 
-    // Cancels and hides one active locator session for a player, if present.
     private void clearLocator(UUID playerId, String structureId) {
         ActiveLocator active = this.removeSession(playerId, structureId);
         if (active != null) {
@@ -278,7 +270,7 @@ public class LocatorManager implements Manager {
         return true;
     }
 
-    // Returns the player's active locators, keyed by structure id, in the order they were located.
+    /** Keyed by structure id, in the order they were located. */
     public Map<String, Locator> getActiveLocators(Player player) {
         Map<String, Locator> result = new LinkedHashMap<>();
         synchronized (this.activeLocators) {
@@ -309,8 +301,8 @@ public class LocatorManager implements Manager {
     }
 
     /**
-     * The locator this stack is the item for, or null. Matching on the stack rather than on its
-     * material is what keeps a plain brush from working as the Trail Ruins locator.
+     * The locator this stack is the item for, or null. Matching on the stack rather than the material
+     * is what keeps a plain brush from working as the Trail Ruins locator.
      */
     @Nullable
     public Locator getLocatorByItem(ItemStack itemStack) {

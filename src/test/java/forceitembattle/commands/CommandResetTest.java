@@ -35,8 +35,8 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
  * {@code /reset}: kick everyone and restart on a new world.
  *
  * <p>The invariant this exists for is the one the command's own comment states: <b>the seed is
- * resolved before anybody is kicked</b>. Every refusal path â€” no seed pool, an unknown biome, a
- * pool that throws â€” has to leave the server exactly as it found it, because the alternative is a
+ * resolved before anybody is kicked</b>. Every refusal path — no seed pool, an unknown biome, a
+ * pool that throws — has to leave the server exactly as it found it, because the alternative is a
  * room full of kicked players and no reset scheduled. That state is unrecoverable by anything short
  * of restarting the server by hand, and it is one moved statement away.
  *
@@ -45,7 +45,7 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
  *
  * <p>{@code scheduleReset} itself is not exercised. It registers a JVM shutdown hook, deletes the
  * world directory and calls {@code Bukkit.restart()}; the plugin is a mock here, so what is pinned
- * is the decision to call it and the seed handed over â€” the part this command owns.
+ * is the decision to call it and the seed handed over — the part this command owns.
  */
 class CommandResetTest {
 
@@ -85,7 +85,7 @@ class CommandResetTest {
      * Public so Bukkit's reflective dispatch can see the handler.
      *
      * <p>It reads {@code leaveMessage()}, not {@code reason()}. MockBukkit's {@code kick(Component)}
-     * builds its {@code PlayerKickEvent} with the two components the other way round â€” a literal
+     * builds its {@code PlayerKickEvent} with the two components the other way round — a literal
      * "Plugin" lands in the reason and the component the caller passed lands in the leave message.
      * On a real server the two are the other way round. This is asserting what the command handed
      * to {@code kick}, so it follows MockBukkit's slot rather than the name.

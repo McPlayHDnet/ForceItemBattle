@@ -16,12 +16,10 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
 /**
  * That MockBukkit runs against this plugin's Paper version, and what it unlocks.
  *
- * <p>Everything the unit suite could not reach came down to one thing: {@code new ItemStack(...)}
- * needs the attribute registry, which only a running server has. {@code HeadlessBoundaryTest}
- * has been pinning that boundary since pass 1, and it is why {@code gui/}, {@code listener/} and
- * {@code commands/} have no tests between them.
+ * <p>Everything the headless suite cannot reach comes down to {@code new ItemStack(...)} needing the
+ * attribute registry, which only a running server has; MockBukkit provides one.
  *
- * <p>MockBukkit provides the server. The artifact is named after the exact Paper API version —
+ * <p>The artifact is named after the exact Paper API version —
  * {@code mockbukkit-v26.2} — which is the thing to check first when this stops resolving after a
  * Paper bump: a matching MockBukkit has to exist for the new version.
  */

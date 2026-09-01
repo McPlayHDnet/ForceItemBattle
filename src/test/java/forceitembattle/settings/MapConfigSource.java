@@ -4,12 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * The second adapter: a {@link ConfigSource} backed by a map.
- *
- * <p>Its whole job is to make paths visible. The rule {@link Ruleset} encodes is <em>which path a
- * setting resolves to</em>, and that was previously only observable by watching which value came
- * back out of a real {@code config.yml} — so the two places it went wrong (a write that missed the
- * read's path, a preset that outlived its round) were both invisible.
+ * A {@link ConfigSource} backed by a map, so paths are visible. The rule {@link Ruleset} encodes is
+ * <em>which path a setting resolves to</em>, which a real {@code config.yml} only shows indirectly.
  */
 final class MapConfigSource implements ConfigSource {
 

@@ -1,11 +1,8 @@
 package forceitembattle.util;
 
 /**
- * Countdown rendering for the surfaces that show one — the tab footer's pool and trader timers, and
- * a running random event's own clock.
- *
- * Kept in one place so every countdown in the game turns red at the same moment; a player reading
- * two timers side by side in the same footer should not have to learn two colour scales.
+ * Countdown rendering. Kept in one place so every countdown in the game turns red at the same
+ * moment: a player reading two timers side by side should not have to learn two colour scales.
  */
 public final class TimeFormat {
 
@@ -37,14 +34,10 @@ public final class TimeFormat {
     /**
      * A duration as {@code 1h 5m 30s}, dropping any component that is zero.
      *
-     * <p>Used where a length is being read rather than watched: the round's remaining time on the
-     * action bar, and the time a find took on a result screen.
-     *
-     * <p>Two long-standing warts, pinned by tests rather than fixed so that changing either is a
-     * decision instead of a surprise: zero renders as the empty string, and a duration ending on
-     * hours or minutes keeps a trailing space ({@code "5m "}). Callers get away with the first
-     * because a round showing {@code 0} is already over, and with the second because the strings
-     * land inside MiniMessage, where the space is invisible.
+     * <p>Two warts, pinned by tests rather than fixed so changing either is a decision: zero renders
+     * as the empty string, and a duration ending on hours or minutes keeps a trailing space
+     * ({@code "5m "}). Callers get away with both — a round showing {@code 0} is already over, and
+     * the strings land inside MiniMessage where the space is invisible.
      */
     public static String humanised(int totalSeconds) {
         int seconds = totalSeconds % 60;
@@ -72,12 +65,9 @@ public final class TimeFormat {
     }
 
     /**
-     * A world's time of day as {@code HH:mm}.
-     *
-     * Minecraft's day starts at sunrise, not midnight: tick 0 is 06:00 and a full day is 24000
-     * ticks, so the six-hour offset has to be added before wrapping. Reading the raw tick count as
-     * a clock is off by a quarter of a day, which is exactly enough to make "it's about to get
-     * dark" wrong.
+     * A world's time of day as {@code HH:mm}. Minecraft's day starts at sunrise, not midnight — tick
+     * 0 is 06:00 — so the six-hour offset has to be added before wrapping. Reading the raw tick
+     * count as a clock is off by a quarter of a day.
      */
     public static String worldClock(long timeTicks) {
         long minutesOfDay = Math.floorMod((timeTicks * 60 / 1000) + 6 * 60, 1440L);

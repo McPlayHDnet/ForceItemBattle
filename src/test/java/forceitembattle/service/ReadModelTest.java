@@ -17,12 +17,8 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 /**
- * The translation at the seam, and the one decision inside it.
- *
- * <p>Every generated field is a boxed type that can arrive null. Deciding that an absent count is
- * zero is a translation decision, and it used to be made — or forgotten — at each of forty call
- * sites: {@code entry.getTimesCollected() != null ? entry.getTimesCollected() : 0L} appeared
- * verbatim in the collection loaders, and not at all in the leaderboard renderers.
+ * The translation at the seam, and the one decision inside it: every generated field is boxed and can
+ * arrive null, and deciding that an absent count is zero is made once here.
  */
 class ReadModelTest {
 

@@ -30,7 +30,7 @@ import org.mockbukkit.mockbukkit.world.WorldMock;
  * {@code /pause} and {@code /resume}: the two halves of stopping the clock.
  *
  * <p>They are one test because they are one mechanism read in both directions, and the mistakes
- * available are symmetry mistakes â€” a gate that lets you pause an already-paused round, or a
+ * available are symmetry mistakes — a gate that lets you pause an already-paused round, or a
  * resume that starts the clock without starting the world's. The daylight and weather gamerules
  * are the part with no other cover at all: a resume that forgets to turn them back on leaves the
  * round running at a frozen midnight, which nothing in the plugin would report.

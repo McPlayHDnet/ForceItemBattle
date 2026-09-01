@@ -134,12 +134,9 @@ class RulesetTest {
         assertEquals(2, config.saveCount());
     }
 
-    // --- a view, not a snapshot -------------------------------------------------------------
-
     /**
-     * The deliberate scope limit on this candidate. Resolving every setting once when the round
-     * starts would have been the stronger seam, and would also have stopped an op's mid-round
-     * toggle taking effect — a live behaviour, so it is not a refactor's to remove.
+     * Deliberate: resolving every setting once at round start would stop an op's mid-round toggle
+     * taking effect, which is live behaviour.
      */
     @Test
     void readsAreLiveRatherThanResolvedOnce() {
@@ -150,8 +147,6 @@ class RulesetTest {
         config.set(TEAM_PATH, true);
         assertTrue(ruleset.enabled(GameSetting.TEAM));
     }
-
-    // --- addressing a preset that is not the active one -------------------------------------
 
     @Test
     void aPresetCanBeAskedDirectlyWhicheverIsActive() {
@@ -175,10 +170,7 @@ class RulesetTest {
         assertSame(chaos, ruleset.preset());
     }
 
-    /**
-     * The property this candidate exists for, guarded so it cannot quietly come back. Reaching for
-     * the plugin here would restore the cycle in one edit and nothing else would fail.
-     */
+    /** Reaching for the plugin here restores the dependency cycle, and nothing else would fail. */
     @Test
     void isBuiltFromAConfigSourceRatherThanThePlugin() {
         List<Class<?>> parameters =

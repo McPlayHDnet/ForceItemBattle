@@ -15,9 +15,7 @@ public class CommandsManager implements Manager {
 
     private final ForceItemBattle plugin;
 
-    /**
-     * Commands list used for /help
-     */
+    /** Used for /help. */
     private final List<CustomCommand> commands = new ArrayList<>();
 
     public void registerCommand(CustomCommand customCommand) {
@@ -45,18 +43,10 @@ public class CommandsManager implements Manager {
      * Warns about commands declared in the generated plugin.yml that no {@link CustomCommand} ever
      * claimed. Call once, after every command has been registered.
      *
-     * The command list is maintained twice — the {@code bukkitPluginYaml} block in build.gradle.kts
-     * and {@code initCommands()} — and only one direction of drift was caught: registering an
-     * executor for a name that isn't declared throws above. The other direction was silent, and the
-     * two lists live in different files with nothing compiling either against the other, so a name
-     * that reaches only one of them is one edit away.
-     *
-     * <p>The case that prompted this check was a command declared in plugin.yml under one name
-     * while the {@link CustomCommand} meant to own it answered to another, leaving the declared
-     * name unclaimed. Both have since gone with the player-trading feature, so the example no
-     * longer exists — the failure shape does. A declared command with no executor still exists to
-     * the server: it tab-completes, passes the "unknown command" check, and then does nothing but
-     * print its usage line.
+     * <p>The list is maintained twice — the {@code bukkitPluginYaml} block in build.gradle.kts and
+     * {@code initCommands()} — and only one direction of drift throws: registering an executor for an
+     * undeclared name. The other is silent, and a declared command with no executor still exists to
+     * the server, tab-completing and passing the "unknown command" check before doing nothing.
      */
     public void warnAboutUnboundCommands() {
         for (String name : this.plugin.getDescription().getCommands().keySet()) {

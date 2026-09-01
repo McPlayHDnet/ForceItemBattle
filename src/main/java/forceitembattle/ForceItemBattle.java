@@ -110,27 +110,19 @@ public final class ForceItemBattle extends JavaPlugin {
     /** The lifecycle order, resolved once at boot so disable() reverses exactly what enable() ran. */
     private List<Manager> lifecycle = List.of();
     /**
-     * Who is in the round. Constructed before every manager and depending on none of them, which
-     * is what keeps the manager graph acyclic — see {@link forceitembattle.model.Roster}.
+     * Who is in the round. Constructed before every manager and depending on none of them, which is
+     * what keeps the manager graph acyclic. The three fields below are here for the same reason.
      */
     @Getter
     private final Roster roster = new Roster();
 
-    /** Where the round is. Like the roster: constructed before every manager, depending on none. */
     @Getter
     private final RoundPhase roundPhase = new RoundPhase();
 
-    /**
-     * How much of the round is left, and how long it is. Shared rather than owned by
-     * {@code TimerManager}, which merely drives it — see {@link forceitembattle.model.RoundClock}.
-     */
+    /** Shared rather than owned by {@code TimerManager}, which merely drives it. */
     @Getter
     private final RoundClock roundClock = new RoundClock();
 
-    /**
-     * The end-of-round reveal. Owned here rather than by a manager for the same reason as the
-     * roster and the phase: it depends on nothing, so nothing depends on a manager to reach it.
-     */
     @Getter
     private final ResultCeremony resultCeremony = new ResultCeremony();
     @Getter
@@ -198,22 +190,16 @@ public final class ForceItemBattle extends JavaPlugin {
         saveConfig();
     }
 
-    /**
-     * Records a manager for its lifecycle. <b>Does not decide when it is enabled</b> — that is
-     * {@link #lifecycleOrder()}, declared separately and deliberately. Why the two are separate
-     * lists is in {@code CONTEXT.md § Manager Lifecycle}.
-     */
+    /** Records a manager. <b>Does not decide when it is enabled</b> — {@link #lifecycleOrder()} does. */
     private <T extends Manager> T register(T manager) {
         this.managers.add(manager);
         return manager;
     }
 
     /**
-     * The order managers are enabled in, and — reversed — disabled in.
-     *
-     * <p><b>Load-bearing.</b> {@code TimerManager} starting its task earlier or saving its config
-     * later are live behaviour changes no test would catch, which is why this is a list edited
-     * deliberately rather than a side effect of where a {@code new} happens to sit.
+     * The order managers are enabled in, and — reversed — disabled in. Load-bearing:
+     * {@code TimerManager} starting its task earlier or saving its config later are live behaviour
+     * changes no test would catch, so this is edited deliberately rather than following construction.
      */
     private List<Manager> lifecycleOrder() {
         return List.of(
@@ -242,10 +228,8 @@ public final class ForceItemBattle extends JavaPlugin {
     }
 
     /**
-     * Every registered manager appears in the lifecycle order exactly once. A manager registered
-     * but left out of {@link #lifecycleOrder()} would never be enabled and nothing else would say
-     * so, hence the boot failure — the same bargain {@code CommandsManager} makes for an
-     * unregistered command.
+     * A manager registered but left out of {@link #lifecycleOrder()} would never be enabled and
+     * nothing else would say so, hence the boot failure.
      */
     private void verifyLifecycleCoversEveryManager(List<Manager> order) {
         if (order.size() != this.managers.size() || !order.containsAll(this.managers)) {
@@ -277,9 +261,8 @@ public final class ForceItemBattle extends JavaPlugin {
         this.commandsManager = register(new CommandsManager(this));
         this.achievementManager = register(new AchievementManager(this));
 
-        // Constructed here rather than last: CollectionManager's loaders need it, and it needs
-        // AchievementManager's cache. Its enable()/disable() position is unchanged -- that is
-        // lifecycleOrder()'s business now, not this line's, which is the whole point of the split.
+        // Here rather than last: CollectionManager's loaders need it, and it needs
+        // AchievementManager's cache. Its enable()/disable() position is lifecycleOrder()'s business.
         this.fibService = register(new FIBServiceClient(this, this.achievementManager.getGlobalStatsCache()));
 
         this.collectionManager = register(
@@ -292,9 +275,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.voteSkipManager = register(new VoteSkipManager(this.roster, this.gamemanager, this.itemDifficultiesManager));
         this.scoreboardManager = register(new ScoreboardManager(this));
 
-        // Named dependencies rather than the plugin, so this one has to be built after all of them.
-        // That ordering requirement is the cost of the explicitness, and it is why the managers
-        // above still take the plugin: most are constructed before their collaborators exist.
+        // Takes named dependencies rather than the plugin, so it has to be built after all of them.
         this.foundItemResolver = register(new FoundItemResolver(
                 this.settings,
                 this.gamemanager,
@@ -305,8 +286,8 @@ public final class ForceItemBattle extends JavaPlugin {
                 this.itemDifficultiesManager,
                 this.fibService));
 
-        // Construction above follows dependencies; this follows the lifecycle. They are no longer
-        // the same list, which is what lets a manager take a sibling constructed before it.
+        // Construction above follows dependencies; this follows the lifecycle. Keeping them separate
+        // is what lets a manager take a sibling constructed before it.
         this.lifecycle = this.lifecycleOrder();
         this.verifyLifecycleCoversEveryManager(this.lifecycle);
         this.lifecycle.forEach(Manager::enable);

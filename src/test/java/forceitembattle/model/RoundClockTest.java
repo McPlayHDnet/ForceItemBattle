@@ -10,13 +10,7 @@ import java.util.OptionalInt;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-/**
- * The round clock, run forward without a server.
- *
- * <p>Until this was extracted, "does the round end when it should, and does it warn on the way
- * there?" could only be answered by starting a game and waiting an hour. The whole point of the
- * split is that a full round is now a loop.
- */
+/** The round clock, run forward without a server: a full round is a loop. */
 class RoundClockTest {
 
     private static RoundClock clockAt(int secondsLeft) {

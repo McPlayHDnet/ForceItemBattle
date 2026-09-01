@@ -43,13 +43,9 @@ public class PortalListener implements Listener {
     private final RoundPhase roundPhase;
     private final GameSettings settings;
     /**
-     * Where each player's scatters have already sent them, so a second trip through the same
-     * portal — or a second visit to the End — lands in the same place rather than somewhere new.
-     *
-     * <p>Neither is ever cleared, and that is safe rather than lucky: {@code scheduleReset}
-     * restarts the JVM between rounds, so a map cannot carry a destination from one round into the
-     * next. It is the same reprieve {@code CONTEXT.md} records for LATE_SPECTATOR. Worth stating,
-     * because "memo that outlives a round" reads like a leak every time somebody meets it.
+     * Where each player's scatters have already sent them, so a second trip through the same portal —
+     * or a second visit to the End — lands in the same place. Neither map is ever cleared, which is
+     * safe only because {@code scheduleReset} restarts the JVM between rounds.
      */
     private final Map<UUID, List<TeleporterLocation>> playerTeleporterLocations = new HashMap<>();
     private final Map<UUID, Location> playerEndLocations = new HashMap<>();
@@ -108,7 +104,6 @@ public class PortalListener implements Listener {
 
         Location existingLocation = this.findExistingLocation(player);
         if (existingLocation != null) {
-            // Re-using a teleporter already used this round — not a new/distinct one.
             if (midGame) {
                 Bukkit.getPluginManager().callEvent(new AntimatterTeleporterUseEvent(player, false));
             }
@@ -119,8 +114,7 @@ public class PortalListener implements Listener {
         World world = player.getWorld();
 
         // 5000..15000 blocks out on each axis, sign picked separately. Deliberately the same range
-        // the End scatter uses in onChangedWorld -- the two used to disagree (this one went half as
-        // far) with nothing recording why, and the answer was that nothing had decided it.
+        // the End scatter uses in onChangedWorld.
         int xOffset = random.nextBoolean() ? random.nextInt(10_001) + 5000 : -(random.nextInt(10_001) + 5000);
         int zOffset = random.nextBoolean() ? random.nextInt(10_001) + 5000 : -(random.nextInt(10_001) + 5000);
 
@@ -134,13 +128,12 @@ public class PortalListener implements Listener {
             block.setType(Material.STONE);
         }
 
-        // computeIfAbsent, not get: the list happens to exist here only because
-        // findExistingLocation ran first and created it, which is an ordering rule between two
-        // methods that nothing states and nothing enforces.
+        // computeIfAbsent, not get: the list exists here only because findExistingLocation ran first
+        // and created it, which is an ordering rule nothing enforces.
         playerTeleporterLocations.computeIfAbsent(player.getUniqueId(), k -> new ArrayList<>())
                 .add(new TeleporterLocation(currentLocation, newLocation));
 
-        // A teleporter this player hasn't used before this round — counts as distinct.
+        // Unused before this round, so it counts as distinct.
         if (midGame) {
             Bukkit.getPluginManager().callEvent(new AntimatterTeleporterUseEvent(player, true));
         }

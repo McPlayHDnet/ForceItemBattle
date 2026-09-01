@@ -36,22 +36,12 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * The one place that speaks both the vendor's vocabulary and the game's.
- *
- * <h2>Why this exists</h2>
- *
- * <p>Pass 1 put the <em>write</em> side of the FIBService seam behind {@code FibStatisticsClient}
- * and left the read side, where eleven files outside {@code service/} named generated types
- * directly. A regenerated client — which happens whenever a service controller signature changes —
- * therefore reached into GUIs, commands and the achievement package.
+ * The one place that speaks both the vendor's vocabulary and the game's, so a regenerated client
+ * cannot reach into GUIs, commands and the achievement package.
  *
  * <p>Everything here is a translation and nothing here is a rule. Null-tolerance is the exception:
- * every generated field is a boxed type that can arrive null, and deciding that an absent count is
- * zero is a translation decision, so it is made once here rather than at forty call sites.
- *
- * <p><b>Sizing, honestly.</b> Pass 1 called this "a domain read model for every statistic the site
- * shows, a far larger project than this card described", and pass 2's card talked itself down to
- * "two field types and four loaders". Pass 1 was right: it is nine types.
+ * every generated field is boxed and can arrive null, and deciding that an absent count is zero is
+ * a translation decision, made once here rather than at forty call sites.
  */
 final class ReadModel {
 
@@ -124,14 +114,9 @@ final class ReadModel {
     }
 
     /**
-     * The team-mode view.
-     *
-     * <p>Rarities come from {@code getTeamRarities()}, not {@code getRarities()}: a back-to-back in
-     * a team game belongs to the team. A teammate's inventory can be what makes one happen at all,
-     * and the b2b streak has always been recorded for both members — but the per-rarity tally used
-     * to be keyed to whoever held the item, so the global rarity achievements filled up for one
-     * member and stalled for the other. Visible on RNGesus (2) and Extraordinary (5) and invisible
-     * on the rest purely because their thresholds are 250 / 100 / 50.
+     * Rarities come from {@code getTeamRarities()}, not {@code getRarities()}: a back-to-back in a
+     * team game belongs to the team. Keying the per-rarity tally to whoever held the item makes the
+     * global rarity achievements fill up for one member and stall for the other.
      */
     static StatsView combinedTeamStats(FibPlayerCombinedTeamStatsDto stats) {
         return new StatsView(

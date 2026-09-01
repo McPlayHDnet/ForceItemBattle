@@ -64,12 +64,9 @@ public class PlayerLifecycleListener implements Listener {
             case RESULT_SCREEN -> this.showResultScreen(player);
             case LATE_SPECTATOR, COUNTDOWN_SPECTATOR -> PlayerOutfitter.toSpectator(player);
             case LOBBY -> PlayerOutfitter.toLobby(player, this.roundPhase.state());
-            // Nothing to write, and deliberately so. Reattaching the player object above was the
-            // whole outcome: quitting in PRE_GAME releases your roster spot, so the only way to
-            // reach this arm is to quit during the countdown and return before it ends -- and
-            // applyStartSetup will outfit them when it does. Writing a state here would be undone
-            // seconds later, and toLobby would put lobby buttons in the hands of someone who is
-            // about to be a participant.
+            // Nothing to write, deliberately: the only way here is to quit during the countdown and
+            // return before it ends, and applyStartSetup outfits them when it does. Lobby buttons
+            // would go to someone who is about to be a participant.
             case RECONNECTING_BEFORE_START -> { }
         }
 
@@ -81,18 +78,15 @@ public class PlayerLifecycleListener implements Listener {
     }
 
     /**
-     * A participant rejoining a running round.
-     *
-     * <p>{@code applyStartSetup} is a no-op for anyone who was online when the countdown ended and
-     * the full round setup for anyone who was not — {@code startSetupApplied} is what tells them
-     * apart, so this call is safe either way.
+     * A participant rejoining a running round. {@code applyStartSetup} is a no-op for anyone who was
+     * online when the countdown ended and the full setup for anyone who was not, so it is safe here
+     * either way.
      */
     private void restoreParticipant(Player player) {
         this.gamemanager.applyStartSetup(player);
 
-        // Only players the timer has already ticked for have a bar. Someone who was offline for the
-        // whole countdown has none yet, and showBossBar(null) would throw here and abort the rest
-        // of the join.
+        // Someone offline for the whole countdown has no bar yet, and showBossBar(null) would throw
+        // and abort the rest of the join.
         BossBar bossBar = this.timerManager.getBossBar().get(player.getUniqueId());
         if (bossBar != null) {
             player.showBossBar(bossBar);
@@ -101,18 +95,13 @@ public class PlayerLifecycleListener implements Listener {
 
     /**
      * They missed the result screen {@code finishGame()} handed out; give them the same one rather
-     * than resetting them to a lobby player and losing the score they are ranked on.
+     * than resetting them to a lobby player and losing the score they are ranked on. Literally the
+     * same body — {@code finishGame} never touched them, so they still carry the health, mount, level
+     * and coloured tab name they disconnected with.
      *
-     * <p>"The same one" is now literally the same body. This used to be a thinner copy — clear,
-     * creative, buttons — and the four things it left out were exactly the four a rejoiner still
-     * carries: {@code RESULT_SCREEN} is only reachable by quitting <em>during</em> the round and
-     * returning after it ended, so {@code finishGame} never touched them and they arrive on the
-     * result screen with the health, mount, level and coloured tab name they disconnected with.
-     *
-     * <p>The destination is resolved here rather than inside the outfitter, which takes decided
-     * values only. It is the world spawn, matching {@code finishGame} — not
-     * {@code ForceItemBattle.getSpawnLocation()}, which is a different, configured place, and
-     * sending a rejoiner there would leave them somewhere the rest of the room is not.
+     * <p>The destination is the world spawn, matching {@code finishGame} — not
+     * {@code ForceItemBattle.getSpawnLocation()}, a different configured place that would leave a
+     * rejoiner somewhere the rest of the room is not.
      */
     private void showResultScreen(Player player) {
         World overworld = Dimension.OVERWORLD.world();

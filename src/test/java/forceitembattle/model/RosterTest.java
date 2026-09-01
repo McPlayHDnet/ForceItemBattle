@@ -11,22 +11,15 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
-/**
- * The whole admission matrix: every game state, on the roster and off it.
- *
- * <p>Ten combinations, and the only way to ask about any of them used to be to join a server in
- * that state — the rule was a five-branch tree inside a Bukkit join handler whose every leaf built
- * an {@code ItemStack} or set a game mode.
- */
+/** The whole admission matrix: every game state, on the roster and off it. */
 class RosterTest {
 
     @Nested
     class AlreadyOnTheRoster {
 
         /**
-         * The precedence that matters most and is easiest to lose: an existing entry wins over
-         * every default. Someone who disconnected during the countdown still owns their team, their
-         * force item and their score.
+         * An existing entry wins over every default: someone who disconnected during the countdown
+         * still owns their team, their force item and their score.
          */
         @ParameterizedTest
         @EnumSource(GameState.class)
@@ -54,11 +47,7 @@ class RosterTest {
             assertEquals(Admission.RESULT_SCREEN, Roster.admit(true, GameState.END_GAME));
         }
 
-        /**
-         * The outcome that was previously a branch falling off the end of an if-chain: nothing to
-         * write at all. Naming it is the point — an empty case is invisible as an omission and
-         * obvious as a name.
-         */
+        /** The one outcome with nothing to write at all. */
         @ParameterizedTest
         @EnumSource(value = GameState.class, names = {"PRE_GAME", "STARTING"})
         void beforeTheRoundNothingIsWritten(GameState state) {
@@ -87,8 +76,7 @@ class RosterTest {
 
         /**
          * Someone who never played this round is not on the result screen, so the lobby is what is
-         * left for them. Shares an outcome with PRE_GAME, which is easy to miss when it is the
-         * unlabelled {@code else} at the bottom of a chain.
+         * left for them — the same outcome as PRE_GAME.
          */
         @Test
         void arrivingAfterTheRoundAlsoMakesALobbyPlayer() {
@@ -96,18 +84,12 @@ class RosterTest {
         }
 
         /**
-         * The asymmetry this candidate pins rather than fixes.
+         * A deliberate asymmetry: a countdown spectator gets a roster entry, a late spectator does
+         * not, so a mid-round joiner is still off the roster when the next round starts. Production
+         * is spared because {@code scheduleReset} restarts the JVM between rounds.
          *
-         * <p>A countdown spectator gets a roster entry; a late spectator does not, and
-         * {@code addPlayer} has no other caller — so a mid-round joiner has no {@code
-         * ForceItemPlayer} at all, and is still not on the roster when the next round starts.
-         * Production is spared because {@code scheduleReset} restarts the JVM between rounds; a
-         * server playing two rounds in one session is not.
-         *
-         * <p>Not made consistent on purpose: a roster entry counts toward the
-         * {@code forceItemPlayerMap().size() &lt; 4} head-count {@code /start} uses to decide
-         * whether to build teams, so evening this up would change when teams appear. That is a
-         * decision about the game.
+         * <p>Not evened up on purpose — a roster entry counts toward the head-count {@code /start}
+         * uses to decide whether to build teams, so changing it would change when teams appear.
          */
         @Test
         void aLateSpectatorIsTheOneArrivalThatCreatesNoRosterEntry() {
@@ -145,10 +127,7 @@ class RosterTest {
             assertTrue(Roster.releasesSpotOnQuit(state));
         }
 
-        /**
-         * Quitting releases a spot in exactly the states where arriving hands out a lobby place.
-         * The two rules are mirrors, which is why they sit in the same module.
-         */
+        /** Quitting releases a spot in exactly the states where arriving hands out a lobby place. */
         @Test
         void releasingASpotMirrorsWhereArrivingMakesALobbyPlayer() {
             Set<GameState> releases = EnumSet.noneOf(GameState.class);

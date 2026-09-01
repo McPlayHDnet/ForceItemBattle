@@ -8,21 +8,17 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
 /**
- * One participant in the current round.
- *
- * <h2>Two accessor families, on purpose</h2>
+ * One participant in the current round. Two accessor families, on purpose:
  *
  * <ul>
- *   <li><b>{@code active*}</b> — the value in effect, read from the current {@link ScoreOwner}:
- *       the team's in a team game, this player's own otherwise. What callers want in nearly
- *       every case.</li>
+ *   <li><b>{@code active*}</b> — the value in effect, read from the current {@link ScoreOwner}: the
+ *       team's in a team game, this player's own otherwise. What callers want in nearly every case.</li>
  *   <li><b>plain ({@code currentMaterial()}, {@code currentScore()}, …)</b> — this player's own
- *       values, ignoring the team. Only correct where the team has already been ruled out, or
- *       where the per-player value is genuinely the subject.</li>
+ *       values, ignoring the team. Only correct where the team has been ruled out, or where the
+ *       per-player value is genuinely the subject.</li>
  * </ul>
  *
- * <p>{@link #setCurrentTeam(Team)} is the one place the choice is made. Full account, including
- * why {@code backToBackStreak} stays a plain field here, in {@code CONTEXT.md § Score Owner}.
+ * <p>{@link #setCurrentTeam(Team)} is the one place the choice is made.
  */
 public class ForceItemPlayer {
 
@@ -32,10 +28,7 @@ public class ForceItemPlayer {
     /** This player's own item, score, jokers and found-list. Never replaced, never null. */
     private final SoloScore own;
 
-    /**
-     * Whoever owns the score right now: {@link #own} when solo, the team once one is assigned.
-     * Set only by {@link #setCurrentTeam(Team)}.
-     */
+    /** {@link #own} when solo, the team once one is assigned. Set only by {@link #setCurrentTeam}. */
     private ScoreOwner scoreOwner;
 
     private Team currentTeam;
@@ -46,11 +39,9 @@ public class ForceItemPlayer {
     @Setter
     private boolean isSpectator;
     /**
-     * Whether this player already received the round setup (gamemode, jokers, tools, backpack).
-     *
-     * The countdown-end pass only reaches players who are online at that instant, so a player who
-     * was disconnected then gets the same setup when they rejoin. This flag is what keeps that from
-     * handing out a second set of jokers to everyone else.
+     * The countdown-end pass only reaches players online at that instant, so a disconnected one gets
+     * the same setup on rejoin. This flag is what keeps that from handing everyone else a second set
+     * of jokers.
      */
     @Setter
     private boolean startSetupApplied;
@@ -96,8 +87,7 @@ public class ForceItemPlayer {
         return own.itemAssignedAt();
     }
 
-    // Package-private on purpose: outside model/ there is no reason to write a player's own
-    // values, since everything now addresses the ScoreOwner. These remain for the model's tests.
+    // Package-private on purpose: outside model/ everything addresses the ScoreOwner instead.
 
     void setNextMaterial(Material nextMaterial) {
         own.setNextMaterial(nextMaterial);
@@ -117,17 +107,14 @@ public class ForceItemPlayer {
 
     // --- active family: whoever owns the score right now -----------------------------------
 
-    /** The force item this player is currently hunting. */
     public Material activeMaterial() {
         return scoreOwner.material();
     }
 
-    /** The item queued behind the current one, shown by the CHAIN setting. */
     public Material activeNextMaterial() {
         return scoreOwner.nextMaterial();
     }
 
-    /** The item held before the current one, or {@code null} at the start of a round. */
     @Nullable
     public Material activePreviousMaterial() {
         return scoreOwner.previousMaterial();
@@ -138,17 +125,15 @@ public class ForceItemPlayer {
         return scoreOwner.jokers();
     }
 
-    /** Score on the board for this player — the shared team score in a team game. */
+    /** Score on the board — the shared team score in a team game. */
     public int activeScore() {
         return scoreOwner.score();
     }
 
-    /** When the current item was handed out, for measuring how long it took to find. */
     public long activeItemAssignedAt() {
         return scoreOwner.itemAssignedAt();
     }
 
-    /** Whoever owns this player's score right now. The one thing the active family reads. */
     public ScoreOwner scoreOwner() {
         return scoreOwner;
     }
@@ -158,9 +143,8 @@ public class ForceItemPlayer {
     }
 
     /**
-     * Joins or leaves a team, and repoints the score owner with it — the single place the choice
-     * between the two families is made. Passing {@code null} restores this player's own values,
-     * which are still exactly where they were before the team was assigned.
+     * Joins or leaves a team, repointing the score owner with it. Passing {@code null} restores this
+     * player's own values, which are still exactly where they were before the team was assigned.
      */
     public void setCurrentTeam(Team currentTeam) {
         this.currentTeam = currentTeam;
@@ -179,28 +163,19 @@ public class ForceItemPlayer {
         return currentTeam == null ? Optional.empty() : currentTeam.teammateOf(this);
     }
 
-    /**
-     * Everyone who shares this player's item and score: the whole team in a team game, just this
-     * player when solo. Lets a caller announce or reward "the people this find belongs to" without
-     * branching on the mode.
-     */
+    /** Everyone who shares this player's item and score: the whole team, or just them when solo. */
     public List<ForceItemPlayer> squad() {
         return scoreOwner.members();
     }
 
     /**
-     * Spends one skip from whichever pool this player draws on, and returns what is left. The pool
-     * is shared in a team game, which is why this exists: {@code setRemainingJokers()} writes the
-     * player's own pool, which nobody reads while they are on a team.
+     * Spends one skip from whichever pool this player draws on. Not the same as the player's own
+     * pool, which nobody reads while they are on a team.
      */
     public int spendJoker() {
         return scoreOwner.spendJoker();
     }
 
-    /**
-     * Credits a found item to whoever owns the score. The item lands in that owner's found-list,
-     * which is what the match history and the result screen read back.
-     */
     public void recordFoundItem(ForceItem forceItem) {
         scoreOwner.record(forceItem);
     }

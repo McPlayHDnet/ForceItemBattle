@@ -72,14 +72,9 @@ public final class CommandResult extends CustomCommand {
     }
 
     /**
-     * The team {@code argument} names, or null when it names none.
-     *
-     * <p>Both halves of this used to be wrong. The lookup ran inside a
-     * {@code catch (IllegalArgumentException)}, which catches the {@code NumberFormatException}
-     * from bad text but <em>not</em> the {@code IndexOutOfBoundsException} from
-     * {@code List.get()} — so {@code /result #99} threw out of the command. And the catch that did
-     * fire had no {@code return} after it, so a failed parse fell through to open a result screen
-     * with nothing to show.
+     * The team {@code argument} names, or null when it names none. Both an unparseable id and an
+     * out-of-range one have to answer null: they are different exceptions, and a bounds failure
+     * escaping here threw {@code /result #99} out of the command.
      */
     @Nullable
     private Team teamAt(String argument) {
@@ -94,13 +89,7 @@ public final class CommandResult extends CustomCommand {
         return index >= 0 && index < teams.size() ? teams.get(index) : null;
     }
 
-    /**
-     * Hands out the next reveal, or says the ceremony is over.
-     *
-     * <p>This was two branches differing only in solo-versus-team — which is the Score Owner
-     * distinction, so the ceremony walks Score Owners and there is one branch. The command no
-     * longer holds a place counter or a match id.
-     */
+    /** Hands out the next reveal, or says the ceremony is over. */
     private void showNextResult(Player player) {
         ResultCeremony ceremony = this.plugin.getResultCeremony();
 
@@ -117,8 +106,8 @@ public final class CommandResult extends CustomCommand {
                 ? () -> this.plugin.getGamemanager().getMatchHistory().markResultsRevealed()
                 : null;
 
-        // The reveal builds the pages and hands them out; the ceremony stores them. The GUI does
-        // not reach into shared state to do it, which is what the old FinishInventory did.
+        // The reveal builds the pages and hands them out; the ceremony stores them. The GUI never
+        // reaches into shared state to do it.
         Bukkit.getOnlinePlayers().forEach(viewer -> new ResultReveal(
                 this.plugin,
                 reveal,

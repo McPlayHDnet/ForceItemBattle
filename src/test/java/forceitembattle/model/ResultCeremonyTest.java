@@ -105,10 +105,6 @@ class ResultCeremonyTest {
             assertEquals(Optional.empty(), ceremony.nextReveal());
         }
 
-        /**
-         * A new match restarts the walk. This used to be a match id compared against a field on the
-         * command, which is why the counter lived there at all.
-         */
         @Test
         void beginningAgainRestartsTheWalk() {
             ScoreOwner first = owner("first");

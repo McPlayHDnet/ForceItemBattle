@@ -122,16 +122,9 @@ public class TimeBasedAchievementHandler implements AchievementHandler<TimeAchie
             }
 
             // Nobody else has a real find yet, and this player's owner has exactly the one just
-            // recorded. The find lands before this runs -- FoundItemListener is registered ahead
-            // of AchievementListener on the same event -- which is why the owner's own count is
-            // allowed to be 1 rather than 0.
-            //
-            // This used to be written out twice, once over teams and once over the roster, and the
-            // two halves had drifted into different rules: only the team half filtered out skips,
-            // and the solo half exempted the finder outright instead of counting their finds. So in
-            // a solo round a rival who had merely *skipped* an item blocked EARLY_BIRD for everyone,
-            // and the finder's own tally was never checked at all. The team half was the rule that
-            // matched the achievement's description, so it is the one that survives.
+            // recorded. The find lands before this runs -- FoundItemListener is registered ahead of
+            // AchievementListener on the same event -- which is why the owner's own count may be 1.
+            // Skips are filtered out: a rival who merely skipped an item must not block this.
             ScoreOwner own = forceItemPlayer.scoreOwner();
             boolean isFirstGlobally = world.scoreOwners().stream().allMatch(owner -> {
                 long collected = owner.foundItems().stream()

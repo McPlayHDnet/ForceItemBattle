@@ -3,13 +3,12 @@ package forceitembattle.settings;
 import javax.annotation.Nullable;
 
 /**
- * The settings in force for the round being played, and where each one is read from: it owns the
- * active {@link GamePreset} and therefore the config path every read and write resolves to. See
- * {@code CONTEXT.md § Ruleset}.
+ * The settings in force for the round being played: it owns the active {@link GamePreset} and
+ * therefore the config path every read and write resolves to.
  *
- * <p>Two rules that have each been got wrong once and are worth keeping in view: reads go through
- * to the {@link ConfigSource} every time rather than being snapshotted at {@code /start}, and
- * {@link #pathFor} is the only place a path is built, for reads and writes alike.
+ * <p>Two rules, each got wrong once: reads go through to the {@link ConfigSource} every time rather
+ * than being snapshotted at {@code /start}, and {@link #pathFor} is the only place a path is built,
+ * for reads and writes alike.
  */
 public final class Ruleset {
 
@@ -24,11 +23,9 @@ public final class Ruleset {
     }
 
     /**
-     * Points this ruleset at a preset, or back at the top-level settings when given {@code null}.
-     *
-     * <p>Called by {@code /start} on <em>every</em> run, including the ones that name no preset.
-     * That is what stops a preset outliving its round, which only a server playing two rounds in
-     * one session — the round-test harness — ever notices.
+     * Called by {@code /start} on <em>every</em> run, including the ones that name no preset — that
+     * is what stops a preset outliving its round, which only a server playing two rounds in one
+     * session ever notices.
      */
     public void usePreset(@Nullable GamePreset preset) {
         this.preset = preset;
@@ -57,7 +54,7 @@ public final class Ruleset {
         this.config.save();
     }
 
-    /** Whether a preset is decided per round, so a setting's value can be asked for one directly. */
+    /** A setting's value in a named preset, regardless of which one is active. */
     public boolean enabledIn(GamePreset gamePreset, GameSetting setting) {
         return this.config.getBoolean(pathIn(gamePreset, setting));
     }

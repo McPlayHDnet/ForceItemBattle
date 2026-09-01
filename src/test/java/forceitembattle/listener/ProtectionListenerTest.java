@@ -25,12 +25,9 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
 /**
  * {@link ProtectionListener}, and specifically the pause.
  *
- * <p>Candidate 7 found that six of the nine protection gates used {@code return}-polarity — they
- * skipped the check rather than refusing the action — so {@code /pause} switched protection off
- * while the Minecraft world kept ticking. The fix routed them to {@code roundInProgress()}. Nothing
- * pinned it, because these handlers need a real block, a real player and a real world.
- *
- * <p>They do now.
+ * <p>Six of the nine protection gates {@code return} rather than refusing, so gating them on
+ * {@code roundRunning()} switches protection off while the Minecraft world keeps ticking. They must
+ * ask {@code roundInProgress()}.
  */
 class ProtectionListenerTest extends ListenerTestBase {
 
@@ -86,11 +83,8 @@ class ProtectionListenerTest extends ListenerTestBase {
     }
 
     /**
-     * The candidate 7 fix, pinned.
-     *
-     * <p>A pause stops this plugin's clock, not the world's. Protection has to keep applying, so
-     * this gate asks {@code roundInProgress()} — if it ever reverts to {@code roundRunning()}, the
-     * protection check is skipped for the whole pause and this test is what says so.
+     * A pause stops this plugin's clock, not the world's, so protection has to keep applying. If this
+     * gate ever reverts to {@code roundRunning()}, the check is skipped for the whole pause.
      */
     @Test
     void protectionStillApplyDuringAPause() {

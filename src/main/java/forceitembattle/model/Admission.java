@@ -2,19 +2,13 @@ package forceitembattle.model;
 
 /**
  * What an arriving player becomes: six outcomes from two facts — already on the roster, and which
- * state the round is in. The table, and why {@link #LATE_SPECTATOR} deliberately creates no roster
- * entry, are in {@code CONTEXT.md § Roster}.
- *
- * <p>The rule answers in names; one adapter turns the name into game modes and slots, the way
- * {@link RoundSetup} and {@code PlayerOutfitter} already do.
+ * state the round is in. Answers in names; one adapter turns the name into game modes and slots.
  */
 public enum Admission {
 
     /**
-     * On the roster, and the round is running. They own a team, a force item and a score already,
-     * so they come back as the participant they were. Someone who was offline for the whole
-     * countdown still needs the round setup applied; someone who was online does not, and
-     * {@code startSetupApplied} is what tells them apart.
+     * On the roster, and the round is running. They already own a team, a force item and a score.
+     * {@code startSetupApplied} decides whether the round setup still has to be applied.
      */
     RETURNING_PARTICIPANT,
 
@@ -42,12 +36,11 @@ public enum Admission {
     /** Not on the roster, and no round is running. A lobby player, and a participant in the next round. */
     LOBBY;
 
-    /** Whether this outcome puts the player on the roster. */
     public boolean joinsRoster() {
         return this == COUNTDOWN_SPECTATOR || this == LOBBY;
     }
 
-    /** Whether the player holds a stake in the round now starting, rather than watching it. */
+    /** Whether the player watches the round now starting rather than holding a stake in it. */
     public boolean isSpectating() {
         return this == LATE_SPECTATOR || this == COUNTDOWN_SPECTATOR;
     }

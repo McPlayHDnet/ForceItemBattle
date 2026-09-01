@@ -23,10 +23,7 @@ public class RandomEventManager implements Manager {
     private static final int MIN_GAP_SECONDS = 12 * 60;
     private static final int MAX_GAP_SECONDS = 20 * 60;
 
-    /**
-     * The first event can land anywhere in the opening stretch, including the first minutes —
-     * the 30s floor only keeps it clear of the /start countdown and the spawn scramble.
-     */
+    /** The 30s floor only keeps the first event clear of the countdown and the spawn scramble. */
     private static final int FIRST_EVENT_MIN_SECONDS = 30;
     private static final int FIRST_EVENT_MAX_SECONDS = MAX_GAP_SECONDS;
 
@@ -53,9 +50,7 @@ public class RandomEventManager implements Manager {
         this.reset();
     }
 
-    /**
-     * Called from /start once the duration is known.
-     */
+    /** Called from /start once the duration is known. */
     public void startGame() {
         this.reset();
 
@@ -91,12 +86,10 @@ public class RandomEventManager implements Manager {
         }
     }
 
-    /**
-     * Called once per second from TimerManager, mid-game only.
-     */
+    /** Called once per second from TimerManager, mid-game only. */
     public void tick(int timeLeft) {
-        // Drive a running timed event's own clock first; it may conclude here. Because this method
-        // is mid-game only, that countdown freezes during pause with no extra handling.
+        // A running timed event's own clock first; it may conclude here. Mid-game only, so that
+        // countdown freezes during a pause with no extra handling.
         if (this.activeEvent != null && this.activeEvent.tick()) {
             this.activeEvent = null;
             this.activeType = null;
@@ -109,8 +102,8 @@ public class RandomEventManager implements Manager {
 
         this.schedule.poll();
 
-        // An event has no expiry, so its slot can come round while it is still unresolved.
-        // Drop the slot rather than queueing it — only one event runs at a time.
+        // An event has no expiry, so its slot can come round while it is still unresolved. Drop the
+        // slot rather than queueing it — only one event runs at a time.
         if (this.activeEvent != null) {
             return;
         }
@@ -143,8 +136,8 @@ public class RandomEventManager implements Manager {
         this.activeEvent = event;
         event.start();
 
-        // An instant event has already resolved inside start(); don't let it hold the slot,
-        // or it would swallow every remaining slot in the round.
+        // An instant event resolved inside start(); holding the slot would swallow every remaining
+        // slot in the round.
         if (event.isInstant()) {
             this.activeType = null;
             this.activeEvent = null;
@@ -153,10 +146,7 @@ public class RandomEventManager implements Manager {
         return true;
     }
 
-    /**
-     * The running event's tab-footer block, or empty when nothing is running. Called once per
-     * second from {@link TabListManager}.
-     */
+    /** Called once per second from {@link TabListManager}. */
     public String tabFooterBlock() {
         RandomEvent event = this.activeEvent;
         return event == null ? "" : event.tabFooterBlock();

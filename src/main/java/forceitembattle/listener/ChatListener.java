@@ -57,11 +57,8 @@ public class ChatListener implements Listener {
             return;
         }
 
-        // No team chat active -> global.
-        // The TEAM setting was a third way of asking a question isInTeam() already answers, and
-        // the null check beside it was there because the two could disagree.
-        // Null means no roster entry -- someone who joined mid-round. They are on no team, so
-        // global is the right answer for them too.
+        // Null means no roster entry -- someone who joined mid-round. They are on no team, so global
+        // is the right answer for them too.
         if (fibPlayer == null
                 || !fibPlayer.isInTeam()
                 || !this.settings.isSettingEnabled(GameSetting.TEAM_CHAT)) {

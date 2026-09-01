@@ -28,28 +28,13 @@ import org.junit.jupiter.api.Test;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
 
 /**
- * {@link ClickableItemsListener}: which right-clicks are menu buttons and which are just items.
+ * Which right-clicks are menu buttons and which are just items. {@link Lookalikes} pins that an item
+ * merely <em>looking</em> like a button is not one; {@link RealButtons} takes every stack it clicks
+ * from a player who has been through {@link PlayerOutfitter} rather than building one by hand.
  *
- * <p>The two menu handlers dispatch on raw {@link Material}, so anything that <em>looks</em> like a
- * button is one. At {@code END_GAME} a grass block a player is holding to build with teleports
- * them and a spyglass they picked up puts them in spectator mode; before a round, an ender pearl
- * quietly drops them out of it. Nothing distinguishes the item the plugin handed out from an
- * identical one the world produced.
- *
- * <p>{@link Lookalikes} is the failing half, and it stays failing until the buttons carry a marker
- * and the handler dispatches on that instead of on the material.
- *
- * <p>{@link RealButtons} is the regression net, and the way it is written is the point: every
- * stack it clicks is taken from a player who has been through {@link PlayerOutfitter}, never built
- * by hand. So when the writer starts stamping a marker and the reader starts reading one, these
- * tests keep passing without being touched — which is the only way they can testify that the
- * rewrite preserved behaviour.
- *
- * <p>Three arms are deliberately not exercised: Achievements, Collection and the Teleporter GUI all
- * run through {@code Scheduler.runSync}, which needs a registered plugin behind Bukkit's scheduler,
- * and the plugin is a mock here. The arms that are covered â€” the dimension buttons and both
- * spectate toggles â€” are the ones that write player state directly, which is also where a
- * misfiring lookalike does the visible damage.
+ * <p>Three arms are deliberately not exercised: Achievements, Collection and the Teleporter GUI run
+ * through {@code Scheduler.runSync}, which needs a registered plugin behind Bukkit's scheduler, and
+ * the plugin is a mock here. The covered arms are the ones that write player state directly.
  */
 class ClickableItemsListenerTest extends ListenerTestBase {
 
@@ -70,8 +55,6 @@ class ClickableItemsListenerTest extends ListenerTestBase {
                 mock(TimerManager.class));
     }
 
-    // --- fixtures ---------------------------------------------------------------------------
-
     private PlayerMock inTheOverworld(String name) {
         PlayerMock player = player(name);
         player.teleport(at(0, 64, 0));
@@ -85,13 +68,9 @@ class ClickableItemsListenerTest extends ListenerTestBase {
     }
 
     /**
-     * A right-click with this stack in hand, as the handlers see it.
-     *
-     * <p>Against a real block, deliberately. {@code PlayerInteractEvent} decides its initial
-     * cancelled state from whether a block was clicked â€” with none, {@code useInteractedBlock}
-     * starts at {@code DENY} and {@code isCancelled()} is already true before any handler runs, so
-     * every assertion about a click being consumed would pass for free. Clicking a block starts it
-     * at {@code ALLOW}, which makes {@code setCancelled(true)} an actual signal.
+     * Against a real block, deliberately: with none, {@code useInteractedBlock} starts at
+     * {@code DENY} and {@code isCancelled()} is already true before any handler runs, so every
+     * assertion about a click being consumed would pass for free.
      */
     private PlayerInteractEvent rightClick(PlayerMock player, ItemStack held) {
         return new PlayerInteractEvent(player, Action.RIGHT_CLICK_BLOCK, held,
@@ -128,20 +107,11 @@ class ClickableItemsListenerTest extends ListenerTestBase {
         return button;
     }
 
-    // --- the tests --------------------------------------------------------------------------
-
-    /**
-     * The bug. Each of these is an ordinary item, obtained the ordinary way, that the menu handler
-     * mistakes for one of its own.
-     */
+    /** Ordinary items, obtained the ordinary way, that share a material with a menu button. */
     @Nested
     class Lookalikes {
 
-        /**
-         * The report's own example. At {@code END_GAME} everyone is in creative with the whole
-         * block palette available, so holding a grass block is not an exotic situation â€” and the
-         * click is cancelled, which means the block cannot be placed.
-         */
+        /** At {@code END_GAME} everyone is in creative with the whole block palette available. */
         @Test
         void aRealGrassBlockIsNotATeleportButton() {
             PlayerMock player = inTheOverworld("Understudy1");
@@ -162,7 +132,6 @@ class ClickableItemsListenerTest extends ListenerTestBase {
                     "an ordinary block should not answer back");
         }
 
-        /** A spyglass is a real item players carry. Holding one should not eject them into spectator. */
         @Test
         void aRealSpyglassDoesNotPutThemIntoSpectator() {
             PlayerMock player = inTheOverworld("Understudy1");
@@ -174,11 +143,7 @@ class ClickableItemsListenerTest extends ListenerTestBase {
                     "looking through a spyglass is not a request to stop playing");
         }
 
-        /**
-         * The worst of the three, because it is silent and it costs the round. An ender pearl is
-         * an ordinary lobby item; throwing one before the round starts drops the player out of it,
-         * and the only sign is a chat line they did not ask for.
-         */
+        /** Silent and it costs the round: the only sign is a chat line they did not ask for. */
         @Test
         void aRealEnderPearlDoesNotOptThemOutOfTheRound() {
             PlayerMock player = inTheOverworld("Understudy1");
@@ -190,7 +155,6 @@ class ClickableItemsListenerTest extends ListenerTestBase {
                     "holding a pearl is not opting out of the round");
         }
 
-        /** And the mirror: a real ender eye does not opt them back in. */
         @Test
         void aRealEnderEyeDoesNotOptThemBackIn() {
             PlayerMock player = inTheOverworld("Understudy1");
@@ -203,10 +167,7 @@ class ClickableItemsListenerTest extends ListenerTestBase {
         }
     }
 
-    /**
-     * The regression net. Every stack here comes from {@link PlayerOutfitter}, so these keep
-     * passing across the rewrite without being edited â€” which is what makes them evidence.
-     */
+    /** Every stack here comes from {@link PlayerOutfitter}, never built by hand. */
     @Nested
     class RealButtons {
 
@@ -255,11 +216,7 @@ class ClickableItemsListenerTest extends ListenerTestBase {
             assertTrue(entry.isSpectator());
         }
 
-        /**
-         * Opting out rewrites slot 8 into the opposite button, and clicking that one puts them
-         * back. Today the click handler builds that replacement itself; after the rewrite it asks
-         * the writer for it, and this is the test that says the round trip still works.
-         */
+        /** Opting out rewrites slot 8 into the opposite button, and clicking that one puts them back. */
         @Test
         void andTheReplacementButtonPutsThemBack() {
             PlayerMock player = inTheOverworld("Understudy1");
@@ -274,10 +231,7 @@ class ClickableItemsListenerTest extends ListenerTestBase {
         }
     }
 
-    /**
-     * Phase gating, pinned as it stands. The two handlers each return early on the wrong phase,
-     * and the table that replaces them has to keep that true through its own phase column.
-     */
+    /** A button is only a button in a phase it is live in. */
     @Nested
     class PhaseGating {
 

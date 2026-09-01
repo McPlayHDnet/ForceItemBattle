@@ -21,9 +21,8 @@ import org.mockbukkit.mockbukkit.MockBukkit;
  * {@link ItemBuilder}, which builds every item in the plugin — the joker stack, the backpack, the
  * lobby items, every slot of all fourteen menus.
  *
- * <p>It was unreachable for the most basic reason there is: its constructor calls
- * {@code new ItemStack(material)}. {@code HeadlessBoundaryTest} has recorded that as the wall since
- * pass 1, and it is why {@code gui/} had no tests at all.
+ * <p>Needs MockBukkit: the constructor calls {@code new ItemStack(material)}, which
+ * {@code HeadlessBoundaryTest} records as the headless wall.
  */
 class ItemBuilderTest {
 

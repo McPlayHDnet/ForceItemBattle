@@ -31,15 +31,11 @@ import forceitembattle.model.stats.StatsView;
 
 /**
  * Statistics domain of FIBService: solo, team, member, combined, and leaderboard.
- * Wraps {@link FibStatisticsControllerApi} and shares transport/async plumbing via
- * the {@link ApiExecutor} handed in by the owning {@link FIBServiceClient}.
  *
- * <p>Two layers, deliberately. The lower one takes generated request types and moves them over
- * HTTP. The upper one — everything under "the game's vocabulary" below — takes rounds, finds and
- * players, and is what the rest of the plugin calls. Nothing outside this package should be
- * building a {@code Fib...RequestDto}: those types are regenerated from the running service
- * whenever a controller signature changes, and a listener that names one is a listener that a
- * schema change can break.
+ * <p>Two layers, deliberately. The lower one takes generated request types and moves them over HTTP.
+ * The upper one takes rounds, finds and players, and is what the rest of the plugin calls. Nothing
+ * outside this package should be building a {@code Fib...RequestDto} — those types are regenerated
+ * from the running service whenever a controller signature changes.
  */
 public class FibStatisticsClient {
 
@@ -47,10 +43,9 @@ public class FibStatisticsClient {
     private final ApiExecutor executor;
 
     /**
-     * The cache a write invalidates. Held directly rather than fetched through the plugin: this is
-     * a service, and reaching from here into {@code AchievementManager} to find one field made the
-     * whole achievement subsystem look like a dependency of the stats transport. It is not — the
-     * only thing this needs is somewhere to say "that player's totals just changed".
+     * The cache a write invalidates. Held directly rather than reached through
+     * {@code AchievementManager}, which would make the achievement subsystem look like a dependency
+     * of the stats transport.
      */
     private final GlobalStatsCache globalStats;
 
@@ -60,14 +55,9 @@ public class FibStatisticsClient {
         this.globalStats = globalStats;
     }
 
-    // =====================================================================================
-    // The game's vocabulary.
-    //
-    // Everything below takes rounds, finds and players and produces the generated request types
-    // itself. Above this line is the transport; the game does not need to know it exists. The rules
-    // about *which row* a number belongs on live here too — they are stats rules, not game rules,
-    // and leaving them at the call sites is how gamesPlayed came to be counted twice once already.
-    // =====================================================================================
+    // The game's vocabulary. Everything below takes rounds, finds and players and builds the
+    // generated request types itself. The rules about *which row* a number belongs on live here too:
+    // leaving them at the call sites is how gamesPlayed came to be counted twice once already.
 
     /** One tick of a counter attributed to the acting player: their solo row, or their member row. */
     public void recordPlayerCounter(UUID self, @Nullable ForceItemPlayer actor,
@@ -85,11 +75,9 @@ public class FibStatisticsClient {
     }
 
     /**
-     * One item obtained: the totals, the per-item tally, the time it took, and the streak.
-     *
-     * <p>The streak is the awkward one, and the awkwardness is why it lives here. In a team game the
-     * peak belongs on the shared team row; in solo it rides along on the player's own update. A skip
-     * breaks the streak, so it is reported on neither.
+     * One item obtained: the totals, the per-item tally, the time it took, and the streak. In a team
+     * game the streak peak belongs on the shared team row; solo, it rides along on the player's own
+     * update. A skip breaks the streak, so it is reported on neither.
      */
     public void recordFind(ForceItemPlayer finder, boolean teamGame, String itemName,
                            boolean skipped, int itemStreak, long timeSpentMs) {
@@ -149,9 +137,7 @@ public class FibStatisticsClient {
     }
 
     /**
-     * A player started a round.
-     *
-     * <p>Both teammates write the same normalised team row, so a stat that counts rather than maxes
+     * Both teammates write the same normalised team row, so a stat that counts rather than maxes
      * would be doubled if both sides sent it — only the primary writer does.
      */
     public void recordGameStarted(ForceItemPlayer player) {
@@ -172,9 +158,8 @@ public class FibStatisticsClient {
     }
 
     /**
-     * A player finished a round: how far they travelled, what they scored, and whether they won.
-     *
-     * <p>Three different scopes, which is why this is one method rather than three calls:
+     * A player finished a round. One method rather than three calls because the three numbers have
+     * three different scopes:
      * <ul>
      *   <li>travel is the player's own contribution, so it routes solo-or-member;</li>
      *   <li>score and the win go on whichever row owns the score — and {@code gamesWon} counts, so
@@ -307,11 +292,9 @@ public class FibStatisticsClient {
         executor.runAsync(() -> api.recordGameOutcome(playerUuid, request), onSuccess, onError);
     }
 
-    // --- the read side, in the game's words --------------------------------------------------
-    //
-    // Everything above returns generated types and is reached only from inside service/. These
-    // return the domain read model, and are what every GUI and command calls. The split is the
-    // point of the seam: a regenerated client changes the methods above and nothing else.
+    // The read side, in the game's words. Everything above returns generated types and is reached
+    // only from inside service/; these return the domain read model and are what every GUI and
+    // command calls. A regenerated client changes the methods above and nothing else.
 
     public void soloStats(UUID playerUuid, Consumer<StatsView> onSuccess, Consumer<ApiException> onError) {
         executor.runAsync(() -> api.getSoloStatistics(playerUuid),
@@ -357,11 +340,8 @@ public class FibStatisticsClient {
     }
 
     /**
-     * A rarity delta as the generated request wants it. The mirror of {@code ReadModel.rarities}.
-     *
-     * <p>Only non-zero fields are set, which keeps the request body byte-identical to the one the
-     * enum used to build for itself: a delta carries a single one, and sending four explicit zeros
-     * alongside it would be a different payload for the same meaning.
+     * A rarity delta as the generated request wants it. Only non-zero fields are set: a delta carries
+     * a single one, and sending four explicit zeros alongside it is a different payload.
      */
     private static FibRaritiesUpdateRequestDto raritiesUpdate(Rarity rarity) {
         RarityCounts counts = rarity.asIncrement();

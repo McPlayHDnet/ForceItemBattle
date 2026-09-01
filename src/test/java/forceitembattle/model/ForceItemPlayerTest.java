@@ -62,13 +62,9 @@ class ForceItemPlayerTest {
         }
 
         /**
-         * The property thirteen call sites now depend on.
-         *
-         * <p>They used to ask {@code isSettingEnabled(TEAM)} and then dereference
-         * {@code currentTeam()}, which is fine right up until the two disagree — a player who
-         * joined during the countdown holds a roster spot and no team, so in a round configured for
-         * teams four of those sites threw. Whether this player has a team is a fact about the
-         * player. Nothing here can consult a setting, which is the whole point.
+         * Whether this player has a team is a fact about the player, not the setting. Asking
+         * {@code isSettingEnabled(TEAM)} and then dereferencing {@code currentTeam()} throws for a
+         * player who joined during the countdown: they hold a roster spot and no team.
          */
         @Test
         void aParticipantWithNoTeamIsSoloWhateverTheRoundWasConfiguredFor() {
@@ -211,10 +207,8 @@ class ForceItemPlayerTest {
     }
 
     /**
-     * The routing itself, now that it is a {@link ScoreOwner} rather than six ternaries.
-     *
-     * The family split above pins <em>what</em> each accessor returns; these pin <em>how</em> it is
-     * chosen, which is the part that used to be spread across the call sites.
+     * The family split above pins <em>what</em> each accessor returns; these pin <em>how</em> the
+     * {@link ScoreOwner} behind it is chosen.
      */
     @Nested
     class Routing {

@@ -51,7 +51,7 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
  * of the player slot and reports "does not exist" for a real achievement.
  *
  * <p>{@code list} is verified only as far as the storage load it requests. What its callback opens
- * is an {@code AchievementCategoryInventory}, and building one needs {@code ItemStack} â€” the
+ * is an {@code AchievementCategoryInventory}, and building one needs {@code ItemStack} — the
  * headless wall that {@code HeadlessBoundaryTest} pins. Leaving the callback unrun is what keeps
  * this test on the near side of it.
  */
@@ -471,7 +471,7 @@ class CommandAchievementTest {
          * with {@code Bukkit.getOfflinePlayer(String)}, which never returns null and never fails:
          * a name nobody has ever used still yields a uuid, so a typo writes a row against a player
          * who does not exist and the admin is told it worked. {@code /stats reset} does not have
-         * this shape â€” it resolves through {@code getOfflinePlayerIfCached} and refuses an unknown
+         * this shape — it resolves through {@code getOfflinePlayerIfCached} and refuses an unknown
          * name. If that stricter form is adopted here, this test is the one to change.
          */
         @Test

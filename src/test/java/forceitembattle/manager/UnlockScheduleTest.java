@@ -9,13 +9,7 @@ import java.util.List;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-/**
- * When the item pools open.
- *
- * <p>The schedule was previously reachable only through a manager carrying 1,382 lines of item
- * data, which needed a mocked plugin, settings, timer and game manager to answer "is MID open
- * yet?". None of those are properties of the question, and none appear here.
- */
+/** When the item pools open, with no plugin, settings, timer or game manager in sight. */
 class UnlockScheduleTest {
 
     private static int minutes(int m) {

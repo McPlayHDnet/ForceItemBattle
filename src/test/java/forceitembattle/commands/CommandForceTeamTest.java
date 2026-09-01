@@ -37,7 +37,7 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
  * to tell apart from the outside.
  *
  * <p>{@link Solo} pins the two-argument form, which passes {@code null} as the second member. That
- * is the intended shape â€” {@code TeamsManager.create}'s second parameter is {@code @Nullable} â€”
+ * is the intended shape — {@code TeamsManager.create}'s second parameter is {@code @Nullable} —
  * and it is the half that is easy to lose to a "surely both are required" tidy-up.
  */
 class CommandForceTeamTest {

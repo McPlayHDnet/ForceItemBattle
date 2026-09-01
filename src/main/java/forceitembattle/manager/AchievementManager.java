@@ -161,15 +161,13 @@ public class AchievementManager implements Manager {
             checkMetaTiers(player.getUniqueId(), player, team, teamGame);
         }
 
-        // Team-eligible achievements are also granted to the rest of the team; which ones
-        // those are is decided by the handler flags.
         if (isTeamAchievement && team != null) {
             for (ForceItemPlayer teamMember : team.getPlayers()) {
                 UUID memberUuid = teamMember.player().getUniqueId();
                 if (memberUuid.equals(player.getUniqueId())) {
                     continue;
                 }
-                // Don't re-grant (and therefore re-announce) to a teammate who already has it.
+                // Re-granting would re-announce.
                 if (storage.hasAchievement(memberUuid, achievement)) {
                     continue;
                 }
@@ -214,7 +212,7 @@ public class AchievementManager implements Manager {
 
         UUID uuid = player.getUniqueId();
 
-        // The cache is what de-dups unlocks; without it we'd re-grant (and re-announce) every time.
+        // The cache is what de-dups unlocks; without it every call re-grants and re-announces.
         if (!storage.isLoaded(uuid)) {
             return;
         }
@@ -242,9 +240,8 @@ public class AchievementManager implements Manager {
                 if (!stats.isMet(achievement.getGlobalRule())) {
                     continue;
                 }
-                // Always recorded SOLO with no teammate. A GLOBAL stat spans both modes, so the
-                // mode of the unlock is meaningless — and recording it as TEAM at game-end but
-                // SOLO at join would make the same achievement's mode depend on where it fired.
+                // Always SOLO with no teammate: a GLOBAL stat spans both modes, so recording TEAM at
+                // game-end and SOLO at join would make the mode depend on where the unlock fired.
                 writeUnlock(uuid, player, achievement, null, false);
             }
 
@@ -253,9 +250,8 @@ public class AchievementManager implements Manager {
     }
 
     /**
-     * Evaluates the COLLECTION achievement(s) for one player after a match has been persisted.
      * Called from the match submit's success callback, so the just-finished game is already in the
-     * DB -- the achievement fills at conclusion rather than a game late.
+     * DB and the achievement fills at conclusion rather than a game late.
      */
     public void evaluateCollectionAchievement(Player player) {
         UUID uuid = player.getUniqueId();
@@ -294,11 +290,9 @@ public class AchievementManager implements Manager {
     }
 
     /**
-     * Persists one unlock (with the correct mode + teammate) and, if the player
-     * is online, fires the grant event so downstream listeners (announcements,
-     * Completionist) run. A player in a team game with no resolvable teammate
-     * (e.g. a solo remnant of a team) is recorded as SOLO to keep service data
-     * valid.
+     * Persists one unlock and, if the player is online, fires the grant event so announcements and
+     * Completionist run. A team player with no resolvable teammate is recorded as SOLO, to keep the
+     * service data valid.
      */
     private void writeUnlock(UUID memberUuid, Player memberPlayer, Achievements achievement,
                              Team team, boolean teamGame) {
@@ -384,17 +378,15 @@ public class AchievementManager implements Manager {
     }
 
     /**
-     * True if this achievement's tracker recorded at least one occurrence this
-     * round. The tracker is the shared team tracker for team-eligible achievements,
-     * so it reflects whether either teammate triggered it. A missing tracker means
-     * it never fired.
+     * For team-eligible achievements the tracker is the shared team one, so this reflects whether
+     * either teammate triggered it. A missing tracker means it never fired.
      */
     private boolean hadOccurrence(UUID uuid, Achievements achievement) {
         return getProgress(uuid, achievement) instanceof SimpleAchievementProgress simpleProgress
                 && simpleProgress.count > 0;
     }
 
-    /** True if the player (solo) or their team (teams) finished in 1st place. Ties for 1st count as a win. */
+    /** Ties for 1st count as a win. */
     private boolean didWin(ForceItemPlayer fip, boolean teamGame) {
         if (teamGame && fip.currentTeam() != null) {
             List<Team> teams = plugin.getRoster().players().values().stream()
@@ -414,11 +406,7 @@ public class AchievementManager implements Manager {
         teamProgress.clear();
     }
 
-    /**
-     * The live progress tracker for a player+achievement in the current round,
-     * or null if none exists yet. Checks the player's own progress and, for
-     * team-shared achievements, the team's progress.
-     */
+    /** Checks the player's own progress and, for team-shared achievements, the team's. */
     public AchievementProgressTracker getProgress(UUID uuid, Achievements achievement) {
         Map<Achievements, AchievementProgressTracker> playerMap = playerProgress.get(uuid);
         if (playerMap != null && playerMap.get(achievement) != null) {
@@ -434,11 +422,7 @@ public class AchievementManager implements Manager {
         return null;
     }
 
-    /**
-     * Human-readable description of how far along a player's achievement is,
-     * for debugging (e.g. a /achievements progress command). Progress is
-     * in-memory and per-round, so this only reflects the current game.
-     */
+    /** Progress is in-memory and per-round, so this only reflects the current game. */
     public String describeProgress(UUID uuid, Achievements achievement) {
         AchievementProgressTracker tracker = getProgress(uuid, achievement);
         if (tracker == null) {

@@ -10,15 +10,8 @@ import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 
 /**
- * Who finished where.
- *
- * <p>The ranking feeds both the {@code /result} reveal and the {@code placement} / {@code won}
+ * Who finished where. Feeds both the {@code /result} reveal and the {@code placement} / {@code won}
  * fields written to match history, so a tie handled wrongly here shows up as a wrong winner.
- *
- * <p>These were methods on {@code Gamemanager}, and pure ones — they take a collection and a way to
- * score it and return a map. Keeping them there meant {@code AchievementManager} had to depend on
- * the class that starts and finishes rounds in order to ask who came first, which was the last of
- * the seven dependency cycles that ran through {@code Gamemanager}.
  */
 public final class Standings {
 
@@ -60,10 +53,8 @@ public final class Standings {
     }
 
     /**
-     * The roster ordered by score.
-     *
-     * <p>Ties break on UUID so the order is stable between calls — without it the result screen
-     * could deal two tied players out in a different order each time it was opened.
+     * The roster ordered by score. Ties break on UUID so the order is stable between calls —
+     * otherwise the result screen deals two tied players out differently each time it is opened.
      *
      * @param ascending lowest score first when true
      */

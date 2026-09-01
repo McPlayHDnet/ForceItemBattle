@@ -26,11 +26,7 @@ import org.junit.jupiter.api.Test;
 /**
  * {@link FoundItemsLoader}: read-through caching for a player's collection.
  *
- * <p>Testable without a server or a plugin because the read side of the service seam was finished —
- * this used to take a {@code ForceItemBattle} purely to reach {@code getFibService()}, and now takes
- * the service itself.
- *
- * <p>The rule worth pinning is the one its own comment calls out: <b>a failure is delivered as an
+ * <p>The rule worth pinning: <b>a failure is delivered as an
  * empty map but is never cached</b>. An empty collection is a real answer ("collected nothing"), so
  * caching a transient error would stall achievement progress until the next match rather than
  * retrying.

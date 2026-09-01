@@ -13,28 +13,17 @@ import org.bukkit.inventory.ItemStack;
 /**
  * The end-of-round reveal: who is shown next, and the screens already shown.
  *
- * <p>It was three things in three places — the walk inside {@code CommandResult} (which held
- * {@code public int place} and a match id as command state, and wrote the same walk out twice for
- * solo and for teams), the archive as two maps on {@code Gamemanager} that nothing in
- * {@code Gamemanager} ever read, and the winner hook as a ternary building a {@code Runnable}.
+ * <p>Like {@link Roster} and {@link RoundPhase}, this depends on nothing — no Bukkit, no plugin, no
+ * managers. The order is handed in at {@link #beginFor} rather than computed here.
  *
- * <p>Like {@link Roster} and {@link RoundPhase}, this depends on nothing — no Bukkit behaviour, no
- * plugin, no managers. The order is handed in at {@link #beginFor}, already built, rather than
- * computed here from a roster and a team manager.
+ * <p>Page maps are opaque: stored, handed back, never looked inside, and {@link ItemStack} appears in
+ * the signature and nowhere else. Keep it that way — reaching into a page would put this module
+ * behind a running server.
  *
- * <h2>The pages are opaque</h2>
- *
- * <p>A page map is stored and handed back and never looked inside; {@link ItemStack} appears in the
- * signature and nowhere else. Keep it that way — reaching into a page would put this module behind
- * a running server, which is the whole reason the walk was untestable before.
- *
- * <h2>Keyed by identity</h2>
- *
- * <p>The archive keys on the {@link ScoreOwner} instance. That is safe for the length of a round
- * because an existing roster entry always wins over every default — see {@code CONTEXT.md § Roster}
- * — so a player reconnecting at END_GAME gets their original {@code ForceItemPlayer} back, and its
- * {@code SoloScore} is final. If {@code Roster.admit} ever stops guaranteeing that, this breaks
- * quietly, which is why it is written down here.
+ * <p>The archive keys on the {@link ScoreOwner} <em>instance</em>. Safe for the length of a round only
+ * because an existing roster entry always wins over every default, so a player reconnecting at
+ * END_GAME gets their original {@code ForceItemPlayer} back with its final {@code SoloScore}. If
+ * {@code Roster.admit} ever stops guaranteeing that, this breaks quietly.
  */
 public final class ResultCeremony {
 
@@ -50,9 +39,8 @@ public final class ResultCeremony {
     /**
      * Starts the ceremony for a match, discarding anything left from the previous one.
      *
-     * @param order worst-placed first, which is the order the reveal walks. Spectators are already
-     *              excluded and ties already broken by the caller — see {@code CONTEXT.md §
-     *              Result Ceremony} for why that ordering is not the one the stats write uses.
+     * @param order worst-placed first. Spectators are already excluded and ties already broken by the
+     *              caller; this is deliberately not the ordering the stats write uses.
      */
     public void beginFor(UUID matchId, List<Reveal> order) {
         this.matchId = matchId;
@@ -67,11 +55,7 @@ public final class ResultCeremony {
         return this.matchId;
     }
 
-    /**
-     * The next owner to reveal, or empty once the winner has been shown.
-     *
-     * <p>Advances on every call: this is the reveal being handed out, not a peek.
-     */
+    /** Advances on every call: this is the reveal being handed out, not a peek. */
     public Optional<Reveal> nextReveal() {
         if (this.next >= this.order.size()) {
             return Optional.empty();
@@ -79,7 +63,6 @@ public final class ResultCeremony {
         return Optional.of(this.order.get(this.next++));
     }
 
-    /** Whether every owner has been revealed. */
     public boolean isFinished() {
         return this.next >= this.order.size();
     }
@@ -89,16 +72,14 @@ public final class ResultCeremony {
         this.pagesByOwner.put(owner, pages);
     }
 
-    /** The stored screen for an owner, or empty if none was ever built. */
     public Optional<Map<Integer, Map<Integer, ItemStack>>> pagesFor(@Nullable ScoreOwner owner) {
         return owner == null ? Optional.empty() : Optional.ofNullable(this.pagesByOwner.get(owner));
     }
 
     /**
-     * Builds the reveal order from the places, worst first.
-     *
-     * <p>Takes places rather than computing them so this module stays free of the roster and the
-     * team manager. The map is expected best-first, which is what {@link Standings} returns.
+     * Builds the reveal order from the places, worst first. Takes places rather than computing them
+     * so this module stays free of the roster and team manager. The map is expected best-first,
+     * which is what {@link Standings} returns.
      */
     public static <T extends ScoreOwner> List<Reveal> orderFrom(Map<T, Integer> placesBestFirst) {
         List<Map.Entry<T, Integer>> entries = new ArrayList<>(placesBestFirst.entrySet());
@@ -112,10 +93,8 @@ public final class ResultCeremony {
     }
 
     /**
-     * One owner's turn in the ceremony.
-     *
-     * @param last whether this is the winner — the reveal after which the stats link may go out.
-     *             The ceremony decides which turn that is; what happens then is the caller's.
+     * @param last whether this is the winner — the reveal after which the stats link may go out. The
+     *             ceremony decides which turn that is; what happens then is the caller's.
      */
     public record Reveal(ScoreOwner owner, int place, boolean last) {
 

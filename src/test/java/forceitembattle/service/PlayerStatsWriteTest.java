@@ -90,11 +90,8 @@ class PlayerStatsWriteTest {
 
     /**
      * Someone who connected after the round began has no roster entry, and nothing to attribute.
-     *
-     * <p>This used to fall through to a solo write — a faithful port of what the call sites did by
-     * hand, and wrong in the same way they were. It is how a spectator who wandered over an
-     * antimatter teleporter pad ended up on the stats page owning exactly one teleporter use and
-     * nothing else.
+     * Falling through to a solo write is how a spectator who wandered over an antimatter teleporter
+     * pad ends up on the stats page owning exactly one teleporter use and nothing else.
      */
     @Test
     void aPlayerWithNoRosterEntryWritesNothing() {

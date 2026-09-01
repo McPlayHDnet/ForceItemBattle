@@ -336,7 +336,7 @@ class CommandForceItemTest {
 
         /**
          * The completion offers only what the command would accept. {@code water} is a block, not
-         * an obtainable item, so it is not offered even though the prefix matches it exactly â€”
+         * an obtainable item, so it is not offered even though the prefix matches it exactly —
          * {@code water_bucket}, which is an item, still is.
          */
         @Test

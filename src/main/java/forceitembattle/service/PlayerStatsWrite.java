@@ -12,22 +12,16 @@ import javax.annotation.Nullable;
  * Routes a stat that belongs to <em>one player's own contribution</em> to whichever row records it:
  * their solo stats in a solo game, their member row inside the team in a team game.
  *
- * <p>Five call sites (found item, back-to-back rarity, wheel-of-fortune use, death, antimatter
- * teleporter) all wrote the same ten-line branch, differing only in the payload. They differ in
- * <em>type</em> as well — the generated client has separate builders for solo and member updates
- * with no common supertype — which is why this takes two suppliers rather than one value. Only the
- * branch that runs is built.
+ * <p>Two suppliers rather than one value because the generated client has separate builders for solo
+ * and member updates with no common supertype. Only the branch that runs is built.
  *
  * <p>Deliberately not for shared team stats (highest score, longest streak): those live on the team
  * row, are written once per team, and go through {@code updateTeamStatisticsAsync} guarded by
  * {@link forceitembattle.model.Team#isPrimaryWriter(ForceItemPlayer)}.
  *
- * <p><b>Who counts as a participant is decided here, not at the call sites.</b> It used to be each
- * site's job, and four of the five remembered while the antimatter teleporter did not — a spectator
- * walking over a teleporter pad mid-game had the use written to their solo row, and since they never
- * played, that single stat was the only thing they owned. It surfaced on the stats page as a player
- * whose entire career is one teleporter use. The rule belongs somewhere it cannot be forgotten by
- * the sixth caller, and this is the routing point every one of them already goes through.
+ * <p><b>Who counts as a participant is decided here, not at the call sites</b>, so the next caller
+ * cannot forget it. Leaving it to each site put a spectator's teleporter use on their solo row,
+ * surfacing on the stats page as a player whose entire career is one teleporter use.
  */
 public final class PlayerStatsWrite {
 
@@ -44,9 +38,8 @@ public final class PlayerStatsWrite {
                               @Nullable ForceItemPlayer forceItemPlayer,
                               Supplier<FibSoloStatisticsUpdateRequestDto> soloUpdate,
                               Supplier<FibTeamMemberStatsUpdateRequestDto> memberUpdate) {
-        // Nothing to attribute. Both shapes of "watching rather than playing" land here: someone who
-        // took the spectate toggle in the lobby keeps a roster entry with the flag set, while someone
-        // who connected after the round began has no roster entry at all.
+        // Both shapes of "watching rather than playing": the spectate toggle keeps a roster entry
+        // with the flag set, while someone who connected after the round began has none at all.
         if (!Roster.isPlaying(forceItemPlayer)) {
             return;
         }

@@ -10,14 +10,11 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 /**
- * Command that is specified in plugin.yml.
+ * Command that is specified in plugin.yml. Constructing one does not register it: that happens
+ * through {@link CommandsManager#registerCommand(CustomCommand)} during bootstrap.
  *
- * <p>Constructing one does not register it: that happens explicitly through
- * {@link CommandsManager#registerCommand(CustomCommand)} during bootstrap.
- *
- * <p>A command <b>declares</b> what it requires in {@link #preconditions()} and is invoked only
- * once those hold — it does not check for itself. The rules the declaration obeys, and why
- * subcommand-level gates are not part of it, are on {@link Precondition}.
+ * <p>A command <b>declares</b> what it requires in {@link #preconditions()} and is invoked only once
+ * those hold — it does not check for itself. See {@link Precondition}.
  */
 @Getter
 public abstract class CustomCommand implements CommandExecutor {
@@ -28,10 +25,8 @@ public abstract class CustomCommand implements CommandExecutor {
     private String description;
 
     /**
-     * Set by {@link CommandsManager#registerCommand} at bootstrap, and by tests directly.
-     *
-     * <p>Not a constructor parameter: that would put it through all 34 subclass constructors to
-     * serve a check none of them performs themselves.
+     * Set by {@link CommandsManager#registerCommand} at bootstrap, and by tests directly. Not a
+     * constructor parameter: that would thread it through 34 subclass constructors.
      */
     private CommandContext context;
 
@@ -41,12 +36,11 @@ public abstract class CustomCommand implements CommandExecutor {
     }
 
     /**
-     * What must hold before this command's body runs, in the order it is checked — the first
-     * failure is what the sender is told. Return {@link List#of()} for a command with no gates.
+     * What must hold before this command's body runs, in the order it is checked — the first failure
+     * is what the sender is told. Return {@link List#of()} for a command with no gates.
      *
-     * <p>Abstract on purpose. A default would make declaring optional, and "forgot to declare a
-     * gate" would once again look exactly like "correctly has none" — which is the shape that let
-     * {@code /skip} run its whole body for non-ops only.
+     * <p>Abstract on purpose: a default would make declaring optional, and "forgot to declare a gate"
+     * would look exactly like "correctly has none".
      */
     protected abstract List<Precondition> preconditions();
 
@@ -99,15 +93,10 @@ public abstract class CustomCommand implements CommandExecutor {
     }
 
     /**
-     * Runs {@code action} only if the player is an op, and refuses them otherwise.
-     *
-     * <p><b>For subcommand gates only</b> — {@code CommandAchievement} and {@code CommandStats},
-     * where the gate hangs off {@code args[0]} and a command-level declaration cannot reach it.
-     * Everything else declares {@link Precondition#OP}.
-     *
-     * <p>Takes the body rather than returning a boolean, which is the form {@code
-     * CommandAchievement} had already invented for itself. A boolean exists to be put in an
-     * {@code if}, and putting it in an {@code if} is what inverted {@code /skip}.
+     * <b>For subcommand gates only</b> — {@code CommandAchievement} and {@code CommandStats}, where
+     * the gate hangs off {@code args[0]} and a command-level declaration cannot reach it. Everything
+     * else declares {@link Precondition#OP}. Takes the body rather than returning a boolean, because
+     * a boolean exists to be put in an {@code if} and inverted by mistake.
      */
     protected final void requireOp(Player player, Runnable action) {
         if (!player.isOp()) {

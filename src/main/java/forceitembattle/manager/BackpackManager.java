@@ -26,10 +26,9 @@ public class BackpackManager implements Manager {
     public Inventory getBackpackForPlayer(Player player) {
         ForceItemPlayer forceItemPlayer = this.forceItemBattle.getRoster().get(player.getUniqueId());
 
-        // Whether this player has a team, not whether the round was configured for them. With the
-        // setting on and no team -- a spectator who joined during the countdown -- the old check
-        // passed and then dereferenced a null team. No roster entry at all is the same answer:
-        // someone who arrived mid-round gets their own backpack, not a team's.
+        // Whether this player has a team, not whether the round was configured for them: with the
+        // setting on and no team -- a spectator who joined during the countdown -- checking the
+        // setting dereferences a null team. No roster entry at all is the same answer.
         if (forceItemPlayer != null && forceItemPlayer.isInTeam()) {
             return getTeamBackpack(forceItemPlayer.currentTeam());
         }

@@ -3,21 +3,13 @@ package forceitembattle.model;
 /**
  * Where the round is, and nothing else.
  *
- * <h2>Why this is its own module</h2>
+ * <p>Its own module because "is the round running?" is the most-asked question in the codebase, and
+ * answering it from {@code Gamemanager} made almost every listener depend on the class that starts
+ * and finishes rounds. Like {@link Roster}, this depends on nothing — no Bukkit, no plugin, no
+ * managers — and that is load-bearing: a dependency added here reintroduces a cycle for every module
+ * that asks what phase the round is in, which is most of them.
  *
- * <p>It was a field on {@code Gamemanager}, which meant that asking "is the round running?" — the
- * most-asked question in the codebase, 26 call sites across 20 files — created a dependency on the
- * class that starts and finishes rounds. Seven of the nine dependency cycles among managers existed
- * for that reason and no other: measuring the graph showed that of the twenty edges pointing into
- * {@code Gamemanager}, eleven wanted the roster and seven wanted this.
- *
- * <p>So, like {@link Roster}, this depends on nothing — no Bukkit, no plugin, no managers — and
- * that is load-bearing rather than incidental. A dependency added here would reintroduce a cycle
- * for every module that asks what phase the round is in, which is most of them.
- *
- * <p>The phase predicates live on {@link GameState} itself; this holds the current one and lets it
- * be moved. Nine of the ten listeners now hold one of these instead of a {@code Gamemanager},
- * because where the round is was the only thing they ever wanted from it.
+ * <p>The phase predicates live on {@link GameState} itself; this holds the current one.
  */
 public final class RoundPhase {
 
@@ -28,12 +20,9 @@ public final class RoundPhase {
     }
 
     /**
-     * Moves the round to a new phase.
-     *
-     * <p>Deliberately not called {@code setState}: the transitions are not interchangeable writes.
-     * {@code /start} freezes the roster by moving to STARTING, a pause has bookkeeping attached on
-     * either side, and finishing a round is what the whole stats pipeline hangs off. Those belong
-     * to {@code Gamemanager}, which orchestrates the effects and calls this for the flip.
+     * Deliberately not {@code setState}: the transitions are not interchangeable writes. Moving to
+     * STARTING freezes the roster, a pause has bookkeeping on either side, and finishing is what the
+     * stats pipeline hangs off. Those effects belong to {@code Gamemanager}; this is only the flip.
      */
     public void moveTo(GameState state) {
         this.state = state;
@@ -60,11 +49,7 @@ public final class RoundPhase {
         return this.state.roundRunning();
     }
 
-    /**
-     * The round has started and has not finished, pause included.
-     *
-     * <p>A pause stops this plugin's clock, not the world's — see {@link GameState#roundInProgress}.
-     */
+    /** The round has started and has not finished, pause included. */
     public boolean roundInProgress() {
         return this.state.roundInProgress();
     }

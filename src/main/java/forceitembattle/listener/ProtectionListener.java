@@ -35,12 +35,12 @@ import org.bukkit.event.player.PlayerBucketEmptyEvent;
  * Adapter for the protection rules: cancels what {@link ProtectionManager} refuses, plays the
  * refusal sound, and tells the operators.
  *
- * <p>Nothing here decides anything. Every handler asks a question, and the only judgement it makes
- * is how to word the answer.
+ * <p>Nothing here decides anything: every handler asks a question, and the only judgement it makes is
+ * how to word the answer.
  */
 @RequiredArgsConstructor
 public class ProtectionListener implements Listener {
-    /** Still needed for {@code new NamespacedKey(plugin, ...)}, which is Bukkit API, not a sibling. */
+    /** Still needed for {@code new NamespacedKey(plugin, ...)}. */
     private final ForceItemBattle plugin;
     private final Roster roster;
     private final RoundPhase roundPhase;
@@ -56,18 +56,10 @@ public class ProtectionListener implements Listener {
     }
 
     /**
-     * Protection applies for as long as the round does, pause included.
-     *
-     * <p>This asked {@code isMidGame()} until the state predicates were separated, which meant
-     * every gate below switched off the moment someone typed {@code /pause}. A pause stops this
-     * plugin's clock and freezes the players; it does not stop the world. Primed TNT still
-     * detonates, lava still flows, fire still spreads and pistons — disabled for the whole round by
-     * {@link #onPiston} — started working again.
-     *
-     * <p>The two handlers that cancel outright when the round is not running ({@code onBlockBreak},
-     * {@code onBlockPlace}) were never affected: they refuse everything outside a running round,
-     * which already covered a pause. It is the six that {@code return} early, skipping the check
-     * rather than refusing the action, where the gap was.
+     * Protection applies for as long as the round does, <b>pause included</b>. A pause stops this
+     * plugin's clock and freezes the players; it does not stop the world. Asking {@code roundRunning}
+     * here switches off every gate below the moment someone types {@code /pause}, and primed TNT,
+     * lava, fire and pistons all start working again.
      */
     private boolean roundInProgress() {
         return this.roundPhase.roundInProgress();
@@ -103,8 +95,8 @@ public class ProtectionListener implements Listener {
             return;
         }
 
-        // Whatever was just broken is no longer anyone's container. Harmless on a block that never
-        // was one, and it keeps the ownership map from holding entries for blocks that are gone.
+        // Harmless on a block that never was a container, and it keeps the ownership map from
+        // holding entries for blocks that are gone.
         this.protection().breakContainer(block);
     }
 
@@ -225,10 +217,7 @@ public class ProtectionListener implements Listener {
         }
     }
 
-    /**
-     * The shape every refusal takes: stop it, tell the player with a sound, tell the operators what
-     * was attempted. Five handlers wrote these three lines out individually.
-     */
+    /** Stop it, tell the player with a sound, tell the operators what was attempted. */
     private void refuse(Cancellable event, Player player, String attempt, Location location) {
         event.setCancelled(true);
         player.playSound(player, Sound.ENTITY_VILLAGER_NO, 1, 1);

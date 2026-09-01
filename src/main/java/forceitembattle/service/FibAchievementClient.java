@@ -34,11 +34,8 @@ public class FibAchievementClient {
     }
 
     /**
-     * Unlocks an achievement in the game's own terms.
-     *
-     * <p>The generated request carries the mode as its own enum and expects the teammate only on a
-     * team unlock — two details the achievement subsystem had to know purely because it was the one
-     * building the request. It now says what happened and leaves the shape to this.
+     * Unlocks an achievement in the game's own terms, so the caller does not have to know that the
+     * generated request carries its own mode enum and wants the teammate only on a team unlock.
      */
     public void unlockAsync(UUID playerUuid, String achievementId, AchievementMode mode,
                             @Nullable UUID teammateUuid) {

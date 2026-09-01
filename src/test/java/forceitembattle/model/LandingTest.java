@@ -12,14 +12,8 @@ import org.junit.jupiter.params.provider.EnumSource;
 /**
  * {@link Landing}: whether a scatter destination needs a floor putting under it.
  *
- * <p>One predicate, and it earns a test file because the version it replaces was wrong for its
- * whole life and nothing could say so. {@code PortalListener} asked
- * {@code !block.getType().isBlock()} — which is a question about whether a material is a placeable
- * block <em>type</em>, true even of air — so the floor was never placed and the only sign was a
- * player occasionally falling out of the world after a teleport.
- *
- * <p>{@link TheGuardThatWasThere} is the part worth keeping: it pins the two mistakes available
- * here, so neither can be reintroduced by someone reaching for the predicate that reads best.
+ * <p>{@link TheGuardThatWasThere} pins the two mistakes available here, so neither can be
+ * reintroduced by someone reaching for the predicate that reads best.
  */
 class LandingTest {
 
@@ -53,10 +47,7 @@ class LandingTest {
             assertFalse(Landing.needsFloor(below), below + " is somewhere you land, not a hole");
         }
 
-        /**
-         * Ground cover is ground. A snowy plain or a meadow is the top block in its column, so
-         * these are what a great many ordinary destinations actually look like.
-         */
+        /** Ground cover is ground: a snowy plain or a meadow is the top block in its column. */
         @ParameterizedTest
         @EnumSource(value = Material.class, names = {"SNOW", "SHORT_GRASS", "TALL_GRASS", "FERN"})
         void groundCoverIsNotScarred(Material below) {
@@ -64,27 +55,24 @@ class LandingTest {
         }
     }
 
-    /**
-     * The two ways to get this wrong, pinned against the API rather than against my memory of it.
-     * Both predicates read like the right question and neither is.
-     */
+    /** The two ways to get this wrong. Both predicates read like the right question and neither is. */
     @Nested
     class TheGuardThatWasThere {
 
         /**
-         * The bug as shipped. {@code isBlock()} is true for air, so the guard it formed was false
-         * for every material a player can land on and the floor was never placed once.
+         * {@code isBlock()} is true for air, so a guard built on it is false for every material a
+         * player can land on and the floor is never placed.
          */
         @Test
         void isBlockCannotExpressThisAtAll() {
-            assertTrue(Material.AIR.isBlock(), "this is why the original guard never fired");
+            assertTrue(Material.AIR.isBlock(), "which is why such a guard never fires");
             assertTrue(Material.WATER.isBlock());
             assertTrue(Material.STONE.isBlock());
         }
 
         /**
-         * And the tempting over-correction. {@code isSolid()} is false for water, lava and ground
-         * cover, so swapping it in would plug oceans and scar meadows.
+         * The tempting over-correction: {@code isSolid()} is false for water, lava and ground cover,
+         * so swapping it in would plug oceans and scar meadows.
          */
         @Test
         void isSolidWouldFireOnPlacesThatAreFineToLandOn() {

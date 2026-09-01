@@ -123,8 +123,7 @@ class GameRulesListenerTest extends ListenerTestBase {
     class PauseFreeze {
 
         /**
-         * A pause pins players to the block they are standing on. This is what makes the pause gaps
-         * candidate 7 closed hard to exploit from inside: the players cannot walk anywhere, even
+         * A pause pins players to the block they are standing on, so they cannot walk anywhere even
          * though the world keeps ticking around them.
          */
         @Test
