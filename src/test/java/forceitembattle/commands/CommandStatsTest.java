@@ -15,7 +15,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.player.CommandStats;
 import forceitembattle.manager.ItemDifficultiesManager;
 import forceitembattle.model.RarityCounts;
@@ -67,17 +66,14 @@ class CommandStatsTest {
     void setUp() {
         this.server = MockBukkit.mock();
 
-        ForceItemBattle plugin = mock(ForceItemBattle.class);
         FIBServiceClient service = mock(FIBServiceClient.class);
         this.helper = mock(FibStatisticsClient.class);
         ItemDifficultiesManager items = mock(ItemDifficultiesManager.class);
 
-        when(plugin.getFibService()).thenReturn(service);
         when(service.statistics()).thenReturn(this.helper);
-        when(plugin.getItemDifficultiesManager()).thenReturn(items);
         when(items.getUnicodeFromMaterial(anyBoolean(), any())).thenReturn("?");
 
-        this.command = new CommandStats(plugin);
+        this.command = new CommandStats(items, service);
         ((CustomCommand) this.command).setContext(new CommandContext(null, null, null));
     }
 
@@ -85,7 +81,6 @@ class CommandStatsTest {
     void tearDown() {
         MockBukkit.unmock();
     }
-
 
     private PlayerMock join(String name) {
         return this.server.addPlayer(name);
@@ -160,7 +155,6 @@ class CommandStatsTest {
             return null;
         }).when(this.helper).teamStats(any(), any(), any(), any());
     }
-
 
     @Nested
     class Usage {

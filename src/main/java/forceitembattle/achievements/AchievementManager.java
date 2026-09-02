@@ -1,20 +1,11 @@
-package forceitembattle.manager;
+package forceitembattle.achievements;
 
-import forceitembattle.model.Roster;
-import forceitembattle.model.Standings;
-import forceitembattle.ForceItemBattle;
-import forceitembattle.achievements.AchievementMode;
-import forceitembattle.achievements.AchievementScope;
-import forceitembattle.achievements.AchievementStorage;
-import forceitembattle.achievements.AchievementWorld;
-import forceitembattle.achievements.Achievements;
 import forceitembattle.achievements.global.GlobalStatsCache;
 import forceitembattle.achievements.global.GlobalStatsLoader;
-import forceitembattle.achievements.Trigger;
 import forceitembattle.achievements.handlers.AchievementHandler;
+import forceitembattle.achievements.handlers.CollectionAchievementHandler;
 import forceitembattle.achievements.progress.AchievementProgressTracker;
 import forceitembattle.achievements.progress.BackToBackAchievementProgress;
-import forceitembattle.achievements.handlers.CollectionAchievementHandler;
 import forceitembattle.achievements.progress.CollectionAchievementProgress;
 import forceitembattle.achievements.progress.ConsecutiveStoneAchievementProgress;
 import forceitembattle.achievements.progress.CounterAchievementProgress;
@@ -22,10 +13,17 @@ import forceitembattle.achievements.progress.ItemFrequencyAchievementProgress;
 import forceitembattle.achievements.progress.SimpleAchievementProgress;
 import forceitembattle.achievements.progress.SkipAchievementProgress;
 import forceitembattle.achievements.progress.TimeAchievementProgress;
+import forceitembattle.collection.CollectionManager;
 import forceitembattle.event.PlayerGrantAchievementEvent;
-import forceitembattle.settings.GameSetting;
+import forceitembattle.manager.Manager;
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.Roster;
+import forceitembattle.model.RoundPhase;
+import forceitembattle.model.Standings;
 import forceitembattle.model.Team;
+import forceitembattle.service.FIBServiceClient;
+import forceitembattle.settings.GameSetting;
+import forceitembattle.settings.GameSettings;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumMap;
@@ -40,10 +38,14 @@ import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
+import org.bukkit.plugin.Plugin;
 
 public class AchievementManager implements Manager {
 
-    private final ForceItemBattle plugin;
+    private final Roster roster;
+    private final RoundPhase roundPhase;
+    private final GameSettings settings;
+    private final CollectionManager collection;
 
     /**
      * What a handler is allowed to ask about the round. Built once here because this manager is the
@@ -61,12 +63,17 @@ public class AchievementManager implements Manager {
     // Pre-built so handleEvent only walks the achievements bound to the incoming trigger.
     private final Map<Trigger, List<Achievements>> achievementsByTrigger;
 
-    public AchievementManager(ForceItemBattle plugin) {
-        this.plugin = plugin;
-        this.world = new PluginAchievementWorld(plugin);
-        this.storage = new AchievementStorage(plugin);
-        this.globalStatsCache = new GlobalStatsCache();
-        this.globalStatsLoader = new GlobalStatsLoader(plugin, this.globalStatsCache);
+    public AchievementManager(Plugin plugin, Roster roster, RoundPhase roundPhase, GameSettings settings,
+                              CollectionManager collection, FIBServiceClient fibService,
+                              GlobalStatsCache globalStatsCache, AchievementWorld world) {
+        this.roster = roster;
+        this.roundPhase = roundPhase;
+        this.settings = settings;
+        this.collection = collection;
+        this.world = world;
+        this.storage = new AchievementStorage(plugin, fibService);
+        this.globalStatsCache = globalStatsCache;
+        this.globalStatsLoader = new GlobalStatsLoader(fibService, globalStatsCache);
         this.achievementsByTrigger = buildTriggerMap();
     }
 
@@ -93,15 +100,15 @@ public class AchievementManager implements Manager {
     public void handleEvent(Player player, Event event, Trigger trigger) {
         UUID uuid = player.getUniqueId();
 
-        if (!plugin.getRoundPhase().roundRunning()) {
+        if (!this.roundPhase.roundRunning()) {
             return;
         }
 
-        if (!plugin.getSettings().isSettingEnabled(GameSetting.ACHIEVEMENTS)) {
+        if (!this.settings.isSettingEnabled(GameSetting.ACHIEVEMENTS)) {
             return;
         }
 
-        ForceItemPlayer forceItemPlayer = this.plugin.getRoster().participant(uuid).orElse(null);
+        ForceItemPlayer forceItemPlayer = this.roster.participant(uuid).orElse(null);
         if (forceItemPlayer == null) {
             return;
         }
@@ -193,7 +200,7 @@ public class AchievementManager implements Manager {
                 if (storage.hasAchievement(playerUuid, achievement)) {
                     continue;
                 }
-                if (!achievement.getCompletionistRule().isMet(plugin, playerUuid)) {
+                if (!achievement.getCompletionistRule().isMet(this.storage, playerUuid)) {
                     continue;
                 }
 
@@ -204,7 +211,7 @@ public class AchievementManager implements Manager {
     }
 
     public void evaluateGlobalAchievements(Player player) {
-        if (!plugin.getSettings().isSettingEnabled(GameSetting.ACHIEVEMENTS)) {
+        if (!this.settings.isSettingEnabled(GameSetting.ACHIEVEMENTS)) {
             return;
         }
 
@@ -258,7 +265,7 @@ public class AchievementManager implements Manager {
 
         // No invalidation needed here: submitMatchAsync clears each participant's found-set after the
         // write lands and before this callback runs, so the load below always reads through.
-        CollectionManager collection = this.plugin.getCollectionManager();
+        CollectionManager collection = this.collection;
         collection.getFoundItemsLoader().load(uuid, found -> {
             if (!player.isOnline()) {
                 return;
@@ -310,15 +317,15 @@ public class AchievementManager implements Manager {
     }
 
     public void checkGameEndAchievements() {
-        if (!plugin.getRoundPhase().isEndGame()) {
+        if (!this.roundPhase.isEndGame()) {
             return;
         }
 
-        if (!plugin.getSettings().isSettingEnabled(GameSetting.ACHIEVEMENTS)) {
+        if (!this.settings.isSettingEnabled(GameSetting.ACHIEVEMENTS)) {
             return;
         }
 
-        for (ForceItemPlayer fip : this.plugin.getRoster().players().values()) {
+        for (ForceItemPlayer fip : this.roster.players().values()) {
             if (!Roster.isPlaying(fip)) {
                 continue;
             }
@@ -379,7 +386,7 @@ public class AchievementManager implements Manager {
     /** Ties for 1st count as a win. */
     private boolean didWin(ForceItemPlayer fip, boolean teamGame) {
         if (teamGame && fip.currentTeam() != null) {
-            List<Team> teams = plugin.getRoster().players().values().stream()
+            List<Team> teams = this.roster.players().values().stream()
                     .map(ForceItemPlayer::currentTeam)
                     .filter(Objects::nonNull)
                     .distinct()
@@ -387,7 +394,7 @@ public class AchievementManager implements Manager {
             Integer place = Standings.ofTeams(teams).get(fip.currentTeam());
             return place != null && place == 1;
         }
-        Integer place = Standings.ofPlayers(plugin.getRoster().players()).get(fip);
+        Integer place = Standings.ofPlayers(this.roster.players()).get(fip);
         return place != null && place == 1;
     }
 
@@ -405,7 +412,7 @@ public class AchievementManager implements Manager {
                 return tracker;
             }
         }
-        ForceItemPlayer fip = this.plugin.getRoster().get(uuid);
+        ForceItemPlayer fip = this.roster.get(uuid);
         if (fip != null && fip.currentTeam() != null) {
             Map<Achievements, AchievementProgressTracker> teamMap = teamProgress.get(fip.currentTeam());
             if (teamMap != null) {

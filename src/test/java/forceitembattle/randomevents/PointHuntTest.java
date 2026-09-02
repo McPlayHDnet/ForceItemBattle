@@ -2,9 +2,7 @@ package forceitembattle.randomevents;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.util.Text;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.junit.jupiter.api.Test;
@@ -16,8 +14,13 @@ class PointHuntTest {
         return PlainTextComponentSerializer.plainText().serialize(Text.of(hunt.tabFooterBlock()));
     }
 
+    /** Nothing here reaches a collaborator; the rendering under test is pure. */
+    private static EventContext context() {
+        return new EventContext(null, null, null, null, null);
+    }
+
     private static PointHunt hunt() {
-        return new PointHunt(mock(ForceItemBattle.class));
+        return new PointHunt(context());
     }
 
     @Test
@@ -47,7 +50,7 @@ class PointHuntTest {
     /** Events that have nothing ongoing to report contribute nothing. */
     @Test
     void otherEventsContributeNothingByDefault() {
-        assertEquals("", new ItemHunt(mock(ForceItemBattle.class)).tabFooterBlock());
-        assertEquals("", new SpecialTrader(mock(ForceItemBattle.class)).tabFooterBlock());
+        assertEquals("", new ItemHunt(context()).tabFooterBlock());
+        assertEquals("", new SpecialTrader(context()).tabFooterBlock());
     }
 }

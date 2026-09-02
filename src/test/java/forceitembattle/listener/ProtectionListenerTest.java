@@ -8,7 +8,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.ProtectionManager;
 import forceitembattle.model.GameState;
 import forceitembattle.model.ProtectionVerdict;
@@ -37,8 +36,7 @@ class ProtectionListenerTest extends ListenerTestBase {
     @BeforeEach
     void setUpListener() {
         this.protection = mock(ProtectionManager.class);
-        ForceItemBattle plugin = mock(ForceItemBattle.class);
-        this.listener = new ProtectionListener(plugin, new Roster(), this.roundPhase, this.protection);
+        this.listener = new ProtectionListener(new Roster(), this.roundPhase, this.protection);
     }
 
     private BlockBreakEvent breakAt(PlayerMock player, int x, int y, int z) {

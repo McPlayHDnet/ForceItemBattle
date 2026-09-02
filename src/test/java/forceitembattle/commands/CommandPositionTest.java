@@ -12,7 +12,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.player.CommandPosition;
 import forceitembattle.manager.PositionManager;
 import forceitembattle.model.ForceItemPlayer;
@@ -24,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -68,17 +68,15 @@ class CommandPositionTest {
         this.world = this.server.addSimpleWorld("world");
         this.saved.clear();
 
-        ForceItemBattle plugin = mock(ForceItemBattle.class);
+        JavaPlugin plugin = mock(JavaPlugin.class);
         this.roster = new Roster();
         this.positions = mock(PositionManager.class);
 
-        when(plugin.getRoster()).thenReturn(this.roster);
-        when(plugin.getPositionManager()).thenReturn(this.positions);
         when(this.positions.getAllPositions()).thenReturn(this.saved);
         when(this.positions.positionExist(any()))
                 .thenAnswer(invocation -> this.saved.containsKey(invocation.getArgument(0)));
 
-        this.command = new CommandPosition(plugin);
+        this.command = new CommandPosition(this.roster, this.positions);
         inARoundThatIs(GameState.MID_GAME, GameSetting.POSITIONS);
     }
 

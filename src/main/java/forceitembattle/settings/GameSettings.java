@@ -1,12 +1,12 @@
 package forceitembattle.settings;
 
-import forceitembattle.ForceItemBattle;
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
+import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.GameRules;
-import lombok.Getter;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.plugin.java.JavaPlugin;
 
 /**
  * The plugin's configuration: loading it, the preset catalogue, and the Bukkit side effects two
@@ -17,7 +17,7 @@ import org.bukkit.configuration.ConfigurationSection;
  */
 public class GameSettings {
 
-    private final ForceItemBattle plugin;
+    private final JavaPlugin plugin;
 
     /**
      * The settings in force for the current round. Public so {@code /start} can point it at a
@@ -28,7 +28,7 @@ public class GameSettings {
 
     private final ConcurrentSkipListMap<String, GamePreset> gamePresetMap;
 
-    public GameSettings(ForceItemBattle plugin) {
+    public GameSettings(JavaPlugin plugin) {
         this.plugin = plugin;
         this.ruleset = new Ruleset(new BukkitConfigSource(plugin));
         this.gamePresetMap = new ConcurrentSkipListMap<>(String.CASE_INSENSITIVE_ORDER);

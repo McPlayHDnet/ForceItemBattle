@@ -1,6 +1,5 @@
 package forceitembattle.gui;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.collection.CollectedItem;
 import forceitembattle.collection.CollectionCategory;
 import forceitembattle.util.ProgressBar;
@@ -30,22 +29,22 @@ public final class CollectionBookInventory extends InventoryBuilder {
             37, 38, 39, 40, 41, 42, 43,
     };
 
-    private final ForceItemBattle plugin;
+    private final GuiContext gui;
     private final String playerName;
     private final UUID playerUUID;
     private Map<String, CollectedItem> collected;
 
-    public CollectionBookInventory(ForceItemBattle plugin, String playerName, UUID playerUUID) {
+    public CollectionBookInventory(GuiContext gui, String playerName, UUID playerUUID) {
         super(9 * 6, Text.of("<dark_gray>» <dark_aqua>Collection <dark_gray>◆ <gray>" + playerName));
 
-        this.plugin = plugin;
+        this.gui = gui;
         this.playerName = playerName;
         this.playerUUID = playerUUID;
 
         this.addUpdateHandler(this::updateInventory);
         this.addClickHandler(inventoryClickEvent -> inventoryClickEvent.setCancelled(true));
 
-        this.plugin.getCollectionManager().getFoundItemsLoader().load(playerUUID, found -> {
+        this.gui.collection().getFoundItemsLoader().load(playerUUID, found -> {
             this.collected = found;
             this.updateInventory();
         });
@@ -57,7 +56,7 @@ public final class CollectionBookInventory extends InventoryBuilder {
         this.setItems(0, 8, GuiItems.accentBorder());
         this.setItems(45, 53, GuiItems.accentBorder());
 
-        Map<CollectionCategory, List<Material>> buckets = this.plugin.getCollectionManager().getCollectionBuckets();
+        Map<CollectionCategory, List<Material>> buckets = this.gui.collection().getCollectionBuckets();
 
         // Counted once per category and reused by the render loop below, which would otherwise
         // walk the whole ~1300-item catalogue a second time on every repaint.
@@ -119,7 +118,7 @@ public final class CollectionBookInventory extends InventoryBuilder {
                             .getItemStack(),
                     inventoryClickEvent -> {
                         this.getPlayer().playSound(this.getPlayer(), Sound.UI_BUTTON_CLICK, 1, 1);
-                        new CollectionDexInventory(this.plugin, this.playerName, this.playerUUID, category)
+                        new CollectionDexInventory(this.gui, this.playerName, this.playerUUID, category)
                                 .open(this.getPlayer());
                     });
         }

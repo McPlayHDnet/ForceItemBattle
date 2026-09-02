@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import forceitembattle.Players;
 import java.util.List;
 import java.util.UUID;
 import org.bukkit.Material;

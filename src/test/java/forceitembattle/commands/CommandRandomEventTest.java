@@ -12,11 +12,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.admin.CommandRandomEvent;
-import forceitembattle.manager.RandomEventManager;
 import forceitembattle.model.GameState;
 import forceitembattle.model.Roster;
+import forceitembattle.randomevents.RandomEventManager;
 import forceitembattle.randomevents.RandomEvents;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,12 +43,10 @@ class CommandRandomEventTest {
     void setUp() {
         this.server = MockBukkit.mock();
 
-        ForceItemBattle plugin = mock(ForceItemBattle.class);
         this.events = mock(RandomEventManager.class);
-        when(plugin.getRandomEventManager()).thenReturn(this.events);
         when(this.events.trigger(any())).thenReturn(true);
 
-        this.command = new CommandRandomEvent(plugin);
+        this.command = new CommandRandomEvent(this.events);
         ((CustomCommand) this.command).setContext(
                 contextWith(GameState.MID_GAME, new Roster()));
     }

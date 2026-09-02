@@ -1,6 +1,5 @@
 package forceitembattle.gui;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.AchievementScope;
 import forceitembattle.achievements.Achievements;
 import forceitembattle.model.stats.AchievementUnlock;
@@ -30,7 +29,7 @@ public final class AchievementInventory extends InventoryBuilder {
     private static final DateTimeFormatter WHEN_FORMAT = DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm");
     private static final int BAR_WIDTH = 24;
 
-    private final ForceItemBattle plugin;
+    private final GuiContext gui;
     private final String playerName;
     private final UUID playerUUID;
     private final AchievementScope scope;
@@ -44,10 +43,10 @@ public final class AchievementInventory extends InventoryBuilder {
     // Found-set for the COLLECTION page's progress bars; null until loaded.
     private Map<String, CollectedItem> foundItems;
 
-    public AchievementInventory(ForceItemBattle plugin, String playerName, UUID playerUUID, AchievementScope scope) {
+    public AchievementInventory(GuiContext gui, String playerName, UUID playerUUID, AchievementScope scope) {
         super(9 * 6, Text.of("<dark_gray>» <dark_aqua>" + scope.getDisplayName() + " <dark_gray>◆ <gray>" + playerName));
 
-        this.plugin = plugin;
+        this.gui = gui;
         this.playerName = playerName;
         this.playerUUID = playerUUID;
         this.scope = scope;
@@ -60,13 +59,13 @@ public final class AchievementInventory extends InventoryBuilder {
         // Pull the full unlock records (mode + teammate + unlockedAt) from the service — the local
         // cache only holds ids — and refresh once they arrive. Each record carries its teammate's
         // name, so this one round trip is everything the menu needs.
-        this.plugin.getFibService().achievements().unlocks(playerUUID,
+        this.gui.service().achievements().unlocks(playerUUID,
                 loaded -> {
                     this.unlocks = indexByAchievementId(loaded);
                     this.updateInventory();
                 },
                 error -> {
-                    this.plugin.getLogger().warning("Failed to load achievement details for "
+                    this.gui.plugin().getLogger().warning("Failed to load achievement details for "
                             + playerUUID + " (HTTP " + error.getCode() + "): " + error.getMessage());
                     this.updateInventory();
                 });
@@ -74,12 +73,12 @@ public final class AchievementInventory extends InventoryBuilder {
         // Progress on locked entries is only meaningful for GLOBAL — a ROUND achievement's
         // progress is in-memory and per-round, and META progress is counted locally below.
         if (scope == AchievementScope.GLOBAL) {
-            this.plugin.getAchievementManager().getGlobalStatsLoader().load(playerUUID, stats -> {
+            this.gui.achievements().getGlobalStatsLoader().load(playerUUID, stats -> {
                 this.globalStats = stats;
                 this.updateInventory();
             });
         } else if (scope == AchievementScope.COLLECTION) {
-            this.plugin.getCollectionManager().getFoundItemsLoader().load(playerUUID, found -> {
+            this.gui.collection().getFoundItemsLoader().load(playerUUID, found -> {
                 this.foundItems = found;
                 this.updateInventory();
             });
@@ -106,13 +105,13 @@ public final class AchievementInventory extends InventoryBuilder {
 
         // Fallback completion source: the local id cache (covers a just-unlocked
         // achievement whose async service write hasn't landed yet).
-        Set<String> cachedIds = this.plugin.getAchievementManager()
+        Set<String> cachedIds = this.gui.achievements()
                 .getAchievementStorage().getPlayerAchievements(this.playerUUID);
 
         this.setItem(49, GuiItems.back(),
                 inventoryClickEvent -> {
                     this.getPlayer().playSound(this.getPlayer(), Sound.UI_BUTTON_CLICK, 1, 1);
-                    new AchievementCategoryInventory(this.plugin, this.playerName, this.playerUUID)
+                    new AchievementCategoryInventory(this.gui, this.playerName, this.playerUUID)
                             .open(this.getPlayer());
                 });
 
@@ -170,7 +169,7 @@ public final class AchievementInventory extends InventoryBuilder {
             if (isDex) {
                 this.setItem(slotIndex, stack, inventoryClickEvent -> {
                     this.getPlayer().playSound(this.getPlayer(), Sound.UI_BUTTON_CLICK, 1, 1);
-                    new CollectionBookInventory(this.plugin, this.playerName, this.playerUUID).open(this.getPlayer());
+                    new CollectionBookInventory(this.gui, this.playerName, this.playerUUID).open(this.getPlayer());
                 });
             } else {
                 this.setItem(slotIndex, stack);
@@ -195,7 +194,7 @@ public final class AchievementInventory extends InventoryBuilder {
         List<String> lore = new ArrayList<>();
 
         if (achievement.getScope() == AchievementScope.COLLECTION) {
-            Set<String> catalogue = this.plugin.getCollectionManager().getCollectionCatalogue();
+            Set<String> catalogue = this.gui.collection().getCollectionCatalogue();
             if (this.foundItems == null) {
                 lore.add("<dark_gray>» <gray>Loading progress...");
                 return lore;

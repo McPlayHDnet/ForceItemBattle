@@ -3,9 +3,9 @@ package forceitembattle.achievements.handlers;
 import forceitembattle.achievements.AchievementWorld;
 import forceitembattle.achievements.Trigger;
 import forceitembattle.achievements.progress.ConsecutiveStoneAchievementProgress;
+import forceitembattle.collection.MaterialCategory;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.model.ForceItemPlayer;
-import forceitembattle.model.MaterialCategory;
 import org.bukkit.Material;
 import org.bukkit.event.Event;
 

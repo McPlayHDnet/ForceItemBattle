@@ -25,8 +25,6 @@ import forceitembattle.achievements.handlers.TimeBasedAchievementHandler;
 import forceitembattle.achievements.handlers.TradingAchievementHandler;
 import forceitembattle.achievements.handlers.WheelOfFortuneAchievementHandler;
 import forceitembattle.achievements.handlers.WheelOfFortuneUsesAchievementHandler;
-import forceitembattle.model.BiomeGroup;
-import forceitembattle.model.CustomItem;
 import forceitembattle.model.Dimension;
 import java.util.EnumSet;
 import java.util.Set;
@@ -181,7 +179,7 @@ public enum Achievements {
             new DeathCounterAchievementHandler(0)),
 
     CONNOISSEUR("Connoisseur", "Eat Cavendish",
-            new EatingAchievementHandler(1, CustomItem.ofModelData(Material.ENCHANTED_GOLDEN_APPLE, "cavendish"))),
+            new EatingAchievementHandler(1, CustomItemSpec.ofModelData(Material.ENCHANTED_GOLDEN_APPLE, "cavendish"))),
 
     THANK_YOU("Thank you", "Trade with the wandering trader 10 times in one round",
             new TradingAchievementHandler(10)),
@@ -199,17 +197,17 @@ public enum Achievements {
     LEGENDARY("Legendary", "Find a Legendary item in the Antimatter Depths",
             new LootAchievementHandler(1,
                     NamespacedKey.fromString("fib:antimatter_depths_storage"),
-                    CustomItem.customData("fib:fib_item", "legendary_template"), false)),
+                    CustomItemSpec.customData("fib:fib_item", "legendary_template"), false)),
 
     FIFTEEN_MULT("+15 Mult", "Find Gros Michel inside the Antimatter Depths",
             new LootAchievementHandler(1,
                     NamespacedKey.fromString("fib:antimatter_depths_treasure"),
-                    CustomItem.ofModelData(Material.GOLDEN_APPLE, "gros_michel"), false)),
+                    CustomItemSpec.ofModelData(Material.GOLDEN_APPLE, "gros_michel"), false)),
 
     WILL_IT_BREAK("Will it break?", "Find Cavendish inside the Antimatter Depths",
             new LootAchievementHandler(1,
                     NamespacedKey.fromString("fib:antimatter_depths_treasure"),
-                    CustomItem.ofModelData(Material.ENCHANTED_GOLDEN_APPLE, "cavendish"), false)),
+                    CustomItemSpec.ofModelData(Material.ENCHANTED_GOLDEN_APPLE, "cavendish"), false)),
 
     BELIEVER("Believer", "Find your currently needed item in a loot chest",
             new LootAchievementHandler(1, null, null, true)),

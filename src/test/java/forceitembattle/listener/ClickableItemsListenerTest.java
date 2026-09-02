@@ -6,8 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
-import forceitembattle.ForceItemBattle;
+import forceitembattle.gui.GuiContext;
 import forceitembattle.manager.BackpackManager;
+import forceitembattle.manager.ItemDifficultiesManager;
 import forceitembattle.manager.LocatorManager;
 import forceitembattle.manager.PlayerOutfitter;
 import forceitembattle.manager.TimerManager;
@@ -22,6 +23,7 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -45,7 +47,10 @@ class ClickableItemsListenerTest extends ListenerTestBase {
     void setUpListener() {
         this.roster = new Roster();
         this.listener = new ClickableItemsListener(
-                mock(ForceItemBattle.class),
+                mock(Plugin.class),
+                () -> null,
+                mock(GuiContext.class),
+                mock(ItemDifficultiesManager.class),
                 this.roster,
                 mock(BackpackManager.class),
                 mock(FIBServiceClient.class),

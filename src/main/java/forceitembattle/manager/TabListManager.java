@@ -1,10 +1,10 @@
 package forceitembattle.manager;
 
-import forceitembattle.model.Roster;
 import forceitembattle.manager.ItemDifficultiesManager.State;
-import forceitembattle.model.ActiveTrader;
 import forceitembattle.model.Dimension;
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.Roster;
+import forceitembattle.randomevents.RandomEventManager;
 import forceitembattle.util.LocationFormat;
 import forceitembattle.util.Text;
 import forceitembattle.util.TimeFormat;

@@ -1,4 +1,4 @@
-package forceitembattle.model;
+package forceitembattle.achievements;
 
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.CustomModelData;
@@ -14,11 +14,11 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A match spec for items this plugin does <i>not</i> create — datapack loot-table
  * items such as Cavendish, Gros Michel and the legendary template. Items the plugin
- * builds itself live in {@link CustomMaterials} instead.
+ * builds itself live in {@link forceitembattle.model.CustomMaterials} instead.
  */
 
 @Getter
-public class CustomItem {
+public class CustomItemSpec {
 
     @Nullable
     private final Material material;
@@ -34,7 +34,7 @@ public class CustomItem {
     @Nullable
     private final String customDataValue;
 
-    private CustomItem(@Nullable Material material, @Nullable String customModelDataString,
+    private CustomItemSpec(@Nullable Material material, @Nullable String customModelDataString,
                        @Nullable String customDataKey, @Nullable String customDataValue) {
         this.material = material;
         this.customModelDataString = customModelDataString;
@@ -43,13 +43,13 @@ public class CustomItem {
     }
 
     /** Matches a material carrying the given custom-model-data string. */
-    public static CustomItem ofModelData(Material material, String customModelDataString) {
-        return new CustomItem(material, customModelDataString, null, null);
+    public static CustomItemSpec ofModelData(Material material, String customModelDataString) {
+        return new CustomItemSpec(material, customModelDataString, null, null);
     }
 
     /** Matches purely on a persistent-data (custom_data / PublicBukkitValues) string tag. */
-    public static CustomItem customData(String customDataKey, String customDataValue) {
-        return new CustomItem(null, null, customDataKey, customDataValue);
+    public static CustomItemSpec customData(String customDataKey, String customDataValue) {
+        return new CustomItemSpec(null, null, customDataKey, customDataValue);
     }
 
     /** Every criterion of this spec must hold; unset ones are simply not checked. */

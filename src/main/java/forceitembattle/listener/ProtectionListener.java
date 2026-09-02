@@ -3,7 +3,6 @@ package forceitembattle.listener;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.model.RoundPhase;
 import forceitembattle.model.Roster;
-import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.ProtectionManager;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.ProtectionVerdict;
@@ -40,8 +39,6 @@ import org.bukkit.event.player.PlayerBucketEmptyEvent;
  */
 @RequiredArgsConstructor
 public class ProtectionListener implements Listener {
-    /** Still needed for {@code new NamespacedKey(plugin, ...)}. */
-    private final ForceItemBattle plugin;
     private final Roster roster;
     private final RoundPhase roundPhase;
     private final ProtectionManager protectionManager;

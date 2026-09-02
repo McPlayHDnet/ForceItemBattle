@@ -1,6 +1,5 @@
 package forceitembattle.manager;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.Dimension;
 import forceitembattle.model.ForceItemPlayer;
@@ -27,6 +26,7 @@ import org.bukkit.block.Biome;
 import org.bukkit.entity.Player;
 import org.bukkit.generator.structure.Structure;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.StructureSearchResult;
 import org.jetbrains.annotations.Nullable;
@@ -41,13 +41,13 @@ public class LocatorManager implements Manager {
     private static final int SURFACE_ARRIVAL_RADIUS = 70;   // blocks
 
     /** Kept for {@code runTaskTimerAsynchronously}, which needs a Plugin. */
-    private final ForceItemBattle plugin;
+    private final Plugin plugin;
     private final PositionManager positionManager;
     private final Map<String, Locator> locators;
     private final Map<String, Location> locatedStructures;
     private final Map<UUID, Map<String, ActiveLocator>> activeLocators;
 
-    public LocatorManager(ForceItemBattle plugin, PositionManager positionManager) {
+    public LocatorManager(Plugin plugin, PositionManager positionManager) {
         this.plugin = plugin;
         this.positionManager = positionManager;
         this.locators = new HashMap<>();

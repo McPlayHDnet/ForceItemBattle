@@ -1,8 +1,12 @@
-package forceitembattle.model;
+package forceitembattle.manager;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import forceitembattle.Players;
+import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.GameContext;
+import forceitembattle.model.Team;
 import java.util.Arrays;
 import org.bukkit.Material;
 import org.junit.jupiter.api.Nested;

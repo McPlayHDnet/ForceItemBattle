@@ -12,9 +12,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.admin.CommandReset;
 import forceitembattle.util.SeedPool;
+import forceitembattle.util.WorldReset;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,13 +44,13 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
  * reset was scheduled.
  *
  * <p>{@code scheduleReset} itself is not exercised. It registers a JVM shutdown hook, deletes the
- * world directory and calls {@code Bukkit.restart()}; the plugin is a mock here, so what is pinned
+ * world directory and calls {@code Bukkit.restart()}; {@link WorldReset} is a mock here, so what is pinned
  * is the decision to call it and the seed handed over — the part this command owns.
  */
 class CommandResetTest {
 
     private ServerMock server;
-    private ForceItemBattle plugin;
+    private WorldReset worldReset;
     private SeedPool seedPool;
     private CommandReset command;
 
@@ -63,16 +63,15 @@ class CommandResetTest {
     @BeforeEach
     void setUp() {
         this.server = MockBukkit.mock();
-        this.plugin = mock(ForceItemBattle.class);
+        this.worldReset = mock(WorldReset.class);
         this.seedPool = mock(SeedPool.class);
         this.joined.clear();
         this.kickScreens.clear();
 
-        when(this.plugin.getSeedPool()).thenReturn(this.seedPool);
 
         this.server.getPluginManager().registerEvents(new KickRecorder(), MockBukkit.createMockPlugin());
 
-        this.command = new CommandReset(this.plugin);
+        this.command = new CommandReset(this.seedPool, this.worldReset);
         ((CustomCommand) this.command).setContext(new CommandContext(null, null, null));
     }
 
@@ -129,7 +128,7 @@ class CommandResetTest {
 
     /** Nobody kicked, nothing scheduled: what every refusal must leave behind. */
     private void assertServerUntouched() {
-        verify(this.plugin, never()).scheduleReset(any());
+        verify(this.worldReset, never()).scheduleReset(any());
         assertTrue(this.kickScreens.isEmpty(),
                 "a path that refused kicked somebody: " + this.kickScreens);
         for (PlayerMock player : this.joined) {
@@ -149,7 +148,7 @@ class CommandResetTest {
 
             run(admin);
 
-            verify(plugin).scheduleReset(null);
+            verify(worldReset).scheduleReset(null);
         }
 
         @Test
@@ -201,7 +200,7 @@ class CommandResetTest {
 
             run(admin, "jungle");
 
-            verify(plugin).scheduleReset(eq(4242L));
+            verify(worldReset).scheduleReset(eq(4242L));
         }
 
         @Test
@@ -211,7 +210,7 @@ class CommandResetTest {
 
             run(admin, "JUNGLE");
 
-            verify(plugin).scheduleReset(eq(4242L));
+            verify(worldReset).scheduleReset(eq(4242L));
         }
 
         /** The kick screen names the biome, prettified, so players know what they are rejoining. */
@@ -233,7 +232,8 @@ class CommandResetTest {
         @Test
         void aMissingSeedPoolAbortsBeforeKickingAnyone() {
             PlayerMock admin = joinOp("Admin");
-            when(plugin.getSeedPool()).thenReturn(null);
+            command = new CommandReset(null, worldReset);
+            ((CustomCommand) command).setContext(new CommandContext(null, null, null));
 
             run(admin, "jungle");
 
@@ -327,7 +327,8 @@ class CommandResetTest {
         @Test
         void withNoPoolAtAllNothingIsOffered() {
             PlayerMock admin = joinOp("Admin");
-            when(plugin.getSeedPool()).thenReturn(null);
+            command = new CommandReset(null, worldReset);
+            ((CustomCommand) command).setContext(new CommandContext(null, null, null));
 
             assertTrue(command.onTabComplete(admin, "reset", new String[]{""}).isEmpty());
         }

@@ -7,9 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.player.CommandPause;
 import forceitembattle.commands.player.CommandResume;
 import forceitembattle.manager.Gamemanager;
@@ -17,6 +15,7 @@ import forceitembattle.model.GameState;
 import forceitembattle.model.Roster;
 import forceitembattle.settings.GameSetting;
 import org.bukkit.GameRules;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -52,12 +51,11 @@ class CommandPauseTest {
         // Dimension.OVERWORLD resolves by name, so the world has to be called "world".
         this.overworld = this.server.addSimpleWorld("world");
 
-        ForceItemBattle plugin = mock(ForceItemBattle.class);
+        JavaPlugin plugin = mock(JavaPlugin.class);
         this.gamemanager = mock(Gamemanager.class);
-        when(plugin.getGamemanager()).thenReturn(this.gamemanager);
 
-        this.pause = new CommandPause(plugin);
-        this.resume = new CommandResume(plugin);
+        this.pause = new CommandPause(this.gamemanager);
+        this.resume = new CommandResume(this.gamemanager);
     }
 
     @AfterEach

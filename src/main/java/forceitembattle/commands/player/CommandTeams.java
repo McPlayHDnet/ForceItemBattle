@@ -1,14 +1,15 @@
 package forceitembattle.commands.player;
 
 import static forceitembattle.commands.Precondition.PRE_GAME;
+import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.Precondition;
+import forceitembattle.manager.TeamsManager;
+import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.Roster;
+import forceitembattle.settings.GameSetting;
+import forceitembattle.util.Text;
 import java.util.List;
 import java.util.Set;
-import forceitembattle.ForceItemBattle;
-import forceitembattle.commands.CustomCommand;
-import forceitembattle.settings.GameSetting;
-import forceitembattle.model.ForceItemPlayer;
-import forceitembattle.util.Text;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -17,8 +18,13 @@ public final class CommandTeams extends CustomCommand {
     /** The subcommands that take a player name as their second argument. */
     private static final Set<String> TARGETED_SUBCOMMANDS = Set.of("invite", "accept", "decline");
 
-    public CommandTeams(ForceItemBattle plugin) {
-        super(plugin, "teams");
+    private final Roster roster;
+    private final TeamsManager teamManager;
+
+    public CommandTeams(Roster roster, TeamsManager teamManager) {
+        super("teams");
+        this.roster = roster;
+        this.teamManager = teamManager;
         setDescription("Everything about teams");
     }
 
@@ -33,7 +39,7 @@ public final class CommandTeams extends CustomCommand {
         // Resolved once, and required. Everything below hands it to TeamsManager, which
         // dereferences it without checking -- and a player with no roster entry is possible even
         // in PRE_GAME if the roster has not caught up with them yet.
-        ForceItemPlayer self = this.plugin.getRoster().get(player.getUniqueId());
+        ForceItemPlayer self = this.roster.get(player.getUniqueId());
         if (self == null) {
             player.sendMessage(Text.of("<red>You are not in this round."));
             return;
@@ -41,11 +47,11 @@ public final class CommandTeams extends CustomCommand {
 
         if (args.length == 1) {
             if (args[0].equalsIgnoreCase("leave")) {
-                this.plugin.getTeamManager().leave(self);
+                this.teamManager.leave(self);
                 return;
             }
             if (args[0].equalsIgnoreCase("list")) {
-                this.plugin.getTeamManager().showTeamList(self);
+                this.teamManager.showTeamList(self);
                 return;
             }
             this.sendHelpMessage(player);
@@ -66,16 +72,16 @@ public final class CommandTeams extends CustomCommand {
                 return;
             }
 
-            ForceItemPlayer other = this.plugin.getRoster().get(target.getUniqueId());
+            ForceItemPlayer other = this.roster.get(target.getUniqueId());
             if (other == null) {
                 player.sendMessage(Text.of("<yellow>" + target.getName() + " <red>is not in this round."));
                 return;
             }
 
             switch (args[0].toLowerCase()) {
-                case "invite" -> this.plugin.getTeamManager().invite(self, other);
-                case "accept" -> this.plugin.getTeamManager().accept(self, other);
-                case "decline" -> this.plugin.getTeamManager().decline(self, other);
+                case "invite" -> this.teamManager.invite(self, other);
+                case "accept" -> this.teamManager.accept(self, other);
+                case "decline" -> this.teamManager.decline(self, other);
                 default -> this.sendHelpMessage(player);
             }
             return;

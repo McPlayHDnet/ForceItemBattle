@@ -1,10 +1,10 @@
 package forceitembattle.commands.player;
 
 import static forceitembattle.commands.Precondition.ROUND_RUNNING;
-import forceitembattle.commands.Precondition;
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
+import forceitembattle.commands.Precondition;
+import forceitembattle.manager.VoteSkipManager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.Text;
 import java.util.Arrays;
@@ -15,8 +15,11 @@ import org.bukkit.entity.Player;
 public final class CommandVote extends CustomCommand implements CustomTabCompleter {
 
 
-    public CommandVote(ForceItemBattle plugin) {
-        super(plugin, "vote");
+    private final VoteSkipManager voteSkipManager;
+
+    public CommandVote(VoteSkipManager voteSkipManager) {
+        super("vote");
+        this.voteSkipManager = voteSkipManager;
         setDescription("Voting for a skip item");
     }
 
@@ -33,17 +36,17 @@ public final class CommandVote extends CustomCommand implements CustomTabComplet
             return;
         }
 
-        if (!this.plugin.getVoteSkipManager().isVoteInProgress()) {
+        if (!this.voteSkipManager.isVoteInProgress()) {
             player.sendMessage(Text.of("<red>No skip vote is currently in progress."));
             return;
         }
 
         String action = args[0].toLowerCase();
         switch (action) {
-            case "yes" -> this.plugin.getVoteSkipManager().castVote(player, true);
-            case "no" -> this.plugin.getVoteSkipManager().castVote(player, false);
+            case "yes" -> this.voteSkipManager.castVote(player, true);
+            case "no" -> this.voteSkipManager.castVote(player, false);
             case "cancel" -> requireOp(player, () -> {
-                this.plugin.getVoteSkipManager().cancelVote();
+                this.voteSkipManager.cancelVote();
                 player.sendMessage(Text.of("<gray>You cancelled the vote."));
                 Bukkit.getOnlinePlayers().forEach(p ->
                         p.sendMessage(Text.of("<red><b>The vote has been cancelled by an operator!</b>"))

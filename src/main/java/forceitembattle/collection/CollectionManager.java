@@ -1,12 +1,9 @@
-package forceitembattle.manager;
+package forceitembattle.collection;
 
-import forceitembattle.service.FIBServiceClient;
-import forceitembattle.collection.CollectionCategory;
-import forceitembattle.collection.FoundItemsCache;
-import forceitembattle.collection.FoundItemsLoader;
-import forceitembattle.collection.ItemRarityCache;
-import forceitembattle.collection.ItemRarityLoader;
+import forceitembattle.manager.ItemDifficultiesManager;
+import forceitembattle.manager.Manager;
 import forceitembattle.model.CustomMaterials;
+import forceitembattle.service.FIBServiceClient;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumMap;

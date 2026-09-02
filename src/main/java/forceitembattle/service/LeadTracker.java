@@ -1,4 +1,4 @@
-package forceitembattle.model;
+package forceitembattle.service;
 
 public final class LeadTracker {
 

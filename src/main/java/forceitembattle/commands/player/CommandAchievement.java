@@ -1,12 +1,13 @@
 package forceitembattle.commands.player;
 
-import forceitembattle.commands.Precondition;
-import forceitembattle.ForceItemBattle;
-import forceitembattle.achievements.global.GlobalStat;
-import forceitembattle.gui.AchievementCategoryInventory;
+import forceitembattle.achievements.AchievementManager;
 import forceitembattle.achievements.Achievements;
+import forceitembattle.achievements.global.GlobalStat;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
+import forceitembattle.commands.Precondition;
+import forceitembattle.gui.AchievementCategoryInventory;
+import forceitembattle.gui.GuiContext;
 import forceitembattle.util.Text;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,8 +20,13 @@ import org.bukkit.entity.Player;
 
 public final class CommandAchievement extends CustomCommand implements CustomTabCompleter {
 
-    public CommandAchievement(ForceItemBattle plugin) {
-        super(plugin, "achievements");
+    private final AchievementManager achievementManager;
+    private final GuiContext gui;
+
+    public CommandAchievement(AchievementManager achievementManager, GuiContext gui) {
+        super("achievements");
+        this.achievementManager = achievementManager;
+        this.gui = gui;
         setUsage("<list|grant|revoke|reset> [player] [achievement]");
         setDescription("Manage achievements");
     }
@@ -67,11 +73,11 @@ public final class CommandAchievement extends CustomCommand implements CustomTab
 
         final String name = targetName;
 
-        this.plugin.getAchievementManager().getAchievementStorage().loadPlayer(targetUUID, () -> {
+        this.achievementManager.getAchievementStorage().loadPlayer(targetUUID, () -> {
             if (!player.isOnline()) {
                 return;
             }
-            new AchievementCategoryInventory(this.plugin, name, targetUUID).open(player);
+            new AchievementCategoryInventory(this.gui, name, targetUUID).open(player);
         });
     }
 
@@ -88,7 +94,7 @@ public final class CommandAchievement extends CustomCommand implements CustomTab
             targetName = target.getName() != null ? target.getName() : args[1];
         }
 
-        this.plugin.getAchievementManager().getGlobalStatsLoader().load(targetUuid, stats -> {
+        this.achievementManager.getGlobalStatsLoader().load(targetUuid, stats -> {
             if (!player.isOnline()) {
                 return;
             }
@@ -117,7 +123,7 @@ public final class CommandAchievement extends CustomCommand implements CustomTab
             return;
         }
 
-        this.plugin.getAchievementManager().getAchievementStorage().addAchievement(target.getUniqueId(), achievement);
+        this.achievementManager.getAchievementStorage().addAchievement(target.getUniqueId(), achievement);
 
         player.sendMessage(Text.of(
                 "<green>Successfully granted <yellow>" + achievement.getTitle() + " <green>to <yellow>" + target.getName()));
@@ -137,7 +143,7 @@ public final class CommandAchievement extends CustomCommand implements CustomTab
             return;
         }
 
-        this.plugin.getAchievementManager().getAchievementStorage().removeAchievement(target.getUniqueId(), achievement);
+        this.achievementManager.getAchievementStorage().removeAchievement(target.getUniqueId(), achievement);
 
         player.sendMessage(Text.of(
                 "<green>Successfully revoked <yellow>" + achievement.getTitle() + " <green>from <yellow>" + target.getName()));
@@ -152,7 +158,7 @@ public final class CommandAchievement extends CustomCommand implements CustomTab
 
         OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
 
-        this.plugin.getAchievementManager().getAchievementStorage().resetPlayerAchievements(target.getUniqueId());
+        this.achievementManager.getAchievementStorage().resetPlayerAchievements(target.getUniqueId());
 
         player.sendMessage(Text.of(
                 "<green>Successfully reset all achievements for <yellow>" + target.getName()));
@@ -188,8 +194,8 @@ public final class CommandAchievement extends CustomCommand implements CustomTab
             return;
         }
 
-        String progress = this.plugin.getAchievementManager().describeProgress(targetUUID, achievement);
-        boolean unlocked = this.plugin.getAchievementManager()
+        String progress = this.achievementManager.describeProgress(targetUUID, achievement);
+        boolean unlocked = this.achievementManager
                 .getAchievementStorage().hasAchievement(targetUUID, achievement);
 
         player.sendMessage(Text.of(

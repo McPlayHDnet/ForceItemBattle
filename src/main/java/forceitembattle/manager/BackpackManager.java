@@ -1,7 +1,7 @@
 package forceitembattle.manager;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.Roster;
 import forceitembattle.model.Team;
 import forceitembattle.util.Text;
 import java.util.HashMap;
@@ -10,21 +10,24 @@ import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public class BackpackManager implements Manager {
 
-    private final ForceItemBattle forceItemBattle;
+    private final JavaPlugin plugin;
+    private final Roster roster;
     private final Map<UUID, Inventory> playerBackpack;
     private final Map<Team, Inventory> teamBackpack;
 
-    public BackpackManager(ForceItemBattle forceItemBattle) {
-        this.forceItemBattle = forceItemBattle;
+    public BackpackManager(JavaPlugin plugin, Roster roster) {
+        this.plugin = plugin;
+        this.roster = roster;
         this.playerBackpack = new HashMap<>();
         this.teamBackpack = new HashMap<>();
     }
 
     public Inventory getBackpackForPlayer(Player player) {
-        ForceItemPlayer forceItemPlayer = this.forceItemBattle.getRoster().get(player.getUniqueId());
+        ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());
 
         // Whether this player has a team, not whether the round was configured for them: with the
         // setting on and no team -- a spectator who joined during the countdown -- checking the
@@ -48,7 +51,7 @@ public class BackpackManager implements Manager {
         this.playerBackpack.put(fibPlayer.player().getUniqueId(),
                 Bukkit.createInventory(
                         null,
-                        this.forceItemBattle.getConfig().getInt("settings.backpackRows") * 9,
+                        this.plugin.getConfig().getInt("settings.backpackRows") * 9,
                         Text.of("<dark_gray>» <gold>Backpack <dark_gray>● <gray>Menu")));
         fibPlayer.player().getInventory().setItem(8, Gamemanager.createBackpack(fibPlayer, fibPlayer.isInTeam()));
     }
@@ -57,7 +60,7 @@ public class BackpackManager implements Manager {
         this.teamBackpack.put(team,
                 Bukkit.createInventory(
                         null,
-                        this.forceItemBattle.getConfig().getInt("settings.backpackRows") * 9,
+                        this.plugin.getConfig().getInt("settings.backpackRows") * 9,
                         Text.of("<dark_gray>» <gold>Backpack <dark_gray>● <gray>Menu")));
         fibPlayer.player().getInventory().setItem(8, Gamemanager.createBackpack(fibPlayer, fibPlayer.isInTeam()));
     }

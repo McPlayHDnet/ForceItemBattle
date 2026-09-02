@@ -1,17 +1,20 @@
 package forceitembattle.commands.player;
 
-import forceitembattle.commands.Precondition;
-import java.util.List;
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
+import forceitembattle.commands.Precondition;
+import forceitembattle.manager.TimerManager;
 import forceitembattle.util.Text;
+import java.util.List;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 
 public final class CommandSpectate extends CustomCommand {
 
-    public CommandSpectate(ForceItemBattle plugin) {
-        super(plugin, "spectate");
+    private final TimerManager timerManager;
+
+    public CommandSpectate(TimerManager timerManager) {
+        super("spectate");
+        this.timerManager = timerManager;
         setDescription("Toggle gamemode spectator");
     }
 
@@ -22,7 +25,7 @@ public final class CommandSpectate extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (this.plugin.getTimerManager().getTimeLeft() > 0) {
+        if (this.timerManager.getTimeLeft() > 0) {
             player.sendMessage(Text.of("<red>This command can only be used after the game end."));
             return;
         }

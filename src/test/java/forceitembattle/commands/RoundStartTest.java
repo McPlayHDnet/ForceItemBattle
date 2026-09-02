@@ -1,8 +1,9 @@
-package forceitembattle.model;
+package forceitembattle.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
+import forceitembattle.commands.admin.RoundStart;
 import forceitembattle.settings.GamePreset;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

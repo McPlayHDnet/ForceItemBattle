@@ -1,12 +1,13 @@
 package forceitembattle.commands.player;
 
-import forceitembattle.commands.Precondition;
-import java.util.List;
-import forceitembattle.ForceItemBattle;
-import forceitembattle.model.CustomMaterials;
 import forceitembattle.commands.CustomCommand;
+import forceitembattle.commands.Precondition;
+import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.Roster;
+import forceitembattle.model.RoundPhase;
 import forceitembattle.util.Text;
+import java.util.List;
 import org.apache.commons.text.WordUtils;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -14,8 +15,13 @@ import org.bukkit.inventory.ItemStack;
 
 public final class CommandInfoWiki extends CustomCommand {
 
-    public CommandInfoWiki(ForceItemBattle plugin) {
-        super(plugin, "infowiki");
+    private final Roster roster;
+    private final RoundPhase roundPhase;
+
+    public CommandInfoWiki(Roster roster, RoundPhase roundPhase) {
+        super("infowiki");
+        this.roster = roster;
+        this.roundPhase = roundPhase;
         setDescription("Get wiki info link for your current item");
     }
 
@@ -28,9 +34,9 @@ public final class CommandInfoWiki extends CustomCommand {
     public void onPlayerCommand(Player player, String label, String[] args) {
         ItemStack item = player.getInventory().getItemInMainHand();
 
-        if (this.plugin.getRoundPhase().roundRunning()) {
+        if (this.roundPhase.roundRunning()) {
             ForceItemPlayer forceItemPlayer =
-                    this.plugin.getRoster().participant(player.getUniqueId()).orElse(null);
+                    this.roster.participant(player.getUniqueId()).orElse(null);
             if (forceItemPlayer == null) {
                 player.sendMessage(Text.of("<red>You are not playing."));
                 return;

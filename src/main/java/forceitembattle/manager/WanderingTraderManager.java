@@ -1,10 +1,11 @@
 package forceitembattle.manager;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.model.ActiveTrader;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.Dimension;
 import forceitembattle.model.Locator;
+import forceitembattle.model.Roster;
+import forceitembattle.model.RoundPhase;
 import forceitembattle.model.TraderKind;
 import forceitembattle.util.LocationFormat;
 import forceitembattle.util.Prefix;
@@ -23,14 +24,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Supplier;
 import lombok.Getter;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -40,6 +42,7 @@ import org.bukkit.inventory.MenuType;
 import org.bukkit.inventory.Merchant;
 import org.bukkit.inventory.MerchantRecipe;
 import org.bukkit.inventory.view.MerchantView;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.Nullable;
@@ -69,7 +72,14 @@ public class WanderingTraderManager implements Manager {
             Material.IRON_HELMET, Material.IRON_CHESTPLATE, Material.IRON_LEGGINGS, Material.IRON_BOOTS
     };
 
-    private final ForceItemBattle plugin;
+    private final Plugin plugin;
+    private final Roster roster;
+    private final RoundPhase roundPhase;
+    private final PositionManager positionManager;
+    private final LocatorManager locatorManager;
+
+    /** Late-bound: the scoreboard reads this manager's traders, so the two are mutually dependent. */
+    private final Supplier<ScoreboardManager> scoreboard;
 
     /** Live traders, keyed by entity uuid. Insertion-ordered so the tab list is stable. */
     private final Map<UUID, ActiveTrader> traders = new LinkedHashMap<>();
@@ -84,8 +94,15 @@ public class WanderingTraderManager implements Manager {
     private int timer;
     private BukkitTask spawnTimerTask;
 
-    public WanderingTraderManager(ForceItemBattle plugin) {
+    public WanderingTraderManager(Plugin plugin, Roster roster, RoundPhase roundPhase,
+                                  PositionManager positionManager, LocatorManager locatorManager,
+                                  Supplier<ScoreboardManager> scoreboard) {
         this.plugin = plugin;
+        this.roster = roster;
+        this.roundPhase = roundPhase;
+        this.positionManager = positionManager;
+        this.locatorManager = locatorManager;
+        this.scoreboard = scoreboard;
         this.randomAfterStartSpawnTime = ThreadLocalRandom.current().nextInt(7, 11) * 60; // [7, 10] minutes
         this.timer = this.randomAfterStartSpawnTime;
     }
@@ -111,7 +128,7 @@ public class WanderingTraderManager implements Manager {
         BukkitRunnable bukkitRunnable = new BukkitRunnable() {
             @Override
             public void run() {
-                if (!plugin.getRoundPhase().roundRunning()) {
+                if (!WanderingTraderManager.this.roundPhase.roundRunning()) {
                     return;
                 }
 
@@ -180,7 +197,7 @@ public class WanderingTraderManager implements Manager {
         ActiveTrader trader = new ActiveTrader(entity.getUniqueId(), kind, location, recipes);
         trader.setTimer(TRADER_LIFETIME_SECONDS);
         this.traders.put(trader.getUuid(), trader);
-        this.plugin.getScoreboardManager().updateAllPlayers();
+        this.scoreboard.get().updateAllPlayers();
 
         this.announce(trader);
         trader.setTask(this.startDespawnTimer(trader, entity));
@@ -198,7 +215,7 @@ public class WanderingTraderManager implements Manager {
                     return;
                 }
 
-                if (plugin.getRoundPhase().isPausedGame()) {
+                if (WanderingTraderManager.this.roundPhase.isPausedGame()) {
                     return; // the trader's lifetime freezes while the game is paused
                 }
 
@@ -226,7 +243,7 @@ public class WanderingTraderManager implements Manager {
             double distance = player.getLocation().distance(spawn);
             if (distance <= SPAWN_PING_RADIUS) {
                 if (this.nearSpawnPlayers.add(player.getUniqueId()) && !this.traders.isEmpty()) {
-                    this.traders.values().forEach(trader -> this.plugin.getPositionManager()
+                    this.traders.values().forEach(trader -> this.positionManager
                             .playParticleLine(player, trader.getLocation(), trader.getKind().getParticleColor()));
                 }
             } else if (distance > SPAWN_PING_EXIT_RADIUS) {
@@ -245,7 +262,7 @@ public class WanderingTraderManager implements Manager {
     }
 
     private void announce(ActiveTrader trader) {
-        this.plugin.getRoster().players().values().forEach(forceItemPlayer -> {
+        this.roster.players().values().forEach(forceItemPlayer -> {
             Player player = forceItemPlayer.player();
 
             player.sendMessage(Text.of(Prefix.POSITION + "<gray>The " + trader.getKind().coloredName()
@@ -253,7 +270,7 @@ public class WanderingTraderManager implements Manager {
                     + LocationFormat.xyz(trader.getLocation())
                     + LocationFormat.distance(player.getLocation(), trader.getLocation())));
 
-            this.plugin.getPositionManager().playParticleLine(player, trader.getLocation(),
+            this.positionManager.playParticleLine(player, trader.getLocation(),
                     trader.getKind().getParticleColor());
         });
 
@@ -287,7 +304,7 @@ public class WanderingTraderManager implements Manager {
         recipes.add(this.specialOffer(CustomMaterials.WHEEL_OF_FORTUNE.itemStack(SPECIAL_WHEEL_AMOUNT), SPECIAL_WHEEL_PRICE));
         recipes.add(this.specialOffer(CustomMaterials.WEATHERED_CAPTAINS_JOURNAL.itemStack(), SPECIAL_PRICE));
 
-        Locator locator = this.plugin.getLocatorManager().randomLocator();
+        Locator locator = this.locatorManager.randomLocator();
         if (locator != null) {
             recipes.add(this.specialOffer(locator.getLocatorItem().itemStack(), SPECIAL_PRICE));
         }

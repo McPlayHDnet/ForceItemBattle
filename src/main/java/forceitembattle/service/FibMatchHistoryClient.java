@@ -4,16 +4,17 @@ import de.threeseconds.openapi.fibservice.client.api.FibMatchControllerApi;
 import de.threeseconds.openapi.fibservice.client.invoker.ApiException;
 import de.threeseconds.openapi.fibservice.client.model.FibFoundItemStatsDto;
 import de.threeseconds.openapi.fibservice.client.model.FibMatchSubmitRequestDto;
-import forceitembattle.ForceItemBattle;
-import forceitembattle.collection.FoundItemsCache;
+import forceitembattle.achievements.AchievementManager;
 import forceitembattle.achievements.global.GlobalStatsCache;
-import forceitembattle.manager.AchievementManager;
+import forceitembattle.collection.CollectedItem;
+import forceitembattle.collection.CollectionManager;
+import forceitembattle.collection.FoundItemsCache;
+import forceitembattle.collection.ItemRarity;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
-import forceitembattle.collection.CollectedItem;
-import forceitembattle.collection.ItemRarity;
-import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * Match-history domain of FIBService: submits one finished game (participants, teams, item
@@ -25,12 +26,17 @@ public class FibMatchHistoryClient {
 
     private final FibMatchControllerApi api;
     private final ApiExecutor executor;
-    private final ForceItemBattle plugin;
+    /** Late-bound for the same reason as in {@link FibCatalogueClient}: both are built here. */
+    private final Supplier<AchievementManager> achievementManager;
+    private final Supplier<CollectionManager> collection;
 
-    FibMatchHistoryClient(FibMatchControllerApi api, ApiExecutor executor, ForceItemBattle plugin) {
+    FibMatchHistoryClient(FibMatchControllerApi api, ApiExecutor executor,
+                          Supplier<AchievementManager> achievementManager,
+                          Supplier<CollectionManager> collection) {
         this.api = api;
         this.executor = executor;
-        this.plugin = plugin;
+        this.achievementManager = achievementManager;
+        this.collection = collection;
     }
 
     public void submitMatchAsync(UUID matchId, FibMatchSubmitRequestDto request, Runnable onSuccess) {
@@ -59,9 +65,9 @@ public class FibMatchHistoryClient {
         if (request.getParticipants() == null) {
             return;
         }
-        AchievementManager achievements = this.plugin.getAchievementManager();
+        AchievementManager achievements = this.achievementManager.get();
         GlobalStatsCache globalStats = achievements.getGlobalStatsCache();
-        FoundItemsCache foundItems = this.plugin.getCollectionManager().getFoundItemsCache();
+        FoundItemsCache foundItems = this.collection.get().getFoundItemsCache();
         request.getParticipants().forEach(participant -> {
             UUID playerUuid = participant.getPlayerUuid();
             if (playerUuid != null) {

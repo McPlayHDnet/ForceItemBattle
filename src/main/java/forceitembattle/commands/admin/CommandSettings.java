@@ -1,17 +1,23 @@
 package forceitembattle.commands.admin;
 
 import static forceitembattle.commands.Precondition.OP;
-import forceitembattle.commands.Precondition;
-import java.util.List;
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
+import forceitembattle.commands.Precondition;
 import forceitembattle.gui.SettingsInventory;
+import forceitembattle.model.Roster;
+import forceitembattle.settings.GameSettings;
+import java.util.List;
 import org.bukkit.entity.Player;
 
 public final class CommandSettings extends CustomCommand {
 
-    public CommandSettings(ForceItemBattle plugin) {
-        super(plugin, "settings");
+    private final Roster roster;
+    private final GameSettings settings;
+
+    public CommandSettings(Roster roster, GameSettings settings) {
+        super("settings");
+        this.roster = roster;
+        this.settings = settings;
 
         setDescription("Manage settings");
     }
@@ -23,6 +29,6 @@ public final class CommandSettings extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        new SettingsInventory(this.plugin, null).open(player);
+        new SettingsInventory(this.roster, this.settings, null).open(player);
     }
 }

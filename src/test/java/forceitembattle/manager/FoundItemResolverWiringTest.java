@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.randomevents.RandomEventManager;
 import forceitembattle.service.FIBServiceClient;
 import forceitembattle.settings.GameSettings;
 import java.util.List;

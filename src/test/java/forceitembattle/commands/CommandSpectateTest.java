@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.player.CommandSpectate;
 import forceitembattle.manager.TimerManager;
 import org.bukkit.GameMode;
@@ -43,11 +42,9 @@ class CommandSpectateTest {
     void setUp() {
         this.server = MockBukkit.mock();
 
-        ForceItemBattle plugin = mock(ForceItemBattle.class);
         this.timer = mock(TimerManager.class);
-        when(plugin.getTimerManager()).thenReturn(this.timer);
 
-        this.command = new CommandSpectate(plugin);
+        this.command = new CommandSpectate(this.timer);
         ((CustomCommand) this.command).setContext(new CommandContext(null, null, null));
     }
 

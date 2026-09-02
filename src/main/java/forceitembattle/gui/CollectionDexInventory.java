@@ -1,8 +1,8 @@
 package forceitembattle.gui;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.collection.CollectedItem;
 import forceitembattle.collection.CollectionCategory;
+import forceitembattle.collection.CollectionManager;
 import forceitembattle.collection.ItemRarity;
 import forceitembattle.manager.ItemDifficultiesManager;
 import forceitembattle.model.CustomMaterials;
@@ -55,7 +55,7 @@ public final class CollectionDexInventory extends InventoryBuilder {
         }
     }
 
-    private final ForceItemBattle plugin;
+    private final GuiContext gui;
     private final String playerName;
     private final UUID playerUUID;
     private final CollectionCategory category;
@@ -68,26 +68,26 @@ public final class CollectionDexInventory extends InventoryBuilder {
     // renders as soon as either arrives and gains the rarity line when it shows up.
     private ItemRarity rarity;
 
-    public CollectionDexInventory(ForceItemBattle plugin, String playerName, UUID playerUUID, CollectionCategory category) {
+    public CollectionDexInventory(GuiContext gui, String playerName, UUID playerUUID, CollectionCategory category) {
         super(9 * 6, Text.of("<dark_gray>» <dark_aqua>" + category.getDisplayName() + " <dark_gray>◆ <gray>" + playerName));
 
-        this.plugin = plugin;
+        this.gui = gui;
         this.playerName = playerName;
         this.playerUUID = playerUUID;
         this.category = category;
         // Pre-bucketed and pre-sorted once by the manager; just read this category's list.
-        this.items = this.plugin.getCollectionManager().getCollectionBuckets()
+        this.items = this.gui.collection().getCollectionBuckets()
                 .getOrDefault(category, List.of());
 
         this.addUpdateHandler(this::updateInventory);
         this.addClickHandler(inventoryClickEvent -> inventoryClickEvent.setCancelled(true));
 
-        this.plugin.getCollectionManager().getFoundItemsLoader().load(playerUUID, found -> {
+        this.gui.collection().getFoundItemsLoader().load(playerUUID, found -> {
             this.collected = found;
             this.updateInventory();
         });
 
-        this.plugin.getCollectionManager().getItemRarityLoader().load(loaded -> {
+        this.gui.collection().getItemRarityLoader().load(loaded -> {
             this.rarity = loaded;
             this.updateInventory();
         });
@@ -95,7 +95,7 @@ public final class CollectionDexInventory extends InventoryBuilder {
 
     /** Memoised via CollectionManager -- sorting compares names O(n log n) times per repaint. */
     private String displayName(Material material) {
-        return this.plugin.getCollectionManager().displayNameOf(material);
+        return this.gui.collection().displayNameOf(material);
     }
 
     private boolean isCollected(Material material) {
@@ -170,7 +170,7 @@ public final class CollectionDexInventory extends InventoryBuilder {
      */
     private List<String> huntingHints(Material material) {
         ItemDifficultiesManager.ItemDefinition definition =
-                this.plugin.getItemDifficultiesManager().getItemRegistry().get(material);
+                this.gui.items().getItemRegistry().get(material);
         if (definition == null) {
             return List.of();
         }
@@ -237,7 +237,7 @@ public final class CollectionDexInventory extends InventoryBuilder {
         this.setItem(49, GuiItems.back(),
                 inventoryClickEvent -> {
                     this.getPlayer().playSound(this.getPlayer(), Sound.UI_BUTTON_CLICK, 1, 1);
-                    new CollectionBookInventory(this.plugin, this.playerName, this.playerUUID).open(this.getPlayer());
+                    new CollectionBookInventory(this.gui, this.playerName, this.playerUUID).open(this.getPlayer());
                 });
 
         this.paging.draw(this, visible.size(), this::updateInventory);

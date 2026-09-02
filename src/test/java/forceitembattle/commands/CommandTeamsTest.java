@@ -6,9 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.player.CommandTeams;
 import forceitembattle.manager.TeamsManager;
 import forceitembattle.model.ForceItemPlayer;
@@ -48,19 +46,15 @@ class CommandTeamsTest {
     @BeforeEach
     void setUp() {
         this.server = MockBukkit.mock();
-        ForceItemBattle plugin = mock(ForceItemBattle.class);
         this.roster = new Roster();
         this.teamManager = mock(TeamsManager.class);
-
-        when(plugin.getRoster()).thenReturn(this.roster);
-        when(plugin.getTeamManager()).thenReturn(this.teamManager);
 
         Map<String, Object> settings = new HashMap<>();
         settings.put(GameSetting.TEAM.configPath(), true);
         RoundPhase phase = new RoundPhase();
         phase.moveTo(GameState.PRE_GAME);
 
-        this.command = new CommandTeams(plugin);
+        this.command = new CommandTeams(this.roster, this.teamManager);
         ((CustomCommand) this.command).setContext(
                 new CommandContext(phase, new Ruleset(new MapConfig(settings)), this.roster));
     }

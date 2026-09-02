@@ -1,7 +1,7 @@
 package forceitembattle.gui;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.event.WheelOfFortuneWinEvent;
+import forceitembattle.manager.ItemDifficultiesManager;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.util.Text;
 import java.time.Duration;
@@ -16,16 +16,19 @@ import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
 public final class VaultInventory extends InventoryBuilder {
 
-    private final ForceItemBattle plugin;
+    private final Plugin plugin;
+    private final ItemDifficultiesManager items;
 
-    public VaultInventory(ForceItemBattle plugin) {
+    public VaultInventory(Plugin plugin, ItemDifficultiesManager items) {
         super(9 * 5, Text.of("<dark_gray>» <dark_green>Vault"));
 
         this.plugin = plugin;
+        this.items = items;
 
         this.setItems(0, 8, GuiItems.accentBorder());
         this.setItems(this.getInventory().getSize() - 9, this.getInventory().getSize() - 1, GuiItems.accentBorder());
@@ -42,7 +45,7 @@ public final class VaultInventory extends InventoryBuilder {
         this.addUpdateHandler(() -> {
             // Copy before shuffling: the manager hands back its cached pool, shared with every
             // other reader this tick.
-            List<Material> itemList = new ArrayList<>(plugin.getItemDifficultiesManager().getAvailableItems());
+            List<Material> itemList = new ArrayList<>(items.getAvailableItems());
             Collections.shuffle(itemList);
 
             new BukkitRunnable() {

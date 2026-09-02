@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.player.CommandShout;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,7 +38,7 @@ class CommandShoutTest {
     @BeforeEach
     void setUp() {
         this.server = MockBukkit.mock();
-        this.command = new CommandShout(mock(ForceItemBattle.class));
+        this.command = new CommandShout();
         ((CustomCommand) this.command).setContext(new CommandContext(null, null, null));
     }
 

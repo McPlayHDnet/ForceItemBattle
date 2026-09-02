@@ -3,13 +3,11 @@ package forceitembattle.commands;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.player.CommandInfo;
 import forceitembattle.manager.ItemDifficultiesManager;
 import forceitembattle.manager.RecipeManager;
@@ -44,7 +42,6 @@ import org.mockito.ArgumentCaptor;
 class CommandInfoTest {
 
     private ServerMock server;
-    private ForceItemBattle plugin;
     private RoundPhase roundPhase;
     private Roster roster;
     private RecipeManager recipeManager;
@@ -53,7 +50,6 @@ class CommandInfoTest {
     @BeforeEach
     void setUp() {
         this.server = MockBukkit.mock();
-        this.plugin = mock(ForceItemBattle.class);
         this.roundPhase = new RoundPhase();
         this.roster = new Roster();
         this.recipeManager = mock(RecipeManager.class);
@@ -61,12 +57,7 @@ class CommandInfoTest {
         ItemDifficultiesManager items = mock(ItemDifficultiesManager.class);
         when(items.itemHasDescription(any())).thenReturn(false);
 
-        when(this.plugin.getRoundPhase()).thenReturn(this.roundPhase);
-        when(this.plugin.getRoster()).thenReturn(this.roster);
-        when(this.plugin.getRecipeManager()).thenReturn(this.recipeManager);
-        when(this.plugin.getItemDifficultiesManager()).thenReturn(items);
-
-        this.command = new CommandInfo(this.plugin);
+        this.command = new CommandInfo(this.roster, this.roundPhase, items, this.recipeManager);
         ((CustomCommand) this.command).setContext(
                 new CommandContext(this.roundPhase, null, this.roster));
     }

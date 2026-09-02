@@ -1,19 +1,27 @@
 package forceitembattle.commands;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.Manager;
+import forceitembattle.model.Roster;
+import forceitembattle.model.RoundPhase;
+import forceitembattle.settings.GameSettings;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabCompleter;
+import org.bukkit.plugin.java.JavaPlugin;
 
 @Getter
 @RequiredArgsConstructor
 public class CommandsManager implements Manager {
 
-    private final ForceItemBattle plugin;
+    /** For {@code getCommand}/{@code getDescription}: registration is a Bukkit concern. */
+    private final JavaPlugin plugin;
+
+    private final RoundPhase roundPhase;
+    private final GameSettings settings;
+    private final Roster roster;
 
     /** Used for /help. */
     private final List<CustomCommand> commands = new ArrayList<>();
@@ -27,9 +35,9 @@ public class CommandsManager implements Manager {
         }
 
         customCommand.setContext(new CommandContext(
-                this.plugin.getRoundPhase(),
-                this.plugin.getSettings().getRuleset(),
-                this.plugin.getRoster()));
+                this.roundPhase,
+                this.settings.getRuleset(),
+                this.roster));
 
         command.setExecutor(customCommand);
         if (customCommand instanceof TabCompleter tabCompleter) {

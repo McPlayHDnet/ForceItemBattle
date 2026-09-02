@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import forceitembattle.ForceItemBattle;
+import org.bukkit.plugin.java.JavaPlugin;
 import forceitembattle.model.RoundClock;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
@@ -40,22 +40,17 @@ class ItemRollTest {
 
     @BeforeEach
     void setUp() {
-        ForceItemBattle plugin = mock(ForceItemBattle.class);
+        JavaPlugin plugin = mock(JavaPlugin.class);
+        when(plugin.getConfig()).thenReturn(new YamlConfiguration());
         this.settings = mock(GameSettings.class);
         this.clock = new RoundClock();
-
-        when(plugin.getSettings()).thenReturn(this.settings);
-        when(plugin.getTimerManager()).thenReturn(mock(TimerManager.class));
-        when(plugin.getGamemanager()).thenReturn(mock(Gamemanager.class));
-        when(plugin.getRoundClock()).thenReturn(this.clock);
-        when(plugin.getConfig()).thenReturn(new YamlConfiguration());
 
         when(this.settings.getQuickieMode()).thenReturn(QuickieMode.DISABLED);
         allow(GameSetting.HARD, true);
         allow(GameSetting.EXTREME, true);
         allow(GameSetting.END, true);
 
-        this.items = new ItemDifficultiesManager(plugin);
+        this.items = new ItemDifficultiesManager(plugin, this.clock, this.settings);
         this.items.enable();
     }
 

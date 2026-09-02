@@ -5,14 +5,20 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.admin.CommandStart;
+import forceitembattle.commands.admin.RoundStart;
+import forceitembattle.manager.Gamemanager;
+import forceitembattle.manager.TeamsManager;
+import forceitembattle.manager.TimerManager;
+import forceitembattle.model.Roster;
+import forceitembattle.model.RoundClock;
+import forceitembattle.model.RoundPhase;
 import forceitembattle.settings.ConfigSource;
 import forceitembattle.settings.GamePreset;
 import forceitembattle.settings.GameSettings;
-import forceitembattle.model.Roster;
 import forceitembattle.settings.Ruleset;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,7 +40,7 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
 class CommandStartTest {
 
     private ServerMock server;
-    private ForceItemBattle plugin;
+    private JavaPlugin plugin;
     private GameSettings settings;
     private Ruleset ruleset;
     private CommandStart command;
@@ -42,17 +48,15 @@ class CommandStartTest {
     @BeforeEach
     void setUp() {
         this.server = MockBukkit.mock();
-        this.plugin = mock(ForceItemBattle.class);
+        this.plugin = mock(JavaPlugin.class);
         this.settings = mock(GameSettings.class);
         this.ruleset = new Ruleset(mock(ConfigSource.class));
 
-        when(this.plugin.getSettings()).thenReturn(this.settings);
         when(this.settings.getRuleset()).thenReturn(this.ruleset);
         // performCommand reads the roster head-count before it parses the arguments, so even the
         // paths that refuse on a bad argument need one present.
-        when(this.plugin.getRoster()).thenReturn(new Roster());
 
-        this.command = new CommandStart(this.plugin);
+        this.command = new CommandStart(mock(Gamemanager.class), mock(TimerManager.class), new Roster(), mock(RoundPhase.class), mock(RoundClock.class), this.settings, mock(TeamsManager.class), plugin);
         // The op gate is declared, so it is evaluated in onCommand -- which needs the context that
         // CommandsManager supplies at bootstrap.
         // Cast because setContext is package-private on CustomCommand, and a package-private

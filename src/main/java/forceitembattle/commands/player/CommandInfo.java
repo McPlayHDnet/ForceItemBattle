@@ -1,12 +1,15 @@
 package forceitembattle.commands.player;
 
-import forceitembattle.commands.Precondition;
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
+import forceitembattle.commands.Precondition;
+import forceitembattle.manager.ItemDifficultiesManager;
+import forceitembattle.manager.RecipeManager;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.DescriptionItem;
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.Roster;
+import forceitembattle.model.RoundPhase;
 import forceitembattle.util.Text;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,8 +26,17 @@ public final class CommandInfo extends CustomCommand implements CustomTabComplet
             .sorted()
             .toList();
 
-    public CommandInfo(ForceItemBattle plugin) {
-        super(plugin, "info");
+    private final Roster roster;
+    private final RoundPhase roundPhase;
+    private final ItemDifficultiesManager items;
+    private final RecipeManager recipeManager;
+
+    public CommandInfo(Roster roster, RoundPhase roundPhase, ItemDifficultiesManager items, RecipeManager recipeManager) {
+        super("info");
+        this.roster = roster;
+        this.roundPhase = roundPhase;
+        this.items = items;
+        this.recipeManager = recipeManager;
         setUsage("[item]");
         setDescription("Get information about an item");
     }
@@ -46,9 +58,9 @@ public final class CommandInfo extends CustomCommand implements CustomTabComplet
             }
             item = new ItemStack(material);
 
-        } else if (this.plugin.getRoundPhase().roundRunning()) {
+        } else if (this.roundPhase.roundRunning()) {
             ForceItemPlayer forceItemPlayer =
-                    this.plugin.getRoster().participant(player.getUniqueId()).orElse(null);
+                    this.roster.participant(player.getUniqueId()).orElse(null);
             if (forceItemPlayer == null) {
                 player.sendMessage(Text.of("<red>You are not playing, type /info [item] to get information about an item"));
                 return;
@@ -64,16 +76,16 @@ public final class CommandInfo extends CustomCommand implements CustomTabComplet
         }
 
         DescriptionItem descriptionItem;
-        if (this.plugin.getItemDifficultiesManager().itemHasDescription(item.getType())) {
-            descriptionItem = this.plugin.getItemDifficultiesManager().getDescriptionItems().get(item.getType());
+        if (this.items.itemHasDescription(item.getType())) {
+            descriptionItem = this.items.getDescriptionItems().get(item.getType());
             if (descriptionItem.lines() != null) {
-                this.plugin.getItemDifficultiesManager().getDescriptionItemLines(descriptionItem.material()).forEach(player::sendMessage);
+                this.items.getDescriptionItemLines(descriptionItem.material()).forEach(player::sendMessage);
             } else {
                 throw new NullPointerException("The item description is either null or empty");
             }
         }
 
-        this.plugin.getRecipeManager().createRecipeViewer(player, item);
+        this.recipeManager.createRecipeViewer(player, item);
     }
 
     private Material matchMaterial(String input) {

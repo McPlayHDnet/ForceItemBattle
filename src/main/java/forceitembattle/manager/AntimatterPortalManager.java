@@ -1,10 +1,11 @@
 package forceitembattle.manager;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.gui.ItemBuilder;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.util.Scheduler;
 import forceitembattle.util.Text;
+import io.papermc.paper.registry.RegistryAccess;
+import io.papermc.paper.registry.RegistryKey;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,8 +16,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import io.papermc.paper.registry.RegistryAccess;
-import io.papermc.paper.registry.RegistryKey;
 import org.bukkit.Registry;
 import org.bukkit.Sound;
 import org.bukkit.World;
@@ -30,6 +29,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.generator.structure.GeneratedStructure;
 import org.bukkit.generator.structure.Structure;
 import org.bukkit.generator.structure.StructurePiece;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.BoundingBox;
@@ -88,7 +88,7 @@ public class AntimatterPortalManager implements Manager {
     /** The start room's footprint, sorted, used to pick it out of the structure's piece list. */
     private static final int[] START_ROOM_SIZE = {19, 19, 48};
 
-    private final ForceItemBattle plugin;
+    private final Plugin plugin;
     private final Map<UUID, List<ActivePortal>> portalsByOwner = new HashMap<>();
 
     /**
@@ -103,7 +103,7 @@ public class AntimatterPortalManager implements Manager {
     private final Map<UUID, ActivePortal> returnPortalByPlayer = new HashMap<>();
     private final Random random = new Random();
 
-    public AntimatterPortalManager(ForceItemBattle plugin) {
+    public AntimatterPortalManager(Plugin plugin) {
         this.plugin = plugin;
     }
 

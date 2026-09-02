@@ -1,31 +1,32 @@
 package forceitembattle.listener;
 
-import forceitembattle.gui.InventoryBuilder;
-import forceitembattle.manager.Gamemanager;
-import forceitembattle.manager.PlayerOutfitter;
-import forceitembattle.model.MenuItem;
-import forceitembattle.model.RoundPhase;
-import forceitembattle.model.Roster;
-import forceitembattle.ForceItemBattle;
-import forceitembattle.manager.BackpackManager;
-import forceitembattle.manager.LocatorManager;
-import forceitembattle.manager.TimerManager;
-import forceitembattle.service.FIBServiceClient;
-import forceitembattle.settings.GameSettings;
-import forceitembattle.gui.AchievementCategoryInventory;
 import forceitembattle.event.FoundItemEvent;
+import forceitembattle.gui.AchievementCategoryInventory;
 import forceitembattle.gui.CollectionBookInventory;
+import forceitembattle.gui.GuiContext;
+import forceitembattle.gui.InventoryBuilder;
+import forceitembattle.gui.TeleporterInventory;
+import forceitembattle.gui.VaultInventory;
+import forceitembattle.manager.BackpackManager;
+import forceitembattle.manager.Gamemanager;
+import forceitembattle.manager.ItemDifficultiesManager;
+import forceitembattle.manager.LocatorManager;
+import forceitembattle.manager.PlayerOutfitter;
+import forceitembattle.manager.TimerManager;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.Dimension;
-import forceitembattle.settings.GameSetting;
-import forceitembattle.service.PlayerCounter;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.Locator;
-import forceitembattle.gui.TeleporterInventory;
+import forceitembattle.model.MenuItem;
+import forceitembattle.model.Roster;
+import forceitembattle.model.RoundPhase;
+import forceitembattle.service.FIBServiceClient;
+import forceitembattle.service.PlayerCounter;
+import forceitembattle.settings.GameSetting;
+import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Prefix;
 import forceitembattle.util.Scheduler;
 import forceitembattle.util.Text;
-import forceitembattle.gui.VaultInventory;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -48,6 +49,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
 
 @RequiredArgsConstructor
 public class ClickableItemsListener implements Listener {
@@ -68,8 +70,13 @@ public class ClickableItemsListener implements Listener {
             Material.SNOW,
             Material.SNOW_BLOCK
     );
-    /** Still needed: this listener opens four GUIs, which take the plugin. */
-    private final ForceItemBattle plugin;
+    /** Only for {@code VaultInventory}, which schedules its spin animation. */
+    private final Plugin plugin;
+
+    /** Read, never held: the lobby spawn moves when a round starts. */
+    private final Supplier<Location> spawnLocation;
+    private final GuiContext gui;
+    private final ItemDifficultiesManager items;
     private final Roster roster;
     private final BackpackManager backpackManager;
     private final FIBServiceClient fibService;
@@ -110,11 +117,11 @@ public class ClickableItemsListener implements Listener {
 
         switch (menuItem) {
             case ACHIEVEMENTS, RESULT_ACHIEVEMENTS -> openMenu(player, () ->
-                    new AchievementCategoryInventory(this.plugin, player.getName(), player.getUniqueId()));
+                    new AchievementCategoryInventory(this.gui, player.getName(), player.getUniqueId()));
             case COLLECTION, RESULT_COLLECTION -> openMenu(player, () ->
-                    new CollectionBookInventory(this.plugin, player.getName(), player.getUniqueId()));
-            case TELEPORTER -> openMenu(player, () -> new TeleporterInventory(this.plugin));
-            case TO_OVERWORLD -> teleportToDimension(e, player, Dimension.OVERWORLD, this.plugin::getSpawnLocation);
+                    new CollectionBookInventory(this.gui, player.getName(), player.getUniqueId()));
+            case TELEPORTER -> openMenu(player, () -> new TeleporterInventory());
+            case TO_OVERWORLD -> teleportToDimension(e, player, Dimension.OVERWORLD, this.spawnLocation);
             case TO_NETHER -> teleportToDimension(e, player, Dimension.NETHER,
                     () -> new Location(Dimension.NETHER.world(), 0, 70, 0));
             case TO_END -> teleportToDimension(e, player, Dimension.END, () -> {
@@ -205,7 +212,7 @@ public class ClickableItemsListener implements Listener {
         }
 
         if (CustomMaterials.WHEEL_OF_FORTUNE.matches(e.getItem())) {
-            new VaultInventory(this.plugin).open(player);
+            new VaultInventory(this.plugin, this.items).open(player);
             player.getInventory().getItemInMainHand().setAmount(player.getInventory().getItemInMainHand().getAmount() - 1);
 
             if (this.settings.isSettingEnabled(GameSetting.STATS)) {

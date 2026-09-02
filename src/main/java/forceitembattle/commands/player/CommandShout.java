@@ -2,7 +2,6 @@ package forceitembattle.commands.player;
 
 import forceitembattle.commands.Precondition;
 import java.util.List;
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.util.Text;
 import java.util.HashSet;
@@ -14,8 +13,8 @@ public final class CommandShout extends CustomCommand {
 
     private static final Set<Player> shoutingPlayers = new HashSet<>();
 
-    public CommandShout(ForceItemBattle plugin) {
-        super(plugin, "shout");
+    public CommandShout() {
+        super("shout");
         setDescription("Send global message when team chat is enabled");
     }
 

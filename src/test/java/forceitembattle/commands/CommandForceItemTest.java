@@ -10,7 +10,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.admin.CommandForceItem;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.ScoreboardManager;
@@ -64,22 +63,17 @@ class CommandForceItemTest {
     void setUp() {
         this.server = MockBukkit.mock();
 
-        ForceItemBattle plugin = mock(ForceItemBattle.class);
         this.roundPhase = new RoundPhase();
         this.roster = new Roster();
         this.gamemanager = mock(Gamemanager.class);
         this.forcedQueue = new ArrayDeque<>();
 
-        when(plugin.getRoster()).thenReturn(this.roster);
-        when(plugin.getGamemanager()).thenReturn(this.gamemanager);
-        when(plugin.getTimerManager()).thenReturn(mock(TimerManager.class));
-        when(plugin.getScoreboardManager()).thenReturn(mock(ScoreboardManager.class));
         when(this.gamemanager.getForcedItemQueue()).thenReturn(this.forcedQueue);
         when(this.gamemanager.generateMaterial()).thenReturn(Material.BEDROCK);
 
         this.roundPhase.moveTo(GameState.MID_GAME);
 
-        this.command = new CommandForceItem(plugin);
+        this.command = new CommandForceItem(this.gamemanager, mock(TimerManager.class), this.roster, mock(ScoreboardManager.class));
         ((CustomCommand) this.command).setContext(
                 new CommandContext(this.roundPhase, null, this.roster));
     }

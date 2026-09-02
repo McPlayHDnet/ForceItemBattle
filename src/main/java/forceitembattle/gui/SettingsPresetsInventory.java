@@ -1,9 +1,9 @@
 package forceitembattle.gui;
 
-import forceitembattle.ForceItemBattle;
+import forceitembattle.model.Roster;
+import forceitembattle.settings.GamePreset;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
-import forceitembattle.settings.GamePreset;
 import forceitembattle.util.Text;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,7 +16,7 @@ public final class SettingsPresetsInventory extends InventoryBuilder {
 
     public static HashMap<UUID, GamePreset> namingPhase = new HashMap<>();
 
-    public SettingsPresetsInventory(ForceItemBattle forceItemBattle, GamePreset gamePreset, GameSettings gameSettings) {
+    public SettingsPresetsInventory(Roster roster, GameSettings gameSettings, GamePreset gamePreset) {
         super(9 * 5, Text.of("<dark_gray>» <dark_aqua>Settings <dark_gray>● <gray>Presets"));
 
         this.setItems(0, 8, GuiItems.border());
@@ -56,7 +56,7 @@ public final class SettingsPresetsInventory extends InventoryBuilder {
                     .getItemStack(), event -> {
 
                 getPlayer().playSound(getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
-                new SettingsInventory(forceItemBattle, gamePreset).open(this.getPlayer());
+                new SettingsInventory(roster, gameSettings, gamePreset).open(this.getPlayer());
             });
             lore.clear();
 
@@ -83,7 +83,7 @@ public final class SettingsPresetsInventory extends InventoryBuilder {
 
                 getPlayer().playSound(getPlayer(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
                 gameSettings.addGamePreset(gamePreset);
-                new PresetMenuInventory(forceItemBattle, gameSettings).open(getPlayer());
+                new PresetMenuInventory(roster, gameSettings).open(getPlayer());
             });
         });
     }

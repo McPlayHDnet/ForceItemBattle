@@ -1,20 +1,26 @@
 package forceitembattle.commands.player;
 
 import static forceitembattle.commands.Precondition.ROUND_RUNNING;
-import forceitembattle.commands.Precondition;
-import java.util.List;
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
-import forceitembattle.settings.GameSetting;
+import forceitembattle.commands.Precondition;
+import forceitembattle.manager.VoteSkipManager;
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.Roster;
+import forceitembattle.settings.GameSetting;
 import forceitembattle.util.Text;
+import java.util.List;
 import org.bukkit.entity.Player;
 
 public final class CommandVoteSkip extends CustomCommand {
 
 
-    public CommandVoteSkip(ForceItemBattle plugin) {
-        super(plugin, "voteskip");
+    private final Roster roster;
+    private final VoteSkipManager voteSkipManager;
+
+    public CommandVoteSkip(Roster roster, VoteSkipManager voteSkipManager) {
+        super("voteskip");
+        this.roster = roster;
+        this.voteSkipManager = voteSkipManager;
         setDescription("Voting for a skip item");
     }
 
@@ -26,7 +32,7 @@ public final class CommandVoteSkip extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        ForceItemPlayer forceItemPlayer = this.plugin.getRoster().get(player.getUniqueId());
+        ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());
         if (forceItemPlayer == null) {
             player.sendMessage(Text.of("<red>You are not playing."));
             return;
@@ -37,11 +43,11 @@ public final class CommandVoteSkip extends CustomCommand {
             return;
         }
 
-        if (this.plugin.getVoteSkipManager().isVoteInProgress()) {
+        if (this.voteSkipManager.isVoteInProgress()) {
             player.sendMessage(Text.of("<red>A skip vote is currently in progress."));
             return;
         }
 
-        this.plugin.getVoteSkipManager().startVoting(player);
+        this.voteSkipManager.startVoting(player);
     }
 }

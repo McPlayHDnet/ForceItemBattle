@@ -1,6 +1,5 @@
 package forceitembattle.gui;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.util.Text;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -9,12 +8,10 @@ import org.bukkit.entity.Player;
 
 public final class TeleporterInventory extends InventoryBuilder {
 
-    private final ForceItemBattle plugin;
 
-    public TeleporterInventory(ForceItemBattle plugin) {
+    public TeleporterInventory() {
         super(9 * 6, Text.of("<dark_gray>» <red>Teleporter <dark_gray>● <gray>Menu"));
 
-        this.plugin = plugin;
 
         this.setItems(0, 8, GuiItems.border());
         this.setItems(45, 53, GuiItems.border());

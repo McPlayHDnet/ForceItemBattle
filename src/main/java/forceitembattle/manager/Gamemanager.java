@@ -1,32 +1,34 @@
 package forceitembattle.manager;
 
-import forceitembattle.ForceItemBattle;
-import forceitembattle.model.Dimension;
-import forceitembattle.model.GameContext;
-import forceitembattle.settings.GameSetting;
-import forceitembattle.service.MatchHistoryReporter;
-import forceitembattle.model.ForceItemPlayer;
-import forceitembattle.model.GameState;
-import forceitembattle.model.RoundSetup;
-import forceitembattle.model.RoundPhase;
-import forceitembattle.model.Roster;
-import forceitembattle.model.Standings;
+import forceitembattle.achievements.AchievementManager;
 import forceitembattle.gui.ItemBuilder;
+import forceitembattle.model.Dimension;
+import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.GameContext;
+import forceitembattle.model.GameState;
+import forceitembattle.model.ResultCeremony;
+import forceitembattle.model.Roster;
+import forceitembattle.model.RoundClock;
+import forceitembattle.model.RoundPhase;
+import forceitembattle.model.ScoreOwner;
+import forceitembattle.model.Standings;
 import forceitembattle.model.Team;
+import forceitembattle.randomevents.RandomEventManager;
+import forceitembattle.service.FIBServiceClient;
+import forceitembattle.service.MatchHistoryReporter;
+import forceitembattle.settings.GameSetting;
+import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Text;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Deque;
-import java.util.HashMap;
-import java.util.List;
 import java.util.LinkedHashMap;
-import java.util.stream.Collectors;
-import forceitembattle.model.ResultCeremony;
-import forceitembattle.model.ScoreOwner;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-import javax.annotation.Nullable;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Bukkit;
@@ -43,12 +45,27 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.plugin.Plugin;
 
 public class Gamemanager implements Manager {
 
     public static final NamespacedKey BACKPACK_KEY = new NamespacedKey("fib", "backpack");
     private static final Material JOKER_MATERIAL = Material.BARRIER;
-    private final ForceItemBattle forceItemBattle;
+    private final GameSettings settings;
+    private final RoundClock roundClock;
+    private final ResultCeremony resultCeremony;
+    private final ItemDifficultiesManager items;
+    private final BackpackManager backpacks;
+    private final RecipeManager recipeManager;
+    private final PositionManager positionManager;
+    private final ScoreboardManager scoreboardManager;
+    private final TeamsManager teamManager;
+    private final WanderingTraderManager traders;
+    private final RandomEventManager randomEvents;
+    private final AchievementManager achievementManager;
+    private final FIBServiceClient fibService;
+    private final Consumer<Location> spawnLocationSink;
+    private final Plugin plugin;
     private final Roster roster;
 
     @Getter
@@ -74,13 +91,33 @@ public class Gamemanager implements Manager {
     @Getter
     private final Deque<Material> forcedItemQueue = new ArrayDeque<>();
 
-    public Gamemanager(ForceItemBattle forceItemBattle, Roster roster, RoundPhase roundPhase) {
-        this.forceItemBattle = forceItemBattle;
+    public Gamemanager(Plugin plugin, Roster roster, RoundPhase roundPhase, GameSettings settings,
+                       RoundClock roundClock, ResultCeremony resultCeremony, ItemDifficultiesManager items,
+                       BackpackManager backpacks, RecipeManager recipeManager, PositionManager positionManager,
+                       ScoreboardManager scoreboardManager, TeamsManager teamManager,
+                       WanderingTraderManager traders, RandomEventManager randomEvents,
+                       AchievementManager achievementManager, FIBServiceClient fibService,
+                       Consumer<Location> spawnLocationSink) {
+        this.plugin = plugin;
+        this.settings = settings;
+        this.roundClock = roundClock;
+        this.resultCeremony = resultCeremony;
+        this.items = items;
+        this.backpacks = backpacks;
+        this.recipeManager = recipeManager;
+        this.positionManager = positionManager;
+        this.scoreboardManager = scoreboardManager;
+        this.teamManager = teamManager;
+        this.traders = traders;
+        this.randomEvents = randomEvents;
+        this.achievementManager = achievementManager;
+        this.fibService = fibService;
+        this.spawnLocationSink = spawnLocationSink;
         this.roster = roster;
         this.roundPhase = roundPhase;
 
 
-        this.matchHistory = new MatchHistoryReporter(forceItemBattle);
+        this.matchHistory = new MatchHistoryReporter(fibService, roster, settings, teamManager);
     }
 
     public void evaluateLead() {
@@ -98,8 +135,8 @@ public class Gamemanager implements Manager {
         Object best = null;
         int bestScore = Integer.MIN_VALUE;
         boolean tied = false;
-        if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-            for (Team team : this.forceItemBattle.getTeamManager().getTeams()) {
+        if (this.settings.isSettingEnabled(GameSetting.TEAM)) {
+            for (Team team : this.teamManager.getTeams()) {
                 int score = team.getCurrentScore();
                 if (best == null || score > bestScore) {
                     best = team.getTeamId();
@@ -183,7 +220,7 @@ public class Gamemanager implements Manager {
         if (forced != null) {
             return forced;
         }
-        return this.forceItemBattle.getItemDifficultiesManager().generateRandomMaterial();
+        return this.items.generateRandomMaterial();
     }
 
     public Material generateSeededMaterial() {
@@ -191,7 +228,7 @@ public class Gamemanager implements Manager {
         if (forced != null) {
             return forced;
         }
-        return this.forceItemBattle.getItemDifficultiesManager().generateSeededRandomMaterial();
+        return this.items.generateSeededRandomMaterial();
     }
 
     private MaterialPair nextMaterials(boolean runMode) {
@@ -206,7 +243,7 @@ public class Gamemanager implements Manager {
 
     public void initializeMaterials() {
         this.forcedItemQueue.clear();
-        boolean runMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.RUN);
+        boolean runMode = this.settings.isSettingEnabled(GameSetting.RUN);
         long now = System.currentTimeMillis();
 
         // Everyone starts the round un-equipped; applyStartSetup flips this back per player.
@@ -257,7 +294,7 @@ public class Gamemanager implements Manager {
             return;
         }
 
-        boolean runMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.RUN);
+        boolean runMode = this.settings.isSettingEnabled(GameSetting.RUN);
 
         MaterialPair pair = this.nextMaterials(runMode);
 
@@ -284,9 +321,9 @@ public class Gamemanager implements Manager {
         }
         forceItemPlayer.setStartSetupApplied(true);
 
-        GameContext context = GameContext.of(this.forceItemBattle.getSettings(), forceItemPlayer);
+        GameContext context = GameContext.of(this.settings, forceItemPlayer);
 
-        this.sendStartSummary(player, this.forceItemBattle.getRoundClock().totalSeconds() / 60, this.jokerAmount);
+        this.sendStartSummary(player, this.roundClock.totalSeconds() / 60, this.jokerAmount);
 
         // A solo player owns their own pool, so it is set here. A team's is set once for the whole
         // team by distributeTeamJokers, and setting it per member would just overwrite it.
@@ -299,14 +336,14 @@ public class Gamemanager implements Manager {
 
         if (context.backpackEnabled()) {
             if (forceItemPlayer.isInTeam()) {
-                this.forceItemBattle.getBackpackManager().createTeamBackpack(forceItemPlayer.currentTeam(), forceItemPlayer);
+                this.backpacks.createTeamBackpack(forceItemPlayer.currentTeam(), forceItemPlayer);
             } else {
-                this.forceItemBattle.getBackpackManager().createBackpack(forceItemPlayer);
+                this.backpacks.createBackpack(forceItemPlayer);
             }
         }
 
-        if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.STATS)) {
-            this.forceItemBattle.getFibService().statistics().recordGameStarted(forceItemPlayer);
+        if (this.settings.isSettingEnabled(GameSetting.STATS)) {
+            this.fibService.statistics().recordGameStarted(forceItemPlayer);
         }
     }
 
@@ -318,7 +355,7 @@ public class Gamemanager implements Manager {
         player.sendMessage(Text.of("  <dark_gray>● <gray>Jokers <dark_gray>» <green>" + jokersAmount));
         for (GameSetting gameSettings : GameSetting.values()) {
             if (gameSettings.defaultValue() instanceof Integer) continue;
-            player.sendMessage(Text.of("  <dark_gray>● <gray>" + gameSettings.displayName() + " <dark_gray>» <green>" + (this.forceItemBattle.getSettings().isSettingEnabled(gameSettings) ? "<dark_green>✔" : "<dark_red>✘")));
+            player.sendMessage(Text.of("  <dark_gray>● <gray>" + gameSettings.displayName() + " <dark_gray>» <green>" + (this.settings.isSettingEnabled(gameSettings) ? "<dark_green>✔" : "<dark_red>✘")));
         }
         player.sendMessage(" ");
         player.sendMessage(Text.of(" <dark_gray>● <gray>Useful Commands:"));
@@ -338,9 +375,9 @@ public class Gamemanager implements Manager {
         this.setGameStartTime(System.currentTimeMillis());
         this.matchHistory.beginMatch(UUID.randomUUID());
 
-        this.forceItemBattle.getRecipeManager().initRecipes();
-        this.forceItemBattle.getPositionManager().clearPositions();
-        this.forceItemBattle.getItemDifficultiesManager().configureUnlockSchedule(durationMinutes);
+        this.recipeManager.initRecipes();
+        this.positionManager.clearPositions();
+        this.items.configureUnlockSchedule(durationMinutes);
 
         World world = Objects.requireNonNull(Dimension.OVERWORLD.world());
         prepareSpawn(world.getSpawnLocation());
@@ -353,16 +390,16 @@ public class Gamemanager implements Manager {
         // keeps their roster spot and is set up by the same call when they rejoin.
         Bukkit.getOnlinePlayers().forEach(this::applyStartSetup);
 
-        if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+        if (this.settings.isSettingEnabled(GameSetting.TEAM)) {
             distributeTeamJokers(jokersAmount);
         }
 
-        this.forceItemBattle.getWanderingTraderManager().startTimer();
-        this.forceItemBattle.getRandomEventManager().startGame();
-        this.forceItemBattle.getAchievementManager().resetProgress();
-        this.forceItemBattle.getItemDifficultiesManager().resetUnlockAnnouncements();
+        this.traders.startTimer();
+        this.randomEvents.startGame();
+        this.achievementManager.resetProgress();
+        this.items.resetUnlockAnnouncements();
         this.roundPhase.moveTo(GameState.MID_GAME);
-        this.forceItemBattle.getScoreboardManager().updateAllPlayers();
+        this.scoreboardManager.updateAllPlayers();
     }
 
     /**
@@ -371,7 +408,7 @@ public class Gamemanager implements Manager {
      * the team's remaining pool by {@link #applyStartSetup(Player)} on rejoin.
      */
     private void distributeTeamJokers(int jokersAmount) {
-        this.forceItemBattle.getTeamManager().getTeams().forEach(team -> {
+        this.teamManager.getTeams().forEach(team -> {
             team.setJokers(jokersAmount);
 
             List<ForceItemPlayer> members = team.members();
@@ -385,7 +422,7 @@ public class Gamemanager implements Manager {
 
     /** Clears the two blocks at spawn so nobody starts the round inside terrain. */
     private void prepareSpawn(Location location) {
-        this.forceItemBattle.setSpawnLocation(location.clone());
+        this.spawnLocationSink.accept(location.clone());
 
         Block block = location.getBlock();
         block.setType(Material.AIR);
@@ -397,9 +434,9 @@ public class Gamemanager implements Manager {
      * keeps spectators, leaves ties in map order, and is not computed at all when STATS is off.
      */
     private List<ResultCeremony.Reveal> revealOrder() {
-        if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+        if (this.settings.isSettingEnabled(GameSetting.TEAM)) {
             return ResultCeremony.orderFrom(
-                    Standings.ofTeams(this.forceItemBattle.getTeamManager().getTeams()));
+                    Standings.ofTeams(this.teamManager.getTeams()));
         }
 
         Map<UUID, ForceItemPlayer> contenders = this.roster.players().entrySet().stream()
@@ -417,15 +454,15 @@ public class Gamemanager implements Manager {
 
     public void finishGame() {
         this.roundPhase.moveTo(GameState.END_GAME);
-        this.forceItemBattle.getAchievementManager().checkGameEndAchievements();
+        this.achievementManager.checkGameEndAchievements();
 
-        boolean statsEnabled = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.STATS);
+        boolean statsEnabled = this.settings.isSettingEnabled(GameSetting.STATS);
         Map<ForceItemPlayer, Integer> placesMap = statsEnabled
                 ? Standings.ofPlayers(this.roster.players())
                 : null;
         Map<Team, Integer> teamPlaces = (statsEnabled
-                && this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM))
-                ? Standings.ofTeams(this.forceItemBattle.getTeamManager().getTeams())
+                && this.settings.isSettingEnabled(GameSetting.TEAM))
+                ? Standings.ofTeams(this.teamManager.getTeams())
                 : null;
 
         World overworld = Dimension.OVERWORLD.world();
@@ -448,7 +485,7 @@ public class Gamemanager implements Manager {
                             ? Integer.valueOf(1).equals(placesMap.get(forceItemPlayer))
                             : (teamPlaces != null && Integer.valueOf(1).equals(teamPlaces.get(currentTeam)));
 
-                    this.forceItemBattle.getFibService().statistics().recordRoundFinished(
+                    this.fibService.statistics().recordRoundFinished(
                             forceItemPlayer,
                             player.getName(),
                             forceItemPlayer.activeScore(),
@@ -456,23 +493,23 @@ public class Gamemanager implements Manager {
                             won);
                 }
             } catch (Exception exception) {
-                this.forceItemBattle.getLogger().warning(
+                this.plugin.getLogger().warning(
                         "Failed to finish round for " + player.getName() + ": " + exception.getMessage());
             }
         });
 
         // Its own ordering, not the stats one: spectators excluded, ties broken on UUID so they are
         // dealt out the same way every time. The stats maps do neither and are null when STATS is off.
-        this.forceItemBattle.getResultCeremony().beginFor(
+        this.resultCeremony.beginFor(
                 this.matchHistory.getMatchId(), this.revealOrder());
 
         if (statsEnabled) {
-            this.matchHistory.submit(placesMap, teamPlaces, this.forceItemBattle.getRoundClock().totalSeconds(),
+            this.matchHistory.submit(placesMap, teamPlaces, this.roundClock.totalSeconds(),
                     this::evaluateCollectionAchievements);
             for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
                 ForceItemPlayer forceItemPlayer = this.roster.get(onlinePlayer.getUniqueId());
                 if (forceItemPlayer != null && !forceItemPlayer.isSpectator()) {
-                    this.forceItemBattle.getAchievementManager().evaluateGlobalAchievements(onlinePlayer);
+                    this.achievementManager.evaluateGlobalAchievements(onlinePlayer);
                 }
             }
         }
@@ -509,7 +546,7 @@ public class Gamemanager implements Manager {
             }
             Player participantPlayer = participant.player();
             if (participantPlayer != null && participantPlayer.isOnline()) {
-                this.forceItemBattle.getAchievementManager().evaluateCollectionAchievement(participantPlayer);
+                this.achievementManager.evaluateCollectionAchievement(participantPlayer);
             }
         }
     }

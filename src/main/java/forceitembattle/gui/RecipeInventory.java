@@ -1,6 +1,6 @@
 package forceitembattle.gui;
 
-import forceitembattle.ForceItemBattle;
+import forceitembattle.manager.RecipeManager;
 import forceitembattle.manager.customrecipe.ToolRecipe;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.util.Text;
@@ -45,7 +45,7 @@ public final class RecipeInventory extends InventoryBuilder {
     private static final int SMITHING_FIRST_ITEM_SLOT = 19;
     private static final int OTHER_FIRST_ITEM_SLOT = 20;
 
-    public RecipeInventory(ForceItemBattle forceItemBattle, RecipeViewer recipeViewer, Player player) {
+    public RecipeInventory(RecipeManager recipes, RecipeViewer recipeViewer, Player player) {
         super(9 * 5, Text.of("<dark_gray>● <dark_aqua>" +
                 materialName(recipeViewer.itemStack().getType()) +
                 " <dark_gray>» <gray>" + (recipeViewer.currentRecipeIndex() + 1) + "<dark_gray>/<gray>" + recipeViewer.pages()
@@ -57,13 +57,13 @@ public final class RecipeInventory extends InventoryBuilder {
             }
         }
 
-        if (forceItemBattle.getRecipeManager().closeHandlers.containsKey(recipeViewer.uuid())) {
-            forceItemBattle.getRecipeManager().handleRecipeClose(player);
+        if (recipes.closeHandlers.containsKey(recipeViewer.uuid())) {
+            recipes.handleRecipeClose(player);
         }
 
-        forceItemBattle.getRecipeManager().ignoreCloseHandler.put(recipeViewer.uuid(), false);
+        recipes.ignoreCloseHandler.put(recipeViewer.uuid(), false);
 
-        forceItemBattle.getRecipeManager().closeHandlers.put(recipeViewer.uuid(), () -> forceItemBattle.getRecipeManager().ignoreCloseHandler.remove(player.getUniqueId()));
+        recipes.closeHandlers.put(recipeViewer.uuid(), () -> recipes.ignoreCloseHandler.remove(player.getUniqueId()));
 
         this.addUpdateHandler(() -> {
             this.setItem(PREVIOUS_RECIPE_ITEM_SLOT, GuiItems.previous("Previous Recipe"), event -> {
@@ -84,7 +84,7 @@ public final class RecipeInventory extends InventoryBuilder {
                 recipeViewer.setCurrentRecipeIndex(currentRecipeIndex);
                 recipeViewer.setRecipe(recipeViewer.recipes().get(recipeViewer.currentRecipeIndex()));
 
-                new RecipeInventory(forceItemBattle, recipeViewer, player).open(player);
+                new RecipeInventory(recipes, recipeViewer, player).open(player);
             });
 
             this.setItem(NEXT_RECIPE_ITEM_SLOT, GuiItems.next("Next Recipe"), inventoryClickEvent -> {
@@ -106,7 +106,7 @@ public final class RecipeInventory extends InventoryBuilder {
                 recipeViewer.setCurrentRecipeIndex(currentRecipeIndex);
                 recipeViewer.setRecipe(recipeViewer.recipes().get(recipeViewer.currentRecipeIndex()));
 
-                new RecipeInventory(forceItemBattle, recipeViewer, player).open(player);
+                new RecipeInventory(recipes, recipeViewer, player).open(player);
             });
         });
 
@@ -225,7 +225,7 @@ public final class RecipeInventory extends InventoryBuilder {
                 } else {
                     recipeViewer.setRecipe(Bukkit.getRecipesFor(recipeViewer.itemStack()).get(0));
                 }
-                new RecipeInventory(forceItemBattle, recipeViewer, player).open(player);
+                new RecipeInventory(recipes, recipeViewer, player).open(player);
 
             } else {
                 player.sendMessage(Text.of("<red>Sneak click to show recipe for this item!"));
@@ -233,9 +233,9 @@ public final class RecipeInventory extends InventoryBuilder {
         });
 
         this.addCloseHandler(inventoryCloseEvent -> {
-            if (forceItemBattle.getRecipeManager().isShowingRecipe(player) && !forceItemBattle.getRecipeManager().ignoreInventoryClosed(player)) {
+            if (recipes.isShowingRecipe(player) && !recipes.ignoreInventoryClosed(player)) {
                 inventoryCloseEvent.getInventory().clear();
-                forceItemBattle.getRecipeManager().handleRecipeClose(player);
+                recipes.handleRecipeClose(player);
             }
         });
     }

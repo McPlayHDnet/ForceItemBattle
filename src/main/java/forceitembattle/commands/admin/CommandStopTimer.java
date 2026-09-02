@@ -2,17 +2,19 @@ package forceitembattle.commands.admin;
 
 import static forceitembattle.commands.Precondition.OP;
 import static forceitembattle.commands.Precondition.ROUND_RUNNING;
-import forceitembattle.commands.Precondition;
-import java.util.List;
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
-import forceitembattle.util.Text;
+import forceitembattle.commands.Precondition;
+import forceitembattle.manager.TimerManager;
+import java.util.List;
 import org.bukkit.entity.Player;
 
 public final class CommandStopTimer extends CustomCommand {
 
-    public CommandStopTimer(ForceItemBattle plugin) {
-        super(plugin, "stoptimer");
+    private final TimerManager timerManager;
+
+    public CommandStopTimer(TimerManager timerManager) {
+        super("stoptimer");
+        this.timerManager = timerManager;
 
         setDescription("Stop the timer and end the game");
     }
@@ -24,6 +26,6 @@ public final class CommandStopTimer extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        this.plugin.getTimerManager().setTimeLeft(1);
+        this.timerManager.setTimeLeft(1);
     }
 }

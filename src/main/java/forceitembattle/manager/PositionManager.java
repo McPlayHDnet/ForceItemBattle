@@ -1,6 +1,5 @@
 package forceitembattle.manager;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.util.ParticleUtils;
 import java.util.HashMap;
 import java.util.Map;
@@ -11,6 +10,7 @@ import org.bukkit.Particle;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,10 +42,10 @@ public class PositionManager implements Manager {
             {-0.12, 0.06}, {-0.12, -0.06}, {-0.18, 0.00},
     };
 
-    private final ForceItemBattle plugin;
+    private final Plugin plugin;
     private final Map<String, Location> positionsMap;
 
-    public PositionManager(ForceItemBattle plugin) {
+    public PositionManager(Plugin plugin) {
         this.plugin = plugin;
         this.positionsMap = new HashMap<>();
     }

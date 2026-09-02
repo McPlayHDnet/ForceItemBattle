@@ -8,7 +8,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.player.CommandVote;
 import forceitembattle.commands.player.CommandVoteSkip;
 import forceitembattle.manager.VoteSkipManager;
@@ -49,12 +48,8 @@ class CommandVoteTest {
     @BeforeEach
     void setUp() {
         this.server = MockBukkit.mock();
-        ForceItemBattle plugin = mock(ForceItemBattle.class);
         this.roster = new Roster();
         this.voteSkip = mock(VoteSkipManager.class);
-
-        when(plugin.getRoster()).thenReturn(this.roster);
-        when(plugin.getVoteSkipManager()).thenReturn(this.voteSkip);
 
         Map<String, Object> settings = new HashMap<>();
         settings.put(GameSetting.RUN.configPath(), true);
@@ -62,9 +57,9 @@ class CommandVoteTest {
         phase.moveTo(GameState.MID_GAME);
         CommandContext context = new CommandContext(phase, new Ruleset(new MapConfig(settings)), this.roster);
 
-        this.vote = new CommandVote(plugin);
+        this.vote = new CommandVote(this.voteSkip);
         ((CustomCommand) this.vote).setContext(context);
-        this.voteSkipCommand = new CommandVoteSkip(plugin);
+        this.voteSkipCommand = new CommandVoteSkip(this.roster, this.voteSkip);
         ((CustomCommand) this.voteSkipCommand).setContext(context);
     }
 

@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.player.CommandFixSkips;
 import forceitembattle.manager.BackpackManager;
 import forceitembattle.manager.Gamemanager;
@@ -50,19 +49,16 @@ class CommandFixSkipsTest {
     @BeforeEach
     void setUp() {
         this.server = MockBukkit.mock();
-        ForceItemBattle plugin = mock(ForceItemBattle.class);
         BackpackManager backpacks = mock(BackpackManager.class);
         this.roster = new Roster();
         this.backpack = Bukkit.createInventory(null, 9 * 3);
 
-        when(plugin.getRoster()).thenReturn(this.roster);
-        when(plugin.getBackpackManager()).thenReturn(backpacks);
         when(backpacks.getBackpackForPlayer(org.mockito.ArgumentMatchers.any())).thenReturn(this.backpack);
 
         RoundPhase phase = new RoundPhase();
         phase.moveTo(GameState.MID_GAME);
 
-        this.command = new CommandFixSkips(plugin);
+        this.command = new CommandFixSkips(this.roster, backpacks);
         ((CustomCommand) this.command).setContext(new CommandContext(phase, null, this.roster));
     }
 

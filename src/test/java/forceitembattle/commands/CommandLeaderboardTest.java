@@ -15,7 +15,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.player.CommandLeaderboard;
 import forceitembattle.model.stats.DuoLeaderboardEntry;
 import forceitembattle.model.stats.LeaderboardEntry;
@@ -67,16 +66,14 @@ class CommandLeaderboardTest {
     void setUp() {
         this.server = MockBukkit.mock();
 
-        ForceItemBattle plugin = mock(ForceItemBattle.class);
         FIBServiceClient service = mock(FIBServiceClient.class);
         this.statistics = mock(FibStatisticsClient.class);
         this.achievements = mock(FibAchievementClient.class);
 
-        when(plugin.getFibService()).thenReturn(service);
         when(service.statistics()).thenReturn(this.statistics);
         when(service.achievements()).thenReturn(this.achievements);
 
-        this.command = new CommandLeaderboard(plugin);
+        this.command = new CommandLeaderboard(service);
         ((CustomCommand) this.command).setContext(new CommandContext(null, null, null));
     }
 

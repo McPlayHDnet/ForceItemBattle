@@ -1,18 +1,20 @@
 package forceitembattle.commands.player;
 
 import static forceitembattle.commands.Precondition.ROUND_RUNNING;
-import forceitembattle.commands.Precondition;
-import java.util.List;
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
+import forceitembattle.commands.Precondition;
+import forceitembattle.manager.BackpackManager;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.util.Text;
+import java.util.List;
 import org.bukkit.entity.Player;
 
 public final class CommandBp extends CustomCommand {
 
-    public CommandBp(ForceItemBattle plugin) {
-        super(plugin, "bp");
+    private final BackpackManager backpackManager;
+
+    public CommandBp(BackpackManager backpackManager) {
+        super("bp");
+        this.backpackManager = backpackManager;
         setDescription("Open your backpack");
     }
 
@@ -24,6 +26,6 @@ public final class CommandBp extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        this.plugin.getBackpackManager().openPlayerBackpack(player);
+        this.backpackManager.openPlayerBackpack(player);
     }
 }

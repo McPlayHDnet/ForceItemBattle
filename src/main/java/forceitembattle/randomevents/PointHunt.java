@@ -1,6 +1,5 @@
 package forceitembattle.randomevents;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.model.Find;
 import forceitembattle.manager.ItemDifficultiesManager.State;
 import forceitembattle.model.CustomMaterials;
@@ -46,7 +45,7 @@ public class PointHunt implements RandomEvent {
         };
     }
 
-    private final ForceItemBattle plugin;
+    private final EventContext context;
 
     /**
      * Keyed by {@link ScoreOwner}, so teammates share a tally and a solo player has their own.
@@ -59,7 +58,7 @@ public class PointHunt implements RandomEvent {
 
     @Override
     public void start() {
-        boolean teamGame = this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM);
+        boolean teamGame = this.context.settings().isSettingEnabled(GameSetting.TEAM);
 
         Bukkit.broadcast(Text.of(Prefix.RANDOM_EVENT + "<aqua><b>Point Hunt</b><reset><gray> has begun!"));
         Bukkit.broadcast(Text.of(Prefix.RANDOM_EVENT + "<gray>For the next <yellow>10 minutes<gray>, score the most points to win! "
@@ -85,7 +84,7 @@ public class PointHunt implements RandomEvent {
             return false;
         }
 
-        State state = this.plugin.getItemDifficultiesManager().getState(find.material());
+        State state = this.context.items().getState(find.material());
         if (state == null) {
             return false; // not a pool item (custom/unregistered) — no points
         }

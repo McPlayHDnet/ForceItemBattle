@@ -5,9 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.admin.CommandSkip;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.model.GameState;
@@ -41,13 +39,10 @@ class CommandSkipTest {
     @BeforeEach
     void setUp() {
         this.server = MockBukkit.mock();
-        ForceItemBattle plugin = mock(ForceItemBattle.class);
         this.roundPhase = new RoundPhase();
         this.gamemanager = mock(Gamemanager.class);
 
-        when(plugin.getGamemanager()).thenReturn(this.gamemanager);
-
-        this.command = new CommandSkip(plugin);
+        this.command = new CommandSkip(this.gamemanager);
         ((CustomCommand) this.command).setContext(
                 new CommandContext(this.roundPhase, null, new Roster()));
 

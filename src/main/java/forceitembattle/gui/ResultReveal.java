@@ -1,11 +1,11 @@
 package forceitembattle.gui;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ForceItem;
 import forceitembattle.model.ResultCeremony;
 import forceitembattle.model.ScoreOwner;
 import forceitembattle.settings.GameSetting;
+import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Scheduler;
 import forceitembattle.util.Text;
 import java.time.Duration;
@@ -21,6 +21,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
 /**
@@ -47,7 +48,8 @@ public final class ResultReveal extends InventoryBuilder {
      * @param onRevealComplete run once the title and chat line went out, or null when this is not
      *                         the winner's turn
      */
-    public ResultReveal(ForceItemBattle plugin,
+    public ResultReveal(Plugin plugin,
+                        GameSettings settings,
                         ResultCeremony.Reveal reveal,
                         Consumer<Map<Integer, Map<Integer, ItemStack>>> onPagesBuilt,
                         @Nullable Runnable onRevealComplete) {
@@ -61,7 +63,7 @@ public final class ResultReveal extends InventoryBuilder {
         this.setItems(0, 8, GuiItems.border());
         this.setItems(9, LAST_ITEM_SLOT, GuiItems.filler());
 
-        boolean isEvent = plugin.getSettings().isSettingEnabled(GameSetting.EVENT);
+        boolean isEvent = settings.isSettingEnabled(GameSetting.EVENT);
 
         new BukkitRunnable() {
 

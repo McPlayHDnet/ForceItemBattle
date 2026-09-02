@@ -5,11 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.player.CommandResult;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.TeamsManager;
 import forceitembattle.manager.TimerManager;
+import forceitembattle.model.ResultCeremony;
 import forceitembattle.model.Roster;
 import forceitembattle.model.Team;
 import forceitembattle.service.MatchHistoryReporter;
@@ -18,6 +18,7 @@ import forceitembattle.settings.GameSettings;
 import java.util.List;
 import java.util.UUID;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -40,7 +41,7 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
 class CommandResultTest {
 
     private ServerMock server;
-    private ForceItemBattle plugin;
+    private JavaPlugin plugin;
     private GameSettings settings;
     private TeamsManager teamManager;
     private Roster roster;
@@ -49,7 +50,7 @@ class CommandResultTest {
     @BeforeEach
     void setUp() {
         this.server = MockBukkit.mock();
-        this.plugin = mock(ForceItemBattle.class);
+        this.plugin = mock(JavaPlugin.class);
         this.settings = mock(GameSettings.class);
         this.teamManager = mock(TeamsManager.class);
         this.roster = new Roster();
@@ -58,17 +59,12 @@ class CommandResultTest {
         MatchHistoryReporter matchHistory = mock(MatchHistoryReporter.class);
         TimerManager timerManager = mock(TimerManager.class);
 
-        when(this.plugin.getSettings()).thenReturn(this.settings);
-        when(this.plugin.getTeamManager()).thenReturn(this.teamManager);
-        when(this.plugin.getRoster()).thenReturn(this.roster);
-        when(this.plugin.getGamemanager()).thenReturn(gamemanager);
-        when(this.plugin.getTimerManager()).thenReturn(timerManager);
         when(gamemanager.getMatchHistory()).thenReturn(matchHistory);
         when(matchHistory.getMatchId()).thenReturn(UUID.randomUUID());
         // The reveal only runs once the round is over.
         when(timerManager.getTimeLeft()).thenReturn(0);
 
-        this.command = new CommandResult(this.plugin);
+        this.command = new CommandResult(gamemanager, timerManager, this.roster, this.settings, this.teamManager, mock(ResultCeremony.class), plugin);
         ((CustomCommand) this.command).setContext(new CommandContext(
                 new forceitembattle.model.RoundPhase(), null, this.roster));
     }

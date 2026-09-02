@@ -13,18 +13,17 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import forceitembattle.ForceItemBattle;
+import forceitembattle.achievements.AchievementManager;
 import forceitembattle.achievements.AchievementStorage;
 import forceitembattle.achievements.Achievements;
 import forceitembattle.achievements.global.GlobalStat;
 import forceitembattle.achievements.global.GlobalStats;
 import forceitembattle.achievements.global.GlobalStatsLoader;
 import forceitembattle.commands.player.CommandAchievement;
-import forceitembattle.manager.AchievementManager;
+import forceitembattle.gui.GuiContext;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.function.Consumer;
 import org.bukkit.Bukkit;
 import org.junit.jupiter.api.AfterEach;
@@ -67,16 +66,14 @@ class CommandAchievementTest {
     void setUp() {
         this.server = MockBukkit.mock();
 
-        ForceItemBattle plugin = mock(ForceItemBattle.class);
         this.achievements = mock(AchievementManager.class);
         this.storage = mock(AchievementStorage.class);
         this.globalStats = mock(GlobalStatsLoader.class);
 
-        when(plugin.getAchievementManager()).thenReturn(this.achievements);
         when(this.achievements.getAchievementStorage()).thenReturn(this.storage);
         when(this.achievements.getGlobalStatsLoader()).thenReturn(this.globalStats);
 
-        this.command = new CommandAchievement(plugin);
+        this.command = new CommandAchievement(this.achievements, mock(GuiContext.class));
         ((CustomCommand) this.command).setContext(new CommandContext(null, null, null));
     }
 

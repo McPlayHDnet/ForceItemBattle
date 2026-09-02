@@ -6,14 +6,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.ItemDifficultiesManager;
-import forceitembattle.manager.TimerManager;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.RoundClock;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.settings.QuickieMode;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.plugin.java.JavaPlugin;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -102,17 +101,14 @@ class CrossRepoContractTest {
     }
 
     private int registeredAtRuntime() {
-        ForceItemBattle plugin = mock(ForceItemBattle.class);
+        JavaPlugin plugin = mock(JavaPlugin.class);
+        when(plugin.getConfig()).thenReturn(new YamlConfiguration());
         GameSettings settings = mock(GameSettings.class);
 
-        when(plugin.getSettings()).thenReturn(settings);
-        when(plugin.getTimerManager()).thenReturn(mock(TimerManager.class));
-        when(plugin.getGamemanager()).thenReturn(mock(Gamemanager.class));
-        when(plugin.getRoundClock()).thenReturn(new RoundClock());
-        when(plugin.getConfig()).thenReturn(new YamlConfiguration());
         when(settings.getQuickieMode()).thenReturn(QuickieMode.DISABLED);
 
-        ItemDifficultiesManager items = new ItemDifficultiesManager(plugin);
+        ItemDifficultiesManager items =
+                new ItemDifficultiesManager(plugin, new RoundClock(), settings);
         items.enable();
         return items.getAllItems().size();
     }

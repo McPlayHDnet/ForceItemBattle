@@ -1,16 +1,17 @@
 package forceitembattle.commands.player;
 
-import forceitembattle.commands.Precondition;
-import forceitembattle.model.CustomMaterials;
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
+import forceitembattle.commands.Precondition;
+import forceitembattle.manager.ItemDifficultiesManager;
+import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.Rarity;
+import forceitembattle.model.RarityCounts;
 import forceitembattle.model.stats.ItemCount;
 import forceitembattle.model.stats.PlayerIdentity;
-import forceitembattle.model.RarityCounts;
 import forceitembattle.model.stats.StatsView;
 import forceitembattle.model.stats.TeamMemberStats;
+import forceitembattle.service.FIBServiceClient;
 import forceitembattle.service.FibStatisticsClient;
 import forceitembattle.util.Text;
 import java.text.DecimalFormat;
@@ -34,8 +35,13 @@ public final class CommandStats extends CustomCommand implements CustomTabComple
     private record PendingReset(String scope, UUID targetUuid, String targetName, long createdAt) {
     }
     
-    public CommandStats(ForceItemBattle plugin) {
-        super(plugin, "stats");
+    private final ItemDifficultiesManager items;
+    private final FIBServiceClient fibService;
+
+    public CommandStats(ItemDifficultiesManager items, FIBServiceClient fibService) {
+        super("stats");
+        this.items = items;
+        this.fibService = fibService;
 
         setUsage("[player]");
         setDescription("Show stats");
@@ -63,7 +69,7 @@ public final class CommandStats extends CustomCommand implements CustomTabComple
     }
 
     private void handleSolo(Player player, String[] args) {
-        FibStatisticsClient helper = this.plugin.getFibService().statistics();
+        FibStatisticsClient helper = this.fibService.statistics();
 
         if (args.length == 1) {
             helper.soloStats(player.getUniqueId(),
@@ -84,7 +90,7 @@ public final class CommandStats extends CustomCommand implements CustomTabComple
     }
 
     private void handleTeam(Player player, String[] args) {
-        FibStatisticsClient helper = this.plugin.getFibService().statistics();
+        FibStatisticsClient helper = this.fibService.statistics();
 
         if (args.length == 1) {
             helper.combinedTeamStats(player.getUniqueId(),
@@ -105,7 +111,7 @@ public final class CommandStats extends CustomCommand implements CustomTabComple
     }
 
     private void handleDuo(Player player, String[] args) {
-        FibStatisticsClient helper = this.plugin.getFibService().statistics();
+        FibStatisticsClient helper = this.fibService.statistics();
 
         if (args.length < 2) {
             player.sendMessage(Text.of("<red>Usage: /stats duo <teammate> <dark_gray>or <red>/stats duo <player1> <player2>"));
@@ -193,7 +199,7 @@ public final class CommandStats extends CustomCommand implements CustomTabComple
             return;
         }
 
-        FibStatisticsClient helper = this.plugin.getFibService().statistics();
+        FibStatisticsClient helper = this.fibService.statistics();
         String targetName = pending.targetName();
         UUID targetUuid = pending.targetUuid();
 
@@ -268,7 +274,7 @@ public final class CommandStats extends CustomCommand implements CustomTabComple
         }
         for (ItemCount item : topItems) {
             Material material = Material.valueOf(item.itemName().toUpperCase());
-            String unicode = this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, material);
+            String unicode = this.items.getUnicodeFromMaterial(true, material);
             String formattedName = CustomMaterials.nameOf(material);
             player.sendMessage(Text.of("    <dark_gray>» <reset>" + unicode + " <gray>" + formattedName + " <dark_gray>× <dark_aqua>" + item.count()));
         }

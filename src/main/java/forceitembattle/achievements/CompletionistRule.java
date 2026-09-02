@@ -1,6 +1,5 @@
 package forceitembattle.achievements;
 
-import forceitembattle.ForceItemBattle;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Set;
@@ -18,9 +17,7 @@ public record CompletionistRule(Set<AchievementScope> requiredScopes) {
         }
     }
 
-    public boolean isMet(ForceItemBattle plugin, UUID playerUuid) {
-        AchievementStorage storage = plugin.getAchievementManager().getAchievementStorage();
-
+    public boolean isMet(AchievementStorage storage, UUID playerUuid) {
         return Arrays.stream(Achievements.values())
                 .filter(achievement -> requiredScopes.contains(achievement.getScope()))
                 .allMatch(achievement -> storage.hasAchievement(playerUuid, achievement));

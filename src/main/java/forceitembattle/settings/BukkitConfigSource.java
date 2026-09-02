@@ -1,7 +1,7 @@
 package forceitembattle.settings;
 
-import forceitembattle.ForceItemBattle;
 import lombok.RequiredArgsConstructor;
+import org.bukkit.plugin.java.JavaPlugin;
 
 /**
  * The live {@link ConfigSource}: the plugin's own {@code config.yml}.
@@ -12,7 +12,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public final class BukkitConfigSource implements ConfigSource {
 
-    private final ForceItemBattle plugin;
+    private final JavaPlugin plugin;
 
     @Override
     public boolean getBoolean(String path) {

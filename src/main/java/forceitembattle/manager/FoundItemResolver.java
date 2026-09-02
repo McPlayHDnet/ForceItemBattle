@@ -1,7 +1,6 @@
 package forceitembattle.manager;
 
 import forceitembattle.model.BackToBack;
-import forceitembattle.model.BackToBackProbability;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.Find;
 import forceitembattle.model.FindOutcome;
@@ -9,6 +8,7 @@ import forceitembattle.model.ForceItem;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameContext;
 import forceitembattle.model.Rarity;
+import forceitembattle.randomevents.RandomEventManager;
 import forceitembattle.service.FIBServiceClient;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.util.GameBroadcast;

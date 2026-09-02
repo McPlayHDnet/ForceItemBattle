@@ -39,11 +39,9 @@ class CommandHelpTest {
     void setUp() {
         this.server = MockBukkit.mock();
 
-        ForceItemBattle plugin = mock(ForceItemBattle.class);
         this.commands = mock(CommandsManager.class);
-        when(plugin.getCommandsManager()).thenReturn(this.commands);
 
-        this.help = new CommandHelp(plugin);
+        this.help = new CommandHelp(this.commands);
         ((CustomCommand) this.help).setContext(new CommandContext(null, null, null));
     }
 
@@ -55,7 +53,7 @@ class CommandHelpTest {
     /** A command that exists only to be listed. */
     private static final class Probe extends CustomCommand {
         private Probe(String name, String usage, String description) {
-            super(null, name);
+            super(name);
             if (usage != null) {
                 setUsage(usage);
             }

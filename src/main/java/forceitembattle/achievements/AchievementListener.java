@@ -1,13 +1,10 @@
-package forceitembattle.listener;
+package forceitembattle.achievements;
 
 import forceitembattle.model.RoundPhase;
 import forceitembattle.model.Roster;
-import forceitembattle.manager.AchievementManager;
 import forceitembattle.manager.BackpackManager;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Scheduler;
-import forceitembattle.achievements.Achievements;
-import forceitembattle.achievements.Trigger;
 import forceitembattle.event.AntimatterTeleporterUseEvent;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.event.PlayerGrantAchievementEvent;

@@ -9,15 +9,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
-import forceitembattle.ForceItemBattle;
-import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameState;
 import forceitembattle.model.Roster;
 import forceitembattle.settings.GameSetting;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
-import javax.annotation.Nullable;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.junit.jupiter.api.AfterEach;
@@ -62,7 +58,7 @@ class CustomCommandTest {
         private final List<Precondition> gates;
 
         ProbeCommand(Precondition... gates) {
-            super(mock(ForceItemBattle.class), "probe");
+            super("probe");
             this.gates = List.of(gates);
         }
 
@@ -84,7 +80,7 @@ class CustomCommandTest {
         private final List<Precondition> gates;
 
         ConsoleFriendlyCommand(Precondition... gates) {
-            super(mock(ForceItemBattle.class), "consoleprobe");
+            super("consoleprobe");
             this.gates = List.of(gates);
         }
 
@@ -308,31 +304,32 @@ class CustomCommandTest {
             assertEquals(expected, labelsOf(command), command.getName() + " declares different gates");
         }
 
-        private final ForceItemBattle plugin = mock(ForceItemBattle.class);
+        // Only the declaration is under test here, and preconditions() reads no dependency,
+        // so every command is built with nulls rather than a graph of mocks.
 
         @Test
         void theAdminCommands() {
-            assertGates(new forceitembattle.commands.admin.CommandForceItem(this.plugin), "OP, ROUND_RUNNING, PARTICIPANT");
-            assertGates(new forceitembattle.commands.admin.CommandForceTeam(this.plugin), "OP, setting(TEAM), PRE_GAME");
-            assertGates(new forceitembattle.commands.admin.CommandItems(this.plugin), "OP");
-            assertGates(new forceitembattle.commands.admin.CommandRandomEvent(this.plugin), "OP, ROUND_RUNNING");
-            assertGates(new forceitembattle.commands.admin.CommandReset(this.plugin), "OP");
-            assertGates(new forceitembattle.commands.admin.CommandSettings(this.plugin), "OP");
-            assertGates(new forceitembattle.commands.admin.CommandSkip(this.plugin), "OP, ROUND_RUNNING");
-            assertGates(new forceitembattle.commands.admin.CommandStart(this.plugin), "OP");
-            assertGates(new forceitembattle.commands.admin.CommandStopTimer(this.plugin), "OP, ROUND_RUNNING");
+            assertGates(new forceitembattle.commands.admin.CommandForceItem(null, null, null, null), "OP, ROUND_RUNNING, PARTICIPANT");
+            assertGates(new forceitembattle.commands.admin.CommandForceTeam(null, null), "OP, setting(TEAM), PRE_GAME");
+            assertGates(new forceitembattle.commands.admin.CommandItems(null), "OP");
+            assertGates(new forceitembattle.commands.admin.CommandRandomEvent(null), "OP, ROUND_RUNNING");
+            assertGates(new forceitembattle.commands.admin.CommandReset(null, null), "OP");
+            assertGates(new forceitembattle.commands.admin.CommandSettings(null, null), "OP");
+            assertGates(new forceitembattle.commands.admin.CommandSkip(null), "OP, ROUND_RUNNING");
+            assertGates(new forceitembattle.commands.admin.CommandStart(null, null, null, null, null, null, null, null), "OP");
+            assertGates(new forceitembattle.commands.admin.CommandStopTimer(null), "OP, ROUND_RUNNING");
         }
 
         @Test
         void thePlayerCommands() {
-            assertGates(new forceitembattle.commands.player.CommandBp(this.plugin), "ROUND_RUNNING, setting(BACKPACK)");
-            assertGates(new forceitembattle.commands.player.CommandFixSkips(this.plugin), "ROUND_RUNNING");
-            assertGates(new forceitembattle.commands.player.CommandPause(this.plugin), "OP_WHEN_EVENT, ROUND_RUNNING");
-            assertGates(new forceitembattle.commands.player.CommandPosition(this.plugin), "OP_WHEN_EVENT, setting(POSITIONS)");
-            assertGates(new forceitembattle.commands.player.CommandResume(this.plugin), "OP_WHEN_EVENT, PAUSED");
-            assertGates(new forceitembattle.commands.player.CommandTeams(this.plugin), "setting(TEAM), PRE_GAME");
-            assertGates(new forceitembattle.commands.player.CommandVote(this.plugin), "ROUND_RUNNING, setting(RUN)");
-            assertGates(new forceitembattle.commands.player.CommandVoteSkip(this.plugin), "ROUND_RUNNING, setting(RUN)");
+            assertGates(new forceitembattle.commands.player.CommandBp(null), "ROUND_RUNNING, setting(BACKPACK)");
+            assertGates(new forceitembattle.commands.player.CommandFixSkips(null, null), "ROUND_RUNNING");
+            assertGates(new forceitembattle.commands.player.CommandPause(null), "OP_WHEN_EVENT, ROUND_RUNNING");
+            assertGates(new forceitembattle.commands.player.CommandPosition(null, null), "OP_WHEN_EVENT, setting(POSITIONS)");
+            assertGates(new forceitembattle.commands.player.CommandResume(null), "OP_WHEN_EVENT, PAUSED");
+            assertGates(new forceitembattle.commands.player.CommandTeams(null, null), "setting(TEAM), PRE_GAME");
+            assertGates(new forceitembattle.commands.player.CommandVote(null), "ROUND_RUNNING, setting(RUN)");
+            assertGates(new forceitembattle.commands.player.CommandVoteSkip(null, null), "ROUND_RUNNING, setting(RUN)");
         }
 
         /**
@@ -342,18 +339,18 @@ class CustomCommandTest {
          */
         @Test
         void theSubcommandGatedCommands() {
-            assertGates(new forceitembattle.commands.player.CommandAchievement(this.plugin), "");
-            assertGates(new forceitembattle.commands.player.CommandStats(this.plugin), "");
+            assertGates(new forceitembattle.commands.player.CommandAchievement(null, null), "");
+            assertGates(new forceitembattle.commands.player.CommandStats(null, null), "");
         }
 
         /** Everything else declares nothing, and that is a statement rather than an omission. */
         @Test
         void theUngatedCommandsDeclareEmpty() {
-            assertGates(new forceitembattle.commands.player.CommandBed(this.plugin), "");
-            assertGates(new forceitembattle.commands.player.CommandInfo(this.plugin), "");
-            assertGates(new forceitembattle.commands.player.CommandInfoWiki(this.plugin), "");
-            assertGates(new forceitembattle.commands.player.CommandResult(this.plugin), "");
-            assertGates(new forceitembattle.commands.player.CommandSpectate(this.plugin), "");
+            assertGates(new forceitembattle.commands.player.CommandBed(), "");
+            assertGates(new forceitembattle.commands.player.CommandInfo(null, null, null, null), "");
+            assertGates(new forceitembattle.commands.player.CommandInfoWiki(null, null), "");
+            assertGates(new forceitembattle.commands.player.CommandResult(null, null, null, null, null, null, null), "");
+            assertGates(new forceitembattle.commands.player.CommandSpectate(null), "");
         }
     }
 

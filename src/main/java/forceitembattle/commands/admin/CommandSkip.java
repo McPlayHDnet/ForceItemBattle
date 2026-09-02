@@ -2,18 +2,21 @@ package forceitembattle.commands.admin;
 
 import static forceitembattle.commands.Precondition.OP;
 import static forceitembattle.commands.Precondition.ROUND_RUNNING;
-import forceitembattle.commands.Precondition;
-import java.util.List;
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
+import forceitembattle.commands.Precondition;
+import forceitembattle.manager.Gamemanager;
 import forceitembattle.util.Text;
+import java.util.List;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 public final class CommandSkip extends CustomCommand {
 
-    public CommandSkip(ForceItemBattle plugin) {
-        super(plugin, "skip");
+    private final Gamemanager gamemanager;
+
+    public CommandSkip(Gamemanager gamemanager) {
+        super("skip");
+        this.gamemanager = gamemanager;
 
         setDescription("Skip current item for player");
     }
@@ -35,7 +38,7 @@ public final class CommandSkip extends CustomCommand {
 
         if (target != null) {
             player.sendMessage(Text.of("<gray>Skipped this item for " + target.getName()));
-            this.plugin.getGamemanager().forceSkipItem(target);
+            this.gamemanager.forceSkipItem(target);
         } else {
             player.sendMessage(Text.of("<red>This player is not online"));
         }

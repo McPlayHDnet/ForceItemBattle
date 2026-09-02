@@ -1,6 +1,5 @@
 package forceitembattle.randomevents;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.Find;
 import forceitembattle.util.Prefix;
@@ -18,7 +17,7 @@ public class ItemHunt implements RandomEvent {
     private static final int MIN_WHEELS = 1;
     private static final int MAX_WHEELS = 3;
 
-    private final ForceItemBattle plugin;
+    private final EventContext context;
 
     @Override
     public void start() {

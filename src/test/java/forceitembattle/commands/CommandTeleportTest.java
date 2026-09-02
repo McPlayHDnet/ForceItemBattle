@@ -6,9 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.player.CommandBed;
 import forceitembattle.commands.player.CommandSpawn;
+import java.util.concurrent.atomic.AtomicReference;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -38,7 +38,7 @@ class CommandTeleportTest {
 
     private ServerMock server;
     private WorldMock world;
-    private ForceItemBattle plugin;
+    private final AtomicReference<Location> spawnLocation = new AtomicReference<>();
     private CommandBed bed;
     private CommandSpawn spawn;
 
@@ -46,10 +46,9 @@ class CommandTeleportTest {
     void setUp() {
         this.server = MockBukkit.mock();
         this.world = this.server.addSimpleWorld("world");
-        this.plugin = mock(ForceItemBattle.class);
 
-        this.bed = new CommandBed(this.plugin);
-        this.spawn = new CommandSpawn(this.plugin);
+        this.bed = new CommandBed();
+        this.spawn = new CommandSpawn(this.spawnLocation::get);
         ((CustomCommand) this.bed).setContext(new CommandContext(null, null, null));
         ((CustomCommand) this.spawn).setContext(new CommandContext(null, null, null));
     }
@@ -84,7 +83,7 @@ class CommandTeleportTest {
         void itTeleportsToTheConfiguredSpawn() {
             PlayerMock player = join("Understudy1");
             Location destination = at(100, 70, -40);
-            when(plugin.getSpawnLocation()).thenReturn(destination);
+            spawnLocation.set(destination);
 
             spawn.onCommand(player, null, "spawn", new String[0]);
 
@@ -94,7 +93,7 @@ class CommandTeleportTest {
         @Test
         void withNoSpawnSetItRefuses() {
             PlayerMock player = join("Understudy1");
-            when(plugin.getSpawnLocation()).thenReturn(null);
+            spawnLocation.set(null);
 
             spawn.onCommand(player, null, "spawn", new String[0]);
 
@@ -108,7 +107,7 @@ class CommandTeleportTest {
             PlayerMock player = join("Understudy1");
             Entity passenger = world.spawnEntity(at(0, 64, 0), EntityType.PIG);
             player.addPassenger(passenger);
-            when(plugin.getSpawnLocation()).thenReturn(at(100, 70, -40));
+            spawnLocation.set(at(100, 70, -40));
 
             spawn.onCommand(player, null, "spawn", new String[0]);
 

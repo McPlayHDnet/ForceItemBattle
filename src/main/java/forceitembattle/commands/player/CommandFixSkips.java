@@ -1,20 +1,26 @@
 package forceitembattle.commands.player;
 
 import static forceitembattle.commands.Precondition.ROUND_RUNNING;
-import forceitembattle.commands.Precondition;
-import java.util.List;
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
+import forceitembattle.commands.Precondition;
+import forceitembattle.manager.BackpackManager;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.Roster;
 import forceitembattle.util.Text;
+import java.util.List;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 public final class CommandFixSkips extends CustomCommand {
-    public CommandFixSkips(ForceItemBattle plugin) {
-        super(plugin, "fixskips");
+    private final Roster roster;
+    private final BackpackManager backpackManager;
+
+    public CommandFixSkips(Roster roster, BackpackManager backpackManager) {
+        super("fixskips");
+        this.roster = roster;
+        this.backpackManager = backpackManager;
         setDescription("Fix skips");
     }
 
@@ -27,7 +33,7 @@ public final class CommandFixSkips extends CustomCommand {
     public void onPlayerCommand(Player player, String label, String[] args) {
         boolean silent = args.length > 0 && args[0].equalsIgnoreCase("-silent");
 
-        ForceItemPlayer forceItemPlayer = this.plugin.getRoster().get(player.getUniqueId());
+        ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());
         if (forceItemPlayer == null) {
             if (!silent) {
                 player.sendMessage(Text.of("<red>You are not playing."));
@@ -44,7 +50,7 @@ public final class CommandFixSkips extends CustomCommand {
         }
 
         ItemStack jokers = Gamemanager.getJokers(remainingJokers);
-        Inventory backpack = this.plugin.getBackpackManager().getBackpackForPlayer(player);
+        Inventory backpack = this.backpackManager.getBackpackForPlayer(player);
 
         backpack.remove(Gamemanager.getJokerMaterial());
 

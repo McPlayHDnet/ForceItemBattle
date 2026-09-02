@@ -2,20 +2,26 @@ package forceitembattle.commands.admin;
 
 import static forceitembattle.commands.Precondition.OP;
 import static forceitembattle.commands.Precondition.PRE_GAME;
-import forceitembattle.commands.Precondition;
-import java.util.List;
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
-import forceitembattle.settings.GameSetting;
+import forceitembattle.commands.Precondition;
+import forceitembattle.manager.TeamsManager;
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.Roster;
+import forceitembattle.settings.GameSetting;
 import forceitembattle.util.Text;
+import java.util.List;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 public final class CommandForceTeam extends CustomCommand {
 
-    public CommandForceTeam(ForceItemBattle plugin) {
-        super(plugin, "forceteam");
+    private final Roster roster;
+    private final TeamsManager teamManager;
+
+    public CommandForceTeam(Roster roster, TeamsManager teamManager) {
+        super("forceteam");
+        this.roster = roster;
+        this.teamManager = teamManager;
         setUsage("<name> <player1> (player2)");
         setDescription("Force create a team");
     }
@@ -42,7 +48,7 @@ public final class CommandForceTeam extends CustomCommand {
             return;
         }
 
-        ForceItemPlayer first = this.plugin.getRoster().get(player1.getUniqueId());
+        ForceItemPlayer first = this.roster.get(player1.getUniqueId());
 
         if (args.length == 3) {
             Player player2 = Bukkit.getPlayer(args[2]);
@@ -52,11 +58,11 @@ public final class CommandForceTeam extends CustomCommand {
                 return;
             }
 
-            ForceItemPlayer second = this.plugin.getRoster().get(player2.getUniqueId());
-            this.plugin.getTeamManager().create(first, second, teamName);
+            ForceItemPlayer second = this.roster.get(player2.getUniqueId());
+            this.teamManager.create(first, second, teamName);
             player.sendMessage(Text.of("<dark_aqua>Successfully created team <green>" + teamName));
         } else {
-            this.plugin.getTeamManager().create(first, null, teamName);
+            this.teamManager.create(first, null, teamName);
             player.sendMessage(Text.of("<dark_aqua>Successfully created solo team <green>" + teamName));
         }
     }

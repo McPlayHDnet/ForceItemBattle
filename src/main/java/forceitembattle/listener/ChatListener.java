@@ -1,7 +1,6 @@
 package forceitembattle.listener;
 
 import forceitembattle.model.Roster;
-import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Scheduler;
@@ -21,11 +20,6 @@ import org.bukkit.event.Listener;
 
 @RequiredArgsConstructor
 public class ChatListener implements Listener {
-    /**
-     * Still needed: this listener opens a GUI, and the GUI layer has not been swept. Its
-     * collaborators are named below; this is the one thing left that is genuinely a plugin.
-     */
-    private final ForceItemBattle plugin;
     private final Roster roster;
     private final Gamemanager gamemanager;
     private final GameSettings settings;
@@ -42,7 +36,7 @@ public class ChatListener implements Listener {
             Scheduler.runSync(() -> {
                 GamePreset gamePreset = SettingsPresetsInventory.namingPhase.get(player.getUniqueId());
                 gamePreset.setPresetName(message);
-                new SettingsPresetsInventory(this.plugin, gamePreset, this.settings).open(player);
+                new SettingsPresetsInventory(this.roster, this.settings, gamePreset).open(player);
                 SettingsPresetsInventory.namingPhase.remove(player.getUniqueId());
             });
             return;

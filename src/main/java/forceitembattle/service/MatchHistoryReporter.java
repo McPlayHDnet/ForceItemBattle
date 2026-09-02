@@ -4,10 +4,10 @@ import de.threeseconds.openapi.fibservice.client.model.FibMatchItemSubmitDto;
 import de.threeseconds.openapi.fibservice.client.model.FibMatchParticipantSubmitDto;
 import de.threeseconds.openapi.fibservice.client.model.FibMatchSubmitRequestDto;
 import de.threeseconds.openapi.fibservice.client.model.FibMatchTeamSubmitDto;
-import forceitembattle.ForceItemBattle;
+import forceitembattle.manager.TeamsManager;
 import forceitembattle.model.ForceItem;
 import forceitembattle.model.ForceItemPlayer;
-import forceitembattle.model.LeadTracker;
+import forceitembattle.model.Roster;
 import forceitembattle.model.Team;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
@@ -36,7 +36,6 @@ public class MatchHistoryReporter {
     private static final String MATCH_STATS_URL = "https://forceitembattle.net/stats?view=match&id=";
     private static final long MATCH_STATS_LINK_DELAY_TICKS = 5L;
 
-    private final ForceItemBattle plugin;
 
     @Getter
     private UUID matchId;
@@ -60,8 +59,17 @@ public class MatchHistoryReporter {
     /** Wall-clock millis when the current pause began, or 0 when the game is not paused. */
     private long pauseStartedAt;
 
-    public MatchHistoryReporter(ForceItemBattle plugin) {
-        this.plugin = plugin;
+    private final FIBServiceClient fibService;
+    private final Roster roster;
+    private final GameSettings settings;
+    private final TeamsManager teamManager;
+
+    public MatchHistoryReporter(FIBServiceClient fibService, Roster roster, GameSettings settings,
+                                TeamsManager teamManager) {
+        this.fibService = fibService;
+        this.roster = roster;
+        this.settings = settings;
+        this.teamManager = teamManager;
     }
 
     public void beginMatch(UUID matchId) {
@@ -106,9 +114,9 @@ public class MatchHistoryReporter {
                        Map<Team, Integer> teamPlaces,
                        int durationSeconds,
                        Runnable onPersisted) {
-        GameSettings settings = this.plugin.getSettings();
+        GameSettings settings = this.settings;
         boolean teamMode = settings.isSettingEnabled(GameSetting.TEAM);
-        Map<UUID, ForceItemPlayer> roster = this.plugin.getRoster().players();
+        Map<UUID, ForceItemPlayer> roster = this.roster.players();
 
         FibMatchSubmitRequestDto request = new FibMatchSubmitRequestDto()
                 .startedAt(Instant.ofEpochMilli(this.startedAtMillis).atOffset(ZoneOffset.UTC))
@@ -121,7 +129,7 @@ public class MatchHistoryReporter {
                 .items(buildItems(roster, teamMode))
                 .settings(snapshotSettings(settings));
 
-        this.plugin.getFibService().matchHistory().submitMatchAsync(this.matchId, request, () -> {
+        this.fibService.matchHistory().submitMatchAsync(this.matchId, request, () -> {
             onPersisted.run();
             this.linkReady = true;
             this.tryShareLink();
@@ -142,7 +150,7 @@ public class MatchHistoryReporter {
 
     private List<FibMatchTeamSubmitDto> buildTeams() {
         List<FibMatchTeamSubmitDto> teams = new ArrayList<>();
-        for (Team team : this.plugin.getTeamManager().getTeams()) {
+        for (Team team : this.teamManager.getTeams()) {
             teams.add(new FibMatchTeamSubmitDto()
                     .teamIndex(team.getTeamId())
                     .teamName(team.getName())
@@ -176,7 +184,7 @@ public class MatchHistoryReporter {
     private List<FibMatchItemSubmitDto> buildItems(Map<UUID, ForceItemPlayer> roster, boolean teamMode) {
         List<FibMatchItemSubmitDto> items = new ArrayList<>();
         if (teamMode) {
-            for (Team team : this.plugin.getTeamManager().getTeams()) {
+            for (Team team : this.teamManager.getTeams()) {
                 appendItems(items, team.getFoundItems(), null, team.getTeamId());
             }
         } else {

@@ -3,7 +3,6 @@ package forceitembattle.manager;
 import forceitembattle.gui.ItemBuilder;
 import forceitembattle.model.GameState;
 import forceitembattle.model.MenuItem;
-import forceitembattle.model.RoundSetup;
 import java.util.List;
 import javax.annotation.Nullable;
 import net.kyori.adventure.text.Component;

@@ -1,4 +1,4 @@
-package forceitembattle.model;
+package forceitembattle.achievements;
 
 import java.util.List;
 import lombok.Getter;

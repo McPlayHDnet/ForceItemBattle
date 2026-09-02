@@ -1,7 +1,7 @@
 package forceitembattle.manager;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.Roster;
 import forceitembattle.model.Team;
 import forceitembattle.util.TeamPairing;
 import forceitembattle.util.Text;
@@ -17,12 +17,14 @@ import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import lombok.Getter;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public class TeamsManager implements Manager {
 
@@ -35,7 +37,11 @@ public class TeamsManager implements Manager {
     private static final String PAIRINGS_PATH = "lastPairings";
     private static final String LEGACY_CONFIG_PATH = "teams.lastPairings";
 
-    private final ForceItemBattle forceItemBattle;
+    private final JavaPlugin plugin;
+    private final Roster roster;
+
+    /** Late-bound: the scoreboard is built after this manager. */
+    private final Supplier<ScoreboardManager> scoreboard;
 
     private final Map<ForceItemPlayer, Team> pendingInvite;
     @Getter
@@ -45,8 +51,10 @@ public class TeamsManager implements Manager {
     private final Set<String> previousPairings;
     private final Random random;
 
-    public TeamsManager(ForceItemBattle forceItemBattle) {
-        this.forceItemBattle = forceItemBattle;
+    public TeamsManager(JavaPlugin plugin, Roster roster, Supplier<ScoreboardManager> scoreboard) {
+        this.plugin = plugin;
+        this.roster = roster;
+        this.scoreboard = scoreboard;
         this.pendingInvite = new ConcurrentHashMap<>();
         this.teams = new ArrayList<>();
         this.maxTeamSize = 2;
@@ -57,23 +65,23 @@ public class TeamsManager implements Manager {
     @Override
     public void enable() {
         this.previousPairings.addAll(this.loadPairings());
-        this.forceItemBattle.getLogger().info("Loaded " + this.previousPairings.size()
+        this.plugin.getLogger().info("Loaded " + this.previousPairings.size()
                 + " pairing(s) from the previous round; those teams will be avoided.");
     }
 
     private List<String> loadPairings() {
-        File file = new File(this.forceItemBattle.getDataFolder(), HISTORY_FILE);
+        File file = new File(this.plugin.getDataFolder(), HISTORY_FILE);
         if (file.isFile()) {
             return YamlConfiguration.loadConfiguration(file).getStringList(PAIRINGS_PATH);
         }
 
         // Migration off the config.yml key: useful only on the first boot after this change, but it
         // costs one read and beats losing a round.
-        return this.forceItemBattle.getConfig().getStringList(LEGACY_CONFIG_PATH);
+        return this.plugin.getConfig().getStringList(LEGACY_CONFIG_PATH);
     }
 
     public void autoTeams() {
-        List<ForceItemPlayer> playersWithoutTeam = this.forceItemBattle.getRoster().players().values().stream()
+        List<ForceItemPlayer> playersWithoutTeam = this.roster.players().values().stream()
                 .filter(player -> player.currentTeam() == null)
                 .collect(Collectors.toList());
 
@@ -99,11 +107,11 @@ public class TeamsManager implements Manager {
             this.teams.add(singlePlayerTeam);
 
             player.setCurrentTeam(singlePlayerTeam);
-            this.forceItemBattle.getScoreboardManager().updateAllPlayers();
+            this.scoreboard.get().updateAllPlayers();
         }
 
         this.rememberPairings();
-        this.forceItemBattle.getScoreboardManager().updateAllPlayers();
+        this.scoreboard.get().updateAllPlayers();
     }
 
     private List<ForceItemPlayer> orderAvoidingPreviousPairings(List<ForceItemPlayer> players) {
@@ -125,7 +133,7 @@ public class TeamsManager implements Manager {
         }
 
         if (skipReason != null) {
-            this.forceItemBattle.getLogger().info("Building teams at random (" + skipReason + ").");
+            this.plugin.getLogger().info("Building teams at random (" + skipReason + ").");
             List<ForceItemPlayer> shuffled = new ArrayList<>(players);
             Collections.shuffle(shuffled, this.random);
             return shuffled;
@@ -137,7 +145,7 @@ public class TeamsManager implements Manager {
         int repeats = this.countRepeats(ordered);
         if (repeats > 0) {
             // Unavoidable at small player counts, so a notice rather than a failure.
-            this.forceItemBattle.getLogger().info("Could not avoid " + repeats + " of the previous round's "
+            this.plugin.getLogger().info("Could not avoid " + repeats + " of the previous round's "
                     + this.previousPairings.size() + " pairing(s) with " + ordered.size() + " players.");
         }
 
@@ -174,16 +182,16 @@ public class TeamsManager implements Manager {
             }
         }
 
-        File file = new File(this.forceItemBattle.getDataFolder(), HISTORY_FILE);
+        File file = new File(this.plugin.getDataFolder(), HISTORY_FILE);
         YamlConfiguration history = new YamlConfiguration();
         history.set(PAIRINGS_PATH, new ArrayList<>(this.previousPairings));
 
         try {
             history.save(file);
-            this.forceItemBattle.getLogger().info("Stored " + this.previousPairings.size()
+            this.plugin.getLogger().info("Stored " + this.previousPairings.size()
                     + " pairing(s) to " + HISTORY_FILE + " for the next round.");
         } catch (IOException e) {
-            this.forceItemBattle.getLogger().log(Level.SEVERE,
+            this.plugin.getLogger().log(Level.SEVERE,
                     "Failed to store team pairings to " + HISTORY_FILE + "; the next round will pair at random.", e);
         }
     }
@@ -231,7 +239,7 @@ public class TeamsManager implements Manager {
         this.teams.remove(team);
         this.teams.add(team);
 
-        this.forceItemBattle.getScoreboardManager().updateAllPlayers();
+        this.scoreboard.get().updateAllPlayers();
     }
 
     public void accept(ForceItemPlayer player, ForceItemPlayer target) {
@@ -257,7 +265,7 @@ public class TeamsManager implements Manager {
             player.player().sendMessage(Text.of("<red>You have no invite from <yellow>" + target.player().getName()));
 
         }
-        this.forceItemBattle.getScoreboardManager().updateAllPlayers();
+        this.scoreboard.get().updateAllPlayers();
     }
 
     public void create(ForceItemPlayer first, @Nullable ForceItemPlayer second, String name) {
@@ -270,7 +278,7 @@ public class TeamsManager implements Manager {
         // Never set a playerListName here: the client only applies ScoreboardManager's team
         // prefix/suffix to players who have no tab-list display name of their own, so naming one
         // member makes the two halves of a team render differently.
-        this.forceItemBattle.getScoreboardManager().updateAllPlayers();
+        this.scoreboard.get().updateAllPlayers();
 
         String message = "<dark_aqua>You are now in team <green>" + name + " <dark_aqua>with <yellow>";
 
@@ -306,7 +314,7 @@ public class TeamsManager implements Manager {
                 teamPlayers.player().sendMessage(Text.of("<yellow>" + player.player().getName() + " <dark_aqua>left your team"));
             });
         }
-        this.forceItemBattle.getScoreboardManager().updateAllPlayers();
+        this.scoreboard.get().updateAllPlayers();
     }
 
     public void showTeamList(ForceItemPlayer player) {
@@ -323,7 +331,7 @@ public class TeamsManager implements Manager {
     }
 
     public void clearAllTeams() {
-        this.forceItemBattle.getRoster().players().values().forEach(players -> {
+        this.roster.players().values().forEach(players -> {
             if (players.currentTeam() != null) {
                 players.setCurrentTeam(null);
                 // null, not the plain name: any display name at all makes the client skip the
@@ -333,7 +341,7 @@ public class TeamsManager implements Manager {
         });
         this.pendingInvite.clear();
         this.getTeams().clear();
-        this.forceItemBattle.getScoreboardManager().updateAllPlayers();
+        this.scoreboard.get().updateAllPlayers();
     }
 
     private void disbandTeam(Team team) {

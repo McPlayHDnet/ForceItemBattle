@@ -1,5 +1,6 @@
 package forceitembattle.achievements.handlers;
 
+import forceitembattle.achievements.AchievementManager;
 import forceitembattle.achievements.AchievementWorld;
 import forceitembattle.achievements.progress.SimpleAchievementProgress;
 import forceitembattle.model.ForceItemPlayer;

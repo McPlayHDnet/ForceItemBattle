@@ -1,27 +1,30 @@
 package forceitembattle.achievements;
 
-import forceitembattle.util.Scheduler;
-import forceitembattle.ForceItemBattle;
+import forceitembattle.service.FIBServiceClient;
 import forceitembattle.service.FibAchievementClient;
+import forceitembattle.util.Scheduler;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import org.bukkit.plugin.Plugin;
 
 public class AchievementStorage {
 
-    private final ForceItemBattle plugin;
+    private final Plugin plugin;
+    private final FIBServiceClient fibService;
 
     private final Map<UUID, Set<String>> cache = new ConcurrentHashMap<>();
     private final Set<UUID> loaded = ConcurrentHashMap.newKeySet();
 
-    public AchievementStorage(ForceItemBattle plugin) {
+    public AchievementStorage(Plugin plugin, FIBServiceClient fibService) {
         this.plugin = plugin;
+        this.fibService = fibService;
     }
 
     private FibAchievementClient achievementClient() {
-        return plugin.getFibService().achievements();
+        return this.fibService.achievements();
     }
 
     /**

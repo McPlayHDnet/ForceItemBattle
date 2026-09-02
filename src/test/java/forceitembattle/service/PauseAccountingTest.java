@@ -76,7 +76,7 @@ class PauseAccountingTest {
 
     @Test
     void openAndCloseRecordAPauseThatIsThenSubtracted() throws Exception {
-        MatchHistoryReporter reporter = new MatchHistoryReporter(null);
+        MatchHistoryReporter reporter = new MatchHistoryReporter(null, null, null, null);
         reporter.beginMatch(java.util.UUID.randomUUID());
 
         long before = System.currentTimeMillis();
@@ -94,7 +94,7 @@ class PauseAccountingTest {
     /** beginMatch clears anything the previous round recorded. */
     @Test
     void beginMatchDiscardsEarlierPauses() throws Exception {
-        MatchHistoryReporter reporter = new MatchHistoryReporter(null);
+        MatchHistoryReporter reporter = new MatchHistoryReporter(null, null, null, null);
         reporter.beginMatch(java.util.UUID.randomUUID());
 
         long before = System.currentTimeMillis();

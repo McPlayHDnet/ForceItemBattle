@@ -1,10 +1,10 @@
 package forceitembattle.commands.player;
 
-import forceitembattle.commands.Precondition;
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
+import forceitembattle.commands.Precondition;
 import forceitembattle.gui.CollectionBookInventory;
+import forceitembattle.gui.GuiContext;
 import forceitembattle.util.Text;
 import java.util.List;
 import java.util.UUID;
@@ -20,8 +20,11 @@ import org.bukkit.entity.Player;
  */
 public final class CommandCollection extends CustomCommand implements CustomTabCompleter {
 
-    public CommandCollection(ForceItemBattle plugin) {
-        super(plugin, "collection");
+    private final GuiContext gui;
+
+    public CommandCollection(GuiContext gui) {
+        super("collection");
+        this.gui = gui;
 
         setUsage("[player]");
         setDescription("Show your collection book");
@@ -35,7 +38,7 @@ public final class CommandCollection extends CustomCommand implements CustomTabC
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
         if (args.length == 0) {
-            new CollectionBookInventory(this.plugin, player.getName(), player.getUniqueId()).open(player);
+            new CollectionBookInventory(this.gui, player.getName(), player.getUniqueId()).open(player);
             return;
         }
 
@@ -45,7 +48,7 @@ public final class CommandCollection extends CustomCommand implements CustomTabC
             return;
         }
 
-        new CollectionBookInventory(this.plugin, args[0], targetUuid).open(player);
+        new CollectionBookInventory(this.gui, args[0], targetUuid).open(player);
     }
 
     /**

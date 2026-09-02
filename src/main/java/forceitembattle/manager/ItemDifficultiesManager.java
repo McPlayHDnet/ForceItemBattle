@@ -2,12 +2,12 @@ package forceitembattle.manager;
 
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import forceitembattle.ForceItemBattle;
+import forceitembattle.model.DescriptionItem;
 import forceitembattle.model.Dimension;
+import forceitembattle.model.RoundClock;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.settings.QuickieMode;
-import forceitembattle.model.DescriptionItem;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -29,12 +29,15 @@ import lombok.Getter;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public class ItemDifficultiesManager implements Manager {
 
     private static final Random RANDOM = new Random();
 
-    private final ForceItemBattle plugin;
+    private final JavaPlugin plugin;
+    private final RoundClock roundClock;
+    private final GameSettings settings;
     @Getter
     private final Map<Material, ItemDefinition> itemRegistry = new HashMap<>();
     private final Random FIXED_RANDOM;
@@ -68,8 +71,10 @@ public class ItemDifficultiesManager implements Manager {
                            boolean hard, boolean extreme, boolean end) {
     }
 
-    public ItemDifficultiesManager(ForceItemBattle forceItemBattle) {
-        this.plugin = forceItemBattle;
+    public ItemDifficultiesManager(JavaPlugin plugin, RoundClock roundClock, GameSettings settings) {
+        this.plugin = plugin;
+        this.roundClock = roundClock;
+        this.settings = settings;
         this.FIXED_RANDOM_SEED = new Random().nextLong();
         this.FIXED_RANDOM = new Random(FIXED_RANDOM_SEED);
         this.descriptionItems = new HashMap<>();
@@ -197,7 +202,7 @@ public class ItemDifficultiesManager implements Manager {
     }
 
     private void refreshAvailablePool() {
-        GameSettings settings = this.plugin.getSettings();
+        GameSettings settings = this.settings;
         PoolKey key = new PoolKey(
                 getActiveStates(),
                 settings.getQuickieMode(),
@@ -252,13 +257,13 @@ public class ItemDifficultiesManager implements Manager {
     /** Pools active this tick, in unlock order (EARLY → LATE). */
     public List<State> getActiveStates() {
         return this.unlockSchedule.activeAt(
-                elapsedSeconds() / 60, roundSeconds(), this.plugin.getSettings().getQuickieMode());
+                elapsedSeconds() / 60, roundSeconds(), this.settings.getQuickieMode());
     }
 
     /** The next pool to unlock, or {@code null} when every permitted pool is already active. */
     public State getNextState() {
         return this.unlockSchedule.nextAfter(
-                elapsedSeconds() / 60, roundSeconds(), this.plugin.getSettings().getQuickieMode());
+                elapsedSeconds() / 60, roundSeconds(), this.settings.getQuickieMode());
     }
 
     /**
@@ -267,15 +272,15 @@ public class ItemDifficultiesManager implements Manager {
      */
     public int secondsUntilNextPool() {
         return this.unlockSchedule.secondsUntilNext(
-                elapsedSeconds(), roundSeconds(), this.plugin.getSettings().getQuickieMode());
+                elapsedSeconds(), roundSeconds(), this.settings.getQuickieMode());
     }
 
     private int roundSeconds() {
-        return this.plugin.getRoundClock().totalSeconds();
+        return this.roundClock.totalSeconds();
     }
 
     private int elapsedSeconds() {
-        return this.plugin.getRoundClock().elapsedSeconds();
+        return this.roundClock.elapsedSeconds();
     }
 
     public Material generateRandomMaterial() {
@@ -298,7 +303,7 @@ public class ItemDifficultiesManager implements Manager {
 
     /** Applied once when the pool is built, not per draw. */
     private void filterDisabledItems(Collection<Material> items) {
-        GameSettings settings = this.plugin.getSettings();
+        GameSettings settings = this.settings;
         boolean hard = settings.isSettingEnabled(GameSetting.HARD);
         boolean extreme = settings.isSettingEnabled(GameSetting.EXTREME);
         boolean end = settings.isSettingEnabled(GameSetting.END);

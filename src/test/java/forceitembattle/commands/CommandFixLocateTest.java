@@ -12,7 +12,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.player.CommandFixLocate;
 import forceitembattle.manager.LocatorManager;
 import forceitembattle.model.CustomMaterials;
@@ -54,12 +53,10 @@ class CommandFixLocateTest {
         this.server = MockBukkit.mock();
         this.active.clear();
 
-        ForceItemBattle plugin = mock(ForceItemBattle.class);
         this.locators = mock(LocatorManager.class);
-        when(plugin.getLocatorManager()).thenReturn(this.locators);
         when(this.locators.getActiveLocators(any())).thenReturn(this.active);
 
-        this.command = new CommandFixLocate(plugin);
+        this.command = new CommandFixLocate(this.locators);
         ((CustomCommand) this.command).setContext(new CommandContext(null, null, null));
     }
 

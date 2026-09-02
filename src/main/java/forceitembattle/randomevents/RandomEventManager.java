@@ -1,10 +1,11 @@
-package forceitembattle.manager;
+package forceitembattle.randomevents;
 
-import forceitembattle.ForceItemBattle;
+import forceitembattle.manager.Manager;
 import forceitembattle.model.Find;
-import forceitembattle.randomevents.RandomEvent;
-import forceitembattle.randomevents.RandomEvents;
+import forceitembattle.model.Roster;
+import forceitembattle.model.RoundClock;
 import forceitembattle.settings.GameSetting;
+import forceitembattle.settings.GameSettings;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Deque;
@@ -30,7 +31,12 @@ public class RandomEventManager implements Manager {
     /** No event may start with less than this left on the clock. */
     private static final int END_BUFFER_SECONDS = 5 * 60;
 
-    private final ForceItemBattle plugin;
+    /** Handed to every event this manager starts — see {@link EventContext}. */
+    private final EventContext eventContext;
+
+    private final Roster roster;
+    private final RoundClock roundClock;
+    private final GameSettings settings;
 
     /** Remaining fire times, as timeLeft values, in descending order. */
     private final Deque<Integer> schedule = new ArrayDeque<>();
@@ -54,16 +60,16 @@ public class RandomEventManager implements Manager {
     public void startGame() {
         this.reset();
 
-        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.RANDOM_EVENTS)) {
+        if (!this.settings.isSettingEnabled(GameSetting.RANDOM_EVENTS)) {
             return;
         }
 
         // Run Battle is already a race for the first find; a hunt on top of it means nothing.
-        if (this.plugin.getSettings().isSettingEnabled(GameSetting.RUN)) {
+        if (this.settings.isSettingEnabled(GameSetting.RUN)) {
             return;
         }
 
-        this.planSchedule(this.plugin.getRoundClock().totalSeconds());
+        this.planSchedule(this.roundClock.totalSeconds());
     }
 
     public void reset() {
@@ -129,7 +135,7 @@ public class RandomEventManager implements Manager {
             return false;
         }
 
-        RandomEvent event = type.create(this.plugin);
+        RandomEvent event = type.create(this.eventContext);
         this.fired.add(type);
 
         this.activeType = type;
@@ -188,7 +194,7 @@ public class RandomEventManager implements Manager {
     }
 
     private long countParticipants() {
-        return this.plugin.getRoster().players().values().stream()
+        return this.roster.players().values().stream()
                 .filter(forceItemPlayer -> !forceItemPlayer.isSpectator())
                 .count();
     }

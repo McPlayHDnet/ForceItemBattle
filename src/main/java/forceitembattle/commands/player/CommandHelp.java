@@ -1,16 +1,19 @@
 package forceitembattle.commands.player;
 
-import forceitembattle.commands.Precondition;
-import java.util.List;
-import forceitembattle.ForceItemBattle;
+import forceitembattle.commands.CommandsManager;
 import forceitembattle.commands.CustomCommand;
+import forceitembattle.commands.Precondition;
 import forceitembattle.util.Text;
+import java.util.List;
 import org.bukkit.entity.Player;
 
 public final class CommandHelp extends CustomCommand {
 
-    public CommandHelp(ForceItemBattle plugin) {
-        super(plugin, "help");
+    private final CommandsManager commandsManager;
+
+    public CommandHelp(CommandsManager commandsManager) {
+        super("help");
+        this.commandsManager = commandsManager;
     }
 
     private void msg(Player player, String message) {
@@ -27,7 +30,7 @@ public final class CommandHelp extends CustomCommand {
         msg(player, "<gray>");
         msg(player, "<gold><b>ForceItemBattle</b> <gray>- <white>Help");
 
-        for (CustomCommand command : plugin.getCommandsManager().getCommands()) {
+        for (CustomCommand command : this.commandsManager.getCommands()) {
             if (command instanceof CommandHelp) {
                 continue;
             }

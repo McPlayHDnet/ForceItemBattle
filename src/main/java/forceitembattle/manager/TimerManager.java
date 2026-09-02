@@ -1,11 +1,13 @@
 package forceitembattle.manager;
 
-import forceitembattle.model.Roster;
-import forceitembattle.ForceItemBattle;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.Roster;
 import forceitembattle.model.RoundClock;
+import forceitembattle.model.RoundPhase;
+import forceitembattle.randomevents.RandomEventManager;
 import forceitembattle.settings.GameSetting;
+import forceitembattle.settings.GameSettings;
 import forceitembattle.util.FileLogger;
 import forceitembattle.util.Text;
 import forceitembattle.util.TimeFormat;
@@ -22,6 +24,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -36,18 +39,34 @@ public class TimerManager implements Manager {
     private static final Title.Times TIMES =
             Title.Times.times(Duration.ofMillis(1000), Duration.ofMillis(1000), Duration.ofMillis(1000));
 
-    private final ForceItemBattle forceItemBattle;
+    private final JavaPlugin plugin;
+    private final Roster roster;
+    private final RoundPhase roundPhase;
+    private final GameSettings settings;
+    private final Gamemanager gamemanager;
+    private final ItemDifficultiesManager items;
+    private final RandomEventManager randomEvents;
+    private final TabListManager tabList;
     @Getter
     private final Map<UUID, BossBar> bossBar = new HashMap<>();
     /** Driven here, owned by the plugin, so nothing has to reach through this class for the time. */
     private final RoundClock clock;
     private BukkitTask timerTask;
 
-    public TimerManager(ForceItemBattle forceItemBattle, RoundClock clock) {
-        this.forceItemBattle = forceItemBattle;
+    public TimerManager(JavaPlugin plugin, RoundClock clock, Roster roster, RoundPhase roundPhase,
+                        GameSettings settings, Gamemanager gamemanager, ItemDifficultiesManager items,
+                        RandomEventManager randomEvents, TabListManager tabList) {
+        this.plugin = plugin;
+        this.roster = roster;
+        this.roundPhase = roundPhase;
+        this.settings = settings;
+        this.gamemanager = gamemanager;
+        this.items = items;
+        this.randomEvents = randomEvents;
+        this.tabList = tabList;
         this.clock = clock;
-        if (this.forceItemBattle.getConfig().contains("timer.time")) {
-            this.clock.setSecondsLeft(this.forceItemBattle.getConfig().getInt("timer.time"));
+        if (this.plugin.getConfig().contains("timer.time")) {
+            this.clock.setSecondsLeft(this.plugin.getConfig().getInt("timer.time"));
         }
     }
 
@@ -62,13 +81,13 @@ public class TimerManager implements Manager {
             this.timerTask.cancel();
         }
 
-        this.forceItemBattle.reloadConfig();
-        if (this.forceItemBattle.getConfig().getBoolean("isReset")) {
-            this.forceItemBattle.getConfig().set("timer.time", 0);
+        this.plugin.reloadConfig();
+        if (this.plugin.getConfig().getBoolean("isReset")) {
+            this.plugin.getConfig().set("timer.time", 0);
         } else {
             this.save();
         }
-        this.forceItemBattle.saveConfig();
+        this.plugin.saveConfig();
     }
 
     public int getTimeLeft() {
@@ -80,14 +99,14 @@ public class TimerManager implements Manager {
     }
 
     public void save() {
-        this.forceItemBattle.getConfig().set("timer.time", this.clock.secondsLeft());
+        this.plugin.getConfig().set("timer.time", this.clock.secondsLeft());
     }
 
     public void sendActionBar() {
         for (Player player : Bukkit.getOnlinePlayers()) {
 
-            if (!this.forceItemBattle.getRoundPhase().roundRunning()) {
-                if (this.forceItemBattle.getRoundPhase().isPausedGame()) {
+            if (!this.roundPhase.roundRunning()) {
+                if (this.roundPhase.isPausedGame()) {
                     Title timeLeftTitle = Title.title(Component.empty(), Text.of("<red>Game is paused!"),
                             Title.Times.times(Duration.ofMillis(0), Duration.ofMillis(1000), Duration.ofMillis(500)));
                     player.showTitle(timeLeftTitle);
@@ -97,7 +116,7 @@ public class TimerManager implements Manager {
                 continue;
             }
 
-            ForceItemPlayer forceItemPlayer = this.forceItemBattle.getRoster()
+            ForceItemPlayer forceItemPlayer = this.roster
                     .participant(player.getUniqueId())
                     .orElse(null);
 
@@ -117,7 +136,7 @@ public class TimerManager implements Manager {
         String timeText = "<gradient:#fcef64:#fcc44b:#ff9e59><b>"
                 + TimeFormat.humanised(this.getTimeLeft()) + "</b></gradient>";
         String scoreText = "";
-        if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.SCORE)) {
+        if (this.settings.isSettingEnabled(GameSetting.SCORE)) {
             // isInTeam(), not the TEAM setting: a spectator-turned-player holds no team and would
             // disagree with it.
             scoreText = "<dark_gray>| <green>" + (forceItemPlayer.isInTeam() ? "Team score: " : "Your score: ")
@@ -127,7 +146,7 @@ public class TimerManager implements Manager {
         player.sendActionBar(Text.of(timeText + " " + scoreText));
 
         String bossBarTitle = this.itemLabel(material);
-        if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.CHAIN)) {
+        if (this.settings.isSettingEnabled(GameSetting.CHAIN)) {
             bossBarTitle += " <gray><b>➡</b> " + this.itemLabel(forceItemPlayer.activeNextMaterial());
         }
 
@@ -140,7 +159,7 @@ public class TimerManager implements Manager {
     private String itemLabel(Material material) {
         return "<gradient:#6eee87:#5fc52e><b>" + CustomMaterials.nameOf(material)
                 + " <reset><shadow:black:0.4>"
-                + this.forceItemBattle.getItemDifficultiesManager().getUnicodeFromMaterial(false, material)
+                + this.items.getUnicodeFromMaterial(false, material)
                 + "</shadow>";
     }
 
@@ -149,36 +168,36 @@ public class TimerManager implements Manager {
             @Override
             public void run() {
                 sendActionBar();
-                if (!forceItemBattle.getRoundPhase().roundRunning()) {
-                    forceItemBattle.getTabListManager().clearFooter();
+                if (!TimerManager.this.roundPhase.roundRunning()) {
+                    TimerManager.this.tabList.clearFooter();
                     return;
                 }
 
                 OptionalInt milestone = clock.tick();
 
-                forceItemBattle.getRandomEventManager().tick(clock.secondsLeft());
+                TimerManager.this.randomEvents.tick(clock.secondsLeft());
                 announceUnlockedPools();
 
                 // After the pool poll, so the footer countdown flips to "active" on the same tick the
                 // unlock message is sent.
-                forceItemBattle.getTabListManager().update();
+                TimerManager.this.tabList.update();
 
                 milestone.ifPresent(TimerManager.this::announceMilestone);
 
                 if (clock.expired()) {
                     announceRoundOver();
-                    forceItemBattle.getTabListManager().clearFooter();
-                    forceItemBattle.getGamemanager().finishGame();
+                    TimerManager.this.tabList.clearFooter();
+                    TimerManager.this.gamemanager.finishGame();
                     FileLogger.log("<< Force Item Battle is over >>");
                     cancel();
                 }
             }
-        }.runTaskTimer(this.forceItemBattle, 20, 20);
+        }.runTaskTimer(this.plugin, 20, 20);
     }
 
     private void announceUnlockedPools() {
         for (ItemDifficultiesManager.State unlockedPool :
-                this.forceItemBattle.getItemDifficultiesManager().pollNewlyUnlockedStates()) {
+                this.items.pollNewlyUnlockedStates()) {
             Bukkit.getOnlinePlayers().forEach(players -> {
                 players.sendMessage(Text.of("<shadow:black:0><sprite:items:item/clock_00> <reset><gray>New item pool unlocked <dark_gray>» <"
                         + unlockedPool.getColor() + ">" + unlockedPool.getDisplayName()));

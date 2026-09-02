@@ -1,12 +1,9 @@
 package forceitembattle.commands;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.player.CommandInfoWiki;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameState;
@@ -42,14 +39,10 @@ class CommandInfoWikiTest {
     @BeforeEach
     void setUp() {
         this.server = MockBukkit.mock();
-        ForceItemBattle plugin = mock(ForceItemBattle.class);
         this.roundPhase = new RoundPhase();
         this.roster = new Roster();
 
-        when(plugin.getRoundPhase()).thenReturn(this.roundPhase);
-        when(plugin.getRoster()).thenReturn(this.roster);
-
-        this.command = new CommandInfoWiki(plugin);
+        this.command = new CommandInfoWiki(this.roster, this.roundPhase);
         ((CustomCommand) this.command).setContext(
                 new CommandContext(this.roundPhase, null, this.roster));
     }

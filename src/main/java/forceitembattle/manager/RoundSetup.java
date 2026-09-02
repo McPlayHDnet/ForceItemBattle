@@ -1,5 +1,7 @@
-package forceitembattle.model;
+package forceitembattle.manager;
 
+import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.GameContext;
 import java.util.List;
 import org.bukkit.Material;
 

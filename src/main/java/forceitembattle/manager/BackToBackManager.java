@@ -1,14 +1,14 @@
 package forceitembattle.manager;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.event.FoundItemEvent;
-import forceitembattle.model.BackToBackProbability;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameContext;
 import forceitembattle.model.Rarity;
 import forceitembattle.model.Team;
+import forceitembattle.service.FIBServiceClient;
 import forceitembattle.settings.GameSetting;
+import forceitembattle.settings.GameSettings;
 import forceitembattle.util.GameBroadcast;
 import forceitembattle.util.InventorySearch;
 import forceitembattle.util.Scheduler;
@@ -28,7 +28,10 @@ import org.bukkit.inventory.ItemStack;
 @RequiredArgsConstructor
 public class BackToBackManager implements Manager {
 
-    private final ForceItemBattle plugin;
+    private final GameSettings settings;
+    private final ItemDifficultiesManager items;
+    private final BackpackManager backpacks;
+    private final FIBServiceClient fibService;
 
     /** Called after an item has been found <em>and the next one assigned</em>. */
     public void handleAfterFind(ForceItemPlayer forceItemPlayer, GameContext context) {
@@ -64,8 +67,8 @@ public class BackToBackManager implements Manager {
 
     public BackToBackProbability calculateProbability(ForceItemPlayer forceItemPlayer) {
         Player player = forceItemPlayer.player();
-        int totalItemsInPool = this.plugin.getItemDifficultiesManager().getAvailableItems().size();
-        boolean backpackEnabled = this.plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK);
+        int totalItemsInPool = this.items.getAvailableItems().size();
+        boolean backpackEnabled = this.settings.isSettingEnabled(GameSetting.BACKPACK);
         boolean teamGame = forceItemPlayer.currentTeam() != null;
 
         // Everything the owner of this streak already holds — both members' inventories in a team.
@@ -79,11 +82,11 @@ public class BackToBackManager implements Manager {
         if (teamGame) {
             Team team = forceItemPlayer.currentTeam();
             if (backpackEnabled) {
-                InventorySearch.collectUniqueMaterials(this.plugin.getBackpackManager().getTeamBackpack(team), uniqueMaterials);
+                InventorySearch.collectUniqueMaterials(this.backpacks.getTeamBackpack(team), uniqueMaterials);
             }
             streak = team.getBackToBackStreak();
         } else if (backpackEnabled) {
-            InventorySearch.collectUniqueMaterials(this.plugin.getBackpackManager().getPlayerBackpack(player), uniqueMaterials);
+            InventorySearch.collectUniqueMaterials(this.backpacks.getPlayerBackpack(player), uniqueMaterials);
         }
 
         Material previous = forceItemPlayer.activePreviousMaterial();
@@ -126,8 +129,8 @@ public class BackToBackManager implements Manager {
 
         if (context.backpackEnabled()) {
             Inventory backpackInventory = context.teamGame()
-                    ? this.plugin.getBackpackManager().getTeamBackpack(forceItemPlayer.currentTeam())
-                    : this.plugin.getBackpackManager().getPlayerBackpack(forceItemPlayer.player());
+                    ? this.backpacks.getTeamBackpack(forceItemPlayer.currentTeam())
+                    : this.backpacks.getPlayerBackpack(forceItemPlayer.player());
 
             if (InventorySearch.contains(backpackInventory, targetMaterial)) {
                 return new BackToBackResult(true, null);
@@ -154,7 +157,7 @@ public class BackToBackManager implements Manager {
             foundNextItemEvent.setSkipped(false);
 
             BackToBackProbability probability = calculateProbability(forceItemPlayer);
-            String unicode = this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, foundItem.getType());
+            String unicode = this.items.getUnicodeFromMaterial(true, foundItem.getType());
             String materialName = CustomMaterials.nameOf(foundItem.getType());
 
             Component message;
@@ -185,7 +188,7 @@ public class BackToBackManager implements Manager {
 
         // The peak recorded in a team game is the team's, not this player's, and lands on both
         // members. The stats client owns that; this only says which two numbers are in play.
-        this.plugin.getFibService().statistics().recordBackToBackPeak(
+        this.fibService.statistics().recordBackToBackPeak(
                 forceItemPlayer,
                 context.teamGame() && team != null,
                 forceItemPlayer.backToBackStreak(),

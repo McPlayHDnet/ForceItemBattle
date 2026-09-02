@@ -2,22 +2,24 @@ package forceitembattle.commands.player;
 
 import static forceitembattle.commands.Precondition.ROUND_RUNNING;
 import static forceitembattle.commands.Precondition.OP_WHEN_EVENT;
-import forceitembattle.commands.Precondition;
-import java.util.List;
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
+import forceitembattle.commands.Precondition;
+import forceitembattle.manager.Gamemanager;
 import forceitembattle.model.Dimension;
-import forceitembattle.settings.GameSetting;
 import forceitembattle.util.Text;
+import java.util.List;
 import org.bukkit.Bukkit;
-import org.bukkit.World;
 import org.bukkit.GameRules;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 
 public final class CommandPause extends CustomCommand {
 
-    public CommandPause(ForceItemBattle plugin) {
-        super(plugin, "pause");
+    private final Gamemanager gamemanager;
+
+    public CommandPause(Gamemanager gamemanager) {
+        super("pause");
+        this.gamemanager = gamemanager;
         setDescription("Pause the game");
     }
 
@@ -37,6 +39,6 @@ public final class CommandPause extends CustomCommand {
             overworld.setGameRule(GameRules.ADVANCE_WEATHER, false);
         }
 
-        this.plugin.getGamemanager().pauseGame();
+        this.gamemanager.pauseGame();
     }
 }

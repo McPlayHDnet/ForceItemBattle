@@ -3,13 +3,15 @@ package forceitembattle.commands.admin;
 import static forceitembattle.commands.Precondition.PARTICIPANT;
 import static forceitembattle.commands.Precondition.OP;
 import static forceitembattle.commands.Precondition.ROUND_RUNNING;
-import forceitembattle.commands.Precondition;
-import forceitembattle.ForceItemBattle;
-import forceitembattle.model.CustomMaterials;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
+import forceitembattle.commands.Precondition;
 import forceitembattle.manager.Gamemanager;
+import forceitembattle.manager.ScoreboardManager;
+import forceitembattle.manager.TimerManager;
+import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.Roster;
 import forceitembattle.util.Text;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,8 +27,17 @@ import org.bukkit.entity.Player;
 
 public final class CommandForceItem extends CustomCommand implements CustomTabCompleter {
 
-    public CommandForceItem(ForceItemBattle plugin) {
-        super(plugin, "forceitem");
+    private final Gamemanager gamemanager;
+    private final TimerManager timerManager;
+    private final Roster roster;
+    private final ScoreboardManager scoreboardManager;
+
+    public CommandForceItem(Gamemanager gamemanager, TimerManager timerManager, Roster roster, ScoreboardManager scoreboardManager) {
+        super("forceitem");
+        this.gamemanager = gamemanager;
+        this.timerManager = timerManager;
+        this.roster = roster;
+        this.scoreboardManager = scoreboardManager;
 
         setUsage("<item> [item2] [item3] ...");
         setDescription("Dev: force the current (and upcoming) item(s)");
@@ -58,9 +69,9 @@ public final class CommandForceItem extends CustomCommand implements CustomTabCo
 
         // Present because PARTICIPANT is declared above; the gate already refused anyone else.
         ForceItemPlayer forceItemPlayer =
-                this.plugin.getRoster().participant(player.getUniqueId()).orElseThrow();
+                this.roster.participant(player.getUniqueId()).orElseThrow();
 
-        Gamemanager gamemanager = this.plugin.getGamemanager();
+        Gamemanager gamemanager = this.gamemanager;
 
         // Queue everything after the second item; generateMaterial() drains this
         // as new items are handed out, so the row is walked through in order.
@@ -75,8 +86,8 @@ public final class CommandForceItem extends CustomCommand implements CustomTabCo
 
         forceItemPlayer.scoreOwner().assignMaterials(current, next);
 
-        this.plugin.getTimerManager().sendActionBar();
-        this.plugin.getScoreboardManager().updateAllPlayers();
+        this.timerManager.sendActionBar();
+        this.scoreboardManager.updateAllPlayers();
 
         StringBuilder confirmation = new StringBuilder("<gray>Forced item <dark_gray>» <green>"
                 + CustomMaterials.nameOf(current));

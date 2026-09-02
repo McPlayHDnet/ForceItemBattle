@@ -1,10 +1,10 @@
 package forceitembattle.achievements.global;
 
 import forceitembattle.model.stats.GlobalPlayerStats;
-import forceitembattle.util.Scheduler;
-import forceitembattle.ForceItemBattle;
 import forceitembattle.model.stats.StatsView;
+import forceitembattle.service.FIBServiceClient;
 import forceitembattle.service.FibStatisticsClient;
+import forceitembattle.util.Scheduler;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -12,11 +12,11 @@ import java.util.function.Consumer;
 
 public class GlobalStatsLoader {
 
-    private final ForceItemBattle plugin;
+    private final FIBServiceClient fibService;
     private final GlobalStatsCache cache;
 
-    public GlobalStatsLoader(ForceItemBattle plugin, GlobalStatsCache cache) {
-        this.plugin = plugin;
+    public GlobalStatsLoader(FIBServiceClient fibService, GlobalStatsCache cache) {
+        this.fibService = fibService;
         this.cache = cache;
     }
 
@@ -27,7 +27,7 @@ public class GlobalStatsLoader {
             return;
         }
 
-        FibStatisticsClient statistics = this.plugin.getFibService().statistics();
+        FibStatisticsClient statistics = this.fibService.statistics();
 
         AtomicReference<StatsView> solo = new AtomicReference<>();
         AtomicReference<StatsView> team = new AtomicReference<>();

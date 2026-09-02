@@ -1,15 +1,21 @@
 package forceitembattle.commands.admin;
 
 import static forceitembattle.commands.Precondition.OP;
-import forceitembattle.commands.Precondition;
-import forceitembattle.ForceItemBattle;
+
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
-import forceitembattle.settings.GameSetting;
-import forceitembattle.settings.GamePreset;
+import forceitembattle.commands.Precondition;
+import forceitembattle.manager.Gamemanager;
+import forceitembattle.manager.TeamsManager;
+import forceitembattle.manager.TimerManager;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameState;
-import forceitembattle.model.RoundStart;
+import forceitembattle.model.Roster;
+import forceitembattle.model.RoundClock;
+import forceitembattle.model.RoundPhase;
+import forceitembattle.settings.GamePreset;
+import forceitembattle.settings.GameSetting;
+import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Text;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -20,12 +26,32 @@ import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
 public final class CommandStart extends CustomCommand implements CustomTabCompleter {
 
-    public CommandStart(ForceItemBattle plugin) {
-        super(plugin, "start");
+    private final Gamemanager gamemanager;
+    private final TimerManager timerManager;
+    private final Roster roster;
+    private final RoundPhase roundPhase;
+    private final RoundClock roundClock;
+    private final GameSettings settings;
+    private final TeamsManager teamManager;
+
+    /** Only to schedule the countdown. */
+    private final Plugin plugin;
+
+    public CommandStart(Gamemanager gamemanager, TimerManager timerManager, Roster roster, RoundPhase roundPhase, RoundClock roundClock, GameSettings settings, TeamsManager teamManager, Plugin plugin) {
+        super("start");
+        this.gamemanager = gamemanager;
+        this.timerManager = timerManager;
+        this.roster = roster;
+        this.roundPhase = roundPhase;
+        this.roundClock = roundClock;
+        this.settings = settings;
+        this.teamManager = teamManager;
+        this.plugin = plugin;
         setUsage("<time in min> <jokers> or <preset>");
         setDescription("Start the game");
     }
@@ -51,13 +77,13 @@ public final class CommandStart extends CustomCommand implements CustomTabComple
 
     private void start(CommandSender sender, String[] args) {
         if (args.length == 1) {
-            if (this.plugin.getSettings().getGamePreset(args[0]) == null) {
+            if (this.settings.getGamePreset(args[0]) == null) {
                 sender.sendMessage(Text.of("<yellow>" + args[0] + " <red>does not exist in presets."));
                 return;
             }
 
-            GamePreset gamePreset = this.plugin.getSettings().getGamePreset(args[0]);
-            this.plugin.getSettings().getRuleset().usePreset(gamePreset);
+            GamePreset gamePreset = this.settings.getGamePreset(args[0]);
+            this.settings.getRuleset().usePreset(gamePreset);
             this.performCommand(gamePreset, sender, args);
 
         } else if (args.length == 2) {
@@ -65,7 +91,7 @@ public final class CommandStart extends CustomCommand implements CustomTabComple
                 // Clears whatever the last round used. Without this `/start speedrun` followed by
                 // `/start 90 3` plays the second round on speedrun's settings — hidden in production
                 // only because scheduleReset restarts the JVM between rounds.
-                this.plugin.getSettings().getRuleset().usePreset(null);
+                this.settings.getRuleset().usePreset(null);
                 this.performCommand(null, sender, args);
 
             } catch (NumberFormatException e) {
@@ -78,8 +104,8 @@ public final class CommandStart extends CustomCommand implements CustomTabComple
     }
 
     private void performCommand(GamePreset gamePreset, CommandSender player, String[] args) {
-        boolean teamsConfigured = this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM);
-        int rosterSize = this.plugin.getRoster().players().size();
+        boolean teamsConfigured = this.settings.isSettingEnabled(GameSetting.TEAM);
+        int rosterSize = this.roster.players().size();
 
         RoundStart start = gamePreset != null
                 ? RoundStart.fromPreset(gamePreset, teamsConfigured, rosterSize)
@@ -99,12 +125,12 @@ public final class CommandStart extends CustomCommand implements CustomTabComple
 
         this.applyTeams(plan.teams());
 
-        this.plugin.getRoundClock().startRound(plan.durationSeconds());
-        this.plugin.getGamemanager().setJokerAmount(jokersAmount);
-        this.plugin.getGamemanager().initializeMaterials();
+        this.roundClock.startRound(plan.durationSeconds());
+        this.gamemanager.setJokerAmount(jokersAmount);
+        this.gamemanager.initializeMaterials();
 
         // Teams and force items are assigned by now, so the roster is frozen from here on.
-        this.plugin.getRoundPhase().moveTo(GameState.STARTING);
+        this.roundPhase.moveTo(GameState.STARTING);
 
         new BukkitRunnable() {
 
@@ -116,7 +142,7 @@ public final class CommandStart extends CustomCommand implements CustomTabComple
                 if (seconds == 0) {
                     cancel();
 
-                    plugin.getGamemanager().startGame(durationMinutes, jokersAmount);
+                    CommandStart.this.gamemanager.startGame(durationMinutes, jokersAmount);
                     return;
                 }
                 if (seconds < 6) {
@@ -147,7 +173,7 @@ public final class CommandStart extends CustomCommand implements CustomTabComple
 
                 Bukkit.getOnlinePlayers().forEach(player -> {
                     ForceItemPlayer forceItemPlayer =
-                            plugin.getRoster().participant(player.getUniqueId()).orElse(null);
+                            CommandStart.this.roster.participant(player.getUniqueId()).orElse(null);
                     if (forceItemPlayer == null) {
                         return;
                     }
@@ -171,7 +197,7 @@ public final class CommandStart extends CustomCommand implements CustomTabComple
 
                 switch (seconds) {
                     case 8 ->
-                            subTitle = "<white>» <gold>" + (plugin.getTimerManager().getTimeLeft() / 60) + " minutes <white>«";
+                            subTitle = "<white>» <gold>" + (CommandStart.this.timerManager.getTimeLeft() / 60) + " minutes <white>«";
                     case 6 -> subTitle = "<white>» <gold>" + jokersAmount + " Jokers <white>«";
                     case 5 -> subTitle = "<white>» <gold>/info & /infowiki <white>«";
                     case 4 -> subTitle = "<white>» <gold>/spawn & /bed <white>«";
@@ -181,17 +207,17 @@ public final class CommandStart extends CustomCommand implements CustomTabComple
 
                 return subTitle;
             }
-        }.runTaskTimer(this.plugin, 0L, 20L);
+        }.runTaskTimer(CommandStart.this.plugin, 0L, 20L);
     }
 
     /** Every branch here is an effect; which one runs was decided by {@link RoundStart}. */
     private void applyTeams(RoundStart.Teams teams) {
         switch (teams) {
-            case BUILD -> this.plugin.getTeamManager().autoTeams();
+            case BUILD -> this.teamManager.autoTeams();
             case TOO_FEW_PLAYERS -> {
                 Bukkit.broadcast(Text.of("<red>There are not enough players online to enable teams"));
-                this.plugin.getSettings().setSettingEnabled(GameSetting.TEAM, false);
-                this.plugin.getTeamManager().clearAllTeams();
+                this.settings.setSettingEnabled(GameSetting.TEAM, false);
+                this.teamManager.clearAllTeams();
             }
             case NONE -> { }
         }
@@ -199,6 +225,6 @@ public final class CommandStart extends CustomCommand implements CustomTabComple
 
     @Override
     public List<String> onTabComplete(Player player, String label, String[] args) {
-        return new ArrayList<>(this.plugin.getSettings().gamePresetMap().keySet());
+        return new ArrayList<>(this.settings.gamePresetMap().keySet());
     }
 }

@@ -1,6 +1,5 @@
 package forceitembattle.commands;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.util.Text;
 import java.util.List;
 import lombok.Getter;
@@ -19,7 +18,6 @@ import org.bukkit.entity.Player;
 @Getter
 public abstract class CustomCommand implements CommandExecutor {
 
-    protected final ForceItemBattle plugin;
     private final String name;
     private String usage;
     private String description;
@@ -30,8 +28,7 @@ public abstract class CustomCommand implements CommandExecutor {
      */
     private CommandContext context;
 
-    public CustomCommand(ForceItemBattle plugin, String name) {
-        this.plugin = plugin;
+    public CustomCommand(String name) {
         this.name = name;
     }
 

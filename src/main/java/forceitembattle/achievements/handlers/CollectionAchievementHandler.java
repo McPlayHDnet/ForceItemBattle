@@ -1,13 +1,13 @@
 package forceitembattle.achievements.handlers;
 
 import forceitembattle.achievements.AchievementWorld;
+import forceitembattle.achievements.BiomeGroup;
 import forceitembattle.achievements.Trigger;
 import forceitembattle.achievements.progress.CollectionAchievementProgress;
+import forceitembattle.collection.MaterialCategory;
 import forceitembattle.event.FoundItemEvent;
-import forceitembattle.model.BiomeGroup;
 import forceitembattle.model.Dimension;
 import forceitembattle.model.ForceItemPlayer;
-import forceitembattle.model.MaterialCategory;
 import java.util.Set;
 import org.bukkit.Material;
 import org.bukkit.block.Biome;

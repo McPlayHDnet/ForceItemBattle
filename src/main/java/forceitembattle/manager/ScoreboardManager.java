@@ -1,10 +1,10 @@
 package forceitembattle.manager;
 
-import forceitembattle.ForceItemBattle;
-import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ActiveTrader;
-import forceitembattle.settings.GameSettings;
+import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.Roster;
+import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Text;
 import java.util.Comparator;
 import java.util.List;
@@ -17,10 +17,18 @@ import org.bukkit.scoreboard.Team;
 
 public class ScoreboardManager implements Manager {
 
-    private final ForceItemBattle plugin;
+    private final Roster roster;
+    private final GameSettings settings;
+    private final WanderingTraderManager wanderingTraderManager;
+    private final ItemDifficultiesManager itemDifficultiesManager;
 
-    public ScoreboardManager(ForceItemBattle plugin) {
-        this.plugin = plugin;
+    public ScoreboardManager(Roster roster, GameSettings settings,
+                             WanderingTraderManager wanderingTraderManager,
+                             ItemDifficultiesManager itemDifficultiesManager) {
+        this.roster = roster;
+        this.settings = settings;
+        this.wanderingTraderManager = wanderingTraderManager;
+        this.itemDifficultiesManager = itemDifficultiesManager;
     }
 
     public void setupForPlayer(Player player) {
@@ -37,12 +45,12 @@ public class ScoreboardManager implements Manager {
     }
 
     public void updateForPlayer(Player viewer) {
-        GameSettings settings = plugin.getSettings();
+        GameSettings settings = this.settings;
         Scoreboard board = viewer.getScoreboard();
 
         board.getTeams().forEach(Team::unregister);
 
-        List<ForceItemPlayer> fibPlayers = plugin.getRoster().players().values()
+        List<ForceItemPlayer> fibPlayers = this.roster.players().values()
                 .stream()
                 .sorted(Comparator.comparingInt(p -> {
                     forceitembattle.model.Team team = p.currentTeam();
@@ -69,8 +77,7 @@ public class ScoreboardManager implements Manager {
             Material mat = fibPlayer.activeMaterial();
 
             if (mat != null) {
-                String itemIcon = this.plugin
-                        .getItemDifficultiesManager()
+                String itemIcon = this.itemDifficultiesManager
                         .getUnicodeFromMaterial(true, mat);
 
                 team.suffix(Text.of(
@@ -84,7 +91,7 @@ public class ScoreboardManager implements Manager {
             team.addPlayer(fibPlayer.player());
         }
 
-        for (ActiveTrader trader : this.plugin.getWanderingTraderManager().activeTraders()) {
+        for (ActiveTrader trader : this.wanderingTraderManager.activeTraders()) {
             String name = "TRADER_" + trader.getKind().name();
             org.bukkit.scoreboard.Team traderTeam = board.getTeam(name);
             if (traderTeam == null) {

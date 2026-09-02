@@ -1,12 +1,12 @@
 package forceitembattle.commands.player;
 
-import forceitembattle.commands.Precondition;
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
+import forceitembattle.commands.CustomTabCompleter;
+import forceitembattle.commands.Precondition;
 import forceitembattle.model.stats.DuoLeaderboardEntry;
 import forceitembattle.model.stats.LeaderboardEntry;
 import forceitembattle.model.stats.PlayerIdentity;
-import forceitembattle.commands.CustomTabCompleter;
+import forceitembattle.service.FIBServiceClient;
 import forceitembattle.service.FibStatisticsClient;
 import forceitembattle.util.Text;
 import java.util.List;
@@ -26,8 +26,11 @@ public final class CommandLeaderboard extends CustomCommand implements CustomTab
             "highest_score", "total_items", "games_won", "back_to_back_streak", "blocks_travelled"
     );
 
-    public CommandLeaderboard(ForceItemBattle plugin) {
-        super(plugin, "top");
+    private final FIBServiceClient fibService;
+
+    public CommandLeaderboard(FIBServiceClient fibService) {
+        super("top");
+        this.fibService = fibService;
         setUsage("[solo|duo|teams|achievements] [stat]");
         setDescription("Show the stat leaderboards");
     }
@@ -39,7 +42,7 @@ public final class CommandLeaderboard extends CustomCommand implements CustomTab
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        FibStatisticsClient helper = this.plugin.getFibService().statistics();
+        FibStatisticsClient helper = this.fibService.statistics();
 
         // The first argument is always the scope: solo, duo or teams. Omitting it
         // falls back to the solo leaderboard, so a bare "/top" still works.
@@ -123,7 +126,7 @@ public final class CommandLeaderboard extends CustomCommand implements CustomTab
     }
 
     private void showAchievementLeaderboard(Player player) {
-        this.plugin.getFibService().achievements().achievementLeaderboard(TOP_LIMIT, entries -> {
+        this.fibService.achievements().achievementLeaderboard(TOP_LIMIT, entries -> {
             player.sendMessage(" ");
             player.sendMessage(Text.of("<dark_gray>» <gold><b>Leaderboard</b> <dark_gray>● <green>Achievements <dark_gray>«"));
             player.sendMessage(" ");

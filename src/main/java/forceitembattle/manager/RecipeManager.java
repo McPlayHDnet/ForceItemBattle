@@ -1,12 +1,11 @@
 package forceitembattle.manager;
 
-import forceitembattle.settings.GameSettings;
-import forceitembattle.ForceItemBattle;
+import forceitembattle.gui.RecipeInventory;
+import forceitembattle.gui.RecipeViewer;
 import forceitembattle.manager.customrecipe.FakeRecipe;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.gui.RecipeInventory;
-import forceitembattle.gui.RecipeViewer;
+import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Text;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,17 +19,18 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.RecipeChoice;
 import org.bukkit.inventory.ShapedRecipe;
+import org.bukkit.plugin.Plugin;
 
 public class RecipeManager implements Manager {
 
     private final GameSettings settings;
     public final HashMap<UUID, Boolean> ignoreCloseHandler;
     public final HashMap<UUID, Runnable> closeHandlers;
-    private final ForceItemBattle forceItemBattle;
+    private final Plugin plugin;
     private final HashMap<UUID, RecipeViewer> recipeViewerMap;
 
-    public RecipeManager(ForceItemBattle forceItemBattle, GameSettings settings) {
-        this.forceItemBattle = forceItemBattle;
+    public RecipeManager(Plugin plugin, GameSettings settings) {
+        this.plugin = plugin;
         this.settings = settings;
         this.recipeViewerMap = new HashMap<>();
         this.ignoreCloseHandler = new HashMap<>();
@@ -54,7 +54,7 @@ public class RecipeManager implements Manager {
 
         this.recipeViewerMap.put(player.getUniqueId(), recipeViewer);
 
-        new RecipeInventory(this.forceItemBattle, this.getRecipeViewer(player), player).open(player);
+        new RecipeInventory(this, this.getRecipeViewer(player), player).open(player);
     }
 
     public void initRecipes() {
@@ -132,10 +132,10 @@ public class RecipeManager implements Manager {
     }
 
     public List<Recipe> getRecipes(ItemStack item) {
-        FakeRecipe fakeRecipe = FakeRecipe.forItem(item, this.forceItemBattle);
+        FakeRecipe fakeRecipe = FakeRecipe.forItem(item, this.settings);
 
         if (fakeRecipe != null) {
-            Recipe recipe = fakeRecipe.getRecipe(item, this.forceItemBattle);
+            Recipe recipe = fakeRecipe.getRecipe(item, this.plugin);
 
             if (recipe != null) {
                 return List.of(recipe);

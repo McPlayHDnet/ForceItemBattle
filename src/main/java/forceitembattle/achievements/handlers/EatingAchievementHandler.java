@@ -1,8 +1,8 @@
 package forceitembattle.achievements.handlers;
 
 import forceitembattle.achievements.AchievementWorld;
+import forceitembattle.achievements.CustomItemSpec;
 import forceitembattle.achievements.Trigger;
-import forceitembattle.model.CustomItem;
 import forceitembattle.model.ForceItemPlayer;
 import org.bukkit.event.Event;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
@@ -10,9 +10,9 @@ import org.bukkit.event.player.PlayerItemConsumeEvent;
 public class EatingAchievementHandler extends CountingAchievementHandler {
 
     /** Null means any consumable counts. */
-    private final CustomItem requiredItem;
+    private final CustomItemSpec requiredItem;
 
-    public EatingAchievementHandler(int targetAmount, CustomItem requiredItem) {
+    public EatingAchievementHandler(int targetAmount, CustomItemSpec requiredItem) {
         super(targetAmount);
         this.requiredItem = requiredItem;
     }

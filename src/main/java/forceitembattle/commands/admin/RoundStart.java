@@ -1,4 +1,4 @@
-package forceitembattle.model;
+package forceitembattle.commands.admin;
 
 import forceitembattle.settings.GamePreset;
 

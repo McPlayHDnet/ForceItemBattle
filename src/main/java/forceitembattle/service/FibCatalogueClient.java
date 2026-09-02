@@ -5,11 +5,13 @@ import de.threeseconds.openapi.fibservice.client.invoker.ApiException;
 import de.threeseconds.openapi.fibservice.client.model.FibAchievementCatalogueUpdateRequestDto;
 import de.threeseconds.openapi.fibservice.client.model.FibCatalogueAchievementSubmitDto;
 import de.threeseconds.openapi.fibservice.client.model.FibItemCatalogueUpdateRequestDto;
-import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.Achievements;
+import forceitembattle.collection.CollectionManager;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
+import org.bukkit.plugin.Plugin;
 
 /**
  * Catalogue domain of FIBService: publishes what the game <em>defines</em>, so consumers can turn
@@ -27,12 +29,20 @@ public class FibCatalogueClient {
 
     private final FibCatalogueControllerApi api;
     private final ApiExecutor executor;
-    private final ForceItemBattle plugin;
+    private final Plugin plugin;
 
-    FibCatalogueClient(FibCatalogueControllerApi api, ApiExecutor executor, ForceItemBattle plugin) {
+    /**
+     * Late-bound: {@code CollectionManager} is constructed from this client, so it does not
+     * exist yet when this is built. Only ever read inside {@code publishAsync}, well after boot.
+     */
+    private final Supplier<CollectionManager> collection;
+
+    FibCatalogueClient(FibCatalogueControllerApi api, ApiExecutor executor, Plugin plugin,
+                       Supplier<CollectionManager> collection) {
         this.api = api;
         this.executor = executor;
         this.plugin = plugin;
+        this.collection = collection;
     }
 
     /** Publishes both catalogues. Each is independent -- one failing doesn't hold up the other. */
@@ -42,7 +52,7 @@ public class FibCatalogueClient {
     }
 
     public void publishItemsAsync(Consumer<ApiException> onError) {
-        List<String> items = new ArrayList<>(this.plugin.getCollectionManager().getCollectionCatalogue());
+        List<String> items = new ArrayList<>(this.collection.get().getCollectionCatalogue());
         if (items.isEmpty()) {
             // The service rejects an empty catalogue anyway; caught here so the log names the real
             // cause rather than an HTTP 400.

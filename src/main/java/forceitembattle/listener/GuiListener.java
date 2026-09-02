@@ -1,6 +1,5 @@
 package forceitembattle.listener;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.util.Scheduler;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.gui.InventoryBuilder;
@@ -16,8 +15,6 @@ import org.bukkit.inventory.ItemStack;
 
 @RequiredArgsConstructor
 public class GuiListener implements Listener {
-
-    private final ForceItemBattle plugin;
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
@@ -43,7 +40,6 @@ public class GuiListener implements Listener {
                 return;
             }
         }
-
 
         if (event.getInventory().getHolder() instanceof InventoryBuilder inventoryBuilder) {
             inventoryBuilder.handleClick(event);

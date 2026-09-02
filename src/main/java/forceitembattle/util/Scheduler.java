@@ -1,7 +1,7 @@
 package forceitembattle.util;
 
-import forceitembattle.ForceItemBattle;
 import org.bukkit.Bukkit;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
 
 /**
@@ -14,12 +14,12 @@ import org.bukkit.scheduler.BukkitTask;
  */
 public final class Scheduler {
 
-    private static ForceItemBattle plugin;
+    private static Plugin plugin;
 
     private Scheduler() {
     }
 
-    public static void init(ForceItemBattle plugin) {
+    public static void init(Plugin plugin) {
         Scheduler.plugin = plugin;
     }
 

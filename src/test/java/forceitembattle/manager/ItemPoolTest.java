@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import forceitembattle.ForceItemBattle;
+import org.bukkit.plugin.java.JavaPlugin;
 import forceitembattle.manager.ItemDifficultiesManager.State;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
@@ -25,28 +25,19 @@ class ItemPoolTest {
     private ItemDifficultiesManager items;
     private final RoundClock roundClock = new RoundClock();
     private GameSettings settings;
-    private TimerManager timer;
-    private Gamemanager game;
 
     @BeforeEach
     void setUp() {
-        ForceItemBattle plugin = mock(ForceItemBattle.class);
-        settings = mock(GameSettings.class);
-        timer = mock(TimerManager.class);
-        game = mock(Gamemanager.class);
-
-        when(plugin.getSettings()).thenReturn(settings);
-        when(plugin.getTimerManager()).thenReturn(timer);
-        when(plugin.getGamemanager()).thenReturn(game);
-        when(plugin.getRoundClock()).thenReturn(roundClock);
+        JavaPlugin plugin = mock(JavaPlugin.class);
         when(plugin.getConfig()).thenReturn(new YamlConfiguration());
+        settings = mock(GameSettings.class);
 
         when(settings.getQuickieMode()).thenReturn(QuickieMode.DISABLED);
         when(settings.isSettingEnabled(GameSetting.HARD)).thenReturn(true);
         when(settings.isSettingEnabled(GameSetting.EXTREME)).thenReturn(true);
         when(settings.isSettingEnabled(GameSetting.END)).thenReturn(true);
 
-        items = new ItemDifficultiesManager(plugin);
+        items = new ItemDifficultiesManager(plugin, roundClock, settings);
         items.enable();
     }
 

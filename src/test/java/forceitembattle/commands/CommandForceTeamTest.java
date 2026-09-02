@@ -10,9 +10,7 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.admin.CommandForceTeam;
 import forceitembattle.manager.TeamsManager;
 import forceitembattle.model.ForceItemPlayer;
@@ -51,14 +49,10 @@ class CommandForceTeamTest {
     void setUp() {
         this.server = MockBukkit.mock();
 
-        ForceItemBattle plugin = mock(ForceItemBattle.class);
         this.roster = new Roster();
         this.teams = mock(TeamsManager.class);
 
-        when(plugin.getRoster()).thenReturn(this.roster);
-        when(plugin.getTeamManager()).thenReturn(this.teams);
-
-        this.command = new CommandForceTeam(plugin);
+        this.command = new CommandForceTeam(this.roster, this.teams);
         inARoundThatIs(GameState.PRE_GAME, GameSetting.TEAM);
     }
 
