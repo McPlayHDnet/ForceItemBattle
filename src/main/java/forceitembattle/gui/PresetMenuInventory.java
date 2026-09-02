@@ -15,7 +15,6 @@ public final class PresetMenuInventory extends InventoryBuilder {
     public PresetMenuInventory(ForceItemBattle forceItemBattle, GameSettings gameSettings) {
         super(9 * 5, Text.of("<dark_gray>» <dark_aqua>Settings <dark_gray>● <gray>Presets"));
 
-        /* BORDER */
         this.setItems(0, 8, GuiItems.border());
         this.setItems(36, 44, GuiItems.border());
 

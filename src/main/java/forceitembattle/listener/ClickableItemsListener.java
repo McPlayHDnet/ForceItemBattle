@@ -176,7 +176,7 @@ public class ClickableItemsListener implements Listener {
     }
 
     @EventHandler
-    public void onClick(PlayerInteractEvent e) { // triggered if a joker is used
+    public void onClick(PlayerInteractEvent e) {
         Player player = e.getPlayer();
         if (!this.roundPhase.roundRunning()) {
             return;

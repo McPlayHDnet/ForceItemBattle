@@ -67,7 +67,6 @@ public final class ItemsInventory extends InventoryBuilder {
 
         this.forceItemBattle = forceItemBattle;
 
-        /* TOP-BORDER */
         this.setItems(0, 8, GuiItems.border());
 
         drawFilterButtons(player);

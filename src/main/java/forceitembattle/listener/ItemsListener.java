@@ -73,7 +73,6 @@ public class ItemsListener implements Listener {
         checkItemFound(player, forceItemPlayer, clickedItem);
     }
 
-    /* Found-/Skip Item */
     @EventHandler
     public void onPickupEvent(EntityPickupItemEvent entityPickupItemEvent) {
         if (!(entityPickupItemEvent.getEntity() instanceof Player player)) {

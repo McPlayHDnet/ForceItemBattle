@@ -19,7 +19,6 @@ public final class SettingsPresetsInventory extends InventoryBuilder {
     public SettingsPresetsInventory(ForceItemBattle forceItemBattle, GamePreset gamePreset, GameSettings gameSettings) {
         super(9 * 5, Text.of("<dark_gray>» <dark_aqua>Settings <dark_gray>● <gray>Presets"));
 
-        /* BORDER */
         this.setItems(0, 8, GuiItems.border());
         this.setItems(36, 44, GuiItems.border());
 
@@ -27,7 +26,6 @@ public final class SettingsPresetsInventory extends InventoryBuilder {
 
             List<String> lore = new ArrayList<>();
 
-            /* Name-Preset */
             this.setItem(19, new ItemBuilder(Material.NAME_TAG)
                     .setDisplayName("<dark_gray>● <green>Preset Name <dark_gray>» " + (gamePreset.getPresetName().isEmpty() ? "<red>Not set" : "<dark_aqua>" + gamePreset.getPresetName()))
                     .getItemStack(), event -> {
@@ -38,7 +36,6 @@ public final class SettingsPresetsInventory extends InventoryBuilder {
                 getPlayer().sendMessage(Text.of("<dark_aqua>Send your desired preset-name in chat"));
             });
 
-            /* Timer-Preset */
             this.setItem(21, new ItemBuilder(Material.CLOCK)
                     .setDisplayName("<dark_gray>● <green>Time <dark_gray>» <dark_aqua>" + gamePreset.getCountdown())
                     .getItemStack(), event -> {
@@ -48,7 +45,6 @@ public final class SettingsPresetsInventory extends InventoryBuilder {
             });
 
 
-            /* Settings-Preset */
             lore.add("");
             for (GameSetting defaultGameSettings : GameSetting.values()) {
                 lore.add("  <dark_gray>● <gray>" + defaultGameSettings.displayName() + " <dark_gray>» " + (gamePreset.getGameSettings().contains(defaultGameSettings) ? "<dark_green>✔" : "<dark_red>✘"));
@@ -65,7 +61,6 @@ public final class SettingsPresetsInventory extends InventoryBuilder {
             lore.clear();
 
 
-            /* Joker-Preset */
             this.setItem(25, new ItemBuilder(Material.BARRIER)
                     .setDisplayName("<dark_gray>● <green>Joker <dark_gray>» <dark_aqua>" + gamePreset.getJokers())
                     .getItemStack(), event -> {
@@ -82,7 +77,6 @@ public final class SettingsPresetsInventory extends InventoryBuilder {
 
             });
 
-            /* Save-Preset */
             this.setItem(44, new ItemBuilder(Material.LIME_STAINED_GLASS_PANE)
                     .setDisplayName("<dark_gray>● <green>Save & create preset")
                     .getItemStack(), event -> {

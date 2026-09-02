@@ -156,7 +156,6 @@ public class Gamemanager implements Manager {
     }
 
     private static boolean isJoker(Material material) {
-        // TODO change to also use NBT maybe
         return material == JOKER_MATERIAL;
     }
 

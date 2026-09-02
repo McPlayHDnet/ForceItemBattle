@@ -467,7 +467,6 @@ class CommandStatsTest {
             verifyNoInteractions(helper);
         }
 
-        /** One name pairs the caller with them. */
         @Test
         void oneNamePairsTheCallerWithThatPlayer() {
             PlayerMock player = join("Understudy1");
@@ -479,7 +478,6 @@ class CommandStatsTest {
             verify(helper).teamStats(eq(player.getUniqueId()), eq(other.getUniqueId()), any(), any());
         }
 
-        /** Two names pair those two, and the caller is not one of them. */
         @Test
         void twoNamesPairThoseTwoAndNotTheCaller() {
             PlayerMock player = join("Understudy1");

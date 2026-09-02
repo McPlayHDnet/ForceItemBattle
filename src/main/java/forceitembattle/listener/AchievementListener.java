@@ -70,7 +70,7 @@ public class AchievementListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.MONITOR) // Changed to MONITOR so it runs AFTER Listeners.updateMaterials()
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onItemObtain(FoundItemEvent event) {
         Player player = event.getPlayer();
 

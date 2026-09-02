@@ -124,7 +124,7 @@ public enum FakeRecipe {
         try {
             dye = Material.valueOf(colorName + "_DYE");
         } catch (IllegalArgumentException e) {
-            dye = Material.GRAY_DYE; // Default color ig
+            dye = Material.GRAY_DYE;
         }
 
         Material finalDye = dye;
