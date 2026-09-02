@@ -18,7 +18,6 @@ import forceitembattle.settings.GamePreset;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.settings.Ruleset;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,7 +39,6 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
 class CommandStartTest {
 
     private ServerMock server;
-    private JavaPlugin plugin;
     private GameSettings settings;
     private Ruleset ruleset;
     private CommandStart command;
@@ -48,7 +46,6 @@ class CommandStartTest {
     @BeforeEach
     void setUp() {
         this.server = MockBukkit.mock();
-        this.plugin = mock(JavaPlugin.class);
         this.settings = mock(GameSettings.class);
         this.ruleset = new Ruleset(mock(ConfigSource.class));
 
@@ -56,7 +53,7 @@ class CommandStartTest {
         // performCommand reads the roster head-count before it parses the arguments, so even the
         // paths that refuse on a bad argument need one present.
 
-        this.command = new CommandStart(mock(Gamemanager.class), mock(TimerManager.class), new Roster(), mock(RoundPhase.class), mock(RoundClock.class), this.settings, mock(TeamsManager.class), plugin);
+        this.command = new CommandStart(mock(Gamemanager.class), mock(TimerManager.class), new Roster(), mock(RoundPhase.class), mock(RoundClock.class), this.settings, mock(TeamsManager.class));
         // The op gate is declared, so it is evaluated in onCommand -- which needs the context that
         // CommandsManager supplies at bootstrap.
         // Cast because setContext is package-private on CustomCommand, and a package-private

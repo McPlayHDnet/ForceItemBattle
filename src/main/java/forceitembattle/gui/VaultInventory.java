@@ -3,6 +3,7 @@ package forceitembattle.gui;
 import forceitembattle.event.WheelOfFortuneWinEvent;
 import forceitembattle.manager.ItemDifficultiesManager;
 import forceitembattle.model.CustomMaterials;
+import forceitembattle.util.Scheduler;
 import forceitembattle.util.Text;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -16,18 +17,15 @@ import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
 public final class VaultInventory extends InventoryBuilder {
 
-    private final Plugin plugin;
     private final ItemDifficultiesManager items;
 
-    public VaultInventory(Plugin plugin, ItemDifficultiesManager items) {
+    public VaultInventory(ItemDifficultiesManager items) {
         super(9 * 5, Text.of("<dark_gray>» <dark_green>Vault"));
 
-        this.plugin = plugin;
         this.items = items;
 
         this.setItems(0, 8, GuiItems.accentBorder());
@@ -48,7 +46,7 @@ public final class VaultInventory extends InventoryBuilder {
             List<Material> itemList = new ArrayList<>(items.getAvailableItems());
             Collections.shuffle(itemList);
 
-            new BukkitRunnable() {
+            Scheduler.runTimerSync(new BukkitRunnable() {
                 final int totalDuration = 315;
                 int ticks = 0;
                 int currentIndex = 0;
@@ -107,7 +105,7 @@ public final class VaultInventory extends InventoryBuilder {
                 private double easeOutCubic(double x) {
                     return 1 - Math.pow(1 - x, 3);
                 }
-            }.runTaskTimer(this.plugin, 0L, 1L);
+            }, 0L, 1L);
         });
 
         this.addClickHandler(inventoryClickEvent -> inventoryClickEvent.setCancelled(true));

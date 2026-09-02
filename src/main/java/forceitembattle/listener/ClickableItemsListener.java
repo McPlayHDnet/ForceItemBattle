@@ -49,7 +49,6 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.Plugin;
 
 @RequiredArgsConstructor
 public class ClickableItemsListener implements Listener {
@@ -70,9 +69,6 @@ public class ClickableItemsListener implements Listener {
             Material.SNOW,
             Material.SNOW_BLOCK
     );
-    /** Only for {@code VaultInventory}, which schedules its spin animation. */
-    private final Plugin plugin;
-
     /** Read, never held: the lobby spawn moves when a round starts. */
     private final Supplier<Location> spawnLocation;
     private final GuiContext gui;
@@ -212,7 +208,7 @@ public class ClickableItemsListener implements Listener {
         }
 
         if (CustomMaterials.WHEEL_OF_FORTUNE.matches(e.getItem())) {
-            new VaultInventory(this.plugin, this.items).open(player);
+            new VaultInventory(this.items).open(player);
             player.getInventory().getItemInMainHand().setAmount(player.getInventory().getItemInMainHand().getAmount() - 1);
 
             if (this.settings.isSettingEnabled(GameSetting.STATS)) {

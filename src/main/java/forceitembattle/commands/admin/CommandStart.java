@@ -16,6 +16,7 @@ import forceitembattle.model.RoundPhase;
 import forceitembattle.settings.GamePreset;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
+import forceitembattle.util.Scheduler;
 import forceitembattle.util.Text;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -26,7 +27,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
 public final class CommandStart extends CustomCommand implements CustomTabCompleter {
@@ -40,9 +40,8 @@ public final class CommandStart extends CustomCommand implements CustomTabComple
     private final TeamsManager teamManager;
 
     /** Only to schedule the countdown. */
-    private final Plugin plugin;
 
-    public CommandStart(Gamemanager gamemanager, TimerManager timerManager, Roster roster, RoundPhase roundPhase, RoundClock roundClock, GameSettings settings, TeamsManager teamManager, Plugin plugin) {
+    public CommandStart(Gamemanager gamemanager, TimerManager timerManager, Roster roster, RoundPhase roundPhase, RoundClock roundClock, GameSettings settings, TeamsManager teamManager) {
         super("start");
         this.gamemanager = gamemanager;
         this.timerManager = timerManager;
@@ -51,7 +50,6 @@ public final class CommandStart extends CustomCommand implements CustomTabComple
         this.roundClock = roundClock;
         this.settings = settings;
         this.teamManager = teamManager;
-        this.plugin = plugin;
         setUsage("<time in min> <jokers> or <preset>");
         setDescription("Start the game");
     }
@@ -132,7 +130,7 @@ public final class CommandStart extends CustomCommand implements CustomTabComple
         // Teams and force items are assigned by now, so the roster is frozen from here on.
         this.roundPhase.moveTo(GameState.STARTING);
 
-        new BukkitRunnable() {
+        Scheduler.runTimerSync(new BukkitRunnable() {
 
             int seconds = 11;
 
@@ -207,7 +205,7 @@ public final class CommandStart extends CustomCommand implements CustomTabComple
 
                 return subTitle;
             }
-        }.runTaskTimer(CommandStart.this.plugin, 0L, 20L);
+        }, 0L, 20L);
     }
 
     /** Every branch here is an effect; which one runs was decided by {@link RoundStart}. */

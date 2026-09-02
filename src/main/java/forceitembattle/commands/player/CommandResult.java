@@ -21,7 +21,6 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
 
 public final class CommandResult extends CustomCommand {
 
@@ -31,9 +30,8 @@ public final class CommandResult extends CustomCommand {
     private final GameSettings settings;
     private final TeamsManager teamManager;
     private final ResultCeremony resultCeremony;
-    private final Plugin plugin;
 
-    public CommandResult(Gamemanager gamemanager, TimerManager timerManager, Roster roster, GameSettings settings, TeamsManager teamManager, ResultCeremony resultCeremony, Plugin plugin) {
+    public CommandResult(Gamemanager gamemanager, TimerManager timerManager, Roster roster, GameSettings settings, TeamsManager teamManager, ResultCeremony resultCeremony) {
         super("result");
         this.gamemanager = gamemanager;
         this.timerManager = timerManager;
@@ -41,7 +39,6 @@ public final class CommandResult extends CustomCommand {
         this.settings = settings;
         this.teamManager = teamManager;
         this.resultCeremony = resultCeremony;
-        this.plugin = plugin;
         setDescription("Show the next player's result");
     }
 
@@ -128,7 +125,6 @@ public final class CommandResult extends CustomCommand {
         // The reveal builds the pages and hands them out; the ceremony stores them. The GUI never
         // reaches into shared state to do it.
         Bukkit.getOnlinePlayers().forEach(viewer -> new ResultReveal(
-                this.plugin,
                 this.settings,
                 reveal,
                 pages -> ceremony.archive(reveal.owner(), pages),

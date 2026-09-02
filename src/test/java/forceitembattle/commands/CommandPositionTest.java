@@ -18,12 +18,12 @@ import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameState;
 import forceitembattle.model.Roster;
 import forceitembattle.settings.GameSetting;
+import forceitembattle.util.Scheduler;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -68,7 +68,7 @@ class CommandPositionTest {
         this.world = this.server.addSimpleWorld("world");
         this.saved.clear();
 
-        JavaPlugin plugin = mock(JavaPlugin.class);
+        Scheduler.init(MockBukkit.createMockPlugin());
         this.roster = new Roster();
         this.positions = mock(PositionManager.class);
 
@@ -82,6 +82,7 @@ class CommandPositionTest {
 
     @AfterEach
     void tearDown() {
+        Scheduler.reset();
         MockBukkit.unmock();
     }
 
@@ -105,6 +106,12 @@ class CommandPositionTest {
 
     private void run(PlayerMock player, String... args) {
         this.command.onCommand(player, null, "pos", args);
+    }
+
+    /** Runs the command, then lets the async body it scheduled finish. */
+    private void runAndSettle(PlayerMock player, String... args) {
+        run(player, args);
+        this.server.getScheduler().waitAsyncTasksFinished();
     }
 
     // --- the tests --------------------------------------------------------------------------
@@ -284,6 +291,87 @@ class CommandPositionTest {
             run(admin, "fortress");
 
             verify(positions).createPosition(eq("fortress"), any(Location.class));
+        }
+    }
+
+    /** {@code /pos} and {@code /pos list} — the whole shared list, distances included. */
+    @Nested
+    class Listing {
+
+        @Test
+        void withNoArgumentTheWholeListIsSent() {
+            PlayerMock player = joinPlaying("Understudy1");
+            alreadySaved("fortress");
+            alreadySaved("ancient city");
+
+            runAndSettle(player);
+
+            String said = screenOf(player);
+            assertTrue(said.contains("All saved locations"), said);
+            assertTrue(said.contains("fortress"), said);
+            assertTrue(said.contains("ancient city"), said);
+        }
+
+        /** {@code list} is the same path by keyword, and must not be read as a name to save. */
+        @Test
+        void theListKeywordSavesNothing() {
+            PlayerMock player = joinPlaying("Understudy1");
+
+            runAndSettle(player, "list");
+
+            verify(positions, never()).createPosition(any(), any());
+        }
+
+        @Test
+        void anEmptyListSaysSoRatherThanSendingAHeader() {
+            PlayerMock player = joinPlaying("Understudy1");
+
+            runAndSettle(player);
+
+            assertSaid(player, "Nobody added any locations yet.");
+        }
+    }
+
+    /**
+     * {@code /pos <existing name>} — the branch that shows rather than saves. The dispatch decision
+     * is covered in {@link Saving}; what is pinned here is that the async body actually runs and
+     * that it draws the line, which is the half that was unreachable.
+     */
+    @Nested
+    class Showing {
+
+        @Test
+        void anExistingNameReportsWhereItIs() {
+            PlayerMock player = joinPlaying("Understudy1");
+            alreadySaved("fortress");
+            when(positions.getPosition("fortress")).thenReturn(new Location(world, -400, 40, 900));
+
+            runAndSettle(player, "fortress");
+
+            assertSaid(player, "fortress");
+        }
+
+        @Test
+        void andDrawsTheLineToIt() {
+            PlayerMock player = joinPlaying("Understudy1");
+            alreadySaved("fortress");
+            Location fortress = new Location(world, -400, 40, 900);
+            when(positions.getPosition("fortress")).thenReturn(fortress);
+
+            runAndSettle(player, "fortress");
+
+            verify(positions).playParticleLine(eq(player), eq(fortress), any());
+        }
+
+        @Test
+        void andSavesNothingOverTheTopOfIt() {
+            PlayerMock player = joinPlaying("Understudy1");
+            alreadySaved("fortress");
+            when(positions.getPosition("fortress")).thenReturn(new Location(world, -400, 40, 900));
+
+            runAndSettle(player, "fortress");
+
+            verify(positions, never()).createPosition(any(), any());
         }
     }
 

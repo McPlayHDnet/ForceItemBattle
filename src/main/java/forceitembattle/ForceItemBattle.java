@@ -241,10 +241,10 @@ public final class ForceItemBattle extends JavaPlugin {
         this.itemDifficultiesManager = register(new ItemDifficultiesManager(this, this.roundClock, this.settings));
         this.customItemManager = register(new CustomItemManager(this));
         this.antimatterPortalManager = register(new AntimatterPortalManager(this));
-        this.positionManager = register(new PositionManager(this));
+        this.positionManager = register(new PositionManager());
         this.recipeManager = register(new RecipeManager(this, this.settings));
         this.backpackManager = register(new BackpackManager(this, this.roster));
-        this.locatorManager = register(new LocatorManager(this, this.positionManager));
+        this.locatorManager = register(new LocatorManager(this.positionManager));
 
         // The service client builds the match-history and catalogue clients, which read the
         // collection and achievement managers — both built out of this one. Late-bound, and only
@@ -369,7 +369,7 @@ public final class ForceItemBattle extends JavaPlugin {
                 new RecipeListener(this.recipeManager),
                 new PvPListener(this.roundPhase, this.settings),
                 new ProtectionListener(this.roster, this.roundPhase, this.protectionManager),
-                new ClickableItemsListener(this, this::getSpawnLocation, this.guiContext,
+                new ClickableItemsListener(this::getSpawnLocation, this.guiContext,
                         this.itemDifficultiesManager, this.roster, this.backpackManager, this.fibService, this.roundPhase, this.locatorManager, this.settings, this.timerManager),
                 new ItemsListener(this.roster, this.roundPhase),
                 new PortalListener(this.roster, this.antimatterPortalManager, this.fibService, this.roundPhase, this.settings),
@@ -397,13 +397,13 @@ public final class ForceItemBattle extends JavaPlugin {
         CommandsManager commands = this.commandsManager;
 
         commands.registerCommand(new CommandStart(this.gamemanager, this.timerManager, this.roster, this.roundPhase,
-                this.roundClock, this.settings, this.teamManager, this));
+                this.roundClock, this.settings, this.teamManager));
         commands.registerCommand(new CommandSettings(this.roster, this.settings));
         commands.registerCommand(new CommandSkip(this.gamemanager));
         commands.registerCommand(new CommandReset(this.seedPool, this.worldReset));
         commands.registerCommand(new CommandBp(this.backpackManager));
         commands.registerCommand(new CommandResult(this.gamemanager, this.timerManager, this.roster, this.settings,
-                this.teamManager, this.resultCeremony, this));
+                this.teamManager, this.resultCeremony));
         commands.registerCommand(new CommandInfo(this.roster, this.roundPhase, this.itemDifficultiesManager, this.recipeManager));
         commands.registerCommand(new CommandItems(this.itemDifficultiesManager));
         commands.registerCommand(new CommandStopTimer(this.timerManager));

@@ -9,6 +9,7 @@ import forceitembattle.randomevents.RandomEventManager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.util.FileLogger;
+import forceitembattle.util.Scheduler;
 import forceitembattle.util.Text;
 import forceitembattle.util.TimeFormat;
 import java.time.Duration;
@@ -164,7 +165,7 @@ public class TimerManager implements Manager {
     }
 
     private void run() {
-        this.timerTask = new BukkitRunnable() {
+        this.timerTask = Scheduler.runTimerSync(new BukkitRunnable() {
             @Override
             public void run() {
                 sendActionBar();
@@ -192,7 +193,7 @@ public class TimerManager implements Manager {
                     cancel();
                 }
             }
-        }.runTaskTimer(this.plugin, 20, 20);
+        }, 20, 20);
     }
 
     private void announceUnlockedPools() {

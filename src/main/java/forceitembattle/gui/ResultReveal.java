@@ -21,7 +21,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
 /**
@@ -48,8 +47,7 @@ public final class ResultReveal extends InventoryBuilder {
      * @param onRevealComplete run once the title and chat line went out, or null when this is not
      *                         the winner's turn
      */
-    public ResultReveal(Plugin plugin,
-                        GameSettings settings,
+    public ResultReveal(GameSettings settings,
                         ResultCeremony.Reveal reveal,
                         Consumer<Map<Integer, Map<Integer, ItemStack>>> onPagesBuilt,
                         @Nullable Runnable onRevealComplete) {
@@ -65,7 +63,7 @@ public final class ResultReveal extends InventoryBuilder {
 
         boolean isEvent = settings.isSettingEnabled(GameSetting.EVENT);
 
-        new BukkitRunnable() {
+        Scheduler.runTimerSync(new BukkitRunnable() {
 
             final Map<Integer, ItemStack> slots = new HashMap<>();
             int startSlot = FIRST_ITEM_SLOT;
@@ -156,37 +154,33 @@ public final class ResultReveal extends InventoryBuilder {
             }
 
             private void announceLater(String placeColor, String name, int itemCount, String chatMessage) {
-                new BukkitRunnable() {
+                Scheduler.runLaterSync(() -> {
+                    clearCloseHandlers();
 
-                    @Override
-                    public void run() {
-                        clearCloseHandlers();
-
-                        // Guards against a re-open landing on the very last tick.
-                        Scheduler.runLaterSync(() -> Bukkit.getOnlinePlayers().forEach(viewer -> {
-                            if (viewer.getOpenInventory().getTopInventory() == getInventory()) {
-                                viewer.closeInventory();
-                            }
-                        }), 1L);
-
-                        Title.Times times = Title.Times.times(
-                                Duration.ofMillis(750), Duration.ofMillis(1750), Duration.ofMillis(750));
-                        Component mainTitle = Text.of(placeColor + place + "<white>. " + name);
-                        Component subTitle = Text.of("<gold>" + itemCount + " Items found");
-
-                        for (Player viewer : Bukkit.getOnlinePlayers()) {
-                            viewer.showTitle(Title.title(mainTitle, subTitle, times));
+                    // Guards against a re-open landing on the very last tick.
+                    Scheduler.runLaterSync(() -> Bukkit.getOnlinePlayers().forEach(viewer -> {
+                        if (viewer.getOpenInventory().getTopInventory() == getInventory()) {
+                            viewer.closeInventory();
                         }
+                    }), 1L);
 
-                        getPlayer().sendMessage(Text.of(chatMessage));
+                    Title.Times times = Title.Times.times(
+                            Duration.ofMillis(750), Duration.ofMillis(1750), Duration.ofMillis(750));
+                    Component mainTitle = Text.of(placeColor + place + "<white>. " + name);
+                    Component subTitle = Text.of("<gold>" + itemCount + " Items found");
 
-                        if (onRevealComplete != null) {
-                            onRevealComplete.run();
-                        }
+                    for (Player viewer : Bukkit.getOnlinePlayers()) {
+                        viewer.showTitle(Title.title(mainTitle, subTitle, times));
                     }
-                }.runTaskLater(plugin, REVEAL_TO_TITLE_TICKS);
+
+                    getPlayer().sendMessage(Text.of(chatMessage));
+
+                    if (onRevealComplete != null) {
+                        onRevealComplete.run();
+                    }
+                }, REVEAL_TO_TITLE_TICKS);
             }
-        }.runTaskTimer(plugin, 0L, isEvent ? 8L : 10L);
+        }, 0L, isEvent ? 8L : 10L);
 
         this.addClickHandler(event -> event.setCancelled(true));
 

@@ -316,7 +316,7 @@ class CustomCommandTest {
             assertGates(new forceitembattle.commands.admin.CommandReset(null, null), "OP");
             assertGates(new forceitembattle.commands.admin.CommandSettings(null, null), "OP");
             assertGates(new forceitembattle.commands.admin.CommandSkip(null), "OP, ROUND_RUNNING");
-            assertGates(new forceitembattle.commands.admin.CommandStart(null, null, null, null, null, null, null, null), "OP");
+            assertGates(new forceitembattle.commands.admin.CommandStart(null, null, null, null, null, null, null), "OP");
             assertGates(new forceitembattle.commands.admin.CommandStopTimer(null), "OP, ROUND_RUNNING");
         }
 
@@ -349,7 +349,7 @@ class CustomCommandTest {
             assertGates(new forceitembattle.commands.player.CommandBed(), "");
             assertGates(new forceitembattle.commands.player.CommandInfo(null, null, null, null), "");
             assertGates(new forceitembattle.commands.player.CommandInfoWiki(null, null), "");
-            assertGates(new forceitembattle.commands.player.CommandResult(null, null, null, null, null, null, null), "");
+            assertGates(new forceitembattle.commands.player.CommandResult(null, null, null, null, null, null), "");
             assertGates(new forceitembattle.commands.player.CommandSpectate(null), "");
         }
     }

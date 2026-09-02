@@ -1,6 +1,7 @@
 package forceitembattle.manager;
 
 import forceitembattle.util.ParticleUtils;
+import forceitembattle.util.Scheduler;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.NonNull;
@@ -10,7 +11,6 @@ import org.bukkit.Particle;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,11 +42,9 @@ public class PositionManager implements Manager {
             {-0.12, 0.06}, {-0.12, -0.06}, {-0.18, 0.00},
     };
 
-    private final Plugin plugin;
     private final Map<String, Location> positionsMap;
 
-    public PositionManager(Plugin plugin) {
-        this.plugin = plugin;
+    public PositionManager() {
         this.positionsMap = new HashMap<>();
     }
 
@@ -79,7 +77,7 @@ public class PositionManager implements Manager {
 
         Location target = position.clone().add(0, 0.3, 0);
 
-        new BukkitRunnable() {
+        Scheduler.runTimerSync(new BukkitRunnable() {
             private static final double SPACING = 0.5;
             private static final double FLOW_STEP = 0.25;
             /** Horizontal distance within which the line reveals the target's depth. */
@@ -112,13 +110,13 @@ public class PositionManager implements Manager {
                 levelAim.setY(from.getY());
                 return levelAim;
             }
-        }.runTaskTimer(this.plugin, 0L, 10L);
+        }, 0L, 10L);
     }
 
     /** A short-lived (~5s) line of footprints across the ground towards the target. */
     public void playFootprintTrail(@NonNull Player player, @NonNull Location position, Color color) {
         if (player.getWorld() != position.getWorld()) return;
-        this.createFootprintTrail(player, position, color, 10).runTaskTimer(this.plugin, 0L, FOOTPRINT_REDRAW_TICKS);
+        Scheduler.runTimerSync(this.createFootprintTrail(player, position, color, 10), 0L, FOOTPRINT_REDRAW_TICKS);
     }
 
     /**
@@ -131,7 +129,7 @@ public class PositionManager implements Manager {
     public BukkitRunnable startFootprintTrail(@NonNull Player player, @NonNull Location position, Color color) {
         if (player.getWorld() != position.getWorld()) return null;
         BukkitRunnable trail = this.createFootprintTrail(player, position, color, -1);
-        trail.runTaskTimer(this.plugin, 0L, FOOTPRINT_REDRAW_TICKS);
+        Scheduler.runTimerSync(trail, 0L, FOOTPRINT_REDRAW_TICKS);
         return trail;
     }
 
@@ -216,7 +214,7 @@ public class PositionManager implements Manager {
      */
     public void playSurfaceMarker(@NonNull Player player, @NonNull Location surface, Color color) {
         if (player.getWorld() != surface.getWorld()) return;
-        this.createSurfaceMarker(player, surface, color, 10).runTaskTimer(this.plugin, 0L, 10L);
+        Scheduler.runTimerSync(this.createSurfaceMarker(player, surface, color, 10), 0L, 10L);
     }
 
     /**
@@ -228,7 +226,7 @@ public class PositionManager implements Manager {
     public BukkitRunnable startSurfaceMarker(@NonNull Player player, @NonNull Location surface, Color color) {
         if (player.getWorld() != surface.getWorld()) return null;
         BukkitRunnable marker = this.createSurfaceMarker(player, surface, color, -1);
-        marker.runTaskTimer(this.plugin, 0L, 10L);
+        Scheduler.runTimerSync(marker, 0L, 10L);
         return marker;
     }
 

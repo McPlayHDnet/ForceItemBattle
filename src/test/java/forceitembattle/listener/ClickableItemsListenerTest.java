@@ -4,7 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Answers.RETURNS_DEEP_STUBS;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import forceitembattle.gui.GuiContext;
 import forceitembattle.manager.BackpackManager;
@@ -14,16 +17,18 @@ import forceitembattle.manager.PlayerOutfitter;
 import forceitembattle.manager.TimerManager;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameState;
+import forceitembattle.model.MenuItem;
 import forceitembattle.model.Roster;
 import forceitembattle.service.FIBServiceClient;
 import forceitembattle.settings.GameSettings;
+import java.util.Set;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.block.BlockFace;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.Plugin;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -34,22 +39,24 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
  * merely <em>looking</em> like a button is not one; {@link RealButtons} takes every stack it clicks
  * from a player who has been through {@link PlayerOutfitter} rather than building one by hand.
  *
- * <p>Three arms are deliberately not exercised: Achievements, Collection and the Teleporter GUI run
- * through {@code Scheduler.runSync}, which needs a registered plugin behind Bukkit's scheduler, and
- * the plugin is a mock here. The covered arms are the ones that write player state directly.
+ * <p>{@link MenuArms} covers the three that open a GUI. They were written off for a pass as
+ * unreachable — <i>"run through {@code Scheduler.runSync}, which needs a registered plugin"</i> —
+ * which was true of the Mockito-only harness and not of this one: {@link ListenerTestBase} points
+ * {@code Scheduler} at a registered {@code PluginMock}, so {@link ListenerTestBase#tick} runs them.
  */
 class ClickableItemsListenerTest extends ListenerTestBase {
 
     private Roster roster;
+    private GuiContext gui;
     private ClickableItemsListener listener;
 
     @BeforeEach
     void setUpListener() {
         this.roster = new Roster();
+        this.gui = mock(GuiContext.class, RETURNS_DEEP_STUBS);
         this.listener = new ClickableItemsListener(
-                mock(Plugin.class),
                 () -> null,
-                mock(GuiContext.class),
+                this.gui,
                 mock(ItemDifficultiesManager.class),
                 this.roster,
                 mock(BackpackManager.class),
@@ -301,6 +308,95 @@ class ClickableItemsListenerTest extends ListenerTestBase {
             listener.onMenuButton(event);
 
             assertFalse(event.isCancelled());
+        }
+    }
+
+    /**
+     * The three arms that open a GUI. Each hands the open to {@code Scheduler.runSync} rather than
+     * doing it inline, so the assertion in {@link #nothingOpensUntilTheSchedulerRuns} is really the
+     * one that describes this handler: on return from the event, nothing has happened yet.
+     */
+    @Nested
+    class MenuArms {
+
+        /** The stack the writer puts in the slot this button owns, found by its marker. */
+        private ItemStack buttonFor(PlayerMock player, MenuItem wanted) {
+            if (wanted.menu() == MenuItem.Menu.RESULT) {
+                PlayerOutfitter.toResultScreen(player, null);
+            } else {
+                PlayerOutfitter.toLobby(player, GameState.PRE_GAME);
+            }
+            for (ItemStack stack : player.getInventory().getContents()) {
+                if (PlayerOutfitter.buttonOf(stack) == wanted) {
+                    return stack;
+                }
+            }
+            throw new AssertionError("the " + wanted.menu() + " bar carries no " + wanted + " button");
+        }
+
+        /**
+         * Rows of whatever the player has open, or 0 for nothing. MockBukkit hands back a
+         * {@code null} top inventory rather than a crafting view when no menu is open, so the
+         * null is the "nothing opened" case and not a fault.
+         */
+        private int openInventorySize(PlayerMock player) {
+            Inventory top = player.getOpenInventory().getTopInventory();
+            return top == null ? 0 : top.getSize();
+        }
+
+        @Test
+        void theTeleporterArmOpensTheTeleporterMenu() {
+            PlayerMock player = inTheOverworld("Understudy1");
+            ItemStack button = buttonFor(player, MenuItem.TELEPORTER);
+
+            PlayerInteractEvent event = clickAfterGame(player, button);
+            tick(1L);
+
+            assertTrue(event.isCancelled(), "a button click is consumed, not passed to the world");
+            assertEquals(9 * 6, openInventorySize(player), "the teleporter menu is six rows");
+        }
+
+        @Test
+        void theAchievementsArmOpensTheCategoryMenu() {
+            PlayerMock player = inTheOverworld("Understudy1");
+            when(gui.achievements().getAchievementStorage().getPlayerAchievements(any()))
+                    .thenReturn(Set.of());
+            ItemStack button = buttonFor(player, MenuItem.ACHIEVEMENTS);
+
+            clickBeforeGame(player, button);
+            tick(1L);
+
+            assertEquals(9 * 3, openInventorySize(player), "the category menu is three rows");
+        }
+
+        /**
+         * The collection book loads asynchronously and fills itself in later; what this pins is that
+         * the click reaches the menu and opens it, not what lands in it.
+         */
+        @Test
+        void theCollectionArmOpensTheBook() {
+            PlayerMock player = inTheOverworld("Understudy1");
+            ItemStack button = buttonFor(player, MenuItem.COLLECTION);
+
+            clickBeforeGame(player, button);
+            tick(1L);
+
+            assertEquals(9 * 6, openInventorySize(player), "the collection book is six rows");
+        }
+
+        /**
+         * The handler schedules rather than opens. Worth its own test because every assertion above
+         * would pass just as well if it opened inline, and the indirection is deliberate.
+         */
+        @Test
+        void nothingOpensUntilTheSchedulerRuns() {
+            PlayerMock player = inTheOverworld("Understudy1");
+            ItemStack button = buttonFor(player, MenuItem.TELEPORTER);
+
+            clickAfterGame(player, button);
+
+            assertEquals(0, openInventorySize(player),
+                    "the open is scheduled; nothing should have happened on return from the event");
         }
     }
 

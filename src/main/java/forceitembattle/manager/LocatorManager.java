@@ -7,6 +7,7 @@ import forceitembattle.model.Locator;
 import forceitembattle.util.BiomeSearch;
 import forceitembattle.util.LocationFormat;
 import forceitembattle.util.Prefix;
+import forceitembattle.util.Scheduler;
 import forceitembattle.util.Text;
 import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;
@@ -17,6 +18,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import net.kyori.adventure.bossbar.BossBar;
+import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
@@ -26,7 +28,6 @@ import org.bukkit.block.Biome;
 import org.bukkit.entity.Player;
 import org.bukkit.generator.structure.Structure;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.StructureSearchResult;
 import org.jetbrains.annotations.Nullable;
@@ -40,15 +41,12 @@ public class LocatorManager implements Manager {
     /** Close enough to spot something standing at the surface. */
     private static final int SURFACE_ARRIVAL_RADIUS = 70;   // blocks
 
-    /** Kept for {@code runTaskTimerAsynchronously}, which needs a Plugin. */
-    private final Plugin plugin;
     private final PositionManager positionManager;
     private final Map<String, Locator> locators;
     private final Map<String, Location> locatedStructures;
     private final Map<UUID, Map<String, ActiveLocator>> activeLocators;
 
-    public LocatorManager(Plugin plugin, PositionManager positionManager) {
-        this.plugin = plugin;
+    public LocatorManager(PositionManager positionManager) {
         this.positionManager = positionManager;
         this.locators = new HashMap<>();
         this.locatedStructures = new HashMap<>();
@@ -68,7 +66,7 @@ public class LocatorManager implements Manager {
     public void disable() {
         synchronized (this.activeLocators) {
             this.activeLocators.forEach((playerId, byStructure) -> {
-                Player player = this.plugin.getServer().getPlayer(playerId);
+                Player player = Bukkit.getPlayer(playerId);
                 byStructure.values().forEach(active -> active.cancelAndHide(player));
             });
             this.activeLocators.clear();
@@ -235,7 +233,7 @@ public class LocatorManager implements Manager {
                     .put(locator.getStructureId(), new ActiveLocator(bar, task, groundTask));
         }
 
-        task.runTaskTimerAsynchronously(this.plugin, 0L, 10L);
+        Scheduler.runTimerAsync(task, 0L, 10L);
     }
 
     /** Removes a session from the tracking map without touching the boss bar. */
@@ -257,7 +255,7 @@ public class LocatorManager implements Manager {
     private void clearLocator(UUID playerId, String structureId) {
         ActiveLocator active = this.removeSession(playerId, structureId);
         if (active != null) {
-            active.cancelAndHide(this.plugin.getServer().getPlayer(playerId));
+            active.cancelAndHide(Bukkit.getPlayer(playerId));
         }
     }
 

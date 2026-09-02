@@ -9,6 +9,7 @@ import forceitembattle.model.RoundPhase;
 import forceitembattle.model.TraderKind;
 import forceitembattle.util.LocationFormat;
 import forceitembattle.util.Prefix;
+import forceitembattle.util.Scheduler;
 import forceitembattle.util.Text;
 import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;
@@ -149,7 +150,7 @@ public class WanderingTraderManager implements Manager {
             }
         };
 
-        this.spawnTimerTask = bukkitRunnable.runTaskTimer(this.plugin, 0L, 20L);
+        this.spawnTimerTask = Scheduler.runTimerSync(bukkitRunnable, 0L, 20L);
     }
 
     public boolean spawnWanderingTrader() {
@@ -206,7 +207,7 @@ public class WanderingTraderManager implements Manager {
     }
 
     private BukkitTask startDespawnTimer(ActiveTrader trader, WanderingTrader entity) {
-        return new BukkitRunnable() {
+        return Scheduler.runTimerSync(new BukkitRunnable() {
             @Override
             public void run() {
                 if (trader.getTimer() <= 0 || entity.isDead()) {
@@ -221,7 +222,7 @@ public class WanderingTraderManager implements Manager {
 
                 trader.setTimer(trader.getTimer() - 1);
             }
-        }.runTaskTimer(this.plugin, 0L, 20L);
+        }, 0L, 20L);
     }
 
     /**
