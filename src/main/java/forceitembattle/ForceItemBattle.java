@@ -59,6 +59,7 @@ import forceitembattle.manager.AntimatterPortalManager;
 import forceitembattle.manager.BackToBackManager;
 import forceitembattle.manager.BackpackManager;
 import forceitembattle.manager.CustomItemManager;
+import forceitembattle.manager.ForceItemAssignment;
 import forceitembattle.manager.FoundItemResolver;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.ItemDifficultiesManager;
@@ -137,6 +138,8 @@ public final class ForceItemBattle extends JavaPlugin {
 
     @Getter
     private Gamemanager gamemanager;
+    /** Not a {@link Manager}: no lifecycle, just the rule for what item an owner holds. */
+    private ForceItemAssignment forceItemAssignment;
     private FoundItemResolver foundItemResolver;
     private TimerManager timerManager;
     private BackpackManager backpackManager;
@@ -246,6 +249,10 @@ public final class ForceItemBattle extends JavaPlugin {
         this.backpackManager = register(new BackpackManager(this, this.roster));
         this.locatorManager = register(new LocatorManager(this.positionManager));
 
+        // Who is hunting what. Depends on the roster and the pool and nothing else, so it is built
+        // early and five of its callers stop needing the round orchestrator entirely.
+        this.forceItemAssignment = new ForceItemAssignment(this.roster, this.itemDifficultiesManager);
+
         // The service client builds the match-history and catalogue clients, which read the
         // collection and achievement managers — both built out of this one. Late-bound, and only
         // ever dereferenced long after boot.
@@ -286,7 +293,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.timerManager = register(new TimerManager(this, this.roundClock, this.roster, this.roundPhase,
                 this.settings, this.gamemanager, this.itemDifficultiesManager, this.randomEventManager,
                 this.tabListManager));
-        this.voteSkipManager = register(new VoteSkipManager(this.roster, this.gamemanager, this.itemDifficultiesManager));
+        this.voteSkipManager = register(new VoteSkipManager(this.roster, this.forceItemAssignment, this.settings, this.itemDifficultiesManager));
         this.commandsManager = register(new CommandsManager(this, this.roundPhase, this.settings, this.roster));
 
         this.guiContext = new GuiContext(this, this.achievementManager, this.collectionManager,
@@ -295,6 +302,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.foundItemResolver = register(new FoundItemResolver(
                 this.settings,
                 this.gamemanager,
+                this.forceItemAssignment,
                 this.scoreboardManager,
                 this.backToBackManager,
                 this.randomEventManager,
@@ -396,10 +404,10 @@ public final class ForceItemBattle extends JavaPlugin {
     private void initCommands() {
         CommandsManager commands = this.commandsManager;
 
-        commands.registerCommand(new CommandStart(this.gamemanager, this.timerManager, this.roster, this.roundPhase,
+        commands.registerCommand(new CommandStart(this.gamemanager, this.forceItemAssignment, this.timerManager, this.roster, this.roundPhase,
                 this.roundClock, this.settings, this.teamManager));
         commands.registerCommand(new CommandSettings(this.roster, this.settings));
-        commands.registerCommand(new CommandSkip(this.gamemanager));
+        commands.registerCommand(new CommandSkip(this.forceItemAssignment, this.roster, this.settings));
         commands.registerCommand(new CommandReset(this.seedPool, this.worldReset));
         commands.registerCommand(new CommandBp(this.backpackManager));
         commands.registerCommand(new CommandResult(this.gamemanager, this.timerManager, this.roster, this.settings,
@@ -427,7 +435,7 @@ public final class ForceItemBattle extends JavaPlugin {
         commands.registerCommand(new CommandVote(this.voteSkipManager));
         commands.registerCommand(new CommandVoteSkip(this.roster, this.voteSkipManager));
         commands.registerCommand(new CommandFixLocate(this.locatorManager));
-        commands.registerCommand(new CommandForceItem(this.gamemanager, this.timerManager, this.roster, this.scoreboardManager));
+        commands.registerCommand(new CommandForceItem(this.forceItemAssignment, this.settings, this.timerManager, this.roster, this.scoreboardManager));
         commands.registerCommand(new CommandRandomEvent(this.randomEventManager));
 
         commands.warnAboutUnboundCommands();

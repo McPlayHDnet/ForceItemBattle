@@ -2,15 +2,19 @@ package forceitembattle.commands;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import forceitembattle.commands.admin.CommandSkip;
-import forceitembattle.manager.Gamemanager;
+import forceitembattle.manager.ForceItemAssignment;
+import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameState;
 import forceitembattle.model.RoundPhase;
 import forceitembattle.model.Roster;
+import forceitembattle.settings.GameSettings;
+import org.bukkit.Material;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,18 +37,20 @@ class CommandSkipTest {
 
     private ServerMock server;
     private RoundPhase roundPhase;
-    private Gamemanager gamemanager;
+    private ForceItemAssignment assignment;
+    private Roster roster;
     private CommandSkip command;
 
     @BeforeEach
     void setUp() {
         this.server = MockBukkit.mock();
         this.roundPhase = new RoundPhase();
-        this.gamemanager = mock(Gamemanager.class);
+        this.assignment = mock(ForceItemAssignment.class);
+        this.roster = new Roster();
 
-        this.command = new CommandSkip(this.gamemanager);
+        this.command = new CommandSkip(this.assignment, this.roster, mock(GameSettings.class));
         ((CustomCommand) this.command).setContext(
-                new CommandContext(this.roundPhase, null, new Roster()));
+                new CommandContext(this.roundPhase, null, this.roster));
 
         this.roundPhase.moveTo(GameState.MID_GAME);
     }
@@ -70,18 +76,42 @@ class CommandSkipTest {
         this.command.onCommand(caller, null, "skip", new String[]{target.getName()});
 
         assertTrue(caller.nextMessage().contains("permission"));
-        verify(this.gamemanager, never()).forceSkipItem(any());
+        verify(this.assignment, never()).skipAll(any(), anyBoolean());
+    }
+
+    /** On the roster, which is what {@code /skip} now needs before it will act. */
+    private ForceItemPlayer onRoster(PlayerMock player) {
+        ForceItemPlayer entry = new ForceItemPlayer(player, Material.DIRT, 0, 0);
+        this.roster.add(player.getUniqueId(), entry);
+        return entry;
     }
 
     @Test
     void anOpSkipsTheNamedPlayer() {
         PlayerMock caller = op("Understudy1");
         PlayerMock target = this.server.addPlayer("Understudy2");
+        ForceItemPlayer targetEntry = onRoster(target);
 
         this.command.onCommand(caller, null, "skip", new String[]{target.getName()});
 
-        verify(this.gamemanager).forceSkipItem(target);
+        verify(this.assignment).skipAll(targetEntry, false);
         assertTrue(caller.nextMessage().contains("Skipped this item for Understudy2"));
+    }
+
+    /**
+     * The target has to be <em>in the round</em>, not merely online. The old code took a
+     * {@code Player} and let the assignment side look it up, so this case returned silently and the
+     * admin was told the skip had happened. Now it is refused where the admin can see it.
+     */
+    @Test
+    void anOnlineTargetOutsideTheRoundIsRefused() {
+        PlayerMock caller = op("Understudy1");
+        PlayerMock target = this.server.addPlayer("Understudy2");
+
+        this.command.onCommand(caller, null, "skip", new String[]{target.getName()});
+
+        assertTrue(caller.nextMessage().contains("not in the round"));
+        verify(this.assignment, never()).skipAll(any(), anyBoolean());
     }
 
     @Test
@@ -91,7 +121,7 @@ class CommandSkipTest {
         this.command.onCommand(caller, null, "skip", new String[]{"Nobody"});
 
         assertTrue(caller.nextMessage().contains("not online"));
-        verify(this.gamemanager, never()).forceSkipItem(any());
+        verify(this.assignment, never()).skipAll(any(), anyBoolean());
     }
 
     @Test
@@ -101,7 +131,7 @@ class CommandSkipTest {
         this.command.onCommand(caller, null, "skip", new String[0]);
 
         assertTrue(caller.nextMessage().contains("Usage: /skip"));
-        verify(this.gamemanager, never()).forceSkipItem(any());
+        verify(this.assignment, never()).skipAll(any(), anyBoolean());
     }
 
     /** Declared as ROUND_RUNNING, so a skip outside a round never reaches the body. */
@@ -114,6 +144,6 @@ class CommandSkipTest {
         this.command.onCommand(caller, null, "skip", new String[]{target.getName()});
 
         assertTrue(caller.nextMessage().contains("game is not running"));
-        verify(this.gamemanager, never()).forceSkipItem(any());
+        verify(this.assignment, never()).skipAll(any(), anyBoolean());
     }
 }

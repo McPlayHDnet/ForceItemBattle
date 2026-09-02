@@ -309,14 +309,14 @@ class CustomCommandTest {
 
         @Test
         void theAdminCommands() {
-            assertGates(new forceitembattle.commands.admin.CommandForceItem(null, null, null, null), "OP, ROUND_RUNNING, PARTICIPANT");
+            assertGates(new forceitembattle.commands.admin.CommandForceItem(null, null, null, null, null), "OP, ROUND_RUNNING, PARTICIPANT");
             assertGates(new forceitembattle.commands.admin.CommandForceTeam(null, null), "OP, setting(TEAM), PRE_GAME");
             assertGates(new forceitembattle.commands.admin.CommandItems(null), "OP");
             assertGates(new forceitembattle.commands.admin.CommandRandomEvent(null), "OP, ROUND_RUNNING");
             assertGates(new forceitembattle.commands.admin.CommandReset(null, null), "OP");
             assertGates(new forceitembattle.commands.admin.CommandSettings(null, null), "OP");
-            assertGates(new forceitembattle.commands.admin.CommandSkip(null), "OP, ROUND_RUNNING");
-            assertGates(new forceitembattle.commands.admin.CommandStart(null, null, null, null, null, null, null), "OP");
+            assertGates(new forceitembattle.commands.admin.CommandSkip(null, null, null), "OP, ROUND_RUNNING");
+            assertGates(new forceitembattle.commands.admin.CommandStart(null, null, null, null, null, null, null, null), "OP");
             assertGates(new forceitembattle.commands.admin.CommandStopTimer(null), "OP, ROUND_RUNNING");
         }
 

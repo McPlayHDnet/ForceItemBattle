@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import forceitembattle.manager.Gamemanager;
 import forceitembattle.model.ResultCeremony.Reveal;
 import java.util.LinkedHashMap;
 import java.util.List;

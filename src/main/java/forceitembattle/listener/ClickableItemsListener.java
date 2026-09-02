@@ -8,7 +8,6 @@ import forceitembattle.gui.InventoryBuilder;
 import forceitembattle.gui.TeleporterInventory;
 import forceitembattle.gui.VaultInventory;
 import forceitembattle.manager.BackpackManager;
-import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.ItemDifficultiesManager;
 import forceitembattle.manager.LocatorManager;
 import forceitembattle.manager.PlayerOutfitter;
@@ -16,6 +15,7 @@ import forceitembattle.manager.TimerManager;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.Dimension;
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.GameItems;
 import forceitembattle.model.Locator;
 import forceitembattle.model.MenuItem;
 import forceitembattle.model.Roster;
@@ -196,7 +196,7 @@ public class ClickableItemsListener implements Listener {
             return;
         }
 
-        if (Gamemanager.isBackpack(e.getItem())) {
+        if (GameItems.isBackpack(e.getItem())) {
             // isInTeam(), not the setting: with the setting on and no team this passed and then
             // handed a null team to openTeamBackpack.
             if (forceItemPlayer.isInTeam()) {
@@ -248,7 +248,7 @@ public class ClickableItemsListener implements Listener {
             return;
         }
 
-        if (!Gamemanager.isJoker(e.getItem())) {
+        if (!GameItems.isJoker(e.getItem())) {
             return;
         }
         if (e.getClickedBlock() != null && e.getClickedBlock().getState() instanceof InventoryHolder) {
@@ -258,13 +258,13 @@ public class ClickableItemsListener implements Listener {
 
         if (forceItemPlayer.activeJokers() <= 0) {
             player.sendMessage(Text.of("<red>No more skips left."));
-            player.getInventory().remove(Gamemanager.getJokerMaterial());
+            player.getInventory().remove(GameItems.jokerMaterial());
             return;
         }
 
         int foundSlot = e.getPlayer()
                 .getInventory()
-                .first(Gamemanager.getJokerMaterial());
+                .first(GameItems.jokerMaterial());
         if (foundSlot == -1) {
             return;
         }

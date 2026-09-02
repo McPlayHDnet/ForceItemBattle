@@ -2,6 +2,8 @@ package forceitembattle.manager;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -9,6 +11,7 @@ import static org.mockito.Mockito.when;
 
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.Roster;
+import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Scheduler;
 import org.bukkit.Material;
 import org.junit.jupiter.api.AfterEach;
@@ -37,7 +40,7 @@ class VoteSkipExpiryTest {
 
     private ServerMock server;
     private Roster roster;
-    private Gamemanager gamemanager;
+    private ForceItemAssignment assignment;
     private VoteSkipManager votes;
 
     @BeforeEach
@@ -46,12 +49,13 @@ class VoteSkipExpiryTest {
         Scheduler.init(MockBukkit.createMockPlugin());
 
         this.roster = new Roster();
-        this.gamemanager = mock(Gamemanager.class);
+        this.assignment = mock(ForceItemAssignment.class);
 
         ItemDifficultiesManager items = mock(ItemDifficultiesManager.class);
         when(items.getUnicodeFromMaterial(true, Material.DIRT)).thenReturn("");
 
-        this.votes = new VoteSkipManager(this.roster, this.gamemanager, items);
+        GameSettings settings = mock(GameSettings.class);
+        this.votes = new VoteSkipManager(this.roster, this.assignment, settings, items);
     }
 
     @AfterEach
@@ -121,7 +125,7 @@ class VoteSkipExpiryTest {
             votes.startVoting(playerOf(starter));
             server.getScheduler().performTicks(SIXTY_SECONDS_IN_TICKS + 1);
 
-            verify(gamemanager).forceSkipItem(starter.player());
+            verify(assignment).skipAll(starter, false);
         }
 
         /** The vote costs a joker whether or not it carried — the comment at :127 says so. */
@@ -166,7 +170,7 @@ class VoteSkipExpiryTest {
             assertTrue(!votes.isVoteInProgress(), "quorum closes the vote immediately");
 
             server.getScheduler().performTicks(SIXTY_SECONDS_IN_TICKS + 1);
-            verify(gamemanager).forceSkipItem(starter.player());
+            verify(assignment).skipAll(starter, false);
         }
 
         /**
@@ -216,7 +220,7 @@ class VoteSkipExpiryTest {
             votes.cancelVote();
             server.getScheduler().performTicks(SIXTY_SECONDS_IN_TICKS + 1);
 
-            verify(gamemanager, never()).forceSkipItem(starter.player());
+            verify(assignment, never()).skipAll(any(), anyBoolean());
         }
 
         @Test
@@ -228,7 +232,7 @@ class VoteSkipExpiryTest {
             votes.disable();
             server.getScheduler().performTicks(SIXTY_SECONDS_IN_TICKS + 1);
 
-            verify(gamemanager, never()).forceSkipItem(starter.player());
+            verify(assignment, never()).skipAll(any(), anyBoolean());
         }
     }
 }

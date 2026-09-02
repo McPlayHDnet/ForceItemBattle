@@ -9,8 +9,8 @@ import static org.mockito.Mockito.when;
 
 import forceitembattle.commands.player.CommandFixSkips;
 import forceitembattle.manager.BackpackManager;
-import forceitembattle.manager.Gamemanager;
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.GameItems;
 import forceitembattle.model.GameState;
 import forceitembattle.model.RoundPhase;
 import forceitembattle.model.Roster;
@@ -81,7 +81,7 @@ class CommandFixSkipsTest {
     private static int jokersHeldBy(ForceItemPlayer entry) {
         int held = 0;
         for (ItemStack stack : mockOf(entry).getInventory().getContents()) {
-            if (stack != null && stack.getType() == Gamemanager.getJokerMaterial()) {
+            if (stack != null && stack.getType() == GameItems.jokerMaterial()) {
                 held += stack.getAmount();
             }
         }
@@ -104,7 +104,7 @@ class CommandFixSkipsTest {
         @Test
         void staleJokersAreClearedBeforeTheReissue() {
             ForceItemPlayer entry = onRoster("Understudy1", 2);
-            mockOf(entry).getInventory().addItem(Gamemanager.getJokers(7));
+            mockOf(entry).getInventory().addItem(GameItems.jokers(7));
 
             command.onCommand(mockOf(entry), null, "fixskips", new String[0]);
 
@@ -183,7 +183,7 @@ class CommandFixSkipsTest {
             second.setCurrentTeam(team);
             team.setJokers(4);
 
-            mockOf(second).getInventory().addItem(Gamemanager.getJokers(9));
+            mockOf(second).getInventory().addItem(GameItems.jokers(9));
 
             command.onCommand(mockOf(first), null, "fixskips", new String[0]);
 

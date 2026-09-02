@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import forceitembattle.commands.admin.CommandStart;
 import forceitembattle.commands.admin.RoundStart;
+import forceitembattle.manager.ForceItemAssignment;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.TeamsManager;
 import forceitembattle.manager.TimerManager;
@@ -53,7 +54,7 @@ class CommandStartTest {
         // performCommand reads the roster head-count before it parses the arguments, so even the
         // paths that refuse on a bad argument need one present.
 
-        this.command = new CommandStart(mock(Gamemanager.class), mock(TimerManager.class), new Roster(), mock(RoundPhase.class), mock(RoundClock.class), this.settings, mock(TeamsManager.class));
+        this.command = new CommandStart(mock(Gamemanager.class), mock(ForceItemAssignment.class), mock(TimerManager.class), new Roster(), mock(RoundPhase.class), mock(RoundClock.class), this.settings, mock(TeamsManager.class));
         // The op gate is declared, so it is evaluated in onCommand -- which needs the context that
         // CommandsManager supplies at bootstrap.
         // Cast because setContext is package-private on CustomCommand, and a package-private

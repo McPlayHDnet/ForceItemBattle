@@ -1,6 +1,6 @@
 package forceitembattle.listener;
 
-import forceitembattle.manager.Gamemanager;
+import forceitembattle.model.GameItems;
 import forceitembattle.model.RoundPhase;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.settings.GameSetting;
@@ -24,8 +24,8 @@ public class GameRulesListener implements Listener {
     private final GameSettings settings;
     @EventHandler
     public void onOffHand(PlayerSwapHandItemsEvent event) {
-        if (Gamemanager.isBackpack(event.getMainHandItem()) ||
-                Gamemanager.isBackpack(event.getOffHandItem())) {
+        if (GameItems.isBackpack(event.getMainHandItem()) ||
+                GameItems.isBackpack(event.getOffHandItem())) {
 
             event.setCancelled(true);
         }
@@ -33,8 +33,8 @@ public class GameRulesListener implements Listener {
 
     @EventHandler
     public void onDrop(PlayerDropItemEvent event) {
-        if (Gamemanager.isJoker(event.getItemDrop().getItemStack())
-                || Gamemanager.isBackpack(event.getItemDrop().getItemStack())) {
+        if (GameItems.isJoker(event.getItemDrop().getItemStack())
+                || GameItems.isBackpack(event.getItemDrop().getItemStack())) {
 
             event.setCancelled(true);
         }

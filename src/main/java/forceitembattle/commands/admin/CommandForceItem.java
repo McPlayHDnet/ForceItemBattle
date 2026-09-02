@@ -6,12 +6,14 @@ import static forceitembattle.commands.Precondition.ROUND_RUNNING;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.commands.Precondition;
-import forceitembattle.manager.Gamemanager;
+import forceitembattle.manager.ForceItemAssignment;
 import forceitembattle.manager.ScoreboardManager;
 import forceitembattle.manager.TimerManager;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.Roster;
+import forceitembattle.settings.GameSetting;
+import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Text;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,14 +29,16 @@ import org.bukkit.entity.Player;
 
 public final class CommandForceItem extends CustomCommand implements CustomTabCompleter {
 
-    private final Gamemanager gamemanager;
+    private final ForceItemAssignment assignment;
+    private final GameSettings settings;
     private final TimerManager timerManager;
     private final Roster roster;
     private final ScoreboardManager scoreboardManager;
 
-    public CommandForceItem(Gamemanager gamemanager, TimerManager timerManager, Roster roster, ScoreboardManager scoreboardManager) {
+    public CommandForceItem(ForceItemAssignment assignment, GameSettings settings, TimerManager timerManager, Roster roster, ScoreboardManager scoreboardManager) {
         super("forceitem");
-        this.gamemanager = gamemanager;
+        this.assignment = assignment;
+        this.settings = settings;
         this.timerManager = timerManager;
         this.roster = roster;
         this.scoreboardManager = scoreboardManager;
@@ -71,20 +75,14 @@ public final class CommandForceItem extends CustomCommand implements CustomTabCo
         ForceItemPlayer forceItemPlayer =
                 this.roster.participant(player.getUniqueId()).orElseThrow();
 
-        Gamemanager gamemanager = this.gamemanager;
+        // The whole row in one call: first item now, second queued behind it, the rest drained in
+        // order as they are found. The queue is the assignment module's, keyed by this owner --
+        // it used to be a server-wide deque this command reached into, so a row forced here was
+        // drained by whichever player found something next.
+        this.assignment.force(forceItemPlayer.scoreOwner(), row,
+                this.settings.isSettingEnabled(GameSetting.RUN));
 
-        // Queue everything after the second item; generateMaterial() drains this
-        // as new items are handed out, so the row is walked through in order.
-        gamemanager.getForcedItemQueue().clear();
-        if (row.size() > 2) {
-            gamemanager.getForcedItemQueue().addAll(row.subList(2, row.size()));
-        }
-
-        Material current = row.get(0);
-        // Second item forced when given; otherwise generate normally (queue is empty here).
-        Material next = row.size() >= 2 ? row.get(1) : gamemanager.generateMaterial();
-
-        forceItemPlayer.scoreOwner().assignMaterials(current, next);
+        Material current = row.getFirst();
 
         this.timerManager.sendActionBar();
         this.scoreboardManager.updateAllPlayers();

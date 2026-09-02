@@ -1,6 +1,6 @@
 package forceitembattle.listener;
 
-import forceitembattle.manager.Gamemanager;
+import forceitembattle.model.GameItems;
 import forceitembattle.model.RoundPhase;
 import forceitembattle.model.Roster;
 import forceitembattle.event.FoundItemEvent;
@@ -166,7 +166,7 @@ public class ItemsListener implements Listener {
 
         Material currentItem = forceItemPlayer.activeMaterial();
 
-        if (Gamemanager.isBackpack(item)) return;
+        if (GameItems.isBackpack(item)) return;
 
         if (item.getType() == currentItem) {
             FoundItemEvent foundItemEvent = new FoundItemEvent(player);

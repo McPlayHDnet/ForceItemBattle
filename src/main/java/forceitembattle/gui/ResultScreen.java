@@ -1,5 +1,6 @@
 package forceitembattle.gui;
 
+import forceitembattle.manager.Gamemanager;
 import forceitembattle.model.ScoreOwner;
 import forceitembattle.util.Text;
 import java.util.Map;

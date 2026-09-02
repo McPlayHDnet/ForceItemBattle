@@ -1,5 +1,6 @@
 package forceitembattle.listener;
 
+import forceitembattle.model.GameItems;
 import forceitembattle.model.RoundPhase;
 import forceitembattle.manager.ScoreboardManager;
 import forceitembattle.manager.TeamsManager;
@@ -135,8 +136,8 @@ public class PlayerLifecycleListener implements Listener {
 
         event.deathMessage(Text.of("<dark_gray>[<red>\uD83D\uDC80<dark_gray>] " + plainDeathMessage.replace(plainPlayerName, "<gold>" + player.getName() + "<gray>")));
         if (!event.getKeepInventory()) {
-            event.getDrops().removeIf(Gamemanager::isJoker);
-            event.getDrops().removeIf(Gamemanager::isBackpack);
+            event.getDrops().removeIf(GameItems::isJoker);
+            event.getDrops().removeIf(GameItems::isBackpack);
         }
 
         if (this.roundPhase.roundRunning() && this.settings.isSettingEnabled(GameSetting.STATS)) {
@@ -168,7 +169,7 @@ public class PlayerLifecycleListener implements Listener {
         // A mid-round joiner holds no roster entry and no backpack, so there is nothing to put
         // in slot 8 for them.
         if (forceItemPlayer != null) {
-            player.getInventory().setItem(8, Gamemanager.createBackpack(forceItemPlayer, forceItemPlayer.isInTeam()));
+            player.getInventory().setItem(8, GameItems.backpack(forceItemPlayer, forceItemPlayer.isInTeam()));
         }
 
     }

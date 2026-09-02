@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.GameItems;
 import java.util.ArrayList;
 import java.util.List;
 import org.bukkit.Material;
@@ -22,7 +23,7 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
  *
  * <p>These are the {@code Gamemanager} statics that build and recognise the joker stack and the
  * backpack. They matter more than they look: on death, {@code PlayerLifecycleListener} filters the
- * drops with {@code removeIf(Gamemanager::isJoker)} and {@code removeIf(Gamemanager::isBackpack)},
+ * drops with {@code removeIf(GameItems::isJoker)} and {@code removeIf(GameItems::isBackpack)},
  * so a recogniser that stops matching what the builder produces means players drop — and lose —
  * their jokers and backpack when they die.
  *
@@ -52,27 +53,27 @@ class GameItemsTest {
 
     @Test
     void aJokerStackCarriesTheRequestedAmount() {
-        assertEquals(3, Gamemanager.getJokers(3).getAmount());
+        assertEquals(3, GameItems.jokers(3).getAmount());
     }
 
     /** The round trip. This is the pair the death handler depends on agreeing. */
     @Test
     void aBuiltJokerIsRecognisedAsOne() {
-        assertTrue(Gamemanager.isJoker(Gamemanager.getJokers(1)));
+        assertTrue(GameItems.isJoker(GameItems.jokers(1)));
     }
 
     @Test
     void anOrdinaryItemIsNotAJoker() {
-        assertFalse(Gamemanager.isJoker(new ItemStack(Material.DIAMOND)));
+        assertFalse(GameItems.isJoker(new ItemStack(Material.DIAMOND)));
     }
 
     // --- backpacks ------------------------------------------------------------------------
 
     @Test
     void aBuiltBackpackIsRecognisedAsOne() {
-        ItemStack backpack = Gamemanager.createBackpack(participant("Understudy1"), false);
+        ItemStack backpack = GameItems.backpack(participant("Understudy1"), false);
 
-        assertTrue(Gamemanager.isBackpack(backpack));
+        assertTrue(GameItems.isBackpack(backpack));
     }
 
     /**
@@ -82,12 +83,12 @@ class GameItemsTest {
      */
     @Test
     void aPlainBundleIsNotABackpack() {
-        assertFalse(Gamemanager.isBackpack(new ItemStack(Material.BUNDLE)));
+        assertFalse(GameItems.isBackpack(new ItemStack(Material.BUNDLE)));
     }
 
     @Test
     void anOrdinaryItemIsNotABackpack() {
-        assertFalse(Gamemanager.isBackpack(new ItemStack(Material.DIAMOND)));
+        assertFalse(GameItems.isBackpack(new ItemStack(Material.DIAMOND)));
     }
 
     // --- what death does with them -----------------------------------------------------------
@@ -100,12 +101,12 @@ class GameItemsTest {
     void deathDropsKeepLootAndRemoveTheGameItems() {
         List<ItemStack> drops = new ArrayList<>(List.of(
                 new ItemStack(Material.DIAMOND),
-                Gamemanager.getJokers(2),
-                Gamemanager.createBackpack(participant("Understudy1"), false),
+                GameItems.jokers(2),
+                GameItems.backpack(participant("Understudy1"), false),
                 new ItemStack(Material.COBBLESTONE)));
 
-        drops.removeIf(Gamemanager::isJoker);
-        drops.removeIf(Gamemanager::isBackpack);
+        drops.removeIf(GameItems::isJoker);
+        drops.removeIf(GameItems::isBackpack);
 
         assertEquals(2, drops.size());
         assertTrue(drops.stream().anyMatch(s -> s.getType() == Material.DIAMOND));

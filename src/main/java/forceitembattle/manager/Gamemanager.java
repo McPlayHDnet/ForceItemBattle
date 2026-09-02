@@ -49,8 +49,6 @@ import org.bukkit.plugin.Plugin;
 
 public class Gamemanager implements Manager {
 
-    public static final NamespacedKey BACKPACK_KEY = new NamespacedKey("fib", "backpack");
-    private static final Material JOKER_MATERIAL = Material.BARRIER;
     private final GameSettings settings;
     private final RoundClock roundClock;
     private final ResultCeremony resultCeremony;
@@ -83,13 +81,6 @@ public class Gamemanager implements Manager {
     @Getter
     @Setter
     private int jokerAmount;
-
-    /**
-     * Dev/testing override queue: when non-empty, material generation returns these in order before
-     * falling back to random. Populated by /forceitem, cleared at the start of every game.
-     */
-    @Getter
-    private final Deque<Material> forcedItemQueue = new ArrayDeque<>();
 
     public Gamemanager(Plugin plugin, Roster roster, RoundPhase roundPhase, GameSettings settings,
                        RoundClock roundClock, ResultCeremony resultCeremony, ItemDifficultiesManager items,
@@ -162,145 +153,6 @@ public class Gamemanager implements Manager {
             }
         }
         return tied ? null : best;
-    }
-
-    public static Material getJokerMaterial() {
-        return JOKER_MATERIAL;
-    }
-
-    public static ItemStack getJokers(int amount) {
-        return new ItemBuilder(JOKER_MATERIAL)
-                .setAmount(amount)
-                .setDisplayName("<dark_gray>» <dark_purple>Joker")
-                .getItemStack();
-    }
-
-    public static ItemStack createBackpack(ForceItemPlayer forceItemPlayer, boolean isTeamMode) {
-        Material bundle = Material.BUNDLE;
-        if (isTeamMode) {
-            bundle = Material.getMaterial(forceItemPlayer.currentTeam().getColor().name() + "_BUNDLE");
-        }
-
-        ItemStack itemStack = new ItemBuilder(bundle)
-                .setDisplayName("<dark_gray>» <yellow>Backpack")
-                .getItemStack();
-
-        ItemMeta itemMeta = itemStack.getItemMeta();
-        itemMeta.getPersistentDataContainer().set(BACKPACK_KEY, PersistentDataType.BOOLEAN, Boolean.TRUE);
-        itemStack.setItemMeta(itemMeta);
-
-        return itemStack;
-    }
-
-    private static boolean isJoker(Material material) {
-        return material == JOKER_MATERIAL;
-    }
-
-    public static boolean isJoker(ItemStack itemStack) {
-        return isJoker(itemStack.getType());
-    }
-
-    public static boolean isBackpack(ItemStack itemStack) {
-        if (!itemStack.getType().name().contains("BUNDLE")) {
-            return false;
-        }
-
-        ItemMeta itemMeta = itemStack.getItemMeta();
-        if (!itemMeta.getPersistentDataContainer().has(BACKPACK_KEY)) {
-            return false;
-        }
-
-        return Boolean.TRUE.equals(itemStack.getItemMeta().getPersistentDataContainer().get(BACKPACK_KEY, PersistentDataType.BOOLEAN));
-    }
-
-
-
-    public Material generateMaterial() {
-        Material forced = this.forcedItemQueue.poll();
-        if (forced != null) {
-            return forced;
-        }
-        return this.items.generateRandomMaterial();
-    }
-
-    public Material generateSeededMaterial() {
-        Material forced = this.forcedItemQueue.poll();
-        if (forced != null) {
-            return forced;
-        }
-        return this.items.generateSeededRandomMaterial();
-    }
-
-    private MaterialPair nextMaterials(boolean runMode) {
-        if (runMode) {
-            return new MaterialPair(this.generateSeededMaterial(), this.generateSeededMaterial());
-        }
-        return new MaterialPair(this.generateMaterial(), this.generateMaterial());
-    }
-
-    private record MaterialPair(Material current, Material next) {
-    }
-
-    public void initializeMaterials() {
-        this.forcedItemQueue.clear();
-        boolean runMode = this.settings.isSettingEnabled(GameSetting.RUN);
-        long now = System.currentTimeMillis();
-
-        // Everyone starts the round un-equipped; applyStartSetup flips this back per player.
-        this.roster.players().values().forEach(forceItemPlayer -> forceItemPlayer.setStartSetupApplied(false));
-
-        // In run mode everyone shares one seeded pair; otherwise each owner gets their own.
-        MaterialPair shared = runMode ? this.nextMaterials(true) : null;
-
-        // One pass over the roster, one pair per score owner — keep it that way. Walking online
-        // players instead misses anyone who disconnected during the countdown, and drawing per team
-        // member rather than per owner lets the last member's pair win.
-        this.roster.activeScoreOwners().forEach(owner -> {
-            MaterialPair pair = runMode ? shared : this.nextMaterials(false);
-            owner.startRound(pair.current(), pair.next(), now);
-        });
-    }
-
-
-    /**
-     * Moves whoever this find belongs to onto their next item. In run mode everybody races for the
-     * same seeded item, so one find advances the whole server; otherwise only the finder's owner
-     * moves. Team versus solo is the owner's business, not this method's.
-     */
-    public void advanceMaterials(ForceItemPlayer forceItemPlayer, GameContext context) {
-        long now = System.currentTimeMillis();
-
-        if (context.runMode()) {
-            Material nextMaterial = this.generateSeededMaterial();
-            // Once per owner, not per member: advancing a two-player team twice skips the queued item
-            // and leaves current and next both holding nextMaterial.
-            this.roster.activeScoreOwners().forEach(owner -> owner.advance(nextMaterial, now));
-            return;
-        }
-
-        forceItemPlayer.scoreOwner().advance(this.generateMaterial(), now);
-    }
-
-    /**
-     * Replaces the current item for the whole server with a freshly generated one — what /voteskip
-     * does when the vote carries, and what /skip does as an admin override.
-     *
-     * <p>Charging a joker is <em>not</em> part of this: the only caller that costs one spends it
-     * itself, on the initiator. Do not charge one inside the loop below — it runs once per
-     * non-spectator, so the initiator would pay a joker for each of them.
-     */
-    public void forceSkipItem(Player player) {
-        if (!this.roster.contains(player.getUniqueId())) {
-            return;
-        }
-
-        boolean runMode = this.settings.isSettingEnabled(GameSetting.RUN);
-
-        MaterialPair pair = this.nextMaterials(runMode);
-
-        // Spectators are already out of activeScoreOwners(), which is what keeps a countdown joiner
-        // — who holds no team — from NPE-ing every skip for the rest of the round.
-        this.roster.activeScoreOwners().forEach(owner -> owner.assignMaterials(pair.current(), pair.next()));
     }
 
     /**

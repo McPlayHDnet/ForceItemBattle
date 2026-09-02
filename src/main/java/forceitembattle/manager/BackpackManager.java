@@ -1,6 +1,7 @@
 package forceitembattle.manager;
 
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.GameItems;
 import forceitembattle.model.Roster;
 import forceitembattle.model.Team;
 import forceitembattle.util.Text;
@@ -53,7 +54,7 @@ public class BackpackManager implements Manager {
                         null,
                         this.plugin.getConfig().getInt("settings.backpackRows") * 9,
                         Text.of("<dark_gray>» <gold>Backpack <dark_gray>● <gray>Menu")));
-        fibPlayer.player().getInventory().setItem(8, Gamemanager.createBackpack(fibPlayer, fibPlayer.isInTeam()));
+        fibPlayer.player().getInventory().setItem(8, GameItems.backpack(fibPlayer, fibPlayer.isInTeam()));
     }
 
     public void createTeamBackpack(Team team, ForceItemPlayer fibPlayer) {
@@ -62,7 +63,7 @@ public class BackpackManager implements Manager {
                         null,
                         this.plugin.getConfig().getInt("settings.backpackRows") * 9,
                         Text.of("<dark_gray>» <gold>Backpack <dark_gray>● <gray>Menu")));
-        fibPlayer.player().getInventory().setItem(8, Gamemanager.createBackpack(fibPlayer, fibPlayer.isInTeam()));
+        fibPlayer.player().getInventory().setItem(8, GameItems.backpack(fibPlayer, fibPlayer.isInTeam()));
     }
 
     public void openPlayerBackpack(Player player) {

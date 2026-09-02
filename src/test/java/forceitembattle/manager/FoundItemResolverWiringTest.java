@@ -26,6 +26,7 @@ class FoundItemResolverWiringTest {
         FoundItemResolver resolver = new FoundItemResolver(
                 mock(GameSettings.class),
                 mock(Gamemanager.class),
+                mock(ForceItemAssignment.class),
                 mock(ScoreboardManager.class),
                 mock(BackToBackManager.class),
                 mock(RandomEventManager.class),

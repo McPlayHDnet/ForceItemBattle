@@ -1,7 +1,7 @@
 package forceitembattle.listener;
 
+import forceitembattle.model.GameItems;
 import forceitembattle.util.Scheduler;
-import forceitembattle.manager.Gamemanager;
 import forceitembattle.gui.InventoryBuilder;
 import forceitembattle.gui.SettingsInventory;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +35,7 @@ public class GuiListener implements Listener {
         }
 
         if (movedItem != null && !(event.getInventory().getHolder() instanceof SettingsInventory)) {
-            if (Gamemanager.isBackpack(movedItem)) {
+            if (GameItems.isBackpack(movedItem)) {
                 event.setCancelled(true);
                 return;
             }

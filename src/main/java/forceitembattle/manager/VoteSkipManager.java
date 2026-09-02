@@ -3,6 +3,8 @@ package forceitembattle.manager;
 import forceitembattle.model.Roster;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.settings.GameSetting;
+import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Scheduler;
 import forceitembattle.util.Text;
 import java.util.HashSet;
@@ -17,7 +19,8 @@ import org.bukkit.scheduler.BukkitTask;
 
 public class VoteSkipManager implements Manager {
     private final Roster roster;
-    private final Gamemanager gamemanager;
+    private final ForceItemAssignment assignment;
+    private final GameSettings settings;
     private final ItemDifficultiesManager itemDifficultiesManager;
     private final Set<UUID> yesVotes = new HashSet<>();
     private final Set<UUID> noVotes = new HashSet<>();
@@ -28,9 +31,11 @@ public class VoteSkipManager implements Manager {
     private Material votedMaterial;
     private ForceItemPlayer initiator;
 
-    public VoteSkipManager(Roster roster, Gamemanager gamemanager, ItemDifficultiesManager itemDifficultiesManager) {
+    public VoteSkipManager(Roster roster, ForceItemAssignment assignment, GameSettings settings,
+                           ItemDifficultiesManager itemDifficultiesManager) {
         this.roster = roster;
-        this.gamemanager = gamemanager;
+        this.assignment = assignment;
+        this.settings = settings;
         this.itemDifficultiesManager = itemDifficultiesManager;
     }
 
@@ -127,7 +132,7 @@ public class VoteSkipManager implements Manager {
         // The vote costs the initiator a joker whether or not it carried.
         this.initiator.spendJoker();
         if (skipItem) {
-            this.gamemanager.forceSkipItem(this.initiator.player());
+            this.assignment.skipAll(this.initiator, this.settings.isSettingEnabled(GameSetting.RUN));
         }
 
         this.votedMaterial = null;

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import forceitembattle.model.GameItems;
 import forceitembattle.model.GameState;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -107,7 +108,7 @@ class PlayerOutfitterTest {
 
             PlayerOutfitter.toPlayer(player, 3);
 
-            assertEquals(Gamemanager.getJokerMaterial(), inSlot(player, 4));
+            assertEquals(GameItems.jokerMaterial(), inSlot(player, 4));
             assertEquals(3, player.getInventory().getItem(4).getAmount());
         }
 
@@ -310,7 +311,7 @@ class PlayerOutfitterTest {
 
             PlayerOutfitter.giveJokerShare(player, 2);
 
-            assertEquals(Gamemanager.getJokerMaterial(), inSlot(player, 4));
+            assertEquals(GameItems.jokerMaterial(), inSlot(player, 4));
             assertEquals(2, player.getInventory().getItem(4).getAmount());
         }
 

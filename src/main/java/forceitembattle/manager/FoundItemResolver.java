@@ -37,6 +37,7 @@ public class FoundItemResolver implements Manager {
 
     private final GameSettings settings;
     private final Gamemanager gamemanager;
+    private final ForceItemAssignment assignment;
     private final ScoreboardManager scoreboardManager;
     private final BackToBackManager backToBackManager;
     private final RandomEventManager randomEventManager;
@@ -67,7 +68,7 @@ public class FoundItemResolver implements Manager {
             score(find, context);
         }
 
-        this.gamemanager.advanceMaterials(finder, context);
+        this.assignment.advanceFor(finder, context.runMode());
 
         if (outcome.recordsStats()) {
             recordStats(find, outcome, context);

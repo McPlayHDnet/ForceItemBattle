@@ -4,8 +4,8 @@ import static forceitembattle.commands.Precondition.ROUND_RUNNING;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.Precondition;
 import forceitembattle.manager.BackpackManager;
-import forceitembattle.manager.Gamemanager;
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.GameItems;
 import forceitembattle.model.Roster;
 import forceitembattle.util.Text;
 import java.util.List;
@@ -49,17 +49,17 @@ public final class CommandFixSkips extends CustomCommand {
             return;
         }
 
-        ItemStack jokers = Gamemanager.getJokers(remainingJokers);
+        ItemStack jokers = GameItems.jokers(remainingJokers);
         Inventory backpack = this.backpackManager.getBackpackForPlayer(player);
 
-        backpack.remove(Gamemanager.getJokerMaterial());
+        backpack.remove(GameItems.jokerMaterial());
 
         // Everyone the joker pool belongs to: the team in a team game, just this player otherwise.
         // The branch this replaces asked the TEAM setting and then dereferenced currentTeam(), so
         // a player with no team in a round configured for teams NPE'd here -- and onRespawn runs
         // "/fixskips -silent", which made it a crash on respawn rather than on a command.
         for (ForceItemPlayer member : forceItemPlayer.squad()) {
-            member.player().getInventory().remove(Gamemanager.getJokerMaterial());
+            member.player().getInventory().remove(GameItems.jokerMaterial());
         }
 
         if (player.getInventory().firstEmpty() == -1) {

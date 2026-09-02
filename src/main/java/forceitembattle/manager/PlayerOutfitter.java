@@ -1,6 +1,7 @@
 package forceitembattle.manager;
 
 import forceitembattle.gui.ItemBuilder;
+import forceitembattle.model.GameItems;
 import forceitembattle.model.GameState;
 import forceitembattle.model.MenuItem;
 import java.util.List;
@@ -51,7 +52,7 @@ public final class PlayerOutfitter {
         // Before the tools: addItem fills the first free slot, so handing out tools first would put
         // one of them in the joker slot.
         if (jokersOnHotbar > 0) {
-            player.getInventory().setItem(JOKER_SLOT, Gamemanager.getJokers(jokersOnHotbar));
+            player.getInventory().setItem(JOKER_SLOT, GameItems.jokers(jokersOnHotbar));
         }
 
         for (Material tool : RoundSetup.STARTING_KIT) {
@@ -123,7 +124,7 @@ public final class PlayerOutfitter {
         if (player == null || !player.isOnline() || jokers <= 0) {
             return;
         }
-        player.getInventory().setItem(JOKER_SLOT, Gamemanager.getJokers(jokers));
+        player.getInventory().setItem(JOKER_SLOT, GameItems.jokers(jokers));
     }
 
     private static void giveOpeningBar(Player player, MenuItem.Menu menu, GameState phase) {

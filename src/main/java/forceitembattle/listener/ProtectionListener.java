@@ -1,6 +1,6 @@
 package forceitembattle.listener;
 
-import forceitembattle.manager.Gamemanager;
+import forceitembattle.model.GameItems;
 import forceitembattle.model.RoundPhase;
 import forceitembattle.model.Roster;
 import forceitembattle.manager.ProtectionManager;
@@ -118,7 +118,7 @@ public class ProtectionListener implements Listener {
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
-        if (Gamemanager.isJoker(event.getItemInHand())) {
+        if (GameItems.isJoker(event.getItemInHand())) {
             event.setCancelled(true);
             return;
         }

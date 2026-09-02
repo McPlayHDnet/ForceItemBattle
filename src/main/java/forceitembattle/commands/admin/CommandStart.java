@@ -5,6 +5,7 @@ import static forceitembattle.commands.Precondition.OP;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.commands.Precondition;
+import forceitembattle.manager.ForceItemAssignment;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.TeamsManager;
 import forceitembattle.manager.TimerManager;
@@ -32,6 +33,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 public final class CommandStart extends CustomCommand implements CustomTabCompleter {
 
     private final Gamemanager gamemanager;
+    private final ForceItemAssignment assignment;
     private final TimerManager timerManager;
     private final Roster roster;
     private final RoundPhase roundPhase;
@@ -41,9 +43,10 @@ public final class CommandStart extends CustomCommand implements CustomTabComple
 
     /** Only to schedule the countdown. */
 
-    public CommandStart(Gamemanager gamemanager, TimerManager timerManager, Roster roster, RoundPhase roundPhase, RoundClock roundClock, GameSettings settings, TeamsManager teamManager) {
+    public CommandStart(Gamemanager gamemanager, ForceItemAssignment assignment, TimerManager timerManager, Roster roster, RoundPhase roundPhase, RoundClock roundClock, GameSettings settings, TeamsManager teamManager) {
         super("start");
         this.gamemanager = gamemanager;
+        this.assignment = assignment;
         this.timerManager = timerManager;
         this.roster = roster;
         this.roundPhase = roundPhase;
@@ -125,7 +128,7 @@ public final class CommandStart extends CustomCommand implements CustomTabComple
 
         this.roundClock.startRound(plan.durationSeconds());
         this.gamemanager.setJokerAmount(jokersAmount);
-        this.gamemanager.initializeMaterials();
+        this.assignment.beginRound(this.settings.isSettingEnabled(GameSetting.RUN));
 
         // Teams and force items are assigned by now, so the roster is frozen from here on.
         this.roundPhase.moveTo(GameState.STARTING);

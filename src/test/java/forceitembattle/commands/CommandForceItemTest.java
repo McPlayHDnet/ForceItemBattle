@@ -11,15 +11,16 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import forceitembattle.commands.admin.CommandForceItem;
-import forceitembattle.manager.Gamemanager;
+import forceitembattle.manager.ForceItemAssignment;
+import forceitembattle.manager.ItemDifficultiesManager;
 import forceitembattle.manager.ScoreboardManager;
 import forceitembattle.manager.TimerManager;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameState;
 import forceitembattle.model.RoundPhase;
 import forceitembattle.model.Roster;
-import java.util.ArrayDeque;
-import java.util.Deque;
+import forceitembattle.settings.GameSettings;
+import java.util.ArrayList;
 import java.util.List;
 import org.bukkit.Material;
 import org.junit.jupiter.api.AfterEach;
@@ -55,8 +56,7 @@ class CommandForceItemTest {
     private ServerMock server;
     private RoundPhase roundPhase;
     private Roster roster;
-    private Gamemanager gamemanager;
-    private Deque<Material> forcedQueue;
+    private ForceItemAssignment assignment;
     private CommandForceItem command;
 
     @BeforeEach
@@ -65,15 +65,15 @@ class CommandForceItemTest {
 
         this.roundPhase = new RoundPhase();
         this.roster = new Roster();
-        this.gamemanager = mock(Gamemanager.class);
-        this.forcedQueue = new ArrayDeque<>();
-
-        when(this.gamemanager.getForcedItemQueue()).thenReturn(this.forcedQueue);
-        when(this.gamemanager.generateMaterial()).thenReturn(Material.BEDROCK);
+        // A real assignment module over a stubbed pool. The forced row is its private state now,
+        // so these tests ask what the owner ends up hunting rather than reading a leaked deque.
+        ItemDifficultiesManager items = mock(ItemDifficultiesManager.class);
+        when(items.generateRandomMaterial()).thenReturn(Material.BEDROCK);
+        this.assignment = new ForceItemAssignment(this.roster, items);
 
         this.roundPhase.moveTo(GameState.MID_GAME);
 
-        this.command = new CommandForceItem(this.gamemanager, mock(TimerManager.class), this.roster, mock(ScoreboardManager.class));
+        this.command = new CommandForceItem(this.assignment, mock(GameSettings.class), mock(TimerManager.class), this.roster, mock(ScoreboardManager.class));
         ((CustomCommand) this.command).setContext(
                 new CommandContext(this.roundPhase, null, this.roster));
     }
@@ -102,6 +102,31 @@ class CommandForceItemTest {
         this.command.onCommand(player, null, "forceitem", args);
     }
 
+    /**
+     * The next two items drawn for this owner, by advancing twice. The forced row is private to
+     * {@link ForceItemAssignment}, so what it holds is observed the way the game observes it — by
+     * finding things — rather than by reading the deque.
+     *
+     * <p>Reads {@code activeNextMaterial()}, not {@code activeMaterial()}: {@code advance} shifts next
+     * into current and puts the freshly drawn item in next, so the drawn one is always the queued
+     * slot. And the <i>active</i> family, because on a team the plain accessors read the player's own
+     * untouched fields rather than the Score Owner's.
+     */
+    private List<Material> nextTwoItems(ForceItemPlayer entry) {
+        List<Material> drawn = new ArrayList<>();
+        for (int i = 0; i < 2; i++) {
+            this.assignment.advanceFor(entry, false);
+            drawn.add(entry.activeNextMaterial());
+        }
+        return drawn;
+    }
+
+    /** Asserts nothing is queued behind this owner, so the next draw comes from the pool. */
+    private void assertQueueDrainsTo(ForceItemPlayer entry, Material expected, String because) {
+        this.assignment.advanceFor(entry, false);
+        assertEquals(expected, entry.activeNextMaterial(), because);
+    }
+
     // --- the tests --------------------------------------------------------------------------
 
     @Nested
@@ -123,8 +148,7 @@ class CommandForceItemTest {
 
             run(mockOf(entry), "diamond");
 
-            verify(gamemanager).generateMaterial();
-            assertEquals(Material.BEDROCK, entry.nextMaterial());
+            assertEquals(Material.BEDROCK, entry.activeNextMaterial());
         }
 
         @Test
@@ -133,7 +157,7 @@ class CommandForceItemTest {
 
             run(mockOf(entry), "diamond");
 
-            assertTrue(forcedQueue.isEmpty());
+            assertQueueDrainsTo(entry, Material.BEDROCK, "a single item queues nothing behind it");
         }
 
         @Test
@@ -166,9 +190,9 @@ class CommandForceItemTest {
             run(mockOf(entry), "diamond", "emerald");
 
             assertEquals(Material.DIAMOND, entry.activeMaterial());
-            assertEquals(Material.EMERALD, entry.nextMaterial());
-            assertTrue(forcedQueue.isEmpty(), "two items fill both slots, so nothing is left over");
-            verify(gamemanager, never()).generateMaterial();
+            assertEquals(Material.EMERALD, entry.activeNextMaterial());
+            assertQueueDrainsTo(entry, Material.BEDROCK,
+                    "two items fill both slots, so nothing is left over to queue");
         }
 
         /** From the third argument on, the row is queued in order. */
@@ -179,9 +203,8 @@ class CommandForceItemTest {
             run(mockOf(entry), "diamond", "emerald", "gold_ingot", "iron_ingot");
 
             assertEquals(Material.DIAMOND, entry.activeMaterial());
-            assertEquals(Material.EMERALD, entry.nextMaterial());
-            assertEquals(List.of(Material.GOLD_INGOT, Material.IRON_INGOT),
-                    List.copyOf(forcedQueue));
+            assertEquals(Material.EMERALD, entry.activeNextMaterial());
+            assertEquals(List.of(Material.GOLD_INGOT, Material.IRON_INGOT), nextTwoItems(entry));
         }
 
         /** A second call replaces the row rather than appending to what is still draining. */
@@ -192,7 +215,8 @@ class CommandForceItemTest {
             run(mockOf(entry), "diamond", "emerald", "gold_ingot");
             run(mockOf(entry), "stone", "dirt", "sand");
 
-            assertEquals(List.of(Material.SAND), List.copyOf(forcedQueue));
+            assertEquals(List.of(Material.SAND, Material.BEDROCK), nextTwoItems(entry),
+                    "the first row's leftovers are gone, not draining behind the second");
         }
 
         @Test
@@ -249,13 +273,17 @@ class CommandForceItemTest {
         @Test
         void oneBadArgumentAppliesNoneOfTheRow() {
             ForceItemPlayer entry = joinPlaying("Admin");
-            forcedQueue.add(Material.STONE);
+            // An earlier row, so there is something to disturb: current DIAMOND, next EMERALD,
+            // STONE queued behind them.
+            run(mockOf(entry), "diamond", "emerald", "stone");
+            screenOf(mockOf(entry));
 
-            run(mockOf(entry), "diamond", "emerald", "not_an_item", "gold_ingot");
+            run(mockOf(entry), "sand", "dirt", "not_an_item", "gold_ingot");
 
             assertSaid(mockOf(entry), "Unknown item");
-            assertEquals(Material.DIRT, entry.activeMaterial(), "the current item is untouched");
-            assertEquals(List.of(Material.STONE), List.copyOf(forcedQueue),
+            assertEquals(Material.DIAMOND, entry.activeMaterial(), "the current item is untouched");
+            assertEquals(Material.EMERALD, entry.activeNextMaterial(), "and so is the one after it");
+            assertEquals(List.of(Material.STONE, Material.BEDROCK), nextTwoItems(entry),
                     "the queue is untouched, not cleared and half-filled");
         }
 
