@@ -8,7 +8,6 @@ import forceitembattle.commands.Precondition;
 import forceitembattle.manager.ForceItemAssignment;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.TeamsManager;
-import forceitembattle.manager.TimerManager;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameState;
 import forceitembattle.model.Roster;
@@ -34,7 +33,6 @@ public final class CommandStart extends CustomCommand implements CustomTabComple
 
     private final Gamemanager gamemanager;
     private final ForceItemAssignment assignment;
-    private final TimerManager timerManager;
     private final Roster roster;
     private final RoundPhase roundPhase;
     private final RoundClock roundClock;
@@ -43,11 +41,10 @@ public final class CommandStart extends CustomCommand implements CustomTabComple
 
     /** Only to schedule the countdown. */
 
-    public CommandStart(Gamemanager gamemanager, ForceItemAssignment assignment, TimerManager timerManager, Roster roster, RoundPhase roundPhase, RoundClock roundClock, GameSettings settings, TeamsManager teamManager) {
+    public CommandStart(Gamemanager gamemanager, ForceItemAssignment assignment, Roster roster, RoundPhase roundPhase, RoundClock roundClock, GameSettings settings, TeamsManager teamManager) {
         super("start");
         this.gamemanager = gamemanager;
         this.assignment = assignment;
-        this.timerManager = timerManager;
         this.roster = roster;
         this.roundPhase = roundPhase;
         this.roundClock = roundClock;
@@ -202,7 +199,7 @@ public final class CommandStart extends CustomCommand implements CustomTabComple
 
                 switch (seconds) {
                     case 8 ->
-                            subTitle = "<white>» <gold>" + (CommandStart.this.timerManager.getTimeLeft() / 60) + " minutes <white>«";
+                            subTitle = "<white>» <gold>" + (CommandStart.this.roundClock.secondsLeft() / 60) + " minutes <white>«";
                     case 6 -> subTitle = "<white>» <gold>" + jokersAmount + " Jokers <white>«";
                     case 5 -> subTitle = "<white>» <gold>/info & /infowiki <white>«";
                     case 4 -> subTitle = "<white>» <gold>/spawn & /bed <white>«";

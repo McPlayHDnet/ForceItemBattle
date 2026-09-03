@@ -8,7 +8,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import forceitembattle.commands.player.CommandSpectate;
-import forceitembattle.manager.TimerManager;
+import forceitembattle.model.GameState;
+import forceitembattle.model.RoundPhase;
 import org.bukkit.GameMode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,22 +30,24 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
  * If a real toggle is added, {@link #someoneNotSpectatingIsSilentlyIgnored} is the test that
  * changes.
  *
- * <p>The other half is the timer gate, which is the only thing standing between a player and
- * creative mode mid-round.
+ * <p>The other half is the phase gate, which is the only thing standing between a player and
+ * creative mode mid-round. It used to ask the clock instead: {@code getTimeLeft() > 0} is
+ * {@code !isEndGame()} written in terms of a counter, and the counter is loaded from config before
+ * a round has been played and frozen above zero during a pause.
  */
 class CommandSpectateTest {
 
     private ServerMock server;
-    private TimerManager timer;
+    private RoundPhase phase;
     private CommandSpectate command;
 
     @BeforeEach
     void setUp() {
         this.server = MockBukkit.mock();
 
-        this.timer = mock(TimerManager.class);
+        this.phase = new RoundPhase();
 
-        this.command = new CommandSpectate(this.timer);
+        this.command = new CommandSpectate(this.phase);
         ((CustomCommand) this.command).setContext(new CommandContext(null, null, null));
     }
 
@@ -60,11 +63,11 @@ class CommandSpectateTest {
     }
 
     private void roundIsOver() {
-        when(this.timer.getTimeLeft()).thenReturn(0);
+        this.phase.moveTo(GameState.END_GAME);
     }
 
-    private void secondsLeft(int seconds) {
-        when(this.timer.getTimeLeft()).thenReturn(seconds);
+    private void inState(GameState state) {
+        this.phase.moveTo(state);
     }
 
     private void run(PlayerMock player) {
@@ -98,11 +101,11 @@ class CommandSpectateTest {
         assertTrue(screenOf(player).isEmpty(), "and nothing is said about it either");
     }
 
-    /** The gate: nobody escapes into creative while the clock is still running. */
+    /** The gate: nobody escapes into creative while the round is still on. */
     @Test
     void midRoundItIsRefused() {
         PlayerMock player = join("Understudy1", GameMode.SPECTATOR);
-        secondsLeft(300);
+        inState(GameState.MID_GAME);
 
         run(player);
 
@@ -110,14 +113,32 @@ class CommandSpectateTest {
         assertEquals(GameMode.SPECTATOR, player.getGameMode());
     }
 
-    /** One second left is still mid-round. */
+    /**
+     * A pause is not the end of a round. The clock stops there and stays above zero, so the old
+     * counter gate agreed by accident; the phase says so directly.
+     */
     @Test
-    void theGateOpensOnlyAtZero() {
+    void aPauseIsNotTheEnd() {
         PlayerMock player = join("Understudy1", GameMode.SPECTATOR);
-        secondsLeft(1);
+        inState(GameState.PAUSED_GAME);
 
         run(player);
 
+        assertEquals(GameMode.SPECTATOR, player.getGameMode());
+    }
+
+    /**
+     * And neither is the lobby. Before any round has been played the clock holds the configured
+     * duration, which is where the counter and the phase actually disagreed.
+     */
+    @Test
+    void beforeAnyRoundItIsRefused() {
+        PlayerMock player = join("Understudy1", GameMode.SPECTATOR);
+        inState(GameState.PRE_GAME);
+
+        run(player);
+
+        assertSaid(player, "after the game end");
         assertEquals(GameMode.SPECTATOR, player.getGameMode());
     }
 }

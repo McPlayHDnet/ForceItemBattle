@@ -31,7 +31,7 @@ class FoundItemResolverWiringTest {
                 mock(ScoreboardManager.class),
                 mock(BackToBackManager.class),
                 mock(RandomEventManager.class),
-                mock(TimerManager.class),
+                new forceitembattle.model.RoundClock(),
                 mock(ItemDifficultiesManager.class),
                 mock(FIBServiceClient.class));
 

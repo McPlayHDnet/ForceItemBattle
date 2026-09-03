@@ -22,7 +22,7 @@ import java.util.function.Supplier;
  * {@link FibMatchControllerApi} and shares transport/async plumbing via the {@link ApiExecutor}
  * handed in by the owning {@link FIBServiceClient}.
  */
-public class FibMatchHistoryClient {
+public class FibMatchHistoryClient implements MatchSink {
 
     private final FibMatchControllerApi api;
     private final ApiExecutor executor;
@@ -37,6 +37,11 @@ public class FibMatchHistoryClient {
         this.executor = executor;
         this.achievementManager = achievementManager;
         this.collection = collection;
+    }
+
+    @Override
+    public void submitMatch(UUID matchId, FibMatchSubmitRequestDto request, Runnable onPersisted) {
+        submitMatchAsync(matchId, request, onPersisted);
     }
 
     public void submitMatchAsync(UUID matchId, FibMatchSubmitRequestDto request, Runnable onSuccess) {

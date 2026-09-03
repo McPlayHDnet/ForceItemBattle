@@ -31,8 +31,9 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
  * what happens to a vote nobody finishes, which is the common case in a real round. Ticking the
  * MockBukkit scheduler is what makes 60 seconds cost nothing to assert.
  *
- * <p>One rule is recorded here rather than endorsed — {@link Quorum#aSpectatorsVoteCountsTowardsQuorum}.
- * It is pre-existing and not a regression from the scheduler work.
+ * <p>The spectator hole this file used to record rather than endorse is closed: the eligible voters
+ * are fixed when the vote opens. The tally itself lives in {@code model/SkipVote} and is tested
+ * there; what is asserted here is the wiring — the clock, the chat and the joker charge.
  */
 class VoteSkipExpiryTest {
 
@@ -178,14 +179,13 @@ class VoteSkipExpiryTest {
         }
 
         /**
-         * <b>Recorded, not endorsed.</b> Quorum counts {@code roster.players()}, which includes
-         * spectators, and {@code castVote} never asks the roster whether the voter is playing. So a
-         * spectator both inflates the denominator and can fill it. This predates the scheduler work;
-         * it is candidate 6 in the pass-4 review, where the fix is an eligible-voter set handed in
-         * at {@code open}.
+         * <b>This was the defect, and it is now the assertion.</b> Quorum used to count
+         * {@code roster.players()}, spectators included, while {@code castVote} never asked the
+         * roster whether the voter was playing — so a spectator both inflated the denominator and
+         * could fill it, closing the poll early. The eligible set is now fixed at {@code open}.
          */
         @Test
-        void aSpectatorsVoteCountsTowardsQuorum() {
+        void aSpectatorCannotVoteAndCannotCloseThePoll() {
             ForceItemPlayer starter = joinPlaying("Understudy1");
             ForceItemPlayer spectator = joinPlaying("Understudy2");
             spectator.setSpectator(true);
@@ -193,8 +193,28 @@ class VoteSkipExpiryTest {
             votes.startVoting(playerOf(starter));
             votes.castVote(playerOf(spectator), true);
 
+            assertTrue(votes.isVoteInProgress(),
+                    "a spectator is not an eligible voter and must not close the poll");
+            assertTrue(screenOf(playerOf(spectator)).contains("players in the round"));
+        }
+
+        /**
+         * The other half of the same fix. A spectator no longer counts towards the denominator
+         * either, so the one player actually in the round reaches quorum on their own — before, the
+         * poll would have hung until the minute expired.
+         */
+        @Test
+        void aSpectatorDoesNotInflateTheQuorum() {
+            ForceItemPlayer starter = joinPlaying("Understudy1");
+            ForceItemPlayer other = joinPlaying("Understudy2");
+            ForceItemPlayer spectator = joinPlaying("Understudy3");
+            spectator.setSpectator(true);
+
+            votes.startVoting(playerOf(starter));
+            votes.castVote(playerOf(other), true);
+
             assertTrue(!votes.isVoteInProgress(),
-                    "current behaviour: a spectator's vote closes the poll");
+                    "both eligible voters have voted, so the poll is done");
         }
 
         @Test

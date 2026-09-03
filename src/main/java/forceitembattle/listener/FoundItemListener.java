@@ -5,7 +5,6 @@ import forceitembattle.manager.FoundItemResolver;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.model.Find;
-import forceitembattle.model.ForceItemPlayer;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -25,16 +24,11 @@ public class FoundItemListener implements Listener {
     private final Gamemanager gamemanager;
     @EventHandler
     public void onFoundItem(FoundItemEvent event) {
-        ForceItemPlayer finder = this.roster
-                .get(event.getPlayer().getUniqueId());
-
-        // No roster entry means whoever fired this is not in the round -- someone who joined
-        // after the countdown froze the roster. There is no score to credit, and every step of
-        // the resolver reads the finder.
-        if (finder == null) {
-            return;
-        }
-
-        this.foundItemResolver.resolve(Find.of(event, finder));
+        // participant(), not get(): the two other producers of this event are a joker skip and a
+        // back-to-back chain, and neither should credit someone who has stopped playing. Whoever
+        // is watching rather than playing has no score to credit, and every step of the resolver
+        // reads the finder.
+        this.roster.participant(event.getPlayer().getUniqueId())
+                .ifPresent(finder -> this.foundItemResolver.resolve(Find.of(event, finder)));
     }
 }

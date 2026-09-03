@@ -6,10 +6,10 @@ import forceitembattle.gui.ResultReveal;
 import forceitembattle.gui.ResultScreen;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.TeamsManager;
-import forceitembattle.manager.TimerManager;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.ResultCeremony;
 import forceitembattle.model.Roster;
+import forceitembattle.model.RoundPhase;
 import forceitembattle.model.ScoreOwner;
 import forceitembattle.model.Team;
 import forceitembattle.settings.GameSetting;
@@ -25,16 +25,16 @@ import org.bukkit.entity.Player;
 public final class CommandResult extends CustomCommand {
 
     private final Gamemanager gamemanager;
-    private final TimerManager timerManager;
+    private final RoundPhase roundPhase;
     private final Roster roster;
     private final GameSettings settings;
     private final TeamsManager teamManager;
     private final ResultCeremony resultCeremony;
 
-    public CommandResult(Gamemanager gamemanager, TimerManager timerManager, Roster roster, GameSettings settings, TeamsManager teamManager, ResultCeremony resultCeremony) {
+    public CommandResult(Gamemanager gamemanager, RoundPhase roundPhase, Roster roster, GameSettings settings, TeamsManager teamManager, ResultCeremony resultCeremony) {
         super("result");
         this.gamemanager = gamemanager;
-        this.timerManager = timerManager;
+        this.roundPhase = roundPhase;
         this.roster = roster;
         this.settings = settings;
         this.teamManager = teamManager;
@@ -49,7 +49,8 @@ public final class CommandResult extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (this.timerManager.getTimeLeft() > 0) {
+        // The phase, not the clock: the results screen belongs to the end of a round.
+        if (!this.roundPhase.isEndGame()) {
             return;
         }
 

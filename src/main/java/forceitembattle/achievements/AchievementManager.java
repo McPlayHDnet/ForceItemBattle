@@ -21,7 +21,6 @@ import forceitembattle.model.Roster;
 import forceitembattle.model.RoundPhase;
 import forceitembattle.model.Standings;
 import forceitembattle.model.Team;
-import forceitembattle.service.FIBServiceClient;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
 import java.util.ArrayList;
@@ -38,7 +37,6 @@ import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
-import org.bukkit.plugin.Plugin;
 
 public class AchievementManager implements Manager {
 
@@ -63,17 +61,18 @@ public class AchievementManager implements Manager {
     // Pre-built so handleEvent only walks the achievements bound to the incoming trigger.
     private final Map<Trigger, List<Achievements>> achievementsByTrigger;
 
-    public AchievementManager(Plugin plugin, Roster roster, RoundPhase roundPhase, GameSettings settings,
-                              CollectionManager collection, FIBServiceClient fibService,
-                              GlobalStatsCache globalStatsCache, AchievementWorld world) {
+    public AchievementManager(Roster roster, RoundPhase roundPhase, GameSettings settings,
+                              CollectionManager collection, AchievementStorage storage,
+                              GlobalStatsCache globalStatsCache, GlobalStatsLoader globalStatsLoader,
+                              AchievementWorld world) {
         this.roster = roster;
         this.roundPhase = roundPhase;
         this.settings = settings;
         this.collection = collection;
         this.world = world;
-        this.storage = new AchievementStorage(plugin, fibService);
+        this.storage = storage;
         this.globalStatsCache = globalStatsCache;
-        this.globalStatsLoader = new GlobalStatsLoader(fibService, globalStatsCache);
+        this.globalStatsLoader = globalStatsLoader;
         this.achievementsByTrigger = buildTriggerMap();
     }
 
@@ -187,26 +186,27 @@ public class AchievementManager implements Manager {
         checkMetaTiers(playerUuid, player, null, false);
     }
 
+    /**
+     * Grants every Completionist tier the player has just become eligible for.
+     *
+     * <p>One pass is enough, and provably so: {@link CompletionistRule}'s constructor rejects a rule
+     * that requires META achievements, so unlocking a tier here can never satisfy another one. This
+     * used to be a {@code while (grantedAny)} fixpoint, whose second pass could only ever grant
+     * nothing — pinned by {@code CompletionistRuleTest}, which is the guard that keeps this true.
+     */
     public void checkMetaTiers(UUID playerUuid, Player player, Team team, boolean teamGame) {
-        boolean grantedAny = true;
-
-        while (grantedAny) {
-            grantedAny = false;
-
-            for (Achievements achievement : Achievements.values()) {
-                if (achievement.getScope() != AchievementScope.META) {
-                    continue;
-                }
-                if (storage.hasAchievement(playerUuid, achievement)) {
-                    continue;
-                }
-                if (!achievement.getCompletionistRule().isMet(this.storage, playerUuid)) {
-                    continue;
-                }
-
-                writeUnlock(playerUuid, player, achievement, team, teamGame);
-                grantedAny = true;
+        for (Achievements achievement : Achievements.values()) {
+            if (achievement.getScope() != AchievementScope.META) {
+                continue;
             }
+            if (storage.hasAchievement(playerUuid, achievement)) {
+                continue;
+            }
+            if (!achievement.getCompletionistRule().isMet(this.storage, playerUuid)) {
+                continue;
+            }
+
+            writeUnlock(playerUuid, player, achievement, team, teamGame);
         }
     }
 

@@ -3,6 +3,7 @@ package forceitembattle.listener;
 import forceitembattle.model.RoundPhase;
 import forceitembattle.model.Roster;
 import forceitembattle.manager.AntimatterPortalManager;
+import forceitembattle.manager.ScatterDestinations;
 import forceitembattle.service.FIBServiceClient;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.event.AntimatterTeleporterUseEvent;
@@ -12,19 +13,13 @@ import forceitembattle.settings.GameSetting;
 import forceitembattle.service.PlayerCounter;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.util.Text;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.UUID;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
-import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
@@ -34,7 +29,6 @@ import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.inventory.ItemStack;
-import org.jetbrains.annotations.Nullable;
 
 @RequiredArgsConstructor
 public class PortalListener implements Listener {
@@ -44,14 +38,10 @@ public class PortalListener implements Listener {
     private final RoundPhase roundPhase;
     private final GameSettings settings;
     /**
-     * Where each player's scatters have already sent them, so a second trip through the same portal —
-     * or a second visit to the End — lands in the same place. Neither map is ever cleared, which is
-     * safe only because {@code scheduleReset} restarts the JVM between rounds.
+     * Where each player's scatters have already sent them. The rule and the memory live there; this
+     * listener grounds a destination and moves the player, which is the half that needs a world.
      */
-    private final Map<UUID, List<TeleporterLocation>> playerTeleporterLocations = new HashMap<>();
-    private final Map<UUID, Location> playerEndLocations = new HashMap<>();
-
-    private final Random random = new Random();
+    private final ScatterDestinations destinations;
 
     @EventHandler
     public void onMove(PlayerMoveEvent playerMoveEvent) {
@@ -100,38 +90,24 @@ public class PortalListener implements Listener {
 
         if (midGame && this.settings.isSettingEnabled(GameSetting.STATS)) {
             ForceItemPlayer fip = this.roster.get(player.getUniqueId());
-            this.fibService.statistics().recordPlayerCounter(
+            this.fibService.statisticsWrites().recordPlayerCounter(
                     player.getUniqueId(), fip, PlayerCounter.ANTIMATTER_TELEPORTER_ENTRIES, 1);
         }
 
-        Location existingLocation = this.findExistingLocation(player);
-        if (existingLocation != null) {
+        Location origin = player.getLocation();
+        Optional<Location> existing =
+                this.destinations.existingTeleporterDestination(player.getUniqueId(), origin);
+        if (existing.isPresent()) {
             if (midGame) {
                 Bukkit.getPluginManager().callEvent(new AntimatterTeleporterUseEvent(player, false));
             }
-            player.teleport(existingLocation);
+            player.teleport(existing.get());
             return;
         }
 
-        World world = player.getWorld();
-
-        int xOffset = randomAxisOffset();
-        int zOffset = randomAxisOffset();
-
-        Location currentLocation = player.getLocation();
-        Location newLocation = new Location(world, currentLocation.getX() + xOffset, currentLocation.getY(), currentLocation.getZ() + zOffset);
-        newLocation.setY(world.getHighestBlockYAt(newLocation) + 1);
-
-        Location blockLocation = newLocation.clone().subtract(0, 1, 0);
-        Block block = blockLocation.getBlock();
-        if (Landing.needsFloor(block.getType())) {
-            block.setType(Material.STONE);
-        }
-
-        // computeIfAbsent, not get: the list exists here only because findExistingLocation ran first
-        // and created it, which is an ordering rule nothing enforces.
-        playerTeleporterLocations.computeIfAbsent(player.getUniqueId(), k -> new ArrayList<>())
-                .add(new TeleporterLocation(currentLocation, newLocation));
+        Location newLocation = ground(this.destinations.scatterTargetFrom(origin));
+        layFloorUnder(newLocation);
+        this.destinations.rememberTeleporter(player.getUniqueId(), origin, newLocation);
 
         // Unused before this round, so it counts as distinct.
         if (midGame) {
@@ -141,16 +117,18 @@ public class PortalListener implements Listener {
         player.teleport(newLocation);
     }
 
-    @Nullable
-    private Location findExistingLocation(Player player) {
-        Location playerLocation = player.getLocation();
+    /** Drops a scatter target onto the highest block at its column. */
+    private static Location ground(Location target) {
+        target.setY(target.getWorld().getHighestBlockYAt(target) + 1);
+        return target;
+    }
 
-        for (TeleporterLocation teleporterLocation : playerTeleporterLocations.computeIfAbsent(player.getUniqueId(), k -> new ArrayList<>())) {
-            if (teleporterLocation.isClose(playerLocation)) {
-                return teleporterLocation.destinationLocation;
-            }
+    /** So a scatter onto water, lava or air does not drown or drop whoever arrives. */
+    private static void layFloorUnder(Location location) {
+        Block block = location.clone().subtract(0, 1, 0).getBlock();
+        if (Landing.needsFloor(block.getType())) {
+            block.setType(Material.STONE);
         }
-        return null;
     }
 
     @EventHandler
@@ -164,37 +142,19 @@ public class PortalListener implements Listener {
             return;
         }
 
-        if (Dimension.of(player) == Dimension.END) {
-            if (this.playerEndLocations.containsKey(player.getUniqueId())) {
-                player.teleport(this.playerEndLocations.get(player.getUniqueId()));
-                return;
-            }
-
-            int xOffset = randomAxisOffset();
-            int zOffset = randomAxisOffset();
-
-            Location currentLocation = player.getLocation();
-            Location newLocation = new Location(player.getWorld(), currentLocation.getX() + xOffset, currentLocation.getY(), currentLocation.getZ() + zOffset);
-            newLocation.setY(player.getWorld().getHighestBlockYAt(newLocation) + 1);
-            playerEndLocations.put(player.getUniqueId(), newLocation);
-
-            player.teleport(newLocation);
+        if (Dimension.of(player) != Dimension.END) {
+            return;
         }
-    }
 
-    /**
-     * 5000..15000 blocks out on one axis, sign picked separately. Shared by the antimatter
-     * teleporter's scatter and the End scatter, which have always used the same range.
-     */
-    private int randomAxisOffset() {
-        int magnitude = random.nextInt(10_001) + 5000;
-        return random.nextBoolean() ? magnitude : -magnitude;
-    }
-
-    private record TeleporterLocation(Location portalLocation, Location destinationLocation) {
-
-        public boolean isClose(Location location) {
-            return portalLocation.distanceSquared(location) <= 625;
+        Optional<Location> existing = this.destinations.existingEndDestination(player.getUniqueId());
+        if (existing.isPresent()) {
+            player.teleport(existing.get());
+            return;
         }
+
+        Location newLocation = ground(this.destinations.scatterTargetFrom(player.getLocation()));
+        this.destinations.rememberEnd(player.getUniqueId(), newLocation);
+
+        player.teleport(newLocation);
     }
 }

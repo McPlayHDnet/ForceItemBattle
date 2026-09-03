@@ -108,7 +108,8 @@ public class Gamemanager implements Manager {
         this.roundPhase = roundPhase;
 
 
-        this.matchHistory = new MatchHistoryReporter(fibService, roster, settings, teamManager);
+        this.matchHistory = new MatchHistoryReporter(fibService.matchHistory(), roster, settings,
+                teamManager);
     }
 
     public void evaluateLead() {
@@ -212,7 +213,7 @@ public class Gamemanager implements Manager {
         }
 
         if (this.settings.isSettingEnabled(GameSetting.STATS)) {
-            this.fibService.statistics().recordGameStarted(forceItemPlayer);
+            this.fibService.statisticsWrites().recordGameStarted(forceItemPlayer);
         }
     }
 
@@ -354,7 +355,7 @@ public class Gamemanager implements Manager {
                             ? Integer.valueOf(1).equals(placesMap.get(forceItemPlayer))
                             : (teamPlaces != null && Integer.valueOf(1).equals(teamPlaces.get(currentTeam)));
 
-                    this.fibService.statistics().recordRoundFinished(
+                    this.fibService.statisticsWrites().recordRoundFinished(
                             forceItemPlayer,
                             player.getName(),
                             forceItemPlayer.activeScore(),

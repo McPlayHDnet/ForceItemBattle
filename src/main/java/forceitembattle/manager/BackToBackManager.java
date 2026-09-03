@@ -177,9 +177,9 @@ public class BackToBackManager implements Manager {
 
         int streak = forceItemPlayer.backToBackStreak();
 
-        // In a team game the peak is the team's and lands on both member rows; the stats client owns
+        // In a team game the peak is the team's and lands on both member rows; the write rules own
         // that routing, and since the streak moved onto the Score Owner both numbers are the same one.
-        this.fibService.statistics().recordBackToBackPeak(
+        this.fibService.statisticsWrites().recordBackToBackPeak(
                 forceItemPlayer, context.teamGame() && forceItemPlayer.currentTeam() != null,
                 streak, streak);
     }

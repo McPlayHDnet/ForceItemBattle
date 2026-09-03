@@ -91,10 +91,6 @@ public class TimerManager implements Manager {
         this.plugin.saveConfig();
     }
 
-    public int getTimeLeft() {
-        return this.clock.secondsLeft();
-    }
-
     public void setTimeLeft(int timeLeft) {
         this.clock.setSecondsLeft(timeLeft);
     }
@@ -123,7 +119,7 @@ public class TimerManager implements Manager {
 
             if (forceItemPlayer == null) {
                 player.sendActionBar(Text.of("<gradient:#fcef64:#fcc44b:#f44c7d><b>"
-                        + TimeFormat.humanised(this.getTimeLeft()) + "</b> <dark_gray>| <gold>SPEC"));
+                        + TimeFormat.humanised(this.clock.secondsLeft()) + "</b> <dark_gray>| <gold>SPEC"));
                 continue;
             }
 
@@ -135,7 +131,7 @@ public class TimerManager implements Manager {
         Material material = forceItemPlayer.activeMaterial();
 
         String timeText = "<gradient:#fcef64:#fcc44b:#ff9e59><b>"
-                + TimeFormat.humanised(this.getTimeLeft()) + "</b></gradient>";
+                + TimeFormat.humanised(this.clock.secondsLeft()) + "</b></gradient>";
         String scoreText = "";
         if (this.settings.isSettingEnabled(GameSetting.SCORE)) {
             // isInTeam(), not the TEAM setting: a spectator-turned-player holds no team and would

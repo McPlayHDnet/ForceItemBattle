@@ -316,7 +316,7 @@ class CustomCommandTest {
             assertGates(new forceitembattle.commands.admin.CommandReset(null, null), "OP");
             assertGates(new forceitembattle.commands.admin.CommandSettings(null, null), "OP");
             assertGates(new forceitembattle.commands.admin.CommandSkip(null, null, null), "OP, ROUND_RUNNING");
-            assertGates(new forceitembattle.commands.admin.CommandStart(null, null, null, null, null, null, null, null), "OP");
+            assertGates(new forceitembattle.commands.admin.CommandStart(null, null, null, null, null, null, null), "OP");
             assertGates(new forceitembattle.commands.admin.CommandStopTimer(null), "OP, ROUND_RUNNING");
         }
 

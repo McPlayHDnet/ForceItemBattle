@@ -9,6 +9,7 @@ import forceitembattle.model.ForceItem;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameContext;
 import forceitembattle.model.Rarity;
+import forceitembattle.model.RoundClock;
 import forceitembattle.randomevents.RandomEventManager;
 import forceitembattle.service.FIBServiceClient;
 import forceitembattle.settings.GameSettings;
@@ -43,7 +44,7 @@ public class FoundItemResolver implements Manager {
     private final ScoreboardManager scoreboardManager;
     private final BackToBackManager backToBackManager;
     private final RandomEventManager randomEventManager;
-    private final TimerManager timerManager;
+    private final RoundClock roundClock;
     private final ItemDifficultiesManager itemDifficultiesManager;
     private final FIBServiceClient fibService;
 
@@ -117,7 +118,7 @@ public class FoundItemResolver implements Manager {
 
         ForceItem forceItem = new ForceItem(
                 find.material(),
-                TimeFormat.humanised(this.timerManager.getTimeLeft()),
+                TimeFormat.humanised(this.roundClock.secondsLeft()),
                 System.currentTimeMillis(),
                 backToBack,
                 find.skipped(),
@@ -131,14 +132,14 @@ public class FoundItemResolver implements Manager {
     }
 
     private void trackRarity(ForceItemPlayer finder, Rarity rarity) {
-        this.fibService.statistics().recordRarity(finder.player().getUniqueId(), finder, rarity);
+        this.fibService.statisticsWrites().recordRarity(finder.player().getUniqueId(), finder, rarity);
     }
 
     private void recordStats(Find find, FindOutcome outcome, GameContext context) {
         ForceItemPlayer finder = find.finder();
         finder.setItemStreak(outcome.newItemStreak());
 
-        this.fibService.statistics().recordFind(
+        this.fibService.statisticsWrites().recordFind(
                 finder,
                 context.teamGame(),
                 find.material().name(),

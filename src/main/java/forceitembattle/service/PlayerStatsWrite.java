@@ -16,7 +16,7 @@ import javax.annotation.Nullable;
  * and member updates with no common supertype. Only the branch that runs is built.
  *
  * <p>Deliberately not for shared team stats (highest score, longest streak): those live on the team
- * row, are written once per team, and go through {@code updateTeamStatisticsAsync} guarded by
+ * row, are written once per team, and go through {@code StatisticsSink#updateTeam} guarded by
  * {@link forceitembattle.model.Team#isPrimaryWriter(ForceItemPlayer)}.
  *
  * <p><b>Who counts as a participant is decided here, not at the call sites</b>, so the next caller
@@ -33,7 +33,7 @@ public final class PlayerStatsWrite {
      *                       row, and the roster entry is consulted only to decide which row
      * @param forceItemPlayer the acting player's roster entry, or {@code null} if they have none
      */
-    public static void record(FibStatisticsClient statistics,
+    public static void record(StatisticsSink sink,
                               UUID self,
                               @Nullable ForceItemPlayer forceItemPlayer,
                               Supplier<FibSoloStatisticsUpdateRequestDto> soloUpdate,
@@ -45,7 +45,7 @@ public final class PlayerStatsWrite {
         }
 
         if (!forceItemPlayer.isInTeam()) {
-            statistics.updateSoloStatisticsAsync(self, soloUpdate.get());
+            sink.updateSolo(self, soloUpdate.get());
             return;
         }
 
@@ -55,7 +55,7 @@ public final class PlayerStatsWrite {
             if (teammate.player() == null) {
                 return;
             }
-            statistics.updateMemberStatisticsAsync(
+            sink.updateMember(
                     self, teammate.player().getUniqueId(), self, memberUpdate.get());
         });
     }

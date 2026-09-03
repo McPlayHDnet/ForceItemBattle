@@ -8,7 +8,6 @@ import static org.mockito.Mockito.when;
 import forceitembattle.commands.player.CommandResult;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.TeamsManager;
-import forceitembattle.manager.TimerManager;
 import forceitembattle.model.ResultCeremony;
 import forceitembattle.model.Roster;
 import forceitembattle.model.Team;
@@ -54,16 +53,16 @@ class CommandResultTest {
 
         Gamemanager gamemanager = mock(Gamemanager.class);
         MatchHistoryReporter matchHistory = mock(MatchHistoryReporter.class);
-        TimerManager timerManager = mock(TimerManager.class);
 
         when(gamemanager.getMatchHistory()).thenReturn(matchHistory);
         when(matchHistory.getMatchId()).thenReturn(UUID.randomUUID());
-        // The reveal only runs once the round is over.
-        when(timerManager.getTimeLeft()).thenReturn(0);
 
-        this.command = new CommandResult(gamemanager, timerManager, this.roster, this.settings, this.teamManager, mock(ResultCeremony.class));
-        ((CustomCommand) this.command).setContext(new CommandContext(
-                new forceitembattle.model.RoundPhase(), null, this.roster));
+        // The reveal only runs once the round is over.
+        forceitembattle.model.RoundPhase phase = new forceitembattle.model.RoundPhase();
+        phase.moveTo(forceitembattle.model.GameState.END_GAME);
+
+        this.command = new CommandResult(gamemanager, phase, this.roster, this.settings, this.teamManager, mock(ResultCeremony.class));
+        ((CustomCommand) this.command).setContext(new CommandContext(phase, null, this.roster));
     }
 
     @AfterEach

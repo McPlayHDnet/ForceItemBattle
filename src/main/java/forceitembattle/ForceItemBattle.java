@@ -2,8 +2,11 @@ package forceitembattle;
 
 import forceitembattle.achievements.AchievementListener;
 import forceitembattle.achievements.AchievementManager;
+import forceitembattle.achievements.AchievementStorage;
 import forceitembattle.achievements.PluginAchievementWorld;
+import forceitembattle.achievements.ServiceAchievementSink;
 import forceitembattle.achievements.global.GlobalStatsCache;
+import forceitembattle.achievements.global.GlobalStatsLoader;
 import forceitembattle.collection.CollectionManager;
 import forceitembattle.commands.CommandsManager;
 import forceitembattle.commands.admin.CommandForceItem;
@@ -68,12 +71,14 @@ import forceitembattle.manager.Manager;
 import forceitembattle.manager.PositionManager;
 import forceitembattle.manager.ProtectionManager;
 import forceitembattle.manager.RecipeManager;
+import forceitembattle.manager.ScatterDestinations;
 import forceitembattle.manager.ScoreboardManager;
 import forceitembattle.manager.TabListManager;
 import forceitembattle.manager.TeamsManager;
 import forceitembattle.manager.TimerManager;
 import forceitembattle.manager.VoteSkipManager;
 import forceitembattle.manager.WanderingTraderManager;
+import forceitembattle.model.FindDetection;
 import forceitembattle.model.ResultCeremony;
 import forceitembattle.model.Roster;
 import forceitembattle.model.RoundClock;
@@ -269,11 +274,14 @@ public final class ForceItemBattle extends JavaPlugin {
         this.teamManager = register(new TeamsManager(this, this.roster, () -> this.scoreboardManager));
 
         // The world's timer lookup is late-bound: the timer needs the game manager, which needs this.
-        this.achievementManager = register(new AchievementManager(this, this.roster, this.roundPhase,
-                this.settings, this.collectionManager, this.fibService, this.globalStatsCache,
+        this.achievementManager = register(new AchievementManager(this.roster, this.roundPhase,
+                this.settings, this.collectionManager,
+                new AchievementStorage(new ServiceAchievementSink(this, this.fibService)),
+                this.globalStatsCache,
+                new GlobalStatsLoader(this.fibService, this.globalStatsCache),
                 new PluginAchievementWorld(this.roster, this.roundClock, this.settings,
-                        this.itemDifficultiesManager, this.backpackManager, this.wanderingTraderManager,
-                        () -> this.timerManager)));
+                        this.itemDifficultiesManager, this.backpackManager,
+                        this.wanderingTraderManager)));
 
         this.randomEventManager = register(new RandomEventManager(
                 new EventContext(this, this.roundPhase, this.settings,
@@ -306,7 +314,7 @@ public final class ForceItemBattle extends JavaPlugin {
                 this.scoreboardManager,
                 this.backToBackManager,
                 this.randomEventManager,
-                this.timerManager,
+                this.roundClock,
                 this.itemDifficultiesManager,
                 this.fibService));
 
@@ -379,8 +387,9 @@ public final class ForceItemBattle extends JavaPlugin {
                 new ProtectionListener(this.roster, this.roundPhase, this.protectionManager),
                 new ClickableItemsListener(this::getSpawnLocation, this.guiContext,
                         this.itemDifficultiesManager, this.roster, this.backpackManager, this.fibService, this.roundPhase, this.locatorManager, this.settings, this.timerManager),
-                new ItemsListener(this.roster, this.roundPhase),
-                new PortalListener(this.roster, this.antimatterPortalManager, this.fibService, this.roundPhase, this.settings),
+                new ItemsListener(new FindDetection(this.roster, this.roundPhase)),
+                new PortalListener(this.roster, this.antimatterPortalManager, this.fibService,
+                        this.roundPhase, this.settings, new ScatterDestinations()),
                 new AntimatterPortalListener(this.antimatterPortalManager, this.roundPhase),
                 new AchievementListener(this.roster, this.achievementManager, this.backpackManager, this.roundPhase, this.settings),
                 new PreGameLockListener(this.roundPhase),
@@ -404,13 +413,13 @@ public final class ForceItemBattle extends JavaPlugin {
     private void initCommands() {
         CommandsManager commands = this.commandsManager;
 
-        commands.registerCommand(new CommandStart(this.gamemanager, this.forceItemAssignment, this.timerManager, this.roster, this.roundPhase,
+        commands.registerCommand(new CommandStart(this.gamemanager, this.forceItemAssignment, this.roster, this.roundPhase,
                 this.roundClock, this.settings, this.teamManager));
         commands.registerCommand(new CommandSettings(this.roster, this.settings));
         commands.registerCommand(new CommandSkip(this.forceItemAssignment, this.roster, this.settings));
         commands.registerCommand(new CommandReset(this.seedPool, this.worldReset));
         commands.registerCommand(new CommandBp(this.backpackManager));
-        commands.registerCommand(new CommandResult(this.gamemanager, this.timerManager, this.roster, this.settings,
+        commands.registerCommand(new CommandResult(this.gamemanager, this.roundPhase, this.roster, this.settings,
                 this.teamManager, this.resultCeremony));
         commands.registerCommand(new CommandInfo(this.roster, this.roundPhase, this.itemDifficultiesManager, this.recipeManager));
         commands.registerCommand(new CommandItems(this.itemDifficultiesManager));
@@ -429,7 +438,7 @@ public final class ForceItemBattle extends JavaPlugin {
         commands.registerCommand(new CommandTeams(this.roster, this.teamManager));
         commands.registerCommand(new CommandFixSkips(this.roster, this.backpackManager));
         commands.registerCommand(new CommandAchievement(this.achievementManager, this.guiContext));
-        commands.registerCommand(new CommandSpectate(this.timerManager));
+        commands.registerCommand(new CommandSpectate(this.roundPhase));
         commands.registerCommand(new CommandShout());
         commands.registerCommand(new CommandForceTeam(this.roster, this.teamManager));
         commands.registerCommand(new CommandVote(this.voteSkipManager));

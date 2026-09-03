@@ -214,7 +214,7 @@ public class ClickableItemsListener implements Listener {
             player.getInventory().getItemInMainHand().setAmount(player.getInventory().getItemInMainHand().getAmount() - 1);
 
             if (this.settings.isSettingEnabled(GameSetting.STATS)) {
-                this.fibService.statistics().recordPlayerCounter(
+                this.fibService.statisticsWrites().recordPlayerCounter(
                         player.getUniqueId(), forceItemPlayer, PlayerCounter.WHEELS_OF_FORTUNE_USED, 1);
             }
             return;

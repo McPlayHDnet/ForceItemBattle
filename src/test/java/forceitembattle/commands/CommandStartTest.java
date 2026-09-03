@@ -69,7 +69,7 @@ class CommandStartTest {
         this.assignment = mock(ForceItemAssignment.class);
         this.roster = new Roster();
 
-        this.command = new CommandStart(this.gamemanager, this.assignment, mock(TimerManager.class), this.roster, mock(RoundPhase.class), mock(RoundClock.class), this.settings, mock(TeamsManager.class));
+        this.command = new CommandStart(this.gamemanager, this.assignment, this.roster, mock(RoundPhase.class), mock(RoundClock.class), this.settings, mock(TeamsManager.class));
         // The op gate is declared, so it is evaluated in onCommand -- which needs the context that
         // CommandsManager supplies at bootstrap.
         // Cast because setContext is package-private on CustomCommand, and a package-private

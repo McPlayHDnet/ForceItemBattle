@@ -59,14 +59,14 @@ public class MatchHistoryReporter {
     /** Wall-clock millis when the current pause began, or 0 when the game is not paused. */
     private long pauseStartedAt;
 
-    private final FIBServiceClient fibService;
+    private final MatchSink matchSink;
     private final Roster roster;
     private final GameSettings settings;
     private final TeamsManager teamManager;
 
-    public MatchHistoryReporter(FIBServiceClient fibService, Roster roster, GameSettings settings,
+    public MatchHistoryReporter(MatchSink matchSink, Roster roster, GameSettings settings,
                                 TeamsManager teamManager) {
-        this.fibService = fibService;
+        this.matchSink = matchSink;
         this.roster = roster;
         this.settings = settings;
         this.teamManager = teamManager;
@@ -129,7 +129,7 @@ public class MatchHistoryReporter {
                 .items(buildItems(roster, teamMode))
                 .settings(snapshotSettings(settings));
 
-        this.fibService.matchHistory().submitMatchAsync(this.matchId, request, () -> {
+        this.matchSink.submitMatch(this.matchId, request, () -> {
             onPersisted.run();
             this.linkReady = true;
             this.tryShareLink();

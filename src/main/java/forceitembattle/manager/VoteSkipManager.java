@@ -1,35 +1,41 @@
 package forceitembattle.manager;
 
-import forceitembattle.model.Roster;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.JokerSpend;
+import forceitembattle.model.Roster;
+import forceitembattle.model.SkipVote;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Scheduler;
 import forceitembattle.util.Text;
-import java.util.HashSet;
-import java.util.Random;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import lombok.Getter;
+import java.util.stream.Collectors;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 
+/**
+ * The chat and the clock around a {@link SkipVote}.
+ *
+ * <p>The tally, the quorum and the tie-break are the vote's; this broadcasts, runs the sixty-second
+ * task, and applies what the vote decided — the joker charge and the skip. Splitting them is what
+ * made the rules testable, and closed the spectator hole in the quorum on the way.
+ */
 public class VoteSkipManager implements Manager {
+
+    private static final long VOTE_DURATION_TICKS = 20L * 60L;
+
     private final Roster roster;
     private final ForceItemAssignment assignment;
     private final GameSettings settings;
     private final ItemDifficultiesManager itemDifficultiesManager;
-    private final Set<UUID> yesVotes = new HashSet<>();
-    private final Set<UUID> noVotes = new HashSet<>();
-    private final Random random = new Random();
-    @Getter
-    private boolean voteInProgress = false;
+    private final SkipVote vote = new SkipVote();
+
     private BukkitTask voteTask;
-    private Material votedMaterial;
     private ForceItemPlayer initiator;
 
     public VoteSkipManager(Roster roster, ForceItemAssignment assignment, GameSettings settings,
@@ -48,24 +54,24 @@ public class VoteSkipManager implements Manager {
         }
     }
 
+    public boolean isVoteInProgress() {
+        return this.vote.isOpen();
+    }
+
     public void startVoting(Player initiator) {
         ForceItemPlayer starter = this.roster.get(initiator.getUniqueId());
         if (starter == null) {
             // Not in the round, so there is no item of theirs to vote on. /voteskip already
             // refuses this; the guard is here because the vote state is set below and a throw
-            // half-way would leave voteInProgress stuck on for the rest of the round.
+            // half-way would leave the vote stuck open for the rest of the round.
             return;
         }
 
-        this.voteInProgress = true;
-        this.yesVotes.clear();
-        this.noVotes.clear();
-        this.yesVotes.add(initiator.getUniqueId());
         this.initiator = starter;
-        this.votedMaterial = starter.activeMaterial();
+        this.vote.open(initiator.getUniqueId(), starter.activeMaterial(), participants());
 
-        String materialName = CustomMaterials.nameOf(this.votedMaterial);
-        String unicodeMaterial = this.itemDifficultiesManager.getUnicodeFromMaterial(true, this.votedMaterial);
+        String materialName = CustomMaterials.nameOf(this.vote.material());
+        String unicodeMaterial = this.itemDifficultiesManager.getUnicodeFromMaterial(true, this.vote.material());
 
         Bukkit.getOnlinePlayers().forEach(player -> {
             player.sendMessage(" ");
@@ -77,56 +83,61 @@ public class VoteSkipManager implements Manager {
             player.sendMessage(" ");
         });
 
-        this.voteTask = Scheduler.runLaterSync(this::endVoting, 20 * 60);
+        this.voteTask = Scheduler.runLaterSync(this::endVoting, VOTE_DURATION_TICKS);
+    }
+
+    /**
+     * Who the vote belongs to: everyone playing when it opened. Spectators are excluded — they used
+     * to both inflate the quorum and be able to fill it.
+     */
+    private Set<UUID> participants() {
+        return this.roster.players().entrySet().stream()
+                .filter(entry -> Roster.isPlaying(entry.getValue()))
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toSet());
     }
 
     public void castVote(Player player, boolean voteYes) {
-        UUID uuid = player.getUniqueId();
-        if (this.yesVotes.contains(uuid) || this.noVotes.contains(uuid)) {
-            player.sendMessage(Text.of("<red>You have already voted."));
-            return;
-        }
-
-        if (voteYes) {
-            this.yesVotes.add(uuid);
-            player.sendMessage(Text.of("<gray>You voted for <green><b>YES</b><gray>!"));
-        } else {
-            this.noVotes.add(uuid);
-            player.sendMessage(Text.of("<gray>You voted for <red><b>NO</b><gray>!"));
-        }
-
-        int totalPlayers = this.roster.players().size();
-        int totalVotes = this.yesVotes.size() + this.noVotes.size();
-
-        if (totalVotes >= totalPlayers) {
-            if (this.voteTask != null) this.voteTask.cancel();
-            this.endVoting();
+        switch (this.vote.cast(player.getUniqueId(), voteYes)) {
+            case ALREADY_VOTED -> player.sendMessage(Text.of("<red>You have already voted."));
+            case NOT_ELIGIBLE -> player.sendMessage(
+                    Text.of("<red>Only players in the round can vote."));
+            case NO_VOTE_OPEN -> player.sendMessage(Text.of("<red>There is no vote running."));
+            case COUNTED -> confirm(player, voteYes);
+            case CLOSES_THE_VOTE -> {
+                confirm(player, voteYes);
+                if (this.voteTask != null) {
+                    this.voteTask.cancel();
+                }
+                this.endVoting();
+            }
         }
     }
 
+    private static void confirm(Player player, boolean voteYes) {
+        player.sendMessage(voteYes
+                ? Text.of("<gray>You voted for <green><b>YES</b><gray>!")
+                : Text.of("<gray>You voted for <red><b>NO</b><gray>!"));
+    }
+
     public void endVoting() {
-        this.voteInProgress = false;
+        Material votedMaterial = this.vote.material();
+        SkipVote.Tally tally = this.vote.close();
 
-        int yes = this.yesVotes.size();
-        int no = this.noVotes.size();
-        String voteLabel = (yes != 1 ? "votes" : "vote");
-
-        String materialName = CustomMaterials.nameOf(this.votedMaterial);
-        String unicodeMaterial = this.itemDifficultiesManager.getUnicodeFromMaterial(true, this.votedMaterial);
-
-        boolean isTie = yes == no;
-        boolean skipItem = yes > no || (isTie && random.nextBoolean());
+        String voteLabel = (tally.yes() != 1 ? "votes" : "vote");
+        String materialName = CustomMaterials.nameOf(votedMaterial);
+        String unicodeMaterial = this.itemDifficultiesManager.getUnicodeFromMaterial(true, votedMaterial);
 
         Bukkit.getOnlinePlayers().forEach(player -> {
             player.sendMessage(" ");
             player.sendMessage(Text.of("<gray>The skip voting has been ended."));
-            player.sendMessage(Text.of("  <dark_gray>● <green><b>YES</b> <dark_gray>» <gold>" + yes + " " + voteLabel));
-            player.sendMessage(Text.of("  <dark_gray>● <red><b>NO</b> <dark_gray>» <gold>" + no + " " + voteLabel));
+            player.sendMessage(Text.of("  <dark_gray>● <green><b>YES</b> <dark_gray>» <gold>" + tally.yes() + " " + voteLabel));
+            player.sendMessage(Text.of("  <dark_gray>● <red><b>NO</b> <dark_gray>» <gold>" + tally.no() + " " + voteLabel));
             player.sendMessage(" ");
-            if (isTie) {
+            if (tally.tie()) {
                 player.sendMessage(Text.of("<gray>It was a tie! Choosing randomly..."));
             }
-            player.sendMessage(Text.of("<dark_gray>» <reset>" + unicodeMaterial + " <gold>" + materialName + " <gray>is " + (skipItem ? "now" : "not") + " skipped."));
+            player.sendMessage(Text.of("<dark_gray>» <reset>" + unicodeMaterial + " <gold>" + materialName + " <gray>is " + (tally.carried() ? "now" : "not") + " skipped."));
             player.sendMessage(" ");
         });
 
@@ -136,21 +147,19 @@ public class VoteSkipManager implements Manager {
         Player initiatorPlayer = this.initiator.player();
         PlayerOutfitter.setJokerStack(initiatorPlayer,
                 JokerSpend.charge(this.initiator, PlayerOutfitter.jokerStackIn(initiatorPlayer)));
-        if (skipItem) {
+        if (tally.carried()) {
             this.assignment.skipAll(this.initiator, this.settings.isSettingEnabled(GameSetting.RUN));
         }
 
-        this.votedMaterial = null;
         this.voteTask = null;
     }
 
     public void cancelVote() {
-        if (this.voteTask != null) this.voteTask.cancel();
-        this.voteInProgress = false;
-        this.votedMaterial = null;
+        if (this.voteTask != null) {
+            this.voteTask.cancel();
+        }
+        this.vote.cancel();
         this.initiator = null;
-        this.yesVotes.clear();
-        this.noVotes.clear();
         this.voteTask = null;
     }
 }

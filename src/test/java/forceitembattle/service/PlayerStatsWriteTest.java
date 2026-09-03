@@ -30,11 +30,11 @@ class PlayerStatsWriteTest {
     private static final UUID ALICE = UUID.fromString("00000000-0000-0000-0000-00000000000a");
     private static final UUID BOB = UUID.fromString("00000000-0000-0000-0000-00000000000b");
 
-    private FibStatisticsClient statistics;
+    private StatisticsSink statistics;
 
     @BeforeEach
     void setUp() {
-        statistics = mock(FibStatisticsClient.class);
+        statistics = mock(StatisticsSink.class);
     }
 
     private static ForceItemPlayer player(UUID uuid) {
@@ -53,8 +53,8 @@ class PlayerStatsWriteTest {
     void aSoloPlayerGetsASoloWrite() {
         record(player(ALICE));
 
-        verify(statistics).updateSoloStatisticsAsync(eq(ALICE), any(FibSoloStatisticsUpdateRequestDto.class));
-        verify(statistics, never()).updateMemberStatisticsAsync(any(), any(), any(), any());
+        verify(statistics).updateSolo(eq(ALICE), any(FibSoloStatisticsUpdateRequestDto.class));
+        verify(statistics, never()).updateMember(any(), any(), any(), any());
     }
 
     /** The member row is addressed (player, teammate, member) with the acting player as member. */
@@ -68,9 +68,9 @@ class PlayerStatsWriteTest {
 
         record(alice);
 
-        verify(statistics).updateMemberStatisticsAsync(
+        verify(statistics).updateMember(
                 eq(ALICE), eq(BOB), eq(ALICE), any(FibTeamMemberStatsUpdateRequestDto.class));
-        verify(statistics, never()).updateSoloStatisticsAsync(any(), any());
+        verify(statistics, never()).updateSolo(any(), any());
     }
 
     /**

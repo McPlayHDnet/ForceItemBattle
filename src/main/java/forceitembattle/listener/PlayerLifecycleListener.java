@@ -141,7 +141,7 @@ public class PlayerLifecycleListener implements Listener {
         }
 
         if (this.roundPhase.roundRunning() && this.settings.isSettingEnabled(GameSetting.STATS)) {
-            this.fibService.statistics()
+            this.fibService.statisticsWrites()
                     .recordPlayerCounter(player.getUniqueId(), gamePlayer, PlayerCounter.DEATHS, 1);
         }
 

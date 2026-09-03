@@ -1,14 +1,10 @@
 package forceitembattle.listener;
 
-import forceitembattle.model.GameItems;
-import forceitembattle.model.RoundPhase;
-import forceitembattle.model.Roster;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.gui.InventoryBuilder;
-import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.FindDetection;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -28,34 +24,35 @@ import org.bukkit.inventory.CraftingInventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.SmithingInventory;
 
+/**
+ * The eight ways an item can reach a player's hands.
+ *
+ * <p>Adapter only. Each handler decides whether <em>this kind of event</em> is one that counts —
+ * a right-click rather than a left, a real craft rather than a preview, an inventory that is not a
+ * menu — and then asks {@link FindDetection} whether what it is holding is a find. Whether the
+ * round is running, whether this player is playing it and whether the item matches is one decision
+ * in one place; it used to be three lines repeated eight times here, and it was where the bugs were.
+ */
 @RequiredArgsConstructor
 public class ItemsListener implements Listener {
-    private final Roster roster;
-    private final RoundPhase roundPhase;
+
+    private final FindDetection detection;
+
     @EventHandler
     public void onInteract(PlayerInteractEvent event) {
-        if (!this.roundPhase.roundRunning()) {
-            return;
-        }
-
         if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) {
             return;
         }
 
-        ForceItemPlayer forceItemPlayer = this.roster.get(event.getPlayer().getUniqueId());
-        ItemStack clickedItem = event.getItem();
-
-        checkItemFound(event.getPlayer(), forceItemPlayer, clickedItem);
+        checkItemFound(event.getPlayer(), event.getItem());
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onFoundItemInInventory(InventoryClickEvent inventoryClickEvent) {
         Player player = (Player) inventoryClickEvent.getWhoClicked();
 
-        if (!this.roundPhase.roundRunning()) {
-            return;
-        }
-
+        // The crafting, smithing and brewing grids are handled by onCraft, which has its own rule
+        // about which click actually hands the result over.
         if (inventoryClickEvent.getClickedInventory() instanceof CraftingInventory ||
                 inventoryClickEvent.getClickedInventory() instanceof SmithingInventory ||
                 inventoryClickEvent.getClickedInventory() instanceof BrewerInventory) {
@@ -67,10 +64,7 @@ public class ItemsListener implements Listener {
             return; //prevents from getting the needed item onClick inside any custom GUI
         }
 
-        ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());
-        ItemStack clickedItem = inventoryClickEvent.getCurrentItem();
-
-        checkItemFound(player, forceItemPlayer, clickedItem);
+        checkItemFound(player, inventoryClickEvent.getCurrentItem());
     }
 
     @EventHandler
@@ -78,42 +72,23 @@ public class ItemsListener implements Listener {
         if (!(entityPickupItemEvent.getEntity() instanceof Player player)) {
             return;
         }
-        if (!this.roundPhase.roundRunning()) {
-            return;
-        }
 
-        ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());
-        ItemStack pickedItem = entityPickupItemEvent.getItem().getItemStack();
-
-        checkItemFound(player, forceItemPlayer, pickedItem);
+        checkItemFound(player, entityPickupItemEvent.getItem().getItemStack());
     }
 
     @EventHandler
     public void onBucketEvent(PlayerBucketEmptyEvent event) {
-        onBucket(event.getPlayer(), event.getItemStack());
+        checkItemFound(event.getPlayer(), event.getItemStack());
     }
 
     @EventHandler
     public void onBucketEvent(PlayerBucketFillEvent event) {
-        onBucket(event.getPlayer(), event.getItemStack());
+        checkItemFound(event.getPlayer(), event.getItemStack());
     }
 
     @EventHandler
     public void onBucketEvent(PlayerBucketEntityEvent event) {
-        onBucket(event.getPlayer(), event.getEntityBucket());
-    }
-
-    private void onBucket(Player player, ItemStack clickedItem) {
-        if (clickedItem == null) {
-            return;
-        }
-
-        if (!this.roundPhase.roundRunning()) {
-            return;
-        }
-
-        ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());
-        checkItemFound(player, forceItemPlayer, clickedItem);
+        checkItemFound(event.getPlayer(), event.getEntityBucket());
     }
 
     @EventHandler
@@ -128,53 +103,26 @@ public class ItemsListener implements Listener {
 
     private void onCraft(InventoryClickEvent inventoryClickEvent) {
         Player player = (Player) inventoryClickEvent.getWhoClicked();
-        if (!this.roundPhase.roundRunning()) {
-            return;
-        }
 
         boolean isValidShiftClick = inventoryClickEvent.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY && player.getInventory().firstEmpty() >= 0;
 
         if (isValidShiftClick || inventoryClickEvent.getAction() == InventoryAction.PICKUP_ALL) {
-            ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());
-            ItemStack clickedItem = inventoryClickEvent.getCurrentItem();
-
-            checkItemFound(player, forceItemPlayer, clickedItem);
+            checkItemFound(player, inventoryClickEvent.getCurrentItem());
         }
     }
 
     @EventHandler
     public void onConsume(PlayerItemConsumeEvent playerItemConsumeEvent) {
-        Player player = playerItemConsumeEvent.getPlayer();
-
-        if (!this.roundPhase.roundRunning()) {
-            return;
-        }
-
-        ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());
-        ItemStack clickedItem = playerItemConsumeEvent.getItem();
-
-        checkItemFound(player, forceItemPlayer, clickedItem);
+        checkItemFound(playerItemConsumeEvent.getPlayer(), playerItemConsumeEvent.getItem());
     }
 
-    private void checkItemFound(Player player, ForceItemPlayer forceItemPlayer, ItemStack item) {
-        // Null means no roster entry, which means they arrived after the countdown froze the
-        // roster: a spectator for this round, with no force item to match against. Every caller
-        // here reads the roster directly, so this is the one place it has to be handled.
-        if (forceItemPlayer == null || item == null) {
-            return;
-        }
-
-        Material currentItem = forceItemPlayer.activeMaterial();
-
-        if (GameItems.isBackpack(item)) return;
-
-        if (item.getType() == currentItem) {
+    private void checkItemFound(Player player, ItemStack item) {
+        this.detection.detect(player, item).ifPresent(finder -> {
             FoundItemEvent foundItemEvent = new FoundItemEvent(player);
             foundItemEvent.setFoundItem(item);
             foundItemEvent.setSkipped(false);
 
             Bukkit.getPluginManager().callEvent(foundItemEvent);
-        }
+        });
     }
-
 }

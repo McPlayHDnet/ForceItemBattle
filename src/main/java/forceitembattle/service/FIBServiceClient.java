@@ -22,6 +22,7 @@ public class FIBServiceClient implements Manager {
     private final ApiClient apiClient;
     private final ApiExecutor executor;
     private final FibStatisticsClient statistics;
+    private final StatisticsWrites statisticsWrites;
     private final FibAchievementClient achievements;
     private final FibMatchHistoryClient matchHistory;
     private final FibCatalogueClient catalogue;
@@ -42,6 +43,7 @@ public class FIBServiceClient implements Manager {
         this.executor = new ApiExecutor(plugin);
         this.statistics = new FibStatisticsClient(new FibStatisticsControllerApi(client), executor,
                 globalStatsCache);
+        this.statisticsWrites = new StatisticsWrites(this.statistics);
         this.achievements = new FibAchievementClient(new FibAchievementControllerApi(client), executor);
         this.matchHistory = new FibMatchHistoryClient(new FibMatchControllerApi(client), executor,
                 achievementManager, collection);
@@ -55,6 +57,11 @@ public class FIBServiceClient implements Manager {
 
     public FibStatisticsClient statistics() {
         return statistics;
+    }
+
+    /** The write rules. Reads go through {@link #statistics()}; nothing writes through both. */
+    public StatisticsWrites statisticsWrites() {
+        return statisticsWrites;
     }
 
     public FibAchievementClient achievements() {
