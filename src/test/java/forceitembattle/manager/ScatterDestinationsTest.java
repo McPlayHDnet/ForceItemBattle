@@ -20,13 +20,8 @@ import org.junit.jupiter.api.Test;
 /**
  * Where a scatter sends a player, and where it has sent them before.
  *
- * <p>None of this was reachable while it lived in {@code PortalListener}: the maps were private
- * fields of a Bukkit listener and the draw was a private method beside them. The two rules that can
- * be wrong — "the same pad sends you to the same place" and "a different pad does not" — had no test
- * and are one comparison apart.
- *
- * <p>A mocked {@link World} is enough here. {@link Location} arithmetic and {@code distanceSquared}
- * only need the two worlds to be the same object; nothing below asks the world anything.
+ * <p>A mocked {@link World} is enough: {@code distanceSquared} only needs both worlds to be the same
+ * object, and nothing here asks the world anything.
  */
 class ScatterDestinationsTest {
 

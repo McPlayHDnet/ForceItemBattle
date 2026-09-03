@@ -9,27 +9,16 @@ import javax.annotation.Nullable;
 import org.bukkit.Material;
 
 /**
- * One skip vote: who may vote, who has, and what the result is.
+ * One skip vote: who may vote, who has, and what the result is. See {@code CONTEXT.md § Skip Vote}.
  *
- * <p>Pure tally. It knows nothing about chat, the joker pool or the item assignment — the manager
- * around it keeps all three, plus the sixty-second task. Everything here was previously five bare
- * fields on that manager with the rules interleaved between broadcasts, which is why none of it had
- * a test.
- *
- * <p><b>The eligible voters are handed in at {@link #open}, not counted from the live roster on each
- * cast.</b> That is the fix for a real defect: quorum used to be {@code roster.players().size()},
- * which counts spectators, while {@code castVote} never asked the roster anything. A spectator both
- * inflated the denominator and could fill it, closing the poll early; a participant who disconnected
- * mid-vote left a quorum that could never be reached. A vote is now decided by the people who were
- * playing when it started, whatever happens to the roster during the minute it is open.
+ * <p><b>The eligible voters are handed in at {@link #open}</b>, not counted from the live roster on
+ * each cast. Counting live let a spectator both inflate the quorum and fill it, and left a quorum
+ * nobody could reach when a participant disconnected mid-vote.
  */
 public final class SkipVote {
 
-    /** What happened to a cast vote. */
     public enum Cast {
-        /** Counted; the vote is still open. */
         COUNTED,
-        /** Counted, and every eligible voter has now voted. */
         CLOSES_THE_VOTE,
         ALREADY_VOTED,
         /** A spectator, or someone who joined after the round began. */
@@ -37,9 +26,7 @@ public final class SkipVote {
         NO_VOTE_OPEN
     }
 
-    /**
-     * @param carried whether the item is skipped — a majority, or the coin flip that settles a tie
-     */
+    /** @param carried whether the item is skipped: a majority, or the coin flip that settles a tie */
     public record Tally(int yes, int no, boolean tie, boolean carried) {
     }
 
@@ -62,11 +49,9 @@ public final class SkipVote {
     }
 
     /**
-     * Opens a vote on {@code material}, with the initiator's own YES already cast.
-     *
-     * <p>Deliberately does not close itself when the initiator is the only eligible voter. A vote of
-     * one would otherwise resolve before anybody could read the message announcing it, and the
-     * sixty seconds are the point of the feature.
+     * Opens a vote on {@code material}, with the initiator's own YES already cast. Deliberately does
+     * not close itself when they are the only eligible voter: a vote of one would resolve before
+     * anyone could read the message announcing it.
      */
     public void open(UUID initiator, Material material, Collection<UUID> eligible) {
         this.eligible.clear();
@@ -112,10 +97,7 @@ public final class SkipVote {
                 : Cast.COUNTED;
     }
 
-    /**
-     * Closes the vote and settles it. A tie is broken by a coin flip, which is why the {@code Random}
-     * is a constructor parameter rather than a field literal.
-     */
+    /** A tie is broken by a coin flip, which is why the {@code Random} is a constructor parameter. */
     public Tally close() {
         this.open = false;
 
@@ -126,7 +108,7 @@ public final class SkipVote {
         return new Tally(yes, no, tie, yes > no || (tie && this.random.nextBoolean()));
     }
 
-    /** Drops the vote without a result: nothing is skipped and nothing is charged. */
+    /** No result: nothing is skipped and nothing is charged. */
     public void cancel() {
         this.open = false;
         this.initiator = null;

@@ -29,16 +29,8 @@ import org.junit.jupiter.api.Test;
 /**
  * The rules that fire when the round ends, and the Completionist tiers.
  *
- * <p>None of this had a test. The manager built its own {@link AchievementStorage}, which built its
- * own HTTP client, so constructing one outside a running server was impossible — and the five
- * end-of-round rules live <em>outside</em> the handler table that {@code EventHandlersTest} covers,
- * so nothing reached them by another route either.
- *
- * <p>Two things keep this headless. The players are offline, so {@code writeUnlock} records the
- * unlock but skips the announcement it would otherwise push through {@code Bukkit}; and the round
- * events are mocked, which is enough because every handler below dispatches on {@code instanceof}.
- * Progress is driven through {@code handleEvent} rather than seeded, so the tests exercise the same
- * path the round does.
+ * <p>Headless: the players are offline so {@code writeUnlock} skips its {@code Bukkit} announcement,
+ * and the events are mocked because every handler here dispatches on {@code instanceof}.
  */
 class AchievementManagerTest {
 

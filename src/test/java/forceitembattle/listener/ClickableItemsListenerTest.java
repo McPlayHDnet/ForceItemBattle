@@ -39,11 +39,6 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
  * Which right-clicks are menu buttons and which are just items. {@link Lookalikes} pins that an item
  * merely <em>looking</em> like a button is not one; {@link RealButtons} takes every stack it clicks
  * from a player who has been through {@link PlayerOutfitter} rather than building one by hand.
- *
- * <p>{@link MenuArms} covers the three that open a GUI. They were written off for a pass as
- * unreachable — <i>"run through {@code Scheduler.runSync}, which needs a registered plugin"</i> —
- * which was true of the Mockito-only harness and not of this one: {@link ListenerTestBase} points
- * {@code Scheduler} at a registered {@code PluginMock}, so {@link ListenerTestBase#tick} runs them.
  */
 class ClickableItemsListenerTest extends ListenerTestBase {
 

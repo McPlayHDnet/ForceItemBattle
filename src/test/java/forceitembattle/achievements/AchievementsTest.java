@@ -44,26 +44,12 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
 import org.mockbukkit.mockbukkit.world.WorldMock;
 
 /**
- * The {@link Achievements} table itself — 80 constants and the cast that drives them.
+ * The {@link Achievements} table itself — 80 constants and the unchecked cast that drives them.
  *
- * <h2>The cast</h2>
- *
- * <p>{@code AchievementManager} does this for every ROUND achievement, once per matching event:
- *
- * <pre>
- *   AchievementHandler&lt;AchievementProgressTracker&gt; typed =
- *           (AchievementHandler&lt;AchievementProgressTracker&gt;) handler;   // unchecked
- *   typed.check(event, tracker, player, world);
- * </pre>
- *
- * <p>The tracker came from that same handler's {@code createProgress()}, so the cast is sound as
- * long as every handler agrees with itself about its progress type. Nothing checked that for any of
- * the 53 ROUND constants. A handler whose {@code createProgress()} returns the wrong tracker throws
- * {@code ClassCastException} in a live round, for one achievement, at whatever moment its trigger
- * first fires — and only for the players it was evaluated against.
- *
- * <p>So the central test here drives every ROUND achievement through its own handler with its own
- * progress and a real event for its trigger, doing exactly what the manager does.
+ * <p>{@code AchievementManager} casts each handler to {@code AchievementHandler<AchievementProgressTracker>}
+ * and hands it a tracker from that same handler's {@code createProgress()}. A handler that disagrees
+ * with itself about its progress type throws {@code ClassCastException} mid-round, for one
+ * achievement, whenever its trigger first fires. So every ROUND constant is driven here instead.
  */
 class AchievementsTest {
 
@@ -115,12 +101,7 @@ class AchievementsTest {
         assertTrue(clashes.isEmpty(), String.join("; ", clashes));
     }
 
-    /**
-     * The construction-time invariant, restated. It cannot fail at runtime — a malformed constant
-     * stops the enum class-initialising and takes the whole plugin with it — so this is here to say
-     * what the rule is, and to fail with a readable message rather than
-     * {@code ExceptionInInitializerError} if it ever does.
-     */
+    /** Cannot fail at runtime — a malformed constant kills the enum — but fails readably here. */
     @Test
     void everyAchievementCarriesExactlyItsOwnRule() {
         for (Achievements achievement : Achievements.values()) {
@@ -163,13 +144,7 @@ class AchievementsTest {
 
     // --- the cast -----------------------------------------------------------------------------
 
-    /**
-     * Every ROUND achievement, driven exactly as {@code AchievementManager} drives it.
-     *
-     * <p>If a handler's {@code createProgress()} disagrees with what its {@code check()} expects,
-     * this is where it surfaces — here, in one run, rather than in a live round for one achievement
-     * at whatever moment its trigger first fires.
-     */
+    /** Every ROUND achievement, driven exactly as {@code AchievementManager} drives it. */
     @Test
     void everyRoundHandlerAcceptsItsOwnProgressTracker() {
         List<String> failures = new ArrayList<>();
@@ -273,15 +248,9 @@ class AchievementsTest {
     // --- LOOT achievements are bound to a loot table by name ----------------------------------
 
     /**
-     * LEGENDARY shipped bound to {@code fib:antimatter_depths_legendary}, a table that has never
-     * existed. {@code LootAchievementHandler} rejects any event whose table key differs, so the
-     * achievement could not fire at all — players looted the legendary templates and got nothing.
-     *
-     * <p>The five legendary items are entries in the storage chest's table
-     * ({@code FIB_Worldgen/data/fib/loot_table/antimatter_depths_storage.json}), each carrying the
-     * {@code fib:fib_item = legendary_template} marker the handler matches on. This drives the real
-     * handler with a real tagged stack so a wrong key fails here rather than in a report from a
-     * player who already lost the unlock.
+     * A LOOT achievement bound to a table that does not exist can never fire, silently — LEGENDARY
+     * shipped that way. The legendary items live in the storage chest's table
+     * ({@code FIB_Worldgen/data/fib/loot_table/antimatter_depths_storage.json}).
      */
     @Test
     void legendaryFiresForTheStorageTableThatActuallyHoldsTheLegendaryItems() {
@@ -328,13 +297,9 @@ class AchievementsTest {
     }
 
     /**
-     * Every title and description has to survive the unlock announcement, which embeds both inside a
-     * single-quoted {@code <hover:show_text:'...'>} argument. An apostrophe there closes the argument
-     * early and MiniMessage then dumps the entire raw markup into chat as literal text — the whole
-     * line, not just the hover. "That's a Rock, Jim" and "It's so empty" shipped doing exactly that.
-     *
-     * <p>This runs over the table rather than those two constants so the next title with an
-     * apostrophe — or a backslash, or a {@code <} — fails here instead of in chat.
+     * The unlock announcement embeds title and description in a single-quoted
+     * {@code <hover:show_text:'...'>}. An apostrophe closes the argument early and MiniMessage dumps
+     * the whole raw line into chat. Run over the table, so the next one fails here and not in chat.
      */
     @Test
     void everyAchievementAnnouncementRendersWithoutLeakingMarkup() {

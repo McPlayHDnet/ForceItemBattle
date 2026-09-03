@@ -24,16 +24,8 @@ import org.mockbukkit.mockbukkit.ServerMock;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
 
 /**
- * The 60-second life of a skip vote.
- *
- * <p>A vote ends one of two ways: everyone votes, or the clock runs out. The second was untestable
- * for as long as {@code Scheduler} could not be driven from a test — and it is the one that decides
- * what happens to a vote nobody finishes, which is the common case in a real round. Ticking the
- * MockBukkit scheduler is what makes 60 seconds cost nothing to assert.
- *
- * <p>The spectator hole this file used to record rather than endorse is closed: the eligible voters
- * are fixed when the vote opens. The tally itself lives in {@code model/SkipVote} and is tested
- * there; what is asserted here is the wiring — the clock, the chat and the joker charge.
+ * The 60-second life of a skip vote: the wiring — the clock, the chat and the joker charge. The
+ * tally itself is {@code model/SkipVote} and is tested there.
  */
 class VoteSkipExpiryTest {
 
@@ -117,11 +109,7 @@ class VoteSkipExpiryTest {
             assertTrue(!votes.isVoteInProgress(), "the vote should have expired on its own");
         }
 
-        /**
-         * The initiator's own YES is the only vote cast, so the tally is 1–0 and carries without any
-         * coin flip. Asserted through the manager rather than the message, because the skip is what
-         * the vote is for.
-         */
+        /** The initiator's own YES is the only vote, so 1–0 carries without a coin flip. */
         @Test
         void anUnopposedVoteCarriesAndSkipsTheItem() {
             ForceItemPlayer starter = joinPlaying("Understudy1");
@@ -178,12 +166,7 @@ class VoteSkipExpiryTest {
             verify(assignment).skipAll(starter, false);
         }
 
-        /**
-         * <b>This was the defect, and it is now the assertion.</b> Quorum used to count
-         * {@code roster.players()}, spectators included, while {@code castVote} never asked the
-         * roster whether the voter was playing — so a spectator both inflated the denominator and
-         * could fill it, closing the poll early. The eligible set is now fixed at {@code open}.
-         */
+        /** Quorum once counted {@code roster.players()}, so a spectator could close the poll early. */
         @Test
         void aSpectatorCannotVoteAndCannotCloseThePoll() {
             ForceItemPlayer starter = joinPlaying("Understudy1");
@@ -198,11 +181,7 @@ class VoteSkipExpiryTest {
             assertTrue(screenOf(playerOf(spectator)).contains("players in the round"));
         }
 
-        /**
-         * The other half of the same fix. A spectator no longer counts towards the denominator
-         * either, so the one player actually in the round reaches quorum on their own — before, the
-         * poll would have hung until the minute expired.
-         */
+        /** The other half: a spectator does not pad the denominator either. */
         @Test
         void aSpectatorDoesNotInflateTheQuorum() {
             ForceItemPlayer starter = joinPlaying("Understudy1");
@@ -233,14 +212,10 @@ class VoteSkipExpiryTest {
     }
 
     /**
-     * The button and the pool, after a vote.
-     *
-     * <p>This is the seam assertion, and it is the one that matters. {@code endVoting} used to call
-     * {@code initiator.spendJoker()} and stop there — the pool dropped, the hotbar stack did not, and
-     * the initiator's button read one too high until {@code /fixskips} ran on their next respawn and
-     * quietly repaired it. A test of {@code JokerSpend} alone would have passed throughout, because
-     * the arithmetic was never the problem; the wiring was. That is the same shape as the
-     * {@code startSetupApplied} reset that went missing in candidate 3, which is why this exists.
+     * The button and the pool, after a vote. {@code endVoting} once charged the pool and left the
+     * hotbar stack alone, so the button read one too high until {@code /fixskips} repaired it. A test
+     * of {@code JokerSpend} alone passes throughout: the arithmetic was never the problem, the wiring
+     * was.
      */
     @Nested
     class TheButtonAgreesWithThePool {

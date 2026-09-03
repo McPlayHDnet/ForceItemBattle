@@ -19,13 +19,8 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
 /**
  * Whether an item that passed through someone's hands is a find.
  *
- * <p>This decision had no test at all. It was three lines repeated inside eight event handlers, and
- * {@link FindOutcome} — the pure, well-covered part — only ever runs once somebody else has already
- * decided a find happened. RESUME.md's recurring lesson: the untested call sites are where the
- * damage is, not the tested units.
- *
- * <p>Real {@link ItemStack}s, so the backpack carve-out is exercised through the same persistent
- * data the game writes rather than through a stub that agrees with itself.
+ * <p>Real {@link ItemStack}s, so the backpack carve-out runs against the same persistent data the
+ * game writes rather than a stub that agrees with itself.
  */
 class FindDetectionTest {
 

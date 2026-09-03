@@ -34,22 +34,9 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
 /**
  * {@code /forceitem}: hand yourself a chosen item, and optionally queue the ones after it.
  *
- * <p>A dev command, but the one every other test of the running game leans on to set up a
- * situation, so what it does with its arguments is worth pinning precisely. Three things:
- *
- * <ul>
- *   <li><b>Validate the whole row before applying any of it.</b> The command says so in a comment,
- *       and it matters because the alternative leaves the round half-rewritten: a current item
- *       assigned, a queue partly filled, and a refusal on screen.</li>
- *   <li><b>The row splits three ways.</b> The first argument is the item now, the second is the one
- *       after it, and everything from the third on is queued. Getting that boundary wrong either
- *       drops an item or replays one, and neither is visible without counting.</li>
- *   <li><b>The queue is cleared first</b>, so a second {@code /forceitem} replaces the row rather
- *       than appending to a row that is still draining.</li>
- * </ul>
- *
- * <p>Everything happens through a real {@link ForceItemPlayer}, so the assignment is read back off
- * the roster entry rather than verified on a mock.
+ * <p>Three rules: validate the whole row before applying any of it, or a refusal leaves the round
+ * half-rewritten; the row splits first / second / queued-from-third; and the queue is cleared first,
+ * so a second call replaces the row rather than appending to one still draining.
  */
 class CommandForceItemTest {
 
@@ -103,14 +90,11 @@ class CommandForceItemTest {
     }
 
     /**
-     * The next two items drawn for this owner, by advancing twice. The forced row is private to
-     * {@link ForceItemAssignment}, so what it holds is observed the way the game observes it — by
-     * finding things — rather than by reading the deque.
+     * The next two items drawn for this owner, observed the way the game observes them — by advancing
+     * — because the forced row is private to {@link ForceItemAssignment}.
      *
-     * <p>Reads {@code activeNextMaterial()}, not {@code activeMaterial()}: {@code advance} shifts next
-     * into current and puts the freshly drawn item in next, so the drawn one is always the queued
-     * slot. And the <i>active</i> family, because on a team the plain accessors read the player's own
-     * untouched fields rather than the Score Owner's.
+     * <p>{@code activeNextMaterial()}: {@code advance} shifts next into current, so the freshly drawn
+     * item is always in the queued slot, and the plain family would read untouched per-player fields.
      */
     private List<Material> nextTwoItems(ForceItemPlayer entry) {
         List<Material> drawn = new ArrayList<>();

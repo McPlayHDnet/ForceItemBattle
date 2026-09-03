@@ -26,16 +26,12 @@ import org.mockbukkit.mockbukkit.command.ConsoleCommandSenderMock;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
 
 /**
- * {@link CustomCommand}: the rules every command inherits.
+ * {@link CustomCommand}: the rules every command inherits. Who may run a command, and from where, is
+ * decided here and nowhere else — a regression unlocks or breaks all of them at once.
  *
- * <p>Who may run a command, and from where, is decided here and nowhere else — there is no
- * permission node behind it. A regression here would not break one command; it would break or
- * unlock all of them at once.
- *
- * <p>A command <em>declares</em> its gates rather than checking them. Before that, each subclass
- * called a {@code boolean requireOp(Player)} and acted on the result by hand — and one of the
- * thirteen sites inverted the {@code if}, so {@code /skip} ran its whole body for non-ops only.
- * {@link DeclaredGates} is the pinned table that would now catch that.
+ * <p>Commands <em>declare</em> their gates. Checking them by hand once let {@code /skip} invert its
+ * {@code if} and run its whole body for non-ops only; {@link DeclaredGates} is the table that catches
+ * that.
  */
 class CustomCommandTest {
 

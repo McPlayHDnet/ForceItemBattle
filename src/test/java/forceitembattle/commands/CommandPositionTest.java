@@ -36,22 +36,13 @@ import org.mockbukkit.mockbukkit.world.WorldMock;
 /**
  * {@code /pos}: the shared list of structure locations players call out to each other.
  *
- * <p>Its dispatch is unusual and worth pinning because it has no subcommand keyword: whether
- * {@code /pos fortress} <em>saves</em> where you are standing or <em>shows</em> where someone else
- * saved depends entirely on whether that name already exists. Getting that backwards overwrites a
- * teammate's saved location with wherever you happen to be, and the only sign is that the
- * coordinates changed.
+ * <p>The dispatch has no subcommand keyword — whether {@code /pos fortress} <em>saves</em> where you
+ * stand or <em>shows</em> where someone else saved depends on whether the name already exists.
+ * Backwards, it overwrites a teammate's location and the only sign is changed coordinates.
  *
- * <p>{@code remove} is the one real keyword, and the only part of this command carrying a
- * permission node rather than a {@link Precondition} — {@code forceitembattle.position.remove},
- * checked by hand inside the body. A node nothing else in the plugin uses is exactly the kind that
- * gets dropped from a permissions file and never noticed, so both sides of it are asserted.
- *
- * <p><b>Not covered here:</b> {@code /pos} with no argument and {@code /pos <existing name>}. Both
- * hand their work to {@code Scheduler.runAsync}, which needs a real registered plugin behind
- * Bukkit's scheduler; the plugin is a mock in these tests. What those two paths do — format a
- * distance and draw a particle line — is the async body, not the dispatch decision, and the
- * dispatch decision is what this file is about.
+ * <p>{@code remove} is the one real keyword and the only part carrying a permission node
+ * ({@code forceitembattle.position.remove}) rather than a {@link Precondition} — the kind of node
+ * that gets dropped from a permissions file unnoticed, so both sides are asserted.
  */
 class CommandPositionTest {
 

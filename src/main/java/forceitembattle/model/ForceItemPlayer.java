@@ -8,17 +8,9 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
 /**
- * One participant in the current round. Two accessor families, on purpose:
- *
- * <ul>
- *   <li><b>{@code active*}</b> — the value in effect, read from the current {@link ScoreOwner}: the
- *       team's in a team game, this player's own otherwise. What callers want in nearly every case.</li>
- *   <li><b>plain ({@code currentMaterial()}, {@code currentScore()}, …)</b> — this player's own
- *       values, ignoring the team. Only correct where the team has been ruled out, or where the
- *       per-player value is genuinely the subject.</li>
- * </ul>
- *
- * <p>{@link #setCurrentTeam(Team)} is the one place the choice is made.
+ * One participant in the current round. See {@code CONTEXT.md § Score Owner} for the two accessor
+ * families: {@code active*} reads through the {@link ScoreOwner}, the plain ones ignore the team.
+ * {@link #setCurrentTeam(Team)} is the one place the choice is made.
  */
 public class ForceItemPlayer {
 
@@ -36,11 +28,7 @@ public class ForceItemPlayer {
     private int itemStreak;
     @Setter
     private boolean isSpectator;
-    /**
-     * The countdown-end pass only reaches players online at that instant, so a disconnected one gets
-     * the same setup on rejoin. This flag is what keeps that from handing everyone else a second set
-     * of jokers.
-     */
+    /** Stops the rejoin path handing a second set of jokers to everyone already set up. */
     @Setter
     private boolean startSetupApplied;
 
@@ -153,10 +141,7 @@ public class ForceItemPlayer {
         return currentTeam != null;
     }
 
-    /**
-     * The other member of this player's team, or empty when playing solo. Teams are pairs, so
-     * "the teammate" is well defined; a team holding more than two yields the first other member.
-     */
+    /** Teams are pairs; a team holding more than two yields the first other member. */
     public Optional<ForceItemPlayer> teammate() {
         return currentTeam == null ? Optional.empty() : currentTeam.teammateOf(this);
     }
@@ -166,10 +151,7 @@ public class ForceItemPlayer {
         return scoreOwner.members();
     }
 
-    /**
-     * Spends one skip from whichever pool this player draws on. Not the same as the player's own
-     * pool, which nobody reads while they are on a team.
-     */
+    /** From whichever pool this player draws on, which is not their own while they are on a team. */
     public int spendJoker() {
         return scoreOwner.spendJoker();
     }
@@ -178,11 +160,7 @@ public class ForceItemPlayer {
         scoreOwner.record(forceItem);
     }
 
-    /**
-     * The chain in effect: the team's when they are on one, their own otherwise. Reads through the
-     * Score Owner like {@link #activeJokers()}, and has no plain counterpart — there is only one
-     * streak to read now, so there is nothing to disambiguate.
-     */
+    /** No plain counterpart: there is only one streak, so there is nothing to disambiguate. */
     public int backToBackStreak() {
         return scoreOwner.backToBackStreak();
     }

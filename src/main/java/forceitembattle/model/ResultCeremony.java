@@ -13,17 +13,13 @@ import org.bukkit.inventory.ItemStack;
 /**
  * The end-of-round reveal: who is shown next, and the screens already shown.
  *
- * <p>Like {@link Roster} and {@link RoundPhase}, this depends on nothing — no Bukkit, no plugin, no
- * managers. The order is handed in at {@link #beginFor} rather than computed here.
+ * <p>Depends on nothing — no Bukkit, no plugin, no managers. Page maps are opaque: stored, handed
+ * back, never looked inside, so {@link ItemStack} appears in the signature and nowhere else.
  *
- * <p>Page maps are opaque: stored, handed back, never looked inside, and {@link ItemStack} appears in
- * the signature and nowhere else. Keep it that way — reaching into a page would put this module
- * behind a running server.
- *
- * <p>The archive keys on the {@link ScoreOwner} <em>instance</em>. Safe for the length of a round only
- * because an existing roster entry always wins over every default, so a player reconnecting at
- * END_GAME gets their original {@code ForceItemPlayer} back with its final {@code SoloScore}. If
- * {@code Roster.admit} ever stops guaranteeing that, this breaks quietly.
+ * <p>The archive keys on the {@link ScoreOwner} <em>instance</em>, which holds only because an
+ * existing roster entry always wins over every default — a player reconnecting at END_GAME gets their
+ * original {@code ForceItemPlayer} back. If {@code Roster.admit} stops guaranteeing that, this breaks
+ * quietly.
  */
 public final class ResultCeremony {
 

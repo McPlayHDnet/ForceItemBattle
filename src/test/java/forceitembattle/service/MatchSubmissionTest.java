@@ -31,16 +31,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-/**
- * The submission a finished round produces.
- *
- * <p>This assembly had no coverage. The reporter handed its result straight to a concrete client
- * carrying OkHttp, so the only way to reach anything was
- * {@code new MatchHistoryReporter(null, null, null, null)} plus reflection — which is exactly what
- * {@link PauseAccountingTest} does, and why it could only reach the one static helper. With a
- * {@link MatchSink} the whole request is readable, so the parts that decide what the match page
- * shows — placement, the win flag, the per-item timings, who is left out — are assertable.
- */
+/** The submission a finished round produces: placement, the win flag, timings, and who is left out. */
 class MatchSubmissionTest {
 
     /** Fixed so the timings below are exact rather than approximately now. */

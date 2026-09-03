@@ -32,18 +32,11 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
 import org.mockito.InOrder;
 
 /**
- * {@link CommandStart}'s argument handling — the refusals, and what they leave behind.
+ * {@link CommandStart}'s argument handling — the refusals, and what they leave behind. The rules a
+ * round is built from live in {@code RoundStart} and are tested there.
  *
- * <p>The rules a round is built from live in {@code RoundStart} and are tested there. What is left
- * in the command is parsing and reporting, and this covers the paths that stop before anything is
- * started: a preset that does not exist, the wrong number of arguments, arguments that are not
- * numbers.
- *
- * <p>Each also asserts the round was <em>not</em> started, because a refusal that still mutated the
- * ruleset would be worse than one that said nothing.
- *
- * <p>{@link TheSuccessPath} covers the one thing the refusals cannot: the order of the two calls that
- * open a round. See its javadoc — it exists because a released round-2 regression got through here.
+ * <p>Each refusal also asserts the round was <em>not</em> started: one that still mutated the ruleset
+ * would be worse than one that said nothing.
  */
 class CommandStartTest {
 
@@ -182,21 +175,10 @@ class CommandStartTest {
     /**
      * The two calls that open a round, and the fact that both happen.
      *
-     * <p>This class exists because of a released regression that every other test here was blind to.
-     * Lifting the item draw out of {@code Gamemanager} moved {@code initializeMaterials} to
-     * {@code ForceItemAssignment.beginRound} — and quietly dropped the one line in it that was not
-     * about drawing items: the reset of {@code startSetupApplied}. Nothing then set the flag back to
-     * false, so from the second round of a JVM onwards {@code applyStartSetup} no-opped for everyone
-     * and nobody left creative.
-     *
-     * <p>It was invisible three ways over. The unit suite was green: no test drove the success path,
-     * because the countdown after it needs a live server. Production is spared entirely, because
-     * {@code scheduleReset} restarts the JVM between rounds. Only {@code Invoke-RoundTest.ps1},
-     * playing two rounds in one session, could see it — and it did, on the first run after the change.
-     *
-     * <p>So the point of these is not the assertions, which are two lines. It is that the round-2
-     * regression now has a guard that runs in four minutes rather than five, and one that fails at
-     * the call site where the damage actually was: the wiring, not any body.
+     * <p>Guards a round-2 regression: dropping {@code resetStartSetup} leaves {@code startSetupApplied}
+     * true from the previous round, so nobody leaves creative from the second round of a JVM onwards.
+     * Invisible to the rest of this file, which never drives the success path, and to production,
+     * where {@code scheduleReset} restarts the JVM between rounds.
      */
     @Nested
     class TheSuccessPath {

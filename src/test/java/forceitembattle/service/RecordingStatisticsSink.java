@@ -9,12 +9,8 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * The second implementation of {@link StatisticsSink}, and the reason the interface is worth having.
- *
- * <p>It keeps every write in order with the row it was addressed to, so a test can assert both
- * halves of the rule that has actually gone wrong here before: <em>which</em> row, and <em>what</em>
- * was on it. A Mockito mock answers the first and is awkward about the second, because the payload
- * is a builder whose fields have to be read back.
+ * Keeps every write in order with the row it was addressed to, so a test can assert both which row
+ * and what was on it — the second being awkward with a Mockito mock, since the payload is a builder.
  */
 final class RecordingStatisticsSink implements StatisticsSink {
 

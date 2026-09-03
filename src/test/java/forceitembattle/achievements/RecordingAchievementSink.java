@@ -8,13 +8,7 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
-/**
- * The second implementation of {@link AchievementSink}, and the reason the interface is worth having.
- *
- * <p>{@link AchievementStorage} used to build its own HTTP client, so nothing above it could run
- * without a service. Every unlock lands here instead, with the player and the mode it was recorded
- * under, because "which mode" is part of what the rules decide.
- */
+/** Every unlock, with the player and the mode it was recorded under — the mode is part of the rule. */
 final class RecordingAchievementSink implements AchievementSink {
 
     record Unlock(UUID player, Achievements achievement, AchievementMode mode, UUID teammate) {

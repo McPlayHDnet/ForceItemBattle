@@ -13,13 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-/**
- * The tally behind {@code /voteskip}.
- *
- * <p>All of this used to be five bare fields on {@code VoteSkipManager} with the rules written
- * between Bukkit broadcasts, so none of it had a test — including the coin flip that settles a tie
- * and the quorum rule that had a live defect in it.
- */
+/** The tally behind {@code /voteskip}: quorum, eligibility, and the coin flip that settles a tie. */
 class SkipVoteTest {
 
     private static final UUID ALICE = UUID.fromString("00000000-0000-0000-0000-00000000000a");

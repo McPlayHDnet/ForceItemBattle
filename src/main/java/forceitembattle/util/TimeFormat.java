@@ -32,12 +32,10 @@ public final class TimeFormat {
     }
 
     /**
-     * A duration as {@code 1h 5m 30s}, dropping any component that is zero.
+     * A duration as {@code 1h 5m 30s}, dropping any zero component.
      *
-     * <p>Two warts, pinned by tests rather than fixed so changing either is a decision: zero renders
-     * as the empty string, and a duration ending on hours or minutes keeps a trailing space
-     * ({@code "5m "}). Callers get away with both — a round showing {@code 0} is already over, and
-     * the strings land inside MiniMessage where the space is invisible.
+     * <p>Two warts pinned by tests rather than fixed, so changing either is a decision: zero renders
+     * as the empty string, and a duration ending on hours or minutes keeps a trailing space.
      */
     public static String humanised(int totalSeconds) {
         int seconds = totalSeconds % 60;

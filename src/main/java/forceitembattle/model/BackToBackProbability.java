@@ -8,11 +8,7 @@ import java.util.Locale;
 /**
  * How unlikely a back-to-back chain was, as a percentage, a {@link Rarity} and a label to print.
  *
- * <p>Pure arithmetic over four numbers, which is the point: it used to be welded to
- * {@code player.getInventory()} and {@code backpacks.getTeamBackpack(...)} inside
- * {@code BackToBackManager}, so none of it — including the seventeen lines of leading-zero logic that
- * decide how a 0.0004% chain prints — could be reached by a test. The caller counts what is owned;
- * this decides what that is worth.
+ * <p>Pure arithmetic: the caller counts what is owned, this decides what that is worth.
  *
  * @param percentage the odds as a percentage, so 0.05 means one in two thousand
  * @param formatted  the percentage and rarity label, ready to drop into a message
@@ -20,12 +16,10 @@ import java.util.Locale;
 public record BackToBackProbability(double percentage, Rarity rarity, String formatted) {
 
     /**
-     * @param uniqueOwned       distinct materials this owner already holds, inventories and backpack
-     * @param poolSize          how many materials could currently be handed out
-     * @param streak            the chain length <em>after</em> this find, so a third consecutive
-     *                          owned item is a 3
-     * @param repeatOfPrevious  whether this item is the same one they were just handed, which
-     *                          {@link Rarity} treats as its own thing
+     * @param uniqueOwned      distinct materials this owner already holds, inventories and backpack
+     * @param poolSize         how many materials could currently be handed out
+     * @param streak           the chain length <em>after</em> this find, so a third owned item is 3
+     * @param repeatOfPrevious the same item they were just handed, which {@link Rarity} ranks apart
      */
     public static BackToBackProbability of(int uniqueOwned, int poolSize, int streak,
                                            boolean repeatOfPrevious) {
@@ -37,12 +31,7 @@ public record BackToBackProbability(double percentage, Rarity rarity, String for
                 formatPercent(percent) + " <dark_gray>(<reset>" + rarity.label() + "<dark_gray>)");
     }
 
-    /**
-     * <p>An empty pool yields 0 rather than the {@code Infinity}/{@code NaN} the raw division gives —
-     * reachable when the settings exclude every item, and it used to print as a garbage percentage
-     * because nothing downstream checks. Zero is also the honest reading: a chain over a pool nobody
-     * could draw from is not an achievement anyone earned.
-     */
+    /** An empty pool yields 0, not the {@code Infinity}/{@code NaN} the raw division would give. */
     private static double probabilityOf(int uniqueOwned, int poolSize, int streak) {
         if (poolSize <= 0) {
             return 0.0;
@@ -53,15 +42,11 @@ public record BackToBackProbability(double percentage, Rarity rarity, String for
     }
 
     /**
-     * Enough decimal places to show something. A long chain runs to a very small number, and a fixed
-     * two places would print every one of them as "0%"; this counts the leading zeros and keeps two
-     * significant digits past them.
+     * Enough decimal places to show something: a long chain runs small enough that a fixed two places
+     * would print every one as "0%", so this keeps two significant digits past the leading zeros.
      *
-     * <p><b>Pinned to {@link Locale#ROOT}.</b> {@code DecimalFormat} otherwise follows the JVM's
-     * default locale, so the same chain printed "0.05%" or "0,05%" depending on where the server
-     * happened to be running — a decimal comma in the middle of an English sentence. It went
-     * unnoticed because this code was unreachable from a test; the first assertion written against it
-     * failed on a German-locale machine.
+     * <p><b>Pinned to {@link Locale#ROOT}</b>, or {@code DecimalFormat} follows the JVM default and
+     * prints "0,05%" in an English sentence on a European server.
      */
     private static String formatPercent(double percent) {
         DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance(Locale.ROOT);

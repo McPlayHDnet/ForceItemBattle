@@ -23,12 +23,11 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
 /**
- * Puts a player into one of the states a round holds them in.
+ * Puts a player into one of the states a round holds them in. See {@code CONTEXT.md § Player Outfitting}.
  *
- * <p>The adapter half of {@link RoundSetup}: everything here is a Bukkit write, and every number and
- * material it writes was decided elsewhere. That is why {@link #toResultScreen} is handed its
- * destination rather than looking one up — a world lookup would be a decision, and decisions do not
- * live in the adapter.
+ * <p>The adapter half of {@link RoundSetup}: every number and material it writes was decided
+ * elsewhere, which is why {@link #toResultScreen} is handed its destination rather than looking
+ * one up.
  */
 public final class PlayerOutfitter {
 
@@ -72,13 +71,7 @@ public final class PlayerOutfitter {
         player.playSound(player, Sound.BLOCK_END_PORTAL_SPAWN, 1, 1);
     }
 
-    /**
-     * Entered from two directions — {@code finishGame} sweeps everyone online into it, and a player
-     * who was offline when the round ended enters it on rejoin.
-     *
-     * @param resultSpawn where the room is gathered, or {@code null} to leave them where they stand.
-     *                    Nullable because {@code Dimension.OVERWORLD.world()} is.
-     */
+    /** @param resultSpawn where the room gathers, or {@code null} to leave them where they stand */
     public static void toResultScreen(Player player, @Nullable Location resultSpawn) {
         player.setHealth(20);
         player.setSaturation(20);
@@ -97,19 +90,14 @@ public final class PlayerOutfitter {
         giveOpeningBar(player, MenuItem.Menu.RESULT, GameState.END_GAME);
     }
 
-    /**
-     * Copies the list first: Bukkit makes "no guarantees as to its mutability", and a live view
-     * throws {@code ConcurrentModificationException} when removed from while walking it.
-     */
+    /** Copies first: a live passenger view throws {@code ConcurrentModificationException}. */
     private static void dismount(Player player) {
         List.copyOf(player.getPassengers()).forEach(Entity::remove);
     }
 
     /**
-     * Someone waiting for a round to start — and, because {@code END_GAME} shares the {@code LOBBY}
-     * admission with {@code PRE_GAME}, someone who arrives while a result screen is still up. The
-     * spectate button handed out here is only answered by the {@code PRE_GAME} click handler, so at
-     * {@code END_GAME} it is a dead button. Left that way on purpose.
+     * Also reached at {@code END_GAME}, which shares the LOBBY admission. The spectate button is
+     * answered only by the {@code PRE_GAME} handler, so there it is a dead button — left so on purpose.
      */
     public static void toLobby(Player player, GameState phase) {
         player.getInventory().clear();
@@ -122,7 +110,6 @@ public final class PlayerOutfitter {
         giveOpeningBar(player, MenuItem.Menu.LOBBY, phase);
     }
 
-    /** Hands one team member their share of the pool. Offline members are skipped. */
     public static void giveJokerShare(Player player, int jokers) {
         if (player == null || !player.isOnline() || jokers <= 0) {
             return;
@@ -142,16 +129,10 @@ public final class PlayerOutfitter {
     }
 
     /**
-     * Writes what the joker button reads, or removes it when {@code amount} is zero.
+     * The single writer of the joker stack; zero removes it. {@link JokerSpend} decides the number.
      *
-     * <p>The single writer of that stack, which it had to become: there were four — this class at
-     * round start, the click that spends one, {@code /fixskips}, and a vote path that forgot to be
-     * one at all, so after a vote the button read one too high. {@link JokerSpend} decides the number;
-     * this puts it on screen.
-     *
-     * <p><b>Finds the stack rather than assuming slot 4.</b> Players move it, and the spend path has
-     * always looked it up with {@code first(...)} for that reason. Slot 4 is only the fallback for a
-     * player who has no joker stack at all, which is what a fresh round-start write is.
+     * <p>Finds the stack rather than assuming slot 4, because players move it. Slot 4 is the
+     * fallback for someone holding none, which is what a fresh round-start write is.
      */
     public static void setJokerStack(Player player, int amount) {
         PlayerInventory inventory = player.getInventory();
@@ -163,14 +144,7 @@ public final class PlayerOutfitter {
         inventory.setItem(slot, amount > 0 ? GameItems.jokers(amount) : null);
     }
 
-    /**
-     * What the joker button currently reads, or empty if they are not holding one — the input
-     * {@link JokerSpend} needs to decide what it should read next.
-     *
-     * <p>Here rather than at the two call sites because it is the same lookup
-     * {@link #setJokerStack} does, and having the reader and the writer disagree about where the
-     * stack is would be its own bug.
-     */
+    /** The same lookup {@link #setJokerStack} writes through, so reader and writer cannot disagree. */
     public static OptionalInt jokerStackIn(Player player) {
         int slot = player.getInventory().first(GameItems.jokerMaterial());
         if (slot == -1) {
@@ -181,10 +155,7 @@ public final class PlayerOutfitter {
         return stack == null ? OptionalInt.empty() : OptionalInt.of(stack.getAmount());
     }
 
-    /**
-     * {@code ItemFlag.values()} goes on every button, not just the written book: a menu button is
-     * decoration and should never show mechanical tooltip text.
-     */
+    /** {@code ItemFlag.values()} on every button: they are decoration, never mechanical tooltips. */
     private static ItemStack buttonStack(MenuItem menuItem) {
         return new ItemBuilder(menuItem.material())
                 .setDisplayName(menuItem.label())
@@ -193,10 +164,7 @@ public final class PlayerOutfitter {
                 .getItemStack();
     }
 
-    /**
-     * The button this stack is, or {@code null} if it is not one. Never looks at the material, which
-     * is the point: an item that merely looks like a button is not one, however it was obtained.
-     */
+    /** Never looks at the material: an item that merely looks like a button is not one. */
     @Nullable
     public static MenuItem buttonOf(@Nullable ItemStack itemStack) {
         if (itemStack == null) {

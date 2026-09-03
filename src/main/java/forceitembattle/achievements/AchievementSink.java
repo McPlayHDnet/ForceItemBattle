@@ -5,25 +5,15 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
-/**
- * Where an unlock goes, with the transport taken out.
- *
- * <p>{@link AchievementStorage} owns the cache and the de-dup; this owns the wire. Splitting them is
- * what makes everything above the storage — the end-of-round rules, the Completionist tiers, the
- * whole grant path — reachable from a test, because until now the manager built its own storage,
- * which built its own HTTP client, and nothing in the chain could be substituted.
- *
- * <p>The production implementation is {@link ServiceAchievementSink}; tests use a recording one.
- */
+/** Where an unlock goes. See {@code CONTEXT.md § Service Writes}. */
 public interface AchievementSink {
 
     /**
-     * Every achievement id this player already holds.
+     * Every achievement id this player holds; exactly one callback runs.
      *
-     * <p>Exactly one of the two callbacks runs. {@code onFailure} exists rather than an empty set
-     * because the two mean different things to the cache: an empty set is a player with no unlocks
-     * and is worth remembering, a failure is not, and remembering it would grant every achievement
-     * a second time the moment the service came back.
+     * <p>{@code onFailure} rather than an empty set, because the two mean different things to the
+     * cache: no unlocks is worth remembering, a failed load is not — remembering it would re-grant
+     * every achievement once the service came back.
      */
     void load(UUID playerUuid, Consumer<Set<String>> onLoaded, Runnable onFailure);
 

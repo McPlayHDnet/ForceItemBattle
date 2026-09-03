@@ -37,22 +37,15 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
 /**
  * {@code /achievements}: who may grant, who may revoke, and who the subcommand is about.
  *
- * <p>Six subcommands, three of which write. Like {@code /stats reset}, those three are gated
- * <em>inside</em> the switch through {@code requireOp(player, Runnable)} rather than by a declared
- * {@link Precondition}, because the gate hangs off {@code args[0]} and a command-level declaration
- * cannot see it. Three separate call sites is three chances to leave one off, and leaving one off
- * looks exactly like a subcommand that correctly has no gate. All three are pinned here, from both
- * sides: refused, and the storage untouched.
+ * <p>The three writing subcommands are op-gated <em>inside</em> the switch, because the gate hangs
+ * off {@code args[0]} and a declared {@link Precondition} cannot see it. Three call sites is three
+ * chances to leave one off, and one left off looks like a subcommand that correctly has no gate.
  *
- * <p>The other thing worth pinning is the argument arithmetic on {@code progress}, which is the one
- * subcommand whose meaning shifts with the count: two arguments name an achievement and mean
- * yourself, three name a player and an achievement. An off-by-one reads the achievement name out
- * of the player slot and reports "does not exist" for a real achievement.
+ * <p>{@code progress} is the one whose meaning shifts with the argument count: two means yourself,
+ * three names a player. An off-by-one reads the achievement out of the player slot.
  *
- * <p>{@code list} is verified only as far as the storage load it requests. What its callback opens
- * is an {@code AchievementCategoryInventory}, and building one needs {@code ItemStack} — the
- * headless wall that {@code HeadlessBoundaryTest} pins. Leaving the callback unrun is what keeps
- * this test on the near side of it.
+ * <p>{@code list}'s callback is left unrun: it opens an inventory, which needs {@code ItemStack} —
+ * the headless wall {@code HeadlessBoundaryTest} pins.
  */
 class CommandAchievementTest {
 

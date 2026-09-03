@@ -157,27 +157,20 @@ public class Gamemanager implements Manager {
     }
 
     /**
-     * Marks everyone un-equipped, so the next {@link #applyStartSetup} actually runs for them.
+     * Marks everyone un-equipped, so the next {@link #applyStartSetup} actually runs. Called by
+     * {@code /start} before the items are drawn.
      *
-     * <p>Called by {@code /start} before the items are drawn. It is the counterpart to the
-     * {@code isStartSetupApplied()} guard below and lives here for that reason — the flag's only
-     * reader is a few lines down.
-     *
-     * <p><b>Load-bearing across rounds, and invisible in the first one.</b> Without it the flag is
-     * still {@code true} from the previous round, {@link #applyStartSetup} no-ops for everybody, and
-     * a second round in the same JVM never takes anyone out of creative. Production is spared because
-     * {@code scheduleReset} restarts the server between rounds; {@code Invoke-RoundTest.ps1} plays two
-     * rounds in one session precisely to remove that reprieve, and it is what caught this.
+     * <p><b>Load-bearing from round two onwards, and invisible in round one.</b> Without it the flag
+     * is still set from the previous round, {@link #applyStartSetup} no-ops for everybody, and nobody
+     * leaves creative. Production is spared only because {@code scheduleReset} restarts the JVM.
      */
     public void resetStartSetup() {
         this.roster.players().values().forEach(forceItemPlayer -> forceItemPlayer.setStartSetupApplied(false));
     }
 
     /**
-     * Applies one player's round setup. Spectators are put into spectator mode instead. Safe to call
-     * more than once — {@link ForceItemPlayer#isStartSetupApplied()} makes every call after the first
-     * a no-op, which is what lets someone who disconnected during the countdown be set up on rejoin
-     * rather than landing in ADVENTURE mode with an empty inventory.
+     * Applies one player's round setup; spectators go to spectator mode instead. Idempotent, which
+     * is what lets someone who disconnected during the countdown be set up on rejoin.
      */
     public void applyStartSetup(Player player) {
         ForceItemPlayer forceItemPlayer = this.roster.participant(player.getUniqueId()).orElse(null);
@@ -237,10 +230,7 @@ public class Gamemanager implements Manager {
         player.sendMessage("");
     }
 
-    /**
-     * Everything that has to happen the instant /start's countdown reaches zero. /start only parses
-     * arguments and runs the countdown, then hands over — keep orchestration out of the command.
-     */
+    /** Everything that happens when /start's countdown hits zero. Keep orchestration out of /start. */
     public void startGame(int durationMinutes, int jokersAmount) {
         this.setGameStartTime(System.currentTimeMillis());
         this.matchHistory.beginMatch(UUID.randomUUID());
@@ -368,8 +358,7 @@ public class Gamemanager implements Manager {
             }
         });
 
-        // Its own ordering, not the stats one: spectators excluded, ties broken on UUID so they are
-        // dealt out the same way every time. The stats maps do neither and are null when STATS is off.
+        // Its own ordering, not the stats one: those keep spectators and are null when STATS is off.
         this.resultCeremony.beginFor(
                 this.matchHistory.getMatchId(), this.revealOrder());
 

@@ -6,9 +6,8 @@ import java.util.List;
 import org.bukkit.Material;
 
 /**
- * What a player starts a round holding. Rules, not effects: they answer in counts and materials and
- * write nothing — {@code PlayerOutfitter} does the writing. Keeping them apart is what makes them
- * testable, since an inventory write puts a rule behind a running server.
+ * What a player starts a round holding. Rules, not effects — they answer in counts and materials;
+ * {@code PlayerOutfitter} does the writing. See {@code CONTEXT.md § Round Setup}.
  */
 public final class RoundSetup {
 
@@ -19,12 +18,12 @@ public final class RoundSetup {
             List.of(Material.STONE_AXE, Material.STONE_PICKAXE, Material.STONE_SHOVEL);
 
     /**
-     * How the round's joker pool splits across a team's members, in member order. The remainder goes
-     * to the earlier members — 5 across 2 becomes 3 and 2. The shares must sum to {@code pool} for
-     * any member count: the team's shared pool is set to the full amount separately, so a split that
-     * lost a joker would leave a skip nobody could reach.
+     * The round's joker pool split across a team's members, in member order.
      *
-     * @return one share per member; empty when there are no members to split across.
+     * <p>The shares must sum to {@code pool} for any member count — the team's shared pool is set to
+     * the full amount separately, so a split that lost one would leave a skip nobody could reach.
+     *
+     * @return one share per member; empty when there are no members to split across
      */
     public static int[] splitJokers(int pool, int memberCount) {
         if (memberCount <= 0) {
@@ -42,16 +41,8 @@ public final class RoundSetup {
     }
 
     /**
-     * How many jokers to put in a player's hotbar when their round setup runs.
-     *
-     * <ul>
-     *   <li><b>Solo</b> — the round's full allowance, except in run mode, a race for the first find
-     *       that hands out no skip button at all.</li>
-     *   <li><b>On a team, during the countdown</b> — nothing; the pool split serves the whole roster
-     *       moments later and would overwrite anything put here.</li>
-     *   <li><b>On a team, rejoining later</b> — whatever the team has left. The stack is only the
-     *       button; the count that gates a skip lives on the team.</li>
-     * </ul>
+     * How many jokers to put in a player's hotbar. Zero during the countdown for a team member,
+     * because the pool split overwrites the whole roster moments later.
      *
      * <p>The asymmetry is preserved from the original rather than chosen: run mode suppresses the
      * button for a solo player but not for a team.

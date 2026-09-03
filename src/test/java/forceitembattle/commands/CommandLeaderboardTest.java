@@ -36,24 +36,11 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
 /**
  * {@code /top}: which board is asked for, and what an unrecognised word does.
  *
- * <p>Four scopes over three service calls, dispatched by two whitelists. The parts that repay a
- * test:
- *
- * <ul>
- *   <li><b>The defaults.</b> A bare {@code /top} means solo, ranked by highest score, and it gets
- *       there by defaulting {@code args[0]} <em>before</em> the whitelist check rather than by
- *       branching on {@code args.length}. That ordering is load-bearing: the refusal it would
- *       otherwise fall into reads {@code args[0]}, so a defaulting mistake here is an
- *       {@code ArrayIndexOutOfBoundsException} on the most common invocation of the command.</li>
- *   <li><b>Scope and category are separate whitelists</b> that produce different refusals, and a
- *       valid word from the wrong list is not accepted by the other.</li>
- *   <li><b>{@code achievements} takes no category</b> and returns before the category whitelist is
- *       consulted, so {@code /top achievements} works where the same shape on any other scope
- *       would be checked. It also reads a different service entirely.</li>
- * </ul>
- *
- * <p>The rows themselves are asserted once per scope, because the duo board is the only one that
- * renders a pair and the solo and teams boards differ only in their heading.
+ * <p>Four scopes over three service calls, dispatched by two whitelists. A bare {@code /top}
+ * defaults {@code args[0]} <em>before</em> the whitelist check, which is load-bearing: the refusal it
+ * would otherwise reach reads {@code args[0]}, so a defaulting mistake is an
+ * {@code ArrayIndexOutOfBoundsException} on the command's commonest form. Scope and category are
+ * separate whitelists with separate refusals, and {@code achievements} takes no category at all.
  */
 class CommandLeaderboardTest {
 

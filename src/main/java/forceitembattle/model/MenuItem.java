@@ -9,17 +9,11 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 
 /**
- * One button on a menu hotbar: what it is made of, what it says, which bar it belongs to and where,
- * and when it can be clicked.
- *
- * <p><b>This names actions; it does not perform them.</b> An enum constant is an answer and one
- * adapter turns it into behaviour, which is what keeps this file free of {@code ItemStack},
- * inventories and the plugin graph, and therefore testable. {@code PlayerOutfitter} writes a bar;
- * {@code ClickableItemsListener} looks a button up and acts.
+ * One button on a menu hotbar. See {@code CONTEXT.md § Menu Items}. Names actions, never performs
+ * them, which is what keeps {@code ItemStack} and the plugin graph out of this file.
  *
  * <p><b>Where</b> a button sits belongs to its {@link Menu}; <b>when</b> it can be clicked belongs to
- * the phase. These look like one column and are not — hanging the slot off the phase breaks as soon
- * as a player who never joined the round reaches {@code END_GAME}, which shares the {@code LOBBY}
+ * the phase. Hanging the slot off the phase breaks at {@code END_GAME}, which shares the LOBBY
  * admission with {@code PRE_GAME} and so is handed the lobby bar during the result screen.
  */
 public enum MenuItem {
@@ -74,9 +68,8 @@ public enum MenuItem {
     }
 
     /**
-     * Stamped into every button the plugin hands out, valued with the constant's {@link #name()}.
-     * The reader consults this and nothing else — dispatching on {@link Material} meant anything that
-     * looked like a button was one, so a grass block held to build with teleported the player.
+     * Stamped into every button, valued with the constant's {@link #name()}. The reader consults this
+     * and nothing else: dispatching on {@link Material} let a grass block teleport the player.
      */
     private static final NamespacedKey MARKER_KEY = new NamespacedKey("fib", "menu_item");
 
@@ -134,20 +127,14 @@ public enum MenuItem {
         return this.openingButton;
     }
 
-    /**
-     * The bar as it is first handed out: every opening button on {@code menu} that is clickable in
-     * {@code state}. The menu decides which buttons and where; the phase drops the inert ones.
-     */
+    /** The menu decides which buttons and where; the phase drops the inert ones. */
     public static List<MenuItem> openingBar(Menu menu, GameState state) {
         return Arrays.stream(values())
                 .filter(menuItem -> menuItem.openingButton && menuItem.menu == menu && menuItem.isLiveIn(state))
                 .toList();
     }
 
-    /**
-     * The constant a marker value names. Null rather than an exception: a value left behind by a
-     * since-renamed constant should leave an inert item in someone's hand, not throw in a handler.
-     */
+    /** Null rather than throwing: a marker from a renamed constant leaves an inert item, not a crash. */
     @Nullable
     public static MenuItem byMarker(@Nullable String marker) {
         if (marker == null) {

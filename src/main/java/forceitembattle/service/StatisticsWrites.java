@@ -14,17 +14,11 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 
 /**
- * The game's vocabulary for a statistics write: rounds, finds and players in, request rows out.
+ * Which row a statistics number belongs on. See {@code CONTEXT.md § Service Writes}.
  *
- * <p><b>The rules about which row a number belongs on live here, not at the call sites.</b> Leaving
- * them at the call sites is how {@code gamesPlayed} came to be counted twice once already. A stat
- * that counts rather than maxes would be doubled if both teammates sent it, so on a team only the
- * primary writer sends one; a stat that maxes is safe from either side.
- *
- * <p>It holds a {@link StatisticsSink} and nothing else — no HTTP, no plugin, no Bukkit beyond the
- * roster types it is handed. That is the whole point of the split: every rule below is reachable
- * from a test with a recording sink, and each one had no coverage at all while it shared a class
- * with the generated client.
+ * <p>A stat that <b>counts</b> rather than maxes would be doubled if both teammates sent it, so on a
+ * team only the primary writer sends one; a stat that maxes is safe from either side. Leaving that
+ * to the call sites is how {@code gamesPlayed} came to be counted twice.
  */
 public final class StatisticsWrites {
 
@@ -49,11 +43,7 @@ public final class StatisticsWrites {
                 () -> new FibTeamMemberStatsUpdateRequestDto().raritiesAdd(raritiesUpdate(rarity)));
     }
 
-    /**
-     * One item obtained: the totals, the per-item tally, the time it took, and the streak. In a team
-     * game the streak peak belongs on the shared team row; solo, it rides along on the player's own
-     * update. A skip breaks the streak, so it is reported on neither.
-     */
+    /** A skip breaks the streak, so it is reported on no row; in a team it belongs to the team row. */
     public void recordFind(ForceItemPlayer finder, boolean teamGame, String itemName,
                            boolean skipped, int itemStreak, long timeSpentMs) {
         UUID self = finder.player().getUniqueId();
@@ -88,10 +78,7 @@ public final class StatisticsWrites {
                 });
     }
 
-    /**
-     * The peak of a back-to-back chain. Solo keeps their own; a team's peak is shared, so it is
-     * written to <em>both</em> member rows rather than only the acting player's.
-     */
+    /** A team's peak is shared, so it goes on <em>both</em> member rows, not just the acting one. */
     public void recordBackToBackPeak(ForceItemPlayer player, boolean teamGame,
                                      int ownStreak, int teamStreak) {
         UUID self = player.player().getUniqueId();
@@ -111,10 +98,7 @@ public final class StatisticsWrites {
         });
     }
 
-    /**
-     * Both teammates write the same normalised team row, so a stat that counts rather than maxes
-     * would be doubled if both sides sent it — only the primary writer does.
-     */
+
     public void recordGameStarted(ForceItemPlayer player) {
         UUID self = player.player().getUniqueId();
         Team team = player.currentTeam();
@@ -132,15 +116,9 @@ public final class StatisticsWrites {
     }
 
     /**
-     * A player finished a round. One method rather than three calls because the three numbers have
-     * three different scopes:
-     * <ul>
-     *   <li>travel is the player's own contribution, so it routes solo-or-member;</li>
-     *   <li>score and the win go on whichever row owns the score — and {@code gamesWon} counts, so
-     *       on a team only the primary writer sends it;</li>
-     *   <li>the win/loss outcome is player-scoped and <em>everyone</em> reports it, winners and
-     *       losers alike, because a loss is what resets a streak.</li>
-     * </ul>
+     * One method rather than three, because the three numbers have three scopes: travel is the
+     * player's own, the score and the win belong to whoever owns the score, and the win/loss outcome
+     * is player-scoped and reported by <em>everyone</em> — a loss is what resets a streak.
      */
     public void recordRoundFinished(ForceItemPlayer player, String playerName,
                                     int score, long blocksTravelled, boolean won) {
@@ -177,10 +155,7 @@ public final class StatisticsWrites {
                 .playerName(playerName));
     }
 
-    /**
-     * A rarity delta as the generated request wants it. Only non-zero fields are set: a delta carries
-     * a single one, and sending four explicit zeros alongside it is a different payload.
-     */
+    /** Only non-zero fields: a delta carries one, and four explicit zeros is a different payload. */
     private static FibRaritiesUpdateRequestDto raritiesUpdate(Rarity rarity) {
         RarityCounts counts = rarity.asIncrement();
         FibRaritiesUpdateRequestDto request = new FibRaritiesUpdateRequestDto();

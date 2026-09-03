@@ -9,10 +9,10 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 
 /**
- * Who holds a place in the current round: the roll itself, and the rules for arriving and leaving.
+ * Who holds a place in the current round, and the rules for arriving and leaving.
  *
- * <p>Depends on nothing — no Bukkit, no plugin, no managers — which is what makes the manager graph
- * acyclic. Keep it that way.
+ * <p><b>Depends on nothing</b> — no Bukkit, no plugin, no managers. That is what keeps the manager
+ * graph acyclic; keep it that way.
  */
 public final class Roster {
 
@@ -29,28 +29,19 @@ public final class Roster {
     }
 
     /**
-     * Whoever is <em>playing</em> this round under this UUID. Empty covers both shapes of "watching
-     * rather than playing": someone who took the spectate toggle keeps a roster entry with the flag
-     * set, and someone who connected after the countdown froze the roster holds no entry at all.
-     * Callers cannot tell those apart and do not need to.
+     * Whoever is <em>playing</em> under this UUID. Empty covers both shapes of watching rather than
+     * playing: the spectate toggle keeps a roster entry, a late joiner has none.
      */
     public Optional<ForceItemPlayer> participant(UUID uuid) {
         return Optional.ofNullable(this.players.get(uuid)).filter(Roster::isPlaying);
     }
 
-    /**
-     * The same rule for a caller that already holds the entry rather than a UUID. Static and
-     * null-tolerant so both halves of the rule live here rather than at the call site.
-     */
+    /** The same rule for a caller holding the entry rather than a UUID. Null-tolerant on purpose. */
     public static boolean isPlaying(@Nullable ForceItemPlayer forceItemPlayer) {
         return forceItemPlayer != null && !forceItemPlayer.isSpectator();
     }
 
-    /**
-     * Everyone on the roster, spectators included. A view rather than a copy: {@code
-     * ScoreboardManager} reads this on every find, so a defensive copy would allocate a map per
-     * scoreboard update.
-     */
+    /** Everyone, spectators included. A view, not a copy: this is read on every find. */
     public Map<UUID, ForceItemPlayer> players() {
         return Collections.unmodifiableMap(this.players);
     }
@@ -64,9 +55,8 @@ public final class Roster {
     }
 
     /**
-     * Every score owner playing this round, each appearing once: one per solo player, one per team
-     * however many members it has. The de-duplication is the point — anything acting on the thing
-     * that scores has to run once per owner, and the roster holds one entry per player.
+     * Every score owner playing, each once: one per solo player, one per team. The de-duplication is
+     * the point — the roster holds an entry per player, and owner-level work must run once per owner.
      */
     public List<ScoreOwner> activeScoreOwners() {
         return this.players.values().stream()
@@ -100,11 +90,7 @@ public final class Roster {
         };
     }
 
-    /**
-     * Whether a player leaving now gives up their place. Deliberately false during STARTING: teams
-     * and force items are already assigned by then, so they keep their spot and come back as a
-     * {@link Admission#RETURNING_PARTICIPANT}.
-     */
+    /** False during STARTING on purpose: teams and items are assigned, so a quitter keeps their spot. */
     public static boolean releasesSpotOnQuit(GameState state) {
         return state == GameState.PRE_GAME || state == GameState.END_GAME;
     }

@@ -38,23 +38,11 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
 /**
  * {@code /stats}: which row it asks for, who it is allowed to ask for, and what the screen says.
  *
- * <p>Four subcommand trees over one renderer. Three things here matter more than the rest:
- *
- * <ul>
- *   <li><b>{@code reset} is op-gated inside the switch</b>, through {@code requireOp(player,
- *       Runnable)} rather than a declared {@link Precondition}, because the gate hangs off
- *       {@code args[0]}. It is the only thing between a non-op and another player's wiped stats,
- *       so it is pinned from both sides: refused, and nothing staged.</li>
- *   <li><b>The two-step confirm.</b> A staged reset is keyed by the admin who asked for it, and
- *       {@code confirmReset} removes it before it checks anything — so a confirm is spent whether
- *       or not it fired.</li>
- *   <li><b>Which UUID reaches the service.</b> {@code /stats duo a b} pairs the two names;
- *       {@code /stats duo b} pairs the caller with one. Getting the argument offset wrong renders
- *       someone else's screen under your own name, and nothing else would notice.</li>
- * </ul>
- *
- * <p>The service is mocked at {@link FibStatisticsClient}, the seam the command actually talks to:
- * it hands a view and two callbacks, so a test drives either arm without a round or a transport.
+ * <p>Three things carry the weight. {@code reset} is op-gated inside the switch (the gate hangs off
+ * {@code args[0]}) and is all that stands between a non-op and another player's wiped stats. The
+ * two-step confirm is spent whether or not it fired, because {@code confirmReset} removes the staged
+ * entry before checking anything. And {@code /stats duo a b} pairs two names where {@code duo b}
+ * pairs the caller with one — an argument offset renders someone else's screen under your name.
  */
 class CommandStatsTest {
 

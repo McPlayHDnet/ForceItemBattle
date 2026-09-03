@@ -21,12 +21,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 /**
- * The rules about <em>which row</em> a number belongs on.
- *
- * <p>None of this was reachable before the write seam: the rules shared a class with the generated
- * client, so the only stand-in for them was a mock of the class that owned them. The two mistakes
- * the javadoc in {@link StatisticsWrites} records having already been made are both here — a
- * counting stat sent by both teammates, and a shared peak written to one member row instead of two.
+ * Which row a number belongs on — including the two mistakes already made once: a counting stat sent
+ * by both teammates, and a shared peak written to one member row instead of two.
  */
 class StatisticsWritesTest {
 
