@@ -36,7 +36,6 @@ public class Team implements ScoreOwner {
     private Material nextMaterial;
     @Setter
     private Material previousMaterial;
-    @Setter
     private int backToBackStreak;
     @Setter
     private long lastItemAssignedAt;
@@ -157,6 +156,21 @@ public class Team implements ScoreOwner {
     @Override
     public void setJokers(int jokers) {
         this.remainingJokers = jokers;
+    }
+
+    @Override
+    public int backToBackStreak() {
+        return this.backToBackStreak;
+    }
+
+    @Override
+    public void bumpStreak() {
+        this.backToBackStreak++;
+    }
+
+    @Override
+    public void resetStreak() {
+        this.backToBackStreak = 0;
     }
 
     @Override

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 
 import forceitembattle.ForceItemBattle;
+import forceitembattle.model.BackToBackProbability;
 import forceitembattle.randomevents.RandomEventManager;
 import forceitembattle.service.FIBServiceClient;
 import forceitembattle.settings.GameSettings;
@@ -49,5 +50,27 @@ class FoundItemResolverWiringTest {
 
         assertFalse(parameters.contains(ForceItemBattle.class),
                 "FoundItemResolver should declare its collaborators, not take the plugin");
+    }
+
+    /**
+     * One find, one number — pinned at the seam, because this is where it went wrong.
+     *
+     * <p>{@code score()} used to ask {@code BackToBackManager} for the odds itself, and it ran
+     * <em>before</em> {@code handleAfterFind} bumped the streak. So the percentage written to a
+     * player's stats row was computed at a shorter chain than the one announced to them a tick later:
+     * two numbers for one find, differing systematically rather than racily.
+     *
+     * <p>Asserted structurally rather than by driving a find, which needs a server: the resolver must
+     * not be able to ask for the odds at all. It takes what {@code handleAfterFind} returns, and a
+     * second computation is unavailable to it because {@code BackToBackManager} exposes none.
+     */
+    @Test
+    void cannotComputeTheOddsASecondTime() {
+        boolean exposesAProbabilityQuery = List.of(BackToBackManager.class.getMethods()).stream()
+                .anyMatch(method -> BackToBackProbability.class.equals(method.getReturnType()));
+
+        assertFalse(exposesAProbabilityQuery,
+                "the odds are returned by handleAfterFind and nowhere else; a second entry point "
+                        + "lets a caller compute them again at a different streak");
     }
 }

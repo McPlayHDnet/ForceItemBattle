@@ -216,6 +216,19 @@ class ResultCeremonyTest {
         }
 
         @Override
+        public int backToBackStreak() {
+            return 0;
+        }
+
+        @Override
+        public void bumpStreak() {
+        }
+
+        @Override
+        public void resetStreak() {
+        }
+
+        @Override
         public int score() {
             return 0;
         }

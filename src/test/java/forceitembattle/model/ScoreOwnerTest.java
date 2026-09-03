@@ -188,4 +188,92 @@ class ScoreOwnerTest {
             assertEquals(2, owners.size());
         }
     }
+
+    /**
+     * The back-to-back streak, which moved here from two plain fields — one per player and one per
+     * team, bumped and reset by hand-mirrored paths that had already drifted. The bump raised the
+     * finder plus whichever teammate held the item; the reset zeroed every member. With one holder
+     * that disagreement is unrepresentable, which is the whole reason the field moved.
+     *
+     * <p>It was invisible because in a team game nothing read the per-player value:
+     * {@code recordBackToBackPeak} sends the team's streak to both member rows and ignores the
+     * player's, and the odds read the team's too. Five dead writes per find.
+     */
+    @Nested
+    class BackToBackStreak {
+
+        @Test
+        void startsAtZero() {
+            bothImplementations(owner -> assertEquals(0, owner.backToBackStreak()));
+        }
+
+        @Test
+        void bumpingExtendsTheChain() {
+            bothImplementations(owner -> {
+                owner.bumpStreak();
+                owner.bumpStreak();
+                owner.bumpStreak();
+
+                assertEquals(3, owner.backToBackStreak());
+            });
+        }
+
+        @Test
+        void resettingEndsIt() {
+            bothImplementations(owner -> {
+                owner.bumpStreak();
+                owner.bumpStreak();
+                owner.resetStreak();
+
+                assertEquals(0, owner.backToBackStreak());
+            });
+        }
+
+        /** Both members read the team's chain, because there is only one chain to read. */
+        @Test
+        void everyMemberOfATeamSeesTheSameChain() {
+            ForceItemPlayer alice = player("a");
+            ForceItemPlayer bob = player("b");
+            Team team = new Team(1, FIRST, 7, 3, alice, bob);
+            alice.setCurrentTeam(team);
+            bob.setCurrentTeam(team);
+
+            alice.scoreOwner().bumpStreak();
+
+            assertEquals(1, alice.backToBackStreak());
+            assertEquals(1, bob.backToBackStreak(),
+                    "a teammate who was not the finder is on the same chain");
+        }
+
+        /**
+         * The asymmetry, from the side that used to break: a reset by one member ends it for both,
+         * and a bump by one extends it for both. Previously these touched different sets of players.
+         */
+        @Test
+        void aResetByEitherMemberEndsItForBoth() {
+            ForceItemPlayer alice = player("a");
+            ForceItemPlayer bob = player("b");
+            Team team = new Team(1, FIRST, 7, 3, alice, bob);
+            alice.setCurrentTeam(team);
+            bob.setCurrentTeam(team);
+
+            alice.scoreOwner().bumpStreak();
+            bob.scoreOwner().resetStreak();
+
+            assertEquals(0, alice.backToBackStreak());
+            assertEquals(0, bob.backToBackStreak());
+        }
+
+        /** A solo player's chain is their own, and their neighbour's is not affected. */
+        @Test
+        void soloChainsAreIndependent() {
+            ForceItemPlayer alice = player("a");
+            ForceItemPlayer bob = player("b");
+
+            alice.scoreOwner().bumpStreak();
+
+            assertEquals(1, alice.backToBackStreak());
+            assertEquals(0, bob.backToBackStreak());
+        }
+    }
 }

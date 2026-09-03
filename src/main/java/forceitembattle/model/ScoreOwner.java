@@ -24,6 +24,26 @@ public interface ScoreOwner {
     /** Skips left to spend. */
     int jokers();
 
+    /**
+     * How many consecutive items this owner was handed that they already had.
+     *
+     * <p>Here rather than on {@link ForceItemPlayer} because it is a Score Owner value like every
+     * other on this interface: the team's when there is a team, the player's otherwise. It was two
+     * fields — one per player and one per team, bumped and reset separately — and the two paths had
+     * already drifted: a bump raised the finder plus whoever held the item, while a reset zeroed
+     * every member. That was invisible only because in a team game nothing read the per-player value.
+     * {@code recordBackToBackPeak} sends the <em>team's</em> streak to both member rows and ignores
+     * the player's, and the odds read the team's too. With one holder the two paths cannot disagree
+     * about who they touch.
+     */
+    int backToBackStreak();
+
+    /** Extends the chain by one. */
+    void bumpStreak();
+
+    /** Ends the chain. */
+    void resetStreak();
+
     /** When the current item was handed out, for measuring how long it took to find. */
     long itemAssignedAt();
 

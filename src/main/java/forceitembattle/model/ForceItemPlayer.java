@@ -33,8 +33,6 @@ public class ForceItemPlayer {
 
     private Team currentTeam;
     @Setter
-    private int backToBackStreak;
-    @Setter
     private int itemStreak;
     @Setter
     private boolean isSpectator;
@@ -180,8 +178,13 @@ public class ForceItemPlayer {
         scoreOwner.record(forceItem);
     }
 
+    /**
+     * The chain in effect: the team's when they are on one, their own otherwise. Reads through the
+     * Score Owner like {@link #activeJokers()}, and has no plain counterpart — there is only one
+     * streak to read now, so there is nothing to disambiguate.
+     */
     public int backToBackStreak() {
-        return backToBackStreak;
+        return scoreOwner.backToBackStreak();
     }
 
     public int itemStreak() {

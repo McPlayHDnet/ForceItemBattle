@@ -38,6 +38,7 @@ public class SoloScore implements ScoreOwner {
     private int currentScore;
     @Setter(AccessLevel.PACKAGE)
     private long lastItemAssignedAt;
+    private int backToBackStreak;
 
     SoloScore(ForceItemPlayer player, Material currentMaterial, int remainingJokers, int currentScore) {
         this.player = player;
@@ -80,6 +81,21 @@ public class SoloScore implements ScoreOwner {
     @Override
     public void setJokers(int jokers) {
         this.remainingJokers = jokers;
+    }
+
+    @Override
+    public int backToBackStreak() {
+        return this.backToBackStreak;
+    }
+
+    @Override
+    public void bumpStreak() {
+        this.backToBackStreak++;
+    }
+
+    @Override
+    public void resetStreak() {
+        this.backToBackStreak = 0;
     }
 
     @Override
