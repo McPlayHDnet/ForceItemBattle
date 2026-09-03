@@ -16,6 +16,7 @@ import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.Dimension;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameItems;
+import forceitembattle.model.JokerSpend;
 import forceitembattle.model.Locator;
 import forceitembattle.model.MenuItem;
 import forceitembattle.model.Roster;
@@ -30,6 +31,7 @@ import forceitembattle.util.Text;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -256,44 +258,33 @@ public class ClickableItemsListener implements Listener {
         }
         e.setCancelled(true);
 
-        if (forceItemPlayer.activeJokers() <= 0) {
-            player.sendMessage(Text.of("<red>No more skips left."));
-            player.getInventory().remove(GameItems.jokerMaterial());
-            return;
+        // What a spend costs and what the button should read afterwards is JokerSpend's; everything
+        // below is the inventory write and the announcement, which are this listener's.
+        switch (JokerSpend.spend(forceItemPlayer, PlayerOutfitter.jokerStackIn(player))) {
+            case JokerSpend.Exhausted ignored -> {
+                player.sendMessage(Text.of("<red>No more skips left."));
+                PlayerOutfitter.setJokerStack(player, 0);
+            }
+            case JokerSpend.NoStackInHand ignored -> {
+                // Nothing happened and nothing needs saying.
+            }
+            case JokerSpend.Spent spent -> this.handOver(player, spent);
         }
+    }
 
-        int foundSlot = e.getPlayer()
-                .getInventory()
-                .first(GameItems.jokerMaterial());
-        if (foundSlot == -1) {
-            return;
-        }
+    private void handOver(Player player, JokerSpend.Spent spent) {
+        PlayerOutfitter.setJokerStack(player, spent.stackAmount());
 
-        Material mat = forceItemPlayer.activeMaterial();
-        int jokersLeft = forceItemPlayer.spendJoker();
-
-        ItemStack stack = player.getInventory().getItem(foundSlot);
-        if (stack == null) {
-            return;
-        }
-
-        if (stack.getAmount() > 1) {
-            // In a team game the pool is shared, so this player's stack only loses the one they
-            // just spent; solo, the stack size *is* the remaining count.
-            stack.setAmount(forceItemPlayer.isInTeam() ? stack.getAmount() - 1 : jokersLeft);
-            player.getInventory().setItem(foundSlot, stack);
-        } else {
-            player.getInventory().setItem(foundSlot, null);
-        }
-
-        player.getInventory().addItem(CustomMaterials.itemStackOf(mat));
-        if (!player.getInventory().contains(mat)) {
-            player.getWorld().dropItemNaturally(player.getLocation(), CustomMaterials.itemStackOf(mat));
+        Material handedOver = spent.handedOver();
+        player.getInventory().addItem(CustomMaterials.itemStackOf(handedOver));
+        if (!player.getInventory().contains(handedOver)) {
+            player.getWorld().dropItemNaturally(player.getLocation(),
+                    CustomMaterials.itemStackOf(handedOver));
         }
         this.timerManager.sendActionBar();
 
         FoundItemEvent foundItemEvent = new FoundItemEvent(player);
-        foundItemEvent.setFoundItem(new ItemStack(mat));
+        foundItemEvent.setFoundItem(new ItemStack(handedOver));
         foundItemEvent.setSkipped(true);
 
         Bukkit.getPluginManager().callEvent(foundItemEvent);

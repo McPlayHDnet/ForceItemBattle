@@ -2,7 +2,10 @@ package forceitembattle.commands;
 
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import forceitembattle.commands.admin.CommandStart;
@@ -21,10 +24,12 @@ import forceitembattle.settings.Ruleset;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockbukkit.mockbukkit.MockBukkit;
 import org.mockbukkit.mockbukkit.ServerMock;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
+import org.mockito.InOrder;
 
 /**
  * {@link CommandStart}'s argument handling — the refusals, and what they leave behind.
@@ -36,12 +41,18 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
  *
  * <p>Each also asserts the round was <em>not</em> started, because a refusal that still mutated the
  * ruleset would be worse than one that said nothing.
+ *
+ * <p>{@link TheSuccessPath} covers the one thing the refusals cannot: the order of the two calls that
+ * open a round. See its javadoc — it exists because a released round-2 regression got through here.
  */
 class CommandStartTest {
 
     private ServerMock server;
     private GameSettings settings;
     private Ruleset ruleset;
+    private Gamemanager gamemanager;
+    private ForceItemAssignment assignment;
+    private Roster roster;
     private CommandStart command;
 
     @BeforeEach
@@ -54,7 +65,11 @@ class CommandStartTest {
         // performCommand reads the roster head-count before it parses the arguments, so even the
         // paths that refuse on a bad argument need one present.
 
-        this.command = new CommandStart(mock(Gamemanager.class), mock(ForceItemAssignment.class), mock(TimerManager.class), new Roster(), mock(RoundPhase.class), mock(RoundClock.class), this.settings, mock(TeamsManager.class));
+        this.gamemanager = mock(Gamemanager.class);
+        this.assignment = mock(ForceItemAssignment.class);
+        this.roster = new Roster();
+
+        this.command = new CommandStart(this.gamemanager, this.assignment, mock(TimerManager.class), this.roster, mock(RoundPhase.class), mock(RoundClock.class), this.settings, mock(TeamsManager.class));
         // The op gate is declared, so it is evaluated in onCommand -- which needs the context that
         // CommandsManager supplies at bootstrap.
         // Cast because setContext is package-private on CustomCommand, and a package-private
@@ -162,5 +177,53 @@ class CommandStartTest {
         }
 
         assertSame(speedrun, this.ruleset.preset());
+    }
+
+    /**
+     * The two calls that open a round, and the fact that both happen.
+     *
+     * <p>This class exists because of a released regression that every other test here was blind to.
+     * Lifting the item draw out of {@code Gamemanager} moved {@code initializeMaterials} to
+     * {@code ForceItemAssignment.beginRound} — and quietly dropped the one line in it that was not
+     * about drawing items: the reset of {@code startSetupApplied}. Nothing then set the flag back to
+     * false, so from the second round of a JVM onwards {@code applyStartSetup} no-opped for everyone
+     * and nobody left creative.
+     *
+     * <p>It was invisible three ways over. The unit suite was green: no test drove the success path,
+     * because the countdown after it needs a live server. Production is spared entirely, because
+     * {@code scheduleReset} restarts the JVM between rounds. Only {@code Invoke-RoundTest.ps1},
+     * playing two rounds in one session, could see it — and it did, on the first run after the change.
+     *
+     * <p>So the point of these is not the assertions, which are two lines. It is that the round-2
+     * regression now has a guard that runs in four minutes rather than five, and one that fails at
+     * the call site where the damage actually was: the wiring, not any body.
+     */
+    @Nested
+    class TheSuccessPath {
+
+        /** Runs a real start, ignoring the countdown that needs a live server. */
+        private void startARound() {
+            try {
+                command.onPlayerCommand(op(), "start", new String[]{"1", "3"});
+            } catch (RuntimeException expected) {
+                // the countdown beyond the two calls under test is not the subject
+            }
+        }
+
+        @Test
+        void everyoneIsMarkedUnequippedBeforeTheItemsAreDrawn() {
+            startARound();
+
+            InOrder inOrder = inOrder(gamemanager, assignment);
+            inOrder.verify(gamemanager).resetStartSetup();
+            inOrder.verify(assignment).beginRound(anyBoolean());
+        }
+
+        @Test
+        void andTheRoundIsOpened() {
+            startARound();
+
+            verify(assignment).beginRound(anyBoolean());
+        }
     }
 }

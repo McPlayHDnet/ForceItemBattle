@@ -3,6 +3,7 @@ package forceitembattle.manager;
 import forceitembattle.model.Roster;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.JokerSpend;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Scheduler;
@@ -129,8 +130,12 @@ public class VoteSkipManager implements Manager {
             player.sendMessage(" ");
         });
 
-        // The vote costs the initiator a joker whether or not it carried.
-        this.initiator.spendJoker();
+        // The vote costs the initiator a joker whether or not it carried — and the button has to
+        // agree. It used to charge the pool and leave the stack alone, so the initiator's hotbar read
+        // one too high until /fixskips ran on their next respawn and quietly repaired it.
+        Player initiatorPlayer = this.initiator.player();
+        PlayerOutfitter.setJokerStack(initiatorPlayer,
+                JokerSpend.charge(this.initiator, PlayerOutfitter.jokerStackIn(initiatorPlayer)));
         if (skipItem) {
             this.assignment.skipAll(this.initiator, this.settings.isSettingEnabled(GameSetting.RUN));
         }

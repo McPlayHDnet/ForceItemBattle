@@ -16,6 +16,7 @@ import forceitembattle.manager.LocatorManager;
 import forceitembattle.manager.PlayerOutfitter;
 import forceitembattle.manager.TimerManager;
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.GameItems;
 import forceitembattle.model.GameState;
 import forceitembattle.model.MenuItem;
 import forceitembattle.model.Roster;
@@ -397,6 +398,98 @@ class ClickableItemsListenerTest extends ListenerTestBase {
 
             assertEquals(0, openInventorySize(player),
                     "the open is scheduled; nothing should have happened on return from the event");
+        }
+    }
+
+    /**
+     * Clicking a joker: the three arms of {@link JokerSpend}, wired.
+     *
+     * <p>What each outcome <em>is</em> belongs to {@code JokerSpendTest}, which is headless. What is
+     * pinned here is that the listener acts on it — writes the stack, hands over the item, strips a
+     * dead button — because that is the half a module test cannot see.
+     */
+    @Nested
+    class SpendingAJoker {
+
+        private ForceItemPlayer holdingJokers(PlayerMock player, int jokers) {
+            ForceItemPlayer entry = new ForceItemPlayer(player, Material.DIAMOND, jokers, 0);
+            roster.add(player.getUniqueId(), entry);
+            PlayerOutfitter.setJokerStack(player, jokers);
+            return entry;
+        }
+
+        private void clickTheJoker(PlayerMock player) {
+            phase(GameState.MID_GAME);
+            listener.onClick(rightClick(player, GameItems.jokers(1)));
+        }
+
+        @Test
+        void theStackFollowsTheSpend() {
+            PlayerMock player = inTheOverworld("Understudy1");
+            ForceItemPlayer entry = holdingJokers(player, 3);
+
+            clickTheJoker(player);
+
+            assertEquals(2, entry.activeJokers());
+            assertEquals(2, PlayerOutfitter.jokerStackIn(player).orElse(0),
+                    "the button and the pool must agree");
+        }
+
+        @Test
+        void theHuntedItemIsHandedOver() {
+            PlayerMock player = inTheOverworld("Understudy1");
+            holdingJokers(player, 3);
+
+            clickTheJoker(player);
+
+            assertTrue(player.getInventory().contains(Material.DIAMOND),
+                    "a skip hands you the item you were hunting");
+        }
+
+        @Test
+        void spendingTheLastOneRemovesTheButton() {
+            PlayerMock player = inTheOverworld("Understudy1");
+            holdingJokers(player, 1);
+
+            clickTheJoker(player);
+
+            assertTrue(PlayerOutfitter.jokerStackIn(player).isEmpty(),
+                    "no jokers left means no button, not a stack of zero");
+        }
+
+        @Test
+        void anEmptyPoolIsRefusedAndSaysSo() {
+            PlayerMock player = inTheOverworld("Understudy1");
+            holdingJokers(player, 0);
+            // A leftover button with an empty pool behind it — what Exhausted exists to repair.
+            PlayerOutfitter.setJokerStack(player, 2);
+
+            clickTheJoker(player);
+
+            assertTrue(screenOf(player).contains("No more skips left"));
+        }
+
+        @Test
+        void andTheDeadButtonIsStripped() {
+            PlayerMock player = inTheOverworld("Understudy1");
+            holdingJokers(player, 0);
+            PlayerOutfitter.setJokerStack(player, 2);
+
+            clickTheJoker(player);
+
+            assertTrue(PlayerOutfitter.jokerStackIn(player).isEmpty(),
+                    "a button with nothing behind it is removed rather than left to be clicked again");
+        }
+
+        @Test
+        void aRefusalHandsOverNothing() {
+            PlayerMock player = inTheOverworld("Understudy1");
+            holdingJokers(player, 0);
+            PlayerOutfitter.setJokerStack(player, 2);
+
+            clickTheJoker(player);
+
+            assertFalse(player.getInventory().contains(Material.DIAMOND));
         }
     }
 

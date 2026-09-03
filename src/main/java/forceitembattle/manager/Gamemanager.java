@@ -156,6 +156,23 @@ public class Gamemanager implements Manager {
     }
 
     /**
+     * Marks everyone un-equipped, so the next {@link #applyStartSetup} actually runs for them.
+     *
+     * <p>Called by {@code /start} before the items are drawn. It is the counterpart to the
+     * {@code isStartSetupApplied()} guard below and lives here for that reason — the flag's only
+     * reader is a few lines down.
+     *
+     * <p><b>Load-bearing across rounds, and invisible in the first one.</b> Without it the flag is
+     * still {@code true} from the previous round, {@link #applyStartSetup} no-ops for everybody, and
+     * a second round in the same JVM never takes anyone out of creative. Production is spared because
+     * {@code scheduleReset} restarts the server between rounds; {@code Invoke-RoundTest.ps1} plays two
+     * rounds in one session precisely to remove that reprieve, and it is what caught this.
+     */
+    public void resetStartSetup() {
+        this.roster.players().values().forEach(forceItemPlayer -> forceItemPlayer.setStartSetupApplied(false));
+    }
+
+    /**
      * Applies one player's round setup. Spectators are put into spectator mode instead. Safe to call
      * more than once — {@link ForceItemPlayer#isStartSetupApplied()} makes every call after the first
      * a no-op, which is what lets someone who disconnected during the countdown be set up on rejoin

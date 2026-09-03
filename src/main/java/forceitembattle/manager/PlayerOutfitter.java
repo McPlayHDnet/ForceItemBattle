@@ -3,8 +3,10 @@ package forceitembattle.manager;
 import forceitembattle.gui.ItemBuilder;
 import forceitembattle.model.GameItems;
 import forceitembattle.model.GameState;
+import forceitembattle.model.JokerSpend;
 import forceitembattle.model.MenuItem;
 import java.util.List;
+import java.util.OptionalInt;
 import javax.annotation.Nullable;
 import net.kyori.adventure.text.Component;
 import org.bukkit.GameMode;
@@ -16,6 +18,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
@@ -136,6 +139,46 @@ public final class PlayerOutfitter {
     /** Public because the spectate toggle replaces slot 8 in place rather than relaying the bar. */
     public static void setButton(Player player, MenuItem menuItem) {
         player.getInventory().setItem(menuItem.slot(), buttonStack(menuItem));
+    }
+
+    /**
+     * Writes what the joker button reads, or removes it when {@code amount} is zero.
+     *
+     * <p>The single writer of that stack, which it had to become: there were four — this class at
+     * round start, the click that spends one, {@code /fixskips}, and a vote path that forgot to be
+     * one at all, so after a vote the button read one too high. {@link JokerSpend} decides the number;
+     * this puts it on screen.
+     *
+     * <p><b>Finds the stack rather than assuming slot 4.</b> Players move it, and the spend path has
+     * always looked it up with {@code first(...)} for that reason. Slot 4 is only the fallback for a
+     * player who has no joker stack at all, which is what a fresh round-start write is.
+     */
+    public static void setJokerStack(Player player, int amount) {
+        PlayerInventory inventory = player.getInventory();
+        int slot = inventory.first(GameItems.jokerMaterial());
+        if (slot == -1) {
+            slot = JOKER_SLOT;
+        }
+
+        inventory.setItem(slot, amount > 0 ? GameItems.jokers(amount) : null);
+    }
+
+    /**
+     * What the joker button currently reads, or empty if they are not holding one — the input
+     * {@link JokerSpend} needs to decide what it should read next.
+     *
+     * <p>Here rather than at the two call sites because it is the same lookup
+     * {@link #setJokerStack} does, and having the reader and the writer disagree about where the
+     * stack is would be its own bug.
+     */
+    public static OptionalInt jokerStackIn(Player player) {
+        int slot = player.getInventory().first(GameItems.jokerMaterial());
+        if (slot == -1) {
+            return OptionalInt.empty();
+        }
+
+        ItemStack stack = player.getInventory().getItem(slot);
+        return stack == null ? OptionalInt.empty() : OptionalInt.of(stack.getAmount());
     }
 
     /**

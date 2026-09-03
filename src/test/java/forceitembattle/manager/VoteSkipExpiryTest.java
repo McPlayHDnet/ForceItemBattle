@@ -65,8 +65,12 @@ class VoteSkipExpiryTest {
     }
 
     private ForceItemPlayer joinPlaying(String name) {
+        return joinPlaying(name, 3);
+    }
+
+    private ForceItemPlayer joinPlaying(String name, int jokers) {
         PlayerMock player = this.server.addPlayer(name);
-        ForceItemPlayer entry = new ForceItemPlayer(player, Material.DIRT, 3, 0);
+        ForceItemPlayer entry = new ForceItemPlayer(player, Material.DIRT, jokers, 0);
         this.roster.add(player.getUniqueId(), entry);
         return entry;
     }
@@ -205,6 +209,63 @@ class VoteSkipExpiryTest {
             votes.castVote(playerOf(other), false);
 
             assertTrue(screenOf(playerOf(other)).contains("already voted"));
+        }
+    }
+
+    /**
+     * The button and the pool, after a vote.
+     *
+     * <p>This is the seam assertion, and it is the one that matters. {@code endVoting} used to call
+     * {@code initiator.spendJoker()} and stop there — the pool dropped, the hotbar stack did not, and
+     * the initiator's button read one too high until {@code /fixskips} ran on their next respawn and
+     * quietly repaired it. A test of {@code JokerSpend} alone would have passed throughout, because
+     * the arithmetic was never the problem; the wiring was. That is the same shape as the
+     * {@code startSetupApplied} reset that went missing in candidate 3, which is why this exists.
+     */
+    @Nested
+    class TheButtonAgreesWithThePool {
+
+        private int jokerStackOf(ForceItemPlayer entry) {
+            return PlayerOutfitter.jokerStackIn(playerOf(entry)).orElse(0);
+        }
+
+        @Test
+        @DisplayName("after a vote, the number on the button equals the number in the pool")
+        void theStackFollowsTheCharge() {
+            ForceItemPlayer starter = joinPlaying("Understudy1");
+            joinPlaying("Understudy2");
+            PlayerOutfitter.setJokerStack(playerOf(starter), starter.activeJokers());
+
+            votes.startVoting(playerOf(starter));
+            server.getScheduler().performTicks(SIXTY_SECONDS_IN_TICKS + 1);
+
+            assertEquals(starter.activeJokers(), jokerStackOf(starter),
+                    "the button must not outlive the joker it spent");
+        }
+
+        @Test
+        void andTheChargeActuallyHappened() {
+            ForceItemPlayer starter = joinPlaying("Understudy1");
+            joinPlaying("Understudy2");
+            PlayerOutfitter.setJokerStack(playerOf(starter), 3);
+
+            votes.startVoting(playerOf(starter));
+            server.getScheduler().performTicks(SIXTY_SECONDS_IN_TICKS + 1);
+
+            assertEquals(2, jokerStackOf(starter));
+        }
+
+        /** Spending the last one leaves no button at all, rather than a stack of zero. */
+        @Test
+        void theLastJokerLeavesNoButton() {
+            ForceItemPlayer starter = joinPlaying("Understudy1", 1);
+            joinPlaying("Understudy2");
+            PlayerOutfitter.setJokerStack(playerOf(starter), 1);
+
+            votes.startVoting(playerOf(starter));
+            server.getScheduler().performTicks(SIXTY_SECONDS_IN_TICKS + 1);
+
+            assertTrue(PlayerOutfitter.jokerStackIn(playerOf(starter)).isEmpty());
         }
     }
 
