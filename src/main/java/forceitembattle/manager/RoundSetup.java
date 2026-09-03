@@ -7,7 +7,7 @@ import org.bukkit.Material;
 
 /**
  * What a player starts a round holding. Rules, not effects — they answer in counts and materials;
- * {@code PlayerOutfitter} does the writing. See {@code CONTEXT.md § Round Setup}.
+ * {@code PlayerOutfitter} does the writing.
  */
 public final class RoundSetup {
 

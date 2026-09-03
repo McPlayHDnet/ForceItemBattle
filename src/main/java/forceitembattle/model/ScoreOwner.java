@@ -6,7 +6,7 @@ import org.bukkit.Material;
 
 /**
  * Whoever owns the score a find is credited to: the {@link Team} in a team game, the player
- * themselves when solo. See {@code CONTEXT.md § Score Owner}.
+ * themselves when solo. Every value it holds is shared when a team shares it.
  */
 public interface ScoreOwner {
 

@@ -227,7 +227,7 @@ class CustomCommandTest {
             assertTrue(command.ran.isEmpty(), "a console sender is not playing");
         }
 
-        /** Absent and spectating are one answer — see CONTEXT.md § Roster. */
+        /** Absent and spectating are one answer: both mean not playing. */
         @Test
         void participantRefusesAPlayerWithNoRosterEntry() {
             ProbeCommand command = probe(contextWith(GameState.MID_GAME, new Roster()), PARTICIPANT);

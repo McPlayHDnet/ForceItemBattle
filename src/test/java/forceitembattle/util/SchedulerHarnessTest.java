@@ -18,12 +18,11 @@ import org.mockbukkit.mockbukkit.ServerMock;
 /**
  * That {@link Scheduler} can be driven from a test at all, and how.
  *
- * <p>This file exists because the codebase spent a full pass believing the opposite. Three comments
- * — in {@code CommandPositionTest}, {@code ClickableItemsListenerTest} and {@code RESUME.md} — said
- * scheduled work was out of reach because it "needs a real registered plugin". That was true of the
- * Mockito-only harness and stopped being true the day MockBukkit arrived, but nothing re-checked it,
- * so the claim outlived its own expiry and cost real coverage: every delayed body in the plugin was
- * written off as untestable on the strength of a stale sentence.
+ * <p>This file exists because the codebase spent a full pass believing the opposite: comments in
+ * {@code CommandPositionTest} and {@code ClickableItemsListenerTest} said scheduled work was out of
+ * reach because it "needs a real registered plugin". True of the Mockito-only harness, and false
+ * from the day MockBukkit arrived — but nothing re-checked it, so every delayed body in the plugin
+ * was written off as untestable on the strength of a stale sentence.
  *
  * <p>So the point of these four tests is not the assertions, which are close to trivial. It is that
  * the idiom below is executable and therefore cannot quietly stop being true:

@@ -7,7 +7,7 @@ import de.threeseconds.openapi.fibservice.client.model.FibTeamStatisticsUpdateRe
 import java.util.UUID;
 
 /**
- * The four rows a statistics write can land on. See {@code CONTEXT.md § Service Writes}.
+ * The four rows a statistics write can land on, with the transport taken out.
  *
  * <p>Deliberately in the generated vocabulary rather than the game's: turning rounds and finds into
  * request DTOs is itself the rule {@link StatisticsWrites} is tested on, so the seam sits below it.

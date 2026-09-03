@@ -9,7 +9,7 @@ import javax.annotation.Nullable;
 import org.bukkit.Material;
 
 /**
- * One skip vote: who may vote, who has, and what the result is. See {@code CONTEXT.md § Skip Vote}.
+ * One skip vote: who may vote, who has, and what the result is.
  *
  * <p><b>The eligible voters are handed in at {@link #open}</b>, not counted from the live roster on
  * each cast. Counting live let a spectator both inflate the quorum and fill it, and left a quorum

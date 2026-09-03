@@ -6,7 +6,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
 /**
- * The plugin's entry point to the Bukkit scheduler. See {@code CONTEXT.md § Scheduling}.
+ * The plugin's entry point to the Bukkit scheduler.
  *
  * <p>The repeating pair takes a {@link BukkitRunnable}, not a {@link Runnable}, and that is
  * load-bearing: nine repeating bodies end with {@code this.cancel()} and three more are cancelled

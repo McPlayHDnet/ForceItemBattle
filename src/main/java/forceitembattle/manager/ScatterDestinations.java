@@ -10,7 +10,7 @@ import java.util.UUID;
 import org.bukkit.Location;
 
 /**
- * Where a scatter sends a player, and where it has sent them before. See {@code CONTEXT.md § Scatter}.
+ * Where a scatter sends a player, and where it has sent them before.
  *
  * <p>Owns the memory and the draw; {@code PortalListener} owns the world — grounding a destination,
  * laying a floor under it, and the teleport.

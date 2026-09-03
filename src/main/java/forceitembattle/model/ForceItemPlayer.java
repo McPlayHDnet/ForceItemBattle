@@ -8,8 +8,10 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
 /**
- * One participant in the current round. See {@code CONTEXT.md § Score Owner} for the two accessor
- * families: {@code active*} reads through the {@link ScoreOwner}, the plain ones ignore the team.
+ * One participant in the current round. Two accessor families: {@code active*} reads through the
+ * current {@link ScoreOwner} — the team's in a team game — and is what callers want in nearly every
+ * case; the plain ones ({@code currentMaterial()}, {@code currentScore()}) read this player's own
+ * values and are correct only where the team has been ruled out.
  * {@link #setCurrentTeam(Team)} is the one place the choice is made.
  */
 public class ForceItemPlayer {

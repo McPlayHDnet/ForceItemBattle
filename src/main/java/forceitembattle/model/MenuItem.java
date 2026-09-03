@@ -9,8 +9,8 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 
 /**
- * One button on a menu hotbar. See {@code CONTEXT.md § Menu Items}. Names actions, never performs
- * them, which is what keeps {@code ItemStack} and the plugin graph out of this file.
+ * One button on a menu hotbar. Names actions, never performs them, which is what keeps
+ * {@code ItemStack} and the plugin graph out of this file.
  *
  * <p><b>Where</b> a button sits belongs to its {@link Menu}; <b>when</b> it can be clicked belongs to
  * the phase. Hanging the slot off the phase breaks at {@code END_GAME}, which shares the LOBBY

@@ -14,7 +14,7 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 
 /**
- * Which row a statistics number belongs on. See {@code CONTEXT.md § Service Writes}.
+ * Which row a statistics number belongs on.
  *
  * <p>A stat that <b>counts</b> rather than maxes would be doubled if both teammates sent it, so on a
  * team only the primary writer sends one; a stat that maxes is safe from either side. Leaving that

@@ -7,7 +7,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 /**
- * Whether an item that passed through someone's hands is a find. See {@code CONTEXT.md § Find}.
+ * Whether an item that passed through someone's hands is a find.
  *
  * <p>{@link FindOutcome} answers what a find is worth; this answers whether there is one.
  */

@@ -4,7 +4,8 @@ import java.util.OptionalInt;
 import org.bukkit.Material;
 
 /**
- * Spending a joker. See {@code CONTEXT.md § Joker}.
+ * Spending a joker. The count that gates one lives on the {@link ScoreOwner}; the hotbar stack is
+ * only the button, and keeping the two in step is this module's whole job.
  *
  * <p><b>These methods mutate</b> — they charge the pool themselves rather than returning a decision,
  * so a caller cannot compute a verdict and forget to pay for it.

@@ -17,9 +17,8 @@ import org.junit.jupiter.api.Test;
  * What a skip costs, and what the button should read afterwards.
  *
  * <p><b>Headless.</b> Nothing here builds an {@code ItemStack}, which is the point: this arithmetic
- * used to live inside a click handler at {@code ClickableItemsListener:283}, behind the
- * {@code ItemStack} wall {@code HeadlessBoundaryTest} documents, and had no test at all —
- * the pass-4 review named that one line as the thing the candidate existed to reach.
+ * used to live inside a click handler, behind the {@code ItemStack} wall
+ * {@code HeadlessBoundaryTest} documents, and had no test at all.
  *
  * <p>The rule it hides is easy to state and easy to get backwards: <b>in a team game the pool is
  * shared, so a member's stack loses only the one they spent; solo, the stack size <em>is</em> the
@@ -191,9 +190,8 @@ class JokerSpendTest {
 
         /**
          * <b>Recorded, not endorsed.</b> {@code spendJoker} floors at zero, so a vote by someone with
-         * no jokers left costs nothing and still succeeds — a vote anyone can spam. That is unchanged
-         * behaviour and a rule belonging to {@code /voteskip}, which candidate 6 is going to rewrite;
-         * see {@code CONTEXT.md § Joker}.
+         * no jokers left costs nothing and still succeeds — a vote anyone can spam. Refusing it is a
+         * {@code /voteskip} rule and a product decision, not this module's.
          */
         @Test
         void anExhaustedInitiatorIsNotRefused() {

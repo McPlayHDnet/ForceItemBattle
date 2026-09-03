@@ -5,7 +5,10 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
-/** Where an unlock goes. See {@code CONTEXT.md § Service Writes}. */
+/**
+ * Where an unlock goes, with the transport taken out, so {@link AchievementStorage} and everything
+ * built on it runs without a service behind it.
+ */
 public interface AchievementSink {
 
     /**

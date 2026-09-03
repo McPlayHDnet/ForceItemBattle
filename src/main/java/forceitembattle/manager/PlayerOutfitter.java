@@ -23,7 +23,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
 /**
- * Puts a player into one of the states a round holds them in. See {@code CONTEXT.md § Player Outfitting}.
+ * Puts a player into one of the states a round holds them in.
  *
  * <p>The adapter half of {@link RoundSetup}: every number and material it writes was decided
  * elsewhere, which is why {@link #toResultScreen} is handed its destination rather than looking

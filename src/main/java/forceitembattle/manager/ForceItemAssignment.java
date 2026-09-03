@@ -11,7 +11,7 @@ import java.util.Map;
 import org.bukkit.Material;
 
 /**
- * Who is hunting what, and what they hunt next. See {@code CONTEXT.md § Force Item}.
+ * Who is hunting what, and what they hunt next.
  *
  * <p>Two rules run through all of it. <b>Run mode</b> is the axis: there the whole server races one
  * seeded sequence, so a single draw serves every owner and one find advances all of them; otherwise
