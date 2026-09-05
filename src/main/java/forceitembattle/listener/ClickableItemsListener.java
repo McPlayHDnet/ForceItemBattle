@@ -198,13 +198,9 @@ public class ClickableItemsListener implements Listener {
         }
 
         if (GameItems.isBackpack(e.getItem())) {
-            // isInTeam(), not the setting: with the setting on and no team this passed and then
-            // handed a null team to openTeamBackpack.
-            if (forceItemPlayer.isInTeam()) {
-                this.backpackManager.openTeamBackpack(forceItemPlayer.currentTeam(), player);
-            } else {
-                this.backpackManager.openPlayerBackpack(player);
-            }
+            // The team-or-own rule lives in BackpackManager, so this path and /bp cannot disagree
+            // about it. They used to: /bp always opened the solo one and broke every team round.
+            this.backpackManager.openBackpackFor(player);
             return;
         }
 

@@ -5,6 +5,7 @@ import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.Precondition;
 import forceitembattle.manager.BackpackManager;
 import forceitembattle.settings.GameSetting;
+import forceitembattle.util.Text;
 import java.util.List;
 import org.bukkit.entity.Player;
 
@@ -26,6 +27,8 @@ public final class CommandBp extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        this.backpackManager.openPlayerBackpack(player);
+        if (!this.backpackManager.openBackpackFor(player)) {
+            player.sendMessage(Text.of("<red>You do not have a backpack in this round."));
+        }
     }
 }

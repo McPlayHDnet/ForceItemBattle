@@ -66,6 +66,28 @@ public class BackpackManager implements Manager {
         fibPlayer.player().getInventory().setItem(8, GameItems.backpack(fibPlayer));
     }
 
+    /**
+     * Opens whichever backpack is this player's — the team's when they are in one, their own
+     * otherwise — resolved by the single rule in {@link #getBackpackForPlayer(Player)}.
+     *
+     * <p>Every caller that opens a backpack goes through here. {@code /bp} used to call
+     * {@link #openPlayerBackpack(Player)} unconditionally, so in a team game it looked up the solo
+     * map, found nothing, and handed {@code null} to {@code openInventory} — the command failed with
+     * "An internal error occurred" for the whole round while the slot-8 item, which did branch,
+     * worked fine.
+     *
+     * @return false when there is no backpack to open, which is the case when BACKPACK was switched
+     *         on after the round had already started and none was ever created
+     */
+    public boolean openBackpackFor(Player player) {
+        Inventory backpack = getBackpackForPlayer(player);
+        if (backpack == null) {
+            return false;
+        }
+        player.openInventory(backpack);
+        return true;
+    }
+
     public void openPlayerBackpack(Player player) {
         player.openInventory(this.playerBackpack.get(player.getUniqueId()));
     }
