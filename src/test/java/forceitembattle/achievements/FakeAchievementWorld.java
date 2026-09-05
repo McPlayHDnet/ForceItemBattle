@@ -40,7 +40,6 @@ final class FakeAchievementWorld implements AchievementWorld {
         return this;
     }
 
-    /** Moves the clock forward without changing the round's length. */
     FakeAchievementWorld secondsLeft(int left) {
         this.secondsLeft = left;
         return this;

@@ -7,8 +7,6 @@ import org.junit.jupiter.api.Test;
 
 class TimeFormatTest {
 
-    // ==================== durations ====================
-
     @Test
     void durationsDropTheComponentsThatAreZero() {
         assertEquals("30s", TimeFormat.humanised(30));
@@ -37,8 +35,6 @@ class TimeFormatTest {
         assertEquals("", TimeFormat.humanised(0));
     }
 
-    // ==================== countdown phrasing ====================
-
     @Test
     void wholeMinutesAreSpokenInMinutes() {
         assertEquals("5 minutes left", TimeFormat.countdownPhrase(300));
@@ -50,8 +46,6 @@ class TimeFormatTest {
         assertEquals("30 seconds left", TimeFormat.countdownPhrase(30));
         assertEquals("10 seconds left", TimeFormat.countdownPhrase(10));
     }
-
-    // ==================== countdowns ====================
 
     @Test
     void countdownsRenderAsMinutesAndSeconds() {
@@ -73,8 +67,6 @@ class TimeFormatTest {
     void negativeCountdownsClampToZero() {
         assertEquals(TimeFormat.colored(0), TimeFormat.colored(-500));
     }
-
-    // ==================== world clock ====================
 
     /**
      * Minecraft's day starts at sunrise: tick 0 is 06:00, not midnight. Reading the tick count

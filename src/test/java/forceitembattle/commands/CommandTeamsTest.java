@@ -85,7 +85,6 @@ class CommandTeamsTest {
         }
     }
 
-    /** Joins someone and puts them on the roster. */
     private PlayerMock onRoster(String name) {
         PlayerMock player = this.server.addPlayer(name);
         this.roster.add(player.getUniqueId(), new ForceItemPlayer(player, Material.DIRT, 0, 0));

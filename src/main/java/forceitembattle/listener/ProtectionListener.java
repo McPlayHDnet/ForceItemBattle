@@ -214,7 +214,6 @@ public class ProtectionListener implements Listener {
         }
     }
 
-    /** Stop it, tell the player with a sound, tell the operators what was attempted. */
     private void refuse(Cancellable event, Player player, String attempt, Location location) {
         event.setCancelled(true);
         player.playSound(player, Sound.ENTITY_VILLAGER_NO, 1, 1);

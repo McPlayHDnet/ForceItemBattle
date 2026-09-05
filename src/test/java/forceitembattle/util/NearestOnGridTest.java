@@ -49,7 +49,6 @@ class NearestOnGridTest {
     private static Spot sweep(int originX, int originZ, Probe probe) {
         NearestOnGrid search = new NearestOnGrid(originX, originZ, 2500, SPACING);
         while (!search.advance(64, probe)) {
-            // keep going
         }
         return search.best();
     }
@@ -102,7 +101,6 @@ class NearestOnGridTest {
             Spot spot = new Spot(1200, 64, 0);
             NearestOnGrid search = new NearestOnGrid(0, 0, 2500, SPACING);
             while (!search.advance(64, regionHolding(75, 0, spot))) {
-                // keep going
             }
 
             assertEquals(spot, search.best());
@@ -204,7 +202,6 @@ class NearestOnGridTest {
             Counting counting = new Counting(probe);
             NearestOnGrid search = new NearestOnGrid(originX, originZ, 2500, SPACING);
             while (!search.advance(12, counting)) {
-                // keep going
             }
             return counting;
         }

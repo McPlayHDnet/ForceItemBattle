@@ -61,7 +61,6 @@ public enum MenuItem {
     SPECTATE_RESULT(Material.SPYGLASS, "<dark_gray>» <green>Spectate",
             Menu.RESULT, 8, EnumSet.of(GameState.END_GAME));
 
-    /** Which hotbar a button belongs to. */
     public enum Menu {
         LOBBY,
         RESULT

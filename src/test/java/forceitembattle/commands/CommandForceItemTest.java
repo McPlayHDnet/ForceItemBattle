@@ -70,8 +70,6 @@ class CommandForceItemTest {
         MockBukkit.unmock();
     }
 
-    // --- fixtures ---------------------------------------------------------------------------
-
     /** An op on the roster, hunting {@link Material#DIRT}. */
     private ForceItemPlayer joinPlaying(String name) {
         PlayerMock player = this.server.addPlayer(name);
@@ -110,8 +108,6 @@ class CommandForceItemTest {
         this.assignment.advanceFor(entry, false);
         assertEquals(expected, entry.activeNextMaterial(), because);
     }
-
-    // --- the tests --------------------------------------------------------------------------
 
     @Nested
     class OneItem {

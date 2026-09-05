@@ -73,8 +73,6 @@ class AchievementsTest {
         MockBukkit.unmock();
     }
 
-    // --- the table ----------------------------------------------------------------------------
-
     @Test
     void everyAchievementHasATitleAndADescription() {
         for (Achievements achievement : Achievements.values()) {
@@ -141,8 +139,6 @@ class AchievementsTest {
                     achievement + " disagrees with its own scope");
         }
     }
-
-    // --- the cast -----------------------------------------------------------------------------
 
     /** Every ROUND achievement, driven exactly as {@code AchievementManager} drives it. */
     @Test

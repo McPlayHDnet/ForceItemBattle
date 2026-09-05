@@ -70,8 +70,6 @@ class ForceItemAssignmentTest {
         this.assignment = new ForceItemAssignment(this.roster, items);
     }
 
-    // --- fixtures -------------------------------------------------------------------------------
-
     /** A roster entry over a mocked player — nothing here touches the player beyond its uuid. */
     private ForceItemPlayer joinPlaying(String name) {
         Player player = mock(Player.class);
@@ -97,8 +95,6 @@ class ForceItemAssignmentTest {
         second.setCurrentTeam(team);
         return team;
     }
-
-    // --- the tests ------------------------------------------------------------------------------
 
     @Nested
     class BeginningARound {

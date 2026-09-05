@@ -29,8 +29,6 @@ class RulesetTest {
         return preset;
     }
 
-    // --- which path ------------------------------------------------------------------------
-
     @Test
     void withoutAPresetASettingIsTopLevel() {
         MapConfigSource config = new MapConfigSource().with(TEAM_PATH, true);
@@ -74,8 +72,6 @@ class RulesetTest {
         assertFalse(ruleset.enabled(GameSetting.TEAM),
                 "a round started without a preset reads the top-level settings again");
     }
-
-    // --- reads and writes agree ------------------------------------------------------------
 
     @Test
     void aToggleWithoutAPresetIsReadBack() {

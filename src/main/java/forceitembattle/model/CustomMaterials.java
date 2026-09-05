@@ -74,7 +74,6 @@ public enum CustomMaterials {
     @Nullable
     private final NamespacedKey markerKey;
 
-    /** Used both when building the item and when matching it. */
     @Nullable
     private final String customModelDataString;
 
@@ -191,7 +190,6 @@ public enum CustomMaterials {
         return BY_ID.get(id.toLowerCase());
     }
 
-    /** Custom name if the material is one of ours, plain vanilla name otherwise. */
     public static String nameOf(Material material) {
         CustomMaterials custom = byMaterial(material);
         return custom != null

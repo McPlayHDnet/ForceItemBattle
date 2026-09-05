@@ -75,8 +75,6 @@ class CommandAchievementTest {
         MockBukkit.unmock();
     }
 
-    // --- fixtures ---------------------------------------------------------------------------
-
     private PlayerMock join(String name) {
         return this.server.addPlayer(name);
     }
@@ -108,8 +106,6 @@ class CommandAchievementTest {
             return null;
         }).when(this.globalStats).load(any(), any());
     }
-
-    // --- the tests --------------------------------------------------------------------------
 
     @Nested
     class Dispatch {

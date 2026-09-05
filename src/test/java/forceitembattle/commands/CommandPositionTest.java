@@ -77,8 +77,6 @@ class CommandPositionTest {
         MockBukkit.unmock();
     }
 
-    // --- fixtures ---------------------------------------------------------------------------
-
     private void inARoundThatIs(GameState state, GameSetting... settings) {
         ((CustomCommand) this.command).setContext(contextWith(state, this.roster, settings));
     }
@@ -104,8 +102,6 @@ class CommandPositionTest {
         run(player, args);
         this.server.getScheduler().waitAsyncTasksFinished();
     }
-
-    // --- the tests --------------------------------------------------------------------------
 
     @Nested
     class Saving {

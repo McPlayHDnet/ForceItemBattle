@@ -193,7 +193,6 @@ public final class RecipeInventory extends InventoryBuilder {
         this.setItem(RESULT_SLOT, recipeViewer.recipe().getResult());
         this.setItem(STATION_SLOT, getStationItem(recipeViewer.recipe()));
 
-
         this.addClickHandler(inventoryClickEvent -> {
             if (inventoryClickEvent.getClickedInventory() == null) {
                 return;
@@ -239,7 +238,6 @@ public final class RecipeInventory extends InventoryBuilder {
         });
     }
 
-    /** Lays stacks out in consecutive slots from {@code firstSlot}. */
     private void placeSequentially(int firstSlot, List<ItemStack> stacks) {
         for (int i = 0; i < stacks.size(); i++) {
             this.setItem(firstSlot + i, stacks.get(i));

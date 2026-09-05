@@ -69,8 +69,6 @@ class CommandLeaderboardTest {
         MockBukkit.unmock();
     }
 
-    // --- fixtures ---------------------------------------------------------------------------
-
     private PlayerMock join(String name) {
         return this.server.addPlayer(name);
     }
@@ -83,7 +81,6 @@ class CommandLeaderboardTest {
         return new LeaderboardEntry(rank, new PlayerIdentity(UUID.randomUUID(), name), value);
     }
 
-    /** Arms {@code soloLeaderboard} to hand these rows back. */
     private void soloBoardOf(List<LeaderboardEntry> entries) {
         doAnswer(invocation -> {
             invocation.<Consumer<List<LeaderboardEntry>>>getArgument(2).accept(entries);
@@ -118,8 +115,6 @@ class CommandLeaderboardTest {
             return null;
         }).when(this.statistics).soloLeaderboard(any(), anyInt(), any(), any());
     }
-
-    // --- the tests --------------------------------------------------------------------------
 
     @Nested
     class Defaults {

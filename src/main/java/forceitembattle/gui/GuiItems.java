@@ -20,7 +20,6 @@ public final class GuiItems {
     private static final String BACK =
             "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYmViNTg4YjIxYTZmOThhZDFmZjRlMDg1YzU1MmRjYjA1MGVmYzljYWI0MjdmNDYwNDhmMThmYzgwMzQ3NWY3In19fQ==";
 
-    /** Neutral filler for the body of a menu. */
     public static ItemStack filler() {
         return blankPane(Material.GRAY_STAINED_GLASS_PANE);
     }

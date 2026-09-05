@@ -117,7 +117,6 @@ public class Team implements ScoreOwner {
         return this.getFoundItems();
     }
 
-    // --- ScoreOwner ---
     // Delegation onto the fields above. The Lombok accessors stay, because the places that address a
     // team *as a team* still call them directly.
 

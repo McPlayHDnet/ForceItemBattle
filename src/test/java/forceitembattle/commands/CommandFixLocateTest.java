@@ -65,8 +65,6 @@ class CommandFixLocateTest {
         MockBukkit.unmock();
     }
 
-    // --- fixtures ---------------------------------------------------------------------------
-
     private PlayerMock join(String name) {
         return this.server.addPlayer(name);
     }
@@ -75,14 +73,11 @@ class CommandFixLocateTest {
         this.command.onCommand(player, null, "fixlocate", args);
     }
 
-    /** Registers one running locator under {@code id}, displayed as {@code name}. */
     private void running(String id, String name) {
         this.active.put(id, new Locator(id, name, CustomMaterials.values()[0],
                 Locator.Type.STRUCTURE, Locator.Use.values()[0], 16,
                 Color.LIME, "<green>", 34));
     }
-
-    // --- the tests --------------------------------------------------------------------------
 
     @Nested
     class WithNothingRunning {

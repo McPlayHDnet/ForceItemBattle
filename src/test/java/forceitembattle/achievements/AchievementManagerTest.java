@@ -68,7 +68,6 @@ class AchievementManagerTest {
                 storage, new GlobalStatsCache(), null, new FakeAchievementWorld());
     }
 
-    /** Adds a participant with the given score to the roster and returns them. */
     private ForceItemPlayer join(String seed, int score) {
         ForceItemPlayer player =
                 new ForceItemPlayer(Finds.mockPlayer(seed), Material.DIRT, 0, score);

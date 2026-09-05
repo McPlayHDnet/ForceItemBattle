@@ -80,9 +80,6 @@ public enum BiomeNote {
         return values[ThreadLocalRandom.current().nextInt(values.length)];
     }
 
-    /**
-     * The note this stack is, or null if it isn't one.
-     */
     @Nullable
     public static BiomeNote fromItem(@Nullable ItemStack itemStack) {
         if (itemStack == null || itemStack.getType() != MATERIAL) {

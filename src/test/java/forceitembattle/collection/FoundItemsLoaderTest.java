@@ -53,7 +53,6 @@ class FoundItemsLoaderTest {
         return Map.of("DIRT", new CollectedItem(Instant.EPOCH, 3L));
     }
 
-    /** Makes the service hand back a collection. */
     private void serviceReturns(Map<String, CollectedItem> collected) {
         doAnswer(invocation -> {
             invocation.getArgument(1, Consumer.class).accept(collected);
@@ -61,7 +60,6 @@ class FoundItemsLoaderTest {
         }).when(this.matchHistory).foundItems(eq(PLAYER), any(), any());
     }
 
-    /** Makes the service fail. */
     private void serviceFails() {
         doAnswer(invocation -> {
             invocation.getArgument(2, Consumer.class).accept(null);

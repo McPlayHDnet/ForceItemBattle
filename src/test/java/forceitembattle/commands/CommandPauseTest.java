@@ -63,8 +63,6 @@ class CommandPauseTest {
         MockBukkit.unmock();
     }
 
-    // --- fixtures ---------------------------------------------------------------------------
-
     private PlayerMock join(String name) {
         return this.server.addPlayer(name);
     }
@@ -89,8 +87,6 @@ class CommandPauseTest {
     private boolean weatherAdvances() {
         return Boolean.TRUE.equals(this.overworld.getGameRuleValue(GameRules.ADVANCE_WEATHER));
     }
-
-    // --- the tests --------------------------------------------------------------------------
 
     @Nested
     class Pausing {

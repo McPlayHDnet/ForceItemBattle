@@ -44,12 +44,10 @@ public final class RoundPhase {
         return this.state == GameState.END_GAME;
     }
 
-    /** Play is live: the clock is ticking and a find counts. Excludes a pause. */
     public boolean roundRunning() {
         return this.state.roundRunning();
     }
 
-    /** The round has started and has not finished, pause included. */
     public boolean roundInProgress() {
         return this.state.roundInProgress();
     }

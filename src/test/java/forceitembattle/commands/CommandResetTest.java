@@ -68,7 +68,6 @@ class CommandResetTest {
         this.joined.clear();
         this.kickScreens.clear();
 
-
         this.server.getPluginManager().registerEvents(new KickRecorder(), MockBukkit.createMockPlugin());
 
         this.command = new CommandReset(this.seedPool, this.worldReset);
@@ -95,8 +94,6 @@ class CommandResetTest {
             kickScreens.add(PlainTextComponentSerializer.plainText().serialize(event.leaveMessage()));
         }
     }
-
-    // --- fixtures ---------------------------------------------------------------------------
 
     private PlayerMock join(String name) {
         PlayerMock player = this.server.addPlayer(name);
@@ -135,8 +132,6 @@ class CommandResetTest {
             assertTrue(player.isOnline(), player.getName() + " was kicked by a path that refused");
         }
     }
-
-    // --- the tests --------------------------------------------------------------------------
 
     @Nested
     class WithNoBiome {

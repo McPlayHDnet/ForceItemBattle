@@ -94,8 +94,6 @@ final class ReadModel {
                 : new GlobalPlayerStats(value(dto.getHighestWinStreak()));
     }
 
-    // --- stats views -------------------------------------------------------------------------
-
     static StatsView soloStats(FibSoloStatisticsDto stats) {
         return new StatsView(
                 value(stats.getGamesPlayed()), value(stats.getGamesWon()),
@@ -140,8 +138,6 @@ final class ReadModel {
                 null, memberStats(stats.getMemberStats()));
     }
 
-    // --- leaderboards ------------------------------------------------------------------------
-
     static List<LeaderboardEntry> leaderboard(@Nullable List<FibLeaderboardEntryDto> dtos) {
         return mapped(dtos, dto -> new LeaderboardEntry(value(dto.getRank()), identity(dto.getPlayer()),
                 value(dto.getValue())));
@@ -158,16 +154,12 @@ final class ReadModel {
                 value(dto.getCount())));
     }
 
-    // --- achievements ------------------------------------------------------------------------
-
     static List<AchievementUnlock> unlocks(@Nullable FibPlayerAchievementsDto dto) {
         return mapped(dto == null ? null : dto.getAchievements(),
                 entry -> new AchievementUnlock(entry.getAchievementId(),
                         entry.getMode() == null ? null : String.valueOf(entry.getMode()),
                         identity(entry.getTeammate()), entry.getUnlockedAt()));
     }
-
-    // --- collection --------------------------------------------------------------------------
 
     /** Keyed by item name, which is how the collection screens look an entry up. */
     static Map<String, CollectedItem> collectedItems(@Nullable List<FibFoundItemStatsDto> stats) {

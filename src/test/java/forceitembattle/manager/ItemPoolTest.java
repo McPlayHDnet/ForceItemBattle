@@ -47,8 +47,6 @@ class ItemPoolTest {
         roundClock.setSecondsLeft(durationMinutes * 60 - elapsedMinutes * 60);
     }
 
-    // ==================== unlock schedule ====================
-
     @Test
     void longRoundsUseFixedFiveAndFifteenMinuteMarks() {
         items.configureUnlockSchedule(60);
@@ -136,8 +134,6 @@ class ItemPoolTest {
         items.resetUnlockAnnouncements();
         assertEquals(List.of(State.MID, State.LATE), items.pollNewlyUnlockedStates());
     }
-
-    // ==================== pool cache ====================
 
     @Test
     void repeatedReadsReuseTheCachedPool() {

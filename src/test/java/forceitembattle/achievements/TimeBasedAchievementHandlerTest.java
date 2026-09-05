@@ -35,8 +35,6 @@ class TimeBasedAchievementHandlerTest {
         return team;
     }
 
-    // --- EARLY_BIRD ------------------------------------------------------------------------
-
     @Test
     void firstToCollectGetsIt() {
         ForceItemPlayer alice = participant("a");
@@ -138,8 +136,6 @@ class TimeBasedAchievementHandlerTest {
         assertTrue(handler.check(found(alice, Material.DIRT), progress, alice, world));
         assertFalse(handler.check(found(alice, Material.STONE), progress, alice, world));
     }
-
-    // --- the round clock -------------------------------------------------------------------
 
     @Test
     void anItemInsideTheWindowCounts() {

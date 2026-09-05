@@ -58,8 +58,6 @@ class CommandTeleportTest {
         MockBukkit.unmock();
     }
 
-    // --- fixtures ---------------------------------------------------------------------------
-
     private PlayerMock join(String name) {
         PlayerMock player = this.server.addPlayer(name);
         player.teleport(at(0, 64, 0));

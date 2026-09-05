@@ -61,8 +61,6 @@ class CommandForceTeamTest {
         MockBukkit.unmock();
     }
 
-    // --- fixtures ---------------------------------------------------------------------------
-
     private void inARoundThatIs(GameState state, GameSetting... settings) {
         ((CustomCommand) this.command).setContext(contextWith(state, this.roster, settings));
     }
@@ -84,8 +82,6 @@ class CommandForceTeamTest {
     private void run(PlayerMock player, String... args) {
         this.command.onCommand(player, null, "forceteam", args);
     }
-
-    // --- the tests --------------------------------------------------------------------------
 
     @Nested
     class APair {

@@ -119,7 +119,6 @@ public class ProtectionManager implements Manager {
         return ProtectionVerdict.ALLOWED;
     }
 
-    /** Whether a block is shielded from something with no player behind it. */
     public boolean isProtectedFromNature(Block block) {
         return this.mayBreak(null, null, block).denied();
     }
@@ -150,7 +149,6 @@ public class ProtectionManager implements Manager {
         }
         return nearby.stream().map(Player::getName).collect(Collectors.joining(", "));
     }
-
 
     public void protectContainer(ForceItemPlayer forceItemPlayer, Block block) {
         this.containerMap.put(block, forceItemPlayer.player().getUniqueId());

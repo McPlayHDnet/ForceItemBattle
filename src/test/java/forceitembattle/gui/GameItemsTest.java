@@ -49,8 +49,6 @@ class GameItemsTest {
         return new ForceItemPlayer(player, Material.DIRT, 0, 0);
     }
 
-    // --- jokers ---------------------------------------------------------------------------
-
     @Test
     void aJokerStackCarriesTheRequestedAmount() {
         assertEquals(3, GameItems.jokers(3).getAmount());
@@ -66,8 +64,6 @@ class GameItemsTest {
     void anOrdinaryItemIsNotAJoker() {
         assertFalse(GameItems.isJoker(new ItemStack(Material.DIAMOND)));
     }
-
-    // --- backpacks ------------------------------------------------------------------------
 
     @Test
     void aBuiltBackpackIsRecognisedAsOne() {
@@ -90,8 +86,6 @@ class GameItemsTest {
     void anOrdinaryItemIsNotABackpack() {
         assertFalse(GameItems.isBackpack(new ItemStack(Material.DIAMOND)));
     }
-
-    // --- what death does with them -----------------------------------------------------------
 
     /**
      * The behaviour those two recognisers are for, exercised the way the death handler does it:

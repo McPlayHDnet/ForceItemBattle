@@ -94,7 +94,6 @@ public enum Rarity {
         return rarities == null ? 0 : this.statAccessor.applyAsLong(rarities);
     }
 
-    /** Total back-to-backs across every rarity. */
     public static long total(@Nullable RarityCounts rarities) {
         return Arrays.stream(values()).mapToLong(rarity -> rarity.count(rarities)).sum();
     }

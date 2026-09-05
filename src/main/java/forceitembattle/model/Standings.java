@@ -42,12 +42,10 @@ public final class Standings {
         return placesMap;
     }
 
-    /** Solo placings, by each player's own score. */
     public static Map<ForceItemPlayer, Integer> ofPlayers(Map<UUID, ForceItemPlayer> playerMap) {
         return of(new ArrayList<>(playerMap.values()), ForceItemPlayer::currentScore);
     }
 
-    /** Team placings, by the shared score. */
     public static Map<Team, Integer> ofTeams(List<Team> teams) {
         return of(teams, Team::getCurrentScore);
     }

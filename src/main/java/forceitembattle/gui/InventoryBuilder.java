@@ -149,9 +149,6 @@ public class InventoryBuilder implements InventoryHolder {
         this.dragHandlers.add(dragHandler);
     }
 
-    /**
-     * Add a runnable that will be called when menu is opened or an item is clicked.
-     */
     public void addUpdateHandler(Runnable updateHandler) {
         this.updateHandlers.add(updateHandler);
     }
