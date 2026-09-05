@@ -7,8 +7,10 @@ import forceitembattle.model.Locator;
 import forceitembattle.util.BiomeSearch;
 import forceitembattle.util.CaveScan;
 import forceitembattle.util.LocationFormat;
+import forceitembattle.util.NearestOnGrid;
 import forceitembattle.util.Prefix;
 import forceitembattle.util.Scheduler;
+import forceitembattle.util.StructureSearch;
 import forceitembattle.util.Text;
 import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;
@@ -36,7 +38,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.generator.structure.Structure;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.StructureSearchResult;
 import org.jetbrains.annotations.Nullable;
 
 public class LocatorManager implements Manager {
@@ -47,6 +48,9 @@ public class LocatorManager implements Manager {
     private static final int BURIED_ARRIVAL_RADIUS = 50;    // blocks
     /** Close enough to spot something standing at the surface. */
     private static final int SURFACE_ARRIVAL_RADIUS = 70;   // blocks
+
+    /** Region probes per tick while sweeping for a structure. Keeps a sweep near half a second. */
+    private static final int PROBES_PER_TICK = 48;
 
     /** Chunks each way around the biome's middle that get generated and read. 5×5 in all. */
     private static final int SOUNDING_CHUNK_RADIUS = 2;
@@ -60,8 +64,8 @@ public class LocatorManager implements Manager {
     private final Map<UUID, Map<String, ActiveLocator>> activeLocators;
 
     /**
-     * Who is mid-sweep. A biome locate now takes a moment to come back, and without this a second
-     * right-click during that moment starts a second sweep and spends a second locator.
+     * Who is mid-sweep. Neither kind of locate comes back instantly any more, and without this a
+     * second right-click during that moment starts a second sweep and spends a second locator.
      */
     private final Set<UUID> sounding;
 
@@ -112,42 +116,81 @@ public class LocatorManager implements Manager {
             return;
         }
 
+        // Both kinds finish later now and reveal themselves: the structure sweep spreads its
+        // probes over ticks, the biome one waits on the chunks it has to generate.
         switch (locator.getType()) {
-            case STRUCTURE -> {
-                Location targetLocation = this.locateStructure(locator, player);
-                if (targetLocation != null) { // the helper already messaged the player if not
-                    this.reveal(locator, player, targetLocation, null);
-                }
-            }
-            // Biome locates finish later, on the chunks they had to generate. See locateBiome.
+            case STRUCTURE -> this.locateStructure(locator, player);
             case BIOME -> this.locateBiome(locator, player);
         }
     }
 
-    @Nullable
-    private Location locateStructure(Locator locator, Player player) {
+    /**
+     * Sweeps region by region and keeps the nearest by real distance, because the server's own
+     * search does not — see {@link NearestOnGrid} for MC-138887 and why {@code radius = 0} is the
+     * way out of it.
+     *
+     * <p>Budgeted across ticks rather than run in one go: most probes are cheap, but the ones that
+     * land on chunks already on disk make the server read them, and a few hundred of those in a
+     * single tick is exactly the stall this is supposed to be an improvement on.
+     */
+    private void locateStructure(Locator locator, Player player) {
         @Nullable Structure structure = RegistryAccess.registryAccess()
                 .getRegistry(RegistryKey.STRUCTURE)
                 .get(this.getNamespacedKey(locator.getStructureId()));
 
         if (structure == null) {
             player.sendMessage(Text.of(Prefix.LOCATOR + "<dark_aqua>" + locator.getStructureId() + " <red>is not loaded or could not be found, Fire fix!"));
-            return null;
+            return;
         }
 
-        StructureSearchResult result = player.getWorld().locateNearestStructure(
-                player.getLocation(),
-                structure,
-                STRUCTURE_SEARCH_RADIUS,
-                false
-        );
+        if (!this.sounding.add(player.getUniqueId())) {
+            return;
+        }
 
-        if (result == null) {
+        Location origin = player.getLocation();
+        World world = origin.getWorld();
+        NearestOnGrid sweep = new NearestOnGrid(origin.getBlockX(), origin.getBlockZ(),
+                StructureSearch.PRECISE_RADIUS, StructureSearch.STEP_CHUNKS);
+        NearestOnGrid.Probe probe = StructureSearch.probe(world, structure, origin.getBlockY());
+
+        Scheduler.runTimerSync(new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (!player.isOnline()) {
+                    this.cancel();
+                    LocatorManager.this.sounding.remove(player.getUniqueId());
+                    return;
+                }
+                if (!sweep.advance(PROBES_PER_TICK, probe)) {
+                    return;
+                }
+                this.cancel();
+                LocatorManager.this.finishStructure(locator, player, origin, structure, sweep.best());
+            }
+        }, 0L, 1L);
+    }
+
+    /** Back on the main thread with whatever the sweep turned up. */
+    private void finishStructure(Locator locator, Player player, Location origin, Structure structure,
+                                 @Nullable NearestOnGrid.Spot found) {
+        this.sounding.remove(player.getUniqueId());
+
+        if (!player.isOnline()) {
+            return;
+        }
+
+        Location targetLocation = found != null
+                ? StructureSearch.toLocation(origin.getWorld(), found)
+                // Nothing within the swept radius, so fall back to the server's wide search and
+                // take its answer, MC-138887 and all. At that range its error is noise.
+                : StructureSearch.wide(origin, structure, STRUCTURE_SEARCH_RADIUS);
+
+        if (targetLocation == null) {
             player.sendMessage(Text.of(Prefix.LOCATOR + "<dark_aqua>" + locator.getStructureName() + " <red>could not be found."));
-            return null;
+            return;
         }
 
-        return result.getLocation();
+        this.reveal(locator, player, targetLocation, null);
     }
 
     /**
