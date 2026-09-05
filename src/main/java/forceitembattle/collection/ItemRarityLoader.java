@@ -1,23 +1,19 @@
 package forceitembattle.collection;
 
-import de.threeseconds.openapi.fibservice.client.model.FibCollectionRarityDto;
-import de.threeseconds.openapi.fibservice.client.model.FibItemRarityDto;
-import forceitembattle.ForceItemBattle;
+import forceitembattle.service.FIBServiceClient;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
 public class ItemRarityLoader {
 
-    private final ForceItemBattle plugin;
+    private final FIBServiceClient fibService;
     private final ItemRarityCache cache;
     private final List<Consumer<ItemRarity>> pending = new ArrayList<>();
     private boolean loading;
 
-    public ItemRarityLoader(ForceItemBattle plugin, ItemRarityCache cache) {
-        this.plugin = plugin;
+    public ItemRarityLoader(FIBServiceClient fibService, ItemRarityCache cache) {
+        this.fibService = fibService;
         this.cache = cache;
     }
 
@@ -33,9 +29,8 @@ public class ItemRarityLoader {
         }
         this.loading = true;
 
-        this.plugin.getFibService().matchHistory().getCollectionRarityAsync(
-                dto -> {
-                    ItemRarity rarity = convert(dto);
+        this.fibService.matchHistory().itemRarity(
+                rarity -> {
                     this.cache.put(rarity);
                     deliver(rarity);
                 },
@@ -52,13 +47,4 @@ public class ItemRarityLoader {
         waiting.forEach(consumer -> consumer.accept(rarity));
     }
 
-    private static ItemRarity convert(FibCollectionRarityDto dto) {
-        Map<String, Long> counts = new HashMap<>();
-        if (dto.getItems() != null) {
-            for (FibItemRarityDto item : dto.getItems()) {
-                counts.put(item.getItemName(), item.getPlayerCount() != null ? item.getPlayerCount() : 0L);
-            }
-        }
-        return new ItemRarity(counts, dto.getTotalPlayers() != null ? dto.getTotalPlayers() : 0L);
-    }
 }

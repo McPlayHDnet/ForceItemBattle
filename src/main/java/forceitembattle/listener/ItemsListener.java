@@ -1,13 +1,10 @@
 package forceitembattle.listener;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.gui.InventoryBuilder;
-import forceitembattle.manager.Gamemanager;
-import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.FindDetection;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -27,35 +24,35 @@ import org.bukkit.inventory.CraftingInventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.SmithingInventory;
 
+/**
+ * The eight ways an item can reach a player's hands.
+ *
+ * <p>Adapter only. Each handler decides whether <em>this kind of event</em> is one that counts —
+ * a right-click rather than a left, a real craft rather than a preview, an inventory that is not a
+ * menu — and then asks {@link FindDetection} whether what it is holding is a find. Whether the
+ * round is running, whether this player is playing it and whether the item matches is one decision
+ * in one place; it used to be three lines repeated eight times here, and it was where the bugs were.
+ */
 @RequiredArgsConstructor
 public class ItemsListener implements Listener {
 
-    public final ForceItemBattle plugin;
+    private final FindDetection detection;
 
     @EventHandler
     public void onInteract(PlayerInteractEvent event) {
-        if (!this.plugin.getGamemanager().isMidGame()) {
-            return;
-        }
-
         if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) {
             return;
         }
 
-        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(event.getPlayer().getUniqueId());
-        ItemStack clickedItem = event.getItem();
-
-        checkItemFound(event.getPlayer(), forceItemPlayer, clickedItem);
+        checkItemFound(event.getPlayer(), event.getItem());
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onFoundItemInInventory(InventoryClickEvent inventoryClickEvent) {
         Player player = (Player) inventoryClickEvent.getWhoClicked();
 
-        if (!this.plugin.getGamemanager().isMidGame()) {
-            return;
-        }
-
+        // The crafting, smithing and brewing grids are handled by onCraft, which has its own rule
+        // about which click actually hands the result over.
         if (inventoryClickEvent.getClickedInventory() instanceof CraftingInventory ||
                 inventoryClickEvent.getClickedInventory() instanceof SmithingInventory ||
                 inventoryClickEvent.getClickedInventory() instanceof BrewerInventory) {
@@ -67,54 +64,31 @@ public class ItemsListener implements Listener {
             return; //prevents from getting the needed item onClick inside any custom GUI
         }
 
-        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-        ItemStack clickedItem = inventoryClickEvent.getCurrentItem();
-
-        checkItemFound(player, forceItemPlayer, clickedItem);
+        checkItemFound(player, inventoryClickEvent.getCurrentItem());
     }
 
-    /* Found-/Skip Item */
     @EventHandler
     public void onPickupEvent(EntityPickupItemEvent entityPickupItemEvent) {
         if (!(entityPickupItemEvent.getEntity() instanceof Player player)) {
             return;
         }
-        if (!this.plugin.getGamemanager().isMidGame()) {
-            return;
-        }
 
-        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-        ItemStack pickedItem = entityPickupItemEvent.getItem().getItemStack();
-
-        checkItemFound(player, forceItemPlayer, pickedItem);
+        checkItemFound(player, entityPickupItemEvent.getItem().getItemStack());
     }
 
     @EventHandler
     public void onBucketEvent(PlayerBucketEmptyEvent event) {
-        onBucket(event.getPlayer(), event.getItemStack());
+        checkItemFound(event.getPlayer(), event.getItemStack());
     }
 
     @EventHandler
     public void onBucketEvent(PlayerBucketFillEvent event) {
-        onBucket(event.getPlayer(), event.getItemStack());
+        checkItemFound(event.getPlayer(), event.getItemStack());
     }
 
     @EventHandler
     public void onBucketEvent(PlayerBucketEntityEvent event) {
-        onBucket(event.getPlayer(), event.getEntityBucket());
-    }
-
-    private void onBucket(Player player, ItemStack clickedItem) {
-        if (clickedItem == null) {
-            return;
-        }
-
-        if (!this.plugin.getGamemanager().isMidGame()) {
-            return;
-        }
-
-        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-        checkItemFound(player, forceItemPlayer, clickedItem);
+        checkItemFound(event.getPlayer(), event.getEntityBucket());
     }
 
     @EventHandler
@@ -129,49 +103,26 @@ public class ItemsListener implements Listener {
 
     private void onCraft(InventoryClickEvent inventoryClickEvent) {
         Player player = (Player) inventoryClickEvent.getWhoClicked();
-        if (!this.plugin.getGamemanager().isMidGame()) {
-            return;
-        }
 
         boolean isValidShiftClick = inventoryClickEvent.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY && player.getInventory().firstEmpty() >= 0;
 
         if (isValidShiftClick || inventoryClickEvent.getAction() == InventoryAction.PICKUP_ALL) {
-            ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-            ItemStack clickedItem = inventoryClickEvent.getCurrentItem();
-
-            checkItemFound(player, forceItemPlayer, clickedItem);
+            checkItemFound(player, inventoryClickEvent.getCurrentItem());
         }
     }
 
     @EventHandler
     public void onConsume(PlayerItemConsumeEvent playerItemConsumeEvent) {
-        Player player = playerItemConsumeEvent.getPlayer();
-
-        if (!this.plugin.getGamemanager().isMidGame()) {
-            return;
-        }
-
-        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-        ItemStack clickedItem = playerItemConsumeEvent.getItem();
-
-        checkItemFound(player, forceItemPlayer, clickedItem);
+        checkItemFound(playerItemConsumeEvent.getPlayer(), playerItemConsumeEvent.getItem());
     }
 
-    private void checkItemFound(Player player, ForceItemPlayer forceItemPlayer, ItemStack item) {
-        Material currentItem = forceItemPlayer.activeMaterial();
-        if (item == null) {
-            return;
-        }
-
-        if (Gamemanager.isBackpack(item)) return;
-
-        if (item.getType() == currentItem) {
+    private void checkItemFound(Player player, ItemStack item) {
+        this.detection.detect(player, item).ifPresent(finder -> {
             FoundItemEvent foundItemEvent = new FoundItemEvent(player);
             foundItemEvent.setFoundItem(item);
             foundItemEvent.setSkipped(false);
 
             Bukkit.getPluginManager().callEvent(foundItemEvent);
-        }
+        });
     }
-
 }

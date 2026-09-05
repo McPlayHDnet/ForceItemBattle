@@ -1,13 +1,15 @@
 package forceitembattle.manager;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.model.ActiveTrader;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.Dimension;
 import forceitembattle.model.Locator;
+import forceitembattle.model.Roster;
+import forceitembattle.model.RoundPhase;
 import forceitembattle.model.TraderKind;
 import forceitembattle.util.LocationFormat;
 import forceitembattle.util.Prefix;
+import forceitembattle.util.Scheduler;
 import forceitembattle.util.Text;
 import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;
@@ -20,25 +22,27 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
-import lombok.Getter;
-import org.bukkit.enchantments.Enchantment;
+import java.util.function.Supplier;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.WanderingTrader;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.MenuType;
 import org.bukkit.inventory.Merchant;
 import org.bukkit.inventory.MerchantRecipe;
+import org.bukkit.inventory.view.MerchantView;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +51,6 @@ import org.jetbrains.annotations.Nullable;
  * Spawns and owns every trader in the round. The wandering trader arrives on its own timer;
  * the special trader is spawned by the random-event system. Both can be alive at once.
  */
-@Getter
 public class WanderingTraderManager implements Manager {
 
     private static final int SPAWN_CHUNK_RADIUS = 5;
@@ -68,7 +71,14 @@ public class WanderingTraderManager implements Manager {
             Material.IRON_HELMET, Material.IRON_CHESTPLATE, Material.IRON_LEGGINGS, Material.IRON_BOOTS
     };
 
-    private final ForceItemBattle plugin;
+    private final Plugin plugin;
+    private final Roster roster;
+    private final RoundPhase roundPhase;
+    private final PositionManager positionManager;
+    private final LocatorManager locatorManager;
+
+    /** Late-bound: the scoreboard reads this manager's traders, so the two are mutually dependent. */
+    private final Supplier<ScoreboardManager> scoreboard;
 
     /** Live traders, keyed by entity uuid. Insertion-ordered so the tab list is stable. */
     private final Map<UUID, ActiveTrader> traders = new LinkedHashMap<>();
@@ -79,14 +89,19 @@ public class WanderingTraderManager implements Manager {
     /** Players currently inside the spawn ping zone; entering it replays the trader direction line. */
     private final Set<UUID> nearSpawnPlayers = new HashSet<>();
 
-    private int randomAfterStartSpawnTime;
     private int timer;
     private BukkitTask spawnTimerTask;
 
-    public WanderingTraderManager(ForceItemBattle plugin) {
+    public WanderingTraderManager(Plugin plugin, Roster roster, RoundPhase roundPhase,
+                                  PositionManager positionManager, LocatorManager locatorManager,
+                                  Supplier<ScoreboardManager> scoreboard) {
         this.plugin = plugin;
-        this.randomAfterStartSpawnTime = ThreadLocalRandom.current().nextInt(7, 11) * 60; // [7, 10] minutes
-        this.timer = this.randomAfterStartSpawnTime;
+        this.roster = roster;
+        this.roundPhase = roundPhase;
+        this.positionManager = positionManager;
+        this.locatorManager = locatorManager;
+        this.scoreboard = scoreboard;
+        this.timer = ThreadLocalRandom.current().nextInt(7, 11) * 60; // [7, 10] minutes
     }
 
     @Override
@@ -110,14 +125,13 @@ public class WanderingTraderManager implements Manager {
         BukkitRunnable bukkitRunnable = new BukkitRunnable() {
             @Override
             public void run() {
-                if (!plugin.getGamemanager().isMidGame()) {
+                if (!WanderingTraderManager.this.roundPhase.roundRunning()) {
                     return;
                 }
 
                 if (timer <= 0) {
                     if (spawnWanderingTrader()) {
-                        randomAfterStartSpawnTime = TRADER_LIFETIME_SECONDS + ThreadLocalRandom.current().nextInt(7, 11) * 60;
-                        timer = randomAfterStartSpawnTime;
+                        timer = TRADER_LIFETIME_SECONDS + ThreadLocalRandom.current().nextInt(7, 11) * 60;
                     } else {
                         // No solid ground found near spawn (an ocean start, say). Retry shortly
                         // rather than skipping the trader for another 7-10 minutes.
@@ -131,7 +145,7 @@ public class WanderingTraderManager implements Manager {
             }
         };
 
-        this.spawnTimerTask = bukkitRunnable.runTaskTimer(this.plugin, 0L, 20L);
+        this.spawnTimerTask = Scheduler.runTimerSync(bukkitRunnable, 0L, 20L);
     }
 
     public boolean spawnWanderingTrader() {
@@ -161,8 +175,7 @@ public class WanderingTraderManager implements Manager {
         entity.setAI(false);
         entity.setGravity(true);
 
-        // The wandering trader stays anonymous. The special one is worth walking to, so it says
-        // what it is from a distance.
+        // The wandering trader stays anonymous; the special one is worth walking to.
         if (kind == TraderKind.SPECIAL) {
             entity.customName(Text.of(kind.boldColoredName()));
             entity.setCustomNameVisible(true);
@@ -173,14 +186,14 @@ public class WanderingTraderManager implements Manager {
             case SPECIAL -> this.specialRecipes();
         };
 
-        // The entity is only a marker: right-clicking it is intercepted and each player is handed
-        // their own merchant, so nobody ever opens this recipe list. It is the template.
+        // Only a template: right-clicking the entity is intercepted and each player is handed their
+        // own merchant, so nobody ever opens this recipe list.
         entity.setRecipes(recipes);
 
         ActiveTrader trader = new ActiveTrader(entity.getUniqueId(), kind, location, recipes);
         trader.setTimer(TRADER_LIFETIME_SECONDS);
         this.traders.put(trader.getUuid(), trader);
-        this.plugin.getScoreboardManager().updateAllPlayers();
+        this.scoreboard.get().updateAllPlayers();
 
         this.announce(trader);
         trader.setTask(this.startDespawnTimer(trader, entity));
@@ -189,7 +202,7 @@ public class WanderingTraderManager implements Manager {
     }
 
     private BukkitTask startDespawnTimer(ActiveTrader trader, WanderingTrader entity) {
-        return new BukkitRunnable() {
+        return Scheduler.runTimerSync(new BukkitRunnable() {
             @Override
             public void run() {
                 if (trader.getTimer() <= 0 || entity.isDead()) {
@@ -198,20 +211,19 @@ public class WanderingTraderManager implements Manager {
                     return;
                 }
 
-                if (plugin.getGamemanager().isPausedGame()) {
+                if (WanderingTraderManager.this.roundPhase.isPausedGame()) {
                     return; // the trader's lifetime freezes while the game is paused
                 }
 
                 trader.setTimer(trader.getTimer() - 1);
             }
-        }.runTaskTimer(this.plugin, 0L, 20L);
+        }, 0L, 20L);
     }
 
     /**
-     * Replays the trader direction line for players who (re-)enter the spawn area. The one-shot
-     * line on spawn is long gone by the time someone walks back to spawn to look for the trader.
-     * Zone membership is tracked continuously, so a trader spawning while a player already stands
-     * at spawn does not ping them twice (the announce line covers that moment).
+     * Replays the direction line for players who (re-)enter the spawn area, since the one-shot line
+     * on spawn is long gone by then. Zone membership is tracked continuously, so a trader spawning
+     * while a player already stands at spawn does not ping them twice.
      */
     private void rePingTradersNearSpawn() {
         World world = Dimension.OVERWORLD.world();
@@ -227,7 +239,7 @@ public class WanderingTraderManager implements Manager {
             double distance = player.getLocation().distance(spawn);
             if (distance <= SPAWN_PING_RADIUS) {
                 if (this.nearSpawnPlayers.add(player.getUniqueId()) && !this.traders.isEmpty()) {
-                    this.traders.values().forEach(trader -> this.plugin.getPositionManager()
+                    this.traders.values().forEach(trader -> this.positionManager
                             .playParticleLine(player, trader.getLocation(), trader.getKind().getParticleColor()));
                 }
             } else if (distance > SPAWN_PING_EXIT_RADIUS) {
@@ -246,7 +258,7 @@ public class WanderingTraderManager implements Manager {
     }
 
     private void announce(ActiveTrader trader) {
-        this.plugin.getGamemanager().forceItemPlayerMap().values().forEach(forceItemPlayer -> {
+        this.roster.players().values().forEach(forceItemPlayer -> {
             Player player = forceItemPlayer.player();
 
             player.sendMessage(Text.of(Prefix.POSITION + "<gray>The " + trader.getKind().coloredName()
@@ -254,7 +266,7 @@ public class WanderingTraderManager implements Manager {
                     + LocationFormat.xyz(trader.getLocation())
                     + LocationFormat.distance(player.getLocation(), trader.getLocation())));
 
-            this.plugin.getPositionManager().playParticleLine(player, trader.getLocation(),
+            this.positionManager.playParticleLine(player, trader.getLocation(),
                     trader.getKind().getParticleColor());
         });
 
@@ -264,9 +276,7 @@ public class WanderingTraderManager implements Manager {
         }
     }
 
-    /**
-     * Vanilla's offers, normalised to a single-item price and unlimited uses, plus the wheel.
-     */
+    /** Vanilla's offers, normalised to a single-item price and unlimited uses, plus the wheel. */
     private List<MerchantRecipe> wanderingRecipes(WanderingTrader entity) {
         List<MerchantRecipe> recipes = new ArrayList<>(entity.getRecipes());
 
@@ -283,16 +293,14 @@ public class WanderingTraderManager implements Manager {
         return recipes;
     }
 
-    /**
-     * Five one-emerald offers, rolled once at spawn so everyone sees the same trader.
-     */
+    /** Five one-emerald offers, rolled once at spawn so everyone sees the same trader. */
     private List<MerchantRecipe> specialRecipes() {
         List<MerchantRecipe> recipes = new ArrayList<>();
 
         recipes.add(this.specialOffer(CustomMaterials.WHEEL_OF_FORTUNE.itemStack(SPECIAL_WHEEL_AMOUNT), SPECIAL_WHEEL_PRICE));
         recipes.add(this.specialOffer(CustomMaterials.WEATHERED_CAPTAINS_JOURNAL.itemStack(), SPECIAL_PRICE));
 
-        Locator locator = this.plugin.getLocatorManager().randomLocator();
+        Locator locator = this.locatorManager.randomLocator();
         if (locator != null) {
             recipes.add(this.specialOffer(locator.getLocatorItem().itemStack(), SPECIAL_PRICE));
         }
@@ -313,17 +321,7 @@ public class WanderingTraderManager implements Manager {
         return recipe;
     }
 
-    private MerchantRecipe specialOffer(ItemStack result) {
-        MerchantRecipe recipe = new MerchantRecipe(result, SPECIAL_MAX_USES);
-        recipe.addIngredient(new ItemStack(Material.EMERALD, 1));
-        recipe.setExperienceReward(false);
-        recipe.setPriceMultiplier(0.0F);
-        return recipe;
-    }
-
-    /**
-     * A vanilla level-30 table roll. Treasure is excluded, so no mending — a table wouldn't give it.
-     */
+    /** A vanilla level-30 table roll. Treasure is excluded, so no mending — a table would not give it. */
     private ItemStack enchanted(ItemStack itemStack) {
         RegistryKeySet<Enchantment> tableEnchantments = RegistryAccess.registryAccess()
                 .getRegistry(RegistryKey.ENCHANTMENT)
@@ -337,9 +335,6 @@ public class WanderingTraderManager implements Manager {
         return this.traders.get(entityUuid);
     }
 
-    /**
-     * The trader whose merchant this player currently has open, if any.
-     */
     @Nullable
     public ActiveTrader traderOf(UUID playerUuid) {
         UUID traderUuid = this.tradingPlayers.get(playerUuid);
@@ -358,8 +353,14 @@ public class WanderingTraderManager implements Manager {
         return this.traders.values();
     }
 
-    public Merchant createMerchantFor(Player player, ActiveTrader trader) {
-        Merchant merchant = Bukkit.createMerchant(Text.of("<dark_gray>» " + trader.getKind().coloredName()));
+    /**
+     * This player's own view of {@code trader}, with their own use counts. Returns a view rather than
+     * a {@link Merchant} because the title belongs to the builder now, not to the deprecated
+     * {@code Bukkit.createMerchant}. The merchant is virtual — one per call, never shared — so
+     * {@code checkReachable} is left alone: Paper documents it as having no effect on those.
+     */
+    public MerchantView createMerchantViewFor(Player player, ActiveTrader trader) {
+        Merchant merchant = Bukkit.createMerchant();
 
         List<MerchantRecipe> templates = trader.getRecipes();
         List<MerchantRecipe> recipes = new ArrayList<>();
@@ -373,7 +374,11 @@ public class WanderingTraderManager implements Manager {
         merchant.setRecipes(recipes);
 
         this.tradingPlayers.put(player.getUniqueId(), trader.getUuid());
-        return merchant;
+
+        return MenuType.MERCHANT.builder()
+                .merchant(merchant)
+                .title(Text.of("<dark_gray>» " + trader.getKind().coloredName()))
+                .build(player);
     }
 
     private MerchantRecipe copyOf(MerchantRecipe source) {

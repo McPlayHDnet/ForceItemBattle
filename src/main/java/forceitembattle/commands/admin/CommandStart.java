@@ -1,12 +1,22 @@
 package forceitembattle.commands.admin;
 
-import forceitembattle.ForceItemBattle;
+import static forceitembattle.commands.Precondition.OP;
+
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
-import forceitembattle.settings.GameSetting;
-import forceitembattle.settings.GamePreset;
+import forceitembattle.commands.Precondition;
+import forceitembattle.manager.ForceItemAssignment;
+import forceitembattle.manager.Gamemanager;
+import forceitembattle.manager.TeamsManager;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameState;
+import forceitembattle.model.Roster;
+import forceitembattle.model.RoundClock;
+import forceitembattle.model.RoundPhase;
+import forceitembattle.settings.GamePreset;
+import forceitembattle.settings.GameSetting;
+import forceitembattle.settings.GameSettings;
+import forceitembattle.util.Scheduler;
 import forceitembattle.util.Text;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -15,73 +25,114 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
-public class CommandStart extends CustomCommand implements CustomTabCompleter {
+public final class CommandStart extends CustomCommand implements CustomTabCompleter {
 
-    public CommandStart(ForceItemBattle plugin) {
-        super(plugin, "start");
+    private final Gamemanager gamemanager;
+    private final ForceItemAssignment assignment;
+    private final Roster roster;
+    private final RoundPhase roundPhase;
+    private final RoundClock roundClock;
+    private final GameSettings settings;
+    private final TeamsManager teamManager;
+
+    public CommandStart(Gamemanager gamemanager, ForceItemAssignment assignment, Roster roster, RoundPhase roundPhase, RoundClock roundClock, GameSettings settings, TeamsManager teamManager) {
+        super("start");
+        this.gamemanager = gamemanager;
+        this.assignment = assignment;
+        this.roster = roster;
+        this.roundPhase = roundPhase;
+        this.roundClock = roundClock;
+        this.settings = settings;
+        this.teamManager = teamManager;
         setUsage("<time in min> <jokers> or <preset>");
         setDescription("Start the game");
     }
 
     @Override
-    public void onPlayerCommand(Player player, String label, String[] args) {
-        if (!requireOp(player)) return;
+    protected List<Precondition> preconditions() {
+        return List.of(OP);
+    }
 
+    @Override
+    public void onPlayerCommand(Player player, String label, String[] args) {
+        this.start(player, args);
+    }
+
+    /**
+     * Starting a round needs no player: it acts on the roster, not on whoever asked. Overridden
+     * because the base class refuses console senders, which rules out the console, RCON and tests.
+     */
+    @Override
+    public void onConsoleCommand(CommandSender sender, String label, String[] args) {
+        this.start(sender, args);
+    }
+
+    private void start(CommandSender sender, String[] args) {
         if (args.length == 1) {
-            if (this.plugin.getSettings().getGamePreset(args[0]) == null) {
-                player.sendMessage(Text.of("<yellow>" + args[0] + " <red>does not exist in presets."));
+            if (this.settings.getGamePreset(args[0]) == null) {
+                sender.sendMessage(Text.of("<yellow>" + args[0] + " <red>does not exist in presets."));
                 return;
             }
 
-            GamePreset gamePreset = this.plugin.getSettings().getGamePreset(args[0]);
-            this.plugin.getGamemanager().setCurrentGamePreset(gamePreset);
-            this.performCommand(gamePreset, player, args);
+            GamePreset gamePreset = this.settings.getGamePreset(args[0]);
+            this.settings.getRuleset().usePreset(gamePreset);
+            this.performCommand(gamePreset, sender, args);
 
         } else if (args.length == 2) {
             try {
-                this.performCommand(null, player, args);
+                // Clears whatever the last round used. Without this `/start speedrun` followed by
+                // `/start 90 3` plays the second round on speedrun's settings — hidden in production
+                // only because scheduleReset restarts the JVM between rounds.
+                this.settings.getRuleset().usePreset(null);
+                this.performCommand(null, sender, args);
 
             } catch (NumberFormatException e) {
-                player.sendMessage(Text.of("<red>Usage: /start <time in min> <jokers>"));
-                player.sendMessage(Text.of("<red><time> and <jokers> have to be numbers"));
+                sender.sendMessage(Text.of("<red>Usage: /start <time in min> <jokers>"));
+                sender.sendMessage(Text.of("<red><time> and <jokers> have to be numbers"));
             }
         } else {
-            player.sendMessage(Text.of("<red>Usage: /start <time in min> <jokers>"));
+            sender.sendMessage(Text.of("<red>Usage: /start <time in min> <jokers>"));
         }
     }
 
-    private void performCommand(GamePreset gamePreset, Player player, String[] args) {
-        int durationMinutes = (gamePreset != null ? gamePreset.getCountdown() : Integer.parseInt(args[0]));
-        int durationSeconds = durationMinutes * 60;
-        int jokersAmount = (gamePreset != null ? gamePreset.getJokers() : (Integer.parseInt(args[1])));
+    private void performCommand(GamePreset gamePreset, CommandSender player, String[] args) {
+        boolean teamsConfigured = this.settings.isSettingEnabled(GameSetting.TEAM);
+        int rosterSize = this.roster.players().size();
 
-        if (gamePreset == null && jokersAmount > 64) {
-            player.sendMessage(Text.of("<red>The maximum amount of jokers is 64."));
+        RoundStart start = gamePreset != null
+                ? RoundStart.fromPreset(gamePreset, teamsConfigured, rosterSize)
+                : RoundStart.fromArguments(Integer.parseInt(args[0]), Integer.parseInt(args[1]),
+                        teamsConfigured, rosterSize);
+
+        if (start instanceof RoundStart.Refused refused) {
+            player.sendMessage(Text.of(switch (refused.refusal()) {
+                case TOO_MANY_JOKERS -> "<red>The maximum amount of jokers is " + RoundStart.MAX_JOKERS + ".";
+            }));
             return;
         }
 
-        if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-            if (plugin.getGamemanager().forceItemPlayerMap().size() < 4) {
-                Bukkit.broadcast(Text.of("<red>There are not enough players online to enable teams"));
-                this.plugin.getSettings().setSettingEnabled(GameSetting.TEAM, false);
-                this.plugin.getTeamManager().clearAllTeams();
-            } else {
-                this.plugin.getTeamManager().autoTeams();
-            }
-        }
+        RoundStart.Planned plan = (RoundStart.Planned) start;
+        int durationMinutes = plan.durationMinutes();
+        int jokersAmount = plan.jokers();
 
-        this.plugin.getTimerManager().setTimeLeft(durationSeconds);
-        this.plugin.getGamemanager().setGameDuration(durationSeconds);
-        this.plugin.getGamemanager().setJokerAmount(jokersAmount);
-        this.plugin.getGamemanager().initializeMaterials();
+        this.applyTeams(plan.teams());
+
+        this.roundClock.startRound(plan.durationSeconds());
+        this.gamemanager.setJokerAmount(jokersAmount);
+        // Un-equip everyone before the draw, so applyStartSetup runs for them. Order matters only in
+        // that both must happen before STARTING; the flag reset is separate from the draw because the
+        // flag belongs to the outfitting half, which stayed on Gamemanager.
+        this.gamemanager.resetStartSetup();
+        this.assignment.beginRound(this.settings.isSettingEnabled(GameSetting.RUN));
 
         // Teams and force items are assigned by now, so the roster is frozen from here on.
-        this.plugin.getGamemanager().setCurrentGameState(GameState.STARTING);
+        this.roundPhase.moveTo(GameState.STARTING);
 
-        new BukkitRunnable() {
+        Scheduler.runTimerSync(new BukkitRunnable() {
 
             int seconds = 11;
 
@@ -91,7 +142,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
                 if (seconds == 0) {
                     cancel();
 
-                    plugin.getGamemanager().startGame(durationMinutes, jokersAmount);
+                    CommandStart.this.gamemanager.startGame(durationMinutes, jokersAmount);
                     return;
                 }
                 if (seconds < 6) {
@@ -114,13 +165,16 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
             }
 
             private void showTeams() {
-                if (!plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+                // The decision, not the setting: asking the plan means this does not depend on
+                // applyTeams having written the setting off first.
+                if (plan.teams() != RoundStart.Teams.BUILD) {
                     return;
                 }
 
                 Bukkit.getOnlinePlayers().forEach(player -> {
-                    ForceItemPlayer forceItemPlayer = plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-                    if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
+                    ForceItemPlayer forceItemPlayer =
+                            CommandStart.this.roster.participant(player.getUniqueId()).orElse(null);
+                    if (forceItemPlayer == null) {
                         return;
                     }
 
@@ -143,7 +197,7 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
 
                 switch (seconds) {
                     case 8 ->
-                            subTitle = "<white>» <gold>" + (plugin.getTimerManager().getTimeLeft() / 60) + " minutes <white>«";
+                            subTitle = "<white>» <gold>" + (CommandStart.this.roundClock.secondsLeft() / 60) + " minutes <white>«";
                     case 6 -> subTitle = "<white>» <gold>" + jokersAmount + " Jokers <white>«";
                     case 5 -> subTitle = "<white>» <gold>/info & /infowiki <white>«";
                     case 4 -> subTitle = "<white>» <gold>/spawn & /bed <white>«";
@@ -153,11 +207,24 @@ public class CommandStart extends CustomCommand implements CustomTabCompleter {
 
                 return subTitle;
             }
-        }.runTaskTimer(this.plugin, 0L, 20L);
+        }, 0L, 20L);
+    }
+
+    /** Every branch here is an effect; which one runs was decided by {@link RoundStart}. */
+    private void applyTeams(RoundStart.Teams teams) {
+        switch (teams) {
+            case BUILD -> this.teamManager.autoTeams();
+            case TOO_FEW_PLAYERS -> {
+                Bukkit.broadcast(Text.of("<red>There are not enough players online to enable teams"));
+                this.settings.setSettingEnabled(GameSetting.TEAM, false);
+                this.teamManager.clearAllTeams();
+            }
+            case NONE -> { }
+        }
     }
 
     @Override
     public List<String> onTabComplete(Player player, String label, String[] args) {
-        return new ArrayList<>(this.plugin.getSettings().gamePresetMap().keySet());
+        return new ArrayList<>(this.settings.gamePresetMap().keySet());
     }
 }

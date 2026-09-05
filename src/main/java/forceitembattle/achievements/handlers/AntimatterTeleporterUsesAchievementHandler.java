@@ -1,21 +1,15 @@
 package forceitembattle.achievements.handlers;
 
-import forceitembattle.ForceItemBattle;
+import forceitembattle.achievements.AchievementWorld;
 import forceitembattle.achievements.Trigger;
-import forceitembattle.achievements.progress.SimpleAchievementProgress;
 import forceitembattle.event.AntimatterTeleporterUseEvent;
 import forceitembattle.model.ForceItemPlayer;
 import org.bukkit.event.Event;
 
-public class AntimatterTeleporterUsesAchievementHandler implements AchievementHandler<SimpleAchievementProgress> {
-
-    private final int targetAmount;
+public class AntimatterTeleporterUsesAchievementHandler extends CountingAchievementHandler {
 
     public AntimatterTeleporterUsesAchievementHandler(int targetAmount) {
-        if (targetAmount < 1) {
-            throw new IllegalArgumentException("targetAmount must be at least 1");
-        }
-        this.targetAmount = targetAmount;
+        super(targetAmount);
     }
 
     @Override
@@ -24,16 +18,7 @@ public class AntimatterTeleporterUsesAchievementHandler implements AchievementHa
     }
 
     @Override
-    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin) {
-        if (!(event instanceof AntimatterTeleporterUseEvent teleporterEvent) || !teleporterEvent.isNewTeleporter()) {
-            return false;
-        }
-        progress.count++;
-        return progress.count >= targetAmount;
-    }
-
-    @Override
-    public SimpleAchievementProgress createProgress() {
-        return new SimpleAchievementProgress();
+    protected boolean matches(Event event, ForceItemPlayer forceItemPlayer, AchievementWorld world) {
+        return event instanceof AntimatterTeleporterUseEvent teleporterEvent && teleporterEvent.isNewTeleporter();
     }
 }

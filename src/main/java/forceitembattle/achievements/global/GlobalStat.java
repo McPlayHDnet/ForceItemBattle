@@ -1,8 +1,8 @@
 package forceitembattle.achievements.global;
 
-import de.threeseconds.openapi.fibservice.client.model.FibPlayerStatsDto;
+import forceitembattle.model.stats.GlobalPlayerStats;
 import forceitembattle.model.Rarity;
-import forceitembattle.model.StatsView;
+import forceitembattle.model.stats.StatsView;
 import java.util.function.ToLongFunction;
 import lombok.Getter;
 
@@ -24,7 +24,7 @@ public enum GlobalStat {
     RNGESUS_BACK_TO_BACKS("RNGesus back-to-backs", sum(view -> Rarity.RNGESUS.count(view.rarities()))),
     EXTRAORDINARY_BACK_TO_BACKS("extraordinary back-to-backs", sum(view -> Rarity.EXTRAORDINARY.count(view.rarities()))),
 
-    HIGHEST_WIN_STREAK("consecutive wins", player(FibPlayerStatsDto::getHighestWinStreak));
+    HIGHEST_WIN_STREAK("consecutive wins", player(GlobalPlayerStats::highestWinStreak));
 
     /** Lower-case noun phrase for progress lines, e.g. "47 / 250 back-to-backs". */
     private final String label;
@@ -44,13 +44,8 @@ public enum GlobalStat {
         return sources -> readView(sources.solo(), fromView) + readView(sources.team(), fromView);
     }
 
-    /** Bests and per-round streaks: the global value is the better of the two modes, never their sum. */
-    private static ToLongFunction<GlobalStatSources> max(ToLongFunction<StatsView> fromView) {
-        return sources -> Math.max(readView(sources.solo(), fromView), readView(sources.team(), fromView));
-    }
-
     /** Genuinely mode-independent: read straight off the player-scoped row. */
-    private static ToLongFunction<GlobalStatSources> player(ToLongFunction<FibPlayerStatsDto> fromPlayer) {
+    private static ToLongFunction<GlobalStatSources> player(ToLongFunction<GlobalPlayerStats> fromPlayer) {
         return sources -> sources.player() == null ? 0L : fromPlayer.applyAsLong(sources.player());
     }
 

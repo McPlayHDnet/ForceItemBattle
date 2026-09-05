@@ -1,6 +1,5 @@
 package forceitembattle.listener;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.util.Scheduler;
 import java.util.ArrayList;
@@ -19,6 +18,7 @@ import org.bukkit.event.world.EntitiesLoadEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.MerchantRecipe;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.plugin.Plugin;
 
 @RequiredArgsConstructor
 public class VillagerTradeListener implements Listener {
@@ -30,7 +30,8 @@ public class VillagerTradeListener implements Listener {
     private static final int CLERIC_TRADE_PRICE = 6;
     private static final int CLERIC_TRADE_MAX_USES = 12;
 
-    private final ForceItemBattle plugin;
+    /** For {@link NamespacedKey}, which needs a plugin to namespace under. */
+    private final Plugin plugin;
 
     @EventHandler
     public void onCareerChange(VillagerCareerChangeEvent event) {

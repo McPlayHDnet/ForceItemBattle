@@ -1,6 +1,5 @@
 package forceitembattle.randomevents;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.util.Scheduler;
 import lombok.RequiredArgsConstructor;
 
@@ -10,7 +9,7 @@ public class SpecialTrader implements RandomEvent {
     private static final int RETRY_SECONDS = 20;
     private static final int MAX_ATTEMPTS = 5;
 
-    private final ForceItemBattle plugin;
+    private final EventContext context;
 
     @Override
     public void start() {
@@ -27,18 +26,18 @@ public class SpecialTrader implements RandomEvent {
      * per round, a failed roll is worth retrying rather than writing off.
      */
     private void attemptSpawn(int attempt) {
-        if (this.plugin.getWanderingTraderManager().spawnSpecialTrader()) {
+        if (this.context.traders().spawnSpecialTrader()) {
             return;
         }
 
         if (attempt >= MAX_ATTEMPTS) {
-            this.plugin.getLogger().warning("Special Trader could not be spawned after "
+            this.context.plugin().getLogger().warning("Special Trader could not be spawned after "
                     + MAX_ATTEMPTS + " attempts; skipping it this round.");
             return;
         }
 
         Scheduler.runLaterSync(() -> {
-            if (!this.plugin.getGamemanager().isMidGame()) {
+            if (!this.context.roundPhase().roundRunning()) {
                 return;
             }
             this.attemptSpawn(attempt + 1);

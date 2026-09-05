@@ -1,17 +1,24 @@
 package forceitembattle.commands.admin;
 
-import forceitembattle.ForceItemBattle;
-import forceitembattle.model.CustomMaterials;
+import static forceitembattle.commands.Precondition.PARTICIPANT;
+import static forceitembattle.commands.Precondition.OP;
+import static forceitembattle.commands.Precondition.ROUND_RUNNING;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
-import forceitembattle.manager.Gamemanager;
+import forceitembattle.commands.Precondition;
+import forceitembattle.manager.ForceItemAssignment;
+import forceitembattle.manager.ScoreboardManager;
+import forceitembattle.manager.TimerManager;
+import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ForceItemPlayer;
-import forceitembattle.model.Team;
+import forceitembattle.model.Roster;
 import forceitembattle.settings.GameSetting;
+import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Text;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
@@ -20,24 +27,34 @@ import org.bukkit.entity.Player;
  * optionally queue a whole row of upcoming items.
 **/
 
-public class CommandForceItem extends CustomCommand implements CustomTabCompleter {
+public final class CommandForceItem extends CustomCommand implements CustomTabCompleter {
 
-    public CommandForceItem(ForceItemBattle plugin) {
-        super(plugin, "forceitem");
+    private final ForceItemAssignment assignment;
+    private final GameSettings settings;
+    private final TimerManager timerManager;
+    private final Roster roster;
+    private final ScoreboardManager scoreboardManager;
+
+    public CommandForceItem(ForceItemAssignment assignment, GameSettings settings, TimerManager timerManager, Roster roster, ScoreboardManager scoreboardManager) {
+        super("forceitem");
+        this.assignment = assignment;
+        this.settings = settings;
+        this.timerManager = timerManager;
+        this.roster = roster;
+        this.scoreboardManager = scoreboardManager;
 
         setUsage("<item> [item2] [item3] ...");
         setDescription("Dev: force the current (and upcoming) item(s)");
     }
 
     @Override
+    protected List<Precondition> preconditions() {
+        return List.of(OP, ROUND_RUNNING,
+                PARTICIPANT.refusing("<red>You need to be an active player to force an item"));
+    }
+
+    @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (!requireOp(player)) return;
-
-        if (!this.plugin.getGamemanager().isMidGame()) {
-            player.sendMessage(Text.of("<red>The game is not running. Start it first with /start"));
-            return;
-        }
-
         if (args.length < 1) {
             player.sendMessage(Text.of("<red>Usage: /forceitem <item> [item2] [item3] ..."));
             return;
@@ -54,45 +71,28 @@ public class CommandForceItem extends CustomCommand implements CustomTabComplete
             row.add(material);
         }
 
-        ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-        if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
-            player.sendMessage(Text.of("<red>You need to be an active player to force an item"));
-            return;
-        }
+        // Present because PARTICIPANT is declared above; the gate already refused anyone else.
+        ForceItemPlayer forceItemPlayer =
+                this.roster.participant(player.getUniqueId()).orElseThrow();
 
-        Gamemanager gamemanager = this.plugin.getGamemanager();
+        // The whole row in one call: first item now, second queued behind it, the rest drained in
+        // order as they are found. The queue is the assignment module's, keyed by this owner --
+        // it used to be a server-wide deque this command reached into, so a row forced here was
+        // drained by whichever player found something next.
+        this.assignment.force(forceItemPlayer.scoreOwner(), row,
+                this.settings.isSettingEnabled(GameSetting.RUN));
 
-        // Queue everything after the second item; generateMaterial() drains this
-        // as new items are handed out, so the row is walked through in order.
-        gamemanager.getForcedItemQueue().clear();
-        if (row.size() > 2) {
-            gamemanager.getForcedItemQueue().addAll(row.subList(2, row.size()));
-        }
+        Material current = row.getFirst();
 
-        Material current = row.get(0);
-        // Second item forced when given; otherwise generate normally (queue is empty here).
-        Material next = row.size() >= 2 ? row.get(1) : gamemanager.generateMaterial();
-
-        if (this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-            Team team = forceItemPlayer.currentTeam();
-            team.setCurrentMaterial(current);
-            team.setNextMaterial(next);
-        } else {
-            forceItemPlayer.setCurrentMaterial(current);
-            forceItemPlayer.setNextMaterial(next);
-        }
-
-        this.plugin.getTimerManager().sendActionBar();
-        this.plugin.getScoreboardManager().updateAllPlayers();
+        this.timerManager.sendActionBar();
+        this.scoreboardManager.updateAllPlayers();
 
         StringBuilder confirmation = new StringBuilder("<gray>Forced item <dark_gray>» <green>"
                 + CustomMaterials.nameOf(current));
         if (row.size() > 1) {
-            List<String> upcoming = new ArrayList<>();
-            for (Material material : row.subList(1, row.size())) {
-                upcoming.add(CustomMaterials.nameOf(material));
-            }
-            confirmation.append(" <gray>then <white>").append(String.join("<gray>, <white>", upcoming));
+            confirmation.append(" <gray>then <white>").append(row.subList(1, row.size()).stream()
+                    .map(CustomMaterials::nameOf)
+                    .collect(Collectors.joining("<gray>, <white>")));
         }
         player.sendMessage(Text.of(confirmation.toString()));
     }

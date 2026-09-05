@@ -9,7 +9,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.commons.lang3.text.WordUtils;
+import org.apache.commons.text.WordUtils;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
@@ -40,18 +40,11 @@ public enum CustomMaterials {
             "totem_of_antimatter", null, null);
 
     /**
-     * Custom items that must not answer for their bare material.
-     *
-     * <p>The other entries sit on a material the pool never really asks for on its own — nobody is
-     * sent to find a knowledge book or a nether star as such, so letting the material stand for the
-     * custom item is what players expect. A brush is different: it is an EARLY force item found by
-     * crafting a plain one, so {@code nameOf(BRUSH)} has to stay "Brush" and a joker skip has to
-     * hand out a plain brush, not a free locator. The Kiln-Fired Brush is still reachable by id and
-     * still recognised by {@link #matches}, which is all the locator needs.
-     *
-     * <p>The Totem of Antimatter is the same case: TOTEM_OF_UNDYING is a LATE/EXTREME force item, so
-     * {@code nameOf} has to keep saying "Totem of Undying" and a skip has to hand out a plain totem
-     * rather than a free portal key.
+     * Custom items that must not answer for their bare material. Both sit on a real force item —
+     * BRUSH is EARLY, TOTEM_OF_UNDYING is LATE/EXTREME — so {@code nameOf} has to keep saying the
+     * vanilla name and a joker skip has to hand out the plain item, not a free locator or portal
+     * key. They stay reachable by id and recognised by {@link #matches}, which is all the locators
+     * need. The other entries sit on materials the pool never asks for on their own.
      */
     private static final Set<CustomMaterials> SHARES_MATERIAL_WITH_POOL_ITEM =
             Set.of(KILN_FIRED_BRUSH, TOTEM_OF_ANTIMATTER);
@@ -66,51 +59,34 @@ public enum CustomMaterials {
     private final String id;
     private final String itemName;
 
-    /**
-     * MiniMessage colour used by {@link #displayName()}. Null when a loot table owns the name and
-     * nothing is lost by an unnamed fallback; set alongside {@link #itemLootTable} when the item
-     * still has to read correctly if that table fails to load.
-     */
+    /** Null when a loot table owns the name and nothing is lost by an unnamed fallback. */
     @Nullable
     private final String color;
 
     @Nullable
     private final String displayNameOverride;
 
-    /**
-     * Datapack loot table defining this item, or null when a plain rename is enough.
-     */
+    /** Datapack loot table defining this item, or null when a plain rename is enough. */
     @Nullable
     private final NamespacedKey itemLootTable;
 
-    /**
-     * PDC marker distinguishing the real item from a plain stack of the same material,
-     * or null when the material alone is enough.
-     */
+    /** Distinguishes the real item from a plain stack of the same material. */
     @Nullable
     private final NamespacedKey markerKey;
 
-    /**
-     * Custom-model-data string carried by this item, used both when building it and when
-     * matching it. Null when the material alone is enough.
-     */
+    /** Used both when building the item and when matching it. */
     @Nullable
     private final String customModelDataString;
 
     /**
-     * Item-model the resourcepack draws this item with, replacing the one its material would use.
-     * Null when the material's own model is fine — most custom items are told apart by
-     * {@link #customModelDataString} in a select on the vanilla item instead. The brush cannot be:
-     * its item definition drives the brushing animation, and overriding that would mean rebuilding
-     * vanilla's states, so it points at a model of its own.
+     * Replaces the model the material would use. Null for most custom items, which are told apart by
+     * {@link #customModelDataString} in a select on the vanilla item instead — the brush cannot be,
+     * since its item definition drives the brushing animation.
      */
     @Nullable
     private final NamespacedKey itemModel;
 
-    /**
-     * Resolved from {@link #itemLootTable} on enable by CustomItemManager.
-     * Never handed out directly — always cloned.
-     */
+    /** Resolved from {@link #itemLootTable} on enable. Never handed out directly — always cloned. */
     @Setter
     @Nullable
     private ItemStack prototype;
@@ -130,10 +106,7 @@ public enum CustomMaterials {
         this.itemModel = itemModel;
     }
 
-    /**
-     * MiniMessage name put on the ItemStack, e.g. {@code » Antimatter Locator}.
-     * Null for items whose name comes from their loot table.
-     */
+    /** Null for items whose name comes from their loot table. */
     @Nullable
     public String displayName() {
         if (this.displayNameOverride != null) {
@@ -142,9 +115,6 @@ public enum CustomMaterials {
         return this.color != null ? "<dark_gray>» " + this.color + this.itemName : null;
     }
 
-    /**
-     * A fresh stack of this custom item.
-     */
     public ItemStack itemStack() {
         if (this.prototype != null) {
             return this.prototype.clone();
@@ -154,8 +124,7 @@ public enum CustomMaterials {
         if (this.customModelDataString != null) {
             itemBuilder.setCustomModelDataStrings(List.of(this.customModelDataString));
         }
-        // Keeps a plugin-built copy — the one the special trader sells — looking like the one the
-        // datapack recipe produces.
+        // Keeps a plugin-built copy looking like the one the datapack recipe produces.
         if (this.itemModel != null) {
             itemBuilder.setItemModel(this.itemModel);
         }
@@ -167,9 +136,6 @@ public enum CustomMaterials {
         return itemBuilder.getItemStack();
     }
 
-    /**
-     * A fresh stack of this custom item, {@code amount} of them.
-     */
     public ItemStack itemStack(int amount) {
         ItemStack itemStack = this.itemStack();
         itemStack.setAmount(amount);
@@ -177,9 +143,8 @@ public enum CustomMaterials {
     }
 
     /**
-     * Whether this stack is the real custom item. Some entries own their material outright and
-     * need no further check; others share it with a vanilla item and are told apart by a PDC
-     * marker or a custom-model-data string.
+     * Entries that own their material outright need no further check; the rest are told apart by a
+     * PDC marker or a custom-model-data string.
      */
     public boolean matches(@Nullable ItemStack itemStack) {
         if (itemStack == null || itemStack.getType() != this.material) {
@@ -226,9 +191,7 @@ public enum CustomMaterials {
         return BY_ID.get(id.toLowerCase());
     }
 
-    /**
-     * Custom name if the material is one of ours, plain vanilla name otherwise.
-     */
+    /** Custom name if the material is one of ours, plain vanilla name otherwise. */
     public static String nameOf(Material material) {
         CustomMaterials custom = byMaterial(material);
         return custom != null
@@ -236,24 +199,17 @@ public enum CustomMaterials {
                 : WordUtils.capitalizeFully(material.name().replace("_", " "));
     }
 
-    /**
-     * The /info id if the material is one of ours, the lowercase material name otherwise.
-     */
+    /** The /info id if the material is one of ours, the lowercase material name otherwise. */
     public static String idOf(Material material) {
         CustomMaterials custom = byMaterial(material);
         return custom != null ? custom.getId() : material.name().toLowerCase();
     }
 
     /**
-     * The minecraft.wiki page slug for a material, e.g. {@code Heart_of_the_Sea}.
-     *
-     * The wiki title-cases every word except a handful of short joining words, and a joining word
-     * never leads a title — hence the {@code index > 0}. Match those words whole: a substring
-     * replace over the finished slug lowercases the A inside Axe, Apple, Armor, Andesite and
-     * Amethyst, and catches the "With" inside Wither.
-     *
-     * <p>Lives next to {@link #nameOf(Material)} because it is the same question — what is this
-     * material called — asked for a URL instead of a chat line.
+     * The minecraft.wiki page slug for a material, e.g. {@code Heart_of_the_Sea}. The wiki
+     * title-cases every word except a handful of joining words, and a joining word never leads a
+     * title — hence the {@code index > 0}. Match those words whole: a substring replace over the
+     * finished slug lowercases the A inside Axe, Apple and Amethyst, and the "With" inside Wither.
      */
     public static String wikiSlugOf(Material material) {
         String[] words = material.name().toLowerCase().split("_");

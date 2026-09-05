@@ -1,6 +1,5 @@
 package forceitembattle.randomevents;
 
-import forceitembattle.ForceItemBattle;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
@@ -38,10 +37,10 @@ public enum RandomEvents {
      */
     private final int minSecondsToRun;
 
-    private final Function<ForceItemBattle, RandomEvent> factory;
+    private final Function<EventContext, RandomEvent> factory;
 
     RandomEvents(String displayName, String color, int weight, boolean oncePerGame,
-                 int minSecondsToRun, Function<ForceItemBattle, RandomEvent> factory) {
+                 int minSecondsToRun, Function<EventContext, RandomEvent> factory) {
         this.displayName = displayName;
         this.color = color;
         this.weight = weight;
@@ -61,8 +60,8 @@ public enum RandomEvents {
         return this.name().toLowerCase();
     }
 
-    public RandomEvent create(ForceItemBattle plugin) {
-        return this.factory.apply(plugin);
+    public RandomEvent create(EventContext context) {
+        return this.factory.apply(context);
     }
 
     @Nullable

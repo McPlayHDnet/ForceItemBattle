@@ -1,6 +1,6 @@
 package forceitembattle.achievements.handlers;
 
-import forceitembattle.ForceItemBattle;
+import forceitembattle.achievements.AchievementWorld;
 import forceitembattle.achievements.Trigger;
 import forceitembattle.achievements.progress.SkipAchievementProgress;
 import forceitembattle.event.FoundItemEvent;
@@ -25,19 +25,17 @@ public class SkipAchievementHandler implements AchievementHandler<SkipAchievemen
     }
 
     @Override
-    public boolean check(Event event, SkipAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin) {
+    public boolean check(Event event, SkipAchievementProgress progress, ForceItemPlayer forceItemPlayer, AchievementWorld world) {
         if (!(event instanceof FoundItemEvent foundEvent)) {
             return false;
         }
 
-        ForceItemBattle fib = plugin;
-        int gameDuration = fib.getGamemanager().getGameDuration();
-        int secondsLeft = fib.getTimerManager().getTimeLeft();
+        int secondsLeft = world.secondsLeft();
 
         // On the first event, anchor the received marker to the round start
         // (the first item is assigned at game start, i.e. secondsLeft == gameDuration).
         if (progress.firstEvent) {
-            progress.itemReceivedSecondsLeft = gameDuration;
+            progress.itemReceivedSecondsLeft = world.roundDuration();
             progress.firstEvent = false;
 
             // Can't know how long the very first item was held if it opens with a skip.

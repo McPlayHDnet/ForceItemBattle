@@ -1,25 +1,27 @@
 package forceitembattle.achievements.handlers;
 
-import forceitembattle.ForceItemBattle;
+import forceitembattle.achievements.AchievementWorld;
 import forceitembattle.achievements.Trigger;
 import forceitembattle.achievements.progress.AchievementProgressTracker;
 import forceitembattle.model.ForceItemPlayer;
 import org.bukkit.event.Event;
 
 /**
- * Each handler is responsible for one type of achievement logic
- * AND declares which trigger it responds to.
+ * One type of achievement logic, plus the trigger it responds to.
  *
- * <p>Handlers are stateless strategies held on the {@code Achievements} enum, so
- * they can't be given the plugin at construction (that would depend on class-load
- * order). Collaborators they need are passed into {@link #check} at call time by
- * the {@code AchievementManager}, which owns the plugin reference.
+ * <p>Handlers are stateless strategies held on the {@code Achievements} enum, so they cannot be given
+ * collaborators at construction — that would depend on class-load order. What they need is passed
+ * into {@link #check} at call time.
+ *
+ * <p><b>{@link AchievementWorld}, not the plugin.</b> Taking the plugin makes every rule's real
+ * interface every manager, and this parameter is what decides whether this package can be tested
+ * without a running server. A rule that needs something new widens the world by one named question.
  */
 public interface AchievementHandler<P extends AchievementProgressTracker> {
 
     Trigger getTrigger();
 
-    boolean check(Event event, P progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin);
+    boolean check(Event event, P progress, ForceItemPlayer forceItemPlayer, AchievementWorld world);
 
     P createProgress();
 

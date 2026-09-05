@@ -1,9 +1,6 @@
 package forceitembattle.randomevents;
 
-import forceitembattle.ForceItemBattle;
-import forceitembattle.event.FoundItemEvent;
-import forceitembattle.model.CustomMaterials;
-import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.Find;
 import forceitembattle.util.Prefix;
 import forceitembattle.util.Text;
 import java.util.concurrent.ThreadLocalRandom;
@@ -11,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 
 @RequiredArgsConstructor
 public class ItemHunt implements RandomEvent {
@@ -19,7 +15,7 @@ public class ItemHunt implements RandomEvent {
     private static final int MIN_WHEELS = 1;
     private static final int MAX_WHEELS = 3;
 
-    private final ForceItemBattle plugin;
+    private final EventContext context;
 
     @Override
     public void start() {
@@ -32,14 +28,15 @@ public class ItemHunt implements RandomEvent {
     }
 
     @Override
-    public boolean onFoundItem(FoundItemEvent foundItemEvent, ForceItemPlayer forceItemPlayer) {
-        if (foundItemEvent.isSkipped() || foundItemEvent.isBackToBack()) {
+    public boolean onFoundItem(Find find) {
+        if (find.skipped() || find.backToBack()) {
             return false;
         }
 
-        Player winner = forceItemPlayer.player();
+        Player winner = find.player();
         int wheels = ThreadLocalRandom.current().nextInt(MIN_WHEELS, MAX_WHEELS + 1);
-        this.giveWheels(winner, wheels);
+        // Only the finder is paid, teammates included -- the hunt is a personal race.
+        EventRewards.giveWheels(winner, wheels);
 
         Bukkit.broadcast(Text.of(Prefix.RANDOM_EVENT + "<green>" + winner.getName() + " <gray>won the "
                 + RandomEvents.ITEM_HUNT.coloredName() + " <gray>and receives <yellow>" + wheels
@@ -51,13 +48,4 @@ public class ItemHunt implements RandomEvent {
         return true;
     }
 
-    /**
-     * Only the finder is paid, teammates included — the hunt is a personal race.
-     */
-    private void giveWheels(Player player, int amount) {
-        ItemStack wheels = CustomMaterials.WHEEL_OF_FORTUNE.itemStack(amount);
-
-        player.getInventory().addItem(wheels).values().forEach(leftover ->
-                player.getWorld().dropItemNaturally(player.getLocation(), leftover));
-    }
 }

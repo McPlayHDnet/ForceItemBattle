@@ -1,6 +1,5 @@
 package forceitembattle.gui;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.ItemDifficultiesManager;
 import forceitembattle.util.Text;
 import java.util.HashMap;
@@ -12,12 +11,12 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 
-public class ItemsInventory extends InventoryBuilder {
+public final class ItemsInventory extends InventoryBuilder {
 
     private static final int FIRST_CONTENT_SLOT = 9;
     private static final int FIRST_FILTER_SLOT = 2;
 
-    private final ForceItemBattle forceItemBattle;
+    private final ItemDifficultiesManager items;
     private final HashMap<Integer, HashMap<Integer, ItemStack>> pages = new HashMap<>();
     private final int[] currentPage = {0};
     private Filter currentFilter = Filter.ALL;
@@ -60,14 +59,13 @@ public class ItemsInventory extends InventoryBuilder {
         }
     }
 
-    public ItemsInventory(ForceItemBattle forceItemBattle, Player player) {
+    public ItemsInventory(ItemDifficultiesManager items, Player player) {
         super(9 * 6, Text.of("<dark_gray>» <gold>Items <gray>("
-                + forceItemBattle.getItemDifficultiesManager().getAllItems().size()
+                + items.getAllItems().size()
                 + ") <dark_gray>● <gray>Settings"));
 
-        this.forceItemBattle = forceItemBattle;
+        this.items = items;
 
-        /* TOP-BORDER */
         this.setItems(0, 8, GuiItems.border());
 
         drawFilterButtons(player);
@@ -126,7 +124,7 @@ public class ItemsInventory extends InventoryBuilder {
     }
 
     private void setFilteredItems() {
-        ItemDifficultiesManager items = this.forceItemBattle.getItemDifficultiesManager();
+        ItemDifficultiesManager items = this.items;
 
         int slot = FIRST_CONTENT_SLOT;
         int page = 0;

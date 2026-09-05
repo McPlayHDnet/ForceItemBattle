@@ -1,6 +1,7 @@
 package forceitembattle.commands.player;
 
-import forceitembattle.ForceItemBattle;
+import forceitembattle.commands.Precondition;
+import java.util.List;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.util.Text;
 import java.util.HashSet;
@@ -8,17 +9,22 @@ import java.util.Set;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-public class CommandShout extends CustomCommand {
+public final class CommandShout extends CustomCommand {
 
     private static final Set<Player> shoutingPlayers = new HashSet<>();
 
-    public CommandShout(ForceItemBattle plugin) {
-        super(plugin, "shout");
+    public CommandShout() {
+        super("shout");
         setDescription("Send global message when team chat is enabled");
     }
 
     public static boolean isShouting(Player player) {
         return shoutingPlayers.contains(player);
+    }
+
+    @Override
+    protected List<Precondition> preconditions() {
+        return List.of();
     }
 
     @Override

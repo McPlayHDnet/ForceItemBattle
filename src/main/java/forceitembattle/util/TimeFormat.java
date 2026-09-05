@@ -1,11 +1,8 @@
 package forceitembattle.util;
 
 /**
- * Countdown rendering for the surfaces that show one — the tab footer's pool and trader timers, and
- * a running random event's own clock.
- *
- * Kept in one place so every countdown in the game turns red at the same moment; a player reading
- * two timers side by side in the same footer should not have to learn two colour scales.
+ * Countdown rendering. Kept in one place so every countdown in the game turns red at the same
+ * moment: a player reading two timers side by side should not have to learn two colour scales.
  */
 public final class TimeFormat {
 
@@ -35,12 +32,40 @@ public final class TimeFormat {
     }
 
     /**
-     * A world's time of day as {@code HH:mm}.
+     * A duration as {@code 1h 5m 30s}, dropping any zero component.
      *
-     * Minecraft's day starts at sunrise, not midnight: tick 0 is 06:00 and a full day is 24000
-     * ticks, so the six-hour offset has to be added before wrapping. Reading the raw tick count as
-     * a clock is off by a quarter of a day, which is exactly enough to make "it's about to get
-     * dark" wrong.
+     * <p>Two warts pinned by tests rather than fixed, so changing either is a decision: zero renders
+     * as the empty string, and a duration ending on hours or minutes keeps a trailing space.
+     */
+    public static String humanised(int totalSeconds) {
+        int seconds = totalSeconds % 60;
+        int minutes = (totalSeconds / 60) % 60;
+        int hours = totalSeconds / 60 / 60;
+
+        String time = "";
+        if (hours != 0) time += hours + "h ";
+        if (minutes != 0) time += minutes + "m ";
+        if (seconds != 0) time += seconds + "s";
+
+        return time;
+    }
+
+    /**
+     * How a countdown milestone is spoken: {@code 5 minutes left}, {@code 1 minute left},
+     * {@code 30 seconds left}. Whole minutes are said in minutes, everything else in seconds.
+     */
+    public static String countdownPhrase(int secondsLeft) {
+        if (secondsLeft % 60 == 0) {
+            int minutes = secondsLeft / 60;
+            return minutes + (minutes == 1 ? " minute" : " minutes") + " left";
+        }
+        return secondsLeft + " seconds left";
+    }
+
+    /**
+     * A world's time of day as {@code HH:mm}. Minecraft's day starts at sunrise, not midnight — tick
+     * 0 is 06:00 — so the six-hour offset has to be added before wrapping. Reading the raw tick
+     * count as a clock is off by a quarter of a day.
      */
     public static String worldClock(long timeTicks) {
         long minutesOfDay = Math.floorMod((timeTicks * 60 / 1000) + 6 * 60, 1440L);

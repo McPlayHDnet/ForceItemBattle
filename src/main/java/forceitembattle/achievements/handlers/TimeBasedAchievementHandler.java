@@ -1,10 +1,12 @@
 package forceitembattle.achievements.handlers;
 
-import forceitembattle.ForceItemBattle;
+import forceitembattle.achievements.AchievementListener;
+import forceitembattle.achievements.AchievementWorld;
 import forceitembattle.achievements.Trigger;
 import forceitembattle.achievements.progress.TimeAchievementProgress;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.ScoreOwner;
 import org.bukkit.event.Event;
 
 public class TimeBasedAchievementHandler implements AchievementHandler<TimeAchievementProgress> {
@@ -64,24 +66,21 @@ public class TimeBasedAchievementHandler implements AchievementHandler<TimeAchie
     }
 
     @Override
-    public boolean check(Event event, TimeAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin) {
+    public boolean check(Event event, TimeAchievementProgress progress, ForceItemPlayer forceItemPlayer, AchievementWorld world) {
         if (!(event instanceof FoundItemEvent foundEvent)) {
             return false;
         }
 
-        ForceItemBattle fib = plugin;
-        // Pause-aware game clock: the Timer only counts down during MID_GAME, so
-        // deriving elapsed/remaining from it (instead of wall time) stays correct
-        // across /pause and /resume. Mirrors ItemDifficultiesManager's elapsed calc.
-        int gameDuration = fib.getGamemanager().getGameDuration();
-        int secondsLeft = fib.getTimerManager().getTimeLeft();
-        long elapsedGameTime = gameDuration - secondsLeft;
+        // Pause-aware game clock: the round clock only advances during MID_GAME, so anything
+        // derived from it (rather than from wall time) stays correct across /pause and /resume.
+        int secondsLeft = world.secondsLeft();
+        long elapsedGameTime = world.elapsedSeconds();
 
         // Anchor per-item markers to the round start on first use. The first item
         // is assigned at game start, i.e. when secondsLeft == gameDuration.
         if (!progress.initialized) {
-            progress.lastItemSecondsLeft = gameDuration;
-            progress.itemReceivedSecondsLeft = gameDuration;
+            progress.lastItemSecondsLeft = world.roundDuration();
+            progress.itemReceivedSecondsLeft = world.roundDuration();
             progress.initialized = true;
         }
 
@@ -123,21 +122,17 @@ public class TimeBasedAchievementHandler implements AchievementHandler<TimeAchie
                 return false;
             }
 
-            boolean isFirstGlobally;
-            if (forceItemPlayer.currentTeam() != null) {
-                var ownTeam = forceItemPlayer.currentTeam();
-                isFirstGlobally = fib.getTeamManager().getTeams().stream().allMatch(team -> {
-                    long collected = team.getFoundItems().stream()
-                            .filter(item -> !item.usedSkip())
-                            .count();
-                    return team.equals(ownTeam) ? collected <= 1 : collected == 0;
-                });
-            } else {
-                isFirstGlobally = fib.getGamemanager().forceItemPlayerMap().values().stream()
-                        .filter(p -> !p.isSpectator())
-                        .allMatch(p -> p.foundItems().isEmpty() ||
-                                p.player().getUniqueId().equals(forceItemPlayer.player().getUniqueId()));
-            }
+            // Nobody else has a real find yet, and this player's owner has exactly the one just
+            // recorded. The find lands before this runs -- FoundItemListener is registered ahead of
+            // AchievementListener on the same event -- which is why the owner's own count may be 1.
+            // Skips are filtered out: a rival who merely skipped an item must not block this.
+            ScoreOwner own = forceItemPlayer.scoreOwner();
+            boolean isFirstGlobally = world.scoreOwners().stream().allMatch(owner -> {
+                long collected = owner.foundItems().stream()
+                        .filter(item -> !item.usedSkip())
+                        .count();
+                return owner.equals(own) ? collected <= 1 : collected == 0;
+            });
 
             if (isFirstGlobally) {
                 progress.firstItemCollected = true;

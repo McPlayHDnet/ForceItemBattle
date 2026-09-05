@@ -1,6 +1,6 @@
 package forceitembattle.gui;
 
-import forceitembattle.ForceItemBattle;
+import forceitembattle.manager.RecipeManager;
 import forceitembattle.manager.customrecipe.ToolRecipe;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.util.Text;
@@ -26,7 +26,7 @@ import org.bukkit.inventory.SmithingTrimRecipe;
 import org.bukkit.inventory.SmokingRecipe;
 import org.bukkit.inventory.StonecuttingRecipe;
 
-public class RecipeInventory extends InventoryBuilder {
+public final class RecipeInventory extends InventoryBuilder {
 
     public static final int NEXT_RECIPE_ITEM_SLOT = 8;
     public static final int PREVIOUS_RECIPE_ITEM_SLOT = 0;
@@ -45,7 +45,7 @@ public class RecipeInventory extends InventoryBuilder {
     private static final int SMITHING_FIRST_ITEM_SLOT = 19;
     private static final int OTHER_FIRST_ITEM_SLOT = 20;
 
-    public RecipeInventory(ForceItemBattle forceItemBattle, RecipeViewer recipeViewer, Player player) {
+    public RecipeInventory(RecipeManager recipes, RecipeViewer recipeViewer, Player player) {
         super(9 * 5, Text.of("<dark_gray>● <dark_aqua>" +
                 materialName(recipeViewer.itemStack().getType()) +
                 " <dark_gray>» <gray>" + (recipeViewer.currentRecipeIndex() + 1) + "<dark_gray>/<gray>" + recipeViewer.pages()
@@ -57,13 +57,13 @@ public class RecipeInventory extends InventoryBuilder {
             }
         }
 
-        if (forceItemBattle.getRecipeManager().closeHandlers.containsKey(recipeViewer.uuid())) {
-            forceItemBattle.getRecipeManager().handleRecipeClose(player);
+        if (recipes.closeHandlers.containsKey(recipeViewer.uuid())) {
+            recipes.handleRecipeClose(player);
         }
 
-        forceItemBattle.getRecipeManager().ignoreCloseHandler.put(recipeViewer.uuid(), false);
+        recipes.ignoreCloseHandler.put(recipeViewer.uuid(), false);
 
-        forceItemBattle.getRecipeManager().closeHandlers.put(recipeViewer.uuid(), () -> forceItemBattle.getRecipeManager().ignoreCloseHandler.remove(player.getUniqueId()));
+        recipes.closeHandlers.put(recipeViewer.uuid(), () -> recipes.ignoreCloseHandler.remove(player.getUniqueId()));
 
         this.addUpdateHandler(() -> {
             this.setItem(PREVIOUS_RECIPE_ITEM_SLOT, GuiItems.previous("Previous Recipe"), event -> {
@@ -84,7 +84,7 @@ public class RecipeInventory extends InventoryBuilder {
                 recipeViewer.setCurrentRecipeIndex(currentRecipeIndex);
                 recipeViewer.setRecipe(recipeViewer.recipes().get(recipeViewer.currentRecipeIndex()));
 
-                new RecipeInventory(forceItemBattle, recipeViewer, player).open(player);
+                new RecipeInventory(recipes, recipeViewer, player).open(player);
             });
 
             this.setItem(NEXT_RECIPE_ITEM_SLOT, GuiItems.next("Next Recipe"), inventoryClickEvent -> {
@@ -106,7 +106,7 @@ public class RecipeInventory extends InventoryBuilder {
                 recipeViewer.setCurrentRecipeIndex(currentRecipeIndex);
                 recipeViewer.setRecipe(recipeViewer.recipes().get(recipeViewer.currentRecipeIndex()));
 
-                new RecipeInventory(forceItemBattle, recipeViewer, player).open(player);
+                new RecipeInventory(recipes, recipeViewer, player).open(player);
             });
         });
 
@@ -127,7 +127,7 @@ public class RecipeInventory extends InventoryBuilder {
                         this.setItem(slot, this.choiceWithLore(materialChoice, recipeViewer));
 
                     } else if (choice != null) {
-                        this.setItem(slot, new ItemStack(choice.getItemStack()));
+                        this.setItem(slot, firstStackOf(choice));
                     }
                     charIndex++;
                 }
@@ -140,7 +140,7 @@ public class RecipeInventory extends InventoryBuilder {
                 if (recipeChoice instanceof RecipeChoice.MaterialChoice materialChoice) {
                     ingredients.add(this.choiceWithLore(materialChoice, recipeViewer));
                 } else if (recipeChoice != null) {
-                    ingredients.add(new ItemStack(recipeChoice.getItemStack()));
+                    ingredients.add(firstStackOf(recipeChoice));
                 }
             }
 
@@ -157,46 +157,34 @@ public class RecipeInventory extends InventoryBuilder {
 
         }
         if (recipeViewer.recipe() instanceof SmithingTrimRecipe smithing) {
-            ingredients.add(smithing.getBase().getItemStack());
-            ingredients.add(smithing.getTemplate().getItemStack());
-            ingredients.add(smithing.getAddition().getItemStack());
+            ingredients.add(firstStackOf(smithing.getBase()));
+            ingredients.add(firstStackOf(smithing.getTemplate()));
+            ingredients.add(firstStackOf(smithing.getAddition()));
 
-            int index = 0;
-            for (ItemStack ingredient : ingredients) {
-                this.setItem(OTHER_FIRST_ITEM_SLOT + index, ingredient);
-                index++;
-            }
+            this.placeSequentially(OTHER_FIRST_ITEM_SLOT, ingredients);
 
         } else if (recipeViewer.recipe() instanceof SmithingTransformRecipe smithing) {
-            ingredients.add(smithing.getBase().getItemStack());
-            ingredients.add(smithing.getTemplate().getItemStack());
-            ingredients.add(smithing.getAddition().getItemStack());
+            ingredients.add(firstStackOf(smithing.getBase()));
+            ingredients.add(firstStackOf(smithing.getTemplate()));
+            ingredients.add(firstStackOf(smithing.getAddition()));
 
-            int index = 0;
-            for (ItemStack ingredient : ingredients) {
-                this.setItem(SMITHING_FIRST_ITEM_SLOT + index, ingredient);
-                index++;
-            }
+            this.placeSequentially(SMITHING_FIRST_ITEM_SLOT, ingredients);
 
         } else if (recipeViewer.recipe() instanceof SmithingRecipe smithing) {
             // A smithing recipe that isn't a transform or trim: no template to show.
-            ingredients.add(smithing.getAddition().getItemStack());
-            ingredients.add(smithing.getBase().getItemStack());
+            ingredients.add(firstStackOf(smithing.getAddition()));
+            ingredients.add(firstStackOf(smithing.getBase()));
 
-            int index = 0;
-            for (ItemStack ingredient : ingredients) {
-                this.setItem(SMITHING_FIRST_ITEM_SLOT + index, ingredient);
-                index++;
-            }
+            this.placeSequentially(SMITHING_FIRST_ITEM_SLOT, ingredients);
         }
         if (recipeViewer.recipe() instanceof MerchantRecipe merchant) {
-            ItemStack fixed = new ItemStack(merchant.getResult().getType(), 1, (byte) 0);
+            ItemStack fixed = new ItemStack(merchant.getResult().getType(), 1);
             ingredients.add(fixed);
 
             this.setItem(OTHER_FIRST_ITEM_SLOT, fixed);
         }
         if (recipeViewer.recipe() instanceof StonecuttingRecipe stonecutting) {
-            ItemStack fixed = new ItemStack(stonecutting.getInput());
+            ItemStack fixed = firstStackOf(stonecutting.getInputChoice());
             ingredients.add(fixed);
 
             this.setItem(OTHER_FIRST_ITEM_SLOT, fixed);
@@ -226,18 +214,17 @@ public class RecipeInventory extends InventoryBuilder {
                 if (itemStack == null) {
                     return;
                 }
-                if (Bukkit.getRecipesFor(itemStack).isEmpty()) {
+                List<Recipe> itemRecipes = Bukkit.getRecipesFor(itemStack);
+                if (itemRecipes.isEmpty()) {
                     player.sendMessage(Text.of("<red>There is no recipe for this item. Just find it lol"));
                     return;
                 }
                 recipeViewer.setCurrentRecipeIndex(0);
                 recipeViewer.setItemStack(itemStack);
-                if (Bukkit.getRecipesFor(recipeViewer.itemStack()).size() > 1) {
-                    recipeViewer.setRecipe(Bukkit.getRecipesFor(recipeViewer.itemStack()).get(recipeViewer.currentRecipeIndex()));
-                } else {
-                    recipeViewer.setRecipe(Bukkit.getRecipesFor(recipeViewer.itemStack()).get(0));
-                }
-                new RecipeInventory(forceItemBattle, recipeViewer, player).open(player);
+                // The index was just reset to 0, so the multi-recipe and single-recipe branches this
+                // replaces both selected the first one.
+                recipeViewer.setRecipe(itemRecipes.getFirst());
+                new RecipeInventory(recipes, recipeViewer, player).open(player);
 
             } else {
                 player.sendMessage(Text.of("<red>Sneak click to show recipe for this item!"));
@@ -245,11 +232,18 @@ public class RecipeInventory extends InventoryBuilder {
         });
 
         this.addCloseHandler(inventoryCloseEvent -> {
-            if (forceItemBattle.getRecipeManager().isShowingRecipe(player) && !forceItemBattle.getRecipeManager().ignoreInventoryClosed(player)) {
+            if (recipes.isShowingRecipe(player) && !recipes.ignoreInventoryClosed(player)) {
                 inventoryCloseEvent.getInventory().clear();
-                forceItemBattle.getRecipeManager().handleRecipeClose(player);
+                recipes.handleRecipeClose(player);
             }
         });
+    }
+
+    /** Lays stacks out in consecutive slots from {@code firstSlot}. */
+    private void placeSequentially(int firstSlot, List<ItemStack> stacks) {
+        for (int i = 0; i < stacks.size(); i++) {
+            this.setItem(firstSlot + i, stacks.get(i));
+        }
     }
 
     private static String materialName(Material type) {
@@ -257,38 +251,46 @@ public class RecipeInventory extends InventoryBuilder {
     }
 
     public static ItemStack getStationItem(Recipe recipe) {
+        // ToolRecipe first: it extends ShapelessRecipe, and it brings its own display stack rather
+        // than a station material.
         if (recipe instanceof ToolRecipe toolRecipe) {
             return toolRecipe.getStationDisplay();
-
-        } else if (recipe instanceof ShapedRecipe) {
-            return new ItemStack(Material.CRAFTING_TABLE);
-
-        } else if (recipe instanceof ShapelessRecipe) {
-            return new ItemStack(Material.CRAFTING_TABLE);
-
-        } else if (recipe instanceof FurnaceRecipe) {
-            return new ItemStack(Material.FURNACE);
-
-        } else if (recipe instanceof SmithingRecipe) {
-            return new ItemStack(Material.SMITHING_TABLE);
-
-        } else if (recipe instanceof SmokingRecipe) {
-            return new ItemStack(Material.SMOKER);
-
-        } else if (recipe instanceof BlastingRecipe) {
-            return new ItemStack(Material.BLAST_FURNACE);
-
-        } else if (recipe instanceof CampfireRecipe) {
-            return new ItemStack(Material.CAMPFIRE);
-
-        } else if (recipe instanceof StonecuttingRecipe) {
-            return new ItemStack(Material.STONECUTTER);
-
-        } else if (recipe instanceof MerchantRecipe) {
-            return new ItemStack(Material.VILLAGER_SPAWN_EGG);
-        } else {
-            return null;
         }
+
+        Material station = switch (recipe) {
+            case ShapedRecipe ignored -> Material.CRAFTING_TABLE;
+            case ShapelessRecipe ignored -> Material.CRAFTING_TABLE;
+            case FurnaceRecipe ignored -> Material.FURNACE;
+            case SmithingRecipe ignored -> Material.SMITHING_TABLE;
+            case SmokingRecipe ignored -> Material.SMOKER;
+            case BlastingRecipe ignored -> Material.BLAST_FURNACE;
+            case CampfireRecipe ignored -> Material.CAMPFIRE;
+            case StonecuttingRecipe ignored -> Material.STONECUTTER;
+            case MerchantRecipe ignored -> Material.VILLAGER_SPAWN_EGG;
+            default -> null;
+        };
+
+        return station == null ? null : new ItemStack(station);
+    }
+
+    /**
+     * The stack a recipe choice is drawn as: its first alternative.
+     *
+     * <p>Replaces {@code RecipeChoice.getItemStack()}, which Paper deprecated "for compatibility
+     * only" — it is the same behaviour, spelled out. An {@code ExactChoice} carries stacks and hands
+     * back a clone of the first; a {@code MaterialChoice} carries materials and builds one. The
+     * deprecated method also stamped {@code Short.MAX_VALUE} durability on a multi-material choice,
+     * which is legacy damage-value signalling and does nothing here — every multi-material choice
+     * this GUI draws goes through choiceWithLore instead, which cycles the alternatives.
+     */
+    private static ItemStack firstStackOf(RecipeChoice choice) {
+        if (choice instanceof RecipeChoice.ExactChoice exact) {
+            return exact.getChoices().get(0).clone();
+        }
+        if (choice instanceof RecipeChoice.MaterialChoice material) {
+            return new ItemStack(material.getChoices().get(0));
+        }
+        return new ItemStack(Material.AIR);
     }
 
     private ItemStack choiceWithLore(RecipeChoice.MaterialChoice materialChoice, RecipeViewer recipeViewer) {

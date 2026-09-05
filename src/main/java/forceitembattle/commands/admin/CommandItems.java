@@ -1,21 +1,31 @@
 package forceitembattle.commands.admin;
 
-import forceitembattle.ForceItemBattle;
+import static forceitembattle.commands.Precondition.OP;
 import forceitembattle.commands.CustomCommand;
+import forceitembattle.commands.Precondition;
 import forceitembattle.gui.ItemsInventory;
+import forceitembattle.manager.ItemDifficultiesManager;
+import java.util.List;
 import org.bukkit.entity.Player;
 
-public class CommandItems extends CustomCommand {
+public final class CommandItems extends CustomCommand {
 
-    public CommandItems(ForceItemBattle plugin) {
-        super(plugin, "items");
+    private final ItemDifficultiesManager items;
+
+    public CommandItems(ItemDifficultiesManager items) {
+        super("items");
+        this.items = items;
 
         setDescription("Show all available items");
     }
 
     @Override
+    protected List<Precondition> preconditions() {
+        return List.of(OP);
+    }
+
+    @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (!requireOp(player)) return;
-        new ItemsInventory(this.plugin, player).open(player);
+        new ItemsInventory(this.items, player).open(player);
     }
 }

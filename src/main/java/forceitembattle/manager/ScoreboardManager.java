@@ -1,12 +1,12 @@
 package forceitembattle.manager;
 
-import forceitembattle.ForceItemBattle;
-import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ActiveTrader;
-import forceitembattle.settings.GameSetting;
-import forceitembattle.settings.GameSettings;
+import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.Roster;
+import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Text;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import net.kyori.adventure.text.Component;
@@ -18,10 +18,18 @@ import org.bukkit.scoreboard.Team;
 
 public class ScoreboardManager implements Manager {
 
-    private final ForceItemBattle plugin;
+    private final Roster roster;
+    private final GameSettings settings;
+    private final WanderingTraderManager wanderingTraderManager;
+    private final ItemDifficultiesManager itemDifficultiesManager;
 
-    public ScoreboardManager(ForceItemBattle plugin) {
-        this.plugin = plugin;
+    public ScoreboardManager(Roster roster, GameSettings settings,
+                             WanderingTraderManager wanderingTraderManager,
+                             ItemDifficultiesManager itemDifficultiesManager) {
+        this.roster = roster;
+        this.settings = settings;
+        this.wanderingTraderManager = wanderingTraderManager;
+        this.itemDifficultiesManager = itemDifficultiesManager;
     }
 
     public void setupForPlayer(Player player) {
@@ -32,19 +40,35 @@ public class ScoreboardManager implements Manager {
     }
 
     public void updateAllPlayers() {
+        List<Nameplate> nameplates = buildNameplates();
         for (Player player : Bukkit.getOnlinePlayers()) {
-            updateForPlayer(player);
+            updateForPlayer(player, nameplates);
         }
     }
 
     public void updateForPlayer(Player viewer) {
-        Gamemanager gameManager = plugin.getGamemanager();
-        GameSettings settings = plugin.getSettings();
-        Scoreboard board = viewer.getScoreboard();
+        updateForPlayer(viewer, buildNameplates());
+    }
 
-        board.getTeams().forEach(Team::unregister);
+    /**
+     * One rostered player's row, as it appears on <em>every</em> board: none of it depends on who is
+     * looking.
+     */
+    private record Nameplate(String teamName, Component prefix, Component suffix, Player target) {
+    }
 
-        List<ForceItemPlayer> fibPlayers = gameManager.forceItemPlayerMap().values()
+    /**
+     * Builds every row once.
+     *
+     * <p>This used to happen inside {@link #updateForPlayer(Player)}, which meant one sort and two
+     * MiniMessage parses per rostered player <em>per viewer</em> — quadratic in the player count, on
+     * a method called on every find. Components are immutable, so a single instance is safe to hand
+     * to every board.
+     */
+    private List<Nameplate> buildNameplates() {
+        List<Nameplate> nameplates = new ArrayList<>();
+
+        List<ForceItemPlayer> fibPlayers = this.roster.players().values()
                 .stream()
                 .sorted(Comparator.comparingInt(p -> {
                     forceitembattle.model.Team team = p.currentTeam();
@@ -56,37 +80,49 @@ public class ScoreboardManager implements Manager {
             Player target = fibPlayer.player();
             if (target == null) continue;
 
-            String teamName = getUniqueTeamName(settings, fibPlayer);
-            org.bukkit.scoreboard.Team team = board.getTeam(teamName);
-            if (team == null) {
-                team = board.registerNewTeam(teamName);
-            }
-
-            if (settings.isSettingEnabled(GameSetting.TEAM) && fibPlayer.currentTeam() != null) {
-                team.prefix(Text.of(fibPlayer.currentTeam().getTeamDisplay() + " "));
-            } else {
-                team.prefix(Text.of(""));
-            }
+            Component prefix = fibPlayer.isInTeam()
+                    ? Text.of(fibPlayer.currentTeam().getTeamDisplay() + " ")
+                    : Text.of("");
 
             Material mat = fibPlayer.activeMaterial();
-
+            Component suffix;
             if (mat != null) {
-                String itemIcon = this.plugin
-                        .getItemDifficultiesManager()
+                String itemIcon = this.itemDifficultiesManager
                         .getUnicodeFromMaterial(true, mat);
 
-                team.suffix(Text.of(
+                suffix = Text.of(
                         " <gray>[<gold>" + CustomMaterials.nameOf(mat)
                                 + " <reset><shadow:black:0.4>" + itemIcon + "</shadow><gray>]"
-                ));
+                );
             } else {
-                team.suffix(Component.empty());
+                suffix = Component.empty();
             }
 
-            team.addPlayer(fibPlayer.player());
+            nameplates.add(new Nameplate(
+                    getUniqueTeamName(this.settings, fibPlayer), prefix, suffix, target));
+        }
+        return nameplates;
+    }
+
+    private void updateForPlayer(Player viewer, List<Nameplate> nameplates) {
+        Scoreboard board = viewer.getScoreboard();
+
+        board.getTeams().forEach(Team::unregister);
+
+        for (Nameplate nameplate : nameplates) {
+            // Teammates share a team name ("T_<id>"), so the second one finds the team the first
+            // registered. Registering it twice would throw.
+            org.bukkit.scoreboard.Team team = board.getTeam(nameplate.teamName());
+            if (team == null) {
+                team = board.registerNewTeam(nameplate.teamName());
+            }
+
+            team.prefix(nameplate.prefix());
+            team.suffix(nameplate.suffix());
+            team.addPlayer(nameplate.target());
         }
 
-        for (ActiveTrader trader : this.plugin.getWanderingTraderManager().activeTraders()) {
+        for (ActiveTrader trader : this.wanderingTraderManager.activeTraders()) {
             String name = "TRADER_" + trader.getKind().name();
             org.bukkit.scoreboard.Team traderTeam = board.getTeam(name);
             if (traderTeam == null) {
@@ -98,7 +134,7 @@ public class ScoreboardManager implements Manager {
     }
 
     private String getUniqueTeamName(GameSettings settings, ForceItemPlayer fibPlayer) {
-        if (!settings.isSettingEnabled(GameSetting.TEAM) || fibPlayer.currentTeam() == null) {
+        if (!fibPlayer.isInTeam()) {
             return "P_" + fibPlayer.player().getUniqueId().toString().substring(0, 10);
         }
         return "T_" + fibPlayer.currentTeam().getTeamId();

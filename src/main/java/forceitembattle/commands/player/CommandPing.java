@@ -1,15 +1,21 @@
 package forceitembattle.commands.player;
 
-import forceitembattle.ForceItemBattle;
+import forceitembattle.commands.Precondition;
+import java.util.List;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.util.Text;
 import org.bukkit.entity.Player;
 
-public class CommandPing extends CustomCommand {
+public final class CommandPing extends CustomCommand {
 
-    public CommandPing(ForceItemBattle plugin) {
-        super(plugin, "ping");
+    public CommandPing() {
+        super("ping");
         setDescription("Check your ping");
+    }
+
+    @Override
+    protected List<Precondition> preconditions() {
+        return List.of();
     }
 
     @Override

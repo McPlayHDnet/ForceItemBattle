@@ -1,9 +1,9 @@
 package forceitembattle.achievements.handlers;
 
-import forceitembattle.ForceItemBattle;
+import forceitembattle.achievements.AchievementWorld;
+import forceitembattle.achievements.CustomItemSpec;
 import forceitembattle.achievements.Trigger;
 import forceitembattle.achievements.progress.SimpleAchievementProgress;
-import forceitembattle.model.CustomItem;
 import forceitembattle.model.ForceItemPlayer;
 import java.util.List;
 import org.bukkit.Material;
@@ -16,11 +16,11 @@ public class LootAchievementHandler implements AchievementHandler<SimpleAchievem
 
     private final int targetAmount;
     private final NamespacedKey lootTableKey; // null = any loot table
-    private final CustomItem customItem;      // null = don't require a specific item
+    private final CustomItemSpec customItem;      // null = don't require a specific item
     private final boolean neededItem;         // true = match the player's current needed material
 
     public LootAchievementHandler(int targetAmount, NamespacedKey lootTableKey,
-                                  CustomItem customItem, boolean neededItem) {
+                                  CustomItemSpec customItem, boolean neededItem) {
         if (targetAmount < 1) {
             throw new IllegalArgumentException("targetAmount must be at least 1");
         }
@@ -36,7 +36,7 @@ public class LootAchievementHandler implements AchievementHandler<SimpleAchievem
     }
 
     @Override
-    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin) {
+    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer, AchievementWorld world) {
         if (!(event instanceof LootGenerateEvent lootEvent)) {
             return false;
         }
@@ -53,12 +53,7 @@ public class LootAchievementHandler implements AchievementHandler<SimpleAchievem
 
         if (neededItem) {
             Material needed = forceItemPlayer.activeMaterial();
-            for (ItemStack item : loot) {
-                if (item != null && item.getType() == needed) {
-                    return true;
-                }
-            }
-            return false;
+            return loot.stream().anyMatch(item -> item != null && item.getType() == needed);
         }
 
         if (customItem != null) {

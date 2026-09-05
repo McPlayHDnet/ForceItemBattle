@@ -1,23 +1,29 @@
 package forceitembattle.commands;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.manager.Manager;
+import forceitembattle.model.Roster;
+import forceitembattle.model.RoundPhase;
+import forceitembattle.settings.GameSettings;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabCompleter;
+import org.bukkit.plugin.java.JavaPlugin;
 
 @Getter
 @RequiredArgsConstructor
 public class CommandsManager implements Manager {
 
-    private final ForceItemBattle plugin;
+    /** For {@code getCommand}/{@code getDescription}: registration is a Bukkit concern. */
+    private final JavaPlugin plugin;
 
-    /**
-     * Commands list used for /help
-     */
+    private final RoundPhase roundPhase;
+    private final GameSettings settings;
+    private final Roster roster;
+
+    /** Used for /help. */
     private final List<CustomCommand> commands = new ArrayList<>();
 
     public void registerCommand(CustomCommand customCommand) {
@@ -27,6 +33,11 @@ public class CommandsManager implements Manager {
         if (command == null) {
             throw new IllegalArgumentException("Command " + name + " does not exist in plugin.yml");
         }
+
+        customCommand.setContext(new CommandContext(
+                this.roundPhase,
+                this.settings.getRuleset(),
+                this.roster));
 
         command.setExecutor(customCommand);
         if (customCommand instanceof TabCompleter tabCompleter) {
@@ -40,13 +51,10 @@ public class CommandsManager implements Manager {
      * Warns about commands declared in the generated plugin.yml that no {@link CustomCommand} ever
      * claimed. Call once, after every command has been registered.
      *
-     * The command list is maintained twice — the {@code bukkitPluginYaml} block in build.gradle.kts
-     * and {@code initCommands()} — and only one direction of drift was caught: registering an
-     * executor for a name that isn't declared throws above. The other direction was silent, which is
-     * how {@code asktrade} sat in plugin.yml with no executor behind it while the class that looked
-     * like it owned that name was actually called {@code trade}. A declared command with no executor
-     * still exists to the server: it tab-completes, passes the "unknown command" check, and then
-     * does nothing but print its usage line.
+     * <p>The list is maintained twice — the {@code bukkitPluginYaml} block in build.gradle.kts and
+     * {@code initCommands()} — and only one direction of drift throws: registering an executor for an
+     * undeclared name. The other is silent, and a declared command with no executor still exists to
+     * the server, tab-completing and passing the "unknown command" check before doing nothing.
      */
     public void warnAboutUnboundCommands() {
         for (String name : this.plugin.getDescription().getCommands().keySet()) {

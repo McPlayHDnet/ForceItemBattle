@@ -1,7 +1,9 @@
 package forceitembattle.listener;
 
-import forceitembattle.ForceItemBattle;
+import forceitembattle.model.RoundPhase;
+import forceitembattle.settings.GameSettings;
 import forceitembattle.settings.GameSetting;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
@@ -20,7 +22,14 @@ import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
 @RequiredArgsConstructor
 public class PvPListener implements Listener {
 
-    private final ForceItemBattle plugin;
+    /** Environmental burns that can be pinned on a nearby player, so they count as PvP. */
+    private static final Set<EntityDamageEvent.DamageCause> FIRE_CAUSES = Set.of(
+            EntityDamageEvent.DamageCause.FIRE,
+            EntityDamageEvent.DamageCause.FIRE_TICK,
+            EntityDamageEvent.DamageCause.LAVA);
+
+    private final RoundPhase roundPhase;
+    private final GameSettings settings;
 
     @EventHandler
     public void onTntIgnited(EntitySpawnEvent e) {
@@ -49,18 +58,14 @@ public class PvPListener implements Listener {
     }
 
     public int getPlayersNearby(Block block) {
-        int totalPlayers = 0;
-        for (Entity entity : block.getWorld().getNearbyEntities(block.getLocation(), 6, 6, 6)) {
-            if (entity instanceof Player) {
-                totalPlayers++;
-            }
-        }
-        return totalPlayers;
+        return (int) block.getWorld().getNearbyEntities(block.getLocation(), 6, 6, 6).stream()
+                .filter(Player.class::isInstance)
+                .count();
     }
 
     @EventHandler
     public void onEntityDamage(EntityDamageEvent event) {
-        if (!this.plugin.getGamemanager().isMidGame()) {
+        if (!this.roundPhase.roundRunning()) {
             event.setCancelled(true);
         }
 
@@ -68,7 +73,7 @@ public class PvPListener implements Listener {
             return;
         }
 
-        if (event.getCause() == EntityDamageEvent.DamageCause.FIRE || event.getCause() == EntityDamageEvent.DamageCause.FIRE_TICK || event.getCause() == EntityDamageEvent.DamageCause.LAVA) {
+        if (FIRE_CAUSES.contains(event.getCause())) {
             for (Entity nearby : event.getEntity().getNearbyEntities(6, 6, 6)) {
                 if (!(nearby instanceof Player)) {
                     continue;
@@ -85,13 +90,13 @@ public class PvPListener implements Listener {
 
     @EventHandler
     public void onEntityTarget(EntityTargetLivingEntityEvent event) {
-        if (this.plugin.getGamemanager().isPausedGame() && event.getTarget() instanceof Player) {
+        if (this.roundPhase.isPausedGame() && event.getTarget() instanceof Player) {
             event.setCancelled(true);
         }
     }
 
     private boolean isPvpEnabled() {
-        return this.plugin.getSettings().isSettingEnabled(GameSetting.PVP);
+        return this.settings.isSettingEnabled(GameSetting.PVP);
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -117,12 +122,12 @@ public class PvPListener implements Listener {
     }
 
     private Object getEntityOrigin(Entity entity) {
-        if (entity instanceof Projectile) {
-            return ((Projectile) entity).getShooter();
+        if (entity instanceof Projectile projectile) {
+            return projectile.getShooter();
         }
 
-        if (entity instanceof TNTPrimed) {
-            return ((TNTPrimed) entity).getSource();
+        if (entity instanceof TNTPrimed tntPrimed) {
+            return tntPrimed.getSource();
         }
 
         return entity;

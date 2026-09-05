@@ -5,42 +5,49 @@ import de.threeseconds.openapi.fibservice.client.api.FibCatalogueControllerApi;
 import de.threeseconds.openapi.fibservice.client.api.FibMatchControllerApi;
 import de.threeseconds.openapi.fibservice.client.api.FibStatisticsControllerApi;
 import de.threeseconds.openapi.fibservice.client.invoker.ApiClient;
-import de.threeseconds.openapi.fibservice.client.model.FibAchievementUnlockRequestDto;
-import de.threeseconds.openapi.fibservice.client.model.FibMatchSubmitRequestDto;
 import de.threeseconds.openapi.fibservice.client.model.FibSoloStatisticsUpdateRequestDto;
 import de.threeseconds.openapi.fibservice.client.model.FibTeamMemberStatsUpdateRequestDto;
-import de.threeseconds.openapi.fibservice.client.model.FibTeamStatisticsUpdateRequestDto;
-import forceitembattle.ForceItemBattle;
+import forceitembattle.achievements.AchievementManager;
+import forceitembattle.achievements.global.GlobalStatsCache;
+import forceitembattle.collection.CollectionManager;
 import forceitembattle.manager.Manager;
 import forceitembattle.util.Scheduler;
+import java.util.function.Supplier;
+import org.bukkit.plugin.Plugin;
 
 public class FIBServiceClient implements Manager {
 
     private static final String DEFAULT_BASE_URL = "http://127.0.0.7:29708";
 
-    private final ForceItemBattle plugin;
     private final ApiClient apiClient;
     private final ApiExecutor executor;
     private final FibStatisticsClient statistics;
+    private final StatisticsWrites statisticsWrites;
     private final FibAchievementClient achievements;
     private final FibMatchHistoryClient matchHistory;
     private final FibCatalogueClient catalogue;
 
-    public FIBServiceClient(ForceItemBattle plugin) {
-        this(plugin, DEFAULT_BASE_URL);
+    public FIBServiceClient(Plugin plugin, GlobalStatsCache globalStatsCache,
+                            Supplier<AchievementManager> achievementManager,
+                            Supplier<CollectionManager> collection) {
+        this(plugin, DEFAULT_BASE_URL, globalStatsCache, achievementManager, collection);
     }
 
-    public FIBServiceClient(ForceItemBattle plugin, String baseUrl) {
+    public FIBServiceClient(Plugin plugin, String baseUrl, GlobalStatsCache globalStatsCache,
+                            Supplier<AchievementManager> achievementManager,
+                            Supplier<CollectionManager> collection) {
         ApiClient client = new ApiClient();
         client.setBasePath(baseUrl);
-        this.plugin = plugin;
         this.apiClient = client;
 
         this.executor = new ApiExecutor(plugin);
-        this.statistics = new FibStatisticsClient(new FibStatisticsControllerApi(client), executor, plugin);
+        this.statistics = new FibStatisticsClient(new FibStatisticsControllerApi(client), executor,
+                globalStatsCache);
+        this.statisticsWrites = new StatisticsWrites(this.statistics);
         this.achievements = new FibAchievementClient(new FibAchievementControllerApi(client), executor);
-        this.matchHistory = new FibMatchHistoryClient(new FibMatchControllerApi(client), executor, plugin);
-        this.catalogue = new FibCatalogueClient(new FibCatalogueControllerApi(client), executor, plugin);
+        this.matchHistory = new FibMatchHistoryClient(new FibMatchControllerApi(client), executor,
+                achievementManager, collection);
+        this.catalogue = new FibCatalogueClient(new FibCatalogueControllerApi(client), executor, plugin, collection);
     }
 
     @Override
@@ -52,6 +59,11 @@ public class FIBServiceClient implements Manager {
         return statistics;
     }
 
+    /** The write rules. Reads go through {@link #statistics()}; nothing writes through both. */
+    public StatisticsWrites statisticsWrites() {
+        return statisticsWrites;
+    }
+
     public FibAchievementClient achievements() {
         return achievements;
     }
@@ -60,28 +72,12 @@ public class FIBServiceClient implements Manager {
         return matchHistory;
     }
 
-    public FibCatalogueClient catalogue() {
-        return catalogue;
-    }
-
     public static FibSoloStatisticsUpdateRequestDto soloUpdate() {
         return new FibSoloStatisticsUpdateRequestDto();
     }
 
-    public static FibTeamStatisticsUpdateRequestDto teamUpdate() {
-        return new FibTeamStatisticsUpdateRequestDto();
-    }
-
     public static FibTeamMemberStatsUpdateRequestDto memberUpdate() {
         return new FibTeamMemberStatsUpdateRequestDto();
-    }
-
-    public static FibAchievementUnlockRequestDto achievementUnlock() {
-        return new FibAchievementUnlockRequestDto();
-    }
-
-    public static FibMatchSubmitRequestDto matchSubmit() {
-        return new FibMatchSubmitRequestDto();
     }
 
     @Override

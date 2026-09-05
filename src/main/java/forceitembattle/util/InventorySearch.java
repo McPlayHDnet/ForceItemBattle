@@ -1,6 +1,6 @@
 package forceitembattle.util;
 
-import forceitembattle.manager.Gamemanager;
+import forceitembattle.model.GameItems;
 import java.util.Set;
 import org.bukkit.Material;
 import org.bukkit.Tag;
@@ -140,6 +140,6 @@ public final class InventorySearch {
 
     /** Null, or one of the plugin's own tool items — never counts as a found item. */
     private static boolean isPluginItem(@Nullable ItemStack item) {
-        return item == null || Gamemanager.isJoker(item) || Gamemanager.isBackpack(item);
+        return item == null || GameItems.isJoker(item) || GameItems.isBackpack(item);
     }
 }

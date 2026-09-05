@@ -1,158 +1,124 @@
 package forceitembattle.manager;
 
-import de.threeseconds.openapi.fibservice.client.model.FibPlayerStatsUpdateRequestDto;
-import forceitembattle.ForceItemBattle;
+import forceitembattle.achievements.AchievementManager;
 import forceitembattle.model.Dimension;
-import forceitembattle.model.GameContext;
-import forceitembattle.settings.GameSetting;
-import forceitembattle.settings.GamePreset;
-import forceitembattle.service.FIBServiceClient;
-import forceitembattle.service.FibStatisticsClient;
-import forceitembattle.service.MatchHistoryReporter;
-import forceitembattle.service.PlayerStatsWrite;
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.GameContext;
 import forceitembattle.model.GameState;
-import forceitembattle.gui.ItemBuilder;
+import forceitembattle.model.ResultCeremony;
+import forceitembattle.model.Roster;
+import forceitembattle.model.RoundClock;
+import forceitembattle.model.RoundPhase;
+import forceitembattle.model.ScoreOwner;
+import forceitembattle.model.Standings;
 import forceitembattle.model.Team;
+import forceitembattle.randomevents.RandomEventManager;
+import forceitembattle.service.FIBServiceClient;
+import forceitembattle.service.MatchHistoryReporter;
+import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Text;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Deque;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.function.ToIntFunction;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.GameMode;
 import org.bukkit.GameRules;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
-import org.bukkit.Sound;
 import org.bukkit.Statistic;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemFlag;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.plugin.Plugin;
 
 public class Gamemanager implements Manager {
 
-    public static final NamespacedKey BACKPACK_KEY = new NamespacedKey("fib", "backpack");
-    private static final Material JOKER_MATERIAL = Material.BARRIER;
-    private final ForceItemBattle forceItemBattle;
-    private final Map<UUID, ForceItemPlayer> forceItemPlayerMap;
-    /** End-of-game result screens, keyed by player / by team. Paged: page → slot → stack. */
-    private final Map<UUID, Map<Integer, Map<Integer, ItemStack>>> savedInventory = new HashMap<>();
-    private final Map<Team, Map<Integer, Map<Integer, ItemStack>>> savedInventoryTeam = new HashMap<>();
+    private final GameSettings settings;
+    private final RoundClock roundClock;
+    private final ResultCeremony resultCeremony;
+    private final ItemDifficultiesManager items;
+    private final BackpackManager backpacks;
+    private final RecipeManager recipeManager;
+    private final PositionManager positionManager;
+    private final ScoreboardManager scoreboardManager;
+    private final TeamsManager teamManager;
+    private final WanderingTraderManager traders;
+    private final RandomEventManager randomEvents;
+    private final AchievementManager achievementManager;
+    private final FIBServiceClient fibService;
+    private final Consumer<Location> spawnLocationSink;
+    private final Plugin plugin;
+    private final Roster roster;
 
-    /**
-     * Match telemetry. Owns everything that only exists to be reported: the match id, lead changes,
-     * pause intervals, and the submit/link-broadcast flow.
-     */
     @Getter
     private final MatchHistoryReporter matchHistory;
 
-    @Setter
-    @Getter
-    public GameState currentGameState;
-    @Setter
-    private GamePreset currentGamePreset;
-    @Getter
-    @Setter
-    private long gameStartTime;
-    /**
-     * Total game duration (seconds).
-     */
-    @Getter
-    @Setter
-    private int gameDuration;
+    private final RoundPhase roundPhase;
 
     /**
-     * Jokers configured for the current round.
-     *
-     * Kept here rather than only in /start's local scope because a player who reconnects after the
-     * countdown ended still has to be equipped, and by then the command's frame is long gone.
+     * Jokers configured for the current round. Kept here rather than in /start's local scope because
+     * a player who reconnects after the countdown ended still has to be equipped.
      */
     @Getter
     @Setter
     private int jokerAmount;
 
-    /**
-     * Dev/testing override queue. When non-empty, {@link #generateMaterial()} and
-     * {@link #generateSeededMaterial()} return the queued materials in order before
-     * falling back to random generation. Populated by the /forceitem command and
-     * cleared at the start of every game.
-     */
-    @Getter
-    private final Deque<Material> forcedItemQueue = new ArrayDeque<>();
+    public Gamemanager(Plugin plugin, Roster roster, RoundPhase roundPhase, GameSettings settings,
+                       RoundClock roundClock, ResultCeremony resultCeremony, ItemDifficultiesManager items,
+                       BackpackManager backpacks, RecipeManager recipeManager, PositionManager positionManager,
+                       ScoreboardManager scoreboardManager, TeamsManager teamManager,
+                       WanderingTraderManager traders, RandomEventManager randomEvents,
+                       AchievementManager achievementManager, FIBServiceClient fibService,
+                       Consumer<Location> spawnLocationSink) {
+        this.plugin = plugin;
+        this.settings = settings;
+        this.roundClock = roundClock;
+        this.resultCeremony = resultCeremony;
+        this.items = items;
+        this.backpacks = backpacks;
+        this.recipeManager = recipeManager;
+        this.positionManager = positionManager;
+        this.scoreboardManager = scoreboardManager;
+        this.teamManager = teamManager;
+        this.traders = traders;
+        this.randomEvents = randomEvents;
+        this.achievementManager = achievementManager;
+        this.fibService = fibService;
+        this.spawnLocationSink = spawnLocationSink;
+        this.roster = roster;
+        this.roundPhase = roundPhase;
 
-    public Gamemanager(ForceItemBattle forceItemBattle) {
-        this.forceItemBattle = forceItemBattle;
-        this.currentGameState = GameState.PRE_GAME;
-        this.currentGamePreset = null;
 
-        this.forceItemPlayerMap = new HashMap<>();
-        this.matchHistory = new MatchHistoryReporter(forceItemBattle);
+        this.matchHistory = new MatchHistoryReporter(fibService.matchHistory(), roster, settings,
+                teamManager);
     }
 
-    private static <T> Map<T, Integer> calculatePlaces(List<T> entities, ToIntFunction<T> score) {
-        List<T> sorted = entities.stream()
-                .sorted(Comparator.comparingInt(score).reversed())
-                .toList();
-
-        Map<T, Integer> placesMap = new LinkedHashMap<>();
-
-        int place = 0;
-        Integer previousScore = null;
-        for (T entity : sorted) {
-            int currentScore = score.applyAsInt(entity);
-            if (previousScore == null || currentScore != previousScore) {
-                place++;
-            }
-            placesMap.put(entity, place);
-            previousScore = currentScore;
-        }
-        return placesMap;
-    }
-
-    /**
-     * Re-evaluates who is in front and records a lead change if the sole leader's identity moved.
-     * Called from the one place a score can change.
-     */
     public void evaluateLead() {
         this.matchHistory.recordStandings(this.currentSoleLeader());
     }
 
     /**
      * Identity of the unique highest scorer, or null when the top score is shared. Team mode keys on
-     * team id, solo on player UUID; the two never mix within a game, since the mode can't change
-     * mid-match.
+     * team id, solo on player UUID; the two never mix within a game.
      *
-     * Spectators are skipped, matching who gets written as a participant at submit time -- otherwise a
-     * spectator sitting on 0 could create a phantom tie in a one-player game.
+     * <p>Spectators are skipped, matching who gets written as a participant at submit time —
+     * otherwise a spectator sitting on 0 could create a phantom tie in a one-player game.
      */
     private Object currentSoleLeader() {
         Object best = null;
         int bestScore = Integer.MIN_VALUE;
         boolean tied = false;
-        if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-            for (Team team : this.forceItemBattle.getTeamManager().getTeams()) {
+        if (this.settings.isSettingEnabled(GameSetting.TEAM)) {
+            for (Team team : this.teamManager.getTeams()) {
                 int score = team.getCurrentScore();
                 if (best == null || score > bestScore) {
                     best = team.getTeamId();
@@ -163,7 +129,7 @@ public class Gamemanager implements Manager {
                 }
             }
         } else {
-            for (ForceItemPlayer forceItemPlayer : this.forceItemPlayerMap.values()) {
+            for (ForceItemPlayer forceItemPlayer : this.roster.players().values()) {
                 if (forceItemPlayer.isSpectator()) {
                     continue;
                 }
@@ -180,268 +146,27 @@ public class Gamemanager implements Manager {
         return tied ? null : best;
     }
 
-    public static Material getJokerMaterial() {
-        return JOKER_MATERIAL;
-    }
-
-    public static ItemStack getJokers(int amount) {
-        return new ItemBuilder(JOKER_MATERIAL)
-                .setAmount(amount)
-                .setDisplayName("<dark_gray>» <dark_purple>Joker")
-                .getItemStack();
-    }
-
-    public static ItemStack createBackpack(ForceItemPlayer forceItemPlayer, boolean isTeamMode) {
-        Material bundle = Material.BUNDLE;
-        if (isTeamMode) {
-            bundle = Material.getMaterial(forceItemPlayer.currentTeam().getColor().name() + "_BUNDLE");
-        }
-
-        ItemStack itemStack = new ItemBuilder(bundle)
-                .setDisplayName("<dark_gray>» <yellow>Backpack")
-                .getItemStack();
-
-        ItemMeta itemMeta = itemStack.getItemMeta();
-        itemMeta.getPersistentDataContainer().set(BACKPACK_KEY, PersistentDataType.BOOLEAN, Boolean.TRUE);
-        itemStack.setItemMeta(itemMeta);
-
-        return itemStack;
-    }
-
-    private static boolean isJoker(Material material) {
-        // TODO change to also use NBT maybe
-        return material == JOKER_MATERIAL;
-    }
-
-    public static boolean isJoker(ItemStack itemStack) {
-        return isJoker(itemStack.getType());
-    }
-
-    public static boolean isBackpack(ItemStack itemStack) {
-        if (!itemStack.getType().name().contains("BUNDLE")) {
-            return false;
-        }
-
-        ItemMeta itemMeta = itemStack.getItemMeta();
-        if (!itemMeta.getPersistentDataContainer().has(BACKPACK_KEY)) {
-            return false;
-        }
-
-        return Boolean.TRUE.equals(itemStack.getItemMeta().getPersistentDataContainer().get(BACKPACK_KEY, PersistentDataType.BOOLEAN));
-    }
-
-    public void addPlayer(Player player, ForceItemPlayer forceItemPlayer) {
-        this.forceItemPlayerMap.put(player.getUniqueId(), forceItemPlayer);
-    }
-
-    public void removePlayer(Player player) {
-        this.forceItemPlayerMap.remove(player.getUniqueId());
-    }
-
-    public Material generateMaterial() {
-        Material forced = this.forcedItemQueue.poll();
-        if (forced != null) {
-            return forced;
-        }
-        return this.forceItemBattle.getItemDifficultiesManager().generateRandomMaterial();
-    }
-
-    public Material generateSeededMaterial() {
-        Material forced = this.forcedItemQueue.poll();
-        if (forced != null) {
-            return forced;
-        }
-        return this.forceItemBattle.getItemDifficultiesManager().generateSeededRandomMaterial();
-    }
-
-    private MaterialPair nextMaterials(boolean runMode) {
-        if (runMode) {
-            return new MaterialPair(this.generateSeededMaterial(), this.generateSeededMaterial());
-        }
-        return new MaterialPair(this.generateMaterial(), this.generateMaterial());
-    }
-
-    private record MaterialPair(Material current, Material next) {
-    }
-
-    public void initializeMaterials() {
-        this.forcedItemQueue.clear();
-        boolean runMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.RUN);
-        boolean teamMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM);
-        long now = System.currentTimeMillis();
-
-        // Everyone starts the round un-equipped; applyStartSetup flips this back per player.
-        this.forceItemPlayerMap.values().forEach(forceItemPlayer -> forceItemPlayer.setStartSetupApplied(false));
-
-        // In run mode everyone shares one seeded pair; otherwise each player gets their own.
-        MaterialPair shared = runMode ? this.nextMaterials(true) : null;
-
-        if (teamMode) {
-            this.forceItemPlayerMap.forEach((uuid, forceItemPlayer) -> {
-                if (forceItemPlayer.isSpectator()) return;
-
-                MaterialPair pair = runMode ? shared : this.nextMaterials(false);
-
-                forceItemPlayer.currentTeam().setCurrentScore(0);
-                forceItemPlayer.currentTeam().setCurrentMaterial(pair.current());
-                forceItemPlayer.currentTeam().setNextMaterial(pair.next());
-                forceItemPlayer.currentTeam().setLastItemAssignedAt(now);
-            });
-        } else {
-            Bukkit.getOnlinePlayers().forEach(player -> {
-                ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
-                if (forceItemPlayer.isSpectator()) return;
-
-                MaterialPair pair = runMode ? shared : this.nextMaterials(false);
-
-                forceItemPlayer.setCurrentScore(0);
-                forceItemPlayer.setCurrentMaterial(pair.current());
-                forceItemPlayer.setNextMaterial(pair.next());
-                forceItemPlayer.setLastItemAssignedAt(now);
-            });
-        }
-    }
-
-    public void advanceMaterials(ForceItemPlayer forceItemPlayer, GameContext context) {
-        if (context.runMode()) {
-            advanceSeededMaterials(context);
-        } else {
-            advanceRandomMaterials(forceItemPlayer, context);
-        }
-    }
-
-    private void advanceSeededMaterials(GameContext context) {
-        Material nextMaterial = this.generateSeededMaterial();
-        long now = System.currentTimeMillis();
-
-        if (context.teamGame()) {
-            this.forceItemPlayerMap.values().forEach(player -> {
-                // Spectators hold no team -- someone who joined during the countdown sits in the
-                // roster with a null team, and would NPE the whole skip.
-                if (player.isSpectator()) return;
-
-                Team team = player.currentTeam();
-                team.setPreviousMaterial(team.getCurrentMaterial());
-                team.setCurrentMaterial(team.getNextMaterial());
-                team.setNextMaterial(nextMaterial);
-                team.setLastItemAssignedAt(now);
-            });
-        } else {
-            this.forceItemPlayerMap.values().forEach(player -> {
-                if (player.isSpectator()) return;
-
-                player.setPreviousMaterial(player.currentMaterial());
-                player.setCurrentMaterial(player.nextMaterial());
-                player.setNextMaterial(nextMaterial);
-                player.setLastItemAssignedAt(now);
-            });
-        }
-    }
-
-    private void advanceRandomMaterials(ForceItemPlayer forceItemPlayer, GameContext context) {
-        Material nextMaterial = this.generateMaterial();
-        long now = System.currentTimeMillis();
-
-        if (context.teamGame()) {
-            Team team = forceItemPlayer.currentTeam();
-            team.setPreviousMaterial(team.getCurrentMaterial());
-            team.setCurrentMaterial(team.getNextMaterial());
-            team.setNextMaterial(nextMaterial);
-            team.setLastItemAssignedAt(now);
-        } else {
-            forceItemPlayer.setPreviousMaterial(forceItemPlayer.currentMaterial());
-            forceItemPlayer.setCurrentMaterial(forceItemPlayer.nextMaterial());
-            forceItemPlayer.setNextMaterial(nextMaterial);
-            forceItemPlayer.setLastItemAssignedAt(now);
-        }
-    }
-
-    /** Stores the paged result screen for a finished player or team. */
-    public void saveResultPages(@Nullable ForceItemPlayer forceItemPlayer, @Nullable Team team,
-                                Map<Integer, Map<Integer, ItemStack>> pages) {
-        if (team != null) {
-            this.savedInventoryTeam.put(team, pages);
-        } else if (forceItemPlayer != null) {
-            this.savedInventory.put(forceItemPlayer.player().getUniqueId(), pages);
-        }
-    }
-
-    /** The stored result screen, or null if that player/team never finished a game. */
-    @Nullable
-    public Map<Integer, Map<Integer, ItemStack>> getResultPages(@Nullable ForceItemPlayer forceItemPlayer,
-                                                                @Nullable Team team) {
-        if (team != null) {
-            return this.savedInventoryTeam.get(team);
-        }
-        if (forceItemPlayer != null) {
-            return this.savedInventory.get(forceItemPlayer.player().getUniqueId());
-        }
-        return null;
-    }
-
     /**
-     * Replaces the current item for the whole server with a freshly generated one — what /voteskip
-     * does when the vote carries, and what /skip does as an admin override.
+     * Marks everyone un-equipped, so the next {@link #applyStartSetup} actually runs. Called by
+     * {@code /start} before the items are drawn.
      *
-     * Charging a joker is <em>not</em> part of this: the only caller that costs one (the vote)
-     * spends it itself, on the initiator. Do not charge one inside the per-player loop below —
-     * it runs once per non-spectator, so the initiator would pay a joker for each of them.
+     * <p><b>Load-bearing from round two onwards, and invisible in round one.</b> Without it the flag
+     * is still set from the previous round, {@link #applyStartSetup} no-ops for everybody, and nobody
+     * leaves creative. Production is spared only because {@code scheduleReset} restarts the JVM.
      */
-    public void forceSkipItem(Player player) {
-        if (!forceItemPlayerExist(player.getUniqueId())) {
-            return;
-        }
-
-        boolean runMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.RUN);
-        boolean teamMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM);
-
-        MaterialPair pair = this.nextMaterials(runMode);
-
-        forceItemPlayerMap().values().forEach(p -> {
-            // Spectators hold no team; skipping them here is what keeps a countdown joiner from
-            // NPE-ing every skip for the rest of the round.
-            if (p.isSpectator()) return;
-
-            if (teamMode) {
-                p.currentTeam().setCurrentMaterial(pair.current());
-                p.currentTeam().setNextMaterial(pair.next());
-            } else {
-                p.setCurrentMaterial(pair.current());
-                p.setNextMaterial(pair.next());
-            }
-        });
-    }
-
-    public void giveSpectatorItems(Player player) {
-        player.getInventory().setItem(1, new ItemBuilder(Material.LIME_DYE).setDisplayName("<dark_gray>» <green>Achievements").getItemStack());
-        player.getInventory().setItem(2, new ItemBuilder(Material.WRITTEN_BOOK)
-                .setDisplayName("<dark_gray>» <dark_aqua>Collection")
-                .addItemFlags(ItemFlag.values())
-                .getItemStack());
-        player.getInventory().setItem(3, new ItemBuilder(Material.COMPASS).setDisplayName("<dark_gray>» <yellow>Teleporter").getItemStack());
-        player.getInventory().setItem(5, new ItemBuilder(Material.GRASS_BLOCK).setDisplayName("<dark_gray>» <dark_green>Overworld").getItemStack());
-        player.getInventory().setItem(6, new ItemBuilder(Material.NETHERRACK).setDisplayName("<dark_gray>» <red>Nether").getItemStack());
-        player.getInventory().setItem(7, new ItemBuilder(Material.ENDER_EYE).setDisplayName("<dark_gray>» <dark_purple>End").getItemStack());
-        player.getInventory().setItem(8, new ItemBuilder(Material.SPYGLASS).setDisplayName("<dark_gray>» <green>Spectate").getItemStack());
+    public void resetStartSetup() {
+        this.roster.players().values().forEach(forceItemPlayer -> forceItemPlayer.setStartSetupApplied(false));
     }
 
     /**
-     * Applies one player's round setup: gamemode, jokers, starting tools, backpack and the
-     * gamesPlayed write. Spectators are put into spectator mode instead. Safe to call more than
-     * once — {@link ForceItemPlayer#isStartSetupApplied()} makes every call after the first a no-op.
-     *
-     * This lives here rather than inside /start because the countdown-end pass only walks the
-     * players who happen to be online at that instant. Someone who disconnected during the countdown
-     * is still a participant — their team and force item were assigned before the countdown even
-     * began — so the exact same setup has to run when they come back, or they rejoin in ADVENTURE
-     * mode with an empty inventory and no jokers, unable to play the round they are scored in.
+     * Applies one player's round setup; spectators go to spectator mode instead. Idempotent, which
+     * is what lets someone who disconnected during the countdown be set up on rejoin.
      */
     public void applyStartSetup(Player player) {
-        ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
+        ForceItemPlayer forceItemPlayer = this.roster.participant(player.getUniqueId()).orElse(null);
 
-        if (forceItemPlayer == null || forceItemPlayer.isSpectator()) {
-            player.setGameMode(GameMode.SPECTATOR);
-            player.getInventory().clear();
+        if (forceItemPlayer == null) {
+            PlayerOutfitter.toSpectator(player);
             return;
         }
         if (forceItemPlayer.isStartSetupApplied()) {
@@ -449,64 +174,29 @@ public class Gamemanager implements Manager {
         }
         forceItemPlayer.setStartSetupApplied(true);
 
-        boolean teamMode = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM);
+        GameContext context = GameContext.of(this.settings, forceItemPlayer);
 
-        this.sendStartSummary(player, this.gameDuration / 60, this.jokerAmount);
+        this.sendStartSummary(player, this.roundClock.totalSeconds() / 60, this.jokerAmount);
 
-        player.setHealth(20);
-        player.setSaturation(20);
-        player.getInventory().clear();
-
-        if (!teamMode) {
-            forceItemPlayer.setRemainingJokers(this.jokerAmount);
-            if (!this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.RUN)) {
-                player.getInventory().setItem(4, getJokers(this.jokerAmount));
-            }
-        } else if (!this.isStarting() && forceItemPlayer.activeJokers() > 0) {
-            // At countdown end the whole roster is served by /start's distributeTeamJokers, which
-            // splits the pool across both members. A player rejoining later missed that split, so
-            // hand them what the team has left: the stack is only the button, the count that gates
-            // a skip lives on the team.
-            player.getInventory().setItem(4, getJokers(forceItemPlayer.activeJokers()));
+        // A solo player owns their own pool, so it is set here. A team's is set once for the whole
+        // team by distributeTeamJokers, and setting it per member would just overwrite it.
+        if (!forceItemPlayer.isInTeam()) {
+            forceItemPlayer.scoreOwner().setJokers(this.jokerAmount);
         }
 
-        player.getInventory().addItem(new ItemStack(Material.STONE_AXE));
-        player.getInventory().addItem(new ItemStack(Material.STONE_PICKAXE));
-        player.getInventory().addItem(new ItemStack(Material.STONE_SHOVEL));
+        PlayerOutfitter.toPlayer(player,
+                RoundSetup.jokersOnHotbar(forceItemPlayer, context, this.jokerAmount, this.roundPhase.isStarting()));
 
-        player.setLevel(0);
-        player.setExp(0);
-        player.setWalkSpeed(0.2f);
-        player.setStatistic(Statistic.TIME_SINCE_REST, 72000); // 1hr = 3600 seconds * 20 ticks
-        player.getPassengers().forEach(Entity::remove);
-        player.getActivePotionEffects().forEach(potionEffect -> player.removePotionEffect(potionEffect.getType()));
-        player.setGameMode(GameMode.SURVIVAL);
-        player.playSound(player, Sound.BLOCK_END_PORTAL_SPAWN, 1, 1);
-
-        if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.BACKPACK)) {
-            if (teamMode) {
-                this.forceItemBattle.getBackpackManager().createTeamBackpack(forceItemPlayer.currentTeam(), forceItemPlayer);
+        if (context.backpackEnabled()) {
+            if (forceItemPlayer.isInTeam()) {
+                this.backpacks.createTeamBackpack(forceItemPlayer.currentTeam(), forceItemPlayer);
             } else {
-                this.forceItemBattle.getBackpackManager().createBackpack(forceItemPlayer);
+                this.backpacks.createBackpack(forceItemPlayer);
             }
         }
 
-        if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.STATS)) {
-            FibStatisticsClient helper = this.forceItemBattle.getFibService().statistics();
-            if (!teamMode) {
-                helper.updateSoloStatisticsAsync(player.getUniqueId(), FIBServiceClient.soloUpdate().gamesPlayedAdd(1));
-                return;
-            }
-            Team currentTeam = forceItemPlayer.currentTeam();
-            if (currentTeam != null && currentTeam.isPrimaryWriter(forceItemPlayer)) {
-                // Both teammates write the same normalized team row, so only the primary side sends
-                // gamesPlayed — otherwise every game counts twice.
-                forceItemPlayer.teammate().ifPresent(teammate -> helper.updateTeamStatisticsAsync(
-                        player.getUniqueId(),
-                        teammate.player().getUniqueId(),
-                        FIBServiceClient.teamUpdate().gamesPlayedAdd(1)
-                ));
-            }
+        if (this.settings.isSettingEnabled(GameSetting.STATS)) {
+            this.fibService.statisticsWrites().recordGameStarted(forceItemPlayer);
         }
     }
 
@@ -518,7 +208,7 @@ public class Gamemanager implements Manager {
         player.sendMessage(Text.of("  <dark_gray>● <gray>Jokers <dark_gray>» <green>" + jokersAmount));
         for (GameSetting gameSettings : GameSetting.values()) {
             if (gameSettings.defaultValue() instanceof Integer) continue;
-            player.sendMessage(Text.of("  <dark_gray>● <gray>" + gameSettings.displayName() + " <dark_gray>» <green>" + (this.forceItemBattle.getSettings().isSettingEnabled(gameSettings) ? "<dark_green>✔" : "<dark_red>✘")));
+            player.sendMessage(Text.of("  <dark_gray>● <gray>" + gameSettings.displayName() + " <dark_gray>» <green>" + (this.settings.isSettingEnabled(gameSettings) ? "<dark_green>✔" : "<dark_red>✘")));
         }
         player.sendMessage(" ");
         player.sendMessage(Text.of(" <dark_gray>● <gray>Useful Commands:"));
@@ -530,20 +220,13 @@ public class Gamemanager implements Manager {
         player.sendMessage("");
     }
 
-    /**
-     * Everything that has to happen the instant /start's countdown reaches zero: the round's
-     * identity, the world reset, per-player setup, and the flip to MID_GAME.
-     *
-     * Both halves of a round's lifecycle belong here: /start only parses arguments and runs the
-     * countdown, then hands over. Keep orchestration out of the command.
-     */
+    /** Everything that happens when /start's countdown hits zero. Keep orchestration out of /start. */
     public void startGame(int durationMinutes, int jokersAmount) {
-        this.setGameStartTime(System.currentTimeMillis());
         this.matchHistory.beginMatch(UUID.randomUUID());
 
-        this.forceItemBattle.getRecipeManager().initRecipes();
-        this.forceItemBattle.getPositionManager().clearPositions();
-        this.forceItemBattle.getItemDifficultiesManager().configureUnlockSchedule(durationMinutes);
+        this.recipeManager.initRecipes();
+        this.positionManager.clearPositions();
+        this.items.configureUnlockSchedule(durationMinutes);
 
         World world = Objects.requireNonNull(Dimension.OVERWORLD.world());
         prepareSpawn(world.getSpawnLocation());
@@ -556,154 +239,125 @@ public class Gamemanager implements Manager {
         // keeps their roster spot and is set up by the same call when they rejoin.
         Bukkit.getOnlinePlayers().forEach(this::applyStartSetup);
 
-        if (this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM)) {
+        if (this.settings.isSettingEnabled(GameSetting.TEAM)) {
             distributeTeamJokers(jokersAmount);
         }
 
-        this.forceItemBattle.getWanderingTraderManager().startTimer();
-        this.forceItemBattle.getRandomEventManager().startGame();
-        this.forceItemBattle.getAchievementManager().resetProgress();
-        this.forceItemBattle.getItemDifficultiesManager().resetUnlockAnnouncements();
-        this.setCurrentGameState(GameState.MID_GAME);
-        this.forceItemBattle.getScoreboardManager().updateAllPlayers();
+        this.traders.startTimer();
+        this.randomEvents.startGame();
+        this.achievementManager.resetProgress();
+        this.items.resetUnlockAnnouncements();
+        this.roundPhase.moveTo(GameState.MID_GAME);
+        this.scoreboardManager.updateAllPlayers();
     }
 
     /**
-     * Splits the round's joker pool across each team's members.
-     *
-     * The share is computed for the whole team either way, so the split stays stable; a member who
-     * is offline right now simply gets no stack here and is handed the team's remaining pool by
-     * {@link #applyStartSetup(Player)} when they rejoin.
+     * Splits the round's joker pool across each team's members. The share is computed for the whole
+     * team either way, so the split stays stable; an offline member gets no stack here and is handed
+     * the team's remaining pool by {@link #applyStartSetup(Player)} on rejoin.
      */
     private void distributeTeamJokers(int jokersAmount) {
-        this.forceItemBattle.getTeamManager().getTeams().forEach(team -> {
-            team.setRemainingJokers(jokersAmount);
-            int totalPlayers = team.getPlayers().size();
-            int jokerPerPlayer = jokersAmount / totalPlayers;
-            int remainingJoker = jokersAmount % totalPlayers;
+        this.teamManager.getTeams().forEach(team -> {
+            team.setJokers(jokersAmount);
 
-            for (ForceItemPlayer teamPlayer : team.getPlayers()) {
-                int playerJoker = jokerPerPlayer;
+            List<ForceItemPlayer> members = team.members();
+            int[] shares = RoundSetup.splitEvenly(jokersAmount, members.size());
 
-                if (remainingJoker > 0) {
-                    playerJoker++;
-                    remainingJoker--;
-                }
-
-                Player teamMember = teamPlayer.player();
-                if (teamMember == null || !teamMember.isOnline()) {
-                    continue;
-                }
-                teamMember.getInventory().setItem(4, getJokers(playerJoker));
+            for (int member = 0; member < members.size(); member++) {
+                PlayerOutfitter.giveJokerShare(members.get(member).player(), shares[member]);
             }
         });
     }
 
     /** Clears the two blocks at spawn so nobody starts the round inside terrain. */
     private void prepareSpawn(Location location) {
-        this.forceItemBattle.setSpawnLocation(location.clone());
+        this.spawnLocationSink.accept(location.clone());
 
         Block block = location.getBlock();
         block.setType(Material.AIR);
         block.getRelative(BlockFace.UP).setType(Material.AIR);
     }
 
-    public void finishGame() {
-        this.setCurrentGameState(GameState.END_GAME);
-        this.forceItemBattle.getAchievementManager().checkGameEndAchievements();
+    /**
+     * The reveal order, worst-placed first. Deliberately not a reuse of the stats standings: that one
+     * keeps spectators, leaves ties in map order, and is not computed at all when STATS is off.
+     */
+    private List<ResultCeremony.Reveal> revealOrder() {
+        if (this.settings.isSettingEnabled(GameSetting.TEAM)) {
+            return ResultCeremony.orderFrom(
+                    Standings.ofTeams(this.teamManager.getTeams()));
+        }
 
-        boolean statsEnabled = this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.STATS);
+        Map<UUID, ForceItemPlayer> contenders = this.roster.players().entrySet().stream()
+                .filter(entry -> !entry.getValue().isSpectator())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a,
+                        LinkedHashMap::new));
+
+        // A solo player is not a ScoreOwner; the SoloScore behind them is.
+        Map<ScoreOwner, Integer> byOwner = new LinkedHashMap<>();
+        Standings.ofPlayers(Standings.sortedByScore(contenders, false))
+                .forEach((forceItemPlayer, place) -> byOwner.put(forceItemPlayer.scoreOwner(), place));
+
+        return ResultCeremony.orderFrom(byOwner);
+    }
+
+    public void finishGame() {
+        this.roundPhase.moveTo(GameState.END_GAME);
+        this.achievementManager.checkGameEndAchievements();
+
+        boolean statsEnabled = this.settings.isSettingEnabled(GameSetting.STATS);
         Map<ForceItemPlayer, Integer> placesMap = statsEnabled
-                ? this.calculatePlaces(this.sortByValue(this.forceItemPlayerMap(), false))
+                ? Standings.ofPlayers(this.roster.players())
                 : null;
         Map<Team, Integer> teamPlaces = (statsEnabled
-                && this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.TEAM))
-                ? this.calculatePlaces(this.forceItemBattle.getTeamManager().getTeams())
+                && this.settings.isSettingEnabled(GameSetting.TEAM))
+                ? Standings.ofTeams(this.teamManager.getTeams())
                 : null;
+
+        World overworld = Dimension.OVERWORLD.world();
+        Location resultSpawn = overworld == null ? null : overworld.getSpawnLocation();
 
         Bukkit.getOnlinePlayers().forEach(player -> {
             try {
-                ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(player.getUniqueId());
-                player.setHealth(20);
-                player.setSaturation(20);
-                player.getInventory().clear();
-                player.setLevel(0);
-                player.setExp(0);
-                player.teleport(Dimension.OVERWORLD.world().getSpawnLocation());
-                player.setGameMode(GameMode.CREATIVE);
-                player.getPassengers().forEach(Entity::remove);
-                player.setPlayerListName(player.getName());
+                ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());
 
-                this.giveSpectatorItems(player);
+                PlayerOutfitter.toResultScreen(player, resultSpawn);
 
                 if (player.isOp()) {
-                    player.sendMessage(ChatColor.RED + "Use /result to see the results from every player");
+                    player.sendMessage(Text.of("<red>Use /result to see the results from every player"));
                 }
 
-                if (statsEnabled && forceItemPlayer != null && !forceItemPlayer.isSpectator()) {
-                    FibStatisticsClient helper = this.forceItemBattle.getFibService().statistics();
-                    long distance = (long) this.calculateDistance(forceItemPlayer.player());
+                if (statsEnabled && Roster.isPlaying(forceItemPlayer)) {
                     Team currentTeam = forceItemPlayer.currentTeam();
 
-                    // Hoisted: the solo branch, the team branch and the win-streak write all need it.
                     boolean won = currentTeam == null
                             ? Integer.valueOf(1).equals(placesMap.get(forceItemPlayer))
                             : (teamPlaces != null && Integer.valueOf(1).equals(teamPlaces.get(currentTeam)));
 
-                    // This player's own travel: their solo row when solo, their member contribution
-                    // inside the team otherwise. highestScore rides along on the solo update only —
-                    // in a team game the score belongs to the shared team row written below.
-                    PlayerStatsWrite.record(helper, player.getUniqueId(), forceItemPlayer,
-                            () -> {
-                                var soloUpdate = FIBServiceClient.soloUpdate()
-                                        .blocksTravelledAdd(distance)
-                                        .highestScore((long) forceItemPlayer.activeScore());
-                                if (won) {
-                                    soloUpdate.gamesWonAdd(1);
-                                }
-                                return soloUpdate;
-                            },
-                            () -> FIBServiceClient.memberUpdate().blocksTravelledAdd(distance));
-
-                    if (currentTeam != null) {
-                        // Shared team stats. highestScore is a max-set (safe from both sides);
-                        // gamesWon must count once, so only the primary side sends it.
-                        forceItemPlayer.teammate().ifPresent(teammate -> {
-                            var teamUpdate = FIBServiceClient.teamUpdate()
-                                    .highestScore((long) forceItemPlayer.activeScore());
-                            if (won && currentTeam.isPrimaryWriter(forceItemPlayer)) {
-                                teamUpdate.gamesWonAdd(1);
-                            }
-                            helper.updateTeamStatisticsAsync(
-                                    player.getUniqueId(), teammate.player().getUniqueId(), teamUpdate);
-                        });
-                    }
-
-                    // Win streak. Player-scoped, so this is unlike every other write above:
-                    //   - losers report too — a LOSS is what resets the streak
-                    //   - no lower-UUID dedupe — both members of a winning team each own a streak,
-                    //     so both send their own WIN
-                    helper.recordGameOutcomeAsync(
-                            player.getUniqueId(),
-                            new FibPlayerStatsUpdateRequestDto()
-                                    .outcome(won
-                                            ? FibPlayerStatsUpdateRequestDto.OutcomeEnum.WIN
-                                            : FibPlayerStatsUpdateRequestDto.OutcomeEnum.LOSS)
-                                    .playerName(player.getName()));
+                    this.fibService.statisticsWrites().recordRoundFinished(
+                            forceItemPlayer,
+                            player.getName(),
+                            forceItemPlayer.activeScore(),
+                            (long) this.calculateDistance(forceItemPlayer.player()),
+                            won);
                 }
             } catch (Exception exception) {
-                this.forceItemBattle.getLogger().warning(
+                this.plugin.getLogger().warning(
                         "Failed to finish round for " + player.getName() + ": " + exception.getMessage());
             }
         });
 
+        // Its own ordering, not the stats one: those keep spectators and are null when STATS is off.
+        this.resultCeremony.beginFor(
+                this.matchHistory.getMatchId(), this.revealOrder());
+
         if (statsEnabled) {
-            this.matchHistory.submit(placesMap, teamPlaces, this.gameDuration,
+            this.matchHistory.submit(placesMap, teamPlaces, this.roundClock.totalSeconds(),
                     this::evaluateCollectionAchievements);
             for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-                ForceItemPlayer forceItemPlayer = this.getForceItemPlayer(onlinePlayer.getUniqueId());
-                if (forceItemPlayer != null && !forceItemPlayer.isSpectator()) {
-                    this.forceItemBattle.getAchievementManager().evaluateGlobalAchievements(onlinePlayer);
+                ForceItemPlayer forceItemPlayer = this.roster.get(onlinePlayer.getUniqueId());
+                if (Roster.isPlaying(forceItemPlayer)) {
+                    this.achievementManager.evaluateGlobalAchievements(onlinePlayer);
                 }
             }
         }
@@ -711,74 +365,21 @@ public class Gamemanager implements Manager {
 
     /** Blocks travelled this round, summed over every distance statistic Bukkit tracks (all in cm). */
     private int calculateDistance(Player player) {
-        int distance = 0;
-
-        for (Statistic statistics : Statistic.values()) {
-            if (statistics.name().contains("CM")) {
-                distance += player.getStatistic(statistics);
-            }
-        }
+        int distance = Arrays.stream(Statistic.values())
+                .filter(statistic -> statistic.name().contains("CM"))
+                .mapToInt(player::getStatistic)
+                .sum();
 
         return (int) Math.round((double) distance / 100);
     }
 
-    public Map<UUID, ForceItemPlayer> sortByValue(Map<UUID, ForceItemPlayer> unsortMap, final boolean order) {
-        Comparator<Map.Entry<UUID, ForceItemPlayer>> comparator =
-                Comparator.comparingInt((Map.Entry<UUID, ForceItemPlayer> e) -> e.getValue().currentScore())
-                        .thenComparing(Map.Entry::getKey);
-        if (!order) {
-            comparator = comparator.reversed();
-        }
-        return unsortMap.entrySet().stream()
-                .sorted(comparator)
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> b, LinkedHashMap::new));
-    }
-
-    public Map<ForceItemPlayer, Integer> calculatePlaces(Map<UUID, ForceItemPlayer> playerMap) {
-        return calculatePlaces(new ArrayList<>(playerMap.values()), ForceItemPlayer::currentScore);
-    }
-
-    public Map<Team, Integer> calculatePlaces(List<Team> teams) {
-        return calculatePlaces(teams, Team::getCurrentScore);
-    }
-
-    public boolean forceItemPlayerExist(UUID uuid) {
-        return this.forceItemPlayerMap.get(uuid) != null;
-    }
-
-    public ForceItemPlayer getForceItemPlayer(UUID uuid) {
-        return this.forceItemPlayerMap.get(uuid);
-    }
-
-    public Map<UUID, ForceItemPlayer> forceItemPlayerMap() {
-        return this.forceItemPlayerMap;
-    }
-
-    public boolean isPreGame() {
-        return this.getCurrentGameState() == GameState.PRE_GAME;
-    }
-
     /**
-     * True from the moment {@code /start} begins its countdown until the game actually flips to
-     * MID_GAME. During this window teams and force items have already been assigned, so the roster
-     * is frozen: anyone joining is a spectator for the round, and anyone leaving keeps their spot.
-     */
-    public boolean isStarting() {
-        return this.getCurrentGameState() == GameState.STARTING;
-    }
-
-    public boolean isPausedGame() {
-        return this.getCurrentGameState() == GameState.PAUSED_GAME;
-    }
-
-    /**
-     * Begin a pause: flip state and record when it started, so its duration can be subtracted from
-     * item times on resume. Called by /pause instead of setting the state directly, so the timing
-     * bookkeeping cannot be bypassed.
+     * Called by /pause instead of setting the state directly, so the interval bookkeeping that
+     * {@link #resumeGame()} subtracts from item times cannot be bypassed.
      */
     public void pauseGame() {
         this.matchHistory.onPaused();
-        this.setCurrentGameState(GameState.PAUSED_GAME);
+        this.roundPhase.moveTo(GameState.PAUSED_GAME);
         this.clearMobTargets();
     }
 
@@ -787,25 +388,21 @@ public class Gamemanager implements Manager {
      * sees a found-set that includes the round just played rather than trailing it by a game.
      */
     private void evaluateCollectionAchievements() {
-        for (ForceItemPlayer participant : this.forceItemPlayerMap.values()) {
+        for (ForceItemPlayer participant : this.roster.players().values()) {
             if (participant.isSpectator()) {
                 continue;
             }
             Player participantPlayer = participant.player();
             if (participantPlayer != null && participantPlayer.isOnline()) {
-                this.forceItemBattle.getAchievementManager().evaluateCollectionAchievement(participantPlayer);
+                this.achievementManager.evaluateCollectionAchievement(participantPlayer);
             }
         }
     }
 
     /**
-     * Drop every mob's aggro at the moment of pause.
-     *
-     * Cancelling target-acquisition (in the entity-target listener) stops mobs locking on DURING the
-     * pause, but a mob already chasing a player when /pause runs keeps its target and keeps pathing —
-     * and lands its hit the instant the game resumes. Clearing targets here makes the pause actually
-     * calm: mobs already tracking a player let go, and the listener keeps them from re-acquiring
-     * until resume. Together they give "no aggro while paused, no free hit on unpause".
+     * Drops every mob's aggro at the moment of pause. The entity-target listener stops mobs locking
+     * on <em>during</em> the pause, but one already chasing a player keeps its target and lands its
+     * hit the instant the game resumes. Both halves are needed.
      */
     private void clearMobTargets() {
         Bukkit.getWorlds().forEach(world ->
@@ -817,24 +414,15 @@ public class Gamemanager implements Manager {
     }
 
     /**
-     * End a pause: close the open interval and flip state back. The closed [start, end] is kept so
-     * that any item whose find-window straddled this pause has the paused span removed from its
-     * seconds_taken at submit time.
+     * Closes the open pause interval. The closed [start, end] is kept so an item whose find-window
+     * straddled the pause has that span removed from its seconds_taken at submit time.
      */
     public void resumeGame() {
         this.matchHistory.onResumed();
-        this.setCurrentGameState(GameState.MID_GAME);
+        this.roundPhase.moveTo(GameState.MID_GAME);
     }
 
-    public boolean isMidGame() {
-        return this.getCurrentGameState() == GameState.MID_GAME;
-    }
 
-    public boolean isEndGame() {
-        return this.getCurrentGameState() == GameState.END_GAME;
-    }
 
-    public GamePreset currentGamePreset() {
-        return currentGamePreset;
-    }
+
 }

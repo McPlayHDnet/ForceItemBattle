@@ -1,8 +1,9 @@
 package forceitembattle.gui;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.event.WheelOfFortuneWinEvent;
+import forceitembattle.manager.ItemDifficultiesManager;
 import forceitembattle.model.CustomMaterials;
+import forceitembattle.util.Scheduler;
 import forceitembattle.util.Text;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -18,14 +19,14 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
-public class VaultInventory extends InventoryBuilder {
+public final class VaultInventory extends InventoryBuilder {
 
-    private final ForceItemBattle plugin;
+    private final ItemDifficultiesManager items;
 
-    public VaultInventory(ForceItemBattle plugin) {
+    public VaultInventory(ItemDifficultiesManager items) {
         super(9 * 5, Text.of("<dark_gray>» <dark_green>Vault"));
 
-        this.plugin = plugin;
+        this.items = items;
 
         this.setItems(0, 8, GuiItems.accentBorder());
         this.setItems(this.getInventory().getSize() - 9, this.getInventory().getSize() - 1, GuiItems.accentBorder());
@@ -42,10 +43,10 @@ public class VaultInventory extends InventoryBuilder {
         this.addUpdateHandler(() -> {
             // Copy before shuffling: the manager hands back its cached pool, shared with every
             // other reader this tick.
-            List<Material> itemList = new ArrayList<>(plugin.getItemDifficultiesManager().getAvailableItems());
+            List<Material> itemList = new ArrayList<>(items.getAvailableItems());
             Collections.shuffle(itemList);
 
-            new BukkitRunnable() {
+            Scheduler.runTimerSync(new BukkitRunnable() {
                 final int totalDuration = 315;
                 int ticks = 0;
                 int currentIndex = 0;
@@ -104,7 +105,7 @@ public class VaultInventory extends InventoryBuilder {
                 private double easeOutCubic(double x) {
                     return 1 - Math.pow(1 - x, 3);
                 }
-            }.runTaskTimer(this.plugin, 0L, 1L);
+            }, 0L, 1L);
         });
 
         this.addClickHandler(inventoryClickEvent -> inventoryClickEvent.setCancelled(true));

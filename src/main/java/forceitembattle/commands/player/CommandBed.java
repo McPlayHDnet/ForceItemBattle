@@ -1,6 +1,6 @@
 package forceitembattle.commands.player;
 
-import forceitembattle.ForceItemBattle;
+import forceitembattle.commands.Precondition;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.util.Text;
 import java.util.ArrayList;
@@ -8,11 +8,16 @@ import java.util.List;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
-public class CommandBed extends CustomCommand {
+public final class CommandBed extends CustomCommand {
 
-    public CommandBed(ForceItemBattle plugin) {
-        super(plugin, "bed");
+    public CommandBed() {
+        super("bed");
         setDescription("Teleport to your bed location");
+    }
+
+    @Override
+    protected List<Precondition> preconditions() {
+        return List.of();
     }
 
     @Override

@@ -1,8 +1,8 @@
 package forceitembattle.manager.customrecipe;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.settings.GameSetting;
+import forceitembattle.settings.GameSettings;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.logging.Level;
@@ -13,6 +13,7 @@ import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.RecipeChoice;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.inventory.ShapelessRecipe;
+import org.bukkit.plugin.Plugin;
 
 public enum FakeRecipe {
 
@@ -124,7 +125,7 @@ public enum FakeRecipe {
         try {
             dye = Material.valueOf(colorName + "_DYE");
         } catch (IllegalArgumentException e) {
-            dye = Material.GRAY_DYE; // Default color ig
+            dye = Material.GRAY_DYE;
         }
 
         Material finalDye = dye;
@@ -294,14 +295,12 @@ public enum FakeRecipe {
     /**
      * The recipe to show for this item, honouring HARDER_TRACKERS.
      *
-     * <p>Most entries have no {@code _HARD} sibling — either the setting does not touch them
-     * (suspicious stew, concrete, …) or it no longer does (the antimatter locator). Those are used
-     * whatever the setting says, so the plain entry is remembered and only overruled by a matching
-     * {@code _HARD} one.
+     * <p>Most entries have no {@code _HARD} sibling and are used whatever the setting says, so the
+     * plain entry is remembered and only overruled by a matching {@code _HARD} one.
      */
     @Nullable
-    public static FakeRecipe forItem(ItemStack item, ForceItemBattle plugin) {
-        boolean harderTrackers = plugin.getSettings().isSettingEnabled(GameSetting.HARDER_TRACKERS);
+    public static FakeRecipe forItem(ItemStack item, GameSettings settings) {
+        boolean harderTrackers = settings.isSettingEnabled(GameSetting.HARDER_TRACKERS);
         FakeRecipe plainMatch = null;
 
         for (FakeRecipe recipe : CACHE) {
@@ -320,7 +319,7 @@ public enum FakeRecipe {
         return plainMatch;
     }
 
-    public Recipe getRecipe(ItemStack targetItem, ForceItemBattle plugin) {
+    public Recipe getRecipe(ItemStack targetItem, Plugin plugin) {
         try {
             return recipeSupplier.apply(targetItem);
         } catch (Exception e) {

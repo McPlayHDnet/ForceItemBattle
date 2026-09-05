@@ -1,36 +1,44 @@
 package forceitembattle.commands.player;
 
-import forceitembattle.ForceItemBattle;
+import static forceitembattle.commands.Precondition.PAUSED;
+import static forceitembattle.commands.Precondition.OP_WHEN_EVENT;
 import forceitembattle.commands.CustomCommand;
+import forceitembattle.commands.Precondition;
+import forceitembattle.manager.Gamemanager;
 import forceitembattle.model.Dimension;
-import forceitembattle.settings.GameSetting;
 import forceitembattle.util.Text;
+import java.util.List;
 import org.bukkit.Bukkit;
 import org.bukkit.GameRules;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 
-public class CommandResume extends CustomCommand {
+public final class CommandResume extends CustomCommand {
 
-    public CommandResume(ForceItemBattle plugin) {
-        super(plugin, "resume");
+    private final Gamemanager gamemanager;
+
+    public CommandResume(Gamemanager gamemanager) {
+        super("resume");
+        this.gamemanager = gamemanager;
         setDescription("Resume the game");
     }
 
     @Override
+    protected List<Precondition> preconditions() {
+        return List.of(OP_WHEN_EVENT,
+                PAUSED.refusing("<red>The timer is not paused!"));
+    }
+
+    @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (this.plugin.getSettings().isSettingEnabled(GameSetting.EVENT) && !player.isOp()) {
-            player.sendMessage(Text.of("<red>You don't have permission to use this command."));
-            return;
-        }
-
-        if (!this.plugin.getGamemanager().isPausedGame()) {
-            player.sendMessage(Text.of("<red>The timer is not paused!"));
-            return;
-        }
-
         Bukkit.broadcast(Text.of("<gold>The timer has been resumed!"));
-        Dimension.OVERWORLD.world().setGameRule(GameRules.ADVANCE_TIME, true);
-        Dimension.OVERWORLD.world().setGameRule(GameRules.ADVANCE_WEATHER, true);
-        this.plugin.getGamemanager().resumeGame();
+
+        World overworld = Dimension.OVERWORLD.world();
+        if (overworld != null) {
+            overworld.setGameRule(GameRules.ADVANCE_TIME, true);
+            overworld.setGameRule(GameRules.ADVANCE_WEATHER, true);
+        }
+
+        this.gamemanager.resumeGame();
     }
 }

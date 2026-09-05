@@ -1,12 +1,11 @@
 package forceitembattle.manager;
 
-import forceitembattle.ForceItemBattle;
+import forceitembattle.gui.RecipeInventory;
+import forceitembattle.gui.RecipeViewer;
 import forceitembattle.manager.customrecipe.FakeRecipe;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.settings.GameSetting;
-import forceitembattle.gui.ItemBuilder;
-import forceitembattle.gui.RecipeInventory;
-import forceitembattle.gui.RecipeViewer;
+import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Text;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,16 +19,19 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
 import org.bukkit.inventory.RecipeChoice;
 import org.bukkit.inventory.ShapedRecipe;
+import org.bukkit.plugin.Plugin;
 
 public class RecipeManager implements Manager {
 
+    private final GameSettings settings;
     public final HashMap<UUID, Boolean> ignoreCloseHandler;
     public final HashMap<UUID, Runnable> closeHandlers;
-    private final ForceItemBattle forceItemBattle;
+    private final Plugin plugin;
     private final HashMap<UUID, RecipeViewer> recipeViewerMap;
 
-    public RecipeManager(ForceItemBattle forceItemBattle) {
-        this.forceItemBattle = forceItemBattle;
+    public RecipeManager(Plugin plugin, GameSettings settings) {
+        this.plugin = plugin;
+        this.settings = settings;
         this.recipeViewerMap = new HashMap<>();
         this.ignoreCloseHandler = new HashMap<>();
         this.closeHandlers = new HashMap<>();
@@ -52,11 +54,11 @@ public class RecipeManager implements Manager {
 
         this.recipeViewerMap.put(player.getUniqueId(), recipeViewer);
 
-        new RecipeInventory(this.forceItemBattle, this.forceItemBattle.getRecipeManager().getRecipeViewer(player), player).open(player);
+        new RecipeInventory(this, this.getRecipeViewer(player), player).open(player);
     }
 
     public void initRecipes() {
-        final boolean easyRecipes = !this.forceItemBattle.getSettings().isSettingEnabled(GameSetting.HARDER_TRACKERS);
+        final boolean easyRecipes = !this.settings.isSettingEnabled(GameSetting.HARDER_TRACKERS);
 
         NamespacedKey antimatterKey = new NamespacedKey("fib", "antimatter_locator");
         ShapedRecipe antimatterRecipe = new ShapedRecipe(antimatterKey, CustomMaterials.ANTIMATTER_LOCATOR.itemStack());
@@ -86,13 +88,29 @@ public class RecipeManager implements Manager {
         NamespacedKey totemKey = new NamespacedKey("fib", "totem_of_antimatter");
         ShapedRecipe totemRecipe = new ShapedRecipe(totemKey, CustomMaterials.TOTEM_OF_ANTIMATTER.itemStack());
         totemRecipe.shape(" E ", "QGQ", " Q ");
-        totemRecipe.setIngredient('E', new RecipeChoice.ExactChoice(CustomMaterials.EYE_OF_ANTIMATTER.itemStack()));
+        totemRecipe.setIngredient('E', RecipeChoice.exactChoice(CustomMaterials.EYE_OF_ANTIMATTER.itemStack()));
         totemRecipe.setIngredient('G', Material.GLOWSTONE);
         totemRecipe.setIngredient('Q', Material.QUARTZ);
 
-        Bukkit.addRecipe(antimatterRecipe);
-        Bukkit.addRecipe(chambersRecipe);
-        Bukkit.addRecipe(totemRecipe);
+        reRegister(antimatterKey, antimatterRecipe);
+        reRegister(chambersKey, chambersRecipe);
+        reRegister(totemKey, totemRecipe);
+    }
+
+    /**
+     * Registers a recipe, replacing any earlier one under the same key.
+     *
+     * <p>{@link #initRecipes()} runs from {@code startGame()} on every round, and
+     * {@code Bukkit.addRecipe} throws {@code Duplicate recipe ignored} for a key already registered
+     * — which aborts the second round of a server session before anything else happens. Production
+     * never sees it because {@code scheduleReset} restarts the JVM between rounds.
+     *
+     * <p>Removing rather than skipping is deliberate: the tracker shapes depend on the
+     * HARDER_TRACKERS setting, which can change between rounds, so they have to be rebuilt.
+     */
+    private void reRegister(NamespacedKey key, Recipe recipe) {
+        Bukkit.removeRecipe(key);
+        Bukkit.addRecipe(recipe);
     }
 
     public boolean ignoreInventoryClosed(Player player) {
@@ -114,10 +132,10 @@ public class RecipeManager implements Manager {
     }
 
     public List<Recipe> getRecipes(ItemStack item) {
-        FakeRecipe fakeRecipe = FakeRecipe.forItem(item, this.forceItemBattle);
+        FakeRecipe fakeRecipe = FakeRecipe.forItem(item, this.settings);
 
         if (fakeRecipe != null) {
-            Recipe recipe = fakeRecipe.getRecipe(item, this.forceItemBattle);
+            Recipe recipe = fakeRecipe.getRecipe(item, this.plugin);
 
             if (recipe != null) {
                 return List.of(recipe);
