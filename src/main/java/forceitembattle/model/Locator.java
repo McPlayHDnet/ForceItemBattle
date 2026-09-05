@@ -24,6 +24,22 @@ public class Locator {
     private final Color lineColor;
     private final String bossBarGradient;
 
+    /**
+     * The {@code spacing} of this structure's structure set, in chunks, or {@code 0} for a
+     * {@link Type#BIOME} locator, which has no such grid.
+     *
+     * <p>The search sweeps one chunk per spacing, so this decides both how many regions it visits
+     * and when it may stop — see {@code NearestOnGrid}. It is data the server owns and does not
+     * expose, so it is copied here: {@code trial_chambers} and {@code trail_ruins} are both 34 in
+     * vanilla 26.2, and {@code fib:antimatter_depths_portal} is 112 in
+     * {@code FIB_Worldgen/data/fib/worldgen/structure_set/antimatter_depths_portal.json}.
+     *
+     * <p><b>Under the real value is safe, over it is not.</b> Too small only repeats probes, which
+     * agree with each other; too large steps clean over regions and never sees what is in them. So
+     * if one of these ever changes and this is not updated, lower it rather than guessing.
+     */
+    private final int structureSpacing;
+
     public boolean matches(ItemStack itemStack) {
         return this.locatorItem.matches(itemStack);
     }

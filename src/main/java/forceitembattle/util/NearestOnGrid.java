@@ -59,23 +59,30 @@ public final class NearestOnGrid {
     private final int originX;
     private final int originZ;
     private final List<Sample> samples;
+    private final double slack;
 
     private int next;
     private @Nullable Spot best;
     private long bestDistance = Long.MAX_VALUE;
 
     /**
-     * @param radiusBlocks how far out to sweep exhaustively
-     * @param stepChunks   the sample grid's pitch. Must be no larger than the structure set's
-     *                     {@code spacing}, or whole regions fall between samples and their
-     *                     structures are never seen. Smaller than the spacing only costs repeat
-     *                     probes, which land on the server's own structure cache and agree with
-     *                     each other, so erring low is free and erring high is not.
+     * @param radiusBlocks   how far out to sweep before giving up
+     * @param spacingChunks  the structure set's {@code spacing}. Both the grid's pitch and the
+     *                       sweep's stopping rule come from it, so they cannot disagree. Sampling
+     *                       one chunk per spacing is exactly enough — {@code floorDiv(c + k*S, S)}
+     *                       is {@code floorDiv(c, S) + k}, so consecutive samples land in
+     *                       consecutive regions, every region gets one and none gets two. A value
+     *                       under the real spacing still works and merely costs repeat probes; a
+     *                       value over it steps across whole regions and never sees them.
      */
-    public NearestOnGrid(int originX, int originZ, int radiusBlocks, int stepChunks) {
+    public NearestOnGrid(int originX, int originZ, int radiusBlocks, int spacingChunks) {
         this.originX = originX;
         this.originZ = originZ;
-        this.samples = grid(originX, originZ, radiusBlocks, stepChunks);
+        this.samples = grid(originX, originZ, radiusBlocks, spacingChunks);
+        // How far a structure can sit from the sample that found it: the diagonal of its region,
+        // plus a chunk because the sample is measured from a chunk centre. Erring high only costs
+        // probes, so this rounds up.
+        this.slack = spacingChunks * 16.0 * Math.sqrt(2.0) + 16.0;
     }
 
     /** The sample chunks, nearest first. */
@@ -110,6 +117,12 @@ public final class NearestOnGrid {
 
         for (; this.next < limit; this.next++) {
             Sample sample = this.samples.get(this.next);
+
+            if (this.settled(sample)) {
+                this.next = this.samples.size();
+                return true;
+            }
+
             Spot spot = probe.at(sample.chunkX(), sample.chunkZ());
             if (spot == null) {
                 continue;
@@ -123,6 +136,24 @@ public final class NearestOnGrid {
         }
 
         return this.done();
+    }
+
+    /**
+     * Whether nothing left to probe could beat what we already have, so the sweep can stop here.
+     *
+     * <p>Samples run nearest-first, so from this one outwards every region's sample is at least
+     * this far away, and the structure inside such a region is at least {@link #slack} nearer than
+     * its sample at worst. Once the best find beats that, the rest of the grid cannot hold
+     * anything closer and probing it is pure cost. This is what keeps a chamber 100 blocks away
+     * from paying for a sweep out to 2500.
+     */
+    private boolean settled(Sample sample) {
+        if (this.best == null) {
+            return false;
+        }
+        double reach = Math.sqrt(distanceSquared(this.originX, this.originZ,
+                centreOf(sample.chunkX()), centreOf(sample.chunkZ()))) - this.slack;
+        return Math.sqrt(this.bestDistance) <= reach;
     }
 
     public boolean done() {

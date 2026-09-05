@@ -79,7 +79,7 @@ class CommandFixLocateTest {
     private void running(String id, String name) {
         this.active.put(id, new Locator(id, name, CustomMaterials.values()[0],
                 Locator.Type.STRUCTURE, Locator.Use.values()[0], 16,
-                Color.LIME, "<green>"));
+                Color.LIME, "<green>", 34));
     }
 
     // --- the tests --------------------------------------------------------------------------

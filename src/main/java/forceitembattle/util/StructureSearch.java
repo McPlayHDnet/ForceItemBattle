@@ -20,14 +20,6 @@ public final class StructureSearch {
      */
     public static final int PRECISE_RADIUS = 2500;
 
-    /**
-     * The sample grid's pitch, in chunks. Below every spacing the plugin's locators care about —
-     * trial chambers 34, trail ruins 34, {@code fib:antimatter_depths_portal} 112 — with room to
-     * spare, because being under the real spacing is what makes the sweep complete. A locator
-     * pointed at some denser structure set than these would have to lower it.
-     */
-    public static final int STEP_CHUNKS = 16;
-
     private StructureSearch() {
     }
 

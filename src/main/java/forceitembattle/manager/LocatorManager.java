@@ -49,8 +49,13 @@ public class LocatorManager implements Manager {
     /** Close enough to spot something standing at the surface. */
     private static final int SURFACE_ARRIVAL_RADIUS = 70;   // blocks
 
-    /** Region probes per tick while sweeping for a structure. Keeps a sweep near half a second. */
-    private static final int PROBES_PER_TICK = 48;
+    /**
+     * Region probes per tick while sweeping for a structure. Low on purpose: a probe that lands on
+     * a chunk already on disk makes the server read and parse it, and those are the probes nearest
+     * the player — so the cheap-looking ones are the expensive ones. A near find now settles in
+     * two or three ticks anyway.
+     */
+    private static final int PROBES_PER_TICK = 12;
 
     /** Chunks each way around the biome's middle that get generated and read. 5×5 in all. */
     private static final int SOUNDING_CHUNK_RADIUS = 2;
@@ -77,13 +82,13 @@ public class LocatorManager implements Manager {
         this.sounding = ConcurrentHashMap.newKeySet();
 
         this.addLocator(new Locator("fib:antimatter_depths_portal", "Antimatter", CustomMaterials.ANTIMATTER_LOCATOR, Locator.Type.STRUCTURE,
-                Locator.Use.RIGHT_CLICK, SURFACE_ARRIVAL_RADIUS, Color.PURPLE, "#B314A8:#E775C3"));
+                Locator.Use.RIGHT_CLICK, SURFACE_ARRIVAL_RADIUS, Color.PURPLE, "#B314A8:#E775C3", 112));
         this.addLocator(new Locator("trial_chambers", "Trial Chambers", CustomMaterials.TRIAL_LOCATOR, Locator.Type.STRUCTURE,
-                Locator.Use.RIGHT_CLICK, BURIED_ARRIVAL_RADIUS, Color.fromRGB(0x4F, 0xB4, 0x93), "#2E7D68:#7FD8BC"));
+                Locator.Use.RIGHT_CLICK, BURIED_ARRIVAL_RADIUS, Color.fromRGB(0x4F, 0xB4, 0x93), "#2E7D68:#7FD8BC", 34));
         this.addLocator(new Locator("sulfur_caves", "Sulfur Cave", CustomMaterials.SULFUR_LOCATOR, Locator.Type.BIOME,
-                Locator.Use.RIGHT_CLICK, BURIED_ARRIVAL_RADIUS, Color.YELLOW, "#C7A500:#FFF27E"));
+                Locator.Use.RIGHT_CLICK, BURIED_ARRIVAL_RADIUS, Color.YELLOW, "#C7A500:#FFF27E", 0));
         this.addLocator(new Locator("trail_ruins", "Trail Ruins", CustomMaterials.KILN_FIRED_BRUSH, Locator.Type.STRUCTURE,
-                Locator.Use.BRUSH_GROUND, SURFACE_ARRIVAL_RADIUS, Color.fromRGB(0xC7, 0x7B, 0x3E), "#8A4B22:#E0A46B"));
+                Locator.Use.BRUSH_GROUND, SURFACE_ARRIVAL_RADIUS, Color.fromRGB(0xC7, 0x7B, 0x3E), "#8A4B22:#E0A46B", 34));
     }
 
     @Override
@@ -150,7 +155,7 @@ public class LocatorManager implements Manager {
         Location origin = player.getLocation();
         World world = origin.getWorld();
         NearestOnGrid sweep = new NearestOnGrid(origin.getBlockX(), origin.getBlockZ(),
-                StructureSearch.PRECISE_RADIUS, StructureSearch.STEP_CHUNKS);
+                StructureSearch.PRECISE_RADIUS, locator.getStructureSpacing());
         NearestOnGrid.Probe probe = StructureSearch.probe(world, structure, origin.getBlockY());
 
         Scheduler.runTimerSync(new BukkitRunnable() {
