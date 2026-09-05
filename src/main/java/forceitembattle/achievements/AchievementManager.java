@@ -158,11 +158,10 @@ public class AchievementManager implements Manager {
     private void grantAchievement(Player player, Achievements achievement,
                                   boolean isTeamAchievement, ForceItemPlayer forceItemPlayer) {
         Team team = forceItemPlayer.currentTeam();
-        boolean teamGame = forceItemPlayer.isInTeam();
 
         if (!storage.hasAchievement(player.getUniqueId(), achievement)) {
-            writeUnlock(player.getUniqueId(), player, achievement, team, teamGame);
-            checkMetaTiers(player.getUniqueId(), player, team, teamGame);
+            writeUnlock(player.getUniqueId(), player, achievement, team);
+            checkMetaTiers(player.getUniqueId(), player, team);
         }
 
         if (isTeamAchievement && team != null) {
@@ -175,15 +174,15 @@ public class AchievementManager implements Manager {
                 if (storage.hasAchievement(memberUuid, achievement)) {
                     continue;
                 }
-                writeUnlock(memberUuid, teamMember.player(), achievement, team, teamGame);
-                checkMetaTiers(memberUuid, teamMember.player(), team, teamGame);
+                writeUnlock(memberUuid, teamMember.player(), achievement, team);
+                checkMetaTiers(memberUuid, teamMember.player(), team);
             }
         }
     }
 
     /** Convenience for unlocks with no game context (e.g. a GLOBAL unlock at join). */
     public void checkMetaTiers(UUID playerUuid, Player player) {
-        checkMetaTiers(playerUuid, player, null, false);
+        checkMetaTiers(playerUuid, player, null);
     }
 
     /**
@@ -194,7 +193,7 @@ public class AchievementManager implements Manager {
      * used to be a {@code while (grantedAny)} fixpoint, whose second pass could only ever grant
      * nothing — pinned by {@code CompletionistRuleTest}, which is the guard that keeps this true.
      */
-    public void checkMetaTiers(UUID playerUuid, Player player, Team team, boolean teamGame) {
+    public void checkMetaTiers(UUID playerUuid, Player player, Team team) {
         for (Achievements achievement : Achievements.values()) {
             if (achievement.getScope() != AchievementScope.META) {
                 continue;
@@ -206,7 +205,7 @@ public class AchievementManager implements Manager {
                 continue;
             }
 
-            writeUnlock(playerUuid, player, achievement, team, teamGame);
+            writeUnlock(playerUuid, player, achievement, team);
         }
     }
 
@@ -242,7 +241,7 @@ public class AchievementManager implements Manager {
                 }
                 // Always SOLO with no teammate: a GLOBAL stat spans both modes, so recording TEAM at
                 // game-end and SOLO at join would make the mode depend on where the unlock fired.
-                writeUnlock(uuid, player, achievement, null, false);
+                writeUnlock(uuid, player, achievement, null);
             }
 
             checkMetaTiers(uuid, player);
@@ -279,7 +278,7 @@ public class AchievementManager implements Manager {
                     continue;
                 }
                 // Recorded SOLO with no teammate, for the same reason the GLOBAL unlocks are.
-                writeUnlock(uuid, player, achievement, null, false);
+                writeUnlock(uuid, player, achievement, null);
             }
             checkMetaTiers(uuid, player);
         });
@@ -291,8 +290,8 @@ public class AchievementManager implements Manager {
      * service data valid.
      */
     private void writeUnlock(UUID memberUuid, Player memberPlayer, Achievements achievement,
-                             Team team, boolean teamGame) {
-        UUID teammate = teamGame ? teammateOf(memberUuid, team) : null;
+                             Team team) {
+        UUID teammate = teammateOf(memberUuid, team);
         AchievementMode mode = teammate != null ? AchievementMode.TEAM : AchievementMode.SOLO;
 
         storage.addAchievement(memberUuid, achievement, mode, teammate);
@@ -333,7 +332,6 @@ public class AchievementManager implements Manager {
             UUID uuid = fip.player().getUniqueId();
 
             Team team = fip.currentTeam();
-            boolean teamGame = fip.isInTeam();
 
             // CHICOT — finish with no deaths.
             if (!storage.hasAchievement(uuid, Achievements.CHICOT)) {
@@ -343,33 +341,33 @@ public class AchievementManager implements Manager {
                         Achievements.CHICOT, key -> Achievements.CHICOT.getHandler().createProgress());
                 if (chicotProgress instanceof SimpleAchievementProgress simpleProgress
                         && simpleProgress.deathCount == 0) {
-                    writeUnlock(uuid, fip.player(), Achievements.CHICOT, team, teamGame);
+                    writeUnlock(uuid, fip.player(), Achievements.CHICOT, team);
                 }
             }
 
             // THE_HARD_WAY — finish the game without a single back-to-back.
             if (!storage.hasAchievement(uuid, Achievements.THE_HARD_WAY)
                     && !hadOccurrence(uuid, Achievements.THE_HARD_WAY)) {
-                writeUnlock(uuid, fip.player(), Achievements.THE_HARD_WAY, team, teamGame);
+                writeUnlock(uuid, fip.player(), Achievements.THE_HARD_WAY, team);
             }
 
             // NO_HANDOUTS — win the game without a single back-to-back.
             if (!storage.hasAchievement(uuid, Achievements.NO_HANDOUTS)
                     && !hadOccurrence(uuid, Achievements.NO_HANDOUTS)
-                    && didWin(fip, teamGame)) {
-                writeUnlock(uuid, fip.player(), Achievements.NO_HANDOUTS, team, teamGame);
+                    && didWin(fip)) {
+                writeUnlock(uuid, fip.player(), Achievements.NO_HANDOUTS, team);
             }
 
             // NO_SHORTCUTS — finish without entering the Antimatter Teleporter.
             if (!storage.hasAchievement(uuid, Achievements.NO_SHORTCUTS)
                     && !hadOccurrence(uuid, Achievements.NO_SHORTCUTS)) {
-                writeUnlock(uuid, fip.player(), Achievements.NO_SHORTCUTS, team, teamGame);
+                writeUnlock(uuid, fip.player(), Achievements.NO_SHORTCUTS, team);
             }
 
             // IT_IS_BEAUTIFUL — finish without leaving the Overworld.
             if (!storage.hasAchievement(uuid, Achievements.IT_IS_BEAUTIFUL)
                     && !hadOccurrence(uuid, Achievements.IT_IS_BEAUTIFUL)) {
-                writeUnlock(uuid, fip.player(), Achievements.IT_IS_BEAUTIFUL, team, teamGame);
+                writeUnlock(uuid, fip.player(), Achievements.IT_IS_BEAUTIFUL, team);
             }
         }
     }
@@ -384,8 +382,8 @@ public class AchievementManager implements Manager {
     }
 
     /** Ties for 1st count as a win. */
-    private boolean didWin(ForceItemPlayer fip, boolean teamGame) {
-        if (teamGame && fip.currentTeam() != null) {
+    private boolean didWin(ForceItemPlayer fip) {
+        if (fip.isInTeam()) {
             List<Team> teams = this.roster.players().values().stream()
                     .map(ForceItemPlayer::currentTeam)
                     .filter(Objects::nonNull)

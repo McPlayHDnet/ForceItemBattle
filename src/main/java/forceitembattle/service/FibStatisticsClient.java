@@ -36,6 +36,19 @@ import java.util.function.Consumer;
  */
 public class FibStatisticsClient implements StatisticsSink {
 
+    /**
+     * One of this client's player-scoped stats loaders. {@code soloStats} and {@code combinedTeamStats}
+     * share a shape, so a caller can pick between them at runtime — {@code /stats} does, to serve solo
+     * and team from one code path.
+     *
+     * <p>It lives here rather than at the call site so that {@link ApiException}, a generated-client
+     * type, stays inside this package like every other one.
+     */
+    @FunctionalInterface
+    public interface StatsLoader {
+        void load(UUID playerUuid, Consumer<StatsView> onSuccess, Consumer<ApiException> onError);
+    }
+
     private final FibStatisticsControllerApi api;
     private final ApiExecutor executor;
 

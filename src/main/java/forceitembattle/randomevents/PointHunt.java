@@ -2,7 +2,7 @@ package forceitembattle.randomevents;
 
 import forceitembattle.model.Find;
 import forceitembattle.manager.ItemDifficultiesManager.State;
-import forceitembattle.model.CustomMaterials;
+import forceitembattle.manager.RoundSetup;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.ScoreOwner;
 import forceitembattle.model.Team;
@@ -17,7 +17,6 @@ import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 
 /**
  * A ten-minute scoring race. Every non-skipped find (back-to-backs included) scores by pool tier
@@ -151,14 +150,12 @@ public class PointHunt implements RandomEvent {
         List<ForceItemPlayer> members = winner.members();
 
         if (members.size() <= 1) {
-            members.forEach(member -> this.giveWheels(member.player(), SOLO_WHEELS));
+            members.forEach(member -> EventRewards.giveWheels(member.player(), SOLO_WHEELS));
         } else {
-            int base = TEAM_WHEELS_TOTAL / members.size();
-            int remainder = TEAM_WHEELS_TOTAL % members.size();
+            int[] shares = RoundSetup.splitEvenly(TEAM_WHEELS_TOTAL, members.size());
             for (int i = 0; i < members.size(); i++) {
-                int amount = base + (i < remainder ? 1 : 0);
-                if (amount > 0) {
-                    this.giveWheels(members.get(i).player(), amount);
+                if (shares[i] > 0) {
+                    EventRewards.giveWheels(members.get(i).player(), shares[i]);
                 }
             }
         }
@@ -169,10 +166,5 @@ public class PointHunt implements RandomEvent {
                 : "<green>" + members.getFirst().player().getName();
     }
 
-    private void giveWheels(Player player, int amount) {
-        ItemStack wheels = CustomMaterials.WHEEL_OF_FORTUNE.itemStack(amount);
-        player.getInventory().addItem(wheels).values().forEach(leftover ->
-                player.getWorld().dropItemNaturally(player.getLocation(), leftover));
-    }
 }
 

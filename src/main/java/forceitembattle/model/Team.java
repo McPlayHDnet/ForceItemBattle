@@ -28,7 +28,6 @@ public class Team implements ScoreOwner {
     @Setter
     @Nullable
     private String name;
-    @Getter
     private DyeColor color;
     @Setter
     private Material currentMaterial;

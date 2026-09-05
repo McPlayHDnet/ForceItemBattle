@@ -1,6 +1,5 @@
 package forceitembattle.randomevents;
 
-import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.Find;
 import forceitembattle.util.Prefix;
 import forceitembattle.util.Text;
@@ -9,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 
 @RequiredArgsConstructor
 public class ItemHunt implements RandomEvent {
@@ -37,7 +35,8 @@ public class ItemHunt implements RandomEvent {
 
         Player winner = find.player();
         int wheels = ThreadLocalRandom.current().nextInt(MIN_WHEELS, MAX_WHEELS + 1);
-        this.giveWheels(winner, wheels);
+        // Only the finder is paid, teammates included -- the hunt is a personal race.
+        EventRewards.giveWheels(winner, wheels);
 
         Bukkit.broadcast(Text.of(Prefix.RANDOM_EVENT + "<green>" + winner.getName() + " <gray>won the "
                 + RandomEvents.ITEM_HUNT.coloredName() + " <gray>and receives <yellow>" + wheels
@@ -49,13 +48,4 @@ public class ItemHunt implements RandomEvent {
         return true;
     }
 
-    /**
-     * Only the finder is paid, teammates included — the hunt is a personal race.
-     */
-    private void giveWheels(Player player, int amount) {
-        ItemStack wheels = CustomMaterials.WHEEL_OF_FORTUNE.itemStack(amount);
-
-        player.getInventory().addItem(wheels).values().forEach(leftover ->
-                player.getWorld().dropItemNaturally(player.getLocation(), leftover));
-    }
 }

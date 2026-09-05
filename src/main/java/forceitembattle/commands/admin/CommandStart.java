@@ -39,8 +39,6 @@ public final class CommandStart extends CustomCommand implements CustomTabComple
     private final GameSettings settings;
     private final TeamsManager teamManager;
 
-    /** Only to schedule the countdown. */
-
     public CommandStart(Gamemanager gamemanager, ForceItemAssignment assignment, Roster roster, RoundPhase roundPhase, RoundClock roundClock, GameSettings settings, TeamsManager teamManager) {
         super("start");
         this.gamemanager = gamemanager;

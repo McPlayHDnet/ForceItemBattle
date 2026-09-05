@@ -68,13 +68,16 @@ public final class CommandStats extends CustomCommand implements CustomTabComple
         }
     }
 
-    private void handleSolo(Player player, String[] args) {
-        FibStatisticsClient helper = this.fibService.statistics();
-
+    /**
+     * Self or named target, for whichever scope was asked for. Solo and team differ only in the
+     * loader they call, the panel's title, and the noun in the two refusals.
+     */
+    private void handleScope(Player player, String[] args, String title, String noun,
+                             FibStatisticsClient.StatsLoader loader) {
         if (args.length == 1) {
-            helper.soloStats(player.getUniqueId(),
-                    view -> sendStats(player, "Solo Stats", "<green>" + player.getName(), view),
-                    error -> player.sendMessage(Text.of("<red>Could not load your solo stats.")));
+            loader.load(player.getUniqueId(),
+                    view -> sendStats(player, title, "<green>" + player.getName(), view),
+                    error -> player.sendMessage(Text.of("<red>Could not load your " + noun + " stats.")));
             return;
         }
 
@@ -84,30 +87,17 @@ public final class CommandStats extends CustomCommand implements CustomTabComple
             return;
         }
 
-        helper.soloStats(targetUuid,
-                view -> sendStats(player, "Solo Stats", "<green>" + args[1], view),
-                error -> player.sendMessage(Text.of("<yellow>" + args[1] + " <red>has no solo stats yet")));
+        loader.load(targetUuid,
+                view -> sendStats(player, title, "<green>" + args[1], view),
+                error -> player.sendMessage(Text.of("<yellow>" + args[1] + " <red>has no " + noun + " stats yet")));
+    }
+
+    private void handleSolo(Player player, String[] args) {
+        handleScope(player, args, "Solo Stats", "solo", this.fibService.statistics()::soloStats);
     }
 
     private void handleTeam(Player player, String[] args) {
-        FibStatisticsClient helper = this.fibService.statistics();
-
-        if (args.length == 1) {
-            helper.combinedTeamStats(player.getUniqueId(),
-                    view -> sendStats(player, "Team Stats", "<green>" + player.getName(), view),
-                    error -> player.sendMessage(Text.of("<red>Could not load your team stats.")));
-            return;
-        }
-
-        UUID targetUuid = resolvePlayer(args[1]);
-        if (targetUuid == null) {
-            player.sendMessage(Text.of("<yellow>" + args[1] + " <red>was not found"));
-            return;
-        }
-
-        helper.combinedTeamStats(targetUuid,
-                view -> sendStats(player, "Team Stats", "<green>" + args[1], view),
-                error -> player.sendMessage(Text.of("<yellow>" + args[1] + " <red>has no team stats yet")));
+        handleScope(player, args, "Team Stats", "team", this.fibService.statistics()::combinedTeamStats);
     }
 
     private void handleDuo(Player player, String[] args) {
@@ -358,19 +348,16 @@ public final class CommandStats extends CustomCommand implements CustomTabComple
                     completions.add("confirm");
                 }
             } else {
-                completions.addAll(onlinePlayerNames());
+                completions.addAll(CustomTabCompleter.onlinePlayerNames());
             }
         } else if (args.length == 3
                 && (args[0].equalsIgnoreCase("duo")
                 || (args[0].equalsIgnoreCase("reset") && player.isOp()
                 && (args[1].equalsIgnoreCase("solo") || args[1].equalsIgnoreCase("team"))))) {
-            completions.addAll(onlinePlayerNames());
+            completions.addAll(CustomTabCompleter.onlinePlayerNames());
         }
 
         return completions;
     }
 
-    private static List<String> onlinePlayerNames() {
-        return Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();
-    }
 }

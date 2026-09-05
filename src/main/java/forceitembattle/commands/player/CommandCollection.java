@@ -72,6 +72,6 @@ public final class CommandCollection extends CustomCommand implements CustomTabC
         if (args.length != 1) {
             return List.of();
         }
-        return Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();
+        return CustomTabCompleter.onlinePlayerNames();
     }
 }

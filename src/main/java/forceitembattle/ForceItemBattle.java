@@ -244,8 +244,10 @@ public final class ForceItemBattle extends JavaPlugin {
         this.seedPool.load();
 
         // Dependency order. Every manager takes what it needs by name, so this is a topological
-        // sort of the graph rather than a free choice — the three exceptions are the Suppliers
-        // below, which are the only genuine cycles left.
+        // sort of the graph rather than a free choice — the two exceptions are the Suppliers
+        // below, which are the only genuine cycles left. TeamsManager used to be a third: it took
+        // a Supplier<ScoreboardManager> for a cycle that does not exist, since the scoreboard is
+        // built just above it and does not depend on it. Check for that before adding one.
         this.itemDifficultiesManager = register(new ItemDifficultiesManager(this, this.roundClock, this.settings));
         this.customItemManager = register(new CustomItemManager(this));
         this.antimatterPortalManager = register(new AntimatterPortalManager(this));
@@ -271,7 +273,7 @@ public final class ForceItemBattle extends JavaPlugin {
                 this.positionManager, this.locatorManager, () -> this.scoreboardManager));
         this.scoreboardManager = register(new ScoreboardManager(this.roster, this.settings,
                 this.wanderingTraderManager, this.itemDifficultiesManager));
-        this.teamManager = register(new TeamsManager(this, this.roster, () -> this.scoreboardManager));
+        this.teamManager = register(new TeamsManager(this, this.roster, this.scoreboardManager));
 
         // The world's timer lookup is late-bound: the timer needs the game manager, which needs this.
         this.achievementManager = register(new AchievementManager(this.roster, this.roundPhase,

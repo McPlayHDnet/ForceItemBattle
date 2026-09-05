@@ -40,6 +40,18 @@ public class TimerManager implements Manager {
     private static final Title.Times TIMES =
             Title.Times.times(Duration.ofMillis(1000), Duration.ofMillis(1000), Duration.ofMillis(1000));
 
+    /**
+     * The paused-state title and action bar. Constant, and {@link #sendActionBar()} runs once a
+     * second for every online player, so building and re-parsing them per player was pure waste.
+     * Titles and Components are immutable, so one instance is safe to show to everybody.
+     */
+    private static final Title PAUSED_TITLE = Title.title(
+            Component.empty(),
+            Text.of("<red>Game is paused!"),
+            Title.Times.times(Duration.ofMillis(0), Duration.ofMillis(1000), Duration.ofMillis(500)));
+
+    private static final Component PAUSED_ACTION_BAR = Text.of("<gray>Timer <red><b>paused</red>");
+
     private final JavaPlugin plugin;
     private final Roster roster;
     private final RoundPhase roundPhase;
@@ -104,12 +116,9 @@ public class TimerManager implements Manager {
 
             if (!this.roundPhase.roundRunning()) {
                 if (this.roundPhase.isPausedGame()) {
-                    Title timeLeftTitle = Title.title(Component.empty(), Text.of("<red>Game is paused!"),
-                            Title.Times.times(Duration.ofMillis(0), Duration.ofMillis(1000), Duration.ofMillis(500)));
-                    player.showTitle(timeLeftTitle);
-
+                    player.showTitle(PAUSED_TITLE);
                 }
-                player.sendActionBar(Text.of("<gray>Timer <red><b>paused</red>"));
+                player.sendActionBar(PAUSED_ACTION_BAR);
                 continue;
             }
 

@@ -169,7 +169,7 @@ public class PlayerLifecycleListener implements Listener {
         // A mid-round joiner holds no roster entry and no backpack, so there is nothing to put
         // in slot 8 for them.
         if (forceItemPlayer != null) {
-            player.getInventory().setItem(8, GameItems.backpack(forceItemPlayer, forceItemPlayer.isInTeam()));
+            player.getInventory().setItem(8, GameItems.backpack(forceItemPlayer));
         }
 
     }

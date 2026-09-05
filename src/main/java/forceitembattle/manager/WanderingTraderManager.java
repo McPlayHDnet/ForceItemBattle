@@ -26,7 +26,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Supplier;
-import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -52,7 +51,6 @@ import org.jetbrains.annotations.Nullable;
  * Spawns and owns every trader in the round. The wandering trader arrives on its own timer;
  * the special trader is spawned by the random-event system. Both can be alive at once.
  */
-@Getter
 public class WanderingTraderManager implements Manager {
 
     private static final int SPAWN_CHUNK_RADIUS = 5;
@@ -91,7 +89,6 @@ public class WanderingTraderManager implements Manager {
     /** Players currently inside the spawn ping zone; entering it replays the trader direction line. */
     private final Set<UUID> nearSpawnPlayers = new HashSet<>();
 
-    private int randomAfterStartSpawnTime;
     private int timer;
     private BukkitTask spawnTimerTask;
 
@@ -104,8 +101,7 @@ public class WanderingTraderManager implements Manager {
         this.positionManager = positionManager;
         this.locatorManager = locatorManager;
         this.scoreboard = scoreboard;
-        this.randomAfterStartSpawnTime = ThreadLocalRandom.current().nextInt(7, 11) * 60; // [7, 10] minutes
-        this.timer = this.randomAfterStartSpawnTime;
+        this.timer = ThreadLocalRandom.current().nextInt(7, 11) * 60; // [7, 10] minutes
     }
 
     @Override
@@ -135,8 +131,7 @@ public class WanderingTraderManager implements Manager {
 
                 if (timer <= 0) {
                     if (spawnWanderingTrader()) {
-                        randomAfterStartSpawnTime = TRADER_LIFETIME_SECONDS + ThreadLocalRandom.current().nextInt(7, 11) * 60;
-                        timer = randomAfterStartSpawnTime;
+                        timer = TRADER_LIFETIME_SECONDS + ThreadLocalRandom.current().nextInt(7, 11) * 60;
                     } else {
                         // No solid ground found near spawn (an ocean start, say). Retry shortly
                         // rather than skipping the trader for another 7-10 minutes.

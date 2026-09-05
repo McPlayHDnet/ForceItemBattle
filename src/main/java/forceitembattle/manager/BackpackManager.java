@@ -54,7 +54,7 @@ public class BackpackManager implements Manager {
                         null,
                         this.plugin.getConfig().getInt("settings.backpackRows") * 9,
                         Text.of("<dark_gray>» <gold>Backpack <dark_gray>● <gray>Menu")));
-        fibPlayer.player().getInventory().setItem(8, GameItems.backpack(fibPlayer, fibPlayer.isInTeam()));
+        fibPlayer.player().getInventory().setItem(8, GameItems.backpack(fibPlayer));
     }
 
     public void createTeamBackpack(Team team, ForceItemPlayer fibPlayer) {
@@ -63,7 +63,7 @@ public class BackpackManager implements Manager {
                         null,
                         this.plugin.getConfig().getInt("settings.backpackRows") * 9,
                         Text.of("<dark_gray>» <gold>Backpack <dark_gray>● <gray>Menu")));
-        fibPlayer.player().getInventory().setItem(8, GameItems.backpack(fibPlayer, fibPlayer.isInTeam()));
+        fibPlayer.player().getInventory().setItem(8, GameItems.backpack(fibPlayer));
     }
 
     public void openPlayerBackpack(Player player) {

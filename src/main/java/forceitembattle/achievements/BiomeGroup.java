@@ -1,10 +1,11 @@
 package forceitembattle.achievements;
 
+import java.util.HashMap;
 import java.util.List;
-import lombok.Getter;
+import java.util.Map;
 import org.bukkit.block.Biome;
+import org.jetbrains.annotations.Nullable;
 
-@Getter
 public enum BiomeGroup {
 
     OCEAN(Biome.OCEAN, Biome.DEEP_OCEAN),
@@ -39,4 +40,29 @@ public enum BiomeGroup {
         this.biomes = List.of(biomes);
     }
 
+    /**
+     * Reverse index of {@link #biomes}. Built once, because the lookup below runs for every player on
+     * every block they walk into, where scanning all {@code values()} meant a fresh array clone and up
+     * to two dozen list scans per step.
+     *
+     * <p>{@code putIfAbsent} keeps declaration order authoritative, so a biome claimed by two groups
+     * resolves to the same one the old first-match loop returned.
+     */
+    private static final Map<Biome, BiomeGroup> GROUP_OF = buildIndex();
+
+    private static Map<Biome, BiomeGroup> buildIndex() {
+        Map<Biome, BiomeGroup> index = new HashMap<>();
+        for (BiomeGroup group : values()) {
+            for (Biome biome : group.biomes) {
+                index.putIfAbsent(biome, group);
+            }
+        }
+        return Map.copyOf(index);
+    }
+
+    /** The group claiming this biome, or null when none does. */
+    @Nullable
+    public static BiomeGroup of(Biome biome) {
+        return GROUP_OF.get(biome);
+    }
 }

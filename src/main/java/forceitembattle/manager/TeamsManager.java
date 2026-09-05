@@ -17,7 +17,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -40,8 +39,7 @@ public class TeamsManager implements Manager {
     private final JavaPlugin plugin;
     private final Roster roster;
 
-    /** Late-bound: the scoreboard is built after this manager. */
-    private final Supplier<ScoreboardManager> scoreboard;
+    private final ScoreboardManager scoreboard;
 
     private final Map<ForceItemPlayer, Team> pendingInvite;
     @Getter
@@ -51,7 +49,7 @@ public class TeamsManager implements Manager {
     private final Set<String> previousPairings;
     private final Random random;
 
-    public TeamsManager(JavaPlugin plugin, Roster roster, Supplier<ScoreboardManager> scoreboard) {
+    public TeamsManager(JavaPlugin plugin, Roster roster, ScoreboardManager scoreboard) {
         this.plugin = plugin;
         this.roster = roster;
         this.scoreboard = scoreboard;
@@ -107,11 +105,11 @@ public class TeamsManager implements Manager {
             this.teams.add(singlePlayerTeam);
 
             player.setCurrentTeam(singlePlayerTeam);
-            this.scoreboard.get().updateAllPlayers();
+            this.scoreboard.updateAllPlayers();
         }
 
         this.rememberPairings();
-        this.scoreboard.get().updateAllPlayers();
+        this.scoreboard.updateAllPlayers();
     }
 
     private List<ForceItemPlayer> orderAvoidingPreviousPairings(List<ForceItemPlayer> players) {
@@ -209,9 +207,13 @@ public class TeamsManager implements Manager {
     }
 
     public void invite(ForceItemPlayer player, ForceItemPlayer target) {
-        Team team = new Team(this.teams.size() + 1, null, 0, 0, player);
-        if (player.currentTeam() != null) team = player.currentTeam();
-        else player.setCurrentTeam(team);
+        // Assigning the inviter a team happens before the self-invite guard below, as it always has:
+        // inviting yourself still leaves you in a team of one.
+        Team team = player.currentTeam();
+        if (team == null) {
+            team = new Team(this.teams.size() + 1, null, 0, 0, player);
+            player.setCurrentTeam(team);
+        }
 
         if (player == target) {
             player.player().sendMessage(Text.of("<red>You cannot interact with yourself :("));
@@ -239,7 +241,7 @@ public class TeamsManager implements Manager {
         this.teams.remove(team);
         this.teams.add(team);
 
-        this.scoreboard.get().updateAllPlayers();
+        this.scoreboard.updateAllPlayers();
     }
 
     public void accept(ForceItemPlayer player, ForceItemPlayer target) {
@@ -265,7 +267,7 @@ public class TeamsManager implements Manager {
             player.player().sendMessage(Text.of("<red>You have no invite from <yellow>" + target.player().getName()));
 
         }
-        this.scoreboard.get().updateAllPlayers();
+        this.scoreboard.updateAllPlayers();
     }
 
     public void create(ForceItemPlayer first, @Nullable ForceItemPlayer second, String name) {
@@ -278,7 +280,7 @@ public class TeamsManager implements Manager {
         // Never set a playerListName here: the client only applies ScoreboardManager's team
         // prefix/suffix to players who have no tab-list display name of their own, so naming one
         // member makes the two halves of a team render differently.
-        this.scoreboard.get().updateAllPlayers();
+        this.scoreboard.updateAllPlayers();
 
         String message = "<dark_aqua>You are now in team <green>" + name + " <dark_aqua>with <yellow>";
 
@@ -314,7 +316,7 @@ public class TeamsManager implements Manager {
                 teamPlayers.player().sendMessage(Text.of("<yellow>" + player.player().getName() + " <dark_aqua>left your team"));
             });
         }
-        this.scoreboard.get().updateAllPlayers();
+        this.scoreboard.updateAllPlayers();
     }
 
     public void showTeamList(ForceItemPlayer player) {
@@ -341,7 +343,7 @@ public class TeamsManager implements Manager {
         });
         this.pendingInvite.clear();
         this.getTeams().clear();
-        this.scoreboard.get().updateAllPlayers();
+        this.scoreboard.updateAllPlayers();
     }
 
     private void disbandTeam(Team team) {

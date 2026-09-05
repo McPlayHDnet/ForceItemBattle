@@ -43,9 +43,9 @@ public final class GameItems {
                 .getItemStack();
     }
 
-    public static ItemStack backpack(ForceItemPlayer forceItemPlayer, boolean isTeamMode) {
+    public static ItemStack backpack(ForceItemPlayer forceItemPlayer) {
         Material bundle = Material.BUNDLE;
-        if (isTeamMode) {
+        if (forceItemPlayer.isInTeam()) {
             bundle = Material.getMaterial(forceItemPlayer.currentTeam().getColor().name() + "_BUNDLE");
         }
 
@@ -78,7 +78,7 @@ public final class GameItems {
             return false;
         }
 
-        return Boolean.TRUE.equals(itemStack.getItemMeta().getPersistentDataContainer()
+        return Boolean.TRUE.equals(itemMeta.getPersistentDataContainer()
                 .get(BACKPACK_KEY, PersistentDataType.BOOLEAN));
     }
 }

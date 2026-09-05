@@ -51,7 +51,11 @@ public class PortalListener implements Listener {
             return;
         }
         Location playerLocation = player.getLocation();
-        Collection<ArmorStand> armorStands = playerLocation.getWorld().getEntitiesByClass(ArmorStand.class);
+        // Chunk-local rather than a whole-world scan: this runs on every move packet of every
+        // player, and the teleporter markers themselves accumulate armour stands. 1.5 is a safe
+        // superset of the 1.0 detection radius re-checked below, so the verdict is unchanged.
+        Collection<ArmorStand> armorStands =
+                playerLocation.getWorld().getNearbyEntitiesByType(ArmorStand.class, playerLocation, 1.5);
         for (ArmorStand armorStand : armorStands) {
             ItemStack helmet = armorStand.getEquipment().getHelmet();
             if (helmet != null && helmet.getType() == Material.SNOWBALL) {

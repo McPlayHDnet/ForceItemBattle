@@ -214,17 +214,16 @@ public final class RecipeInventory extends InventoryBuilder {
                 if (itemStack == null) {
                     return;
                 }
-                if (Bukkit.getRecipesFor(itemStack).isEmpty()) {
+                List<Recipe> itemRecipes = Bukkit.getRecipesFor(itemStack);
+                if (itemRecipes.isEmpty()) {
                     player.sendMessage(Text.of("<red>There is no recipe for this item. Just find it lol"));
                     return;
                 }
                 recipeViewer.setCurrentRecipeIndex(0);
                 recipeViewer.setItemStack(itemStack);
-                if (Bukkit.getRecipesFor(recipeViewer.itemStack()).size() > 1) {
-                    recipeViewer.setRecipe(Bukkit.getRecipesFor(recipeViewer.itemStack()).get(recipeViewer.currentRecipeIndex()));
-                } else {
-                    recipeViewer.setRecipe(Bukkit.getRecipesFor(recipeViewer.itemStack()).get(0));
-                }
+                // The index was just reset to 0, so the multi-recipe and single-recipe branches this
+                // replaces both selected the first one.
+                recipeViewer.setRecipe(itemRecipes.getFirst());
                 new RecipeInventory(recipes, recipeViewer, player).open(player);
 
             } else {

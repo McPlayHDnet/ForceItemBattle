@@ -26,14 +26,15 @@ public final class FindDetection {
             return Optional.empty();
         }
 
-        // The backpack is a bundle, so a round whose force item is one would otherwise be completed
-        // by opening the backpack every player is handed at the start.
-        if (GameItems.isBackpack(stack)) {
-            return Optional.empty();
-        }
-
         // participant(), not get(): a spectator keeps the item they were hunting when they stopped.
         return this.roster.participant(player.getUniqueId())
-                .filter(participant -> stack.getType() == participant.activeMaterial());
+                .filter(participant -> stack.getType() == participant.activeMaterial())
+                // The backpack is a bundle, so a round whose force item is one would otherwise be
+                // completed by opening the backpack every player is handed at the start.
+                //
+                // Tested last on purpose: it is the only check here that reads item meta, which
+                // CraftBukkit deep-copies on every call. Behind the material match it runs a
+                // handful of times a round rather than on every click, pickup, craft and consume.
+                .filter(participant -> !GameItems.isBackpack(stack));
     }
 }

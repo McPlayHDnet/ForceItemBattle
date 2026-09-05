@@ -228,7 +228,7 @@ public final class CommandAchievement extends CustomCommand implements CustomTab
             // player argument — the op-only subcommands still need one, but only for ops
             if (sub.equals("list") || sub.equals("global")
                     || (player.isOp() && (sub.equals("grant") || sub.equals("revoke") || sub.equals("reset")))) {
-                return filter(onlinePlayerNames(), args[1]);
+                return filter(CustomTabCompleter.onlinePlayerNames(), args[1]);
             }
             return List.of();
         }
@@ -268,7 +268,4 @@ public final class CommandAchievement extends CustomCommand implements CustomTab
         return Arrays.stream(Achievements.values()).map(Enum::name).toList();
     }
 
-    private List<String> onlinePlayerNames() {
-        return Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();
-    }
 }

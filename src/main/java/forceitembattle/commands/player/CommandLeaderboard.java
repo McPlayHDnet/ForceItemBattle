@@ -175,12 +175,7 @@ public final class CommandLeaderboard extends CustomCommand implements CustomTab
         player.sendMessage(Text.of("<red>Could not load leaderboard."));
     }
 
-    /**
-     * The player's name, or the first eight characters of their uuid when the name has not been
-     * recorded yet. A null identity should not happen on a ranked row, but is guarded so one bad
-     * entry cannot take down the whole board render.
-     */
-
+    /** Turns a snake_case category key into a spaced, title-cased header label. */
     private String formatCategoryName(String category) {
         String[] words = category.split("_");
         StringBuilder sb = new StringBuilder();

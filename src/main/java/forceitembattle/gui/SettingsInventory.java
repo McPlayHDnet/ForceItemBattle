@@ -10,6 +10,7 @@ import java.util.Objects;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.event.inventory.InventoryClickEvent;
 
 public final class SettingsInventory extends InventoryBuilder {
 
@@ -94,9 +95,7 @@ public final class SettingsInventory extends InventoryBuilder {
                 }
 
                 if (gameSetting == GameSetting.QUICKIE) {
-                    QuickieMode current = settings.getQuickieMode();
-                    settings.setQuickieMode(inventoryClickEvent.isRightClick() ? current.previous() : current.next());
-                    this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
+                    this.cycleQuickie(inventoryClickEvent);
                     return;
                 }
 
@@ -147,9 +146,7 @@ public final class SettingsInventory extends InventoryBuilder {
                 if (inventoryClickEvent.getCurrentItem() == null) return;
 
                 if (gameSetting == GameSetting.QUICKIE) {
-                    QuickieMode current = settings.getQuickieMode();
-                    settings.setQuickieMode(inventoryClickEvent.isRightClick() ? current.previous() : current.next());
-                    this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
+                    this.cycleQuickie(inventoryClickEvent);
                     return;
                 }
 
@@ -185,6 +182,17 @@ public final class SettingsInventory extends InventoryBuilder {
 
             });
         }
+    }
+
+    /**
+     * Steps the quickie mode one place, backwards on a right click. Unlike every other setting this
+     * one cycles rather than toggles, and both the name row and the status row below it do it, so
+     * both call this.
+     */
+    private void cycleQuickie(InventoryClickEvent inventoryClickEvent) {
+        QuickieMode current = settings.getQuickieMode();
+        settings.setQuickieMode(inventoryClickEvent.isRightClick() ? current.previous() : current.next());
+        this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
     }
 
     /**

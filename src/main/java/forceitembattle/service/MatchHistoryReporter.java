@@ -114,8 +114,7 @@ public class MatchHistoryReporter {
                        Map<Team, Integer> teamPlaces,
                        int durationSeconds,
                        Runnable onPersisted) {
-        GameSettings settings = this.settings;
-        boolean teamMode = settings.isSettingEnabled(GameSetting.TEAM);
+        boolean teamMode = this.settings.isSettingEnabled(GameSetting.TEAM);
         Map<UUID, ForceItemPlayer> roster = this.roster.players();
 
         FibMatchSubmitRequestDto request = new FibMatchSubmitRequestDto()
@@ -127,7 +126,7 @@ public class MatchHistoryReporter {
                 .teams(teamMode ? buildTeams() : List.of())
                 .participants(buildParticipants(roster, placesMap, teamPlaces))
                 .items(buildItems(roster, teamMode))
-                .settings(snapshotSettings(settings));
+                .settings(snapshotSettings(this.settings));
 
         this.matchSink.submitMatch(this.matchId, request, () -> {
             onPersisted.run();

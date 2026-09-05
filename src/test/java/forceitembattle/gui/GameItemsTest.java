@@ -71,7 +71,7 @@ class GameItemsTest {
 
     @Test
     void aBuiltBackpackIsRecognisedAsOne() {
-        ItemStack backpack = GameItems.backpack(participant("Understudy1"), false);
+        ItemStack backpack = GameItems.backpack(participant("Understudy1"));
 
         assertTrue(GameItems.isBackpack(backpack));
     }
@@ -102,7 +102,7 @@ class GameItemsTest {
         List<ItemStack> drops = new ArrayList<>(List.of(
                 new ItemStack(Material.DIAMOND),
                 GameItems.jokers(2),
-                GameItems.backpack(participant("Understudy1"), false),
+                GameItems.backpack(participant("Understudy1")),
                 new ItemStack(Material.COBBLESTONE)));
 
         drops.removeIf(GameItems::isJoker);

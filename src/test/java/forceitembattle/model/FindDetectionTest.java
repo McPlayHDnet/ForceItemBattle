@@ -92,7 +92,7 @@ class FindDetectionTest {
         @Test
         void theBackpackIsNeverAFindEvenWhenItMatches() {
             PlayerMock alice = join("Understudy1", Material.BUNDLE);
-            ItemStack backpack = GameItems.backpack(roster.get(alice.getUniqueId()), false);
+            ItemStack backpack = GameItems.backpack(roster.get(alice.getUniqueId()));
 
             assertEquals(Material.BUNDLE, backpack.getType(), "the fixture must be the hunted type");
             assertFalse(detects(alice, backpack));

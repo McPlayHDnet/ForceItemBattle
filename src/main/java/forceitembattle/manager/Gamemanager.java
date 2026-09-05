@@ -1,7 +1,6 @@
 package forceitembattle.manager;
 
 import forceitembattle.achievements.AchievementManager;
-import forceitembattle.gui.ItemBuilder;
 import forceitembattle.model.Dimension;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameContext;
@@ -19,9 +18,7 @@ import forceitembattle.service.MatchHistoryReporter;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Text;
-import java.util.ArrayDeque;
 import java.util.Arrays;
-import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,16 +32,12 @@ import org.bukkit.Bukkit;
 import org.bukkit.GameRules;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.Statistic;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Mob;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 
 public class Gamemanager implements Manager {
@@ -70,9 +63,6 @@ public class Gamemanager implements Manager {
     private final MatchHistoryReporter matchHistory;
 
     private final RoundPhase roundPhase;
-    @Getter
-    @Setter
-    private long gameStartTime;
 
     /**
      * Jokers configured for the current round. Kept here rather than in /start's local scope because
@@ -232,7 +222,6 @@ public class Gamemanager implements Manager {
 
     /** Everything that happens when /start's countdown hits zero. Keep orchestration out of /start. */
     public void startGame(int durationMinutes, int jokersAmount) {
-        this.setGameStartTime(System.currentTimeMillis());
         this.matchHistory.beginMatch(UUID.randomUUID());
 
         this.recipeManager.initRecipes();
@@ -272,7 +261,7 @@ public class Gamemanager implements Manager {
             team.setJokers(jokersAmount);
 
             List<ForceItemPlayer> members = team.members();
-            int[] shares = RoundSetup.splitJokers(jokersAmount, members.size());
+            int[] shares = RoundSetup.splitEvenly(jokersAmount, members.size());
 
             for (int member = 0; member < members.size(); member++) {
                 PlayerOutfitter.giveJokerShare(members.get(member).player(), shares[member]);
@@ -338,7 +327,7 @@ public class Gamemanager implements Manager {
                     player.sendMessage(Text.of("<red>Use /result to see the results from every player"));
                 }
 
-                if (statsEnabled && forceItemPlayer != null && !forceItemPlayer.isSpectator()) {
+                if (statsEnabled && Roster.isPlaying(forceItemPlayer)) {
                     Team currentTeam = forceItemPlayer.currentTeam();
 
                     boolean won = currentTeam == null
@@ -367,7 +356,7 @@ public class Gamemanager implements Manager {
                     this::evaluateCollectionAchievements);
             for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
                 ForceItemPlayer forceItemPlayer = this.roster.get(onlinePlayer.getUniqueId());
-                if (forceItemPlayer != null && !forceItemPlayer.isSpectator()) {
+                if (Roster.isPlaying(forceItemPlayer)) {
                     this.achievementManager.evaluateGlobalAchievements(onlinePlayer);
                 }
             }

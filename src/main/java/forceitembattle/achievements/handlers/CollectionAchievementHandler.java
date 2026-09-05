@@ -26,56 +26,41 @@ public class CollectionAchievementHandler<T> implements AchievementHandler<Colle
         this.extractor = extractor;
     }
 
+    /**
+     * The biome the player just walked into, or null when this move did not cross a block boundary
+     * (or is not a move at all). Records the position it checked, so a biome lookup — far too hot to
+     * do per move event — happens at most once per block.
+     */
+    private static Biome biomeAtNewBlock(Event event, CollectionAchievementProgress<?> progress) {
+        if (!(event instanceof PlayerMoveEvent moveEvent)) {
+            return null;
+        }
+
+        CollectionAchievementProgress.LastCheckedPosition current =
+                new CollectionAchievementProgress.LastCheckedPosition(
+                        moveEvent.getTo().getBlockX(),
+                        moveEvent.getTo().getBlockY(),
+                        moveEvent.getTo().getBlockZ());
+
+        if (current.equals(progress.lastPosition)) {
+            return null;
+        }
+        progress.lastPosition = current;
+
+        return moveEvent.getTo().getBlock().getBiome();
+    }
+
     public static CollectionAchievementHandler<BiomeGroup> biomeHandler(Set<BiomeGroup> requiredBiomes) {
         return new CollectionAchievementHandler<>(Trigger.VISIT, requiredBiomes, (event, player, progress) -> {
-            if (event instanceof PlayerMoveEvent moveEvent) {
-                // A biome lookup per move event is far too hot; only do it on a block change.
-                int x = moveEvent.getTo().getBlockX();
-                int y = moveEvent.getTo().getBlockY();
-                int z = moveEvent.getTo().getBlockZ();
-
-                CollectionAchievementProgress.LastCheckedPosition current =
-                        new CollectionAchievementProgress.LastCheckedPosition(x, y, z);
-
-                if (current.equals(progress.lastPosition)) {
-                    return null;
-                }
-
-                progress.lastPosition = current;
-
-                Biome biome = moveEvent.getTo().getBlock().getBiome();
-                for (BiomeGroup group : BiomeGroup.values()) {
-                    if (group.getBiomes().contains(biome)) {
-                        return group;
-                    }
-                }
-            }
-            return null;
+            Biome biome = biomeAtNewBlock(event, progress);
+            return biome == null ? null : BiomeGroup.of(biome);
         });
     }
 
     public static CollectionAchievementHandler<Biome> caveBiomeHandler(Set<Biome> requiredBiomes) {
         return new CollectionAchievementHandler<>(Trigger.VISIT, requiredBiomes, (event, player, progress) -> {
-            if (event instanceof PlayerMoveEvent moveEvent) {
-                int x = moveEvent.getTo().getBlockX();
-                int y = moveEvent.getTo().getBlockY();
-                int z = moveEvent.getTo().getBlockZ();
-
-                CollectionAchievementProgress.LastCheckedPosition current =
-                        new CollectionAchievementProgress.LastCheckedPosition(x, y, z);
-
-                if (current.equals(progress.lastPosition)) {
-                    return null;
-                }
-
-                progress.lastPosition = current;
-
-                Biome biome = moveEvent.getTo().getBlock().getBiome();
-                if (requiredBiomes.contains(biome)) {
-                    return biome;
-                }
-            }
-            return null;
+            Biome biome = biomeAtNewBlock(event, progress);
+            return biome != null && requiredBiomes.contains(biome) ? biome : null;
         });
     }
 

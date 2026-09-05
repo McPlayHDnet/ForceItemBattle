@@ -1,6 +1,6 @@
 package forceitembattle.commands;
 
-import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.Roster;
 import forceitembattle.settings.GameSetting;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -80,8 +80,7 @@ public sealed interface Precondition {
                 if (!(sender instanceof Player player)) {
                     return false;
                 }
-                ForceItemPlayer entry = context.entryFor(player.getUniqueId());
-                return entry != null && !entry.isSpectator();
+                return Roster.isPlaying(context.entryFor(player.getUniqueId()));
             },
             "<red>You are not playing.");
 

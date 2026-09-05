@@ -6,7 +6,6 @@ import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameContext;
 import forceitembattle.service.FIBServiceClient;
-import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.util.GameBroadcast;
 import forceitembattle.util.InventorySearch;
@@ -118,10 +117,11 @@ public class BackToBackManager implements Manager {
                 || ownHalf.contains(target);
         boolean teammateHasIt = teammateHalf.contains(target);
 
-        Set<Material> all = new HashSet<>(ownHalf);
-        all.addAll(teammateHalf);
+        // Union built in place: ownHalf is local, both halves have already been consulted above, and
+        // the result is only ever read for its size.
+        ownHalf.addAll(teammateHalf);
 
-        return new Owned(all, selfHasIt || teammateHasIt,
+        return new Owned(ownHalf, selfHasIt || teammateHasIt,
                 !selfHasIt && teammateHasIt ? teammate : null);
     }
 

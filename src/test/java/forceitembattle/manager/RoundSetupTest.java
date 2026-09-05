@@ -41,15 +41,15 @@ class RoundSetupTest {
 
         @Test
         void anEvenPoolSplitsEvenly() {
-            assertArrayEquals(new int[] {3, 3}, RoundSetup.splitJokers(6, 2));
+            assertArrayEquals(new int[] {3, 3}, RoundSetup.splitEvenly(6, 2));
         }
 
         /** The remainder goes to the earlier members: 5 across 2 is 3 and 2, never 2 and 2. */
         @Test
         void anUnevenPoolGivesTheRemainderToTheEarlierMembers() {
-            assertArrayEquals(new int[] {3, 2}, RoundSetup.splitJokers(5, 2));
-            assertArrayEquals(new int[] {2, 2, 1}, RoundSetup.splitJokers(5, 3));
-            assertArrayEquals(new int[] {1, 1, 1, 0}, RoundSetup.splitJokers(3, 4));
+            assertArrayEquals(new int[] {3, 2}, RoundSetup.splitEvenly(5, 2));
+            assertArrayEquals(new int[] {2, 2, 1}, RoundSetup.splitEvenly(5, 3));
+            assertArrayEquals(new int[] {1, 1, 1, 0}, RoundSetup.splitEvenly(3, 4));
         }
 
         /**
@@ -60,7 +60,7 @@ class RoundSetupTest {
         void everyJokerInThePoolIsHandedOut() {
             for (int pool = 0; pool <= 20; pool++) {
                 for (int members = 1; members <= 5; members++) {
-                    int handedOut = Arrays.stream(RoundSetup.splitJokers(pool, members)).sum();
+                    int handedOut = Arrays.stream(RoundSetup.splitEvenly(pool, members)).sum();
 
                     assertEquals(pool, handedOut, "pool " + pool + " across " + members);
                 }
@@ -69,18 +69,18 @@ class RoundSetupTest {
 
         @Test
         void aSoleMemberTakesTheWholePool() {
-            assertArrayEquals(new int[] {7}, RoundSetup.splitJokers(7, 1));
+            assertArrayEquals(new int[] {7}, RoundSetup.splitEvenly(7, 1));
         }
 
         @Test
         void anEmptyPoolGivesEveryoneNothing() {
-            assertArrayEquals(new int[] {0, 0}, RoundSetup.splitJokers(0, 2));
+            assertArrayEquals(new int[] {0, 0}, RoundSetup.splitEvenly(0, 2));
         }
 
         /** An empty team would otherwise divide by zero. */
         @Test
         void aTeamWithNoMembersSplitsNothing() {
-            assertArrayEquals(new int[0], RoundSetup.splitJokers(6, 0));
+            assertArrayEquals(new int[0], RoundSetup.splitEvenly(6, 0));
         }
     }
 

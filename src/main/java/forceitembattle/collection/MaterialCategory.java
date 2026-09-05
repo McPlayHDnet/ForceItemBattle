@@ -45,7 +45,7 @@ public class MaterialCategory {
         }
 
         // Suffixed bamboo only -- BAMBOO itself is the plant.
-        if (name.startsWith("BAMBOO_") || name.equals("BAMBOO_BLOCK")) {
+        if (name.startsWith("BAMBOO_")) {
             return true;
         }
 
@@ -66,7 +66,7 @@ public class MaterialCategory {
             }
         }
 
-        if (name.startsWith("BAMBOO_") || name.equals("BAMBOO_BLOCK")) {
+        if (name.startsWith("BAMBOO_")) {
             return "BAMBOO";
         }
 

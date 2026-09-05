@@ -18,14 +18,17 @@ public final class RoundSetup {
             List.of(Material.STONE_AXE, Material.STONE_PICKAXE, Material.STONE_SHOVEL);
 
     /**
-     * The round's joker pool split across a team's members, in member order.
+     * A pool split as evenly as it goes across a team's members, in member order, with the remainder
+     * handed to the earliest members.
      *
-     * <p>The shares must sum to {@code pool} for any member count — the team's shared pool is set to
-     * the full amount separately, so a split that lost one would leave a skip nobody could reach.
+     * <p>The shares must sum to {@code pool} for any member count. That matters for the round's
+     * jokers, its first caller: the team's shared pool is set to the full amount separately, so a
+     * split that lost one would leave a skip nobody could reach. {@code PointHunt} splits its wheel
+     * payout by the same rule and used to carry its own copy of this arithmetic.
      *
      * @return one share per member; empty when there are no members to split across
      */
-    public static int[] splitJokers(int pool, int memberCount) {
+    public static int[] splitEvenly(int pool, int memberCount) {
         if (memberCount <= 0) {
             return new int[0];
         }
