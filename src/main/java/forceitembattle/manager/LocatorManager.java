@@ -5,20 +5,27 @@ import forceitembattle.model.Dimension;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.Locator;
 import forceitembattle.util.BiomeSearch;
+import forceitembattle.util.CaveScan;
 import forceitembattle.util.LocationFormat;
 import forceitembattle.util.Prefix;
 import forceitembattle.util.Scheduler;
 import forceitembattle.util.Text;
 import io.papermc.paper.registry.RegistryAccess;
 import io.papermc.paper.registry.RegistryKey;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import net.kyori.adventure.bossbar.BossBar;
 import org.bukkit.Bukkit;
+import org.bukkit.ChunkSnapshot;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
@@ -41,16 +48,29 @@ public class LocatorManager implements Manager {
     /** Close enough to spot something standing at the surface. */
     private static final int SURFACE_ARRIVAL_RADIUS = 70;   // blocks
 
+    /** Chunks each way around the biome's middle that get generated and read. 5×5 in all. */
+    private static final int SOUNDING_CHUNK_RADIUS = 2;
+
+    /** Generating 25 fresh chunks thousands of blocks away is usually seconds, not always. */
+    private static final long SOUNDING_TIMEOUT_SECONDS = 20L;
+
     private final PositionManager positionManager;
     private final Map<String, Locator> locators;
     private final Map<String, Location> locatedStructures;
     private final Map<UUID, Map<String, ActiveLocator>> activeLocators;
+
+    /**
+     * Who is mid-sweep. A biome locate now takes a moment to come back, and without this a second
+     * right-click during that moment starts a second sweep and spends a second locator.
+     */
+    private final Set<UUID> sounding;
 
     public LocatorManager(PositionManager positionManager) {
         this.positionManager = positionManager;
         this.locators = new HashMap<>();
         this.locatedStructures = new HashMap<>();
         this.activeLocators = new HashMap<>();
+        this.sounding = ConcurrentHashMap.newKeySet();
 
         this.addLocator(new Locator("fib:antimatter_depths_portal", "Antimatter", CustomMaterials.ANTIMATTER_LOCATOR, Locator.Type.STRUCTURE,
                 Locator.Use.RIGHT_CLICK, SURFACE_ARRIVAL_RADIUS, Color.PURPLE, "#B314A8:#E775C3"));
@@ -71,6 +91,7 @@ public class LocatorManager implements Manager {
             });
             this.activeLocators.clear();
         }
+        this.sounding.clear();
     }
 
     private void addLocator(Locator locator) {
@@ -91,16 +112,16 @@ public class LocatorManager implements Manager {
             return;
         }
 
-        Location targetLocation = switch (locator.getType()) {
-            case STRUCTURE -> this.locateStructure(locator, player);
+        switch (locator.getType()) {
+            case STRUCTURE -> {
+                Location targetLocation = this.locateStructure(locator, player);
+                if (targetLocation != null) { // the helper already messaged the player if not
+                    this.reveal(locator, player, targetLocation, null);
+                }
+            }
+            // Biome locates finish later, on the chunks they had to generate. See locateBiome.
             case BIOME -> this.locateBiome(locator, player);
-        };
-
-        if (targetLocation == null) {
-            return; // the locate* helpers already messaged the player
         }
-
-        this.reveal(locator, player, targetLocation);
     }
 
     @Nullable
@@ -129,42 +150,168 @@ public class LocatorManager implements Manager {
         return result.getLocation();
     }
 
-    @Nullable
-    private Location locateBiome(Locator locator, Player player) {
+    /**
+     * Three steps, because the biome search alone has never been enough for an underground biome.
+     *
+     * <ol>
+     *   <li>{@code nearest} for a point on the region's rim — cheap, wide, and the only step that
+     *       can say "not around here".
+     *   <li>{@link BiomeSearch#interior} to walk in from that rim. Still free: noise samples, no
+     *       chunks.
+     *   <li>{@link #soundOut} to generate what is actually there and look at it, because a cave
+     *       biome is paint over the carvers' work and promises no cavity anywhere.
+     * </ol>
+     *
+     * <p>Only the third step costs anything, and it is what turns "somewhere over there, good
+     * luck" into a spot someone has looked at.
+     */
+    private void locateBiome(Locator locator, Player player) {
         Biome biome = BiomeSearch.resolve(this.getNamespacedKey(locator.getStructureId()));
 
         if (biome == null) {
             player.sendMessage(Text.of(Prefix.LOCATOR + "<dark_aqua>" + locator.getStructureId() + " <red>is not loaded or could not be found, Fire fix!"));
-            return null;
+            return;
         }
 
-        Location targetLocation = BiomeSearch.nearest(player.getLocation(), biome);
+        if (!this.sounding.add(player.getUniqueId())) {
+            return;
+        }
 
-        if (targetLocation == null) {
+        Location rim = BiomeSearch.nearest(player.getLocation(), biome);
+
+        if (rim == null) {
+            this.sounding.remove(player.getUniqueId());
             player.sendMessage(Text.of(Prefix.LOCATOR + "<dark_aqua>" + locator.getStructureName() + " <red>could not be found nearby."));
-            return null;
+            return;
         }
 
-        return targetLocation;
+        player.sendMessage(Text.of(Prefix.LOCATOR + "<gray>Sounding out the <dark_aqua>"
+                + locator.getStructureName() + "<gray>…"));
+
+        this.soundOut(locator, player, biome, BiomeSearch.interior(rim, biome));
     }
 
-    private void reveal(Locator locator, Player player, Location targetLocation) {
+    /**
+     * Generates the chunks around the middle of the biome and reads them for a dig spot.
+     *
+     * <p>The threading is the fiddly part and it is deliberate: {@code getChunkAtAsync} completes
+     * on the main thread, which is where a snapshot has to be taken, so the snapshot is taken in
+     * the future's own callback. Only the scanning — a quarter of a million palette lookups —
+     * moves off the main thread, and it reads snapshots precisely because those are safe to read
+     * there. Everything that touches a player is hopped back with {@code Scheduler.runSync}.
+     */
+    private void soundOut(Locator locator, Player player, Biome biome, Location interior) {
+        World world = interior.getWorld();
+        if (world == null) {
+            this.finishSounding(locator, player, interior, null);
+            return;
+        }
+
+        // Read on the main thread and carried in, so the scan holds no world reference at all.
+        int minHeight = world.getMinHeight();
+        int maxHeight = world.getMaxHeight();
+
+        int chunkX = interior.getBlockX() >> 4;
+        int chunkZ = interior.getBlockZ() >> 4;
+
+        List<CompletableFuture<ChunkSnapshot>> pending = new ArrayList<>();
+        for (int dx = -SOUNDING_CHUNK_RADIUS; dx <= SOUNDING_CHUNK_RADIUS; dx++) {
+            for (int dz = -SOUNDING_CHUNK_RADIUS; dz <= SOUNDING_CHUNK_RADIUS; dz++) {
+                pending.add(world.getChunkAtAsync(chunkX + dx, chunkZ + dz, true, false)
+                        .thenApply(chunk -> chunk.getChunkSnapshot(true, true, false, false)));
+            }
+        }
+
+        CompletableFuture.allOf(pending.toArray(CompletableFuture[]::new))
+                .orTimeout(SOUNDING_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .whenComplete((ignored, error) -> {
+                    // disable() empties the set, so a sweep whose chunks land after the round has
+                    // ended stops here rather than handing work to a plugin that is already gone.
+                    if (!this.sounding.contains(player.getUniqueId())) {
+                        return;
+                    }
+                    if (error != null) {
+                        // Worth degrading rather than failing: the interior point beats the rim
+                        // point the locator used to hand out even with nothing verified about it.
+                        Scheduler.runSync(() -> this.finishSounding(locator, player, interior, null));
+                        return;
+                    }
+                    Scheduler.runAsync(() -> {
+                        List<ChunkSnapshot> snapshots = pending.stream().map(CompletableFuture::join).toList();
+                        CaveScan.Target target = CaveScan.scan(snapshots, biome,
+                                interior.getBlockX(), interior.getBlockY(), interior.getBlockZ(),
+                                minHeight, maxHeight);
+                        if (!this.sounding.contains(player.getUniqueId())) {
+                            return; // same guard again: the scan itself takes a moment
+                        }
+                        Scheduler.runSync(() -> this.finishSounding(locator, player, interior, target));
+                    });
+                });
+    }
+
+    /** Back on the main thread, with whatever the scan found. */
+    private void finishSounding(Locator locator, Player player, Location interior, @Nullable CaveScan.Target target) {
+        this.sounding.remove(player.getUniqueId());
+
+        if (!player.isOnline()) {
+            return;
+        }
+
+        if (target == null) {
+            player.sendMessage(Text.of(Prefix.LOCATOR + "<gray>Found no opening near the <dark_aqua>"
+                    + locator.getStructureName() + "<gray> — pointing at the middle of the biome instead."));
+            this.reveal(locator, player, interior, null);
+            return;
+        }
+
+        Location located = new Location(interior.getWorld(), target.x(), target.y(), target.z());
+        this.reveal(locator, player, located, target.find());
+    }
+
+    /**
+     * @param find what the chunks turned out to hold, or {@code null} when nothing looked at the
+     *             blocks — a structure search, or a biome sweep that came back empty-handed.
+     */
+    private void reveal(Locator locator, Player player, Location targetLocation, @Nullable CaveScan.Find find) {
         // Resolved here on the main thread; the async session task must not touch the world.
         Location digSpot = this.surfaceDigSpot(targetLocation);
+
+        // Worked out once and handed to both the chat line and the boss bar, so the two cannot
+        // disagree about whether this locate knows its depth.
+        String coordinates = find == null
+                ? LocationFormat.xz(targetLocation)
+                : LocationFormat.xyz(targetLocation);
 
         if (!this.isAlreadyRevealed(locator.getStructureId(), targetLocation)) {
             if (locator.getUse().consumedOnFind()) {
                 this.destroyLocator(player, locator);
             }
             player.playSound(player, Sound.BLOCK_CONDUIT_AMBIENT_SHORT, 2, 1);
-            this.startLocatorSession(locator, player, targetLocation, digSpot);
+            this.startLocatorSession(locator, player, targetLocation, digSpot, coordinates);
         }
 
         this.showTheWay(locator, player, targetLocation, digSpot);
         player.sendMessage(Text.of(Prefix.LOCATOR + "<dark_aqua>" + locator.getStructureName() + " <gray>located at "
-                + LocationFormat.xz(targetLocation)
-                + LocationFormat.distance(player.getLocation(), targetLocation)));
+                + coordinates
+                + LocationFormat.distance(player.getLocation(), targetLocation)
+                + this.digAdvice(find, targetLocation)));
         this.locatedStructures.put(locator.getStructureId(), targetLocation);
+    }
+
+    /** What to do on arrival, once the sweep knows something about the ground there. */
+    private String digAdvice(@Nullable CaveScan.Find find, Location targetLocation) {
+        if (find == null) {
+            return "";
+        }
+        return switch (find) {
+            // Deliberately does not say "spring". Sulfur tops a column either because a spring grew
+            // its root system up to it or because the cave itself has been cut open there, and the
+            // scan cannot tell which — but "dig where the sulfur is" is the right move for both.
+            case SURFACE -> "\n" + Prefix.LOCATOR + "<gray>There is <yellow>sulfur <gray>at the surface there. "
+                    + "Dig where it breaks through and it takes you into the cave.";
+            case CAVE -> "\n" + Prefix.LOCATOR + "<gray>Open cave at <dark_aqua>y=" + targetLocation.getBlockY()
+                    + "<gray>. Dig down from the marker.";
+        };
     }
 
     private void showTheWay(Locator locator, Player player, Location targetLocation, Location digSpot) {
@@ -188,7 +335,13 @@ public class LocatorManager implements Manager {
                 targetLocation.getBlockZ() + 0.5);
     }
 
-    private void startLocatorSession(Locator locator, Player player, Location targetLocation, Location digSpot) {
+    /**
+     * @param coordinates the target's position, already formatted — {@code x, ?, z} for a search
+     *                    that only resolved a column, {@code x, y, z} once the chunks have been
+     *                    read and the depth is a real one. See {@link LocationFormat#xz}.
+     */
+    private void startLocatorSession(Locator locator, Player player, Location targetLocation, Location digSpot,
+                                     String coordinates) {
         UUID playerId = player.getUniqueId();
 
         this.clearLocator(playerId, locator.getStructureId());
@@ -203,7 +356,7 @@ public class LocatorManager implements Manager {
             @Override
             public void run() {
                 String bossBarTitle = "<gradient:" + locator.getBossBarGradient() + "><b>" + locator.getStructureName() + " <reset><dark_gray>» "
-                        + LocationFormat.xz(targetLocation)
+                        + coordinates
                         + LocationFormat.distance(player.getLocation(), targetLocation);
                 bar.name(Text.of(bossBarTitle));
                 player.showBossBar(bar);
