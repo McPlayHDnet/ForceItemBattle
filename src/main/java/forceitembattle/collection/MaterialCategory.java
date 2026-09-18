@@ -16,7 +16,7 @@ public class MaterialCategory {
     private static final List<String> WOOD_TYPES = List.of(
             "DARK_OAK", "PALE_OAK", "MANGROVE",
             "CRIMSON",
-            "SPRUCE", "JUNGLE", "ACACIA", "CHERRY", "WARPED",
+            "SPRUCE", "JUNGLE", "ACACIA", "CHERRY", "WARPED", "POPLAR",
             "BIRCH",
             "OAK"
     );
@@ -26,8 +26,10 @@ public class MaterialCategory {
      * because they don't say which wood they are made of.
      */
     public static boolean isWoodType(Material material) {
-        String name = material.name();
+        return isWoodType(material.name());
+    }
 
+    public static boolean isWoodType(String name) {
         if (name.startsWith("WOODEN_")) {
             return false;
         }
@@ -54,11 +56,13 @@ public class MaterialCategory {
 
     /** The wood type of a material, e.g. "OAK", or null if it is not one. */
     public static String getWoodCategory(Material material) {
-        if (!isWoodType(material)) {
+        return getWoodCategory(material.name());
+    }
+
+    public static String getWoodCategory(String name) {
+        if (!isWoodType(name)) {
             return null;
         }
-
-        String name = material.name();
 
         for (String woodType : WOOD_TYPES) {
             if (name.contains(woodType)) {
@@ -75,8 +79,10 @@ public class MaterialCategory {
 
     /** Every stone type and its variants (polished, bricks, tiles, cracked, chiselled, …). */
     public static boolean isStoneType(Material material) {
-        String name = material.name();
+        return isStoneType(material.name());
+    }
 
+    public static boolean isStoneType(String name) {
         // Stone tools are tools, not stone blocks.
         if (name.startsWith("STONE_") && (name.endsWith("_SWORD") || name.endsWith("_AXE") ||
                 name.endsWith("_PICKAXE") || name.endsWith("_SHOVEL") || name.endsWith("_HOE"))) {
@@ -103,25 +109,54 @@ public class MaterialCategory {
     }
 
     public static boolean isTool(Material material) {
-        String name = material.name();
+        return isTool(material.name());
+    }
+
+    public static boolean isTool(String name) {
         return name.endsWith("_SWORD") || name.endsWith("_AXE") ||
                 name.endsWith("_PICKAXE") || name.endsWith("_SHOVEL") ||
                 name.endsWith("_HOE");
     }
 
     public static boolean isArmor(Material material) {
-        String name = material.name();
+        return isArmor(material.name());
+    }
+
+    public static boolean isArmor(String name) {
         return name.endsWith("_HELMET") || name.endsWith("_CHESTPLATE") ||
                 name.endsWith("_LEGGINGS") || name.endsWith("_BOOTS");
     }
 
+    /**
+     * Edible materials by name, mirroring {@code Material.isEdible()} without needing the item
+     * registry. The fish buckets are deliberately absent: they carry {@code minecraft:food} but not
+     * {@code minecraft:consumable}, so they are not edible. Kept in sync by
+     * {@code MaterialCategoryTest.theFoodSetStillAgreesWithTheRegistry}.
+     */
+    private static final Set<String> EDIBLE = Set.of(
+            "APPLE", "BAKED_POTATO", "BEEF", "BEETROOT",
+            "BEETROOT_SOUP", "BREAD", "CARROT", "CHICKEN",
+            "CHORUS_FRUIT", "COD", "COOKED_BEEF", "COOKED_CHICKEN",
+            "COOKED_COD", "COOKED_MUTTON", "COOKED_PORKCHOP", "COOKED_RABBIT",
+            "COOKED_SALMON", "COOKIE", "DRIED_KELP", "ENCHANTED_GOLDEN_APPLE",
+            "GLOW_BERRIES", "GOLDEN_APPLE", "GOLDEN_CARROT", "HONEY_BOTTLE",
+            "MELON_SLICE", "MUSHROOM_STEW", "MUTTON", "POISONOUS_POTATO",
+            "PORKCHOP", "POTATO", "PUFFERFISH", "PUMPKIN_PIE",
+            "RABBIT", "RABBIT_STEW", "ROTTEN_FLESH", "SALMON",
+            "SPIDER_EYE", "SUSPICIOUS_STEW", "SWEET_BERRIES", "TROPICAL_FISH"
+    );
+
     public static boolean isFood(Material material) {
-        return material.isEdible();
+        return isFood(material.name());
+    }
+
+    public static boolean isFood(String materialName) {
+        return EDIBLE.contains(materialName);
     }
 
     public static Set<String> getAllWoodCategories() {
         return Set.of("OAK", "SPRUCE", "BIRCH", "JUNGLE", "ACACIA",
-                "DARK_OAK", "MANGROVE", "CHERRY", "PALE_OAK",
+                "DARK_OAK", "MANGROVE", "CHERRY", "PALE_OAK", "POPLAR",
                 "CRIMSON", "WARPED", "BAMBOO");
     }
 

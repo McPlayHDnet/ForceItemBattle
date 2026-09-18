@@ -54,6 +54,9 @@ public enum CustomMaterials {
             .collect(Collectors.toMap(CustomMaterials::getMaterial, Function.identity()));
     private static final Map<String, CustomMaterials> BY_ID = Arrays.stream(values())
             .collect(Collectors.toMap(CustomMaterials::getId, Function.identity()));
+    /** {@link #BY_MATERIAL} keyed by name. Derived from it, so the exclusion above cannot diverge. */
+    private static final Map<String, CustomMaterials> BY_MATERIAL_NAME = BY_MATERIAL.entrySet().stream()
+            .collect(Collectors.toMap(entry -> entry.getKey().name(), Map.Entry::getValue));
 
     private final Material material;
     private final String id;
@@ -183,6 +186,12 @@ public enum CustomMaterials {
     @Nullable
     public static CustomMaterials byMaterial(Material material) {
         return BY_MATERIAL.get(material);
+    }
+
+    /** As {@link #byMaterial}, by name. */
+    @Nullable
+    public static CustomMaterials byMaterialName(String materialName) {
+        return BY_MATERIAL_NAME.get(materialName);
     }
 
     @Nullable
