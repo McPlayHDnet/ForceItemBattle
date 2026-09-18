@@ -2,9 +2,7 @@ package forceitembattle.util;
 
 import forceitembattle.model.BiomeNote;
 import org.bukkit.Location;
-import org.bukkit.World;
 import org.bukkit.block.Biome;
-import org.bukkit.util.BiomeSearchResult;
 import org.jetbrains.annotations.Nullable;
 
 public final class BiomeNoteLocator {

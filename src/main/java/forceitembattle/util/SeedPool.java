@@ -1,6 +1,5 @@
 package forceitembattle.util;
 
-import forceitembattle.ForceItemBattle;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -12,6 +11,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ThreadLocalRandom;
+import org.bukkit.plugin.Plugin;
 
 public class SeedPool {
 
@@ -20,12 +20,12 @@ public class SeedPool {
     private static final String EXPECTED_FLAGS = "0";
     private static final String EXPECTED_POINT = "0,63,0";
 
-    private final ForceItemBattle plugin;
+    private final Plugin plugin;
     private final File dir;
     private final Set<String> groups = new TreeSet<>(); // sorted, lowercase names
     private boolean available = false;
 
-    public SeedPool(ForceItemBattle plugin) {
+    public SeedPool(Plugin plugin) {
         this.plugin = plugin;
         this.dir = new File(plugin.getDataFolder(), "seeds");
     }

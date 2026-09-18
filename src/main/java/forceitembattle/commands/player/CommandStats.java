@@ -1,15 +1,17 @@
 package forceitembattle.commands.player;
 
-import de.threeseconds.openapi.fibservice.client.model.FibItemCountDto;
-import forceitembattle.model.CustomMaterials;
-import de.threeseconds.openapi.fibservice.client.model.FibPlayerIdentityDto;
-import de.threeseconds.openapi.fibservice.client.model.FibRaritiesDto;
-import de.threeseconds.openapi.fibservice.client.model.FibTeamMemberStatsDto;
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
+import forceitembattle.commands.Precondition;
+import forceitembattle.manager.ItemDifficultiesManager;
+import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.Rarity;
-import forceitembattle.model.StatsView;
+import forceitembattle.model.RarityCounts;
+import forceitembattle.model.stats.ItemCount;
+import forceitembattle.model.stats.PlayerIdentity;
+import forceitembattle.model.stats.StatsView;
+import forceitembattle.model.stats.TeamMemberStats;
+import forceitembattle.service.FIBServiceClient;
 import forceitembattle.service.FibStatisticsClient;
 import forceitembattle.util.Text;
 import java.text.DecimalFormat;
@@ -23,7 +25,7 @@ import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
-public class CommandStats extends CustomCommand implements CustomTabCompleter {
+public final class CommandStats extends CustomCommand implements CustomTabCompleter {
 
     private static final long RESET_CONFIRM_TIMEOUT_MS = 30_000L;
 
@@ -33,11 +35,21 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
     private record PendingReset(String scope, UUID targetUuid, String targetName, long createdAt) {
     }
     
-    public CommandStats(ForceItemBattle plugin) {
-        super(plugin, "stats");
+    private final ItemDifficultiesManager items;
+    private final FIBServiceClient fibService;
+
+    public CommandStats(ItemDifficultiesManager items, FIBServiceClient fibService) {
+        super("stats");
+        this.items = items;
+        this.fibService = fibService;
 
         setUsage("[player]");
         setDescription("Show stats");
+    }
+
+    @Override
+    protected List<Precondition> preconditions() {
+        return List.of();
     }
 
     @Override
@@ -51,18 +63,21 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
             case "solo" -> handleSolo(player, args);
             case "team" -> handleTeam(player, args);
             case "duo" -> handleDuo(player, args);
-            case "reset" -> handleReset(player, args);
+            case "reset" -> requireOp(player, () -> handleReset(player, args));
             default -> sendUsage(player);
         }
     }
 
-    private void handleSolo(Player player, String[] args) {
-        FibStatisticsClient helper = this.plugin.getFibService().statistics();
-
+    /**
+     * Self or named target, for whichever scope was asked for. Solo and team differ only in the
+     * loader they call, the panel's title, and the noun in the two refusals.
+     */
+    private void handleScope(Player player, String[] args, String title, String noun,
+                             FibStatisticsClient.StatsLoader loader) {
         if (args.length == 1) {
-            helper.getSoloStatisticsAsync(player.getUniqueId(),
-                    stats -> sendStats(player, "Solo Stats", "<green>" + player.getName(), StatsView.of(stats)),
-                    error -> player.sendMessage(Text.of("<red>Could not load your solo stats.")));
+            loader.load(player.getUniqueId(),
+                    view -> sendStats(player, title, "<green>" + player.getName(), view),
+                    error -> player.sendMessage(Text.of("<red>Could not load your " + noun + " stats.")));
             return;
         }
 
@@ -72,34 +87,21 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
             return;
         }
 
-        helper.getSoloStatisticsAsync(targetUuid,
-                stats -> sendStats(player, "Solo Stats", "<green>" + args[1], StatsView.of(stats)),
-                error -> player.sendMessage(Text.of("<yellow>" + args[1] + " <red>has no solo stats yet")));
+        loader.load(targetUuid,
+                view -> sendStats(player, title, "<green>" + args[1], view),
+                error -> player.sendMessage(Text.of("<yellow>" + args[1] + " <red>has no " + noun + " stats yet")));
+    }
+
+    private void handleSolo(Player player, String[] args) {
+        handleScope(player, args, "Solo Stats", "solo", this.fibService.statistics()::soloStats);
     }
 
     private void handleTeam(Player player, String[] args) {
-        FibStatisticsClient helper = this.plugin.getFibService().statistics();
-
-        if (args.length == 1) {
-            helper.getPlayerCombinedTeamStatsAsync(player.getUniqueId(),
-                    stats -> sendStats(player, "Team Stats", "<green>" + player.getName(), StatsView.of(stats)),
-                    error -> player.sendMessage(Text.of("<red>Could not load your team stats.")));
-            return;
-        }
-
-        UUID targetUuid = resolvePlayer(args[1]);
-        if (targetUuid == null) {
-            player.sendMessage(Text.of("<yellow>" + args[1] + " <red>was not found"));
-            return;
-        }
-
-        helper.getPlayerCombinedTeamStatsAsync(targetUuid,
-                stats -> sendStats(player, "Team Stats", "<green>" + args[1], StatsView.of(stats)),
-                error -> player.sendMessage(Text.of("<yellow>" + args[1] + " <red>has no team stats yet")));
+        handleScope(player, args, "Team Stats", "team", this.fibService.statistics()::combinedTeamStats);
     }
 
     private void handleDuo(Player player, String[] args) {
-        FibStatisticsClient helper = this.plugin.getFibService().statistics();
+        FibStatisticsClient helper = this.fibService.statistics();
 
         if (args.length < 2) {
             player.sendMessage(Text.of("<red>Usage: /stats duo <teammate> <dark_gray>or <red>/stats duo <player1> <player2>"));
@@ -136,16 +138,15 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
 
         String subject = "<green>" + player1Name + " <dark_gray>& <green>" + player2Name;
 
-        helper.getTeamStatisticsAsync(player1Uuid, player2Uuid,
-                stats -> {
-                    sendStats(player, "Duo Stats", subject, StatsView.of(stats));
-                    sendContributions(player, stats.getMemberStats());
+        helper.teamStats(player1Uuid, player2Uuid,
+                view -> {
+                    sendStats(player, "Duo Stats", subject, view);
+                    sendContributions(player, view.memberStats());
                 },
                 error -> player.sendMessage(Text.of("<yellow>" + player1Name + " <red>and <yellow>" + player2Name + " <red>have no duo stats yet")));
     }
 
     private void handleReset(Player player, String[] args) {
-        if (!requireOp(player)) return;
 
         if (args.length >= 2 && args[1].equalsIgnoreCase("confirm")) {
             confirmReset(player);
@@ -188,7 +189,7 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
             return;
         }
 
-        FibStatisticsClient helper = this.plugin.getFibService().statistics();
+        FibStatisticsClient helper = this.fibService.statistics();
         String targetName = pending.targetName();
         UUID targetUuid = pending.targetUuid();
 
@@ -241,35 +242,35 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
         player.sendMessage(Text.of("  <dark_gray>● <gray>" + label + " <dark_gray>» <dark_aqua>" + value));
     }
 
-    private void sendContributions(Player player, List<FibTeamMemberStatsDto> memberStats) {
+    private void sendContributions(Player player, List<TeamMemberStats> memberStats) {
         if (memberStats == null || memberStats.isEmpty()) {
             return;
         }
 
         player.sendMessage(Text.of("  <dark_gray>● <gray>Contributions <dark_gray>»"));
-        for (FibTeamMemberStatsDto member : memberStats) {
-            String memberName = displayName(member.getMember());
+        for (TeamMemberStats member : memberStats) {
+            String memberName = PlayerIdentity.displayName(member.member(), "?");
             player.sendMessage(Text.of("    <dark_gray>» <green>" + memberName
-                    + " <dark_gray>| <dark_aqua>" + member.getTotalItemsFound() + " items"
-                    + " <dark_gray>| <dark_aqua>" + member.getDeaths() + " deaths"
-                    + " <dark_gray>| <dark_aqua>" + member.getBlocksTravelled() + " blocks"));
+                    + " <dark_gray>| <dark_aqua>" + member.totalItemsFound() + " items"
+                    + " <dark_gray>| <dark_aqua>" + member.deaths() + " deaths"
+                    + " <dark_gray>| <dark_aqua>" + member.blocksTravelled() + " blocks"));
         }
         player.sendMessage(" ");
     }
 
-    private void sendTopItems(Player player, List<FibItemCountDto> topItems) {
+    private void sendTopItems(Player player, List<ItemCount> topItems) {
         if (topItems == null || topItems.isEmpty()) {
             return;
         }
-        for (FibItemCountDto item : topItems) {
-            Material material = Material.valueOf(item.getItemName().toUpperCase());
-            String unicode = this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, material);
+        for (ItemCount item : topItems) {
+            Material material = Material.valueOf(item.itemName().toUpperCase());
+            String unicode = this.items.getUnicodeFromMaterial(true, material);
             String formattedName = CustomMaterials.nameOf(material);
-            player.sendMessage(Text.of("    <dark_gray>» <reset>" + unicode + " <gray>" + formattedName + " <dark_gray>× <dark_aqua>" + item.getCount()));
+            player.sendMessage(Text.of("    <dark_gray>» <reset>" + unicode + " <gray>" + formattedName + " <dark_gray>× <dark_aqua>" + item.count()));
         }
     }
 
-    private void sendRarities(Player player, FibRaritiesDto rarities) {
+    private void sendRarities(Player player, RarityCounts rarities) {
         if (Rarity.total(rarities) == 0) {
             return;
         }
@@ -295,13 +296,6 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
         return null;
     }
 
-    private String displayName(FibPlayerIdentityDto identity) {
-        if (identity == null || identity.getUuid() == null) {
-            return "?";
-        }
-        String name = identity.getName();
-        return name != null ? name : identity.getUuid().toString().substring(0, 8);
-    }
 
     private void sendUsage(Player player) {
         player.sendMessage(" ");
@@ -354,19 +348,16 @@ public class CommandStats extends CustomCommand implements CustomTabCompleter {
                     completions.add("confirm");
                 }
             } else {
-                for (Player p : Bukkit.getOnlinePlayers()) {
-                    completions.add(p.getName());
-                }
+                completions.addAll(CustomTabCompleter.onlinePlayerNames());
             }
         } else if (args.length == 3
                 && (args[0].equalsIgnoreCase("duo")
                 || (args[0].equalsIgnoreCase("reset") && player.isOp()
                 && (args[1].equalsIgnoreCase("solo") || args[1].equalsIgnoreCase("team"))))) {
-            for (Player p : Bukkit.getOnlinePlayers()) {
-                completions.add(p.getName());
-            }
+            completions.addAll(CustomTabCompleter.onlinePlayerNames());
         }
 
         return completions;
     }
+
 }

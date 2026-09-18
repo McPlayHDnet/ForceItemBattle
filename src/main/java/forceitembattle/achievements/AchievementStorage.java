@@ -1,42 +1,34 @@
 package forceitembattle.achievements;
 
-import de.threeseconds.openapi.fibservice.client.model.FibAchievementDto;
 import forceitembattle.util.Scheduler;
-import de.threeseconds.openapi.fibservice.client.model.FibAchievementUnlockRequestDto;
-import de.threeseconds.openapi.fibservice.client.model.FibPlayerAchievementsDto;
-import forceitembattle.ForceItemBattle;
-import forceitembattle.service.FIBServiceClient;
-import forceitembattle.service.FibAchievementClient;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * The unlock cache, and the de-dup that keeps an achievement from being announced twice.
+ *
+ * <p>No transport: writes go to an {@link AchievementSink}, so this class and everything built on it
+ * runs without a service.
+ */
 public class AchievementStorage {
 
-    private final ForceItemBattle plugin;
+    private final AchievementSink sink;
 
     private final Map<UUID, Set<String>> cache = new ConcurrentHashMap<>();
     private final Set<UUID> loaded = ConcurrentHashMap.newKeySet();
 
-    public AchievementStorage(ForceItemBattle plugin) {
-        this.plugin = plugin;
-    }
-
-    private FibAchievementClient achievementClient() {
-        return plugin.getFibService().achievements();
-    }
-
-    public void loadPlayer(UUID playerUUID) {
-        loadPlayer(playerUUID, null);
+    public AchievementStorage(AchievementSink sink) {
+        this.sink = sink;
     }
 
     /**
      * Ensures the player's achievements are loaded from the service, then runs
      * {@code onLoaded} on the main thread (also runs it if already loaded). A load
-     * failure is logged; {@code onLoaded} still runs so callers don't hang.
+     * failure is logged by the sink; {@code onLoaded} still runs so callers don't hang,
+     * and the player stays unloaded so the next call tries again.
      */
     public void loadPlayer(UUID playerUUID, Runnable onLoaded) {
         if (loaded.contains(playerUUID)) {
@@ -46,33 +38,19 @@ public class AchievementStorage {
             return;
         }
 
-        achievementClient().getPlayerAchievementsAsync(playerUUID,
-                dto -> {
-                    cache.computeIfAbsent(playerUUID, key -> ConcurrentHashMap.newKeySet()).addAll(extractIds(dto));
+        sink.load(playerUUID,
+                ids -> {
+                    cache.computeIfAbsent(playerUUID, key -> ConcurrentHashMap.newKeySet()).addAll(ids);
                     loaded.add(playerUUID);
                     if (onLoaded != null) {
                         onLoaded.run();
                     }
                 },
-                error -> {
-                    plugin.getLogger().warning("Failed to load achievements for " + playerUUID
-                            + " (HTTP " + error.getCode() + "): " + error.getMessage());
+                () -> {
                     if (onLoaded != null) {
                         onLoaded.run();
                     }
                 });
-    }
-
-    private Set<String> extractIds(FibPlayerAchievementsDto dto) {
-        Set<String> ids = ConcurrentHashMap.newKeySet();
-        if (dto != null && dto.getAchievements() != null) {
-            for (FibAchievementDto achievement : dto.getAchievements()) {
-                if (achievement.getAchievementId() != null) {
-                    ids.add(achievement.getAchievementId());
-                }
-            }
-        }
-        return ids;
     }
 
     public void unloadPlayer(UUID playerUUID) {
@@ -94,10 +72,6 @@ public class AchievementStorage {
         return achievements != null ? achievements : Collections.emptySet();
     }
 
-    public Map<UUID, Set<String>> getAllAchievements() {
-        return new HashMap<>(cache);
-    }
-
     /**
      * Grants an achievement recorded as SOLO with no teammate. Convenience for
      * manual/admin grants that have no game context.
@@ -114,11 +88,7 @@ public class AchievementStorage {
     public void addAchievement(UUID playerUUID, Achievements achievement, AchievementMode mode, UUID teammateUuid) {
         cache.computeIfAbsent(playerUUID, key -> ConcurrentHashMap.newKeySet()).add(achievement.name());
 
-        FibAchievementUnlockRequestDto request = FIBServiceClient.achievementUnlock()
-                .mode(mode == AchievementMode.TEAM ? FibAchievementUnlockRequestDto.ModeEnum.TEAM : FibAchievementUnlockRequestDto.ModeEnum.SOLO)
-                .teammateUuid(mode == AchievementMode.TEAM ? teammateUuid : null);
-
-        achievementClient().unlockAchievementAsync(playerUUID, achievement.name(), request);
+        sink.unlock(playerUUID, achievement, mode, teammateUuid);
     }
 
     public void removeAchievement(UUID playerUUID, Achievements achievement) {
@@ -126,12 +96,12 @@ public class AchievementStorage {
         if (achievements != null) {
             achievements.remove(achievement.name());
         }
-        achievementClient().removeAchievementAsync(playerUUID, achievement.name());
+        sink.remove(playerUUID, achievement);
     }
 
     public void resetPlayerAchievements(UUID playerUUID) {
         cache.remove(playerUUID);
         loaded.remove(playerUUID);
-        achievementClient().resetPlayerAchievementsAsync(playerUUID);
+        sink.reset(playerUUID);
     }
 }

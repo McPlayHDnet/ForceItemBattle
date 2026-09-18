@@ -3,7 +3,6 @@ package forceitembattle.model;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.bukkit.Color;
-import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
 @Getter
@@ -17,23 +16,30 @@ public class Locator {
     private final Use use;
 
     /**
-     * How close counts as arrived, in blocks: the session ends there and the boss bar and trail go
-     * away. Buried finds want you almost on top of them; trail ruins are visible from the surface,
-     * so that locator lets go while you can still see where it was pointing.
+     * How close counts as arrived, in blocks. Buried finds want you almost on top of them; trail
+     * ruins are visible from the surface, so that locator lets go sooner.
      */
     private final int arrivalRadius;
 
     private final Color lineColor;
     private final String bossBarGradient;
 
-    public Material getLocatorMaterial() {
-        return this.locatorItem.getMaterial();
-    }
-
     /**
-     * Whether this stack is this locator's item. Locators whose material is theirs alone accept any
-     * stack of it; the Kiln-Fired Brush has to be told apart from the plain brush players craft.
+     * The {@code spacing} of this structure's structure set, in chunks, or {@code 0} for a
+     * {@link Type#BIOME} locator, which has no such grid.
+     *
+     * <p>The search sweeps one chunk per spacing, so this decides both how many regions it visits
+     * and when it may stop — see {@code NearestOnGrid}. It is data the server owns and does not
+     * expose, so it is copied here: {@code trial_chambers} and {@code trail_ruins} are both 34 in
+     * vanilla 26.2, and {@code fib:antimatter_depths_portal} is 112 in
+     * {@code FIB_Worldgen/data/fib/worldgen/structure_set/antimatter_depths_portal.json}.
+     *
+     * <p><b>Under the real value is safe, over it is not.</b> Too small only repeats probes, which
+     * agree with each other; too large steps clean over regions and never sees what is in them. So
+     * if one of these ever changes and this is not updated, lower it rather than guessing.
      */
+    private final int structureSpacing;
+
     public boolean matches(ItemStack itemStack) {
         return this.locatorItem.matches(itemStack);
     }
@@ -43,17 +49,11 @@ public class Locator {
         BIOME
     }
 
-    /**
-     * How the item is used — and, because each style is its own kind of tool, what using it costs
-     * and what it leaves behind.
-     */
+    /** How the item is used, and with it what using it costs and what it leaves behind. */
     public enum Use {
-        /** Right-click, anywhere. A one-shot charm: spent on a find, pointing the way with a particle line. */
+        /** A one-shot charm: spent on a find, pointing the way with a particle line. */
         RIGHT_CLICK,
-        /**
-         * Right-click a block — with a brush in hand that reads as sweeping the ground. A tool, not
-         * a charm: it survives every sweep and dusts a line of footprints towards the find.
-         */
+        /** A tool: survives every sweep and dusts a line of footprints towards the find. */
         BRUSH_GROUND;
 
         public boolean consumedOnFind() {
@@ -61,9 +61,8 @@ public class Locator {
         }
 
         /**
-         * Footprints across the ground, instead of a line through the air and a beam over the dig
-         * spot. The two go together: what the brush finds is trail ruins, which lie at the surface,
-         * so there is nothing to dig down to and nothing to put a beam over.
+         * Footprints instead of an air line and a beam: what the brush finds is trail ruins, which
+         * lie at the surface, so there is nothing to dig down to.
          */
         public boolean leavesFootprints() {
             return this == BRUSH_GROUND;

@@ -10,6 +10,7 @@ import java.util.UUID;
 import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -90,7 +91,7 @@ public class ItemBuilder {
             lore.add(line.replaceAll("&", "§"));
         }
 
-        itemMeta.setLore(lore);
+        itemMeta.lore(lore.stream().map(LegacyComponentSerializer.legacySection()::deserialize).toList());
         setItemMeta(itemMeta);
         return this;
     }
@@ -105,7 +106,7 @@ public class ItemBuilder {
 
     public ItemBuilder setDisplayNameLegacy(String displayName) {
         ItemMeta itemMeta = getItemStack().getItemMeta();
-        itemMeta.setDisplayName(displayName.replaceAll("&", "§"));
+        itemMeta.displayName(LegacyComponentSerializer.legacyAmpersand().deserialize(displayName));
         setItemMeta(itemMeta);
         return this;
     }
@@ -137,11 +138,6 @@ public class ItemBuilder {
 
     public ItemBuilder setSkullMeta(SkullMeta skullMeta) {
         this.itemStack.setItemMeta((ItemMeta) skullMeta);
-        return this;
-    }
-
-    public ItemBuilder setMaterial(Material material) {
-        this.itemStack.setType(material);
         return this;
     }
 

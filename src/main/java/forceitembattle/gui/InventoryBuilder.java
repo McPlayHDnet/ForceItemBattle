@@ -19,7 +19,6 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.inventory.InventoryType;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -76,9 +75,6 @@ public class InventoryBuilder implements InventoryHolder {
     }
 
     protected void onDrag(InventoryDragEvent event) {
-    }
-
-    protected void onChat(AsyncPlayerChatEvent event) {
     }
 
     public void addItem(ItemStack item) {
@@ -153,9 +149,6 @@ public class InventoryBuilder implements InventoryHolder {
         this.dragHandlers.add(dragHandler);
     }
 
-    /**
-     * Add a runnable that will be called when menu is opened or an item is clicked.
-     */
     public void addUpdateHandler(Runnable updateHandler) {
         this.updateHandlers.add(updateHandler);
     }

@@ -1,11 +1,10 @@
 package forceitembattle.listener;
 
-import forceitembattle.ForceItemBattle;
+import forceitembattle.model.GameItems;
 import forceitembattle.util.Scheduler;
-import forceitembattle.manager.Gamemanager;
 import forceitembattle.gui.InventoryBuilder;
+import forceitembattle.gui.SettingsInventory;
 import lombok.RequiredArgsConstructor;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -16,8 +15,6 @@ import org.bukkit.inventory.ItemStack;
 
 @RequiredArgsConstructor
 public class GuiListener implements Listener {
-
-    private final ForceItemBattle plugin;
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
@@ -37,15 +34,12 @@ public class GuiListener implements Listener {
             }
         }
 
-        if (movedItem != null) {
-            if (!event.getView().getTitle().equals("§8» §3Settings §8● §7Menu")) {
-                if (Gamemanager.isBackpack(movedItem)) {
-                    event.setCancelled(true);
-                    return;
-                }
+        if (movedItem != null && !(event.getInventory().getHolder() instanceof SettingsInventory)) {
+            if (GameItems.isBackpack(movedItem)) {
+                event.setCancelled(true);
+                return;
             }
         }
-
 
         if (event.getInventory().getHolder() instanceof InventoryBuilder inventoryBuilder) {
             inventoryBuilder.handleClick(event);
@@ -60,12 +54,9 @@ public class GuiListener implements Listener {
             return;
         }
 
-        if (inventoryCloseEvent.getInventory().getHolder() instanceof InventoryBuilder inventoryBuilder) {
-
-            if (inventoryBuilder.handleClose(inventoryCloseEvent)) {
-                Scheduler.runSync(() -> inventoryBuilder.open((Player) inventoryCloseEvent.getPlayer()));
-                return;
-            }
+        if (inventoryCloseEvent.getInventory().getHolder() instanceof InventoryBuilder inventoryBuilder
+                && inventoryBuilder.handleClose(inventoryCloseEvent)) {
+            Scheduler.runSync(() -> inventoryBuilder.open(player));
         }
     }
 }

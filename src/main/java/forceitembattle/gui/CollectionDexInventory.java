@@ -1,8 +1,8 @@
 package forceitembattle.gui;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.collection.CollectedItem;
 import forceitembattle.collection.CollectionCategory;
+import forceitembattle.collection.CollectionManager;
 import forceitembattle.collection.ItemRarity;
 import forceitembattle.manager.ItemDifficultiesManager;
 import forceitembattle.model.CustomMaterials;
@@ -25,9 +25,8 @@ import org.bukkit.Sound;
  * buckets and the collection from the cached loader, so this can't disagree with the achievement
  * or with the book's counts.
  */
-public class CollectionDexInventory extends InventoryBuilder {
+public final class CollectionDexInventory extends InventoryBuilder {
 
-    private static final int ITEMS_PER_PAGE = 36;
     private static final DateTimeFormatter DATE_FORMAT =
             DateTimeFormatter.ofPattern("d MMM yyyy", Locale.ENGLISH).withZone(ZoneId.systemDefault());
 
@@ -56,12 +55,12 @@ public class CollectionDexInventory extends InventoryBuilder {
         }
     }
 
-    private final ForceItemBattle plugin;
+    private final GuiContext gui;
     private final String playerName;
     private final UUID playerUUID;
     private final CollectionCategory category;
     private final List<Material> items;
-    private int currentPage;
+    private final GridPaging paging = new GridPaging();
     private Filter filter = Filter.ALL;
     private Sort sort = Sort.COLLECTED_FIRST;
     private Map<String, CollectedItem> collected;
@@ -69,27 +68,26 @@ public class CollectionDexInventory extends InventoryBuilder {
     // renders as soon as either arrives and gains the rarity line when it shows up.
     private ItemRarity rarity;
 
-    public CollectionDexInventory(ForceItemBattle plugin, String playerName, UUID playerUUID, CollectionCategory category) {
+    public CollectionDexInventory(GuiContext gui, String playerName, UUID playerUUID, CollectionCategory category) {
         super(9 * 6, Text.of("<dark_gray>» <dark_aqua>" + category.getDisplayName() + " <dark_gray>◆ <gray>" + playerName));
 
-        this.plugin = plugin;
+        this.gui = gui;
         this.playerName = playerName;
         this.playerUUID = playerUUID;
         this.category = category;
-        this.currentPage = 0;
         // Pre-bucketed and pre-sorted once by the manager; just read this category's list.
-        this.items = this.plugin.getCollectionManager().getCollectionBuckets()
+        this.items = this.gui.collection().getCollectionBuckets()
                 .getOrDefault(category, List.of());
 
         this.addUpdateHandler(this::updateInventory);
         this.addClickHandler(inventoryClickEvent -> inventoryClickEvent.setCancelled(true));
 
-        this.plugin.getCollectionManager().getFoundItemsLoader().load(playerUUID, found -> {
+        this.gui.collection().getFoundItemsLoader().load(playerUUID, found -> {
             this.collected = found;
             this.updateInventory();
         });
 
-        this.plugin.getCollectionManager().getItemRarityLoader().load(loaded -> {
+        this.gui.collection().getItemRarityLoader().load(loaded -> {
             this.rarity = loaded;
             this.updateInventory();
         });
@@ -97,7 +95,7 @@ public class CollectionDexInventory extends InventoryBuilder {
 
     /** Memoised via CollectionManager -- sorting compares names O(n log n) times per repaint. */
     private String displayName(Material material) {
-        return this.plugin.getCollectionManager().displayNameOf(material);
+        return this.gui.collection().displayNameOf(material);
     }
 
     private boolean isCollected(Material material) {
@@ -172,7 +170,7 @@ public class CollectionDexInventory extends InventoryBuilder {
      */
     private List<String> huntingHints(Material material) {
         ItemDifficultiesManager.ItemDefinition definition =
-                this.plugin.getItemDifficultiesManager().getItemRegistry().get(material);
+                this.gui.items().getItemRegistry().get(material);
         if (definition == null) {
             return List.of();
         }
@@ -187,10 +185,6 @@ public class CollectionDexInventory extends InventoryBuilder {
             hints.add("<dark_gray>» <gray>Requires: <dark_purple>End");
         }
         return hints;
-    }
-
-    private int totalPages(int visibleCount) {
-        return Math.max(1, (int) Math.ceil((double) visibleCount / ITEMS_PER_PAGE));
     }
 
     private void updateInventory() {
@@ -224,7 +218,7 @@ public class CollectionDexInventory extends InventoryBuilder {
                     this.getPlayer().playSound(this.getPlayer(), Sound.UI_BUTTON_CLICK, 1, 1);
                     Filter[] filters = Filter.values();
                     this.filter = filters[(this.filter.ordinal() + 1) % filters.length];
-                    this.currentPage = 0;
+                    this.paging.reset();
                     this.updateInventory();
                 });
 
@@ -236,48 +230,19 @@ public class CollectionDexInventory extends InventoryBuilder {
                     this.getPlayer().playSound(this.getPlayer(), Sound.UI_BUTTON_CLICK, 1, 1);
                     Sort[] sorts = Sort.values();
                     this.sort = sorts[(this.sort.ordinal() + 1) % sorts.length];
-                    this.currentPage = 0;
+                    this.paging.reset();
                     this.updateInventory();
                 });
 
         this.setItem(49, GuiItems.back(),
                 inventoryClickEvent -> {
                     this.getPlayer().playSound(this.getPlayer(), Sound.UI_BUTTON_CLICK, 1, 1);
-                    new CollectionBookInventory(this.plugin, this.playerName, this.playerUUID).open(this.getPlayer());
+                    new CollectionBookInventory(this.gui, this.playerName, this.playerUUID).open(this.getPlayer());
                 });
 
-        int totalPages = this.totalPages(visible.size());
-        if (totalPages > 1) {
-            boolean hasPrevious = this.currentPage > 0;
-            boolean hasNext = this.currentPage < totalPages - 1;
+        this.paging.draw(this, visible.size(), this::updateInventory);
 
-            this.setItem(45, GuiItems.pageBack(hasPrevious),
-                    inventoryClickEvent -> {
-                        if (hasPrevious) {
-                            this.getPlayer().playSound(this.getPlayer(), Sound.ITEM_BOOK_PAGE_TURN, 1, 1);
-                            this.currentPage--;
-                            this.updateInventory();
-                        } else {
-                            this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);
-                        }
-                    });
-
-            this.setItem(53, GuiItems.pageForward(hasNext),
-                    inventoryClickEvent -> {
-                        if (hasNext) {
-                            this.getPlayer().playSound(this.getPlayer(), Sound.ITEM_BOOK_PAGE_TURN, 1, 1);
-                            this.currentPage++;
-                            this.updateInventory();
-                        } else {
-                            this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);
-                        }
-                    });
-        }
-
-        int startIndex = this.currentPage * ITEMS_PER_PAGE;
-        int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, visible.size());
-        for (int i = startIndex; i < endIndex; i++) {
-            int slotIndex = i - startIndex + 9;
+        this.paging.forEachOnPage(visible.size(), (i, slotIndex) -> {
             Material material = visible.get(i);
             CollectedItem stats = statsOf(material);
             boolean found = stats != null;
@@ -305,6 +270,6 @@ public class CollectionDexInventory extends InventoryBuilder {
                     .setDisplayName((found ? "<green>" : "<gray>") + displayName(material))
                     .setLore(lore)
                     .getItemStack());
-        }
+        });
     }
 }

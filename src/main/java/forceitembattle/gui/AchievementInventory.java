@@ -1,11 +1,9 @@
 package forceitembattle.gui;
 
-import de.threeseconds.openapi.fibservice.client.model.FibAchievementDto;
-import de.threeseconds.openapi.fibservice.client.model.FibPlayerAchievementsDto;
-import de.threeseconds.openapi.fibservice.client.model.FibPlayerIdentityDto;
-import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.AchievementScope;
 import forceitembattle.achievements.Achievements;
+import forceitembattle.model.stats.AchievementUnlock;
+import forceitembattle.model.stats.PlayerIdentity;
 import forceitembattle.achievements.CollectionRule;
 import forceitembattle.collection.CollectedItem;
 import forceitembattle.achievements.global.GlobalRule;
@@ -26,33 +24,32 @@ import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.inventory.ItemStack;
 
-public class AchievementInventory extends InventoryBuilder {
+public final class AchievementInventory extends InventoryBuilder {
 
     private static final DateTimeFormatter WHEN_FORMAT = DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm");
     private static final int BAR_WIDTH = 24;
 
-    private final ForceItemBattle plugin;
+    private final GuiContext gui;
     private final String playerName;
     private final UUID playerUUID;
     private final AchievementScope scope;
     /** Only the achievements of this scope, in declaration order. Paging is over this, not values(). */
     private final List<Achievements> entries;
-    private int currentPage;
+    private final GridPaging paging = new GridPaging();
     // achievementId -> its unlock records (SOLO/TEAM), fetched from the service for display.
-    private Map<String, List<FibAchievementDto>> unlocks = new HashMap<>();
+    private Map<String, List<AchievementUnlock>> unlocks = new HashMap<>();
     // Only fetched for the GLOBAL scope; null until it lands.
     private GlobalStats globalStats;
     // Found-set for the COLLECTION page's progress bars; null until loaded.
     private Map<String, CollectedItem> foundItems;
 
-    public AchievementInventory(ForceItemBattle plugin, String playerName, UUID playerUUID, AchievementScope scope) {
+    public AchievementInventory(GuiContext gui, String playerName, UUID playerUUID, AchievementScope scope) {
         super(9 * 6, Text.of("<dark_gray>» <dark_aqua>" + scope.getDisplayName() + " <dark_gray>◆ <gray>" + playerName));
 
-        this.plugin = plugin;
+        this.gui = gui;
         this.playerName = playerName;
         this.playerUUID = playerUUID;
         this.scope = scope;
-        this.currentPage = 0;
         this.entries = Arrays.stream(Achievements.values())
                 .filter(achievement -> achievement.getScope() == scope)
                 .toList();
@@ -62,13 +59,13 @@ public class AchievementInventory extends InventoryBuilder {
         // Pull the full unlock records (mode + teammate + unlockedAt) from the service — the local
         // cache only holds ids — and refresh once they arrive. Each record carries its teammate's
         // name, so this one round trip is everything the menu needs.
-        this.plugin.getFibService().achievements().getPlayerAchievementsAsync(playerUUID,
-                dto -> {
-                    this.unlocks = indexByAchievementId(dto);
+        this.gui.service().achievements().unlocks(playerUUID,
+                loaded -> {
+                    this.unlocks = indexByAchievementId(loaded);
                     this.updateInventory();
                 },
                 error -> {
-                    this.plugin.getLogger().warning("Failed to load achievement details for "
+                    this.gui.plugin().getLogger().warning("Failed to load achievement details for "
                             + playerUUID + " (HTTP " + error.getCode() + "): " + error.getMessage());
                     this.updateInventory();
                 });
@@ -76,12 +73,12 @@ public class AchievementInventory extends InventoryBuilder {
         // Progress on locked entries is only meaningful for GLOBAL — a ROUND achievement's
         // progress is in-memory and per-round, and META progress is counted locally below.
         if (scope == AchievementScope.GLOBAL) {
-            this.plugin.getAchievementManager().getGlobalStatsLoader().load(playerUUID, stats -> {
+            this.gui.achievements().getGlobalStatsLoader().load(playerUUID, stats -> {
                 this.globalStats = stats;
                 this.updateInventory();
             });
         } else if (scope == AchievementScope.COLLECTION) {
-            this.plugin.getCollectionManager().getFoundItemsLoader().load(playerUUID, found -> {
+            this.gui.collection().getFoundItemsLoader().load(playerUUID, found -> {
                 this.foundItems = found;
                 this.updateInventory();
             });
@@ -91,18 +88,13 @@ public class AchievementInventory extends InventoryBuilder {
         this.addClickHandler(inventoryClickEvent -> inventoryClickEvent.setCancelled(true));
     }
 
-    private Map<String, List<FibAchievementDto>> indexByAchievementId(FibPlayerAchievementsDto dto) {
-        Map<String, List<FibAchievementDto>> map = new HashMap<>();
-        if (dto != null && dto.getAchievements() != null) {
-            for (FibAchievementDto entry : dto.getAchievements()) {
-                map.computeIfAbsent(entry.getAchievementId(), key -> new ArrayList<>()).add(entry);
-            }
+    /** An achievement can be unlocked more than once — solo, and once per teammate. */
+    private Map<String, List<AchievementUnlock>> indexByAchievementId(List<AchievementUnlock> unlocks) {
+        Map<String, List<AchievementUnlock>> map = new HashMap<>();
+        for (AchievementUnlock entry : unlocks) {
+            map.computeIfAbsent(entry.achievementId(), key -> new ArrayList<>()).add(entry);
         }
         return map;
-    }
-
-    private int totalPages(int objectsPerPage) {
-        return Math.max(1, (int) Math.ceil((double) this.entries.size() / objectsPerPage));
     }
 
     private void updateInventory() {
@@ -113,54 +105,22 @@ public class AchievementInventory extends InventoryBuilder {
 
         // Fallback completion source: the local id cache (covers a just-unlocked
         // achievement whose async service write hasn't landed yet).
-        Set<String> cachedIds = this.plugin.getAchievementManager()
+        Set<String> cachedIds = this.gui.achievements()
                 .getAchievementStorage().getPlayerAchievements(this.playerUUID);
-
-        int itemsPerPage = 36;
-        int startIndex = this.currentPage * itemsPerPage;
-        int endIndex = Math.min(startIndex + itemsPerPage, this.entries.size());
 
         this.setItem(49, GuiItems.back(),
                 inventoryClickEvent -> {
                     this.getPlayer().playSound(this.getPlayer(), Sound.UI_BUTTON_CLICK, 1, 1);
-                    new AchievementCategoryInventory(this.plugin, this.playerName, this.playerUUID)
+                    new AchievementCategoryInventory(this.gui, this.playerName, this.playerUUID)
                             .open(this.getPlayer());
                 });
 
-        if (this.entries.size() > itemsPerPage) {
-            boolean hasPrevious = this.currentPage > 0;
-            boolean hasNext = this.currentPage < this.totalPages(itemsPerPage) - 1;
+        this.paging.draw(this, this.entries.size(), this::updateInventory);
 
-            this.setItem(45, GuiItems.pageBack(hasPrevious),
-                    inventoryClickEvent -> {
-                        if (hasPrevious) {
-                            this.getPlayer().playSound(this.getPlayer(), Sound.ITEM_BOOK_PAGE_TURN, 1, 1);
-                            this.currentPage--;
-                            this.updateInventory();
-                        } else {
-                            this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);
-                        }
-                    }
-            );
-
-            this.setItem(53, GuiItems.pageForward(hasNext),
-                    inventoryClickEvent -> {
-                        if (hasNext) {
-                            this.getPlayer().playSound(this.getPlayer(), Sound.ITEM_BOOK_PAGE_TURN, 1, 1);
-                            this.currentPage++;
-                            this.updateInventory();
-                        } else {
-                            this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);
-                        }
-                    }
-            );
-        }
-
-        for (int i = startIndex; i < endIndex; i++) {
-            int slotIndex = i - startIndex + 9;
+        this.paging.forEachOnPage(this.entries.size(), (i, slotIndex) -> {
             Achievements achievement = this.entries.get(i);
 
-            List<FibAchievementDto> unlockRecords = this.unlocks.get(achievement.name());
+            List<AchievementUnlock> unlockRecords = this.unlocks.get(achievement.name());
             boolean isCompleted = isCompleted(achievement, cachedIds);
 
             Material displayMaterial = isCompleted ? Material.LIME_DYE : Material.GRAY_DYE;
@@ -176,13 +136,14 @@ public class AchievementInventory extends InventoryBuilder {
             if (isCompleted) {
                 lore.add("<green>Completed!");
                 if (unlockRecords != null) {
-                    for (FibAchievementDto entry : unlockRecords) {
-                        if ("TEAM".equalsIgnoreCase(String.valueOf(entry.getMode()))) {
-                            lore.add("<dark_gray>» <aqua>Team <dark_gray>◆ <gray>with <yellow>" + teammateName(entry.getTeammate()));
+                    for (AchievementUnlock entry : unlockRecords) {
+                        if (entry.inTeam()) {
+                            lore.add("<dark_gray>» <aqua>Team <dark_gray>◆ <gray>with <yellow>"
+                                    + PlayerIdentity.displayName(entry.teammate(), "Unknown"));
                         } else {
                             lore.add("<dark_gray>» <aqua>Solo");
                         }
-                        String when = formatWhen(entry.getUnlockedAt());
+                        String when = formatWhen(entry.unlockedAt());
                         if (when != null) {
                             lore.add("<dark_gray>» <gray>" + when);
                         }
@@ -208,16 +169,16 @@ public class AchievementInventory extends InventoryBuilder {
             if (isDex) {
                 this.setItem(slotIndex, stack, inventoryClickEvent -> {
                     this.getPlayer().playSound(this.getPlayer(), Sound.UI_BUTTON_CLICK, 1, 1);
-                    new CollectionBookInventory(this.plugin, this.playerName, this.playerUUID).open(this.getPlayer());
+                    new CollectionBookInventory(this.gui, this.playerName, this.playerUUID).open(this.getPlayer());
                 });
             } else {
                 this.setItem(slotIndex, stack);
             }
-        }
+        });
     }
 
     private boolean isCompleted(Achievements achievement, Set<String> cachedIds) {
-        List<FibAchievementDto> records = this.unlocks.get(achievement.name());
+        List<AchievementUnlock> records = this.unlocks.get(achievement.name());
         return (records != null && !records.isEmpty()) || cachedIds.contains(achievement.name());
     }
 
@@ -233,7 +194,7 @@ public class AchievementInventory extends InventoryBuilder {
         List<String> lore = new ArrayList<>();
 
         if (achievement.getScope() == AchievementScope.COLLECTION) {
-            Set<String> catalogue = this.plugin.getCollectionManager().getCollectionCatalogue();
+            Set<String> catalogue = this.gui.collection().getCollectionCatalogue();
             if (this.foundItems == null) {
                 lore.add("<dark_gray>» <gray>Loading progress...");
                 return lore;
@@ -293,13 +254,6 @@ public class AchievementInventory extends InventoryBuilder {
                 + " <yellow>" + pct + "%";
     }
 
-    private String teammateName(FibPlayerIdentityDto teammate) {
-        if (teammate == null || teammate.getUuid() == null) {
-            return "Unknown";
-        }
-        String name = teammate.getName();
-        return name != null ? name : teammate.getUuid().toString().substring(0, 8);
-    }
 
     private String formatWhen(OffsetDateTime when) {
         if (when == null) {

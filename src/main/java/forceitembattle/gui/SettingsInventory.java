@@ -1,25 +1,29 @@
 package forceitembattle.gui;
 
-import forceitembattle.ForceItemBattle;
-import forceitembattle.settings.GameSetting;
-import forceitembattle.settings.QuickieMode;
+import forceitembattle.model.Roster;
 import forceitembattle.settings.GamePreset;
+import forceitembattle.settings.GameSetting;
+import forceitembattle.settings.GameSettings;
+import forceitembattle.settings.QuickieMode;
 import forceitembattle.util.Text;
 import java.util.Objects;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.event.inventory.InventoryClickEvent;
 
-public class SettingsInventory extends InventoryBuilder {
+public final class SettingsInventory extends InventoryBuilder {
 
-    private final ForceItemBattle plugin;
+    private final Roster roster;
+    private final GameSettings settings;
     private final GamePreset gamePreset;
     private int currentPage;
 
-    public SettingsInventory(ForceItemBattle plugin, GamePreset gamePreset) {
+    public SettingsInventory(Roster roster, GameSettings settings, GamePreset gamePreset) {
         super(9 * 4, Text.of("<dark_gray>» <dark_aqua>Settings <dark_gray>● <gray>Menu"));
 
-        this.plugin = plugin;
+        this.roster = roster;
+        this.settings = settings;
         this.gamePreset = gamePreset;
         this.currentPage = 0;
 
@@ -63,14 +67,14 @@ public class SettingsInventory extends InventoryBuilder {
         if (gamePreset != null) {
             this.setItem(8, new ItemBuilder(Material.LIME_STAINED_GLASS_PANE).setDisplayName("<dark_gray>» <green>Save settings").getItemStack(), inventoryClickEvent -> {
                 this.getPlayer().playSound(this.getPlayer(), Sound.BLOCK_NOTE_BLOCK_BELL, 1, 1);
-                new SettingsPresetsInventory(plugin, gamePreset, plugin.getSettings()).open(this.getPlayer());
+                new SettingsPresetsInventory(roster, settings, gamePreset).open(this.getPlayer());
             });
 
         } else {
             if (this.getPlayer().isOp()) {
                 this.setItem(8, new ItemBuilder(Material.STRUCTURE_VOID).setDisplayName("<dark_gray>» <yellow>Manage presets").getItemStack(), inventoryClickEvent -> {
                     this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
-                    new PresetMenuInventory(plugin, plugin.getSettings()).open(this.getPlayer());
+                    new PresetMenuInventory(roster, settings).open(this.getPlayer());
                 });
             }
 
@@ -83,7 +87,7 @@ public class SettingsInventory extends InventoryBuilder {
             this.setItem(slotIndex, new ItemBuilder(gameSetting.defaultMaterial()).setDisplayName(settingDisplayName).setLore(gameSetting.descriptionLore()).getItemStack(), inventoryClickEvent -> {
 
                 if (gameSetting == GameSetting.TEAM) {
-                    if (plugin.getGamemanager().forceItemPlayerMap().size() < 4) {
+                    if (this.roster.players().size() < 4) {
                         this.getPlayer().sendMessage(Text.of("<red>There are not enough players online"));
                         this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);
                         return;
@@ -91,9 +95,7 @@ public class SettingsInventory extends InventoryBuilder {
                 }
 
                 if (gameSetting == GameSetting.QUICKIE) {
-                    QuickieMode current = plugin.getSettings().getQuickieMode();
-                    plugin.getSettings().setQuickieMode(inventoryClickEvent.isRightClick() ? current.previous() : current.next());
-                    this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
+                    this.cycleQuickie(inventoryClickEvent);
                     return;
                 }
 
@@ -102,27 +104,14 @@ public class SettingsInventory extends InventoryBuilder {
                 }
 
                 this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
-                if (gamePreset != null) {
-                    if (gamePreset.getGameSettings().contains(gameSetting))
-                        gamePreset.getGameSettings().remove(gameSetting);
-                    else gamePreset.getGameSettings().add(gameSetting);
-                } else {
-                    plugin.getSettings().setSettingEnabled(gameSetting, !plugin.getSettings().isSettingEnabled(gameSetting));
-                    if (gameSetting == GameSetting.TEAM) {
-                        if (plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-                            Bukkit.broadcast(Text.of("<red>Teams are now enabled. <dark_gray>» <white>/teams"));
-                        } else {
-                            Bukkit.broadcast(Text.of("<red>Teams are now disabled."));
-                        }
-                    }
-                }
+                toggleSetting(gamePreset, gameSetting);
 
             });
 
             ItemBuilder itemBuilder = null;
             String enabledPrefix = "<dark_gray>➟";
             if (gameSetting == GameSetting.QUICKIE) {
-                QuickieMode quickieMode = plugin.getSettings().getQuickieMode();
+                QuickieMode quickieMode = settings.getQuickieMode();
                 if (quickieMode.isEnabled()) {
                     itemBuilder = new ItemBuilder(Material.LIME_DYE).setDisplayName(enabledPrefix + " <green>" + quickieMode.displayName() + " <dark_green>✔");
                 } else {
@@ -136,19 +125,16 @@ public class SettingsInventory extends InventoryBuilder {
                     if (gameSetting == GameSetting.BACKPACKSIZE) {
                         amount = gamePreset.getBackpackRows();
                         itemBuilder = new ItemBuilder(Material.STONE_BUTTON).setAmount(amount).setDisplayName(enabledPrefix + " <yellow>" + amount + " <gray>" + (amount == 1 ? "row" : "rows"));
-                    } else if (gameSetting == GameSetting.TRADING_COOLDOWN) {
-                        amount = gamePreset.getTradingCooldown();
-                        itemBuilder = new ItemBuilder(Material.STONE_BUTTON).setAmount(amount).setDisplayName(enabledPrefix + " <yellow>" + amount + " <gray>" + (amount == 1 ? "minute" : "minutes"));
                     }
 
                 } else {
                     itemBuilder = new ItemBuilder(Material.RED_DYE).setDisplayName(enabledPrefix + " <red>Disabled <dark_red>✘");
                 }
             } else {
-                if (plugin.getSettings().isSettingEnabled(gameSetting)) {
+                if (settings.isSettingEnabled(gameSetting)) {
                     itemBuilder = new ItemBuilder(Material.LIME_DYE).setDisplayName(enabledPrefix + " <green>Enabled <dark_green>✔");
                 } else if (gameSetting.defaultValue() instanceof Integer) {
-                    int amount = plugin.getSettings().getSettingValue(gameSetting);
+                    int amount = settings.getSettingValue(gameSetting);
                     itemBuilder = new ItemBuilder(Material.STONE_BUTTON).setAmount(amount).setDisplayName(enabledPrefix + " <yellow>" + amount + " <gray>" + (amount == 1 ? "row" : "rows"));
                 } else {
                     itemBuilder = new ItemBuilder(Material.RED_DYE).setDisplayName(enabledPrefix + " <red>Disabled <dark_red>✘");
@@ -160,31 +146,17 @@ public class SettingsInventory extends InventoryBuilder {
                 if (inventoryClickEvent.getCurrentItem() == null) return;
 
                 if (gameSetting == GameSetting.QUICKIE) {
-                    QuickieMode current = plugin.getSettings().getQuickieMode();
-                    plugin.getSettings().setQuickieMode(inventoryClickEvent.isRightClick() ? current.previous() : current.next());
-                    this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
+                    this.cycleQuickie(inventoryClickEvent);
                     return;
                 }
 
                 if (inventoryClickEvent.getCurrentItem().getType() == Material.LIME_DYE || inventoryClickEvent.getCurrentItem().getType() == Material.RED_DYE) {
                     this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
-                    if (gamePreset != null) {
-                        if (gamePreset.getGameSettings().contains(gameSetting))
-                            gamePreset.getGameSettings().remove(gameSetting);
-                        else gamePreset.getGameSettings().add(gameSetting);
-                    } else {
-                        plugin.getSettings().setSettingEnabled(gameSetting, !plugin.getSettings().isSettingEnabled(gameSetting));
-                        if (gameSetting == GameSetting.TEAM) {
-                            if (plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-                                Bukkit.broadcast(Text.of("<red>Teams are now enabled. <dark_gray>» <white>/teams"));
-                            } else {
-                                Bukkit.broadcast(Text.of("<red>Teams are now disabled."));
-                            }
-                        }
-                    }
+                    toggleSetting(gamePreset, gameSetting);
 
                 } else if (inventoryClickEvent.getCurrentItem().getType() == Material.STONE_BUTTON) {
-                    if (!plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK) || !plugin.getSettings().isSettingEnabled(GameSetting.TRADING)) {
+                    // BACKPACKSIZE is the only stone-button setting.
+                    if (!settings.isSettingEnabled(GameSetting.BACKPACK)) {
                         this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);
                         return;
                     }
@@ -203,34 +175,45 @@ public class SettingsInventory extends InventoryBuilder {
                         if (gamePreset != null) {
                             gamePreset.setBackpackRows(backpackSize);
                         } else {
-                            plugin.getSettings().setSettingValue(gameSetting, backpackSize);
-                        }
-
-                    } else if (gameSetting == GameSetting.TRADING_COOLDOWN) {
-                        int tradingCooldown = inventoryClickEvent.getCurrentItem().getAmount();
-
-                        if (inventoryClickEvent.isLeftClick() && tradingCooldown < 5) {
-                            tradingCooldown += 1;
-                        } else if (inventoryClickEvent.isRightClick() && tradingCooldown > 1) {
-                            tradingCooldown -= 1;
-                        } else {
-                            this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_BLAZE_HURT, 1, 1);
-                            return;
-                        }
-                        this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
-                        if (gamePreset != null) {
-                            gamePreset.setTradingCooldown(tradingCooldown);
-                        } else {
-                            plugin.getSettings().setSettingValue(gameSetting, tradingCooldown);
+                            settings.setSettingValue(gameSetting, backpackSize);
                         }
                     }
-
-
                 }
 
             });
         }
     }
 
+    /**
+     * Steps the quickie mode one place, backwards on a right click. Unlike every other setting this
+     * one cycles rather than toggles, and both the name row and the status row below it do it, so
+     * both call this.
+     */
+    private void cycleQuickie(InventoryClickEvent inventoryClickEvent) {
+        QuickieMode current = settings.getQuickieMode();
+        settings.setQuickieMode(inventoryClickEvent.isRightClick() ? current.previous() : current.next());
+        this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
+    }
 
+    /**
+     * Flips a boolean setting, on the preset being edited when there is one and on the live settings
+     * otherwise. Both the name row and the status row below it toggle, so both call this.
+     */
+    private void toggleSetting(GamePreset gamePreset, GameSetting gameSetting) {
+        if (gamePreset != null) {
+            if (gamePreset.getGameSettings().contains(gameSetting)) {
+                gamePreset.getGameSettings().remove(gameSetting);
+            } else {
+                gamePreset.getGameSettings().add(gameSetting);
+            }
+            return;
+        }
+
+        settings.setSettingEnabled(gameSetting, !settings.isSettingEnabled(gameSetting));
+        if (gameSetting == GameSetting.TEAM) {
+            Bukkit.broadcast(settings.isSettingEnabled(GameSetting.TEAM)
+                    ? Text.of("<red>Teams are now enabled. <dark_gray>» <white>/teams")
+                    : Text.of("<red>Teams are now disabled."));
+        }
+    }
 }

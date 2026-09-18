@@ -1,6 +1,5 @@
 package forceitembattle.listener;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.model.Dimension;
 import forceitembattle.util.BiomeNoteLocator;
 import forceitembattle.model.BiomeNote;
@@ -22,8 +21,6 @@ import org.bukkit.inventory.ItemStack;
 
 @RequiredArgsConstructor
 public class JournalListener implements Listener {
-
-    private final ForceItemBattle forceItemBattle;
 
     @EventHandler
     public void onInteract(PlayerInteractEvent event) {

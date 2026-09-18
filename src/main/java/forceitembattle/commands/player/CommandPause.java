@@ -1,35 +1,44 @@
 package forceitembattle.commands.player;
 
-import forceitembattle.ForceItemBattle;
+import static forceitembattle.commands.Precondition.ROUND_RUNNING;
+import static forceitembattle.commands.Precondition.OP_WHEN_EVENT;
 import forceitembattle.commands.CustomCommand;
+import forceitembattle.commands.Precondition;
+import forceitembattle.manager.Gamemanager;
 import forceitembattle.model.Dimension;
-import forceitembattle.settings.GameSetting;
 import forceitembattle.util.Text;
+import java.util.List;
 import org.bukkit.Bukkit;
 import org.bukkit.GameRules;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 
-public class CommandPause extends CustomCommand {
+public final class CommandPause extends CustomCommand {
 
-    public CommandPause(ForceItemBattle plugin) {
-        super(plugin, "pause");
+    private final Gamemanager gamemanager;
+
+    public CommandPause(Gamemanager gamemanager) {
+        super("pause");
+        this.gamemanager = gamemanager;
         setDescription("Pause the game");
     }
 
     @Override
+    protected List<Precondition> preconditions() {
+        return List.of(OP_WHEN_EVENT,
+                ROUND_RUNNING.refusing("<red>The timer is already paused."));
+    }
+
+    @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (this.plugin.getSettings().isSettingEnabled(GameSetting.EVENT) && !player.isOp()) {
-            player.sendMessage(Text.of("<red>You don't have permission to use this command."));
-            return;
+        Bukkit.broadcast(Text.of("<gold>The game has been paused!"));
+
+        World overworld = Dimension.OVERWORLD.world();
+        if (overworld != null) {
+            overworld.setGameRule(GameRules.ADVANCE_TIME, false);
+            overworld.setGameRule(GameRules.ADVANCE_WEATHER, false);
         }
 
-        if (!this.plugin.getGamemanager().isMidGame()) {
-            player.sendMessage(Text.of("<red>The timer is already paused."));
-            return;
-        }
-        Bukkit.broadcast(Text.of("<gold>The game has been paused!"));
-        Dimension.OVERWORLD.world().setGameRule(GameRules.ADVANCE_TIME, false);
-        Dimension.OVERWORLD.world().setGameRule(GameRules.ADVANCE_WEATHER, false);
-        this.plugin.getGamemanager().pauseGame();
+        this.gamemanager.pauseGame();
     }
 }

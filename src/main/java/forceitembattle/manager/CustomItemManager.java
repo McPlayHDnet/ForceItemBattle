@@ -1,6 +1,5 @@
 package forceitembattle.manager;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.util.Scheduler;
 import java.util.Collection;
@@ -14,11 +13,12 @@ import org.bukkit.World;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.loot.LootContext;
 import org.bukkit.loot.LootTable;
+import org.bukkit.plugin.Plugin;
 
 @RequiredArgsConstructor
 public class CustomItemManager implements Manager {
 
-    private final ForceItemBattle forceItemBattle;
+    private final Plugin forceItemBattle;
 
     @Override
     public void enable() {

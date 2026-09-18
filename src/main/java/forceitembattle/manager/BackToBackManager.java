@@ -1,24 +1,20 @@
 package forceitembattle.manager;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.model.BackToBackProbability;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameContext;
-import forceitembattle.model.Rarity;
-import forceitembattle.model.Team;
 import forceitembattle.service.FIBServiceClient;
-import forceitembattle.service.FibStatisticsClient;
-import forceitembattle.settings.GameSetting;
+import forceitembattle.settings.GameSettings;
 import forceitembattle.util.GameBroadcast;
 import forceitembattle.util.InventorySearch;
 import forceitembattle.util.Scheduler;
 import forceitembattle.util.Text;
-import java.math.RoundingMode;
-import java.text.DecimalFormat;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
+import javax.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -27,136 +23,121 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
+/**
+ * Being handed an item you already own, and how unlikely that was.
+ *
+ * <p>The arithmetic is {@link BackToBackProbability}'s and the streak is the Score Owner's; what is
+ * left here is gathering what a player holds and saying so.
+ *
+ * <p><b>One find, one number.</b> The odds are computed once — after the streak is bumped, over a
+ * single snapshot of what is owned — and the same figure is announced and recorded. There used to be
+ * two computations: {@code FoundItemResolver.score()} asked for one <em>before</em> the bump, and the
+ * announcement asked again a tick later <em>after</em> it, so the percentage in a player's stats row
+ * was systematically a chain shorter than the one they were shown. Three inventory walks became one
+ * for the same reason.
+ */
 @RequiredArgsConstructor
 public class BackToBackManager implements Manager {
 
-    private final ForceItemBattle plugin;
+    private final GameSettings settings;
+    private final ItemDifficultiesManager items;
+    private final BackpackManager backpacks;
+    private final FIBServiceClient fibService;
 
     /**
-     * Called after an item has been found and the next one assigned: decides whether
-     * the new item is already owned, updates every streak, and kicks off the chain.
+     * Called after an item has been found <em>and the next one assigned</em>, since the chain is about
+     * the item just handed out.
+     *
+     * @return the odds of the chain this find extended, or empty when it broke one
      */
-    public void handleAfterFind(ForceItemPlayer forceItemPlayer, GameContext context) {
+    public Optional<BackToBackProbability> handleAfterFind(ForceItemPlayer forceItemPlayer,
+                                                           GameContext context) {
         if (context.runMode()) {
-            return;
+            return Optional.empty();
         }
 
-        BackToBackResult result = check(forceItemPlayer, forceItemPlayer.activeMaterial(), context);
+        Owned owned = gather(forceItemPlayer, forceItemPlayer.activeMaterial(), context);
 
-        if (!result.hasBackToBack()) {
-            resetStreaks(forceItemPlayer, result, context);
-            return;
+        if (!owned.hasBackToBack()) {
+            forceItemPlayer.scoreOwner().resetStreak();
+            return Optional.empty();
         }
 
-        forceItemPlayer.setBackToBackStreak(forceItemPlayer.backToBackStreak() + 1);
+        // One holder, so there is nothing to keep in step. This used to be three writes — the finder,
+        // whichever teammate happened to hold the item, and the team — mirrored by a reset that
+        // zeroed every member instead, and the two had already drifted.
+        forceItemPlayer.scoreOwner().bumpStreak();
 
-        if (result.teammateWhoHasIt() != null) {
-            ForceItemPlayer teammate = result.teammateWhoHasIt();
-            teammate.setBackToBackStreak(teammate.backToBackStreak() + 1);
-        }
+        BackToBackProbability probability = oddsFor(forceItemPlayer, owned);
 
-        if (context.teamGame() && forceItemPlayer.currentTeam() != null) {
-            Team team = forceItemPlayer.currentTeam();
-            team.setBackToBackStreak(team.getBackToBackStreak() + 1);
-        }
-
-        // Report the running streak the instant it grows; the service keeps the max,
-        // so each chain's peak is captured. (Must come after the team-streak bump above —
-        // the reporter reads the shared team streak in team games.)
+        // The service keeps the max, so reporting on every growth captures each chain's peak. After
+        // the bump: the reporter reads the streak.
         updateStreakStats(forceItemPlayer, context);
+        announce(forceItemPlayer, owned.teammateWhoHasIt(), probability, context);
 
-        triggerBackToBackEvent(forceItemPlayer, result, context);
+        return Optional.of(probability);
     }
 
     /**
-     * How improbable the player's current back-to-back was, with the display string
-     * and rarity that go with it.
+     * What this owner holds, and whether it includes the item they were just handed.
+     *
+     * @param teammateWhoHasIt set only when the teammate is the <em>only</em> holder — the message
+     *                         credits them, and crediting someone for an item the finder already had
+     *                         themselves would read as nonsense
      */
-    public BackToBackProbability calculateProbability(ForceItemPlayer forceItemPlayer) {
+    private record Owned(Set<Material> materials, boolean hasBackToBack,
+                         @Nullable ForceItemPlayer teammateWhoHasIt) {
+    }
+
+    /**
+     * One pass over every inventory that counts. It was three: {@code check} walked them with
+     * {@code contains}, then the odds walked them again with {@code collectUniqueMaterials}, a tick
+     * later and so able to disagree about what was held.
+     */
+    private Owned gather(ForceItemPlayer forceItemPlayer, Material target, GameContext context) {
         Player player = forceItemPlayer.player();
-        int totalItemsInPool = this.plugin.getItemDifficultiesManager().getAvailableItems().size();
-        boolean backpackEnabled = this.plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK);
-        boolean teamGame = forceItemPlayer.currentTeam() != null;
 
-        // Everything the owner of this streak already holds: both members' inventories in a team
-        // game, just this player's when solo.
-        Set<Material> uniqueMaterials = new HashSet<>();
-        for (ForceItemPlayer member : forceItemPlayer.squad()) {
-            InventorySearch.collectUniqueMaterials(member.player().getInventory(), uniqueMaterials);
-        }
-
-        int streak = forceItemPlayer.backToBackStreak();
-
-        if (teamGame) {
-            Team team = forceItemPlayer.currentTeam();
-            if (backpackEnabled) {
-                InventorySearch.collectUniqueMaterials(this.plugin.getBackpackManager().getTeamBackpack(team), uniqueMaterials);
-            }
-            streak = team.getBackToBackStreak();
-        } else if (backpackEnabled) {
-            InventorySearch.collectUniqueMaterials(this.plugin.getBackpackManager().getPlayerBackpack(player), uniqueMaterials);
-        }
-
-        Material previous = forceItemPlayer.activePreviousMaterial();
-        Material current = forceItemPlayer.activeMaterial();
-
-        double baseProbability = Math.min((double) uniqueMaterials.size() / totalItemsInPool, 1.0); // 100% cap
-        double probability = Math.pow(baseProbability, streak);
-        double probabilityPercent = probability * 100;
-
-        Rarity rarity = Rarity.classify(probability, previous != null && current == previous);
-        String formatted = formatPercent(probabilityPercent)
-                + " <dark_gray>(<reset>" + rarity.label() + "<dark_gray>)";
-
-        return new BackToBackProbability(probabilityPercent, rarity, formatted);
-    }
-
-    private void resetStreaks(ForceItemPlayer forceItemPlayer, BackToBackResult result, GameContext context) {
-        forceItemPlayer.setBackToBackStreak(0);
-
-        if (result.teammateWhoHasIt() != null) {
-            result.teammateWhoHasIt().setBackToBackStreak(0);
-        }
-
-        if (context.teamGame() && forceItemPlayer.currentTeam() != null) {
-            Team team = forceItemPlayer.currentTeam();
-            team.setBackToBackStreak(0);
-            team.getPlayers().forEach(member -> member.setBackToBackStreak(0));
-        }
-    }
-
-    /**
-     * Whether the target material is already owned — by the player, their backpack,
-     * or (in team games) a teammate.
-     */
-    private BackToBackResult check(ForceItemPlayer forceItemPlayer, Material targetMaterial, GameContext context) {
-        if (forceItemPlayer.activePreviousMaterial() == targetMaterial) {
-            return new BackToBackResult(true, null);
-        }
-
-        if (InventorySearch.contains(forceItemPlayer.player().getInventory(), targetMaterial)) {
-            return new BackToBackResult(true, null);
-        }
+        Set<Material> ownHalf = new HashSet<>();
+        InventorySearch.collectUniqueMaterials(player.getInventory(), ownHalf);
 
         if (context.backpackEnabled()) {
-            Inventory backpackInventory = context.teamGame()
-                    ? this.plugin.getBackpackManager().getTeamBackpack(forceItemPlayer.currentTeam())
-                    : this.plugin.getBackpackManager().getPlayerBackpack(forceItemPlayer.player());
-
-            if (InventorySearch.contains(backpackInventory, targetMaterial)) {
-                return new BackToBackResult(true, null);
-            }
+            Inventory backpack = context.teamGame()
+                    ? this.backpacks.getTeamBackpack(forceItemPlayer.currentTeam())
+                    : this.backpacks.getPlayerBackpack(player);
+            InventorySearch.collectUniqueMaterials(backpack, ownHalf);
         }
 
         ForceItemPlayer teammate = forceItemPlayer.teammate().orElse(null);
-        if (teammate != null && InventorySearch.contains(teammate.player().getInventory(), targetMaterial)) {
-            return new BackToBackResult(true, teammate);
+        Set<Material> teammateHalf = new HashSet<>();
+        if (teammate != null) {
+            InventorySearch.collectUniqueMaterials(teammate.player().getInventory(), teammateHalf);
         }
 
-        return new BackToBackResult(false, null);
+        boolean selfHasIt = forceItemPlayer.activePreviousMaterial() == target
+                || ownHalf.contains(target);
+        boolean teammateHasIt = teammateHalf.contains(target);
+
+        // Union built in place: ownHalf is local, both halves have already been consulted above, and
+        // the result is only ever read for its size.
+        ownHalf.addAll(teammateHalf);
+
+        return new Owned(ownHalf, selfHasIt || teammateHasIt,
+                !selfHasIt && teammateHasIt ? teammate : null);
     }
 
-    private void triggerBackToBackEvent(ForceItemPlayer forceItemPlayer, BackToBackResult result, GameContext context) {
+    private BackToBackProbability oddsFor(ForceItemPlayer forceItemPlayer, Owned owned) {
+        Material previous = forceItemPlayer.activePreviousMaterial();
+        Material current = forceItemPlayer.activeMaterial();
+
+        return BackToBackProbability.of(
+                owned.materials().size(),
+                this.items.getAvailableItems().size(),
+                forceItemPlayer.backToBackStreak(),
+                previous != null && current == previous);
+    }
+
+    private void announce(ForceItemPlayer forceItemPlayer, @Nullable ForceItemPlayer teammate,
+                          BackToBackProbability probability, GameContext context) {
         Player player = forceItemPlayer.player();
 
         Scheduler.runLaterSync(() -> {
@@ -167,16 +148,15 @@ public class BackToBackManager implements Manager {
             foundNextItemEvent.setBackToBack(true);
             foundNextItemEvent.setSkipped(false);
 
-            BackToBackProbability probability = calculateProbability(forceItemPlayer);
-            String unicode = this.plugin.getItemDifficultiesManager().getUnicodeFromMaterial(true, foundItem.getType());
+            String unicode = this.items.getUnicodeFromMaterial(true, foundItem.getType());
             String materialName = CustomMaterials.nameOf(foundItem.getType());
 
             Component message;
-            if (result.teammateWhoHasIt() != null) {
-                ForceItemPlayer teammate = result.teammateWhoHasIt();
+            if (teammate != null) {
                 message = Text.of(String.format(
                         "<green>%s <gray>was lucky that <green>%s <gray>already owns <reset>%s <gold>%s <dark_gray>» <aqua>%s",
-                        player.getName(), teammate.player().getName(), unicode, materialName, probability.formatted()));
+                        player.getName(), teammate.player().getName(), unicode, materialName,
+                        probability.formatted()));
             } else {
                 message = Text.of(String.format(
                         "<green>%s <gray>was lucky to already own <reset>%s <gold>%s <dark_gray>» <aqua>%s",
@@ -195,56 +175,12 @@ public class BackToBackManager implements Manager {
             return;
         }
 
-        FibStatisticsClient statistics = this.plugin.getFibService().statistics();
-        Player player = forceItemPlayer.player();
+        int streak = forceItemPlayer.backToBackStreak();
 
-        if (!context.teamGame()) {
-            statistics.updateSoloStatisticsAsync(
-                    player.getUniqueId(),
-                    FIBServiceClient.soloUpdate().highestB2BStreak(forceItemPlayer.backToBackStreak())
-            );
-            return;
-        }
-
-        Team team = forceItemPlayer.currentTeam();
-        if (team == null) {
-            return;
-        }
-
-        ForceItemPlayer teammate = forceItemPlayer.teammate().orElse(null);
-        if (teammate == null) {
-            return;
-        }
-
-        // The b2b streak is a shared team stat — record the shared peak for BOTH members.
-        int teamStreak = team.getBackToBackStreak();
-        statistics.updateMemberStatisticsAsync(
-                player.getUniqueId(), teammate.player().getUniqueId(), player.getUniqueId(),
-                FIBServiceClient.memberUpdate().highestB2BStreak(teamStreak));
-        statistics.updateMemberStatisticsAsync(
-                player.getUniqueId(), teammate.player().getUniqueId(), teammate.player().getUniqueId(),
-                FIBServiceClient.memberUpdate().highestB2BStreak(teamStreak));
-    }
-
-    private String formatPercent(double probabilityPercent) {
-        DecimalFormat df;
-
-        if (probabilityPercent >= 1) {
-            df = new DecimalFormat("0.##");
-        } else {
-            int leadingZeros = 0;
-            double temp = probabilityPercent;
-            while (temp < 1 && leadingZeros < 15) {
-                temp *= 10;
-                leadingZeros++;
-            }
-            df = new DecimalFormat("0." + "#".repeat(Math.max(0, leadingZeros + 2)));
-        }
-
-        df.setRoundingMode(RoundingMode.HALF_UP);
-        return df.format(probabilityPercent) + "%";
-    }
-
-    private record BackToBackResult(boolean hasBackToBack, ForceItemPlayer teammateWhoHasIt) {
+        // In a team game the peak is the team's and lands on both member rows; the write rules own
+        // that routing, and since the streak moved onto the Score Owner both numbers are the same one.
+        this.fibService.statisticsWrites().recordBackToBackPeak(
+                forceItemPlayer, context.teamGame() && forceItemPlayer.currentTeam() != null,
+                streak, streak);
     }
 }

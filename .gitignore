@@ -4,8 +4,4 @@ run/
 .idea
 .gradle
 /*.jar
-
-# Local-only test setup. Run with:  ./gradlew test -I local-tests.init.gradle.kts
-local-tests/
-local-tests.init.gradle.kts
 logs/

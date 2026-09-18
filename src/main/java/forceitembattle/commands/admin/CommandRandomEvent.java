@@ -1,30 +1,34 @@
 package forceitembattle.commands.admin;
 
-import forceitembattle.ForceItemBattle;
+import static forceitembattle.commands.Precondition.OP;
+import static forceitembattle.commands.Precondition.ROUND_RUNNING;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
+import forceitembattle.commands.Precondition;
+import forceitembattle.randomevents.RandomEventManager;
 import forceitembattle.randomevents.RandomEvents;
 import forceitembattle.util.Text;
 import java.util.List;
 import org.bukkit.entity.Player;
 
-public class CommandRandomEvent extends CustomCommand implements CustomTabCompleter {
+public final class CommandRandomEvent extends CustomCommand implements CustomTabCompleter {
 
-    public CommandRandomEvent(ForceItemBattle plugin) {
-        super(plugin, "randomevent");
+    private final RandomEventManager randomEventManager;
+
+    public CommandRandomEvent(RandomEventManager randomEventManager) {
+        super("randomevent");
+        this.randomEventManager = randomEventManager;
         setUsage("<event>");
         setDescription("Trigger a random event right now");
     }
 
     @Override
+    protected List<Precondition> preconditions() {
+        return List.of(OP, ROUND_RUNNING);
+    }
+
+    @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (!requireOp(player)) return;
-
-        if (!this.plugin.getGamemanager().isMidGame()) {
-            player.sendMessage(Text.of("<red>The game is not running. Start it first with /start"));
-            return;
-        }
-
         if (args.length != 1) {
             msgUsage(player);
             player.sendMessage(Text.of("<gray>Events <dark_gray>» <yellow>" + String.join("<gray>, <yellow>", RandomEvents.ids())));
@@ -37,7 +41,7 @@ public class CommandRandomEvent extends CustomCommand implements CustomTabComple
             return;
         }
 
-        if (!this.plugin.getRandomEventManager().trigger(type)) {
+        if (!this.randomEventManager.trigger(type)) {
             player.sendMessage(Text.of("<red>An event is already running."));
         }
     }

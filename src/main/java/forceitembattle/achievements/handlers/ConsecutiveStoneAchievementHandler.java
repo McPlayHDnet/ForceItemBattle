@@ -1,11 +1,11 @@
 package forceitembattle.achievements.handlers;
 
-import forceitembattle.ForceItemBattle;
+import forceitembattle.achievements.AchievementWorld;
 import forceitembattle.achievements.Trigger;
 import forceitembattle.achievements.progress.ConsecutiveStoneAchievementProgress;
+import forceitembattle.collection.MaterialCategory;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.model.ForceItemPlayer;
-import forceitembattle.model.MaterialCategory;
 import org.bukkit.Material;
 import org.bukkit.event.Event;
 
@@ -23,7 +23,7 @@ public class ConsecutiveStoneAchievementHandler implements AchievementHandler<Co
     }
 
     @Override
-    public boolean check(Event event, ConsecutiveStoneAchievementProgress progress, ForceItemPlayer forceItemPlayer, ForceItemBattle plugin) {
+    public boolean check(Event event, ConsecutiveStoneAchievementProgress progress, ForceItemPlayer forceItemPlayer, AchievementWorld world) {
         if (!(event instanceof FoundItemEvent foundEvent)) {
             return false;
         }

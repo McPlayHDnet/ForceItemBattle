@@ -1,11 +1,11 @@
 package forceitembattle.commands.player;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
+import forceitembattle.commands.Precondition;
 import forceitembattle.gui.CollectionBookInventory;
+import forceitembattle.gui.GuiContext;
 import forceitembattle.util.Text;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.bukkit.Bukkit;
@@ -18,19 +18,27 @@ import org.bukkit.entity.Player;
  * <p>The book fills itself: {@link CollectionBookInventory} kicks off the read-through load and
  * repaints when it lands, so this just resolves the target and opens.
  */
-public class CommandCollection extends CustomCommand implements CustomTabCompleter {
+public final class CommandCollection extends CustomCommand implements CustomTabCompleter {
 
-    public CommandCollection(ForceItemBattle plugin) {
-        super(plugin, "collection");
+    private final GuiContext gui;
+
+    public CommandCollection(GuiContext gui) {
+        super("collection");
+        this.gui = gui;
 
         setUsage("[player]");
         setDescription("Show your collection book");
     }
 
     @Override
+    protected List<Precondition> preconditions() {
+        return List.of();
+    }
+
+    @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
         if (args.length == 0) {
-            new CollectionBookInventory(this.plugin, player.getName(), player.getUniqueId()).open(player);
+            new CollectionBookInventory(this.gui, player.getName(), player.getUniqueId()).open(player);
             return;
         }
 
@@ -40,7 +48,7 @@ public class CommandCollection extends CustomCommand implements CustomTabComplet
             return;
         }
 
-        new CollectionBookInventory(this.plugin, args[0], targetUuid).open(player);
+        new CollectionBookInventory(this.gui, args[0], targetUuid).open(player);
     }
 
     /**
@@ -61,12 +69,9 @@ public class CommandCollection extends CustomCommand implements CustomTabComplet
 
     @Override
     public List<String> onTabComplete(Player player, String label, String[] args) {
-        List<String> completions = new ArrayList<>();
-        if (args.length == 1) {
-            for (Player online : Bukkit.getOnlinePlayers()) {
-                completions.add(online.getName());
-            }
+        if (args.length != 1) {
+            return List.of();
         }
-        return completions;
+        return CustomTabCompleter.onlinePlayerNames();
     }
 }

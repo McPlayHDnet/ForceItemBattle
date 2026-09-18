@@ -1,11 +1,15 @@
 package forceitembattle.commands.player;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
+import forceitembattle.commands.Precondition;
+import forceitembattle.manager.ItemDifficultiesManager;
+import forceitembattle.manager.RecipeManager;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.DescriptionItem;
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.Roster;
+import forceitembattle.model.RoundPhase;
 import forceitembattle.util.Text;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,17 +19,31 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-public class CommandInfo extends CustomCommand implements CustomTabCompleter {
+public final class CommandInfo extends CustomCommand implements CustomTabCompleter {
 
     private static final List<String> MATERIALS = Arrays.stream(Material.values())
             .map(CustomMaterials::idOf)
             .sorted()
             .toList();
 
-    public CommandInfo(ForceItemBattle plugin) {
-        super(plugin, "info");
+    private final Roster roster;
+    private final RoundPhase roundPhase;
+    private final ItemDifficultiesManager items;
+    private final RecipeManager recipeManager;
+
+    public CommandInfo(Roster roster, RoundPhase roundPhase, ItemDifficultiesManager items, RecipeManager recipeManager) {
+        super("info");
+        this.roster = roster;
+        this.roundPhase = roundPhase;
+        this.items = items;
+        this.recipeManager = recipeManager;
         setUsage("[item]");
         setDescription("Get information about an item");
+    }
+
+    @Override
+    protected List<Precondition> preconditions() {
+        return List.of();
     }
 
     @Override
@@ -40,17 +58,16 @@ public class CommandInfo extends CustomCommand implements CustomTabCompleter {
             }
             item = new ItemStack(material);
 
-        } else if (this.plugin.getGamemanager().isMidGame()) {
-            if (this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
-                ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-                if (forceItemPlayer.isSpectator()) {
-                    player.sendMessage(Text.of("<red>You are not playing, type /info [item] to get information about an item"));
-                    return;
-                }
-                item = new ItemStack(forceItemPlayer.activeMaterial());
-            } else {
+        } else if (this.roundPhase.roundRunning()) {
+            ForceItemPlayer forceItemPlayer =
+                    this.roster.participant(player.getUniqueId()).orElse(null);
+            if (forceItemPlayer == null) {
                 player.sendMessage(Text.of("<red>You are not playing, type /info [item] to get information about an item"));
+                return;
             }
+            // With no argument during a round, /info describes the force item being hunted -- not
+            // whatever happens to be in hand.
+            item = new ItemStack(forceItemPlayer.activeMaterial());
         }
 
         if (item.getType() == Material.AIR) {
@@ -59,16 +76,16 @@ public class CommandInfo extends CustomCommand implements CustomTabCompleter {
         }
 
         DescriptionItem descriptionItem;
-        if (this.plugin.getItemDifficultiesManager().itemHasDescription(item.getType())) {
-            descriptionItem = this.plugin.getItemDifficultiesManager().getDescriptionItems().get(item.getType());
+        if (this.items.itemHasDescription(item.getType())) {
+            descriptionItem = this.items.getDescriptionItems().get(item.getType());
             if (descriptionItem.lines() != null) {
-                this.plugin.getItemDifficultiesManager().getDescriptionItemLines(descriptionItem.material()).forEach(player::sendMessage);
+                this.items.getDescriptionItemLines(descriptionItem.material()).forEach(player::sendMessage);
             } else {
                 throw new NullPointerException("The item description is either null or empty");
             }
         }
 
-        this.plugin.getRecipeManager().createRecipeViewer(player, item);
+        this.recipeManager.createRecipeViewer(player, item);
     }
 
     private Material matchMaterial(String input) {

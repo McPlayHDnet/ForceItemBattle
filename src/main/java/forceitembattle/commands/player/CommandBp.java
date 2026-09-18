@@ -1,29 +1,34 @@
 package forceitembattle.commands.player;
 
-import forceitembattle.ForceItemBattle;
+import static forceitembattle.commands.Precondition.ROUND_RUNNING;
 import forceitembattle.commands.CustomCommand;
+import forceitembattle.commands.Precondition;
+import forceitembattle.manager.BackpackManager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.Text;
+import java.util.List;
 import org.bukkit.entity.Player;
 
-public class CommandBp extends CustomCommand {
+public final class CommandBp extends CustomCommand {
 
-    public CommandBp(ForceItemBattle plugin) {
-        super(plugin, "bp");
+    private final BackpackManager backpackManager;
+
+    public CommandBp(BackpackManager backpackManager) {
+        super("bp");
+        this.backpackManager = backpackManager;
         setDescription("Open your backpack");
     }
 
     @Override
-    public void onPlayerCommand(Player player, String label, String[] args) {
-        if (!this.plugin.getGamemanager().isMidGame()) {
-            player.sendMessage(Text.of("<red>The game has not started yet!"));
-            return;
-        }
+    protected List<Precondition> preconditions() {
+        return List.of(ROUND_RUNNING.refusing("<red>The game has not started yet!"),
+                Precondition.setting(GameSetting.BACKPACK, "<red>Backpacks are disabled in this round!"));
+    }
 
-        if (this.plugin.getSettings().isSettingEnabled(GameSetting.BACKPACK)) {
-            this.plugin.getBackpackManager().openPlayerBackpack(player);
-        } else {
-            player.sendMessage(Text.of("<red>Backpacks are disabled in this round!"));
+    @Override
+    public void onPlayerCommand(Player player, String label, String[] args) {
+        if (!this.backpackManager.openBackpackFor(player)) {
+            player.sendMessage(Text.of("<red>You do not have a backpack in this round."));
         }
     }
 }

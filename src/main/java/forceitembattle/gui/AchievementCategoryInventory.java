@@ -1,17 +1,17 @@
 package forceitembattle.gui;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.AchievementScope;
 import forceitembattle.achievements.Achievements;
 import forceitembattle.util.Text;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 
-public class AchievementCategoryInventory extends InventoryBuilder {
+public final class AchievementCategoryInventory extends InventoryBuilder {
 
     /** One tile per displayed scope. Scope, slot and icon travel together so they cannot drift apart. */
     private record Tile(AchievementScope scope, int slot, Material icon) {
@@ -24,14 +24,14 @@ public class AchievementCategoryInventory extends InventoryBuilder {
             new Tile(AchievementScope.META, 16, Material.NETHER_STAR),
     };
 
-    private final ForceItemBattle plugin;
+    private final GuiContext gui;
     private final String playerName;
     private final UUID playerUUID;
 
-    public AchievementCategoryInventory(ForceItemBattle plugin, String playerName, UUID playerUUID) {
+    public AchievementCategoryInventory(GuiContext gui, String playerName, UUID playerUUID) {
         super(9 * 3, Text.of("<dark_gray>» <dark_aqua>Achievements <dark_gray>◆ <gray>" + playerName));
 
-        this.plugin = plugin;
+        this.gui = gui;
         this.playerName = playerName;
         this.playerUUID = playerUUID;
 
@@ -45,23 +45,17 @@ public class AchievementCategoryInventory extends InventoryBuilder {
         this.setItems(0, 8, GuiItems.accentBorder());
         this.setItems(18, 26, GuiItems.accentBorder());
 
-        Set<String> cachedIds = this.plugin.getAchievementManager()
+        Set<String> cachedIds = this.gui.achievements()
                 .getAchievementStorage().getPlayerAchievements(this.playerUUID);
 
         for (Tile tile : TILES) {
             AchievementScope scope = tile.scope();
 
-            int total = 0;
-            int done = 0;
-            for (Achievements achievement : Achievements.values()) {
-                if (achievement.getScope() != scope) {
-                    continue;
-                }
-                total++;
-                if (cachedIds.contains(achievement.name())) {
-                    done++;
-                }
-            }
+            List<Achievements> scoped = Arrays.stream(Achievements.values())
+                    .filter(achievement -> achievement.getScope() == scope)
+                    .toList();
+            int total = scoped.size();
+            int done = (int) scoped.stream().filter(achievement -> cachedIds.contains(achievement.name())).count();
 
             List<String> lore = new ArrayList<>();
             lore.add("");
@@ -77,7 +71,7 @@ public class AchievementCategoryInventory extends InventoryBuilder {
                             .getItemStack(),
                     inventoryClickEvent -> {
                         this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
-                        new AchievementInventory(this.plugin, this.playerName, this.playerUUID, scope)
+                        new AchievementInventory(this.gui, this.playerName, this.playerUUID, scope)
                                 .open(this.getPlayer());
                     });
         }

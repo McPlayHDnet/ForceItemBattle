@@ -1,128 +1,141 @@
 package forceitembattle.commands.player;
 
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
-import forceitembattle.settings.GameSetting;
-import forceitembattle.gui.FinishInventory;
+import forceitembattle.commands.Precondition;
+import forceitembattle.gui.ResultReveal;
+import forceitembattle.gui.ResultScreen;
+import forceitembattle.manager.Gamemanager;
+import forceitembattle.manager.TeamsManager;
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.ResultCeremony;
+import forceitembattle.model.Roster;
+import forceitembattle.model.RoundPhase;
+import forceitembattle.model.ScoreOwner;
 import forceitembattle.model.Team;
+import forceitembattle.settings.GameSetting;
+import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Text;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-public class CommandResult extends CustomCommand {
+public final class CommandResult extends CustomCommand {
 
-    public int place;
-    /** Match the reveal counter belongs to — a new match restarts the paging from last place. */
-    private UUID lastSeenMatchId;
+    private final Gamemanager gamemanager;
+    private final RoundPhase roundPhase;
+    private final Roster roster;
+    private final GameSettings settings;
+    private final TeamsManager teamManager;
+    private final ResultCeremony resultCeremony;
 
-    public CommandResult(ForceItemBattle plugin) {
-        super(plugin, "result");
+    public CommandResult(Gamemanager gamemanager, RoundPhase roundPhase, Roster roster, GameSettings settings, TeamsManager teamManager, ResultCeremony resultCeremony) {
+        super("result");
+        this.gamemanager = gamemanager;
+        this.roundPhase = roundPhase;
+        this.roster = roster;
+        this.settings = settings;
+        this.teamManager = teamManager;
+        this.resultCeremony = resultCeremony;
         setDescription("Show the next player's result");
+    }
 
-        this.place = -1;
+    @Override
+    protected List<Precondition> preconditions() {
+        return List.of();
     }
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        // The reveal pages from last place to the winner, so each match needs a fresh counter.
-        UUID matchId = this.plugin.getGamemanager().getMatchHistory().getMatchId();
-        if (!Objects.equals(matchId, this.lastSeenMatchId)) {
-            this.lastSeenMatchId = matchId;
-            this.place = -1;
-        }
-
-        if (this.plugin.getTimerManager().getTimeLeft() > 0) {
+        // The phase, not the clock: the results screen belongs to the end of a round.
+        if (!this.roundPhase.isEndGame()) {
             return;
         }
 
         if (args.length == 1) {
-            UUID uuid = null;
-            Team team = null;
-            if (!this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-                try {
-                    uuid = UUID.fromString(args[0]);
-                } catch (IllegalArgumentException e) {
-                    player.sendMessage(Text.of("<red>Invalid UUID."));
+            if (this.settings.isSettingEnabled(GameSetting.TEAM)) {
+                Team team = this.teamAt(args[0]);
+                if (team == null) {
+                    player.sendMessage(Text.of("<red>Invalid team."));
                     return;
                 }
-            } else {
-                try {
-                    team = this.plugin.getTeamManager().getTeams().get(Integer.parseInt(args[0].replace("#", "")) - 1);
-                } catch (IllegalArgumentException e) {
-                    player.sendMessage(Text.of("<red>Invalid team."));
-                }
+                this.openScreen(player, team);
+                return;
             }
 
-            new FinishInventory(
-                    this.plugin,
-                    this.plugin.getGamemanager().getForceItemPlayer(uuid),
-                    team,
-                    null,
-                    false
-            ).open(player);
+            UUID uuid;
+            try {
+                uuid = UUID.fromString(args[0]);
+            } catch (IllegalArgumentException e) {
+                player.sendMessage(Text.of("<red>Invalid UUID."));
+                return;
+            }
+
+            ForceItemPlayer target = this.roster.get(uuid);
+            if (target == null) {
+                player.sendMessage(Text.of("<red>Nobody with that id played this round."));
+                return;
+            }
+
+            this.openScreen(player, target.scoreOwner());
             return;
         }
 
-        if (args.length == 0 && player.isOp()) {
-            showNextPlayer(player);
+        if (args.length == 0) {
+            requireOp(player, () -> showNextResult(player));
         }
     }
 
-    private void showNextPlayer(Player player) {
-        if (!this.plugin.getSettings().isSettingEnabled(GameSetting.TEAM)) {
-            if (this.plugin.getGamemanager().forceItemPlayerMap().isEmpty() || this.place == 0) {
-                player.sendMessage("No more players left.");
-                return;
-            }
-
-            Map<UUID, ForceItemPlayer> sortedMapDesc = this.plugin.getGamemanager().sortByValue(this.plugin.getGamemanager().forceItemPlayerMap().entrySet().stream().filter(entry -> !entry.getValue().isSpectator()).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new)), false);
-            if (this.place == -1) {
-                this.place = sortedMapDesc.size();
-            }
-
-            Map<ForceItemPlayer, Integer> placesMap = this.plugin.getGamemanager().calculatePlaces(sortedMapDesc);
-
-            ForceItemPlayer currentPlayer = sortedMapDesc.values().toArray(new ForceItemPlayer[0])[this.place - 1];
-            int currentPlace = placesMap.get(currentPlayer);
-
-            // The winner is revealed last; the link may only go out once that reveal finished.
-            Runnable onRevealComplete = this.place == 1
-                    ? () -> this.plugin.getGamemanager().getMatchHistory().markResultsRevealed()
-                    : null;
-            Bukkit.getOnlinePlayers().forEach(players -> new FinishInventory(this.plugin, currentPlayer, null, currentPlace, true, onRevealComplete).open(players));
-
-            this.place--;
-
-        } else {
-            if (this.plugin.getGamemanager().forceItemPlayerMap().isEmpty() || this.place == 0) {
-                player.sendMessage("No more teams left.");
-                return;
-            }
-
-            Map<Team, Integer> placesMap = this.plugin.getGamemanager().calculatePlaces(this.plugin.getTeamManager().getTeams());
-            if (this.place == -1) {
-                this.place = placesMap.size();
-            }
-
-            Team currentTeam = placesMap.keySet().toArray(new Team[0])[this.place - 1];
-            int currentPlace = placesMap.get(currentTeam);
-
-            Runnable onRevealComplete = this.place == 1
-                    ? () -> this.plugin.getGamemanager().getMatchHistory().markResultsRevealed()
-                    : null;
-            Bukkit.getOnlinePlayers().forEach(players -> new FinishInventory(this.plugin, null, currentTeam, currentPlace, true, onRevealComplete).open(players));
-
-            this.place--;
-
+    /**
+     * The team {@code argument} names, or null when it names none. Both an unparseable id and an
+     * out-of-range one have to answer null: they are different exceptions, and a bounds failure
+     * escaping here threw {@code /result #99} out of the command.
+     */
+    @Nullable
+    private Team teamAt(String argument) {
+        int index;
+        try {
+            index = Integer.parseInt(argument.replace("#", "")) - 1;
+        } catch (NumberFormatException e) {
+            return null;
         }
 
+        List<Team> teams = this.teamManager.getTeams();
+        return index >= 0 && index < teams.size() ? teams.get(index) : null;
     }
 
+    /** Hands out the next reveal, or says the ceremony is over. */
+    private void showNextResult(Player player) {
+        ResultCeremony ceremony = this.resultCeremony;
+
+        Optional<ResultCeremony.Reveal> next = ceremony.nextReveal();
+        if (next.isEmpty()) {
+            player.sendMessage(Text.of("<gray>No more results left."));
+            return;
+        }
+
+        ResultCeremony.Reveal reveal = next.get();
+
+        // The winner is revealed last; the stats link may only go out once that reveal finished.
+        Runnable onRevealComplete = reveal.last()
+                ? () -> this.gamemanager.getMatchHistory().markResultsRevealed()
+                : null;
+
+        // The reveal builds the pages and hands them out; the ceremony stores them. The GUI never
+        // reaches into shared state to do it.
+        Bukkit.getOnlinePlayers().forEach(viewer -> new ResultReveal(
+                this.settings,
+                reveal,
+                pages -> ceremony.archive(reveal.owner(), pages),
+                onRevealComplete).open(viewer));
+    }
+
+    /** Reopens an owner's screen from the pages the reveal already built. */
+    private void openScreen(Player viewer, ScoreOwner owner) {
+        new ResultScreen(owner, this.resultCeremony.pagesFor(owner).orElse(null))
+                .open(viewer);
+    }
 
 }

@@ -1,21 +1,34 @@
 package forceitembattle.commands.admin;
 
-import forceitembattle.ForceItemBattle;
+import static forceitembattle.commands.Precondition.OP;
 import forceitembattle.commands.CustomCommand;
+import forceitembattle.commands.Precondition;
 import forceitembattle.gui.SettingsInventory;
+import forceitembattle.model.Roster;
+import forceitembattle.settings.GameSettings;
+import java.util.List;
 import org.bukkit.entity.Player;
 
-public class CommandSettings extends CustomCommand {
+public final class CommandSettings extends CustomCommand {
 
-    public CommandSettings(ForceItemBattle plugin) {
-        super(plugin, "settings");
+    private final Roster roster;
+    private final GameSettings settings;
+
+    public CommandSettings(Roster roster, GameSettings settings) {
+        super("settings");
+        this.roster = roster;
+        this.settings = settings;
 
         setDescription("Manage settings");
     }
 
     @Override
+    protected List<Precondition> preconditions() {
+        return List.of(OP);
+    }
+
+    @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (!requireOp(player)) return;
-        new SettingsInventory(this.plugin, null).open(player);
+        new SettingsInventory(this.roster, this.settings, null).open(player);
     }
 }

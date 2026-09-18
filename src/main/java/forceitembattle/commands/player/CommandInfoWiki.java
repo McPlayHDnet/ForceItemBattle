@@ -1,39 +1,48 @@
 package forceitembattle.commands.player;
 
-import forceitembattle.ForceItemBattle;
-import forceitembattle.model.CustomMaterials;
 import forceitembattle.commands.CustomCommand;
+import forceitembattle.commands.Precondition;
+import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.Roster;
+import forceitembattle.model.RoundPhase;
 import forceitembattle.util.Text;
-import org.apache.commons.lang3.text.WordUtils;
+import java.util.List;
+import org.apache.commons.text.WordUtils;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-public class CommandInfoWiki extends CustomCommand {
+public final class CommandInfoWiki extends CustomCommand {
 
-    public CommandInfoWiki(ForceItemBattle plugin) {
-        super(plugin, "infowiki");
+    private final Roster roster;
+    private final RoundPhase roundPhase;
+
+    public CommandInfoWiki(Roster roster, RoundPhase roundPhase) {
+        super("infowiki");
+        this.roster = roster;
+        this.roundPhase = roundPhase;
         setDescription("Get wiki info link for your current item");
+    }
+
+    @Override
+    protected List<Precondition> preconditions() {
+        return List.of();
     }
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
         ItemStack item = player.getInventory().getItemInMainHand();
-        ;
 
-        if (this.plugin.getGamemanager().isMidGame()) {
-            if (this.plugin.getGamemanager().forceItemPlayerExist(player.getUniqueId())) {
-                ForceItemPlayer forceItemPlayer = this.plugin.getGamemanager().getForceItemPlayer(player.getUniqueId());
-                if (forceItemPlayer.isSpectator()) {
-                    player.sendMessage(Text.of("<red>You are not playing."));
-                    return;
-                }
-                item = new ItemStack(forceItemPlayer.activeMaterial());
-            } else {
+        if (this.roundPhase.roundRunning()) {
+            ForceItemPlayer forceItemPlayer =
+                    this.roster.participant(player.getUniqueId()).orElse(null);
+            if (forceItemPlayer == null) {
                 player.sendMessage(Text.of("<red>You are not playing."));
                 return;
             }
+            // During a round the wiki link is for the force item, not the held one.
+            item = new ItemStack(forceItemPlayer.activeMaterial());
         }
 
         if (item.getType() == Material.AIR) {
@@ -41,10 +50,13 @@ public class CommandInfoWiki extends CustomCommand {
             return;
         }
 
+        // capitalizeFully covers the item name and nothing else: extending it over the whole string
+        // lowercases the slug wikiSlugOf just built, and minecraft.wiki is case-sensitive.
         player.sendMessage(Text.of(
-                "<gray>Check out the minecraft wiki for <green>" + WordUtils.capitalizeFully(item.getType().name().toLowerCase().replace("_", " ")
-                        + " <click:open_url:https://minecraft.wiki/" + CustomMaterials.wikiSlugOf(item.getType()) + "><white>[<aqua>Click here<white>]"))
-        );
+                "<gray>Check out the minecraft wiki for <green>"
+                        + WordUtils.capitalizeFully(item.getType().name().toLowerCase().replace("_", " "))
+                        + " <click:open_url:https://minecraft.wiki/" + CustomMaterials.wikiSlugOf(item.getType())
+                        + "><white>[<aqua>Click here<white>]"));
 
     }
 }

@@ -1,27 +1,31 @@
 package forceitembattle.commands.admin;
 
-import forceitembattle.ForceItemBattle;
+import static forceitembattle.commands.Precondition.OP;
+import static forceitembattle.commands.Precondition.ROUND_RUNNING;
 import forceitembattle.commands.CustomCommand;
-import forceitembattle.util.Text;
+import forceitembattle.commands.Precondition;
+import forceitembattle.manager.TimerManager;
+import java.util.List;
 import org.bukkit.entity.Player;
 
-public class CommandStopTimer extends CustomCommand {
+public final class CommandStopTimer extends CustomCommand {
 
-    public CommandStopTimer(ForceItemBattle plugin) {
-        super(plugin, "stoptimer");
+    private final TimerManager timerManager;
+
+    public CommandStopTimer(TimerManager timerManager) {
+        super("stoptimer");
+        this.timerManager = timerManager;
 
         setDescription("Stop the timer and end the game");
     }
 
     @Override
+    protected List<Precondition> preconditions() {
+        return List.of(OP, ROUND_RUNNING);
+    }
+
+    @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        if (!requireOp(player)) return;
-
-        if (!this.plugin.getGamemanager().isMidGame()) {
-            player.sendMessage(Text.of("<red>The game is not running. Start it first with /start"));
-            return;
-        }
-
-        this.plugin.getTimerManager().setTimeLeft(1);
+        this.timerManager.setTimeLeft(1);
     }
 }

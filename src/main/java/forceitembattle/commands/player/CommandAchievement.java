@@ -1,25 +1,39 @@
 package forceitembattle.commands.player;
 
-import forceitembattle.ForceItemBattle;
-import forceitembattle.achievements.global.GlobalStat;
-import forceitembattle.gui.AchievementCategoryInventory;
+import forceitembattle.achievements.AchievementManager;
 import forceitembattle.achievements.Achievements;
+import forceitembattle.achievements.global.GlobalStat;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
+import forceitembattle.commands.Precondition;
+import forceitembattle.gui.AchievementCategoryInventory;
+import forceitembattle.gui.GuiContext;
 import forceitembattle.util.Text;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
-public class CommandAchievement extends CustomCommand implements CustomTabCompleter {
+public final class CommandAchievement extends CustomCommand implements CustomTabCompleter {
 
-    public CommandAchievement(ForceItemBattle plugin) {
-        super(plugin, "achievements");
+    private final AchievementManager achievementManager;
+    private final GuiContext gui;
+
+    public CommandAchievement(AchievementManager achievementManager, GuiContext gui) {
+        super("achievements");
+        this.achievementManager = achievementManager;
+        this.gui = gui;
         setUsage("<list|grant|revoke|reset> [player] [achievement]");
         setDescription("Manage achievements");
+    }
+
+    @Override
+    protected List<Precondition> preconditions() {
+        return List.of();
     }
 
     @Override
@@ -44,11 +58,6 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
         }
     }
 
-    private void requireOp(Player player, Runnable action) {
-        if (!requireOp(player)) return;
-        action.run();
-    }
-
     private void handleListCommand(Player player, String[] args) {
         UUID targetUUID;
         String targetName;
@@ -64,11 +73,11 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
 
         final String name = targetName;
 
-        this.plugin.getAchievementManager().getAchievementStorage().loadPlayer(targetUUID, () -> {
+        this.achievementManager.getAchievementStorage().loadPlayer(targetUUID, () -> {
             if (!player.isOnline()) {
                 return;
             }
-            new AchievementCategoryInventory(this.plugin, name, targetUUID).open(player);
+            new AchievementCategoryInventory(this.gui, name, targetUUID).open(player);
         });
     }
 
@@ -85,7 +94,7 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
             targetName = target.getName() != null ? target.getName() : args[1];
         }
 
-        this.plugin.getAchievementManager().getGlobalStatsLoader().load(targetUuid, stats -> {
+        this.achievementManager.getGlobalStatsLoader().load(targetUuid, stats -> {
             if (!player.isOnline()) {
                 return;
             }
@@ -108,18 +117,13 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
         }
 
         OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
-        String achievementName = args[2].toUpperCase();
 
-        Achievements achievement;
-        try {
-            achievement = Achievements.valueOf(achievementName);
-        } catch (IllegalArgumentException e) {
-            player.sendMessage(Text.of(
-                    "<red>Achievement <yellow>" + achievementName + " <red>does not exist!"));
+        Achievements achievement = parseAchievement(player, args[2]);
+        if (achievement == null) {
             return;
         }
 
-        this.plugin.getAchievementManager().getAchievementStorage().addAchievement(target.getUniqueId(), achievement);
+        this.achievementManager.getAchievementStorage().addAchievement(target.getUniqueId(), achievement);
 
         player.sendMessage(Text.of(
                 "<green>Successfully granted <yellow>" + achievement.getTitle() + " <green>to <yellow>" + target.getName()));
@@ -133,18 +137,13 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
         }
 
         OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
-        String achievementName = args[2].toUpperCase();
 
-        Achievements achievement;
-        try {
-            achievement = Achievements.valueOf(achievementName);
-        } catch (IllegalArgumentException e) {
-            player.sendMessage(Text.of(
-                    "<red>Achievement <yellow>" + achievementName + " <red>does not exist!"));
+        Achievements achievement = parseAchievement(player, args[2]);
+        if (achievement == null) {
             return;
         }
 
-        this.plugin.getAchievementManager().getAchievementStorage().removeAchievement(target.getUniqueId(), achievement);
+        this.achievementManager.getAchievementStorage().removeAchievement(target.getUniqueId(), achievement);
 
         player.sendMessage(Text.of(
                 "<green>Successfully revoked <yellow>" + achievement.getTitle() + " <green>from <yellow>" + target.getName()));
@@ -159,7 +158,7 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
 
         OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
 
-        this.plugin.getAchievementManager().getAchievementStorage().resetPlayerAchievements(target.getUniqueId());
+        this.achievementManager.getAchievementStorage().resetPlayerAchievements(target.getUniqueId());
 
         player.sendMessage(Text.of(
                 "<green>Successfully reset all achievements for <yellow>" + target.getName()));
@@ -190,17 +189,13 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
             return;
         }
 
-        Achievements achievement;
-        try {
-            achievement = Achievements.valueOf(achievementArg.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            player.sendMessage(Text.of(
-                    "<red>Achievement <yellow>" + achievementArg.toUpperCase() + " <red>does not exist!"));
+        Achievements achievement = parseAchievement(player, achievementArg);
+        if (achievement == null) {
             return;
         }
 
-        String progress = this.plugin.getAchievementManager().describeProgress(targetUUID, achievement);
-        boolean unlocked = this.plugin.getAchievementManager()
+        String progress = this.achievementManager.describeProgress(targetUUID, achievement);
+        boolean unlocked = this.achievementManager
                 .getAchievementStorage().hasAchievement(targetUUID, achievement);
 
         player.sendMessage(Text.of(
@@ -233,7 +228,7 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
             // player argument — the op-only subcommands still need one, but only for ops
             if (sub.equals("list") || sub.equals("global")
                     || (player.isOp() && (sub.equals("grant") || sub.equals("revoke") || sub.equals("reset")))) {
-                return filter(onlinePlayerNames(), args[1]);
+                return filter(CustomTabCompleter.onlinePlayerNames(), args[1]);
             }
             return List.of();
         }
@@ -248,30 +243,29 @@ public class CommandAchievement extends CustomCommand implements CustomTabComple
         return List.of();
     }
 
+    /**
+     * The constant the argument names, or null after telling the player it does not exist. Every
+     * subcommand that takes an achievement argument refuses the same way.
+     */
+    @Nullable
+    private Achievements parseAchievement(Player player, String argument) {
+        String achievementName = argument.toUpperCase();
+        try {
+            return Achievements.valueOf(achievementName);
+        } catch (IllegalArgumentException exception) {
+            player.sendMessage(Text.of(
+                    "<red>Achievement <yellow>" + achievementName + " <red>does not exist!"));
+            return null;
+        }
+    }
+
     private List<String> filter(List<String> options, String typed) {
         String prefix = typed.toLowerCase();
-        List<String> matches = new ArrayList<>();
-        for (String option : options) {
-            if (option.toLowerCase().startsWith(prefix)) {
-                matches.add(option);
-            }
-        }
-        return matches;
+        return options.stream().filter(option -> option.toLowerCase().startsWith(prefix)).toList();
     }
 
     private List<String> achievementNames() {
-        List<String> names = new ArrayList<>();
-        for (Achievements achievement : Achievements.values()) {
-            names.add(achievement.name());
-        }
-        return names;
+        return Arrays.stream(Achievements.values()).map(Enum::name).toList();
     }
 
-    private List<String> onlinePlayerNames() {
-        List<String> names = new ArrayList<>();
-        for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-            names.add(onlinePlayer.getName());
-        }
-        return names;
-    }
 }

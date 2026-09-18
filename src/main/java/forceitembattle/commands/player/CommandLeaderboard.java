@@ -1,19 +1,18 @@
 package forceitembattle.commands.player;
 
-import de.threeseconds.openapi.fibservice.client.model.FibAchievementLeaderboardEntryDto;
-import de.threeseconds.openapi.fibservice.client.model.FibLeaderboardEntryDto;
-import de.threeseconds.openapi.fibservice.client.model.FibPlayerIdentityDto;
-import de.threeseconds.openapi.fibservice.client.model.FibTeamLeaderboardEntryDto;
-import forceitembattle.ForceItemBattle;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
+import forceitembattle.commands.Precondition;
+import forceitembattle.model.stats.DuoLeaderboardEntry;
+import forceitembattle.model.stats.LeaderboardEntry;
+import forceitembattle.model.stats.PlayerIdentity;
+import forceitembattle.service.FIBServiceClient;
 import forceitembattle.service.FibStatisticsClient;
 import forceitembattle.util.Text;
-import java.util.ArrayList;
 import java.util.List;
 import org.bukkit.entity.Player;
 
-public class CommandLeaderboard extends CustomCommand implements CustomTabCompleter {
+public final class CommandLeaderboard extends CustomCommand implements CustomTabCompleter {
 
     private static final int TOP_LIMIT = 10;
 
@@ -27,15 +26,23 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
             "highest_score", "total_items", "games_won", "back_to_back_streak", "blocks_travelled"
     );
 
-    public CommandLeaderboard(ForceItemBattle plugin) {
-        super(plugin, "top");
+    private final FIBServiceClient fibService;
+
+    public CommandLeaderboard(FIBServiceClient fibService) {
+        super("top");
+        this.fibService = fibService;
         setUsage("[solo|duo|teams|achievements] [stat]");
         setDescription("Show the stat leaderboards");
     }
 
     @Override
+    protected List<Precondition> preconditions() {
+        return List.of();
+    }
+
+    @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        FibStatisticsClient helper = this.plugin.getFibService().statistics();
+        FibStatisticsClient helper = this.fibService.statistics();
 
         // The first argument is always the scope: solo, duo or teams. Omitting it
         // falls back to the solo leaderboard, so a bare "/top" still works.
@@ -65,7 +72,7 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
     }
 
     private void showSoloLeaderboard(Player player, FibStatisticsClient helper, String category) {
-        helper.getSoloLeaderboardAsync(category, TOP_LIMIT, entries -> {
+        helper.soloLeaderboard(category, TOP_LIMIT, entries -> {
             sendHeader(player, "Leaderboard", category);
             if (entries.isEmpty()) {
                 sendEmpty(player);
@@ -75,16 +82,16 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
 
             // Names arrive inside each entry now, so there is no lookup to do -- the row renders
             // straight from the payload.
-            for (FibLeaderboardEntryDto entry : entries) {
-                sendRow(player, entry.getRank(), displayName(entry.getPlayer()),
-                        entry.getValue(), suffixFor(category));
+            for (LeaderboardEntry entry : entries) {
+                sendRow(player, entry.rank(), PlayerIdentity.displayName(entry.player(), "?"),
+                        entry.value(), suffixFor(category));
             }
             player.sendMessage(" ");
         }, error -> sendError(player));
     }
 
     private void showTeamsLeaderboard(Player player, FibStatisticsClient helper, String category) {
-        helper.getCombinedTeamLeaderboardAsync(category, TOP_LIMIT, entries -> {
+        helper.combinedTeamLeaderboard(category, TOP_LIMIT, entries -> {
             sendHeader(player, "Teams Leaderboard", category);
             if (entries.isEmpty()) {
                 sendEmpty(player);
@@ -92,16 +99,16 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
                 return;
             }
 
-            for (FibLeaderboardEntryDto entry : entries) {
-                sendRow(player, entry.getRank(), displayName(entry.getPlayer()),
-                        entry.getValue(), suffixFor(category));
+            for (LeaderboardEntry entry : entries) {
+                sendRow(player, entry.rank(), PlayerIdentity.displayName(entry.player(), "?"),
+                        entry.value(), suffixFor(category));
             }
             player.sendMessage(" ");
         }, error -> sendError(player));
     }
 
     private void showDuoLeaderboard(Player player, FibStatisticsClient helper, String category) {
-        helper.getTeamLeaderboardAsync(category, TOP_LIMIT, entries -> {
+        helper.duoLeaderboard(category, TOP_LIMIT, entries -> {
             sendHeader(player, "Duo Leaderboard", category);
             if (entries.isEmpty()) {
                 sendEmpty(player);
@@ -109,17 +116,17 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
                 return;
             }
 
-            for (FibTeamLeaderboardEntryDto entry : entries) {
-                String pair = displayName(entry.getPlayer1())
-                        + " <dark_gray>& <green>" + displayName(entry.getPlayer2());
-                sendRow(player, entry.getRank(), pair, entry.getValue(), suffixFor(category));
+            for (DuoLeaderboardEntry entry : entries) {
+                String pair = PlayerIdentity.displayName(entry.player1(), "?")
+                        + " <dark_gray>& <green>" + PlayerIdentity.displayName(entry.player2(), "?");
+                sendRow(player, entry.rank(), pair, entry.value(), suffixFor(category));
             }
             player.sendMessage(" ");
         }, error -> sendError(player));
     }
 
     private void showAchievementLeaderboard(Player player) {
-        this.plugin.getFibService().achievements().getAchievementLeaderboardAsync(TOP_LIMIT, entries -> {
+        this.fibService.achievements().achievementLeaderboard(TOP_LIMIT, entries -> {
             player.sendMessage(" ");
             player.sendMessage(Text.of("<dark_gray>» <gold><b>Leaderboard</b> <dark_gray>● <green>Achievements <dark_gray>«"));
             player.sendMessage(" ");
@@ -130,9 +137,9 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
                 return;
             }
 
-            for (FibAchievementLeaderboardEntryDto entry : entries) {
-                sendRow(player, entry.getRank(), displayName(entry.getPlayer()),
-                        entry.getCount(), "");
+            for (LeaderboardEntry entry : entries) {
+                sendRow(player, entry.rank(), PlayerIdentity.displayName(entry.player(), "?"),
+                        entry.value(), "");
             }
             player.sendMessage(" ");
         }, error -> sendError(player));
@@ -168,19 +175,7 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
         player.sendMessage(Text.of("<red>Could not load leaderboard."));
     }
 
-    /**
-     * The player's name, or the first eight characters of their uuid when the name has not been
-     * recorded yet. A null identity should not happen on a ranked row, but is guarded so one bad
-     * entry cannot take down the whole board render.
-     */
-    private String displayName(FibPlayerIdentityDto identity) {
-        if (identity == null || identity.getUuid() == null) {
-            return "?";
-        }
-        String name = identity.getName();
-        return name != null ? name : identity.getUuid().toString().substring(0, 8);
-    }
-
+    /** Turns a snake_case category key into a spaced, title-cased header label. */
     private String formatCategoryName(String category) {
         String[] words = category.split("_");
         StringBuilder sb = new StringBuilder();
@@ -194,13 +189,13 @@ public class CommandLeaderboard extends CustomCommand implements CustomTabComple
     @Override
     public List<String> onTabComplete(Player player, String label, String[] args) {
         if (args.length == 1) {
-            return new ArrayList<>(SCOPES);
+            return SCOPES;
         }
         // "achievements" takes no category, so offer nothing for its second argument.
         if (args.length == 2 && SCOPES.contains(args[0].toLowerCase())
                 && !args[0].equalsIgnoreCase("achievements")) {
-            return new ArrayList<>(CATEGORIES);
+            return CATEGORIES;
         }
-        return new ArrayList<>();
+        return List.of();
     }
 }

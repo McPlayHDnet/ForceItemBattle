@@ -28,6 +28,12 @@ public final class LocationFormat {
      * the surface Y and would mislead.
      * <p>
      * The hidden Y is deliberate. Do not "unify" this with {@link #xyz}.
+     * <p>
+     * One case has since earned the Y back, and it is the exception that keeps the rule: the
+     * sulfur locator now generates the chunks and reads the blocks, so when {@code CaveScan}
+     * returns a target its Y is a cavity someone looked at rather than a search artefact. That
+     * path calls {@link #xyz} on purpose. Everything that has not been down there still calls
+     * this.
      */
     public static String xz(@Nullable Location location) {
         if (location == null || location.getWorld() == null) {

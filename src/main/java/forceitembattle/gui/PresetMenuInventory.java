@@ -1,21 +1,20 @@
 package forceitembattle.gui;
 
-import forceitembattle.ForceItemBattle;
+import forceitembattle.model.Roster;
+import forceitembattle.settings.GamePreset;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
-import forceitembattle.settings.GamePreset;
 import forceitembattle.util.Text;
 import java.util.ArrayList;
 import java.util.List;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 
-public class PresetMenuInventory extends InventoryBuilder {
+public final class PresetMenuInventory extends InventoryBuilder {
 
-    public PresetMenuInventory(ForceItemBattle forceItemBattle, GameSettings gameSettings) {
+    public PresetMenuInventory(Roster roster, GameSettings gameSettings) {
         super(9 * 5, Text.of("<dark_gray>» <dark_aqua>Settings <dark_gray>● <gray>Presets"));
 
-        /* BORDER */
         this.setItems(0, 8, GuiItems.border());
         this.setItems(36, 44, GuiItems.border());
 
@@ -27,7 +26,7 @@ public class PresetMenuInventory extends InventoryBuilder {
 
                 getPlayer().playSound(getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
                 GamePreset tempGamePreset = new GamePreset();
-                new SettingsPresetsInventory(forceItemBattle, tempGamePreset, gameSettings).open(getPlayer());
+                new SettingsPresetsInventory(roster, gameSettings, tempGamePreset).open(getPlayer());
             });
 
             List<String> lore = new ArrayList<>();

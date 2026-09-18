@@ -10,12 +10,27 @@ public final class Text {
     private Text() {
     }
 
-    public static MiniMessage mm() {
-        return MINI_MESSAGE;
-    }
-
     public static Component of(String miniMessage) {
         return MINI_MESSAGE.deserialize(miniMessage);
+    }
+
+    /**
+     * Makes a string safe to drop inside a single-quoted MiniMessage tag argument, as in
+     * {@code <hover:show_text:'...'>}.
+     *
+     * <p><b>An unescaped apostrophe does not merely lose the hover — it loses the whole message.</b>
+     * MiniMessage closes the argument at the first {@code '}, fails to parse what follows as a tag,
+     * and falls back to emitting the entire markup as literal text, so the player sees
+     * {@code <hover:show_text:'<dark_aqua>That's a Rock...} in chat. Two achievement titles
+     * ("That's a Rock, Jim" and "It's so empty") did exactly that.
+     *
+     * <p>Only for tag <em>arguments</em>. Text placed in a message body needs none of this — an
+     * apostrophe is an ordinary character there, which is why the same title renders fine outside
+     * the hover in the very same line.
+     */
+    public static String tagArgument(String value) {
+        // Backslash first: escaping the quotes first would then double their new backslashes.
+        return value.replace("\\", "\\\\").replace("'", "\\'");
     }
 
     /**

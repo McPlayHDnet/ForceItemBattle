@@ -1,20 +1,36 @@
 package forceitembattle.settings;
 
-import forceitembattle.ForceItemBattle;
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
+import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.GameRules;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.plugin.java.JavaPlugin;
 
+/**
+ * The plugin's configuration: loading it, the preset catalogue, and the Bukkit side effects two
+ * settings carry.
+ *
+ * <p>Which value a setting has is not decided here — that is {@link Ruleset}, which owns the active
+ * preset and therefore the path every read and write resolves to.
+ */
 public class GameSettings {
 
-    private final ForceItemBattle plugin;
+    private final JavaPlugin plugin;
+
+    /**
+     * The settings in force for the current round. Public so {@code /start} can point it at a
+     * preset; everything else goes through the delegating accessors below.
+     */
+    @Getter
+    private final Ruleset ruleset;
 
     private final ConcurrentSkipListMap<String, GamePreset> gamePresetMap;
 
-    public GameSettings(ForceItemBattle plugin) {
+    public GameSettings(JavaPlugin plugin) {
         this.plugin = plugin;
+        this.ruleset = new Ruleset(new BukkitConfigSource(plugin));
         this.gamePresetMap = new ConcurrentSkipListMap<>(String.CASE_INSENSITIVE_ORDER);
 
         this.plugin.getConfig().addDefault("timer.time", 0);
@@ -30,23 +46,27 @@ public class GameSettings {
             this.plugin.getConfig().createSection("presets");
         }
 
-        if (this.plugin.getConfig().isConfigurationSection("presets")) {
-            this.plugin.getConfig().getConfigurationSection("presets").getKeys(false).forEach(keys -> {
-                ConfigurationSection configurationSection = this.plugin.getConfig().getConfigurationSection("presets").getConfigurationSection(keys);
+        ConfigurationSection presets = this.plugin.getConfig().getConfigurationSection("presets");
+        if (presets != null) {
+            presets.getKeys(false).forEach(keys -> {
+                ConfigurationSection configurationSection = presets.getConfigurationSection(keys);
+                if (configurationSection == null) {
+                    return;
+                }
                 GamePreset gamePreset = new GamePreset();
                 gamePreset.setPresetName(keys);
                 gamePreset.setCountdown(configurationSection.getInt("countdown"));
                 gamePreset.setJokers(configurationSection.getInt("jokers"));
                 gamePreset.setBackpackRows(configurationSection.getInt("backpackRows"));
 
-                configurationSection.getConfigurationSection("settings").getKeys(false).forEach(settingKeys -> {
-                    for (GameSetting gameSetting : GameSetting.values()) {
-                        if (gameSetting.configPath().equals(settingKeys)) {
-                            gamePreset.getGameSettings().add(gameSetting);
-                        }
+                // By configPath(), not the bare keys under `settings:` — those never match.
+                gamePreset.getGameSettings().clear();
+                for (GameSetting gameSetting : GameSetting.values()) {
+                    if (gameSetting.defaultValue() instanceof Boolean
+                            && configurationSection.getBoolean(gameSetting.configPath())) {
+                        gamePreset.getGameSettings().add(gameSetting);
                     }
-
-                });
+                }
                 this.gamePresetMap.put(keys, gamePreset);
             });
         }
@@ -54,53 +74,46 @@ public class GameSettings {
     }
 
     public boolean isSettingEnabledInPreset(GamePreset gamePreset, GameSetting gameSetting) {
-        return this.plugin.getConfig().getBoolean("presets." + gamePreset.getPresetName() + "." + gameSetting.configPath());
+        return this.ruleset.enabledIn(gamePreset, gameSetting);
     }
 
     public boolean isSettingEnabled(GameSetting gameSetting) {
-        if (this.plugin.getGamemanager().currentGamePreset() != null) {
-            return this.isSettingEnabledInPreset(this.plugin.getGamemanager().currentGamePreset(), gameSetting);
-        }
-        return this.plugin.getConfig().getBoolean(gameSetting.configPath());
+        return this.ruleset.enabled(gameSetting);
     }
 
+    /**
+     * Writes a setting, and applies the two that are also world state. The gamerule side effects stay
+     * here rather than in {@link Ruleset}: keeping Bukkit out is what lets the value rules be read
+     * without a server.
+     */
     public void setSettingEnabled(GameSetting gameSetting, boolean enabled) {
         if (gameSetting == GameSetting.KEEP_INVENTORY)
             Bukkit.getWorlds().forEach(worlds -> worlds.setGameRule(GameRules.KEEP_INVENTORY, enabled));
 
         if (gameSetting == GameSetting.FASTER_RANDOM_TICK)
-            // 3 is the default random tick speed. 40 is much faster version
+            // 3 is vanilla's random tick speed.
             Bukkit.getWorlds().forEach(worlds -> worlds.setGameRule(GameRules.RANDOM_TICK_SPEED, enabled ? 40 : 3));
 
-
-        this.plugin.getConfig().set(gameSetting.configPath(), enabled);
-        this.plugin.saveConfig();
+        this.ruleset.setEnabled(gameSetting, enabled);
     }
 
     public void setSettingValue(GameSetting gameSetting, Integer value) {
         if (gameSetting.defaultValue() instanceof Integer) {
-            this.plugin.getConfig().set(gameSetting.configPath(), value);
+            this.ruleset.setValue(gameSetting, value);
         }
     }
 
     public int getSettingValue(GameSetting gameSetting) {
-        if (this.plugin.getGamemanager().currentGamePreset() != null) {
-            return this.getSettingValueInPreset(this.plugin.getGamemanager().currentGamePreset(), gameSetting);
-        }
-        return this.plugin.getConfig().getInt(gameSetting.configPath());
-    }
-
-    public int getSettingValueInPreset(GamePreset gamePreset, GameSetting gameSetting) {
-        return this.plugin.getConfig().getInt("presets." + gamePreset.getPresetName() + "." + gameSetting.configPath());
+        return this.ruleset.value(gameSetting);
     }
 
     public QuickieMode getQuickieMode() {
         return QuickieMode.fromOrdinal(this.getSettingValue(GameSetting.QUICKIE));
     }
 
+    /** Read through {@link #getQuickieMode()}, which resolves the active preset, so this must too. */
     public void setQuickieMode(QuickieMode quickieMode) {
-        this.plugin.getConfig().set(GameSetting.QUICKIE.configPath(), quickieMode.ordinal());
-        this.plugin.saveConfig();
+        this.ruleset.setValue(GameSetting.QUICKIE, quickieMode.ordinal());
     }
 
     public void addGamePreset(GamePreset gamePreset) {

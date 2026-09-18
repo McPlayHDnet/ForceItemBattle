@@ -1,7 +1,5 @@
 package forceitembattle.model;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -10,73 +8,36 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
 /**
- * One participant in the current round.
- *
- * <h2>Two accessor families, on purpose</h2>
- *
- * In a team game the item, the score and the joker pool live on the {@link Team}, not on the
- * player — but almost every caller only wants "the value that applies to this player right now"
- * and does not care which of the two owns it. So there are two families:
- *
- * <ul>
- *   <li><b>{@code active*}</b> — the value in effect: the team's in a team game, this player's own
- *       otherwise. This is what callers want in nearly every case.</li>
- *   <li><b>plain ({@code currentMaterial()}, {@code currentScore()}, …)</b> — this player's own
- *       field, ignoring the team. Only correct where the team has already been ruled out, or where
- *       the per-player value is genuinely the subject (solo placements, the raw roster).</li>
- * </ul>
- *
- * <p>Note the deliberate asymmetry: reads route through the team, but the Lombok setters always
- * write this player's own field. Mutating something the team owns goes through the routed mutators
- * ({@link #spendJoker()}, {@link #recordFoundItem(ForceItem)}), never a setter.
+ * One participant in the current round. Two accessor families: {@code active*} reads through the
+ * current {@link ScoreOwner} — the team's in a team game — and is what callers want in nearly every
+ * case; the plain ones ({@code currentMaterial()}, {@code currentScore()}) read this player's own
+ * values and are correct only where the team has been ruled out.
+ * {@link #setCurrentTeam(Team)} is the one place the choice is made.
  */
 public class ForceItemPlayer {
 
     @Setter
     private Player player;
-    private List<ForceItem> foundItems;
-    @Setter
-    private Material currentMaterial;
-    @Setter
-    private Material nextMaterial;
-    @Setter
-    private Material previousMaterial;
-    @Setter
-    private int remainingJokers;
-    @Setter
-    private int currentScore;
-    @Setter
+
+    /** This player's own item, score, jokers and found-list. Never replaced, never null. */
+    private final SoloScore own;
+
+    /** {@link #own} when solo, the team once one is assigned. Set only by {@link #setCurrentTeam}. */
+    private ScoreOwner scoreOwner;
+
     private Team currentTeam;
-    @Setter
-    private int backToBackStreak;
     @Setter
     private int itemStreak;
     @Setter
-    private long lastItemAssignedAt;
-    @Setter
     private boolean isSpectator;
-    /**
-     * Whether this player already received the round setup (gamemode, jokers, tools, backpack).
-     *
-     * The countdown-end pass only reaches players who are online at that instant, so a player who
-     * was disconnected then gets the same setup when they rejoin. This flag is what keeps that from
-     * handing out a second set of jokers to everyone else.
-     */
+    /** Stops the rejoin path handing a second set of jokers to everyone already set up. */
     @Setter
     private boolean startSetupApplied;
-    @Setter
-    private boolean lastItemWasSkipped;
-    @Setter
-    private Material lastSkippedMaterial;
 
     public ForceItemPlayer(Player player, Material currentMaterial, int remainingJokers, int currentScore) {
         this.player = player;
-        this.foundItems = new ArrayList<>();
-        this.currentMaterial = currentMaterial;
-        this.remainingJokers = remainingJokers;
-        this.currentScore = currentScore;
-        this.lastItemWasSkipped = false;
-        this.lastSkippedMaterial = null;
+        this.own = new SoloScore(this, currentMaterial, remainingJokers, currentScore);
+        this.scoreOwner = this.own;
     }
 
     public Player player() {
@@ -84,129 +45,126 @@ public class ForceItemPlayer {
     }
 
     public List<ForceItem> foundItems() {
-        return Collections.unmodifiableList(foundItems);
+        return own.foundItems();
     }
 
-    public void addFoundItemToList(ForceItem forceItem) {
-        if (forceItem != null) {
-            this.foundItems.add(forceItem);
-        }
-    }
+    // --- plain family: this player's own values, team or not -------------------------------
 
     public Material currentMaterial() {
-        return currentMaterial;
+        return own.material();
     }
 
     public Material nextMaterial() {
-        return nextMaterial;
+        return own.nextMaterial();
     }
 
     @Nullable
     public Material previousMaterial() {
-        return previousMaterial;
+        return own.previousMaterial();
     }
 
     public int remainingJokers() {
-        return remainingJokers;
+        return own.jokers();
     }
 
     public int currentScore() {
-        return currentScore;
+        return own.score();
     }
 
     public long lastItemAssignedAt() {
-        return lastItemAssignedAt;
+        return own.itemAssignedAt();
     }
 
-    /** The force item this player is currently hunting. */
+    // Package-private on purpose: outside model/ everything addresses the ScoreOwner instead.
+
+    void setNextMaterial(Material nextMaterial) {
+        own.setNextMaterial(nextMaterial);
+    }
+
+    void setPreviousMaterial(Material previousMaterial) {
+        own.setPreviousMaterial(previousMaterial);
+    }
+
+    void setCurrentScore(int currentScore) {
+        own.setCurrentScore(currentScore);
+    }
+
+    void setLastItemAssignedAt(long lastItemAssignedAt) {
+        own.setLastItemAssignedAt(lastItemAssignedAt);
+    }
+
+    // --- active family: whoever owns the score right now -----------------------------------
+
     public Material activeMaterial() {
-        return currentTeam != null ? currentTeam.getCurrentMaterial() : currentMaterial;
+        return scoreOwner.material();
     }
 
-    /** The item queued behind the current one, shown by the CHAIN setting. */
     public Material activeNextMaterial() {
-        return currentTeam != null ? currentTeam.getNextMaterial() : nextMaterial;
+        return scoreOwner.nextMaterial();
     }
 
-    /** The item held before the current one, or {@code null} at the start of a round. */
     @Nullable
     public Material activePreviousMaterial() {
-        return currentTeam != null ? currentTeam.getPreviousMaterial() : previousMaterial;
+        return scoreOwner.previousMaterial();
     }
 
     /** Skips left to spend — the shared team pool in a team game. */
     public int activeJokers() {
-        return currentTeam != null ? currentTeam.getRemainingJokers() : remainingJokers;
+        return scoreOwner.jokers();
     }
 
-    /** Score on the board for this player — the shared team score in a team game. */
+    /** Score on the board — the shared team score in a team game. */
     public int activeScore() {
-        return currentTeam != null ? currentTeam.getCurrentScore() : currentScore;
+        return scoreOwner.score();
     }
 
-    /** When the current item was handed out, for measuring how long it took to find. */
     public long activeItemAssignedAt() {
-        return currentTeam != null ? currentTeam.getLastItemAssignedAt() : lastItemAssignedAt;
+        return scoreOwner.itemAssignedAt();
+    }
+
+    public ScoreOwner scoreOwner() {
+        return scoreOwner;
     }
 
     public Team currentTeam() {
         return currentTeam;
     }
 
+    /**
+     * Joins or leaves a team, repointing the score owner with it. Passing {@code null} restores this
+     * player's own values, which are still exactly where they were before the team was assigned.
+     */
+    public void setCurrentTeam(Team currentTeam) {
+        this.currentTeam = currentTeam;
+        this.scoreOwner = currentTeam != null ? currentTeam : this.own;
+    }
+
     public boolean isInTeam() {
         return currentTeam != null;
     }
 
-    /**
-     * The other member of this player's team, or empty when playing solo. Teams are pairs, so
-     * "the teammate" is well defined; a team holding more than two yields the first other member.
-     */
+    /** Teams are pairs; a team holding more than two yields the first other member. */
     public Optional<ForceItemPlayer> teammate() {
         return currentTeam == null ? Optional.empty() : currentTeam.teammateOf(this);
     }
 
-    /**
-     * Everyone who shares this player's item and score: the whole team in a team game, just this
-     * player when solo. Lets a caller announce or reward "the people this find belongs to" without
-     * branching on the mode.
-     */
+    /** Everyone who shares this player's item and score: the whole team, or just them when solo. */
     public List<ForceItemPlayer> squad() {
-        return currentTeam == null ? List.of(this) : currentTeam.getPlayers();
+        return scoreOwner.members();
     }
 
-    /**
-     * Spends one skip from whichever pool this player draws on, and returns what is left.
-     *
-     * The pool is shared in a team game, so this must not be a plain setter call — writing
-     * {@code setRemainingJokers()} on a player in a team updates a field nobody reads.
-     */
+    /** From whichever pool this player draws on, which is not their own while they are on a team. */
     public int spendJoker() {
-        if (currentTeam != null) {
-            int left = Math.max(0, activeJokers() - 1);
-            currentTeam.setRemainingJokers(left);
-            return left;
-        }
-        this.remainingJokers = Math.max(0, this.remainingJokers - 1);
-        return this.remainingJokers;
+        return scoreOwner.spendJoker();
     }
 
-    /**
-     * Credits a found item to whoever owns the score: the team in a team game, this player
-     * otherwise. The item lands in the same owner's found-list, which is what the match history
-     * and the result screen read back.
-     */
     public void recordFoundItem(ForceItem forceItem) {
-        if (currentTeam != null) {
-            currentTeam.setCurrentScore(activeScore() + 1);
-            currentTeam.addFoundItemToList(forceItem);
-            return;
-        }
-        this.currentScore = activeScore() + 1;
-        addFoundItemToList(forceItem);
+        scoreOwner.record(forceItem);
     }
 
+    /** No plain counterpart: there is only one streak, so there is nothing to disambiguate. */
     public int backToBackStreak() {
-        return backToBackStreak;
+        return scoreOwner.backToBackStreak();
     }
 
     public int itemStreak() {
@@ -219,14 +177,6 @@ public class ForceItemPlayer {
 
     public boolean isStartSetupApplied() {
         return startSetupApplied;
-    }
-
-    public boolean isLastItemWasSkipped() {
-        return lastItemWasSkipped;
-    }
-
-    public Material getLastSkippedMaterial() {
-        return lastSkippedMaterial;
     }
 
 }
