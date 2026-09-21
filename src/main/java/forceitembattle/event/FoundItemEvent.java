@@ -1,5 +1,7 @@
 package forceitembattle.event;
 
+import forceitembattle.model.BackToBackProbability;
+import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.entity.Player;
@@ -18,6 +20,10 @@ public class FoundItemEvent extends Event {
     private ItemStack foundItem;
     private boolean skipped;
     private boolean backToBack;
+
+    @Nullable
+    private BackToBackProbability backToBackProbability;
+
     private int backToBackCount;
     private boolean previousItemWasSkipped;
 

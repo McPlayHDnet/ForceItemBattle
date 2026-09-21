@@ -12,7 +12,6 @@ import forceitembattle.util.InventorySearch;
 import forceitembattle.util.Scheduler;
 import forceitembattle.util.Text;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
@@ -48,19 +47,20 @@ public class BackToBackManager implements Manager {
      * Called after an item has been found <em>and the next one assigned</em>, since the chain is about
      * the item just handed out.
      *
-     * @return the odds of the chain this find extended, or empty when it broke one
+     * <p>Returns nothing on purpose. The odds belong to the find this schedules, not to the one that
+     * called in, so they are attached to that event rather than handed back — a caller holding them
+     * can only record them against the wrong item.
      */
-    public Optional<BackToBackProbability> handleAfterFind(ForceItemPlayer forceItemPlayer,
-                                                           GameContext context) {
+    public void handleAfterFind(ForceItemPlayer forceItemPlayer, GameContext context) {
         if (context.runMode()) {
-            return Optional.empty();
+            return;
         }
 
         Owned owned = gather(forceItemPlayer, forceItemPlayer.activeMaterial(), context);
 
         if (!owned.hasBackToBack()) {
             forceItemPlayer.scoreOwner().resetStreak();
-            return Optional.empty();
+            return;
         }
 
         // One holder, so there is nothing to keep in step. This used to be three writes — the finder,
@@ -74,8 +74,6 @@ public class BackToBackManager implements Manager {
         // the bump: the reporter reads the streak.
         updateStreakStats(forceItemPlayer, context);
         announce(forceItemPlayer, owned.teammateWhoHasIt(), probability, context);
-
-        return Optional.of(probability);
     }
 
     /**
@@ -147,6 +145,8 @@ public class BackToBackManager implements Manager {
             foundNextItemEvent.setFoundItem(foundItem);
             foundNextItemEvent.setBackToBack(true);
             foundNextItemEvent.setSkipped(false);
+            // The odds of the chain this event records, not of the find that triggered it.
+            foundNextItemEvent.setBackToBackProbability(probability);
 
             String unicode = this.items.getUnicodeFromMaterial(true, foundItem.getType());
             String materialName = CustomMaterials.nameOf(foundItem.getType());

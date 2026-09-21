@@ -140,9 +140,12 @@ public final class ResultReveal extends InventoryBuilder {
                     lore.add("<dark_gray>[<red>Joker<dark_gray>]");
                 }
                 if (forceItem.back2Back().isActive()) {
+                    String rarity = forceItem.back2Back().getRarity();
                     lore.add("");
-                    lore.add("<dark_gray>[<dark_aqua>B2B <dark_gray>» <aqua>"
-                            + forceItem.back2Back().getRarity() + "<dark_gray>]");
+                    lore.add(rarity == null
+                            ? "<dark_gray>[<dark_aqua>B2B<dark_gray>]"
+                            : "<dark_gray>[<dark_aqua>B2B <dark_gray>» <aqua>" + rarity
+                                    + "<dark_gray>]");
                 }
 
                 return new ItemBuilder(CustomMaterials.itemStackOf(forceItem.material()))
