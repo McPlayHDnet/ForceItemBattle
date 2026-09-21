@@ -16,7 +16,6 @@ import forceitembattle.settings.GameSettings;
 import forceitembattle.util.GameBroadcast;
 import forceitembattle.util.Text;
 import forceitembattle.util.TimeFormat;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Sound;
@@ -69,16 +68,14 @@ public class FoundItemResolver implements Manager {
 
         this.assignment.advanceFor(finder, context.runMode());
 
-        // After the advance, because a chain is about the item just handed out; before score(),
-        // because score() records the odds this returns. Those two constraints are why score() sits
-        // below the advance rather than above it, which is where it used to be — it asked the
-        // back-to-back manager for the odds itself, before the streak had been bumped, so the
-        // percentage it recorded was systematically one chain short of the one announced.
-        Optional<BackToBackProbability> backToBack =
-                this.backToBackManager.handleAfterFind(finder, context);
+        // After the advance, because a chain is about the item just handed out. It returns nothing:
+        // the odds it computes describe the item it has just detected, which is recorded by the find
+        // it schedules a tick from now, not by this one. Taking them here and passing them to score()
+        // is exactly how each item ended up wearing the previous item's rarity.
+        this.backToBackManager.handleAfterFind(finder, context);
 
         if (outcome.scores()) {
-            score(find, context, backToBack);
+            score(find, context);
         }
 
         if (outcome.recordsStats()) {
@@ -100,20 +97,20 @@ public class FoundItemResolver implements Manager {
         GameBroadcast.announce(message, find.finder(), context);
     }
 
-    private void score(Find find, GameContext context, Optional<BackToBackProbability> odds) {
+    private void score(Find find, GameContext context) {
         ForceItemPlayer finder = find.finder();
         BackToBack backToBack = new BackToBack(find.backToBack());
 
-        if (find.backToBack()) {
-            odds.ifPresent(probability -> {
-                backToBack.setPercentage(probability.percentage());
-                backToBack.setRarity(probability.formatted());
-                backToBack.setRarityType(probability.rarity());
+        // The odds this find arrived carrying, computed for this very item when it was handed out.
+        BackToBackProbability probability = find.backToBackOdds();
+        if (find.backToBack() && probability != null) {
+            backToBack.setPercentage(probability.percentage());
+            backToBack.setRarity(probability.formatted());
+            backToBack.setRarityType(probability.rarity());
 
-                if (context.statsEnabled() && !context.runMode()) {
-                    trackRarity(finder, probability.rarity());
-                }
-            });
+            if (context.statsEnabled() && !context.runMode()) {
+                trackRarity(finder, probability.rarity());
+            }
         }
 
         ForceItem forceItem = new ForceItem(

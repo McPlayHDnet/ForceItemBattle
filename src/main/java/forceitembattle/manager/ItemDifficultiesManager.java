@@ -421,6 +421,7 @@ public class ItemDifficultiesManager implements Manager {
     }
 
     private void registerAllItems() {
+        register(Material.ABANDONED_CAMP_MAP, State.EARLY);
         register(Material.ACACIA_BOAT, State.EARLY);
         register(Material.ACACIA_BUTTON, State.EARLY);
         register(Material.ACACIA_CHEST_BOAT, State.EARLY);
@@ -515,6 +516,9 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.BLACK_CARPET, State.EARLY);
         register(Material.BLACK_CONCRETE, State.EARLY);
         register(Material.BLACK_CONCRETE_POWDER, State.EARLY);
+        register(Material.BLACK_CONCRETE_SLAB, State.EARLY);
+        register(Material.BLACK_CONCRETE_STAIRS, State.EARLY);
+        register(Material.BLACK_CUSHION, State.EARLY);
         register(Material.BLACK_DYE, State.EARLY);
         register(Material.BLACK_GLAZED_TERRACOTTA, State.MID);
         register(Material.BLACK_HARNESS, State.EARLY);
@@ -523,6 +527,8 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.BLACK_STAINED_GLASS_PANE, State.EARLY);
         register(Material.BLACK_TERRACOTTA, State.EARLY);
         register(Material.BLACK_WOOL, State.EARLY);
+        register(Material.BLACK_WOOL_SLAB, State.EARLY);
+        register(Material.BLACK_WOOL_STAIRS, State.EARLY);
         register(Material.BLACKSTONE, State.MID, ItemTag.NETHER);
         register(Material.BLACKSTONE_SLAB, State.MID, ItemTag.NETHER);
         register(Material.BLACKSTONE_STAIRS, State.MID, ItemTag.NETHER);
@@ -538,6 +544,9 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.BLUE_CARPET, State.EARLY);
         register(Material.BLUE_CONCRETE, State.EARLY);
         register(Material.BLUE_CONCRETE_POWDER, State.EARLY);
+        register(Material.BLUE_CONCRETE_SLAB, State.EARLY);
+        register(Material.BLUE_CONCRETE_STAIRS, State.EARLY);
+        register(Material.BLUE_CUSHION, State.EARLY);
         register(Material.BLUE_DYE, State.EARLY);
         register(Material.BLUE_EGG, State.LATE);
         register(Material.BLUE_GLAZED_TERRACOTTA, State.MID);
@@ -549,6 +558,8 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.BLUE_STAINED_GLASS_PANE, State.EARLY);
         register(Material.BLUE_TERRACOTTA, State.EARLY);
         register(Material.BLUE_WOOL, State.EARLY);
+        register(Material.BLUE_WOOL_SLAB, State.EARLY);
+        register(Material.BLUE_WOOL_STAIRS, State.EARLY);
         register(Material.BOLT_ARMOR_TRIM_SMITHING_TEMPLATE, State.LATE);
         register(Material.BONE, State.EARLY);
         register(Material.BONE_BLOCK, State.EARLY);
@@ -576,6 +587,9 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.BROWN_CARPET, State.EARLY);
         register(Material.BROWN_CONCRETE, State.EARLY);
         register(Material.BROWN_CONCRETE_POWDER, State.EARLY);
+        register(Material.BROWN_CONCRETE_SLAB, State.EARLY);
+        register(Material.BROWN_CONCRETE_STAIRS, State.EARLY);
+        register(Material.BROWN_CUSHION, State.EARLY);
         register(Material.BROWN_DYE, State.EARLY);
         register(Material.BROWN_EGG, State.LATE);
         register(Material.BROWN_GLAZED_TERRACOTTA, State.MID);
@@ -587,12 +601,18 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.BROWN_STAINED_GLASS_PANE, State.EARLY);
         register(Material.BROWN_TERRACOTTA, State.EARLY);
         register(Material.BROWN_WOOL, State.EARLY);
+        register(Material.BROWN_WOOL_SLAB, State.EARLY);
+        register(Material.BROWN_WOOL_STAIRS, State.EARLY);
         register(Material.BRUSH, State.EARLY);
         register(Material.BUBBLE_CORAL, State.LATE);
         register(Material.BUBBLE_CORAL_BLOCK, State.LATE);
         register(Material.BUBBLE_CORAL_FAN, State.LATE);
         register(Material.BUCKET, State.EARLY);
         register(Material.BUNDLE, State.EARLY);
+        register(Material.BURIED_ANCIENT_CITY_MAP, State.LATE);
+        register(Material.BURIED_MINESHAFT_MAP, State.LATE);
+        register(Material.BURIED_TREASURE_MAP, State.EARLY);
+        register(Material.BURIED_TRIAL_CHAMBERS_MAP, State.LATE);
         register(Material.BURN_POTTERY_SHERD, State.LATE);
         register(Material.BUSH, State.EARLY);
         register(Material.CACTUS, State.MID);
@@ -759,6 +779,9 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.CYAN_CARPET, State.MID);
         register(Material.CYAN_CONCRETE, State.MID);
         register(Material.CYAN_CONCRETE_POWDER, State.MID);
+        register(Material.CYAN_CONCRETE_SLAB, State.MID);
+        register(Material.CYAN_CONCRETE_STAIRS, State.MID);
+        register(Material.CYAN_CUSHION, State.MID);
         register(Material.CYAN_DYE, State.MID);
         register(Material.CYAN_GLAZED_TERRACOTTA, State.MID);
         register(Material.CYAN_HARNESS, State.MID);
@@ -767,6 +790,8 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.CYAN_STAINED_GLASS_PANE, State.MID);
         register(Material.CYAN_TERRACOTTA, State.MID);
         register(Material.CYAN_WOOL, State.MID);
+        register(Material.CYAN_WOOL_SLAB, State.MID);
+        register(Material.CYAN_WOOL_STAIRS, State.MID);
         register(Material.DAMAGED_ANVIL, State.LATE);
         register(Material.DANDELION, State.EARLY);
         register(Material.DANGER_POTTERY_SHERD, State.LATE);
@@ -826,6 +851,8 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.DEEPSLATE_TILE_STAIRS, State.EARLY);
         register(Material.DEEPSLATE_TILE_WALL, State.EARLY);
         register(Material.DEEPSLATE_TILES, State.EARLY);
+        register(Material.DESERT_PYRAMID_MAP, State.LATE);
+        register(Material.DESERT_VILLAGE_MAP, State.LATE);
         register(Material.DETECTOR_RAIL, State.MID);
         register(Material.DIAMOND, State.EARLY);
         register(Material.DIAMOND_AXE, State.EARLY);
@@ -965,6 +992,9 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.GRAY_CARPET, State.EARLY);
         register(Material.GRAY_CONCRETE, State.EARLY);
         register(Material.GRAY_CONCRETE_POWDER, State.EARLY);
+        register(Material.GRAY_CONCRETE_SLAB, State.EARLY);
+        register(Material.GRAY_CONCRETE_STAIRS, State.EARLY);
+        register(Material.GRAY_CUSHION, State.EARLY);
         register(Material.GRAY_DYE, State.EARLY);
         register(Material.GRAY_GLAZED_TERRACOTTA, State.MID);
         register(Material.GRAY_HARNESS, State.EARLY);
@@ -973,6 +1003,8 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.GRAY_STAINED_GLASS_PANE, State.EARLY);
         register(Material.GRAY_TERRACOTTA, State.EARLY);
         register(Material.GRAY_WOOL, State.EARLY);
+        register(Material.GRAY_WOOL_SLAB, State.EARLY);
+        register(Material.GRAY_WOOL_STAIRS, State.EARLY);
         register(Material.GREEN_BANNER, State.MID);
         register(Material.GREEN_BED, State.MID);
         register(Material.GREEN_BUNDLE, State.MID);
@@ -980,6 +1012,9 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.GREEN_CARPET, State.MID);
         register(Material.GREEN_CONCRETE, State.MID);
         register(Material.GREEN_CONCRETE_POWDER, State.MID);
+        register(Material.GREEN_CONCRETE_SLAB, State.MID);
+        register(Material.GREEN_CONCRETE_STAIRS, State.MID);
+        register(Material.GREEN_CUSHION, State.MID);
         register(Material.GREEN_DYE, State.MID);
         register(Material.GREEN_GLAZED_TERRACOTTA, State.MID);
         register(Material.GREEN_HARNESS, State.MID);
@@ -988,6 +1023,8 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.GREEN_STAINED_GLASS_PANE, State.MID);
         register(Material.GREEN_TERRACOTTA, State.MID);
         register(Material.GREEN_WOOL, State.MID);
+        register(Material.GREEN_WOOL_SLAB, State.MID);
+        register(Material.GREEN_WOOL_STAIRS, State.MID);
         register(Material.GRINDSTONE, State.EARLY);
         register(Material.GUNPOWDER, State.EARLY);
         register(Material.GUSTER_BANNER_PATTERN, State.LATE, ItemTag.EXTREME);
@@ -1045,6 +1082,7 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.JUNGLE_LOG, State.EARLY);
         register(Material.JUNGLE_PLANKS, State.EARLY);
         register(Material.JUNGLE_PRESSURE_PLATE, State.EARLY);
+        register(Material.JUNGLE_PYRAMID_MAP, State.LATE);
         register(Material.JUNGLE_SAPLING, State.EARLY);
         register(Material.JUNGLE_SHELF, State.EARLY);
         register(Material.JUNGLE_SIGN, State.EARLY);
@@ -1079,6 +1117,9 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.LIGHT_BLUE_CARPET, State.EARLY);
         register(Material.LIGHT_BLUE_CONCRETE, State.EARLY);
         register(Material.LIGHT_BLUE_CONCRETE_POWDER, State.EARLY);
+        register(Material.LIGHT_BLUE_CONCRETE_SLAB, State.EARLY);
+        register(Material.LIGHT_BLUE_CONCRETE_STAIRS, State.EARLY);
+        register(Material.LIGHT_BLUE_CUSHION, State.EARLY);
         register(Material.LIGHT_BLUE_DYE, State.EARLY);
         register(Material.LIGHT_BLUE_GLAZED_TERRACOTTA, State.MID);
         register(Material.LIGHT_BLUE_HARNESS, State.EARLY);
@@ -1087,6 +1128,8 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.LIGHT_BLUE_STAINED_GLASS_PANE, State.EARLY);
         register(Material.LIGHT_BLUE_TERRACOTTA, State.EARLY);
         register(Material.LIGHT_BLUE_WOOL, State.EARLY);
+        register(Material.LIGHT_BLUE_WOOL_SLAB, State.EARLY);
+        register(Material.LIGHT_BLUE_WOOL_STAIRS, State.EARLY);
         register(Material.LIGHT_GRAY_BANNER, State.EARLY);
         register(Material.LIGHT_GRAY_BED, State.EARLY);
         register(Material.LIGHT_GRAY_BUNDLE, State.EARLY);
@@ -1094,6 +1137,9 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.LIGHT_GRAY_CARPET, State.EARLY);
         register(Material.LIGHT_GRAY_CONCRETE, State.EARLY);
         register(Material.LIGHT_GRAY_CONCRETE_POWDER, State.EARLY);
+        register(Material.LIGHT_GRAY_CONCRETE_SLAB, State.EARLY);
+        register(Material.LIGHT_GRAY_CONCRETE_STAIRS, State.EARLY);
+        register(Material.LIGHT_GRAY_CUSHION, State.EARLY);
         register(Material.LIGHT_GRAY_DYE, State.EARLY);
         register(Material.LIGHT_GRAY_GLAZED_TERRACOTTA, State.MID);
         register(Material.LIGHT_GRAY_HARNESS, State.EARLY);
@@ -1102,6 +1148,8 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.LIGHT_GRAY_STAINED_GLASS_PANE, State.EARLY);
         register(Material.LIGHT_GRAY_TERRACOTTA, State.EARLY);
         register(Material.LIGHT_GRAY_WOOL, State.EARLY);
+        register(Material.LIGHT_GRAY_WOOL_SLAB, State.EARLY);
+        register(Material.LIGHT_GRAY_WOOL_STAIRS, State.EARLY);
         register(Material.LIGHT_WEIGHTED_PRESSURE_PLATE, State.EARLY);
         register(Material.LIGHTNING_ROD, State.EARLY);
         register(Material.LILAC, State.EARLY);
@@ -1114,6 +1162,9 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.LIME_CARPET, State.MID);
         register(Material.LIME_CONCRETE, State.MID);
         register(Material.LIME_CONCRETE_POWDER, State.MID);
+        register(Material.LIME_CONCRETE_SLAB, State.MID);
+        register(Material.LIME_CONCRETE_STAIRS, State.MID);
+        register(Material.LIME_CUSHION, State.MID);
         register(Material.LIME_DYE, State.MID);
         register(Material.LIME_GLAZED_TERRACOTTA, State.MID);
         register(Material.LIME_HARNESS, State.MID);
@@ -1122,6 +1173,8 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.LIME_STAINED_GLASS_PANE, State.MID);
         register(Material.LIME_TERRACOTTA, State.MID);
         register(Material.LIME_WOOL, State.MID);
+        register(Material.LIME_WOOL_SLAB, State.MID);
+        register(Material.LIME_WOOL_STAIRS, State.MID);
         register(Material.LODESTONE, State.EARLY);
         register(Material.LOOM, State.MID);
         register(Material.MACE, State.LATE, ItemTag.EXTREME);
@@ -1132,6 +1185,9 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.MAGENTA_CARPET, State.EARLY);
         register(Material.MAGENTA_CONCRETE, State.EARLY);
         register(Material.MAGENTA_CONCRETE_POWDER, State.EARLY);
+        register(Material.MAGENTA_CONCRETE_SLAB, State.EARLY);
+        register(Material.MAGENTA_CONCRETE_STAIRS, State.EARLY);
+        register(Material.MAGENTA_CUSHION, State.EARLY);
         register(Material.MAGENTA_DYE, State.EARLY);
         register(Material.MAGENTA_GLAZED_TERRACOTTA, State.MID);
         register(Material.MAGENTA_HARNESS, State.EARLY);
@@ -1140,6 +1196,8 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.MAGENTA_STAINED_GLASS_PANE, State.EARLY);
         register(Material.MAGENTA_TERRACOTTA, State.EARLY);
         register(Material.MAGENTA_WOOL, State.EARLY);
+        register(Material.MAGENTA_WOOL_SLAB, State.EARLY);
+        register(Material.MAGENTA_WOOL_STAIRS, State.EARLY);
         register(Material.MAGMA_BLOCK, State.EARLY);
         register(Material.MAGMA_CREAM, State.LATE, ItemTag.NETHER);
         register(Material.MANGROVE_BOAT, State.MID);
@@ -1254,6 +1312,7 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.OAK_WOOD, State.EARLY);
         register(Material.OBSERVER, State.MID);
         register(Material.OBSIDIAN, State.MID);
+        register(Material.OCEAN_MONUMENT_MAP, State.LATE);
         register(Material.OMINOUS_BOTTLE, State.LATE, ItemTag.EXTREME);
         register(Material.OMINOUS_TRIAL_KEY, State.LATE, ItemTag.EXTREME);
         register(Material.OPEN_EYEBLOSSOM, State.LATE);
@@ -1264,15 +1323,21 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.ORANGE_CARPET, State.EARLY);
         register(Material.ORANGE_CONCRETE, State.EARLY);
         register(Material.ORANGE_CONCRETE_POWDER, State.EARLY);
+        register(Material.ORANGE_CONCRETE_SLAB, State.EARLY);
+        register(Material.ORANGE_CONCRETE_STAIRS, State.EARLY);
+        register(Material.ORANGE_CUSHION, State.EARLY);
         register(Material.ORANGE_DYE, State.EARLY);
         register(Material.ORANGE_GLAZED_TERRACOTTA, State.MID);
         register(Material.ORANGE_HARNESS, State.EARLY);
+        register(Material.ORANGE_POPLAR_LEAVES, State.EARLY);
         register(Material.ORANGE_SHULKER_BOX, State.LATE, ItemTag.END);
         register(Material.ORANGE_STAINED_GLASS, State.EARLY);
         register(Material.ORANGE_STAINED_GLASS_PANE, State.EARLY);
         register(Material.ORANGE_TERRACOTTA, State.EARLY);
         register(Material.ORANGE_TULIP, State.MID);
         register(Material.ORANGE_WOOL, State.EARLY);
+        register(Material.ORANGE_WOOL_SLAB, State.EARLY);
+        register(Material.ORANGE_WOOL_STAIRS, State.EARLY);
         register(Material.OXEYE_DAISY, State.EARLY);
         register(Material.OXIDIZED_CHISELED_COPPER, State.LATE);
         register(Material.OXIDIZED_COPPER, State.LATE);
@@ -1323,6 +1388,9 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.PINK_CARPET, State.EARLY);
         register(Material.PINK_CONCRETE, State.EARLY);
         register(Material.PINK_CONCRETE_POWDER, State.EARLY);
+        register(Material.PINK_CONCRETE_SLAB, State.EARLY);
+        register(Material.PINK_CONCRETE_STAIRS, State.EARLY);
+        register(Material.PINK_CUSHION, State.EARLY);
         register(Material.PINK_DYE, State.EARLY);
         register(Material.PINK_GLAZED_TERRACOTTA, State.MID);
         register(Material.PINK_HARNESS, State.EARLY);
@@ -1333,7 +1401,10 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.PINK_TERRACOTTA, State.EARLY);
         register(Material.PINK_TULIP, State.MID);
         register(Material.PINK_WOOL, State.EARLY);
+        register(Material.PINK_WOOL_SLAB, State.EARLY);
+        register(Material.PINK_WOOL_STAIRS, State.EARLY);
         register(Material.PISTON, State.EARLY);
+        register(Material.PLAINS_VILLAGE_MAP, State.LATE);
         register(Material.PLENTY_POTTERY_SHERD, State.LATE);
         register(Material.PODZOL, State.LATE);
         register(Material.POINTED_DRIPSTONE, State.MID);
@@ -1374,6 +1445,23 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.POLISHED_TUFF_SLAB, State.EARLY);
         register(Material.POLISHED_TUFF_STAIRS, State.EARLY);
         register(Material.POLISHED_TUFF_WALL, State.EARLY);
+        register(Material.POPLAR_BOAT, State.EARLY);
+        register(Material.POPLAR_BUTTON, State.EARLY);
+        register(Material.POPLAR_CHEST_BOAT, State.EARLY);
+        register(Material.POPLAR_DOOR, State.EARLY);
+        register(Material.POPLAR_FENCE, State.EARLY);
+        register(Material.POPLAR_FENCE_GATE, State.EARLY);
+        register(Material.POPLAR_HANGING_SIGN, State.EARLY);
+        register(Material.POPLAR_LOG, State.EARLY);
+        register(Material.POPLAR_PLANKS, State.EARLY);
+        register(Material.POPLAR_PRESSURE_PLATE, State.EARLY);
+        register(Material.POPLAR_SAPLING, State.EARLY);
+        register(Material.POPLAR_SHELF, State.EARLY);
+        register(Material.POPLAR_SIGN, State.EARLY);
+        register(Material.POPLAR_SLAB, State.EARLY);
+        register(Material.POPLAR_STAIRS, State.EARLY);
+        register(Material.POPLAR_TRAPDOOR, State.EARLY);
+        register(Material.POPLAR_WOOD, State.EARLY);
         register(Material.POPPED_CHORUS_FRUIT, State.LATE, ItemTag.END);
         register(Material.POPPY, State.EARLY);
         register(Material.PORKCHOP, State.EARLY);
@@ -1404,6 +1492,9 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.PURPLE_CARPET, State.EARLY);
         register(Material.PURPLE_CONCRETE, State.EARLY);
         register(Material.PURPLE_CONCRETE_POWDER, State.EARLY);
+        register(Material.PURPLE_CONCRETE_SLAB, State.EARLY);
+        register(Material.PURPLE_CONCRETE_STAIRS, State.EARLY);
+        register(Material.PURPLE_CUSHION, State.EARLY);
         register(Material.PURPLE_DYE, State.EARLY);
         register(Material.PURPLE_GLAZED_TERRACOTTA, State.MID);
         register(Material.PURPLE_HARNESS, State.EARLY);
@@ -1412,6 +1503,8 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.PURPLE_STAINED_GLASS_PANE, State.EARLY);
         register(Material.PURPLE_TERRACOTTA, State.EARLY);
         register(Material.PURPLE_WOOL, State.EARLY);
+        register(Material.PURPLE_WOOL_SLAB, State.EARLY);
+        register(Material.PURPLE_WOOL_STAIRS, State.EARLY);
         register(Material.PURPUR_BLOCK, State.LATE, ItemTag.END);
         register(Material.PURPUR_PILLAR, State.LATE, ItemTag.END);
         register(Material.PURPUR_SLAB, State.LATE, ItemTag.END);
@@ -1442,6 +1535,9 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.RED_CARPET, State.EARLY);
         register(Material.RED_CONCRETE, State.EARLY);
         register(Material.RED_CONCRETE_POWDER, State.EARLY);
+        register(Material.RED_CONCRETE_SLAB, State.EARLY);
+        register(Material.RED_CONCRETE_STAIRS, State.EARLY);
+        register(Material.RED_CUSHION, State.EARLY);
         register(Material.RED_DYE, State.EARLY);
         register(Material.RED_GLAZED_TERRACOTTA, State.MID);
         register(Material.RED_HARNESS, State.EARLY);
@@ -1451,17 +1547,21 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.RED_NETHER_BRICK_STAIRS, State.MID, ItemTag.NETHER);
         register(Material.RED_NETHER_BRICK_WALL, State.MID, ItemTag.NETHER);
         register(Material.RED_NETHER_BRICKS, State.MID, ItemTag.NETHER);
+        register(Material.RED_POPLAR_LEAVES, State.EARLY);
         register(Material.RED_SAND, State.MID);
         register(Material.RED_SANDSTONE, State.MID);
         register(Material.RED_SANDSTONE_SLAB, State.MID);
         register(Material.RED_SANDSTONE_STAIRS, State.MID);
         register(Material.RED_SANDSTONE_WALL, State.MID);
+        register(Material.RED_SHRUB, State.EARLY);
         register(Material.RED_SHULKER_BOX, State.LATE, ItemTag.END);
         register(Material.RED_STAINED_GLASS, State.EARLY);
         register(Material.RED_STAINED_GLASS_PANE, State.EARLY);
         register(Material.RED_TERRACOTTA, State.EARLY);
         register(Material.RED_TULIP, State.MID);
         register(Material.RED_WOOL, State.EARLY);
+        register(Material.RED_WOOL_SLAB, State.EARLY);
+        register(Material.RED_WOOL_STAIRS, State.EARLY);
         register(Material.REDSTONE, State.EARLY);
         register(Material.REDSTONE_BLOCK, State.EARLY);
         register(Material.REDSTONE_LAMP, State.MID, ItemTag.NETHER);
@@ -1488,6 +1588,7 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.SANDSTONE_SLAB, State.EARLY);
         register(Material.SANDSTONE_STAIRS, State.EARLY);
         register(Material.SANDSTONE_WALL, State.EARLY);
+        register(Material.SAVANNA_VILLAGE_MAP, State.LATE);
         register(Material.SCAFFOLDING, State.MID);
         register(Material.SCRAPE_POTTERY_SHERD, State.LATE);
         register(Material.SCULK, State.LATE);
@@ -1502,6 +1603,7 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.SHAPER_ARMOR_TRIM_SMITHING_TEMPLATE, State.LATE);
         register(Material.SHEAF_POTTERY_SHERD, State.LATE);
         register(Material.SHEARS, State.EARLY);
+        register(Material.SHELF_MUSHROOM, State.EARLY);
         register(Material.SHELTER_POTTERY_SHERD, State.LATE);
         register(Material.SHIELD, State.EARLY);
         register(Material.SHORT_DRY_GRASS, State.MID);
@@ -1535,6 +1637,7 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.SNOW, State.EARLY);
         register(Material.SNOW_BLOCK, State.EARLY);
         register(Material.SNOWBALL, State.EARLY);
+        register(Material.SNOWY_VILLAGE_MAP, State.LATE);
         register(Material.SOUL_CAMPFIRE, State.MID, ItemTag.NETHER);
         register(Material.SOUL_LANTERN, State.MID, ItemTag.NETHER);
         register(Material.SOUL_SAND, State.MID, ItemTag.NETHER);
@@ -1583,6 +1686,7 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.STONE_STAIRS, State.EARLY);
         register(Material.STONE_SWORD, State.EARLY);
         register(Material.STONECUTTER, State.EARLY);
+        register(Material.STRAW_BED, State.EARLY);
         register(Material.STRING, State.MID);
         register(Material.STRIPPED_ACACIA_LOG, State.EARLY);
         register(Material.STRIPPED_ACACIA_WOOD, State.EARLY);
@@ -1603,6 +1707,8 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.STRIPPED_OAK_WOOD, State.EARLY);
         register(Material.STRIPPED_PALE_OAK_LOG, State.LATE);
         register(Material.STRIPPED_PALE_OAK_WOOD, State.LATE);
+        register(Material.STRIPPED_POPLAR_LOG, State.EARLY);
+        register(Material.STRIPPED_POPLAR_WOOD, State.EARLY);
         register(Material.STRIPPED_SPRUCE_LOG, State.EARLY);
         register(Material.STRIPPED_SPRUCE_WOOD, State.EARLY);
         register(Material.STRIPPED_WARPED_HYPHAE, State.MID, ItemTag.NETHER);
@@ -1621,7 +1727,9 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.SULFUR_WALL, State.MID);
         register(Material.SUNFLOWER, State.EARLY);
         register(Material.SUSPICIOUS_STEW, State.EARLY);
+        register(Material.SWAMP_HUT_MAP, State.LATE);
         register(Material.SWEET_BERRIES, State.EARLY);
+        register(Material.TAIGA_VILLAGE_MAP, State.LATE);
         register(Material.TALL_DRY_GRASS, State.MID);
         register(Material.TALL_GRASS, State.LATE);
         register(Material.TARGET, State.EARLY);
@@ -1656,6 +1764,7 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.VEX_ARMOR_TRIM_SMITHING_TEMPLATE, State.LATE, ItemTag.EXTREME);
         register(Material.VINE, State.EARLY);
         register(Material.WARD_ARMOR_TRIM_SMITHING_TEMPLATE, State.LATE, ItemTag.EXTREME);
+        register(Material.WARM_OCEAN_RUINS_MAP, State.LATE);
         register(Material.WARPED_BUTTON, State.MID, ItemTag.NETHER);
         register(Material.WARPED_DOOR, State.MID, ItemTag.NETHER);
         register(Material.WARPED_FENCE, State.MID, ItemTag.NETHER);
@@ -1763,6 +1872,9 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.WHITE_CARPET, State.EARLY);
         register(Material.WHITE_CONCRETE, State.EARLY);
         register(Material.WHITE_CONCRETE_POWDER, State.EARLY);
+        register(Material.WHITE_CONCRETE_SLAB, State.EARLY);
+        register(Material.WHITE_CONCRETE_STAIRS, State.EARLY);
+        register(Material.WHITE_CUSHION, State.EARLY);
         register(Material.WHITE_DYE, State.EARLY);
         register(Material.WHITE_GLAZED_TERRACOTTA, State.MID);
         register(Material.WHITE_HARNESS, State.EARLY);
@@ -1772,6 +1884,8 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.WHITE_TERRACOTTA, State.EARLY);
         register(Material.WHITE_TULIP, State.MID);
         register(Material.WHITE_WOOL, State.EARLY);
+        register(Material.WHITE_WOOL_SLAB, State.EARLY);
+        register(Material.WHITE_WOOL_STAIRS, State.EARLY);
         register(Material.WILD_ARMOR_TRIM_SMITHING_TEMPLATE, State.LATE);
         register(Material.WILDFLOWERS, State.EARLY);
         register(Material.WIND_CHARGE, State.LATE);
@@ -1784,6 +1898,7 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.WOODEN_SHOVEL, State.EARLY);
         register(Material.WOODEN_SPEAR, State.EARLY);
         register(Material.WOODEN_SWORD, State.EARLY);
+        register(Material.WOODLAND_MANSION_MAP, State.LATE);
         register(Material.WRITABLE_BOOK, State.EARLY);
         register(Material.WRITTEN_BOOK, State.EARLY);
         register(Material.YELLOW_BANNER, State.EARLY);
@@ -1793,14 +1908,20 @@ public class ItemDifficultiesManager implements Manager {
         register(Material.YELLOW_CARPET, State.EARLY);
         register(Material.YELLOW_CONCRETE, State.EARLY);
         register(Material.YELLOW_CONCRETE_POWDER, State.EARLY);
+        register(Material.YELLOW_CONCRETE_SLAB, State.EARLY);
+        register(Material.YELLOW_CONCRETE_STAIRS, State.EARLY);
+        register(Material.YELLOW_CUSHION, State.EARLY);
         register(Material.YELLOW_DYE, State.EARLY);
         register(Material.YELLOW_GLAZED_TERRACOTTA, State.MID);
         register(Material.YELLOW_HARNESS, State.EARLY);
+        register(Material.YELLOW_POPLAR_LEAVES, State.EARLY);
         register(Material.YELLOW_SHULKER_BOX, State.LATE, ItemTag.END);
         register(Material.YELLOW_STAINED_GLASS, State.EARLY);
         register(Material.YELLOW_STAINED_GLASS_PANE, State.EARLY);
         register(Material.YELLOW_TERRACOTTA, State.EARLY);
         register(Material.YELLOW_WOOL, State.EARLY);
+        register(Material.YELLOW_WOOL_SLAB, State.EARLY);
+        register(Material.YELLOW_WOOL_STAIRS, State.EARLY);
     }
 
     public enum ItemTag {

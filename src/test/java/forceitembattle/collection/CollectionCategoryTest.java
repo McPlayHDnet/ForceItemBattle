@@ -12,10 +12,7 @@ import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
 import org.bukkit.Material;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockbukkit.mockbukkit.MockBukkit;
 
 /**
  * {@link CollectionCategory}, whose correctness is entirely a matter of <em>declaration order</em>.
@@ -26,21 +23,9 @@ import org.mockbukkit.mockbukkit.MockBukkit;
  * just before it. Either one broken puts items in the wrong bucket of the collection book, or
  * removes a whole category from it, and nothing else would say so.
  *
- * <p>Needs a server, which was not obvious: {@code isFoodItem} asks {@code Material.isEdible()},
- * and on Paper 26 that resolves through the item registry. Without one, MockBukkit reports a
- * version mismatch — its guess at why its registry is empty — several frames from the actual cause.
+ * <p>Categorisation is a pure function of the material name, so this class boots no server.
  */
 class CollectionCategoryTest {
-
-    @BeforeEach
-    void setUp() {
-        MockBukkit.mock();
-    }
-
-    @AfterEach
-    void tearDown() {
-        MockBukkit.unmock();
-    }
 
     @Test
     void otherIsLast() {
@@ -155,6 +140,51 @@ class CollectionCategoryTest {
             assertNotNull(category.getDisplayName(), category + " needs a display name");
             assertTrue(category.getDisplayName().length() > 0);
             assertNotNull(category.getHeadTexture(), category + " needs a head texture");
+        }
+    }
+
+    /** Maps must beat two earlier claims: Utility takes {@code MAP}, and Wood takes "JUNGLE". */
+    @Test
+    void explorerMapsAreTheirOwnCategory() {
+        assertCategory(CollectionCategory.MAPS, "MAP", "FILLED_MAP", "BURIED_TREASURE_MAP",
+                "WOODLAND_MANSION_MAP", "PLAINS_VILLAGE_MAP", "ABANDONED_CAMP_MAP",
+                "JUNGLE_PYRAMID_MAP");
+    }
+
+    /** The variants carry _WOOL as an infix, not a suffix, and cushions carry it not at all. */
+    @Test
+    void woolVariantsAndCushionsAreFabric() {
+        assertCategory(CollectionCategory.WOOL_AND_FABRIC, "RED_WOOL", "RED_WOOL_SLAB",
+                "RED_WOOL_STAIRS", "RED_CUSHION", "STRAW_BED");
+    }
+
+    /** Without POPLAR in {@code WOOD_TYPES} the button and pressure plate fall through to Redstone. */
+    @Test
+    void poplarIsWood() {
+        assertCategory(CollectionCategory.WOOD, "POPLAR_LOG", "POPLAR_PLANKS", "POPLAR_DOOR",
+                "POPLAR_BUTTON", "POPLAR_PRESSURE_PLATE", "POPLAR_SHELF", "STRIPPED_POPLAR_WOOD",
+                "POPLAR_BOAT");
+        assertEquals("POPLAR", MaterialCategory.getWoodCategory("POPLAR_LOG"));
+    }
+
+    /** Leaves and saplings stay plants whatever wood they belong to — Flowers is declared before Wood. */
+    @Test
+    void poplarLeavesAndSaplingsStayPlants() {
+        assertCategory(CollectionCategory.FLOWERS_AND_PLANTS, "POPLAR_SAPLING", "RED_POPLAR_LEAVES",
+                "ORANGE_POPLAR_LEAVES", "YELLOW_POPLAR_LEAVES", "RED_SHRUB", "SHELF_MUSHROOM");
+    }
+
+    /** Slab and stair variants follow the block they are cut from, not the Utility catch-all. */
+    @Test
+    void concreteVariantsStayWithConcrete() {
+        assertCategory(CollectionCategory.CLAY_BLOCKS, "CYAN_CONCRETE", "CYAN_CONCRETE_SLAB",
+                "CYAN_CONCRETE_STAIRS");
+    }
+
+    /** By name, so 26.3 materials can be asserted while the test classpath is still on 26.2. */
+    private static void assertCategory(CollectionCategory expected, String... names) {
+        for (String name : names) {
+            assertEquals(expected, CollectionCategory.categoryOf(name), name);
         }
     }
 }

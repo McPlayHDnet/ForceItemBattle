@@ -6,6 +6,7 @@ import static forceitembattle.achievements.Finds.skipped;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -14,7 +15,9 @@ import forceitembattle.achievements.handlers.InventoryFullAchievementHandler;
 import forceitembattle.achievements.progress.CollectionAchievementProgress;
 import forceitembattle.collection.MaterialCategory;
 import forceitembattle.model.ForceItemPlayer;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import org.bukkit.Material;
@@ -153,13 +156,22 @@ class InventoryAndCollectionHandlersTest {
                 }
             }
 
-            assertEquals(required, representative.keySet(),
-                    "every required wood category must be reachable from some material");
+            // A category may be missing only because this API version has no material for it yet.
+            // Missing for any other reason is a predicate bug that makes the achievement uncompletable.
+            Set<String> missing = new LinkedHashSet<>(required);
+            missing.removeAll(representative.keySet());
+            for (String category : missing) {
+                assertFalse(Arrays.stream(Material.values()).anyMatch(m -> m.name().contains(category)),
+                        category + " has materials on this API but getWoodCategory produces none of them");
+            }
 
             ForceItemPlayer alice = participant("a");
             CollectionAchievementHandler<String> handler = CollectionAchievementHandler.woodTypesHandler();
             CollectionAchievementProgress<String> progress = handler.createProgress();
             FakeAchievementWorld world = new FakeAchievementWorld();
+
+            // The grant needs the whole set, so it can only be driven when the whole set exists.
+            assumeTrue(missing.isEmpty(), "not every wood exists on this API version yet: " + missing);
 
             int seen = 0;
             boolean granted = false;

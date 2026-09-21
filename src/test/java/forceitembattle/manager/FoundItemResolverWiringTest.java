@@ -10,6 +10,7 @@ import forceitembattle.randomevents.RandomEventManager;
 import forceitembattle.service.FIBServiceClient;
 import forceitembattle.settings.GameSettings;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -61,16 +62,25 @@ class FoundItemResolverWiringTest {
      * two numbers for one find, differing systematically rather than racily.
      *
      * <p>Asserted structurally rather than by driving a find, which needs a server: the resolver must
-     * not be able to ask for the odds at all. It takes what {@code handleAfterFind} returns, and a
-     * second computation is unavailable to it because {@code BackToBackManager} exposes none.
+     * not be able to get hold of the odds at all. {@code BackToBackManager} hands them to nobody — it
+     * attaches them to the event it schedules, which is the find they actually describe.
+     *
+     * <p>That last part is the second bug this guards. While {@code handleAfterFind} returned the
+     * probability, the resolver recorded it against the find in hand, but the number is computed for
+     * the item <em>just handed out</em> — the next find. Each item was stored with its successor's
+     * rarity and the closing link of every chain with none, which read as "null" in the result GUI
+     * and, since {@code MatchHistoryReporter} drops a null rarity, as a missing back-to-back on the
+     * website. A chain of one has nothing but a closing link, so a lone back-to-back disappeared.
      */
     @Test
-    void cannotComputeTheOddsASecondTime() {
-        boolean exposesAProbabilityQuery = List.of(BackToBackManager.class.getMethods()).stream()
-                .anyMatch(method -> BackToBackProbability.class.equals(method.getReturnType()));
+    void cannotGetTheOddsToRecordAgainstTheWrongFind() {
+        boolean handsOutAProbability = List.of(BackToBackManager.class.getMethods()).stream()
+                .anyMatch(method -> BackToBackProbability.class.equals(method.getReturnType())
+                        || Optional.class.equals(method.getReturnType()));
 
-        assertFalse(exposesAProbabilityQuery,
-                "the odds are returned by handleAfterFind and nowhere else; a second entry point "
-                        + "lets a caller compute them again at a different streak");
+        assertFalse(handsOutAProbability,
+                "BackToBackManager must not return the odds: they belong to the find it schedules, "
+                        + "not to the one that called in, and a caller holding them can only record "
+                        + "them against the previous item");
     }
 }
