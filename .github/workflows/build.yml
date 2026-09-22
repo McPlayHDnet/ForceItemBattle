@@ -22,8 +22,11 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      # Release builds only assemble the jar. The test suite is the PR gate (ci.yml)
+      # and running it a second time here buys nothing but a second chance to fail
+      # the release on a test that already passed once.
       - name: Build with Gradle
-        run: ./gradlew build
+        run: ./gradlew build -x test
 
       - name: Create Release
         id: create_release
