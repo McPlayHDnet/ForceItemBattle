@@ -13,13 +13,13 @@ import org.bukkit.entity.Player;
  * team's name and colour are its social half and have no solo counterpart, and giving the interface
  * a display name is how that split starts eroding.
  */
-final class ResultDisplay {
+public final class ResultDisplay {
 
     private ResultDisplay() {
     }
 
     /** The name shown in the reveal title and the chat line. */
-    static String nameOf(ScoreOwner owner) {
+    public static String nameOf(ScoreOwner owner) {
         if (!(owner instanceof Team team)) {
             return owner.members().isEmpty() ? "?" : owner.members().get(0).player().getName();
         }
@@ -32,12 +32,12 @@ final class ResultDisplay {
     }
 
     /** The window title of a reopened screen. */
-    static String windowTitleFor(ScoreOwner owner) {
+    public static String windowTitleFor(ScoreOwner owner) {
         return owner instanceof Team team ? "Team " + team.getTeamDisplay() : nameOf(owner);
     }
 
     /** What to pass back to {@code /result} to reopen this owner's screen. */
-    static String resultArgumentFor(ScoreOwner owner) {
+    public static String resultArgumentFor(ScoreOwner owner) {
         if (owner instanceof Team team) {
             return "#" + team.getTeamId();
         }
@@ -48,7 +48,7 @@ final class ResultDisplay {
      * The member who handed this item in, or null when it cannot be attributed. Whether it is
      * <em>shown</em> is {@link #attributesCollectors(ScoreOwner)}.
      */
-    static String collectorName(ScoreOwner owner, java.util.UUID collectedBy) {
+    public static String collectorName(ScoreOwner owner, java.util.UUID collectedBy) {
         if (collectedBy == null) {
             return null;
         }
@@ -64,7 +64,7 @@ final class ResultDisplay {
      * Whether the screen names who collected each item. More than one member is the actual condition,
      * not "is this a team" — those coincide only while teams are the sole owner with members.
      */
-    static boolean attributesCollectors(ScoreOwner owner) {
+    public static boolean attributesCollectors(ScoreOwner owner) {
         return owner.members().size() > 1;
     }
 }

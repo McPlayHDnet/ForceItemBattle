@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import forceitembattle.ceremony.ResultStage;
+import forceitembattle.ceremony.StageWorldMock;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.ScoreboardManager;
 import forceitembattle.manager.TeamsManager;
@@ -43,6 +45,7 @@ class PlayerLifecycleListenerTest extends ListenerTestBase {
     private Roster roster;
     private Gamemanager gamemanager;
     private PlayerLifecycleListener listener;
+    private final ResultStage resultStage = new ResultStage(mock(GameSettings.class), StageWorldMock.SEATS);
 
     @BeforeEach
     void setUpListener() {
@@ -60,7 +63,8 @@ class PlayerLifecycleListenerTest extends ListenerTestBase {
                 mock(ScoreboardManager.class),
                 mock(GameSettings.class),
                 mock(TeamsManager.class),
-                timerManager);
+                timerManager,
+                this.resultStage);
     }
 
     /**
@@ -113,6 +117,23 @@ class PlayerLifecycleListenerTest extends ListenerTestBase {
         @BeforeEach
         void aRoundThatEndedWhileTheyWereGone() {
             phase(GameState.END_GAME);
+        }
+
+        @Test
+        void theyAreSeatedAtTheStageOnceTheirClientHasCaughtUp() {
+            StageWorldMock stageWorld = new StageWorldMock(server, "stage");
+            server.addWorld(stageWorld);
+            resultStage.open(stageWorld.getSpawnLocation());
+            PlayerMock player = arrivingMidRoundShaped("Understudy1");
+            onRoster(player);
+
+            join(player);
+            assertFalse(player.isInsideVehicle(), "mounting inside the join event desyncs the client");
+
+            tick(5);
+            assertTrue(player.isInsideVehicle());
+            assertTrue(resultStage.isSeat(player.getVehicle()));
+            resultStage.close();
         }
 
         @Test

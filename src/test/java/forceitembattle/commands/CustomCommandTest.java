@@ -345,7 +345,7 @@ class CustomCommandTest {
             assertGates(new forceitembattle.commands.player.CommandBed(), "");
             assertGates(new forceitembattle.commands.player.CommandInfo(null, null, null, null), "");
             assertGates(new forceitembattle.commands.player.CommandInfoWiki(null, null), "");
-            assertGates(new forceitembattle.commands.player.CommandResult(null, null, null, null, null, null), "");
+            assertGates(new forceitembattle.commands.player.CommandResult(null, null, null, null, null, null, null), "");
             assertGates(new forceitembattle.commands.player.CommandSpectate(null), "");
         }
     }

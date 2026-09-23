@@ -1,6 +1,7 @@
 package forceitembattle.model;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +58,14 @@ public final class ResultCeremony {
             return Optional.empty();
         }
         return Optional.of(this.order.get(this.next++));
+    }
+
+    /** Everyone placed first to third, best first. Ties share a place, so this can hold more than three. */
+    public List<Reveal> podium() {
+        return this.order.stream()
+                .filter(reveal -> reveal.place() <= 3)
+                .sorted(Comparator.comparingInt(Reveal::place))
+                .toList();
     }
 
     public boolean isFinished() {

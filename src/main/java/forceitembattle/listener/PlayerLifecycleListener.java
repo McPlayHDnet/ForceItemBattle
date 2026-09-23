@@ -1,5 +1,6 @@
 package forceitembattle.listener;
 
+import forceitembattle.ceremony.ResultStage;
 import forceitembattle.model.GameItems;
 import forceitembattle.model.RoundPhase;
 import forceitembattle.manager.ScoreboardManager;
@@ -36,6 +37,8 @@ import org.bukkit.inventory.ItemStack;
 
 @RequiredArgsConstructor
 public class PlayerLifecycleListener implements Listener {
+    private static final long SEAT_DELAY_TICKS = 5L;
+
     private final Roster roster;
     private final FIBServiceClient fibService;
     private final RoundPhase roundPhase;
@@ -44,6 +47,7 @@ public class PlayerLifecycleListener implements Listener {
     private final GameSettings settings;
     private final TeamsManager teamManager;
     private final TimerManager timerManager;
+    private final ResultStage resultStage;
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
@@ -69,6 +73,11 @@ public class PlayerLifecycleListener implements Listener {
             // return before it ends, and applyStartSetup outfits them when it does. Lobby buttons
             // would go to someone who is about to be a participant.
             case RECONNECTING_BEFORE_START -> { }
+        }
+
+        if (this.roundPhase.isEndGame()) {
+            // Mounting inside the join event leaves the client out of sync with its seat.
+            Scheduler.runLaterSync(() -> this.resultStage.seat(player), SEAT_DELAY_TICKS);
         }
 
         this.scoreboardManager.setupForPlayer(player);

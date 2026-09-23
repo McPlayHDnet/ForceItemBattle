@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import forceitembattle.ceremony.ResultStage;
 import forceitembattle.commands.player.CommandResult;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.TeamsManager;
@@ -28,8 +29,8 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
 /**
  * {@code /result}'s argument handling — the paths that refuse before anything is opened.
  *
- * <p>Only the refusals are reachable here. Opening a result screen builds a {@code ResultScreen} or a
- * {@code ResultReveal}, which build {@code ItemStack}s, which needs a running server — see {@code HeadlessBoundaryTest}.
+ * <p>Only the refusals are reachable here. Opening a result screen builds a {@code ResultScreen}, which builds
+ * {@code ItemStack}s, which needs a running server — see {@code HeadlessBoundaryTest}.
  * That is not a gap in this test so much as the reason these three bugs survived: every path that
  * could be tested was a path that returned early, and none of them did.
  *
@@ -61,7 +62,7 @@ class CommandResultTest {
         forceitembattle.model.RoundPhase phase = new forceitembattle.model.RoundPhase();
         phase.moveTo(forceitembattle.model.GameState.END_GAME);
 
-        this.command = new CommandResult(gamemanager, phase, this.roster, this.settings, this.teamManager, mock(ResultCeremony.class));
+        this.command = new CommandResult(gamemanager, phase, this.roster, this.settings, this.teamManager, mock(ResultCeremony.class), mock(ResultStage.class));
         ((CustomCommand) this.command).setContext(new CommandContext(phase, null, this.roster));
     }
 
