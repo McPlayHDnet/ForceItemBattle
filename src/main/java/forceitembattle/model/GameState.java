@@ -24,9 +24,8 @@ public enum GameState {
     /**
      * The round has started and has not finished, paused or not.
      *
-     * <p><b>A pause stops this plugin's clock, not the world's.</b> Blocks still tick, primed TNT
-     * still detonates, lava still flows and fire still spreads. Anything guarding the <em>world</em>
-     * rather than gating play wants this, not {@link #roundRunning()}.
+     * <p>Anything guarding the <em>world</em> rather than gating play wants this, not
+     * {@link #roundRunning()}: the world is frozen during a pause, not unprotected.
      */
     public boolean roundInProgress() {
         return this == MID_GAME || this == PAUSED_GAME;

@@ -381,6 +381,8 @@ public class Gamemanager implements Manager {
         this.matchHistory.onPaused();
         this.roundPhase.moveTo(GameState.PAUSED_GAME);
         this.clearMobTargets();
+        // Stops block entities, redstone, fluids and mobs; players keep ticking.
+        Bukkit.getServerTickManager().setFrozen(true);
     }
 
     /**
@@ -419,6 +421,7 @@ public class Gamemanager implements Manager {
      */
     public void resumeGame() {
         this.matchHistory.onResumed();
+        Bukkit.getServerTickManager().setFrozen(false);
         this.roundPhase.moveTo(GameState.MID_GAME);
     }
 

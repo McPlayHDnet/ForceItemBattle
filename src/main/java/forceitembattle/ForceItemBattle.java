@@ -49,6 +49,7 @@ import forceitembattle.listener.GameRulesListener;
 import forceitembattle.listener.GuiListener;
 import forceitembattle.listener.ItemsListener;
 import forceitembattle.listener.JournalListener;
+import forceitembattle.listener.PauseLockListener;
 import forceitembattle.listener.PlayerLifecycleListener;
 import forceitembattle.listener.PortalListener;
 import forceitembattle.listener.PreGameLockListener;
@@ -395,6 +396,7 @@ public final class ForceItemBattle extends JavaPlugin {
                 new AntimatterPortalListener(this.antimatterPortalManager, this.roundPhase),
                 new AchievementListener(this.roster, this.achievementManager, this.backpackManager, this.roundPhase, this.settings),
                 new PreGameLockListener(this.roundPhase),
+                new PauseLockListener(this.roundPhase),
                 new ChatListener(this.roster, this.gamemanager, this.settings),
                 new PlayerLifecycleListener(this.roster, this.fibService, this.roundPhase, this.gamemanager, this.scoreboardManager, this.settings, this.teamManager, this.timerManager),
                 new TradeListener(this.wanderingTraderManager),
