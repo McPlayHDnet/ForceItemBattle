@@ -40,8 +40,6 @@ final class StageLayout {
     static final double SEAT_HEIGHT = 4.3;
     /** Roughly where a player sitting on a cushion has their eyes, above the cushion's base. */
     static final double EYE_HEIGHT = 1.3;
-    /** The front-centre seat's eyes: the one point every item on the canvas is turned towards. */
-    static final Point AUDIENCE_EYE = new Point(0, SEAT_HEIGHT + EYE_HEIGHT, SEAT_DISTANCE);
 
     static final double FOOTPRINT_HALF_WIDTH = (SEATS_PER_ROW / 2 + 2) * SEAT_SPACING;
     static final double FOOTPRINT_FRONT = -1.5;
@@ -119,13 +117,8 @@ final class StageLayout {
         return new Facing(yaw, pitch);
     }
 
-    /**
-     * How an item at {@code point} faces the audience. An item display's front is its local +Z, the
-     * same way an entity looks, so this is simply the look from the item to the audience's eyes.
-     */
-    static Facing towardsAudience(Point point) {
-        return lookAt(point, AUDIENCE_EYE);
-    }
+    /** Every item faces straight south, parallel to the canvas, so the grid reads like an inventory. */
+    static final Facing ITEM_FACING = new Facing(0, 0);
 
     /** First place in the middle, second to the audience's left, third to their right. */
     static double podiumX(int place) {

@@ -276,24 +276,20 @@ class ResultStageTest {
             }
         }
 
-        /** Each settled item is turned at the audience's eyes from its own slot, not billboarded. */
+        /** Every settled item faces the same way, flat like an inventory slot, not billboarded. */
         @Test
-        void everyItemIsAimedAtTheAudience() {
+        void everyItemLiesFlatOnTheCanvas() {
             PlayerMock player = server.addPlayer("Understudy1");
             open();
-            Location seat = player.getVehicle().getLocation();
-            Location anchor = seat.clone().subtract(0, StageLayout.SEAT_HEIGHT, StageLayout.SEAT_DISTANCE);
 
             stage.reveal(new Reveal(owner(player, plain(), plain(), plain(), plain()), 1, false), () -> { }, () -> { });
             tick(WHOLE_REVEAL);
 
             for (ItemDisplay item : itemsOnStage()) {
                 Location at = item.getLocation();
-                StageLayout.Facing expected = StageLayout.towardsAudience(new StageLayout.Point(
-                        at.getX() - anchor.getX(), at.getY() - anchor.getY(), at.getZ() - anchor.getZ()));
                 assertEquals(Display.Billboard.FIXED, item.getBillboard());
-                assertEquals(expected.yaw(), at.getYaw(), 1e-3);
-                assertEquals(expected.pitch(), at.getPitch(), 1e-3);
+                assertEquals(0, at.getYaw(), 1e-3);
+                assertEquals(0, at.getPitch(), 1e-3);
             }
         }
 

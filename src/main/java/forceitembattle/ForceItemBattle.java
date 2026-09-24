@@ -45,6 +45,8 @@ import forceitembattle.commands.player.CommandStats;
 import forceitembattle.commands.player.CommandTeams;
 import forceitembattle.commands.player.CommandVote;
 import forceitembattle.commands.player.CommandVoteSkip;
+import forceitembattle.fairplay.ModDetections;
+import forceitembattle.fairplay.OpTransparencyListener;
 import forceitembattle.gui.GuiContext;
 import forceitembattle.listener.AntimatterPortalListener;
 import forceitembattle.listener.ChatListener;
@@ -86,7 +88,6 @@ import forceitembattle.manager.TeamsManager;
 import forceitembattle.manager.TimerManager;
 import forceitembattle.manager.VoteSkipManager;
 import forceitembattle.manager.WanderingTraderManager;
-import forceitembattle.moddetection.ModDetections;
 import forceitembattle.model.FindDetection;
 import forceitembattle.model.ResultCeremony;
 import forceitembattle.model.Roster;
@@ -420,7 +421,8 @@ public final class ForceItemBattle extends JavaPlugin {
                 new GuiListener(),
                 new JournalListener(),
                 new XaeroMinimapListener(this.modDetections),
-                new FreecamListener(this.modDetections)
+                new FreecamListener(this.modDetections),
+                new OpTransparencyListener(this.roundPhase)
         );
 
     }

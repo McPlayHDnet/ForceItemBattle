@@ -7,7 +7,8 @@ public enum Prefix {
 
     LOCATOR("<dark_purple>", "Locator"),
     POSITION("<gold>", "Position"),
-    RANDOM_EVENT("<light_purple>", "Event");
+    RANDOM_EVENT("<light_purple>", "Event"),
+    FAIR_PLAY("<aqua>", "Fair Play");
 
     private final String value;
 

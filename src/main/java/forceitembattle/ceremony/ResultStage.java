@@ -259,11 +259,9 @@ public final class ResultStage implements Manager {
         ItemDisplay display = this.spawn(StageLayout.SPOTLIGHT, ItemDisplay.class, spawned -> {
             spawned.setItemStack(CustomMaterials.itemStackOf(item.material()));
             spawned.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.GUI);
-            // Aimed at the audience rather than billboarded: a billboard copies the camera's angle,
-            // so every item off the centre of the view was seen from the side.
+            // Not billboarded: a billboard copies the camera's angle, so items off the centre of the view were seen from the side.
             spawned.setBillboard(Display.Billboard.FIXED);
-            Facing facing = StageLayout.towardsAudience(StageLayout.SPOTLIGHT);
-            spawned.setRotation(facing.yaw(), facing.pitch());
+            spawned.setRotation(StageLayout.ITEM_FACING.yaw(), StageLayout.ITEM_FACING.pitch());
             spawned.setBrightness(FULL_BRIGHT);
             spawned.setTeleportDuration(StageTimeline.FLIGHT_TICKS);
             spawned.setTransformation(facingViewer(0f));
@@ -278,11 +276,9 @@ public final class ResultStage implements Manager {
         this.cues.at(1, () -> animate(display, facingViewer(StageLayout.SPOTLIGHT_SCALE * 1.15f), POP_TICKS));
         this.cues.at(1 + POP_TICKS, () -> animate(display, facingViewer(StageLayout.SPOTLIGHT_SCALE), SETTLE_TICKS));
         this.cues.at(StageTimeline.holdFor(item, event), () -> {
-            Point slot = layout.slot(index);
-            Facing facing = StageLayout.towardsAudience(slot);
-            Location target = this.locationOf(slot);
-            target.setYaw(facing.yaw());
-            target.setPitch(facing.pitch());
+            Location target = this.locationOf(layout.slot(index));
+            target.setYaw(StageLayout.ITEM_FACING.yaw());
+            target.setPitch(StageLayout.ITEM_FACING.pitch());
             display.teleport(target);
             animate(display, facingViewer(layout.itemScale()), StageTimeline.FLIGHT_TICKS);
         });

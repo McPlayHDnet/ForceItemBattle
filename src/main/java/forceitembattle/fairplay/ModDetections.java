@@ -1,4 +1,4 @@
-package forceitembattle.moddetection;
+package forceitembattle.fairplay;
 
 import java.util.ArrayList;
 import java.util.EnumSet;

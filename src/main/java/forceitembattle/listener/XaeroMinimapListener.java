@@ -1,7 +1,7 @@
 package forceitembattle.listener;
 
-import forceitembattle.moddetection.ModDetections;
-import forceitembattle.moddetection.ModFinding;
+import forceitembattle.fairplay.ModDetections;
+import forceitembattle.fairplay.ModFinding;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;

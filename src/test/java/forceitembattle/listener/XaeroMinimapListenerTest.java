@@ -5,8 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
-import forceitembattle.moddetection.ModDetections;
-import forceitembattle.moddetection.ModFinding;
+import forceitembattle.fairplay.ModDetections;
+import forceitembattle.fairplay.ModFinding;
 import java.util.List;
 import java.util.Set;
 import net.kyori.adventure.text.Component;

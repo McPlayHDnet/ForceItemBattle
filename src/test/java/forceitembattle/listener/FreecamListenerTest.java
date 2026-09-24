@@ -12,8 +12,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.destroystokyo.paper.event.player.PlayerUseUnknownEntityEvent;
-import forceitembattle.moddetection.ModDetections;
-import forceitembattle.moddetection.ModFinding;
+import forceitembattle.fairplay.ModDetections;
+import forceitembattle.fairplay.ModFinding;
 import io.papermc.paper.event.packet.UncheckedSignChangeEvent;
 import io.papermc.paper.event.player.PlayerClientLoadedWorldEvent;
 import io.papermc.paper.math.BlockPosition;
@@ -139,7 +139,7 @@ class FreecamListenerTest extends ListenerTestBase {
     void usingTheCameraEntityIsAnnouncedAsFreecamInUse(int entityId) {
         this.listener.onUseUnknownEntity(new PlayerUseUnknownEntityEvent(this.player, entityId, true, EquipmentSlot.HAND, null));
 
-        assertEquals("Freecam in use by Understudy1.", nextBroadcast());
+        assertEquals("» Fair Play ┃ Freecam in use by Understudy1.", nextBroadcast());
         assertEquals(List.of(ModFinding.FREECAM_IN_USE), findings());
     }
 

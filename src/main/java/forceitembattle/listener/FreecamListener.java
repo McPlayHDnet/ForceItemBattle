@@ -1,8 +1,8 @@
 package forceitembattle.listener;
 
 import com.destroystokyo.paper.event.player.PlayerUseUnknownEntityEvent;
-import forceitembattle.moddetection.ModDetections;
-import forceitembattle.moddetection.ModFinding;
+import forceitembattle.fairplay.ModDetections;
+import forceitembattle.fairplay.ModFinding;
 import forceitembattle.util.Scheduler;
 import forceitembattle.util.Text;
 import io.papermc.paper.event.packet.UncheckedSignChangeEvent;

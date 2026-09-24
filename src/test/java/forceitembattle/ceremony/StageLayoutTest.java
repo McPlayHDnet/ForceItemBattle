@@ -129,38 +129,6 @@ class StageLayoutTest {
         }
     }
 
-    /**
-     * Items are turned to face the audience rather than billboarded. A billboard copies the camera's
-     * angle, so an item left of the view was seen from its side instead of like its inventory icon.
-     */
-    @Nested
-    class TheFacing {
-
-        @Test
-        void theAudienceEyeIsTheFrontCentreSeats() {
-            Point eye = StageLayout.seat(0).plus(0, StageLayout.EYE_HEIGHT, 0);
-            assertEquals(eye, StageLayout.AUDIENCE_EYE);
-        }
-
-        @Test
-        void anItemAboveTheAudienceTurnsDownTowardsThem() {
-            Facing facing = StageLayout.towardsAudience(StageLayout.CANVAS_CENTRE);
-
-            assertEquals(0, facing.yaw(), 1e-3, "straight south, at the seats");
-            assertTrue(facing.pitch() > 0, "a positive pitch looks down");
-        }
-
-        @Test
-        void itemsOffCentreTurnInwards() {
-            Facing left = StageLayout.towardsAudience(new Point(-6, 8, 0.3));
-            Facing right = StageLayout.towardsAudience(new Point(6, 8, 0.3));
-
-            assertTrue(left.yaw() < 0, "left item turns towards the audience's centre: " + left.yaw());
-            assertTrue(right.yaw() > 0, "right item turns towards the audience's centre: " + right.yaw());
-            assertEquals(-left.yaw(), right.yaw(), 1e-3);
-        }
-    }
-
     @Nested
     class TheAnchor {
 

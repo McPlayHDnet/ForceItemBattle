@@ -1,4 +1,6 @@
-package forceitembattle.moddetection;
+package forceitembattle.fairplay;
+
+import forceitembattle.util.Prefix;
 
 public enum ModFinding {
 
@@ -13,6 +15,6 @@ public enum ModFinding {
     }
 
     public String message(String playerName) {
-        return this.template.formatted(playerName);
+        return Prefix.FAIR_PLAY + this.template.formatted(playerName);
     }
 }

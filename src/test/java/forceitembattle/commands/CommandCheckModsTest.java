@@ -5,8 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import forceitembattle.commands.admin.CommandCheckMods;
-import forceitembattle.moddetection.ModDetections;
-import forceitembattle.moddetection.ModFinding;
+import forceitembattle.fairplay.ModDetections;
+import forceitembattle.fairplay.ModFinding;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,7 +44,7 @@ class CommandCheckModsTest {
 
     @Test
     void nothingDetectedSaysSo() {
-        assertEquals("§7No client mods detected.\n", run());
+        assertEquals("§8» §bFair Play §8┃ §7No client mods detected.\n", run());
     }
 
     @Test
@@ -54,16 +54,28 @@ class CommandCheckModsTest {
         this.modDetections.record(cheater.getUniqueId(), "Understudy1", ModFinding.XAERO_MINIMAP);
 
         assertEquals("""
-                §6Xaero's Minimap §7detected for §eUnderstudy1§7 - it got automatically disabled.
-                §6Freecam §7detected for §eUnderstudy1§7.
+                §8» §bFair Play §8┃ §6Xaero's Minimap §7detected for §eUnderstudy1§7 - it got automatically disabled.
+                §8» §bFair Play §8┃ §6Freecam §7detected for §eUnderstudy1§7.
                 """, run());
+    }
+
+    @Test
+    void findingsAreBroadcastButTheEmptyAnswerIsNot() {
+        PlayerMock bystander = this.server.addPlayer("Bystander");
+
+        run();
+        assertEquals("", screenOf(bystander));
+
+        this.modDetections.record(bystander.getUniqueId(), "Bystander", ModFinding.FREECAM_INSTALLED);
+        run();
+        assertEquals("§8» §bFair Play §8┃ §6Freecam §7detected for §eBystander§7.\n", screenOf(bystander));
     }
 
     @Test
     void aPlayerWhoLeftIsStillListedAndMarkedOffline() {
         this.modDetections.record(UUID.randomUUID(), "Gone", ModFinding.FREECAM_INSTALLED);
 
-        assertEquals("§6Freecam §7detected for §eGone§7. §8(offline)\n", run());
+        assertEquals("§8» §bFair Play §8┃ §6Freecam §7detected for §eGone§7. §8(offline)\n", run());
     }
 
     @Test
@@ -81,8 +93,8 @@ class CommandCheckModsTest {
     void clearForgetsEveryFinding() {
         this.modDetections.record(UUID.randomUUID(), "Understudy1", ModFinding.FREECAM_INSTALLED);
 
-        assertEquals("§7Cleared all detections. Players are checked again when they reconnect.\n", run("clear"));
-        assertEquals("§7No client mods detected.\n", run());
+        assertEquals("§8» §bFair Play §8┃ §7Cleared all detections. Players are checked again when they reconnect.\n", run("clear"));
+        assertEquals("§8» §bFair Play §8┃ §7No client mods detected.\n", run());
     }
 
     @Test
