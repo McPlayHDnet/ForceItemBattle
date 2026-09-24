@@ -135,6 +135,13 @@ class CollectionCategoryTest {
     }
 
     @Test
+    void theSulfurCubeBucketIsUtilityWhileSulfurBlocksAreStone() {
+        assertEquals(CollectionCategory.UTILITY, CollectionCategory.categoryOf(Material.SULFUR_CUBE_BUCKET));
+        assertEquals(CollectionCategory.STONE, CollectionCategory.categoryOf(Material.SULFUR_BRICKS));
+        assertEquals(CollectionCategory.STONE, CollectionCategory.categoryOf(Material.POTENT_SULFUR));
+    }
+
+    @Test
     void everyCategoryHasADisplayNameAndAHead() {
         for (CollectionCategory category : CollectionCategory.values()) {
             assertNotNull(category.getDisplayName(), category + " needs a display name");

@@ -7,8 +7,13 @@ import forceitembattle.achievements.PluginAchievementWorld;
 import forceitembattle.achievements.ServiceAchievementSink;
 import forceitembattle.achievements.global.GlobalStatsCache;
 import forceitembattle.achievements.global.GlobalStatsLoader;
+import forceitembattle.ceremony.CushionSeatListener;
+import forceitembattle.ceremony.CushionSeats;
+import forceitembattle.ceremony.ResultStage;
+import forceitembattle.ceremony.ResultStageListener;
 import forceitembattle.collection.CollectionManager;
 import forceitembattle.commands.CommandsManager;
+import forceitembattle.commands.admin.CommandCheckMods;
 import forceitembattle.commands.admin.CommandForceItem;
 import forceitembattle.commands.admin.CommandForceTeam;
 import forceitembattle.commands.admin.CommandItems;
@@ -40,15 +45,19 @@ import forceitembattle.commands.player.CommandStats;
 import forceitembattle.commands.player.CommandTeams;
 import forceitembattle.commands.player.CommandVote;
 import forceitembattle.commands.player.CommandVoteSkip;
+import forceitembattle.fairplay.ModDetections;
+import forceitembattle.fairplay.OpTransparencyListener;
 import forceitembattle.gui.GuiContext;
 import forceitembattle.listener.AntimatterPortalListener;
 import forceitembattle.listener.ChatListener;
 import forceitembattle.listener.ClickableItemsListener;
 import forceitembattle.listener.FoundItemListener;
+import forceitembattle.listener.FreecamListener;
 import forceitembattle.listener.GameRulesListener;
 import forceitembattle.listener.GuiListener;
 import forceitembattle.listener.ItemsListener;
 import forceitembattle.listener.JournalListener;
+import forceitembattle.listener.PauseLockListener;
 import forceitembattle.listener.PlayerLifecycleListener;
 import forceitembattle.listener.PortalListener;
 import forceitembattle.listener.PreGameLockListener;
@@ -58,6 +67,7 @@ import forceitembattle.listener.RecipeListener;
 import forceitembattle.listener.SettingsListener;
 import forceitembattle.listener.TradeListener;
 import forceitembattle.listener.VillagerTradeListener;
+import forceitembattle.listener.XaeroMinimapListener;
 import forceitembattle.manager.AntimatterPortalManager;
 import forceitembattle.manager.BackToBackManager;
 import forceitembattle.manager.BackpackManager;
@@ -135,6 +145,8 @@ public final class ForceItemBattle extends JavaPlugin {
      */
     private final GlobalStatsCache globalStatsCache = new GlobalStatsCache();
 
+    private final ModDetections modDetections = new ModDetections();
+
     /** Not a {@link Manager}: it owns no state and runs entirely inside a shutdown hook. */
     private WorldReset worldReset;
 
@@ -167,6 +179,7 @@ public final class ForceItemBattle extends JavaPlugin {
     private VoteSkipManager voteSkipManager;
     @Getter
     private ScoreboardManager scoreboardManager;
+    private ResultStage resultStage;
     private FIBServiceClient fibService;
     @Getter
     @Setter
@@ -219,7 +232,8 @@ public final class ForceItemBattle extends JavaPlugin {
                 this.voteSkipManager,
                 this.scoreboardManager,
                 this.fibService,
-                this.foundItemResolver);
+                this.foundItemResolver,
+                this.resultStage);
     }
 
     /**
@@ -292,8 +306,9 @@ public final class ForceItemBattle extends JavaPlugin {
         this.backToBackManager = register(new BackToBackManager(this.settings, this.itemDifficultiesManager,
                 this.backpackManager, this.fibService));
 
+        this.resultStage = register(new ResultStage(this.settings, new CushionSeats()));
         this.gamemanager = register(new Gamemanager(this, this.roster, this.roundPhase, this.settings,
-                this.roundClock, this.resultCeremony, this.itemDifficultiesManager, this.backpackManager,
+                this.roundClock, this.resultCeremony, this.resultStage, this.itemDifficultiesManager, this.backpackManager,
                 this.recipeManager, this.positionManager, this.scoreboardManager, this.teamManager,
                 this.wanderingTraderManager, this.randomEventManager, this.achievementManager,
                 this.fibService, this::setSpawnLocation));
@@ -395,13 +410,19 @@ public final class ForceItemBattle extends JavaPlugin {
                 new AntimatterPortalListener(this.antimatterPortalManager, this.roundPhase),
                 new AchievementListener(this.roster, this.achievementManager, this.backpackManager, this.roundPhase, this.settings),
                 new PreGameLockListener(this.roundPhase),
+                new PauseLockListener(this.roundPhase),
                 new ChatListener(this.roster, this.gamemanager, this.settings),
-                new PlayerLifecycleListener(this.roster, this.fibService, this.roundPhase, this.gamemanager, this.scoreboardManager, this.settings, this.teamManager, this.timerManager),
+                new PlayerLifecycleListener(this.roster, this.fibService, this.roundPhase, this.gamemanager, this.scoreboardManager, this.settings, this.teamManager, this.timerManager, this.resultStage),
                 new TradeListener(this.wanderingTraderManager),
                 new VillagerTradeListener(this),
                 new GameRulesListener(this.roundPhase, this.settings),
+                new ResultStageListener(this.resultStage),
+                new CushionSeatListener(this.resultStage),
                 new GuiListener(),
-                new JournalListener()
+                new JournalListener(),
+                new XaeroMinimapListener(this.modDetections),
+                new FreecamListener(this.modDetections),
+                new OpTransparencyListener(this.roundPhase)
         );
 
     }
@@ -422,7 +443,7 @@ public final class ForceItemBattle extends JavaPlugin {
         commands.registerCommand(new CommandReset(this.seedPool, this.worldReset));
         commands.registerCommand(new CommandBp(this.backpackManager));
         commands.registerCommand(new CommandResult(this.gamemanager, this.roundPhase, this.roster, this.settings,
-                this.teamManager, this.resultCeremony));
+                this.teamManager, this.resultCeremony, this.resultStage));
         commands.registerCommand(new CommandInfo(this.roster, this.roundPhase, this.itemDifficultiesManager, this.recipeManager));
         commands.registerCommand(new CommandItems(this.itemDifficultiesManager));
         commands.registerCommand(new CommandStopTimer(this.timerManager));
@@ -448,6 +469,7 @@ public final class ForceItemBattle extends JavaPlugin {
         commands.registerCommand(new CommandFixLocate(this.locatorManager));
         commands.registerCommand(new CommandForceItem(this.forceItemAssignment, this.settings, this.timerManager, this.roster, this.scoreboardManager));
         commands.registerCommand(new CommandRandomEvent(this.randomEventManager));
+        commands.registerCommand(new CommandCheckMods(this.modDetections));
 
         commands.warnAboutUnboundCommands();
     }

@@ -53,10 +53,9 @@ public class ProtectionListener implements Listener {
     }
 
     /**
-     * Protection applies for as long as the round does, <b>pause included</b>. A pause stops this
-     * plugin's clock and freezes the players; it does not stop the world. Asking {@code roundRunning}
-     * here switches off every gate below the moment someone types {@code /pause}, and primed TNT,
-     * lava, fire and pistons all start working again.
+     * Protection applies for as long as the round does, <b>pause included</b>. Asking
+     * {@code roundRunning} here would switch off every gate below the moment someone types
+     * {@code /pause}.
      */
     private boolean roundInProgress() {
         return this.roundPhase.roundInProgress();

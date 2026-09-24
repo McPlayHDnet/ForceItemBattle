@@ -110,6 +110,9 @@ public enum CollectionCategory {
         if (name.equals("PRISMARINE_SHARD") || name.equals("PRISMARINE_CRYSTALS")) {
             return false; // guardian drops -> Mob Drops, not stone blocks
         }
+        if (name.endsWith("_BUCKET")) {
+            return false; // SULFUR_CUBE_BUCKET -> Utility with the other buckets
+        }
         // isStoneType excludes sandstone for the achievement; the book adds it and all brick blocks.
         // Nether/End bricks are claimed earlier.
         return MaterialCategory.isStoneType(name)

@@ -123,6 +123,52 @@ class ResultCeremonyTest {
     }
 
     @Nested
+    class ThePodium {
+
+        @Test
+        void holdsTheTopThreeBestFirst() {
+            ScoreOwner first = owner("first");
+            ScoreOwner second = owner("second");
+            ScoreOwner third = owner("third");
+            ScoreOwner fourth = owner("fourth");
+
+            ResultCeremony ceremony = new ResultCeremony();
+            ceremony.beginFor(UUID.randomUUID(),
+                    ResultCeremony.orderFrom(placesBestFirst(first, second, third, fourth)));
+
+            assertEquals(List.of(first, second, third),
+                    ceremony.podium().stream().map(Reveal::owner).toList());
+        }
+
+        /** A shared place is a shared step, so a tie can put four owners on three steps. */
+        @Test
+        void keepsEveryoneTiedOnAStep() {
+            Map<ScoreOwner, Integer> tied = new LinkedHashMap<>();
+            tied.put(owner("a"), 1);
+            tied.put(owner("b"), 2);
+            tied.put(owner("c"), 2);
+            tied.put(owner("d"), 3);
+            tied.put(owner("e"), 4);
+
+            ResultCeremony ceremony = new ResultCeremony();
+            ceremony.beginFor(UUID.randomUUID(), ResultCeremony.orderFrom(tied));
+
+            assertEquals(List.of(1, 2, 2, 3), ceremony.podium().stream().map(Reveal::place).toList());
+        }
+
+        /** Reading the podium is not handing out a reveal. */
+        @Test
+        void doesNotAdvanceTheWalk() {
+            ResultCeremony ceremony = new ResultCeremony();
+            ceremony.beginFor(UUID.randomUUID(), ResultCeremony.orderFrom(placesBestFirst(owner("only"))));
+
+            ceremony.podium();
+
+            assertFalse(ceremony.isFinished());
+        }
+    }
+
+    @Nested
     class TheWinnerHook {
 
         /** Exactly one reveal is the last, and it is the one handed out last. */

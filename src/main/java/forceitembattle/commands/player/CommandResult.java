@@ -2,7 +2,8 @@ package forceitembattle.commands.player;
 
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.Precondition;
-import forceitembattle.gui.ResultReveal;
+import forceitembattle.ceremony.ResultStage;
+import forceitembattle.gui.ResultPages;
 import forceitembattle.gui.ResultScreen;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.TeamsManager;
@@ -30,8 +31,9 @@ public final class CommandResult extends CustomCommand {
     private final GameSettings settings;
     private final TeamsManager teamManager;
     private final ResultCeremony resultCeremony;
+    private final ResultStage resultStage;
 
-    public CommandResult(Gamemanager gamemanager, RoundPhase roundPhase, Roster roster, GameSettings settings, TeamsManager teamManager, ResultCeremony resultCeremony) {
+    public CommandResult(Gamemanager gamemanager, RoundPhase roundPhase, Roster roster, GameSettings settings, TeamsManager teamManager, ResultCeremony resultCeremony, ResultStage resultStage) {
         super("result");
         this.gamemanager = gamemanager;
         this.roundPhase = roundPhase;
@@ -39,6 +41,7 @@ public final class CommandResult extends CustomCommand {
         this.settings = settings;
         this.teamManager = teamManager;
         this.resultCeremony = resultCeremony;
+        this.resultStage = resultStage;
         setDescription("Show the next player's result");
     }
 
@@ -110,6 +113,16 @@ public final class CommandResult extends CustomCommand {
     private void showNextResult(Player player) {
         ResultCeremony ceremony = this.resultCeremony;
 
+        if (!this.resultStage.isOpen()) {
+            player.sendMessage(Text.of("<red>The result stage could not be built."));
+            return;
+        }
+        // Checked before nextReveal(), which advances: a refused call must not skip anyone.
+        if (this.resultStage.isRevealing()) {
+            player.sendMessage(Text.of("<red>Wait for the current reveal to finish."));
+            return;
+        }
+
         Optional<ResultCeremony.Reveal> next = ceremony.nextReveal();
         if (next.isEmpty()) {
             player.sendMessage(Text.of("<gray>No more results left."));
@@ -118,18 +131,19 @@ public final class CommandResult extends CustomCommand {
 
         ResultCeremony.Reveal reveal = next.get();
 
+        ScoreOwner owner = reveal.owner();
+
         // The winner is revealed last; the stats link may only go out once that reveal finished.
         Runnable onRevealComplete = reveal.last()
-                ? () -> this.gamemanager.getMatchHistory().markResultsRevealed()
-                : null;
+                ? () -> {
+                    this.gamemanager.getMatchHistory().markResultsRevealed();
+                    this.resultStage.finale(ceremony.podium());
+                }
+                : () -> { };
 
-        // The reveal builds the pages and hands them out; the ceremony stores them. The GUI never
-        // reaches into shared state to do it.
-        Bukkit.getOnlinePlayers().forEach(viewer -> new ResultReveal(
-                this.settings,
-                reveal,
-                pages -> ceremony.archive(reveal.owner(), pages),
-                onRevealComplete).open(viewer));
+        this.resultStage.reveal(reveal,
+                () -> ceremony.archive(owner, ResultPages.build(owner)),
+                onRevealComplete);
     }
 
     /** Reopens an owner's screen from the pages the reveal already built. */

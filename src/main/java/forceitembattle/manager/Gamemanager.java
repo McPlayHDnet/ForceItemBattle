@@ -1,6 +1,7 @@
 package forceitembattle.manager;
 
 import forceitembattle.achievements.AchievementManager;
+import forceitembattle.ceremony.ResultStage;
 import forceitembattle.model.Dimension;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameContext;
@@ -45,6 +46,7 @@ public class Gamemanager implements Manager {
     private final GameSettings settings;
     private final RoundClock roundClock;
     private final ResultCeremony resultCeremony;
+    private final ResultStage resultStage;
     private final ItemDifficultiesManager items;
     private final BackpackManager backpacks;
     private final RecipeManager recipeManager;
@@ -73,7 +75,8 @@ public class Gamemanager implements Manager {
     private int jokerAmount;
 
     public Gamemanager(Plugin plugin, Roster roster, RoundPhase roundPhase, GameSettings settings,
-                       RoundClock roundClock, ResultCeremony resultCeremony, ItemDifficultiesManager items,
+                       RoundClock roundClock, ResultCeremony resultCeremony, ResultStage resultStage,
+                       ItemDifficultiesManager items,
                        BackpackManager backpacks, RecipeManager recipeManager, PositionManager positionManager,
                        ScoreboardManager scoreboardManager, TeamsManager teamManager,
                        WanderingTraderManager traders, RandomEventManager randomEvents,
@@ -83,6 +86,7 @@ public class Gamemanager implements Manager {
         this.settings = settings;
         this.roundClock = roundClock;
         this.resultCeremony = resultCeremony;
+        this.resultStage = resultStage;
         this.items = items;
         this.backpacks = backpacks;
         this.recipeManager = recipeManager;
@@ -347,6 +351,10 @@ public class Gamemanager implements Manager {
             }
         });
 
+        if (resultSpawn != null) {
+            this.resultStage.open(resultSpawn);
+        }
+
         // Its own ordering, not the stats one: those keep spectators and are null when STATS is off.
         this.resultCeremony.beginFor(
                 this.matchHistory.getMatchId(), this.revealOrder());
@@ -381,6 +389,8 @@ public class Gamemanager implements Manager {
         this.matchHistory.onPaused();
         this.roundPhase.moveTo(GameState.PAUSED_GAME);
         this.clearMobTargets();
+        // Stops block entities, redstone, fluids and mobs; players keep ticking.
+        Bukkit.getServerTickManager().setFrozen(true);
     }
 
     /**
@@ -419,6 +429,7 @@ public class Gamemanager implements Manager {
      */
     public void resumeGame() {
         this.matchHistory.onResumed();
+        Bukkit.getServerTickManager().setFrozen(false);
         this.roundPhase.moveTo(GameState.MID_GAME);
     }
 

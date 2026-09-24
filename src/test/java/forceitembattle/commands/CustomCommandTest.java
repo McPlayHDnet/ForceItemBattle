@@ -305,6 +305,7 @@ class CustomCommandTest {
 
         @Test
         void theAdminCommands() {
+            assertGates(new forceitembattle.commands.admin.CommandCheckMods(null), "OP");
             assertGates(new forceitembattle.commands.admin.CommandForceItem(null, null, null, null, null), "OP, ROUND_RUNNING, PARTICIPANT");
             assertGates(new forceitembattle.commands.admin.CommandForceTeam(null, null), "OP, setting(TEAM), PRE_GAME");
             assertGates(new forceitembattle.commands.admin.CommandItems(null), "OP");
@@ -345,7 +346,7 @@ class CustomCommandTest {
             assertGates(new forceitembattle.commands.player.CommandBed(), "");
             assertGates(new forceitembattle.commands.player.CommandInfo(null, null, null, null), "");
             assertGates(new forceitembattle.commands.player.CommandInfoWiki(null, null), "");
-            assertGates(new forceitembattle.commands.player.CommandResult(null, null, null, null, null, null), "");
+            assertGates(new forceitembattle.commands.player.CommandResult(null, null, null, null, null, null, null), "");
             assertGates(new forceitembattle.commands.player.CommandSpectate(null), "");
         }
     }

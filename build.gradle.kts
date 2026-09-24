@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "forceitembattle"
-version = "26.9.1" // year.month.update
+version = "26.9.2" // year.month.update
 description = "ForceItemBattle for McPlayHD.net"
 
 java {
@@ -167,4 +167,5 @@ bukkitPluginYaml {
     commands.register("forceitem")
     commands.register("randomevent")
     commands.register("collection")
+    commands.register("checkmods")
 }
