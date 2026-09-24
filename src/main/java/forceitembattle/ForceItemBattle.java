@@ -13,6 +13,7 @@ import forceitembattle.ceremony.ResultStage;
 import forceitembattle.ceremony.ResultStageListener;
 import forceitembattle.collection.CollectionManager;
 import forceitembattle.commands.CommandsManager;
+import forceitembattle.commands.admin.CommandCheckMods;
 import forceitembattle.commands.admin.CommandForceItem;
 import forceitembattle.commands.admin.CommandForceTeam;
 import forceitembattle.commands.admin.CommandItems;
@@ -49,6 +50,7 @@ import forceitembattle.listener.AntimatterPortalListener;
 import forceitembattle.listener.ChatListener;
 import forceitembattle.listener.ClickableItemsListener;
 import forceitembattle.listener.FoundItemListener;
+import forceitembattle.listener.FreecamListener;
 import forceitembattle.listener.GameRulesListener;
 import forceitembattle.listener.GuiListener;
 import forceitembattle.listener.ItemsListener;
@@ -63,6 +65,7 @@ import forceitembattle.listener.RecipeListener;
 import forceitembattle.listener.SettingsListener;
 import forceitembattle.listener.TradeListener;
 import forceitembattle.listener.VillagerTradeListener;
+import forceitembattle.listener.XaeroMinimapListener;
 import forceitembattle.manager.AntimatterPortalManager;
 import forceitembattle.manager.BackToBackManager;
 import forceitembattle.manager.BackpackManager;
@@ -83,6 +86,7 @@ import forceitembattle.manager.TeamsManager;
 import forceitembattle.manager.TimerManager;
 import forceitembattle.manager.VoteSkipManager;
 import forceitembattle.manager.WanderingTraderManager;
+import forceitembattle.moddetection.ModDetections;
 import forceitembattle.model.FindDetection;
 import forceitembattle.model.ResultCeremony;
 import forceitembattle.model.Roster;
@@ -139,6 +143,8 @@ public final class ForceItemBattle extends JavaPlugin {
      * before it — that ordering is what breaks the service/collection/achievement cycle.
      */
     private final GlobalStatsCache globalStatsCache = new GlobalStatsCache();
+
+    private final ModDetections modDetections = new ModDetections();
 
     /** Not a {@link Manager}: it owns no state and runs entirely inside a shutdown hook. */
     private WorldReset worldReset;
@@ -412,7 +418,9 @@ public final class ForceItemBattle extends JavaPlugin {
                 new ResultStageListener(this.resultStage),
                 new CushionSeatListener(this.resultStage),
                 new GuiListener(),
-                new JournalListener()
+                new JournalListener(),
+                new XaeroMinimapListener(this.modDetections),
+                new FreecamListener(this.modDetections)
         );
 
     }
@@ -459,6 +467,7 @@ public final class ForceItemBattle extends JavaPlugin {
         commands.registerCommand(new CommandFixLocate(this.locatorManager));
         commands.registerCommand(new CommandForceItem(this.forceItemAssignment, this.settings, this.timerManager, this.roster, this.scoreboardManager));
         commands.registerCommand(new CommandRandomEvent(this.randomEventManager));
+        commands.registerCommand(new CommandCheckMods(this.modDetections));
 
         commands.warnAboutUnboundCommands();
     }
