@@ -123,10 +123,10 @@ class ResultCeremonyTest {
     }
 
     @Nested
-    class ThePodium {
+    class TheStandings {
 
         @Test
-        void holdsTheTopThreeBestFirst() {
+        void holdsEveryoneBestFirst() {
             ScoreOwner first = owner("first");
             ScoreOwner second = owner("second");
             ScoreOwner third = owner("third");
@@ -136,11 +136,11 @@ class ResultCeremonyTest {
             ceremony.beginFor(UUID.randomUUID(),
                     ResultCeremony.orderFrom(placesBestFirst(first, second, third, fourth)));
 
-            assertEquals(List.of(first, second, third),
-                    ceremony.podium().stream().map(Reveal::owner).toList());
+            assertEquals(List.of(first, second, third, fourth),
+                    ceremony.standings().stream().map(Reveal::owner).toList());
         }
 
-        /** A shared place is a shared step, so a tie can put four owners on three steps. */
+        /** A tie keeps both owners, so a shared place is a shared podium step. */
         @Test
         void keepsEveryoneTiedOnAStep() {
             Map<ScoreOwner, Integer> tied = new LinkedHashMap<>();
@@ -153,16 +153,16 @@ class ResultCeremonyTest {
             ResultCeremony ceremony = new ResultCeremony();
             ceremony.beginFor(UUID.randomUUID(), ResultCeremony.orderFrom(tied));
 
-            assertEquals(List.of(1, 2, 2, 3), ceremony.podium().stream().map(Reveal::place).toList());
+            assertEquals(List.of(1, 2, 2, 3, 4), ceremony.standings().stream().map(Reveal::place).toList());
         }
 
-        /** Reading the podium is not handing out a reveal. */
+        /** Reading the standings is not handing out a reveal. */
         @Test
         void doesNotAdvanceTheWalk() {
             ResultCeremony ceremony = new ResultCeremony();
             ceremony.beginFor(UUID.randomUUID(), ResultCeremony.orderFrom(placesBestFirst(owner("only"))));
 
-            ceremony.podium();
+            ceremony.standings();
 
             assertFalse(ceremony.isFinished());
         }

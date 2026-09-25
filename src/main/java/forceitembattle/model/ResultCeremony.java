@@ -60,10 +60,9 @@ public final class ResultCeremony {
         return Optional.of(this.order.get(this.next++));
     }
 
-    /** Everyone placed first to third, best first. Ties share a place, so this can hold more than three. */
-    public List<Reveal> podium() {
+    /** Every owner, best first. */
+    public List<Reveal> standings() {
         return this.order.stream()
-                .filter(reveal -> reveal.place() <= 3)
                 .sorted(Comparator.comparingInt(Reveal::place))
                 .toList();
     }

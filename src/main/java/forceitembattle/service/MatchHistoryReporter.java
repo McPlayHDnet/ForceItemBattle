@@ -200,22 +200,13 @@ public class MatchHistoryReporter {
 
     private void appendItems(List<FibMatchItemSubmitDto> out, List<ForceItem> found,
                              UUID playerUuid, Integer teamIndex) {
-        // The first item is measured from the match start, every later one from the previous hand-in
-        // by this same owner. From timestamps, not ForceItem.timeNeeded, which is a display string.
-        long previousMillis = this.startedAtMillis;
+        List<Long> secondsTaken = this.secondsTaken(found);
         for (int i = 0; i < found.size(); i++) {
             ForceItem forceItem = found.get(i);
             String b2bRarity = (forceItem.back2Back() != null && forceItem.back2Back().isActive()
                     && forceItem.back2Back().getRarityType() != null)
                     ? forceItem.back2Back().getRarityType().name()
                     : null;
-            // Wall-clock span minus any pause inside it: an item that straddled a 22-minute pause
-            // otherwise reads as a 22-minute find and tops the "biggest timesinks". Clamped, because
-            // a clock adjustment mid-match must not write a negative duration.
-            long rawMillis = forceItem.timeStamp() - previousMillis;
-            long playMillis = rawMillis - pausedMillisWithin(previousMillis, forceItem.timeStamp());
-            long secondsTaken = Math.max(0L, playMillis / 1000L);
-            previousMillis = forceItem.timeStamp();
             out.add(new FibMatchItemSubmitDto()
                     .playerUuid(playerUuid)
                     .teamIndex(teamIndex)
@@ -223,9 +214,27 @@ public class MatchHistoryReporter {
                     .skipped(forceItem.usedSkip())
                     .b2bRarity(b2bRarity)
                     .orderIndex(i)
-                    .secondsTaken((int) secondsTaken)
+                    .secondsTaken(secondsTaken.get(i).intValue())
                     .collectedAt(Instant.ofEpochMilli(forceItem.timeStamp()).atOffset(ZoneOffset.UTC)));
         }
+    }
+
+    /**
+     * The play time each of one owner's finds took, in order. The first is measured from the match
+     * start, every later one from the owner's previous hand-in; from timestamps, because
+     * {@code ForceItem.timeNeeded} is the clock's display string, not a duration.
+     */
+    public List<Long> secondsTaken(List<ForceItem> found) {
+        List<Long> seconds = new ArrayList<>(found.size());
+        long previousMillis = this.startedAtMillis;
+        for (ForceItem forceItem : found) {
+            // Minus any pause inside the span, or an item straddling a long pause tops the "biggest timesinks".
+            long rawMillis = forceItem.timeStamp() - previousMillis;
+            long playMillis = rawMillis - pausedMillisWithin(previousMillis, forceItem.timeStamp());
+            seconds.add(Math.max(0L, playMillis / 1000L));
+            previousMillis = forceItem.timeStamp();
+        }
+        return seconds;
     }
 
     private long pausedMillisWithin(long fromMillis, long toMillis) {

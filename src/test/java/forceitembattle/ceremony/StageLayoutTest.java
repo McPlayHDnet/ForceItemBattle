@@ -1,6 +1,7 @@
 package forceitembattle.ceremony;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import forceitembattle.ceremony.StageLayout.Facing;
@@ -147,6 +148,57 @@ class StageLayoutTest {
         void theCanvasStaysUnderTheBuildLimit() {
             int anchor = StageLayout.anchorY((x, z) -> 318, 320);
             assertTrue(anchor + StageLayout.CANVAS_TOP < 320);
+        }
+    }
+
+    @Nested
+    class TheButtons {
+
+        private final Point seat = StageLayout.seat(0).plus(0, StageLayout.EYE_HEIGHT, 0);
+
+        private Point towards(Point from, Point to) {
+            return new Point(to.x() - from.x(), to.y() - from.y(), to.z() - from.z());
+        }
+
+        private Point centreOf(Point button) {
+            return button.plus(0, StageLayout.BUTTON_TEXT_RISE, 0);
+        }
+
+        @Test
+        void aButtonCanBeClickedFromTheSeats() {
+            assertTrue(StageLayout.hits(this.seat, towards(this.seat, centreOf(StageLayout.NEXT_BUTTON)), StageLayout.NEXT_BUTTON));
+            assertTrue(StageLayout.hits(this.seat, towards(this.seat, centreOf(StageLayout.PREVIOUS_BUTTON)), StageLayout.PREVIOUS_BUTTON));
+        }
+
+        @Test
+        void theButtonsDoNotOverlap() {
+            Point look = towards(this.seat, centreOf(StageLayout.NEXT_BUTTON));
+            assertFalse(StageLayout.hits(this.seat, look, StageLayout.PREVIOUS_BUTTON));
+        }
+
+        @Test
+        void lookingJustPastAButtonMisses() {
+            Point beside = centreOf(StageLayout.NEXT_BUTTON).plus(StageLayout.BUTTON_HALF_WIDTH + 0.1, 0, 0);
+            assertFalse(StageLayout.hits(this.seat, towards(this.seat, beside), StageLayout.NEXT_BUTTON));
+        }
+
+        @Test
+        void lookingAwayFromTheCanvasMisses() {
+            Point look = towards(this.seat, centreOf(StageLayout.NEXT_BUTTON));
+            Point away = new Point(-look.x(), -look.y(), -look.z());
+            assertFalse(StageLayout.hits(this.seat, away, StageLayout.NEXT_BUTTON));
+        }
+
+        @Test
+        void theStatsPanelClearsTheWidestGrid() {
+            double halfWidth = StageLayout.SUMMARY_LINE_WIDTH * StageLayout.TEXT_PIXEL * StageLayout.SUMMARY_SCALE / 2;
+            assertTrue(StageLayout.SUMMARY.x() - halfWidth > StageLayout.CANVAS_WIDTH / 2);
+        }
+
+        @Test
+        void aButtonOutOfReachMisses() {
+            Point far = new Point(0, 6, StageLayout.BUTTON_REACH + 5);
+            assertFalse(StageLayout.hits(far, towards(far, centreOf(StageLayout.NEXT_BUTTON)), StageLayout.NEXT_BUTTON));
         }
     }
 

@@ -31,6 +31,19 @@ final class StageLayout {
     static final Point TITLE = new Point(0, CANVAS_TOP + 1.1, 0.2);
     static final Point COUNTER = new Point(0, CANVAS_TOP + 0.35, 0.2);
 
+    static final Point PREVIOUS_BUTTON = new Point(-6.5, CANVAS_TOP + 0.8, 0.2);
+    static final Point NEXT_BUTTON = new Point(6.5, CANVAS_TOP + 0.8, 0.2);
+    static final float BUTTON_SCALE = 2.0f;
+    static final double BUTTON_HALF_WIDTH = 2.0;
+    static final double BUTTON_HALF_HEIGHT = 0.6;
+    /** Button text sits on its entity's position; the clickable box is centred a little above it. */
+    static final double BUTTON_TEXT_RISE = 0.25;
+    static final double BUTTON_REACH = 48;
+
+    static final Point SUMMARY = new Point(CANVAS_WIDTH / 2 + 3.6, CANVAS_BOTTOM + 1.5, 0.2);
+    static final float SUMMARY_SCALE = 1.5f;
+    static final int SUMMARY_LINE_WIDTH = 170;
+
     // Measured in-game as the best view: about 10.5 out, eyes a little above the spotlight.
     static final double SEAT_DISTANCE = 10.5;
     static final int SEATS_PER_ROW = 7;
@@ -137,6 +150,28 @@ final class StageLayout {
     static int podiumLabelLineWidth() {
         double column = STEP_WIDTH + STEP_GAP - 0.2;
         return (int) (column / (TEXT_PIXEL * PODIUM_LABEL_SCALE));
+    }
+
+    /**
+     * Whether a look from {@code eye} along {@code direction} passes through a button facing the
+     * audience. Vanilla only lets an entity be clicked from about three blocks, and the seats are ten out.
+     */
+    static boolean hits(Point eye, Point direction, Point button) {
+        if (direction.z() >= 0) {
+            return false;
+        }
+        double distance = (button.z() - eye.z()) / direction.z();
+        if (distance < 0) {
+            return false;
+        }
+        double length = Math.sqrt(direction.x() * direction.x() + direction.y() * direction.y() + direction.z() * direction.z());
+        if (distance * length > BUTTON_REACH) {
+            return false;
+        }
+        double x = eye.x() + direction.x() * distance;
+        double y = eye.y() + direction.y() * distance;
+        return Math.abs(x - button.x()) <= BUTTON_HALF_WIDTH
+                && Math.abs(y - (button.y() + BUTTON_TEXT_RISE)) <= BUTTON_HALF_HEIGHT;
     }
 
     static double podiumHeight(int place) {

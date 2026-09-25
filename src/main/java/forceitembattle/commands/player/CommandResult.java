@@ -137,7 +137,7 @@ public final class CommandResult extends CustomCommand {
         Runnable onRevealComplete = reveal.last()
                 ? () -> {
                     this.gamemanager.getMatchHistory().markResultsRevealed();
-                    this.resultStage.finale(ceremony.podium());
+                    this.resultStage.finale(ceremony.standings(), this.gamemanager.getMatchHistory()::secondsTaken);
                 }
                 : () -> { };
 

@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.title.Title;
@@ -45,6 +46,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.entity.TextDisplay;
 import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.util.Transformation;
+import org.bukkit.util.Vector;
 import org.joml.AxisAngle4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -62,8 +64,11 @@ public final class ResultStage implements Manager {
     private static final int CLEAR_TICKS = 5;
     private static final long FIRST_ITEM_DELAY = CLEAR_TICKS + 15;
     private static final long DEALT_TO_NAME_TICKS = 40;
+    private static final long WINNER_TO_PODIUM_TICKS = 50;
     private static final long STEP_RISE_TICKS = 20;
     private static final long RELEASE_TICKS = 100;
+    // Shared buttons: two people clicking at once must not skip an owner.
+    private static final long SWITCH_COOLDOWN_TICKS = 8;
 
     private static final Display.Brightness FULL_BRIGHT = new Display.Brightness(15, 15);
 
@@ -83,6 +88,13 @@ public final class ResultStage implements Manager {
     private TextDisplay counter;
     @Nullable
     private TextDisplay card;
+    @Nullable
+    private TextDisplay summary;
+
+    private List<ResultCeremony.Reveal> browsable = List.of();
+    private Function<List<ForceItem>, List<Long>> secondsTaken = items -> List.of();
+    private int browsing;
+    private boolean switching;
 
     private int nextSeat;
     private boolean revealing;
@@ -206,11 +218,105 @@ public final class ResultStage implements Manager {
         });
     }
 
-    /** The winner's moment: the podium rises, the top three take their steps, and the seats let go. */
-    public void finale(List<ResultCeremony.Reveal> podium) {
+    /**
+     * The winner's moment: the podium rises, the top three take their steps, the seats let go, and
+     * every result can be browsed.
+     *
+     * @param standings    every owner, best first
+     * @param secondsTaken the play time of each of an owner's finds, in order
+     */
+    public void finale(List<ResultCeremony.Reveal> standings, Function<List<ForceItem>, List<Long>> secondsTaken) {
         if (this.anchor == null) {
             return;
         }
+        List<ResultCeremony.Reveal> podium = standings.stream().filter(reveal -> reveal.place() <= 3).toList();
+        // The winner's name, title and chime go out on the same tick this is called.
+        this.cues.at(WINNER_TO_PODIUM_TICKS, () -> {
+            this.raisePodium(podium);
+            this.cues.at(RELEASE_TICKS + STEP_RISE_TICKS + 45, () -> this.openBrowser(standings, secondsTaken));
+        });
+    }
+
+    public boolean isBrowsing() {
+        return !this.browsable.isEmpty();
+    }
+
+    /**
+     * A click from anywhere in view: if the player is looking at a browse button, the grid switches
+     * for everyone.
+     *
+     * @return whether the click was spent on a button
+     */
+    public boolean click(Player player) {
+        if (!this.isBrowsing() || !player.getWorld().equals(this.world())) {
+            return false;
+        }
+        Point eye = this.pointOf(player.getEyeLocation());
+        Vector look = player.getEyeLocation().getDirection();
+        Point direction = new Point(look.getX(), look.getY(), look.getZ());
+        if (StageLayout.hits(eye, direction, StageLayout.PREVIOUS_BUTTON)) {
+            this.browse(-1);
+            return true;
+        }
+        if (StageLayout.hits(eye, direction, StageLayout.NEXT_BUTTON)) {
+            this.browse(1);
+            return true;
+        }
+        return false;
+    }
+
+    private void openBrowser(List<ResultCeremony.Reveal> standings, Function<List<ForceItem>, List<Long>> secondsTaken) {
+        if (standings.isEmpty()) {
+            return;
+        }
+        this.browsable = List.copyOf(standings);
+        this.secondsTaken = secondsTaken;
+        this.browsing = 0;
+
+        TextDisplay previous = this.text(StageLayout.PREVIOUS_BUTTON, StageLayout.BUTTON_SCALE, Display.Billboard.VERTICAL);
+        TextDisplay next = this.text(StageLayout.NEXT_BUTTON, StageLayout.BUTTON_SCALE, Display.Billboard.VERTICAL);
+        this.write(previous, "<yellow>◀ <white>Previous");
+        this.write(next, "<white>Next <yellow>▶");
+
+        this.summary = this.text(StageLayout.SUMMARY, StageLayout.SUMMARY_SCALE, Display.Billboard.VERTICAL);
+        this.summary.setAlignment(TextDisplay.TextAlignment.LEFT);
+        this.summary.setLineWidth(StageLayout.SUMMARY_LINE_WIDTH);
+
+        // The winner's items are already on the grid, so only the words change.
+        this.describe(this.browsable.getFirst());
+    }
+
+    private void browse(int step) {
+        if (this.switching) {
+            return;
+        }
+        this.switching = true;
+        this.cues.at(SWITCH_COOLDOWN_TICKS, () -> this.switching = false);
+
+        this.browsing = Math.floorMod(this.browsing + step, this.browsable.size());
+        ResultCeremony.Reveal reveal = this.browsable.get(this.browsing);
+
+        this.clearGrid();
+        List<ForceItem> items = List.copyOf(reveal.owner().foundItems());
+        Grid layout = StageLayout.gridFor(items.size());
+        for (int index = 0; index < items.size(); index++) {
+            ItemDisplay display = this.spawnItem(layout.slot(index), items.get(index));
+            this.cues.at(1, () -> animate(display, facingViewer(layout.itemScale()), POP_TICKS));
+        }
+        this.describe(reveal);
+        this.playToAll(Sound.UI_BUTTON_CLICK, 0.4f, 1f);
+    }
+
+    private void describe(ResultCeremony.Reveal reveal) {
+        ScoreOwner owner = reveal.owner();
+        this.write(this.title, Text.placeColor(reveal.place()) + "<b>" + reveal.place() + ". <white>"
+                + ResultDisplay.nameOf(owner));
+        this.write(this.counter, "<gold>" + owner.foundItems().size() + " Items found");
+        this.write(this.summary, SummaryCard.of(owner, this.secondsTaken.apply(owner.foundItems()))
+                + "\n\n<dark_gray>Click ◀ ▶ to browse");
+    }
+
+    private void raisePodium(List<ResultCeremony.Reveal> podium) {
 
         Map<Integer, List<ScoreOwner>> byPlace = new TreeMap<>();
         podium.forEach(reveal -> byPlace.computeIfAbsent(reveal.place(), place -> new ArrayList<>())
@@ -251,27 +357,15 @@ public final class ResultStage implements Manager {
         this.title = null;
         this.counter = null;
         this.card = null;
+        this.summary = null;
+        this.browsable = List.of();
+        this.switching = false;
         this.nextSeat = 0;
         this.revealing = false;
     }
 
     private void present(ScoreOwner owner, ForceItem item, int index, int count, Grid layout, boolean event) {
-        Color glow = StagePalette.glowOf(item);
-        ItemDisplay display = this.spawn(StageLayout.SPOTLIGHT, ItemDisplay.class, spawned -> {
-            spawned.setItemStack(CustomMaterials.itemStackOf(item.material()));
-            spawned.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.GUI);
-            // Not billboarded: a billboard copies the camera's angle, so items off the centre of the view were seen from the side.
-            spawned.setBillboard(Display.Billboard.FIXED);
-            spawned.setRotation(StageLayout.ITEM_FACING.yaw(), StageLayout.ITEM_FACING.pitch());
-            spawned.setBrightness(FULL_BRIGHT);
-            spawned.setTeleportDuration(StageTimeline.FLIGHT_TICKS);
-            spawned.setTransformation(facingViewer(0f));
-            if (glow != null) {
-                spawned.setGlowing(true);
-                spawned.setGlowColorOverride(glow);
-            }
-        });
-        this.grid.add(display);
+        ItemDisplay display = this.spawnItem(StageLayout.SPOTLIGHT, item);
 
         int hold = StageTimeline.holdFor(item, event, count);
         // A transformation set in the spawn tick is the client's starting point, not an animation.
@@ -300,6 +394,27 @@ public final class ResultStage implements Manager {
                     : Particle.END_ROD;
             this.world().spawnParticle(particle, this.locationOf(StageLayout.SPOTLIGHT), 40, 0.8, 0.8, 0.8, 0.15);
         }
+    }
+
+    /** Spawned at scale zero, so the caller animates it in. */
+    private ItemDisplay spawnItem(Point at, ForceItem item) {
+        Color glow = StagePalette.glowOf(item);
+        ItemDisplay display = this.spawn(at, ItemDisplay.class, spawned -> {
+            spawned.setItemStack(CustomMaterials.itemStackOf(item.material()));
+            spawned.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.GUI);
+            // Not billboarded: a billboard copies the camera's angle, so items off the centre of the view were seen from the side.
+            spawned.setBillboard(Display.Billboard.FIXED);
+            spawned.setRotation(StageLayout.ITEM_FACING.yaw(), StageLayout.ITEM_FACING.pitch());
+            spawned.setBrightness(FULL_BRIGHT);
+            spawned.setTeleportDuration(StageTimeline.FLIGHT_TICKS);
+            spawned.setTransformation(facingViewer(0f));
+            if (glow != null) {
+                spawned.setGlowing(true);
+                spawned.setGlowColorOverride(glow);
+            }
+        });
+        this.grid.add(display);
+        return display;
     }
 
     private void announce(ResultCeremony.Reveal reveal, int itemCount) {
