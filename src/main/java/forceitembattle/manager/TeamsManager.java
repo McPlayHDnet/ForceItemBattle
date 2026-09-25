@@ -207,29 +207,30 @@ public class TeamsManager implements Manager {
     }
 
     public void invite(ForceItemPlayer player, ForceItemPlayer target) {
-        // Assigning the inviter a team happens before the self-invite guard below, as it always has:
-        // inviting yourself still leaves you in a team of one.
-        Team team = player.currentTeam();
-        if (team == null) {
-            team = new Team(this.teams.size() + 1, null, 0, 0, player);
-            player.setCurrentTeam(team);
-        }
-
         if (player == target) {
             player.player().sendMessage(Text.of("<red>You cannot interact with yourself :("));
-            return;
-        }
-        if (this.isTeamFull(team)) {
-            player.player().sendMessage(Text.of("<red>Your team is already full"));
-            return;
-        }
-        if (this.alreadyInTeam(team, target)) {
-            player.player().sendMessage(Text.of("<yellow>" + target.player().getName() + " <red>is already in a team"));
             return;
         }
         if (this.alreadyInvited(target)) {
             player.player().sendMessage(Text.of("<yellow>" + target.player().getName() + " <red>already got invited"));
             return;
+        }
+
+        Team team = player.currentTeam();
+        if (team != null && this.isTeamFull(team)) {
+            player.player().sendMessage(Text.of("<red>Your team is already full"));
+            return;
+        }
+        if (team != null && this.alreadyInTeam(team, target)) {
+            player.player().sendMessage(Text.of("<yellow>" + target.player().getName() + " <red>is already in a team"));
+            return;
+        }
+
+        // Only once the invite is certain to go out: a team created and then abandoned by a refusal
+        // above was set on the player but never registered, so the round could not see it.
+        if (team == null) {
+            team = new Team(this.teams.size() + 1, null, 0, 0, player);
+            player.setCurrentTeam(team);
         }
 
         player.player().sendMessage(Text.of("<dark_aqua>You invited <yellow>" + target.player().getName() + " <dark_aqua>to your team"));
