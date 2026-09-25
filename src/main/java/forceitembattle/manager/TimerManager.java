@@ -173,6 +173,12 @@ public class TimerManager implements Manager {
         this.timerTask = Scheduler.runTimerSync(new BukkitRunnable() {
             @Override
             public void run() {
+                // Never cancelled: one task serves every round of the session, and the result
+                // screen is simply a phase in which it has nothing to do.
+                if (TimerManager.this.roundPhase.isEndGame()) {
+                    return;
+                }
+
                 sendActionBar();
                 if (!TimerManager.this.roundPhase.roundRunning()) {
                     TimerManager.this.tabList.clearFooter();
@@ -195,7 +201,6 @@ public class TimerManager implements Manager {
                     TimerManager.this.tabList.clearFooter();
                     TimerManager.this.gamemanager.finishGame();
                     FileLogger.log("<< Force Item Battle is over >>");
-                    cancel();
                 }
             }
         }, 20, 20);

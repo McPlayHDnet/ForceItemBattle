@@ -65,6 +65,12 @@ public sealed interface Precondition {
             (sender, context) -> context.roundPhase().isPreGame(),
             "<red>The game already started");
 
+    /** No round is under way: before the first one, or on the result screen of the last. */
+    Precondition NO_ROUND_UNDER_WAY = new Named(
+            "NO_ROUND_UNDER_WAY",
+            (sender, context) -> context.roundPhase().isPreGame() || context.roundPhase().isEndGame(),
+            "<red>A round is already under way.");
+
     Precondition PAUSED = new Named(
             "PAUSED",
             (sender, context) -> context.roundPhase().isPausedGame(),
