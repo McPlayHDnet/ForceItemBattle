@@ -13,6 +13,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
@@ -28,8 +29,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class TeamsManager implements Manager {
 
     /**
-     * Its own file rather than a key in config.yml: config.yml is a deployed artifact here — it ships
-     * from the website repo because it carries the item descriptions — so anything the plugin writes
+     * Its own file rather than a key in config.yml: config.yml is a deployed artifact here â€” it ships
+     * from the website repo because it carries the item descriptions â€” so anything the plugin writes
      * into it is overwritten by the next deploy, silently degrading the avoidance to a shuffle.
      */
     private static final String HISTORY_FILE = "team-history.yml";
@@ -92,7 +93,7 @@ public class TeamsManager implements Manager {
             List<ForceItemPlayer> teamPlayers = new ArrayList<>(ordered.subList(next, next + teamSizeLimit));
             next += teamSizeLimit;
 
-            Team randomTeam = new Team(this.teams.size() + 1, null, 0, 0, teamPlayers.toArray(new ForceItemPlayer[0]));
+            Team randomTeam = new Team(this.nextTeamId(), null, 0, 0, teamPlayers.toArray(new ForceItemPlayer[0]));
             this.teams.add(randomTeam);
 
             for (ForceItemPlayer player : teamPlayers) {
@@ -101,7 +102,7 @@ public class TeamsManager implements Manager {
         }
 
         for (ForceItemPlayer player : ordered.subList(next, ordered.size())) {
-            Team singlePlayerTeam = new Team(this.teams.size() + 1, null, 0, 0, player);
+            Team singlePlayerTeam = new Team(this.nextTeamId(), null, 0, 0, player);
             this.teams.add(singlePlayerTeam);
 
             player.setCurrentTeam(singlePlayerTeam);
@@ -194,6 +195,16 @@ public class TeamsManager implements Manager {
         }
     }
 
+    /** Not {@code teams.size() + 1}: once a team disbands, that hands out an id still in use. */
+    private int nextTeamId() {
+        return this.teams.stream().mapToInt(Team::getTeamId).max().orElse(0) + 1;
+    }
+
+    /** By id, not list position: the list is reordered by invites and shrinks when a team disbands. */
+    public Optional<Team> teamById(int teamId) {
+        return this.teams.stream().filter(team -> team.getTeamId() == teamId).findFirst();
+    }
+
     public boolean alreadyInTeam(Team team, ForceItemPlayer player) {
         return team.getPlayers().contains(player);
     }
@@ -229,7 +240,7 @@ public class TeamsManager implements Manager {
         // Only once the invite is certain to go out: a team created and then abandoned by a refusal
         // above was set on the player but never registered, so the round could not see it.
         if (team == null) {
-            team = new Team(this.teams.size() + 1, null, 0, 0, player);
+            team = new Team(this.nextTeamId(), null, 0, 0, player);
             player.setCurrentTeam(team);
         }
 
@@ -272,7 +283,7 @@ public class TeamsManager implements Manager {
     }
 
     public void create(ForceItemPlayer first, @Nullable ForceItemPlayer second, String name) {
-        Team team = new Team(this.teams.size() + 1, null, 0, 0);
+        Team team = new Team(this.nextTeamId(), null, 0, 0);
         team.setName(name);
         this.addToTeam(team, first);
         if (second != null) this.addToTeam(team, second);
@@ -326,9 +337,9 @@ public class TeamsManager implements Manager {
             return;
         }
         player.player().sendMessage(" ");
-        player.player().sendMessage(Text.of(" <dark_gray>● <gray>Your team:"));
+        player.player().sendMessage(Text.of(" <dark_gray>â— <gray>Your team:"));
         player.currentTeam().getPlayers().forEach(teamPlayers -> {
-            player.player().sendMessage(Text.of("  <dark_gray>» <gold>" + teamPlayers.player().getName()));
+            player.player().sendMessage(Text.of("  <dark_gray>Â» <gold>" + teamPlayers.player().getName()));
         });
         player.player().sendMessage(" ");
     }

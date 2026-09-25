@@ -163,4 +163,40 @@ class TeamsManagerTest {
             assertEquals(1, teams.getTeams().size());
         }
     }
+    @Nested
+    class TeamIds {
+
+        /** teams.size() + 1 handed a new team the id of one still in play once an earlier one disbanded. */
+        @Test
+        void aDisbandedTeamsSuccessorDoesNotReuseALiveId() {
+            ForceItemPlayer a = join("Understudy1");
+            ForceItemPlayer b = join("Understudy2");
+            ForceItemPlayer c = join("Understudy3");
+            teams.create(a, null, "First");
+            teams.create(b, null, "Second");
+            teams.leave(a);
+
+            teams.create(c, null, "Third");
+
+            assertEquals(2, teams.getTeams().stream().map(Team::getTeamId).distinct().count(),
+                    "two live teams, two distinct ids");
+        }
+
+        /** The reveal's link carries the id; the list order is not stable, so lookup must not use it. */
+        @Test
+        void aTeamIsFoundByItsIdWhateverItsPositionInTheList() {
+            ForceItemPlayer a = join("Understudy1");
+            ForceItemPlayer b = join("Understudy2");
+            ForceItemPlayer c = join("Understudy3");
+            teams.create(a, null, "First");
+            teams.create(b, null, "Second");
+            teams.leave(a);
+            Team second = b.currentTeam();
+            teams.create(c, null, "Third");
+
+            assertSame(second, teams.teamById(second.getTeamId()).orElseThrow());
+            assertSame(c.currentTeam(), teams.teamById(c.currentTeam().getTeamId()).orElseThrow());
+            assertTrue(teams.teamById(99).isEmpty());
+        }
+    }
 }

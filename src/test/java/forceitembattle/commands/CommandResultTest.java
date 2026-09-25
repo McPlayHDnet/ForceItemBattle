@@ -99,11 +99,7 @@ class CommandResultTest {
             assertTold(run("#banana"), "Invalid team.");
         }
 
-        /**
-         * {@code List.get()} throws {@code IndexOutOfBoundsException}, which does <b>not</b> extend
-         * {@code IllegalArgumentException} — so this escaped the catch entirely and threw out of
-         * the command.
-         */
+        /** This used to index the team list, and an out-of-range index threw out of the command. */
         @Test
         void aTeamNumberPastTheEndIsRefused() {
             assertDoesNotThrow(() -> assertTold(run("#99"), "Invalid team."));
