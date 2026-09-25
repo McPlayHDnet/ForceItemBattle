@@ -26,8 +26,8 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
  * {@code /skip}: who may run it, and who it acts on.
  *
  * <p>This command spent an unknown period doing the opposite of what it says. Its op gate was
- * written {@code if (!requireOp(player)) { ...whole body... }} — the one site of thirteen that
- * opened a block instead of returning — so it ran in full for <b>non-ops</b>, after telling them
+ * written {@code if (!requireOp(player)) { ...whole body... }} â€” the one site of thirteen that
+ * opened a block instead of returning â€” so it ran in full for <b>non-ops</b>, after telling them
  * they lacked permission, and did nothing at all for an op.
  *
  * <p>The gate is a declared {@link Precondition} now, so the inversion is unrepresentable. These
@@ -76,7 +76,7 @@ class CommandSkipTest {
         this.command.onCommand(caller, null, "skip", new String[]{target.getName()});
 
         assertTrue(caller.nextMessage().contains("permission"));
-        verify(this.assignment, never()).skipAll(any(), anyBoolean());
+        verify(this.assignment, never()).skipFor(any(), anyBoolean());
     }
 
     /** On the roster, which is what {@code /skip} now needs before it will act. */
@@ -94,7 +94,7 @@ class CommandSkipTest {
 
         this.command.onCommand(caller, null, "skip", new String[]{target.getName()});
 
-        verify(this.assignment).skipAll(targetEntry, false);
+        verify(this.assignment).skipFor(targetEntry, false);
         assertTrue(caller.nextMessage().contains("Skipped this item for Understudy2"));
     }
 
@@ -111,7 +111,7 @@ class CommandSkipTest {
         this.command.onCommand(caller, null, "skip", new String[]{target.getName()});
 
         assertTrue(caller.nextMessage().contains("not in the round"));
-        verify(this.assignment, never()).skipAll(any(), anyBoolean());
+        verify(this.assignment, never()).skipFor(any(), anyBoolean());
     }
 
     @Test
@@ -121,7 +121,7 @@ class CommandSkipTest {
         this.command.onCommand(caller, null, "skip", new String[]{"Nobody"});
 
         assertTrue(caller.nextMessage().contains("not online"));
-        verify(this.assignment, never()).skipAll(any(), anyBoolean());
+        verify(this.assignment, never()).skipFor(any(), anyBoolean());
     }
 
     @Test
@@ -131,7 +131,7 @@ class CommandSkipTest {
         this.command.onCommand(caller, null, "skip", new String[0]);
 
         assertTrue(caller.nextMessage().contains("Usage: /skip"));
-        verify(this.assignment, never()).skipAll(any(), anyBoolean());
+        verify(this.assignment, never()).skipFor(any(), anyBoolean());
     }
 
     /** Declared as ROUND_RUNNING, so a skip outside a round never reaches the body. */
@@ -144,6 +144,6 @@ class CommandSkipTest {
         this.command.onCommand(caller, null, "skip", new String[]{target.getName()});
 
         assertTrue(caller.nextMessage().contains("game is not running"));
-        verify(this.assignment, never()).skipAll(any(), anyBoolean());
+        verify(this.assignment, never()).skipFor(any(), anyBoolean());
     }
 }

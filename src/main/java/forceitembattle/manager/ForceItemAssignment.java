@@ -81,6 +81,23 @@ public final class ForceItemAssignment {
     }
 
     /**
+     * Replaces one player's current item — {@code /skip}. Their queued item moves up, as it would on
+     * a find. In run mode everyone hunts the same item, so there it is a skip for the whole server.
+     */
+    public void skipFor(ForceItemPlayer target, boolean runMode) {
+        if (runMode) {
+            this.skipAll(target, true);
+            return;
+        }
+        if (this.roster.participant(target.player().getUniqueId()).isEmpty()) {
+            return;
+        }
+
+        ScoreOwner owner = target.scoreOwner();
+        owner.assignMaterials(owner.nextMaterial(), this.draw(owner, false));
+    }
+
+    /**
      * Hands an owner an explicit row: the first item now, the second queued, the rest drained in
      * order. A row of one takes a drawn item as its second so the chain display has something to show.
      *
