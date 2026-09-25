@@ -49,6 +49,10 @@ public final class CommandForceTeam extends CustomCommand {
         }
 
         ForceItemPlayer first = this.roster.get(player1.getUniqueId());
+        if (first == null) {
+            player.sendMessage(Text.of("<yellow>" + player1.getName() + " <red>is not in this round."));
+            return;
+        }
 
         if (args.length == 3) {
             Player player2 = Bukkit.getPlayer(args[2]);
@@ -59,6 +63,10 @@ public final class CommandForceTeam extends CustomCommand {
             }
 
             ForceItemPlayer second = this.roster.get(player2.getUniqueId());
+            if (second == null) {
+                player.sendMessage(Text.of("<yellow>" + player2.getName() + " <red>is not in this round."));
+                return;
+            }
             this.teamManager.create(first, second, teamName);
             player.sendMessage(Text.of("<dark_aqua>Successfully created team <green>" + teamName));
         } else {

@@ -272,9 +272,9 @@ public class TeamsManager implements Manager {
     }
 
     public void create(ForceItemPlayer first, @Nullable ForceItemPlayer second, String name) {
-        Team team = new Team(this.teams.size() + 1, null, 0, 0, first);
+        Team team = new Team(this.teams.size() + 1, null, 0, 0);
         team.setName(name);
-        first.setCurrentTeam(team);
+        this.addToTeam(team, first);
         if (second != null) this.addToTeam(team, second);
 
         this.teams.add(team);
@@ -360,7 +360,15 @@ public class TeamsManager implements Manager {
         }
     }
 
+    /** Leaves any team the player is already on first, so nobody is ever listed on two. */
     private void addToTeam(Team team, ForceItemPlayer player) {
+        Team previous = player.currentTeam();
+        if (previous == team) {
+            return;
+        }
+        if (previous != null) {
+            this.removeFromTeam(previous, player);
+        }
         team.addPlayer(player);
         player.setCurrentTeam(team);
     }
