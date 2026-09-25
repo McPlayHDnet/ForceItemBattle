@@ -9,7 +9,6 @@ import org.bukkit.Material;
 final class StagePalette {
 
     static final Color JOKER = Color.fromRGB(0xFF5555);
-    static final Color CARD = Color.fromARGB(0xE0, 0x10, 0x10, 0x14);
     static final Color NONE = Color.fromARGB(0, 0, 0, 0);
 
     private StagePalette() {

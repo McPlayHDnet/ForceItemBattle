@@ -122,9 +122,9 @@ public final class ResultStage implements Manager {
         this.anchor = new Location(world, anchorX, anchorY, anchorZ);
 
 
-        this.title = this.text(StageLayout.TITLE, 3.0f, Display.Billboard.VERTICAL, StagePalette.NONE);
-        this.counter = this.text(StageLayout.COUNTER, 1.6f, Display.Billboard.VERTICAL, StagePalette.NONE);
-        this.card = this.text(StageLayout.CARD, StageLayout.CARD_SCALE, Display.Billboard.CENTER, StagePalette.NONE);
+        this.title = this.text(StageLayout.TITLE, 3.0f, Display.Billboard.VERTICAL);
+        this.counter = this.text(StageLayout.COUNTER, 1.6f, Display.Billboard.VERTICAL);
+        this.card = this.text(StageLayout.CARD, StageLayout.CARD_SCALE, Display.Billboard.CENTER);
         this.write(this.title, "<gold><b>RESULTS");
         this.write(this.counter, "<gray>The first reveal is on its way");
 
@@ -371,7 +371,7 @@ public final class ResultStage implements Manager {
                 .map(name -> "<white>" + name).toList());
         int items = owners.getFirst().foundItems().size();
         TextDisplay label = this.text(new Point(x, top + 2.3, StageLayout.PODIUM_Z), StageLayout.PODIUM_LABEL_SCALE,
-                Display.Billboard.VERTICAL, StagePalette.CARD);
+                Display.Billboard.VERTICAL);
         label.setLineWidth(StageLayout.podiumLabelLineWidth());
         this.write(label, Text.placeColor(place) + "<b>" + place + ".</b> <gold>" + items + " Items\n" + names);
 
@@ -406,14 +406,14 @@ public final class ResultStage implements Manager {
         vacated.forEach(Entity::remove);
     }
 
-    private TextDisplay text(Point point, float scale, Display.Billboard billboard, Color background) {
+    private TextDisplay text(Point point, float scale, Display.Billboard billboard) {
         return this.keep(this.spawn(point, TextDisplay.class, display -> {
             display.setBillboard(billboard);
             display.setBrightness(FULL_BRIGHT);
             display.setAlignment(TextDisplay.TextAlignment.CENTER);
             display.setShadowed(true);
             display.setLineWidth(400);
-            display.setBackgroundColor(background);
+            display.setBackgroundColor(StagePalette.NONE);
             display.setTransformation(scaled(scale));
         }));
     }
