@@ -29,8 +29,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class TeamsManager implements Manager {
 
     /**
-     * Its own file rather than a key in config.yml: config.yml is a deployed artifact here â€” it ships
-     * from the website repo because it carries the item descriptions â€” so anything the plugin writes
+     * Its own file rather than a key in config.yml: config.yml is a deployed artifact here — it ships
+     * from the website repo because it carries the item descriptions — so anything the plugin writes
      * into it is overwritten by the next deploy, silently degrading the avoidance to a shuffle.
      */
     private static final String HISTORY_FILE = "team-history.yml";
@@ -343,9 +343,9 @@ public class TeamsManager implements Manager {
             return;
         }
         player.player().sendMessage(" ");
-        player.player().sendMessage(Text.of(" <dark_gray>â— <gray>Your team:"));
+        player.player().sendMessage(Text.of(" <dark_gray>● <gray>Your team:"));
         player.currentTeam().getPlayers().forEach(teamPlayers -> {
-            player.player().sendMessage(Text.of("  <dark_gray>Â» <gold>" + teamPlayers.player().getName()));
+            player.player().sendMessage(Text.of("  <dark_gray>» <gold>" + teamPlayers.player().getName()));
         });
         player.player().sendMessage(" ");
     }

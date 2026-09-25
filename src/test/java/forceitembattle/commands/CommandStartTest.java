@@ -35,7 +35,7 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
 import org.mockito.InOrder;
 
 /**
- * {@link CommandStart}'s argument handling â€” the refusals, and what they leave behind. The rules a
+ * {@link CommandStart}'s argument handling — the refusals, and what they leave behind. The rules a
  * round is built from live in {@code RoundStart} and are tested there.
  *
  * <p>Each refusal also asserts the round was <em>not</em> started: one that still mutated the ruleset
@@ -126,7 +126,7 @@ class CommandStartTest {
 
     /**
      * Non-numeric arguments are caught rather than thrown. The parse happens inside
-     * {@code performCommand}, so the try/catch has to wrap the call rather than the parse â€” easy to
+     * {@code performCommand}, so the try/catch has to wrap the call rather than the parse — easy to
      * break by moving the parse out, and this is what would notice.
      */
     @Test
@@ -142,7 +142,7 @@ class CommandStartTest {
     /**
      * A non-op is refused before any of the above is even considered. {@code /start} declares
      * {@link Precondition#OP}, so the gate is evaluated in {@code onCommand} and the body is never
-     * entered â€” which is why this goes through the real entry point rather than calling
+     * entered — which is why this goes through the real entry point rather than calling
      * {@code onPlayerCommand} directly.
      */
     @Test

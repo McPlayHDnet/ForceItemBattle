@@ -26,8 +26,8 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
  * {@code /skip}: who may run it, and who it acts on.
  *
  * <p>This command spent an unknown period doing the opposite of what it says. Its op gate was
- * written {@code if (!requireOp(player)) { ...whole body... }} â€” the one site of thirteen that
- * opened a block instead of returning â€” so it ran in full for <b>non-ops</b>, after telling them
+ * written {@code if (!requireOp(player)) { ...whole body... }} — the one site of thirteen that
+ * opened a block instead of returning — so it ran in full for <b>non-ops</b>, after telling them
  * they lacked permission, and did nothing at all for an op.
  *
  * <p>The gate is a declared {@link Precondition} now, so the inversion is unrepresentable. These

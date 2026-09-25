@@ -318,7 +318,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.timerManager = register(new TimerManager(this, this.roundClock, this.roster, this.roundPhase,
                 this.settings, this.gamemanager, this.itemDifficultiesManager, this.randomEventManager,
                 this.tabListManager));
-        this.voteSkipManager = register(new VoteSkipManager(this.roster, this.forceItemAssignment, this.settings, this.itemDifficultiesManager));
+        this.voteSkipManager = register(new VoteSkipManager(this.roster, this.roundPhase, this.forceItemAssignment, this.settings, this.itemDifficultiesManager));
         this.commandsManager = register(new CommandsManager(this, this.roundPhase, this.settings, this.roster));
 
         this.guiContext = new GuiContext(this, this.achievementManager, this.collectionManager,
