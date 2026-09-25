@@ -33,6 +33,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.GameRules;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.Statistic;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -323,33 +324,26 @@ public class Gamemanager implements Manager {
 
         Bukkit.getOnlinePlayers().forEach(player -> {
             try {
-                ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());
-
                 PlayerOutfitter.toResultScreen(player, resultSpawn);
 
                 if (player.isOp()) {
                     player.sendMessage(Text.of("<red>Use /result to see the results from every player"));
-                }
-
-                if (statsEnabled && Roster.isPlaying(forceItemPlayer)) {
-                    Team currentTeam = forceItemPlayer.currentTeam();
-
-                    boolean won = currentTeam == null
-                            ? Integer.valueOf(1).equals(placesMap.get(forceItemPlayer))
-                            : (teamPlaces != null && Integer.valueOf(1).equals(teamPlaces.get(currentTeam)));
-
-                    this.fibService.statisticsWrites().recordRoundFinished(
-                            forceItemPlayer,
-                            player.getName(),
-                            forceItemPlayer.activeScore(),
-                            (long) this.calculateDistance(forceItemPlayer.player()),
-                            won);
                 }
             } catch (Exception exception) {
                 this.plugin.getLogger().warning(
                         "Failed to finish round for " + player.getName() + ": " + exception.getMessage());
             }
         });
+
+        // Every participant, not every online player: someone disconnected at the end still played
+        // the round, and a team's win is only counted by its primary writer, who may be the one away.
+        if (statsEnabled) {
+            for (ForceItemPlayer forceItemPlayer : this.roster.players().values()) {
+                if (Roster.isPlaying(forceItemPlayer)) {
+                    this.recordRoundFinished(forceItemPlayer, placesMap, teamPlaces);
+                }
+            }
+        }
 
         if (resultSpawn != null) {
             this.resultStage.open(resultSpawn);
@@ -371,11 +365,47 @@ public class Gamemanager implements Manager {
         }
     }
 
-    /** Blocks travelled this round, summed over every distance statistic Bukkit tracks (all in cm). */
+    private void recordRoundFinished(ForceItemPlayer forceItemPlayer, Map<ForceItemPlayer, Integer> placesMap,
+                                     Map<Team, Integer> teamPlaces) {
+        Player player = forceItemPlayer.player();
+        try {
+            Team currentTeam = forceItemPlayer.currentTeam();
+            boolean won = currentTeam == null
+                    ? Integer.valueOf(1).equals(placesMap.get(forceItemPlayer))
+                    : (teamPlaces != null && Integer.valueOf(1).equals(teamPlaces.get(currentTeam)));
+
+            this.fibService.statisticsWrites().recordRoundFinished(
+                    forceItemPlayer,
+                    player.getName(),
+                    forceItemPlayer.activeScore(),
+                    this.distanceOrZero(player),
+                    won);
+        } catch (Exception exception) {
+            this.plugin.getLogger().warning(
+                    "Failed to record the round for " + player.getName() + ": " + exception.getMessage());
+        }
+    }
+
+    /** A distance that cannot be read must not cost the player their win and score as well. */
+    private long distanceOrZero(Player player) {
+        try {
+            return this.calculateDistance(player);
+        } catch (RuntimeException exception) {
+            this.plugin.getLogger().warning(
+                    "Could not read the distance travelled by " + player.getName() + ": " + exception.getMessage());
+            return 0L;
+        }
+    }
+
+    /**
+     * Blocks travelled this round, summed over every distance statistic Bukkit tracks (all in cm).
+     * A player who has left is read from their saved statistics, which the server writes on quit.
+     */
     private int calculateDistance(Player player) {
+        OfflinePlayer source = player.isOnline() ? player : Bukkit.getOfflinePlayer(player.getUniqueId());
         int distance = Arrays.stream(Statistic.values())
                 .filter(statistic -> statistic.name().contains("CM"))
-                .mapToInt(player::getStatistic)
+                .mapToInt(source::getStatistic)
                 .sum();
 
         return (int) Math.round((double) distance / 100);
