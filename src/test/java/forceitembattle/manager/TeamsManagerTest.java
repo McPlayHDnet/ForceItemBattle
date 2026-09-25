@@ -6,16 +6,20 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.Roster;
 import forceitembattle.model.Team;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.logging.Logger;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockbukkit.mockbukkit.MockBukkit;
 import org.mockbukkit.mockbukkit.ServerMock;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
@@ -26,11 +30,17 @@ class TeamsManagerTest {
     private Roster roster;
     private TeamsManager teams;
 
+    @TempDir
+    Path dataFolder;
+
     @BeforeEach
     void setUp() {
         this.server = MockBukkit.mock();
         this.roster = new Roster();
-        this.teams = new TeamsManager(mock(JavaPlugin.class), this.roster, mock(ScoreboardManager.class));
+        JavaPlugin plugin = mock(JavaPlugin.class);
+        when(plugin.getDataFolder()).thenReturn(this.dataFolder.toFile());
+        when(plugin.getLogger()).thenReturn(Logger.getLogger("TeamsManagerTest"));
+        this.teams = new TeamsManager(plugin, this.roster, mock(ScoreboardManager.class));
     }
 
     @AfterEach
@@ -197,6 +207,42 @@ class TeamsManagerTest {
             assertSame(second, teams.teamById(second.getTeamId()).orElseThrow());
             assertSame(c.currentTeam(), teams.teamById(c.currentTeam().getTeamId()).orElseThrow());
             assertTrue(teams.teamById(99).isEmpty());
+        }
+    }
+
+    @Nested
+    class AutoTeams {
+
+        private ForceItemPlayer spectating(String name) {
+            ForceItemPlayer entry = join(name);
+            entry.setSpectator(true);
+            return entry;
+        }
+
+        @Test
+        void spectatorsAreNotTeamedUp() {
+            join("Understudy1");
+            join("Understudy2");
+            ForceItemPlayer spectator = spectating("Understudy3");
+
+            teams.autoTeams();
+
+            assertNull(spectator.currentTeam());
+            assertTrue(teams.getTeams().stream().noneMatch(team -> team.getPlayers().contains(spectator)));
+        }
+
+        /** Someone who teamed up by hand and then switched to spectating is taken off that team. */
+        @Test
+        void aSpectatorIsTakenOffAHandMadeTeam() {
+            ForceItemPlayer player = join("Understudy1");
+            ForceItemPlayer turned = join("Understudy2");
+            teams.create(player, turned, "Pair");
+            turned.setSpectator(true);
+
+            teams.autoTeams();
+
+            assertNull(turned.currentTeam());
+            assertEquals(List.of(player), player.currentTeam().members());
         }
     }
 }

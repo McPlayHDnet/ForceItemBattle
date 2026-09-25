@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -14,11 +15,13 @@ import forceitembattle.manager.ForceItemAssignment;
 import forceitembattle.manager.Gamemanager;
 import forceitembattle.manager.TeamsManager;
 import forceitembattle.manager.TimerManager;
+import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.Roster;
 import forceitembattle.model.RoundClock;
 import forceitembattle.model.RoundPhase;
 import forceitembattle.settings.ConfigSource;
 import forceitembattle.settings.GamePreset;
+import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.settings.Ruleset;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
@@ -32,7 +35,7 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
 import org.mockito.InOrder;
 
 /**
- * {@link CommandStart}'s argument handling — the refusals, and what they leave behind. The rules a
+ * {@link CommandStart}'s argument handling â€” the refusals, and what they leave behind. The rules a
  * round is built from live in {@code RoundStart} and are tested there.
  *
  * <p>Each refusal also asserts the round was <em>not</em> started: one that still mutated the ruleset
@@ -46,6 +49,7 @@ class CommandStartTest {
     private Gamemanager gamemanager;
     private ForceItemAssignment assignment;
     private Roster roster;
+    private TeamsManager teamManager;
     private CommandStart command;
 
     @BeforeEach
@@ -61,8 +65,9 @@ class CommandStartTest {
         this.gamemanager = mock(Gamemanager.class);
         this.assignment = mock(ForceItemAssignment.class);
         this.roster = new Roster();
+        this.teamManager = mock(TeamsManager.class);
 
-        this.command = new CommandStart(this.gamemanager, this.assignment, this.roster, mock(RoundPhase.class), mock(RoundClock.class), this.settings, mock(TeamsManager.class));
+        this.command = new CommandStart(this.gamemanager, this.assignment, this.roster, mock(RoundPhase.class), mock(RoundClock.class), this.settings, this.teamManager);
         // The op gate is declared, so it is evaluated in onCommand -- which needs the context that
         // CommandsManager supplies at bootstrap.
         // Cast because setContext is package-private on CustomCommand, and a package-private
@@ -121,7 +126,7 @@ class CommandStartTest {
 
     /**
      * Non-numeric arguments are caught rather than thrown. The parse happens inside
-     * {@code performCommand}, so the try/catch has to wrap the call rather than the parse — easy to
+     * {@code performCommand}, so the try/catch has to wrap the call rather than the parse â€” easy to
      * break by moving the parse out, and this is what would notice.
      */
     @Test
@@ -137,7 +142,7 @@ class CommandStartTest {
     /**
      * A non-op is refused before any of the above is even considered. {@code /start} declares
      * {@link Precondition#OP}, so the gate is evaluated in {@code onCommand} and the body is never
-     * entered — which is why this goes through the real entry point rather than calling
+     * entered â€” which is why this goes through the real entry point rather than calling
      * {@code onPlayerCommand} directly.
      */
     @Test
@@ -206,6 +211,52 @@ class CommandStartTest {
             startARound();
 
             verify(assignment).beginRound(anyBoolean());
+        }
+    }
+
+    @Nested
+    class TheTeamThreshold {
+
+        private void join(String name, boolean spectating) {
+            PlayerMock player = server.addPlayer(name);
+            ForceItemPlayer entry = new ForceItemPlayer(player, null, 0, 0);
+            entry.setSpectator(spectating);
+            roster.add(player.getUniqueId(), entry);
+        }
+
+        private void start() {
+            when(settings.isSettingEnabled(GameSetting.TEAM)).thenReturn(true);
+            try {
+                command.onPlayerCommand(op(), "start", new String[]{"1", "3"});
+            } catch (RuntimeException expected) {
+                // the countdown that follows needs a live server
+            }
+        }
+
+        /** A spectator is not a teammate, so they cannot make up the four that teams need. */
+        @Test
+        void spectatorsDoNotCountTowardsTheFourPlayers() {
+            join("Understudy2", false);
+            join("Understudy3", false);
+            join("Understudy4", false);
+            join("Understudy5", true);
+
+            start();
+
+            verify(teamManager).clearAllTeams();
+            verify(teamManager, never()).autoTeams();
+        }
+
+        @Test
+        void fourPlayersBuildTeams() {
+            join("Understudy2", false);
+            join("Understudy3", false);
+            join("Understudy4", false);
+            join("Understudy5", false);
+
+            start();
+
+            verify(teamManager).autoTeams();
         }
     }
 }

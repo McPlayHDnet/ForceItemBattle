@@ -101,7 +101,7 @@ public final class CommandStart extends CustomCommand implements CustomTabComple
 
     private void performCommand(GamePreset gamePreset, CommandSender player, String[] args) {
         boolean teamsConfigured = this.settings.isSettingEnabled(GameSetting.TEAM);
-        int rosterSize = this.roster.players().size();
+        int rosterSize = (int) this.roster.players().values().stream().filter(Roster::isPlaying).count();
 
         RoundStart start = gamePreset != null
                 ? RoundStart.fromPreset(gamePreset, teamsConfigured, rosterSize)

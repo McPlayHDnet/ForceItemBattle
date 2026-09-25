@@ -80,7 +80,13 @@ public class TeamsManager implements Manager {
     }
 
     public void autoTeams() {
+        // A spectator on a team would take half its jokers and leave their teammate playing alone.
+        List.copyOf(this.roster.players().values()).stream()
+                .filter(player -> player.isSpectator() && player.currentTeam() != null)
+                .forEach(player -> this.removeFromTeam(player.currentTeam(), player));
+
         List<ForceItemPlayer> playersWithoutTeam = this.roster.players().values().stream()
+                .filter(Roster::isPlaying)
                 .filter(player -> player.currentTeam() == null)
                 .collect(Collectors.toList());
 
