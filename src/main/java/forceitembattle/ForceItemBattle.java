@@ -303,8 +303,8 @@ public final class ForceItemBattle extends JavaPlugin {
                 new EventContext(this, this.roundPhase, this.settings,
                         this.itemDifficultiesManager, this.wanderingTraderManager),
                 this.roster, this.roundClock, this.settings));
-        this.backToBackManager = register(new BackToBackManager(this.settings, this.itemDifficultiesManager,
-                this.backpackManager, this.fibService));
+        this.backToBackManager = register(new BackToBackManager(this.settings, this.roundPhase,
+                this.itemDifficultiesManager, this.backpackManager, this.fibService));
 
         this.resultStage = register(new ResultStage(this.settings, new CushionSeats()));
         this.gamemanager = register(new Gamemanager(this, this.roster, this.roundPhase, this.settings,
@@ -318,7 +318,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.timerManager = register(new TimerManager(this, this.roundClock, this.roster, this.roundPhase,
                 this.settings, this.gamemanager, this.itemDifficultiesManager, this.randomEventManager,
                 this.tabListManager));
-        this.voteSkipManager = register(new VoteSkipManager(this.roster, this.forceItemAssignment, this.settings, this.itemDifficultiesManager));
+        this.voteSkipManager = register(new VoteSkipManager(this.roster, this.roundPhase, this.forceItemAssignment, this.settings, this.itemDifficultiesManager));
         this.commandsManager = register(new CommandsManager(this, this.roundPhase, this.settings, this.roster));
 
         this.guiContext = new GuiContext(this, this.achievementManager, this.collectionManager,

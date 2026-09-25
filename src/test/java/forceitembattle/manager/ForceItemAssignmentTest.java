@@ -267,6 +267,65 @@ class ForceItemAssignmentTest {
     }
 
     @Nested
+    class SkippingOnePlayer {
+
+        @Test
+        @DisplayName("/skip moves only the target; everyone else keeps their item")
+        void onlyTheTargetMoves() {
+            ForceItemPlayer target = joinPlaying("Understudy1");
+            ForceItemPlayer other = joinPlaying("Understudy2");
+            assignment.beginRound(false);
+            Material othersItem = other.activeMaterial();
+            Material othersNext = other.activeNextMaterial();
+            Material queued = target.activeNextMaterial();
+
+            assignment.skipFor(target, false);
+
+            assertEquals(queued, target.activeMaterial(), "the target's queued item moves up");
+            assertNotEquals(queued, target.activeNextMaterial());
+            assertEquals(othersItem, other.activeMaterial());
+            assertEquals(othersNext, other.activeNextMaterial());
+        }
+
+        @Test
+        void theFindClockIsLeftAlone() {
+            ForceItemPlayer target = joinPlaying("Understudy1");
+            assignment.beginRound(false);
+            long assignedAt = target.scoreOwner().itemAssignedAt();
+
+            assignment.skipFor(target, false);
+
+            assertEquals(assignedAt, target.scoreOwner().itemAssignedAt());
+        }
+
+        @Test
+        void aSpectatorIsNotSkipped() {
+            ForceItemPlayer spectator = joinPlaying("Understudy1");
+            assignment.beginRound(false);
+            spectator.setSpectator(true);
+            Material before = spectator.activeMaterial();
+
+            assignment.skipFor(spectator, false);
+
+            assertEquals(before, spectator.activeMaterial());
+        }
+
+        @Test
+        @DisplayName("in run mode the shared item is skipped for everyone")
+        void runModeSkipsTheSharedItem() {
+            ForceItemPlayer target = joinPlaying("Understudy1");
+            ForceItemPlayer other = joinPlaying("Understudy2");
+            assignment.beginRound(true);
+            Material shared = target.activeMaterial();
+
+            assignment.skipFor(target, true);
+
+            assertNotEquals(shared, target.activeMaterial());
+            assertEquals(target.activeMaterial(), other.activeMaterial());
+        }
+    }
+
+    @Nested
     class AForcedRow {
 
         @Test

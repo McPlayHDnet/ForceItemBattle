@@ -91,22 +91,14 @@ public final class CommandResult extends CustomCommand {
         }
     }
 
-    /**
-     * The team {@code argument} names, or null when it names none. Both an unparseable id and an
-     * out-of-range one have to answer null: they are different exceptions, and a bounds failure
-     * escaping here threw {@code /result #99} out of the command.
-     */
+    /** The team whose id {@code argument} names — the id the reveal's link carries — or null. */
     @Nullable
     private Team teamAt(String argument) {
-        int index;
         try {
-            index = Integer.parseInt(argument.replace("#", "")) - 1;
+            return this.teamManager.teamById(Integer.parseInt(argument.replace("#", ""))).orElse(null);
         } catch (NumberFormatException e) {
             return null;
         }
-
-        List<Team> teams = this.teamManager.getTeams();
-        return index >= 0 && index < teams.size() ? teams.get(index) : null;
     }
 
     /** Hands out the next reveal, or says the ceremony is over. */
@@ -137,7 +129,7 @@ public final class CommandResult extends CustomCommand {
         Runnable onRevealComplete = reveal.last()
                 ? () -> {
                     this.gamemanager.getMatchHistory().markResultsRevealed();
-                    this.resultStage.finale(ceremony.podium());
+                    this.resultStage.finale(ceremony.standings(), this.gamemanager.getMatchHistory()::secondsTaken);
                 }
                 : () -> { };
 

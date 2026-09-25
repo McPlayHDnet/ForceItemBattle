@@ -8,6 +8,8 @@ import static org.mockito.Mockito.when;
 
 import forceitembattle.commands.player.CommandBed;
 import forceitembattle.commands.player.CommandSpawn;
+import forceitembattle.model.GameState;
+import forceitembattle.model.RoundPhase;
 import java.util.concurrent.atomic.AtomicReference;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
@@ -41,16 +43,19 @@ class CommandTeleportTest {
     private final AtomicReference<Location> spawnLocation = new AtomicReference<>();
     private CommandBed bed;
     private CommandSpawn spawn;
+    private RoundPhase phase;
 
     @BeforeEach
     void setUp() {
         this.server = MockBukkit.mock();
         this.world = this.server.addSimpleWorld("world");
 
+        this.phase = new RoundPhase();
+        this.phase.moveTo(GameState.MID_GAME);
         this.bed = new CommandBed();
         this.spawn = new CommandSpawn(this.spawnLocation::get);
-        ((CustomCommand) this.bed).setContext(new CommandContext(null, null, null));
-        ((CustomCommand) this.spawn).setContext(new CommandContext(null, null, null));
+        ((CustomCommand) this.bed).setContext(new CommandContext(this.phase, null, null));
+        ((CustomCommand) this.spawn).setContext(new CommandContext(this.phase, null, null));
     }
 
     @AfterEach
@@ -149,6 +154,48 @@ class CommandTeleportTest {
 
             assertTrue(player.getPassengers().contains(passenger),
                     "the passenger must be remounted after the teleport");
+        }
+    }
+
+    /** A pause stops the clock; neither teleport may be used to make ground while it stands. */
+    @Nested
+    class DuringAPause {
+
+        @Test
+        void spawnIsRefused() {
+            PlayerMock player = join("Understudy1");
+            spawnLocation.set(at(100, 70, -40));
+            phase.moveTo(GameState.PAUSED_GAME);
+
+            spawn.onCommand(player, null, "spawn", new String[0]);
+
+            assertSaid(player, "while the game is paused");
+            assertAt(player, at(0, 64, 0));
+        }
+
+        @Test
+        void bedIsRefused() {
+            PlayerMock player = join("Understudy1");
+            player.setRespawnLocation(at(-20, 65, 33), true);
+            phase.moveTo(GameState.PAUSED_GAME);
+
+            bed.onCommand(player, null, "bed", new String[0]);
+
+            assertSaid(player, "while the game is paused");
+            assertAt(player, at(0, 64, 0));
+        }
+
+        @Test
+        void bothWorkAgainOnceResumed() {
+            PlayerMock player = join("Understudy1");
+            Location destination = at(100, 70, -40);
+            spawnLocation.set(destination);
+            phase.moveTo(GameState.PAUSED_GAME);
+            phase.moveTo(GameState.MID_GAME);
+
+            spawn.onCommand(player, null, "spawn", new String[0]);
+
+            assertAt(player, destination);
         }
     }
 }

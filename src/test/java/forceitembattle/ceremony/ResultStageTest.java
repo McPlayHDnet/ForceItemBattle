@@ -13,11 +13,13 @@ import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.Rarity;
 import forceitembattle.model.ResultCeremony.Reveal;
 import forceitembattle.model.ScoreOwner;
+import forceitembattle.model.Team;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Scheduler;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Location;
@@ -49,6 +51,7 @@ class ResultStageTest {
 
     /** Longer than any reveal below takes. */
     private static final int WHOLE_REVEAL = 600;
+    private static final Function<List<ForceItem>, List<Long>> NO_TIMES = items -> items.stream().map(item -> 0L).toList();
 
     private ServerMock server;
     private WorldMock world;
@@ -348,7 +351,8 @@ class ResultStageTest {
             stage.finale(List.of(
                     new Reveal(owner(first, plain(), plain(), plain()), 1, true),
                     new Reveal(owner(second, plain(), plain()), 2, false),
-                    new Reveal(owner(third, plain()), 3, false)));
+                    new Reveal(owner(third, plain()), 3, false),
+                    new Reveal(owner(fourth), 4, false)), NO_TIMES);
             tick(WHOLE_REVEAL);
 
             List<Mannequin> standing = world.getEntitiesByClass(Mannequin.class).stream().toList();
@@ -358,10 +362,41 @@ class ResultStageTest {
                     .orElseThrow();
             assertEquals(first.getUniqueId(), winner.getProfile().uuid());
 
-            assertTrue(texts().stream().anyMatch(text -> text.startsWith("1. Understudy1")));
+            assertTrue(texts().contains("1. 3 Items\nUnderstudy1"));
             for (Player player : List.of(first, second, third, fourth)) {
                 assertFalse(player.isInsideVehicle(), player.getName() + " is free to move");
             }
+        }
+
+        /** The winner's name, title and chime used to land on the same tick as the podium and its fanfare. */
+        @Test
+        void thePodiumWaitsForTheWinnersName() {
+            PlayerMock player = server.addPlayer("Understudy1");
+            open();
+
+            stage.finale(List.of(new Reveal(owner(player, plain()), 1, true)), NO_TIMES);
+            tick(20);
+            assertTrue(world.getEntitiesByClass(BlockDisplay.class).isEmpty(), "no step yet");
+
+            tick(WHOLE_REVEAL);
+            assertFalse(world.getEntitiesByClass(BlockDisplay.class).isEmpty());
+        }
+
+        /** A comma-joined team line ran wide enough to cover the neighbouring steps' labels. */
+        @Test
+        void anUnnamedTeamIsListedAMemberPerLine() {
+            PlayerMock alice = server.addPlayer("Alice");
+            PlayerMock bob = server.addPlayer("Bob");
+            open();
+
+            Team team = new Team(1, Material.STONE, 0, 0,
+                    new ForceItemPlayer(alice, Material.STONE, 0, 0),
+                    new ForceItemPlayer(bob, Material.STONE, 0, 0));
+            team.record(plain());
+            stage.finale(List.of(new Reveal(team, 1, true)), NO_TIMES);
+            tick(WHOLE_REVEAL);
+
+            assertTrue(texts().contains("1. 1 Items\nAlice\nBob"), texts().toString());
         }
     }
 
@@ -377,7 +412,7 @@ class ResultStageTest {
 
             stage.reveal(new Reveal(winner, 1, true), () -> { }, () -> { });
             tick(WHOLE_REVEAL);
-            stage.finale(List.of(new Reveal(winner, 1, true)));
+            stage.finale(List.of(new Reveal(winner, 1, true)), NO_TIMES);
             tick(WHOLE_REVEAL);
 
             Quaternionf halfTurn = new Quaternionf().rotateY((float) Math.PI);
@@ -394,7 +429,7 @@ class ResultStageTest {
             open();
             double canvasFace = player.getVehicle().getLocation().getZ() - StageLayout.SEAT_DISTANCE;
 
-            stage.finale(List.of(new Reveal(owner(player, plain()), 1, true)));
+            stage.finale(List.of(new Reveal(owner(player, plain()), 1, true)), NO_TIMES);
             tick(WHOLE_REVEAL);
 
             Set<Material> steps = Set.of(Material.GOLD_BLOCK, Material.IRON_BLOCK, Material.COPPER_BLOCK);
@@ -407,6 +442,79 @@ class ResultStageTest {
     }
 
     @Nested
+    class Browsing {
+
+        private PlayerMock first;
+        private PlayerMock second;
+        private Location anchor;
+
+        @BeforeEach
+        void finishTheCeremony() {
+            this.first = server.addPlayer("Understudy1");
+            this.second = server.addPlayer("Understudy2");
+            open();
+            StageLayout.Point seat = StageLayout.seat(0);
+            this.anchor = this.first.getVehicle().getLocation().clone().subtract(seat.x(), seat.y(), seat.z());
+
+            stage.finale(List.of(
+                    new Reveal(owner(this.first, plain(), plain(), plain()), 1, true),
+                    new Reveal(owner(this.second, backToBack(Rarity.EPIC)), 2, false)), NO_TIMES);
+            tick(WHOLE_REVEAL);
+        }
+
+        private boolean clickAt(StageLayout.Point target) {
+            StageLayout.Point eye = new StageLayout.Point(1.0, 6.0, StageLayout.SEAT_DISTANCE);
+            StageLayout.Facing facing = StageLayout.lookAt(eye, target.plus(0, StageLayout.BUTTON_TEXT_RISE, 0));
+            Location at = this.anchor.clone().add(eye.x(), eye.y() - this.first.getEyeHeight(), eye.z());
+            at.setYaw(facing.yaw());
+            at.setPitch(facing.pitch());
+            this.first.teleport(at);
+            return stage.click(this.first);
+        }
+
+        @Test
+        void theButtonsAndTheWinnersStatsAppearOnceTheSeatsLetGo() {
+            assertTrue(stage.isBrowsing());
+            assertTrue(texts().containsAll(List.of("◀ Previous", "Next ▶", "1. Understudy1")), texts().toString());
+            assertTrue(texts().stream().anyMatch(text -> text.startsWith("STATS\nItems 3")), texts().toString());
+        }
+
+        @Test
+        void nextSwitchesTheGridForEveryone() {
+            assertTrue(clickAt(StageLayout.NEXT_BUTTON));
+            tick(WHOLE_REVEAL);
+
+            assertTrue(texts().contains("2. Understudy2"), texts().toString());
+            assertEquals(1, itemsOnStage().size());
+            assertTrue(texts().stream().anyMatch(text -> text.contains("Back-to-backs 1\n  Epic ×1")), texts().toString());
+        }
+
+        @Test
+        void previousWrapsAroundFromTheWinner() {
+            assertTrue(clickAt(StageLayout.PREVIOUS_BUTTON));
+            tick(WHOLE_REVEAL);
+
+            assertTrue(texts().contains("2. Understudy2"), texts().toString());
+        }
+
+        /** The buttons are shared: a second click inside the cooldown must not skip an owner. */
+        @Test
+        void aDoubleClickSwitchesOnce() {
+            clickAt(StageLayout.NEXT_BUTTON);
+            clickAt(StageLayout.NEXT_BUTTON);
+            tick(WHOLE_REVEAL);
+
+            assertTrue(texts().contains("2. Understudy2"), texts().toString());
+        }
+
+        @Test
+        void aClickAnywhereElseIsLeftAlone() {
+            assertFalse(clickAt(StageLayout.CANVAS_CENTRE));
+            assertTrue(texts().contains("1. Understudy1"));
+        }
+    }
+
+    @Nested
     class Closing {
 
         @Test
@@ -415,8 +523,9 @@ class ResultStageTest {
             open();
             stage.reveal(new Reveal(owner(player, plain(), plain()), 1, true), () -> { }, () -> { });
             tick(WHOLE_REVEAL);
-            stage.finale(List.of(new Reveal(owner(player, plain(), plain()), 1, true)));
-            tick(40);
+            stage.finale(List.of(new Reveal(owner(player, plain(), plain()), 1, true)), NO_TIMES);
+            tick(90);
+            assertFalse(world.getEntitiesByClass(BlockDisplay.class).isEmpty(), "closing mid-rise");
 
             stage.close();
             tick(WHOLE_REVEAL);

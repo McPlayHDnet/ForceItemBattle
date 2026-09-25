@@ -5,6 +5,7 @@ import forceitembattle.model.BackToBackProbability;
 import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameContext;
+import forceitembattle.model.RoundPhase;
 import forceitembattle.service.FIBServiceClient;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.util.GameBroadcast;
@@ -39,6 +40,7 @@ import org.bukkit.inventory.ItemStack;
 public class BackToBackManager implements Manager {
 
     private final GameSettings settings;
+    private final RoundPhase roundPhase;
     private final ItemDifficultiesManager items;
     private final BackpackManager backpacks;
     private final FIBServiceClient fibService;
@@ -137,9 +139,16 @@ public class BackToBackManager implements Manager {
     private void announce(ForceItemPlayer forceItemPlayer, @Nullable ForceItemPlayer teammate,
                           BackToBackProbability probability, GameContext context) {
         Player player = forceItemPlayer.player();
+        Material chained = forceItemPlayer.activeMaterial();
 
         Scheduler.runLaterSync(() -> {
-            ItemStack foundItem = new ItemStack(forceItemPlayer.activeMaterial());
+            // A tick is long enough for the round to end or pause, or for the item to be found by
+            // hand; crediting then would score after the match was submitted, or score the wrong item.
+            if (!this.roundPhase.roundRunning() || forceItemPlayer.activeMaterial() != chained) {
+                return;
+            }
+
+            ItemStack foundItem = new ItemStack(chained);
 
             FoundItemEvent foundNextItemEvent = new FoundItemEvent(player);
             foundNextItemEvent.setFoundItem(foundItem);

@@ -313,17 +313,19 @@ class CustomCommandTest {
             assertGates(new forceitembattle.commands.admin.CommandReset(null, null), "OP");
             assertGates(new forceitembattle.commands.admin.CommandSettings(null, null), "OP");
             assertGates(new forceitembattle.commands.admin.CommandSkip(null, null, null), "OP, ROUND_RUNNING");
-            assertGates(new forceitembattle.commands.admin.CommandStart(null, null, null, null, null, null, null), "OP");
+            assertGates(new forceitembattle.commands.admin.CommandStart(null, null, null, null, null, null, null), "OP, NO_ROUND_UNDER_WAY");
             assertGates(new forceitembattle.commands.admin.CommandStopTimer(null), "OP, ROUND_RUNNING");
         }
 
         @Test
         void thePlayerCommands() {
+            assertGates(new forceitembattle.commands.player.CommandBed(), "NOT_PAUSED");
             assertGates(new forceitembattle.commands.player.CommandBp(null), "ROUND_RUNNING, setting(BACKPACK)");
             assertGates(new forceitembattle.commands.player.CommandFixSkips(null, null), "ROUND_RUNNING");
             assertGates(new forceitembattle.commands.player.CommandPause(null), "OP_WHEN_EVENT, ROUND_RUNNING");
             assertGates(new forceitembattle.commands.player.CommandPosition(null, null), "OP_WHEN_EVENT, setting(POSITIONS)");
             assertGates(new forceitembattle.commands.player.CommandResume(null), "OP_WHEN_EVENT, PAUSED");
+            assertGates(new forceitembattle.commands.player.CommandSpawn(null), "NOT_PAUSED");
             assertGates(new forceitembattle.commands.player.CommandTeams(null, null), "setting(TEAM), PRE_GAME");
             assertGates(new forceitembattle.commands.player.CommandVote(null), "ROUND_RUNNING, setting(RUN)");
             assertGates(new forceitembattle.commands.player.CommandVoteSkip(null, null), "ROUND_RUNNING, setting(RUN)");
@@ -343,7 +345,6 @@ class CustomCommandTest {
         /** Everything else declares nothing, and that is a statement rather than an omission. */
         @Test
         void theUngatedCommandsDeclareEmpty() {
-            assertGates(new forceitembattle.commands.player.CommandBed(), "");
             assertGates(new forceitembattle.commands.player.CommandInfo(null, null, null, null), "");
             assertGates(new forceitembattle.commands.player.CommandInfoWiki(null, null), "");
             assertGates(new forceitembattle.commands.player.CommandResult(null, null, null, null, null, null, null), "");

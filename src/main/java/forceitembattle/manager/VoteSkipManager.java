@@ -4,6 +4,7 @@ import forceitembattle.model.CustomMaterials;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.JokerSpend;
 import forceitembattle.model.Roster;
+import forceitembattle.model.RoundPhase;
 import forceitembattle.model.SkipVote;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
 /**
@@ -27,9 +29,10 @@ import org.bukkit.scheduler.BukkitTask;
  */
 public class VoteSkipManager implements Manager {
 
-    private static final long VOTE_DURATION_TICKS = 20L * 60L;
+    private static final int VOTE_DURATION_SECONDS = 60;
 
     private final Roster roster;
+    private final RoundPhase roundPhase;
     private final ForceItemAssignment assignment;
     private final GameSettings settings;
     private final ItemDifficultiesManager itemDifficultiesManager;
@@ -37,10 +40,12 @@ public class VoteSkipManager implements Manager {
 
     private BukkitTask voteTask;
     private ForceItemPlayer initiator;
+    private int secondsLeft;
 
-    public VoteSkipManager(Roster roster, ForceItemAssignment assignment, GameSettings settings,
-                           ItemDifficultiesManager itemDifficultiesManager) {
+    public VoteSkipManager(Roster roster, RoundPhase roundPhase, ForceItemAssignment assignment,
+                           GameSettings settings, ItemDifficultiesManager itemDifficultiesManager) {
         this.roster = roster;
+        this.roundPhase = roundPhase;
         this.assignment = assignment;
         this.settings = settings;
         this.itemDifficultiesManager = itemDifficultiesManager;
@@ -83,7 +88,27 @@ public class VoteSkipManager implements Manager {
             player.sendMessage(" ");
         });
 
-        this.voteTask = Scheduler.runLaterSync(this::endVoting, VOTE_DURATION_TICKS);
+        this.secondsLeft = VOTE_DURATION_SECONDS;
+        this.voteTask = Scheduler.runTimerSync(new BukkitRunnable() {
+            @Override
+            public void run() {
+                tickVote();
+            }
+        }, 20L, 20L);
+    }
+
+    /** The minute counts play time only, like the round clock; a round that ends drops the vote. */
+    private void tickVote() {
+        if (this.roundPhase.isPausedGame()) {
+            return;
+        }
+        if (!this.roundPhase.roundRunning()) {
+            this.cancelVote();
+            return;
+        }
+        if (--this.secondsLeft <= 0) {
+            this.endVoting();
+        }
     }
 
     /**
@@ -106,9 +131,6 @@ public class VoteSkipManager implements Manager {
             case COUNTED -> confirm(player, voteYes);
             case CLOSES_THE_VOTE -> {
                 confirm(player, voteYes);
-                if (this.voteTask != null) {
-                    this.voteTask.cancel();
-                }
                 this.endVoting();
             }
         }
@@ -121,8 +143,22 @@ public class VoteSkipManager implements Manager {
     }
 
     public void endVoting() {
+        if (this.voteTask != null) {
+            this.voteTask.cancel();
+            this.voteTask = null;
+        }
+
         Material votedMaterial = this.vote.material();
         SkipVote.Tally tally = this.vote.close();
+
+        // Found or skipped while the vote ran: carrying it would skip the item that replaced it.
+        if (this.initiator.activeMaterial() != votedMaterial) {
+            String name = CustomMaterials.nameOf(votedMaterial);
+            Bukkit.getOnlinePlayers().forEach(player -> player.sendMessage(Text.of(
+                    "<gray>The skip voting has been ended: <gold>" + name
+                            + " <gray>is no longer the item, so nothing is skipped.")));
+            return;
+        }
 
         String voteLabel = (tally.yes() != 1 ? "votes" : "vote");
         String materialName = CustomMaterials.nameOf(votedMaterial);
@@ -150,8 +186,6 @@ public class VoteSkipManager implements Manager {
         if (tally.carried()) {
             this.assignment.skipAll(this.initiator, this.settings.isSettingEnabled(GameSetting.RUN));
         }
-
-        this.voteTask = null;
     }
 
     public void cancelVote() {

@@ -10,7 +10,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import forceitembattle.model.ForceItemPlayer;
+import forceitembattle.model.GameState;
 import forceitembattle.model.Roster;
+import forceitembattle.model.RoundPhase;
+import forceitembattle.model.Team;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Scheduler;
 import org.bukkit.Material;
@@ -34,6 +37,7 @@ class VoteSkipExpiryTest {
     private ServerMock server;
     private Roster roster;
     private ForceItemAssignment assignment;
+    private RoundPhase phase;
     private VoteSkipManager votes;
 
     @BeforeEach
@@ -48,7 +52,9 @@ class VoteSkipExpiryTest {
         when(items.getUnicodeFromMaterial(true, Material.DIRT)).thenReturn("");
 
         GameSettings settings = mock(GameSettings.class);
-        this.votes = new VoteSkipManager(this.roster, this.assignment, settings, items);
+        this.phase = new RoundPhase();
+        this.phase.moveTo(GameState.MID_GAME);
+        this.votes = new VoteSkipManager(this.roster, this.phase, this.assignment, settings, items);
     }
 
     @AfterEach
@@ -261,6 +267,83 @@ class VoteSkipExpiryTest {
             server.getScheduler().performTicks(SIXTY_SECONDS_IN_TICKS + 1);
 
             assertTrue(PlayerOutfitter.jokerStackIn(playerOf(starter)).isEmpty());
+        }
+    }
+
+    /** The minute is play time: a pause holds it, and the end of the round drops the vote. */
+    @Nested
+    class TheRoundAroundIt {
+
+        @Test
+        void aPauseHoldsTheClock() {
+            ForceItemPlayer starter = joinPlaying("Understudy1");
+            joinPlaying("Understudy2");
+
+            votes.startVoting(playerOf(starter));
+            server.getScheduler().performTicks(20L * 30);
+            phase.moveTo(GameState.PAUSED_GAME);
+            server.getScheduler().performTicks(SIXTY_SECONDS_IN_TICKS);
+
+            assertTrue(votes.isVoteInProgress(), "a vote must not resolve while the game is paused");
+            verify(assignment, never()).skipAll(any(), anyBoolean());
+
+            phase.moveTo(GameState.MID_GAME);
+            server.getScheduler().performTicks(20L * 31);
+
+            assertTrue(!votes.isVoteInProgress(), "and it finishes its minute once play resumes");
+            verify(assignment).skipAll(starter, false);
+        }
+
+        @Test
+        void theEndOfTheRoundDropsTheVoteWithoutACharge() {
+            ForceItemPlayer starter = joinPlaying("Understudy1");
+            joinPlaying("Understudy2");
+            int before = starter.activeJokers();
+
+            votes.startVoting(playerOf(starter));
+            phase.moveTo(GameState.END_GAME);
+            server.getScheduler().performTicks(SIXTY_SECONDS_IN_TICKS + 1);
+
+            assertTrue(!votes.isVoteInProgress());
+            verify(assignment, never()).skipAll(any(), anyBoolean());
+            assertEquals(before, starter.activeJokers());
+        }
+    }
+
+    /** A carried vote must skip the item it was about, never the one that replaced it. */
+    @Nested
+    class TheItemMovesOn {
+
+        private void replaceItem(ForceItemPlayer entry) {
+            Team team = new Team(1, Material.STONE, 0, entry.activeJokers(), entry);
+            entry.setCurrentTeam(team);
+        }
+
+        @Test
+        void aVoteOnAnItemAlreadyFoundSkipsNothingAndCostsNothing() {
+            ForceItemPlayer starter = joinPlaying("Understudy1");
+            ForceItemPlayer other = joinPlaying("Understudy2");
+            int before = starter.activeJokers();
+
+            votes.startVoting(playerOf(starter));
+            replaceItem(starter);
+            votes.castVote(playerOf(other), true);
+
+            verify(assignment, never()).skipAll(any(), anyBoolean());
+            assertEquals(before, starter.activeJokers());
+            assertTrue(screenOf(playerOf(other)).contains("no longer the item"));
+        }
+
+        @Test
+        void soDoesOneThatRunsOutItsMinute() {
+            ForceItemPlayer starter = joinPlaying("Understudy1");
+            joinPlaying("Understudy2");
+
+            votes.startVoting(playerOf(starter));
+            replaceItem(starter);
+            server.getScheduler().performTicks(SIXTY_SECONDS_IN_TICKS + 1);
+
+            verify(assignment, never()).skipAll(any(), anyBoolean());
         }
     }
 

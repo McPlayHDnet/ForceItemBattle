@@ -101,7 +101,6 @@ public class WanderingTraderManager implements Manager {
         this.positionManager = positionManager;
         this.locatorManager = locatorManager;
         this.scoreboard = scoreboard;
-        this.timer = ThreadLocalRandom.current().nextInt(7, 11) * 60; // [7, 10] minutes
     }
 
     @Override
@@ -121,7 +120,13 @@ public class WanderingTraderManager implements Manager {
         this.nearSpawnPlayers.clear();
     }
 
+    /** Replaces any loop left from an earlier round; two loops share {@link #timer} and double the spawn rate. */
     public void startTimer() {
+        if (this.spawnTimerTask != null) {
+            this.spawnTimerTask.cancel();
+        }
+        this.timer = ThreadLocalRandom.current().nextInt(7, 11) * 60;
+
         BukkitRunnable bukkitRunnable = new BukkitRunnable() {
             @Override
             public void run() {

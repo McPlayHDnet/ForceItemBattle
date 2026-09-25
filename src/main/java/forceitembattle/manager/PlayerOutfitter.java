@@ -1,6 +1,7 @@
 package forceitembattle.manager;
 
 import forceitembattle.gui.ItemBuilder;
+import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameItems;
 import forceitembattle.model.GameState;
 import forceitembattle.model.JokerSpend;
@@ -32,6 +33,7 @@ import org.bukkit.persistence.PersistentDataType;
 public final class PlayerOutfitter {
 
     private static final int JOKER_SLOT = 4;
+    private static final int BACKPACK_SLOT = 8;
 
     private PlayerOutfitter() {
     }
@@ -108,6 +110,28 @@ public final class PlayerOutfitter {
         player.setGameMode(GameMode.ADVENTURE);
 
         giveOpeningBar(player, MenuItem.Menu.LOBBY, phase);
+    }
+
+    /**
+     * Hands the backpack back after a respawn, unless they still hold one. Slot 8 only when it is
+     * free: with keepInventory on, whatever the player keeps there is theirs.
+     */
+    public static void restoreBackpack(Player player, ForceItemPlayer forceItemPlayer) {
+        PlayerInventory inventory = player.getInventory();
+        for (ItemStack stack : inventory.getContents()) {
+            if (stack != null && GameItems.isBackpack(stack)) {
+                return;
+            }
+        }
+
+        ItemStack backpack = GameItems.backpack(forceItemPlayer);
+        ItemStack inSlot = inventory.getItem(BACKPACK_SLOT);
+        if (inSlot == null || inSlot.getType().isAir()) {
+            inventory.setItem(BACKPACK_SLOT, backpack);
+            return;
+        }
+        inventory.addItem(backpack).values().forEach(leftover ->
+                player.getWorld().dropItemNaturally(player.getLocation(), leftover));
     }
 
     public static void giveJokerShare(Player player, int jokers) {

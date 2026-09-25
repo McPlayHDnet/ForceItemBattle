@@ -17,7 +17,7 @@ public final class CommandBed extends CustomCommand {
 
     @Override
     protected List<Precondition> preconditions() {
-        return List.of();
+        return List.of(Precondition.NOT_PAUSED);
     }
 
     @Override

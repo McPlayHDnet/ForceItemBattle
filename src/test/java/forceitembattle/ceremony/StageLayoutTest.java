@@ -1,6 +1,7 @@
 package forceitembattle.ceremony;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import forceitembattle.ceremony.StageLayout.Facing;
@@ -151,6 +152,57 @@ class StageLayoutTest {
     }
 
     @Nested
+    class TheButtons {
+
+        private final Point seat = StageLayout.seat(0).plus(0, StageLayout.EYE_HEIGHT, 0);
+
+        private Point towards(Point from, Point to) {
+            return new Point(to.x() - from.x(), to.y() - from.y(), to.z() - from.z());
+        }
+
+        private Point centreOf(Point button) {
+            return button.plus(0, StageLayout.BUTTON_TEXT_RISE, 0);
+        }
+
+        @Test
+        void aButtonCanBeClickedFromTheSeats() {
+            assertTrue(StageLayout.hits(this.seat, towards(this.seat, centreOf(StageLayout.NEXT_BUTTON)), StageLayout.NEXT_BUTTON));
+            assertTrue(StageLayout.hits(this.seat, towards(this.seat, centreOf(StageLayout.PREVIOUS_BUTTON)), StageLayout.PREVIOUS_BUTTON));
+        }
+
+        @Test
+        void theButtonsDoNotOverlap() {
+            Point look = towards(this.seat, centreOf(StageLayout.NEXT_BUTTON));
+            assertFalse(StageLayout.hits(this.seat, look, StageLayout.PREVIOUS_BUTTON));
+        }
+
+        @Test
+        void lookingJustPastAButtonMisses() {
+            Point beside = centreOf(StageLayout.NEXT_BUTTON).plus(StageLayout.BUTTON_HALF_WIDTH + 0.1, 0, 0);
+            assertFalse(StageLayout.hits(this.seat, towards(this.seat, beside), StageLayout.NEXT_BUTTON));
+        }
+
+        @Test
+        void lookingAwayFromTheCanvasMisses() {
+            Point look = towards(this.seat, centreOf(StageLayout.NEXT_BUTTON));
+            Point away = new Point(-look.x(), -look.y(), -look.z());
+            assertFalse(StageLayout.hits(this.seat, away, StageLayout.NEXT_BUTTON));
+        }
+
+        @Test
+        void theStatsPanelClearsTheWidestGrid() {
+            double halfWidth = StageLayout.SUMMARY_LINE_WIDTH * StageLayout.TEXT_PIXEL * StageLayout.SUMMARY_SCALE / 2;
+            assertTrue(StageLayout.SUMMARY.x() - halfWidth > StageLayout.CANVAS_WIDTH / 2);
+        }
+
+        @Test
+        void aButtonOutOfReachMisses() {
+            Point far = new Point(0, 6, StageLayout.BUTTON_REACH + 5);
+            assertFalse(StageLayout.hits(far, towards(far, centreOf(StageLayout.NEXT_BUTTON)), StageLayout.NEXT_BUTTON));
+        }
+    }
+
+    @Nested
     class ThePodium {
 
         @Test
@@ -159,6 +211,20 @@ class StageLayoutTest {
             assertTrue(StageLayout.podiumHeight(1) > StageLayout.podiumHeight(2));
             assertTrue(StageLayout.podiumHeight(2) > StageLayout.podiumHeight(3));
             assertTrue(StageLayout.podiumX(2) < 0 && StageLayout.podiumX(3) > 0);
+        }
+
+        @Test
+        void neighbouringLabelsNeverMeet() {
+            double widest = StageLayout.podiumLabelLineWidth() * StageLayout.TEXT_PIXEL * StageLayout.PODIUM_LABEL_SCALE;
+            double apart = StageLayout.podiumX(1) - StageLayout.podiumX(2);
+            assertTrue(widest < apart, "a label " + widest + " wide reaches the next step " + apart + " away");
+            assertEquals(apart, StageLayout.podiumX(3) - StageLayout.podiumX(1), EPSILON);
+        }
+
+        /** Sixteen of Minecraft's widest glyphs, the longest a player name gets, still fit on one line. */
+        @Test
+        void aFullLengthNameIsNotBroken() {
+            assertTrue(StageLayout.podiumLabelLineWidth() >= 16 * 6);
         }
 
         @Test

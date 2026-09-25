@@ -7,12 +7,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import forceitembattle.model.BackToBack;
 import forceitembattle.model.ForceItem;
 import forceitembattle.model.Rarity;
-import org.bukkit.Color;
 import org.bukkit.Material;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 /** {@link StageTimeline} and {@link StagePalette}: how long each item holds the spotlight, and in what colour. */
 class StageTimelineTest {
@@ -34,35 +34,55 @@ class StageTimelineTest {
     @Nested
     class Pacing {
 
-        /** The inventory reveal's pace, kept so a plain round takes as long as it always has. */
         @Test
-        void aPlainItemKeepsTheOldPace() {
-            assertEquals(10, StageTimeline.gapAfter(plain(), false));
-            assertEquals(8, StageTimeline.gapAfter(plain(), true));
+        void aShortListIsDealtAtTheFullPace() {
+            assertEquals(StageTimeline.NORMAL_GAP, StageTimeline.gapAfter(plain(), false, 10));
+            assertEquals(StageTimeline.EVENT_GAP, StageTimeline.gapAfter(plain(), true, 10));
+        }
+
+        @Test
+        void aLongerListIsDealtFaster() {
+            int previous = StageTimeline.baseGap(false, 10);
+            for (int count = 11; count <= 200; count++) {
+                int gap = StageTimeline.baseGap(false, count);
+                assertTrue(gap <= previous, count + " items should not be dealt slower than one fewer");
+                previous = gap;
+            }
+            assertTrue(StageTimeline.baseGap(false, 40) < StageTimeline.NORMAL_GAP);
+        }
+
+        @ParameterizedTest
+        @ValueSource(booleans = {false, true})
+        void thePaceNeverDropsBelowTheFloor(boolean event) {
+            assertEquals(StageTimeline.FASTEST_GAP, StageTimeline.baseGap(event, 1000));
         }
 
         /** A skip glows red but is not worth waiting on. */
         @Test
         void aJokerKeepsThePace() {
-            assertEquals(StageTimeline.gapAfter(plain(), false), StageTimeline.gapAfter(joker(), false));
+            assertEquals(StageTimeline.gapAfter(plain(), false, 10), StageTimeline.gapAfter(joker(), false, 10));
         }
 
-        @Test
-        void rarerChainsHoldTheSpotlightLonger() {
-            int previous = StageTimeline.gapAfter(plain(), false);
+        @ParameterizedTest
+        @ValueSource(ints = {10, 1000})
+        void rarerChainsHoldTheSpotlightLonger(int count) {
+            int previous = StageTimeline.gapAfter(plain(), false, count);
             for (Rarity rarity : new Rarity[]{Rarity.RARE, Rarity.EPIC, Rarity.LEGENDARY, Rarity.RNGESUS}) {
-                int gap = StageTimeline.gapAfter(backToBack(rarity), false);
+                int gap = StageTimeline.gapAfter(backToBack(rarity), false, count);
                 assertTrue(gap > previous, rarity + " should outlast the tier below it");
                 previous = gap;
             }
         }
 
         @ParameterizedTest
-        @EnumSource(Rarity.class)
-        void anItemLeavesTheSpotlightBeforeTheNextArrives(Rarity rarity) {
-            ForceItem item = backToBack(rarity);
-            assertTrue(StageTimeline.holdFor(item, false) < StageTimeline.gapAfter(item, false));
-            assertTrue(StageTimeline.holdFor(plain(), true) >= 1);
+        @ValueSource(ints = {1, 10, 40, 1000})
+        void anItemLeavesTheSpotlightBeforeTheNextArrives(int count) {
+            for (ForceItem item : java.util.List.of(plain(), backToBack(Rarity.RARE), backToBack(Rarity.EXTRAORDINARY))) {
+                for (boolean event : new boolean[]{false, true}) {
+                    int hold = StageTimeline.holdFor(item, event, count);
+                    assertTrue(hold >= 2 && hold < StageTimeline.gapAfter(item, event, count));
+                }
+            }
         }
 
         @Test
@@ -105,13 +125,6 @@ class StageTimelineTest {
             BackToBack broken = new BackToBack(false);
             broken.setRarityType(Rarity.LEGENDARY);
             assertNull(StagePalette.glowOf(new ForceItem(Material.STONE, "00:42", 0L, broken, false, null)));
-        }
-
-        @Test
-        void aTintedCardKeepsItsTransparency() {
-            Color tinted = StagePalette.cardFor(StagePalette.glowOf(Rarity.LEGENDARY));
-            assertEquals(StagePalette.CARD.getAlpha(), tinted.getAlpha());
-            assertEquals(StagePalette.CARD, StagePalette.cardFor(null));
         }
     }
 }

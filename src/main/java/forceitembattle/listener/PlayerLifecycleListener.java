@@ -175,10 +175,10 @@ public class PlayerLifecycleListener implements Listener {
             player.performCommand("fixskips -silent");
         }
 
-        // A mid-round joiner holds no roster entry and no backpack, so there is nothing to put
-        // in slot 8 for them.
-        if (forceItemPlayer != null) {
-            player.getInventory().setItem(8, GameItems.backpack(forceItemPlayer));
+        // A mid-round joiner holds no roster entry and no backpack, and with BACKPACK off nobody
+        // was ever given one.
+        if (Roster.isPlaying(forceItemPlayer) && this.settings.isSettingEnabled(GameSetting.BACKPACK)) {
+            PlayerOutfitter.restoreBackpack(player, forceItemPlayer);
         }
 
     }

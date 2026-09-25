@@ -1,5 +1,6 @@
 package forceitembattle.commands.admin;
 
+import static forceitembattle.commands.Precondition.NO_ROUND_UNDER_WAY;
 import static forceitembattle.commands.Precondition.OP;
 
 import forceitembattle.commands.CustomCommand;
@@ -54,7 +55,7 @@ public final class CommandStart extends CustomCommand implements CustomTabComple
 
     @Override
     protected List<Precondition> preconditions() {
-        return List.of(OP);
+        return List.of(OP, NO_ROUND_UNDER_WAY);
     }
 
     @Override
@@ -101,7 +102,7 @@ public final class CommandStart extends CustomCommand implements CustomTabComple
 
     private void performCommand(GamePreset gamePreset, CommandSender player, String[] args) {
         boolean teamsConfigured = this.settings.isSettingEnabled(GameSetting.TEAM);
-        int rosterSize = this.roster.players().size();
+        int rosterSize = (int) this.roster.players().values().stream().filter(Roster::isPlaying).count();
 
         RoundStart start = gamePreset != null
                 ? RoundStart.fromPreset(gamePreset, teamsConfigured, rosterSize)

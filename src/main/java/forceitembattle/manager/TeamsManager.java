@@ -13,6 +13,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
@@ -79,7 +80,13 @@ public class TeamsManager implements Manager {
     }
 
     public void autoTeams() {
+        // A spectator on a team would take half its jokers and leave their teammate playing alone.
+        List.copyOf(this.roster.players().values()).stream()
+                .filter(player -> player.isSpectator() && player.currentTeam() != null)
+                .forEach(player -> this.removeFromTeam(player.currentTeam(), player));
+
         List<ForceItemPlayer> playersWithoutTeam = this.roster.players().values().stream()
+                .filter(Roster::isPlaying)
                 .filter(player -> player.currentTeam() == null)
                 .collect(Collectors.toList());
 
@@ -92,7 +99,7 @@ public class TeamsManager implements Manager {
             List<ForceItemPlayer> teamPlayers = new ArrayList<>(ordered.subList(next, next + teamSizeLimit));
             next += teamSizeLimit;
 
-            Team randomTeam = new Team(this.teams.size() + 1, null, 0, 0, teamPlayers.toArray(new ForceItemPlayer[0]));
+            Team randomTeam = new Team(this.nextTeamId(), null, 0, 0, teamPlayers.toArray(new ForceItemPlayer[0]));
             this.teams.add(randomTeam);
 
             for (ForceItemPlayer player : teamPlayers) {
@@ -101,7 +108,7 @@ public class TeamsManager implements Manager {
         }
 
         for (ForceItemPlayer player : ordered.subList(next, ordered.size())) {
-            Team singlePlayerTeam = new Team(this.teams.size() + 1, null, 0, 0, player);
+            Team singlePlayerTeam = new Team(this.nextTeamId(), null, 0, 0, player);
             this.teams.add(singlePlayerTeam);
 
             player.setCurrentTeam(singlePlayerTeam);
@@ -194,6 +201,16 @@ public class TeamsManager implements Manager {
         }
     }
 
+    /** Not {@code teams.size() + 1}: once a team disbands, that hands out an id still in use. */
+    private int nextTeamId() {
+        return this.teams.stream().mapToInt(Team::getTeamId).max().orElse(0) + 1;
+    }
+
+    /** By id, not list position: the list is reordered by invites and shrinks when a team disbands. */
+    public Optional<Team> teamById(int teamId) {
+        return this.teams.stream().filter(team -> team.getTeamId() == teamId).findFirst();
+    }
+
     public boolean alreadyInTeam(Team team, ForceItemPlayer player) {
         return team.getPlayers().contains(player);
     }
@@ -207,29 +224,30 @@ public class TeamsManager implements Manager {
     }
 
     public void invite(ForceItemPlayer player, ForceItemPlayer target) {
-        // Assigning the inviter a team happens before the self-invite guard below, as it always has:
-        // inviting yourself still leaves you in a team of one.
-        Team team = player.currentTeam();
-        if (team == null) {
-            team = new Team(this.teams.size() + 1, null, 0, 0, player);
-            player.setCurrentTeam(team);
-        }
-
         if (player == target) {
             player.player().sendMessage(Text.of("<red>You cannot interact with yourself :("));
-            return;
-        }
-        if (this.isTeamFull(team)) {
-            player.player().sendMessage(Text.of("<red>Your team is already full"));
-            return;
-        }
-        if (this.alreadyInTeam(team, target)) {
-            player.player().sendMessage(Text.of("<yellow>" + target.player().getName() + " <red>is already in a team"));
             return;
         }
         if (this.alreadyInvited(target)) {
             player.player().sendMessage(Text.of("<yellow>" + target.player().getName() + " <red>already got invited"));
             return;
+        }
+
+        Team team = player.currentTeam();
+        if (team != null && this.isTeamFull(team)) {
+            player.player().sendMessage(Text.of("<red>Your team is already full"));
+            return;
+        }
+        if (team != null && this.alreadyInTeam(team, target)) {
+            player.player().sendMessage(Text.of("<yellow>" + target.player().getName() + " <red>is already in a team"));
+            return;
+        }
+
+        // Only once the invite is certain to go out: a team created and then abandoned by a refusal
+        // above was set on the player but never registered, so the round could not see it.
+        if (team == null) {
+            team = new Team(this.nextTeamId(), null, 0, 0, player);
+            player.setCurrentTeam(team);
         }
 
         player.player().sendMessage(Text.of("<dark_aqua>You invited <yellow>" + target.player().getName() + " <dark_aqua>to your team"));
@@ -271,9 +289,9 @@ public class TeamsManager implements Manager {
     }
 
     public void create(ForceItemPlayer first, @Nullable ForceItemPlayer second, String name) {
-        Team team = new Team(this.teams.size() + 1, null, 0, 0, first);
+        Team team = new Team(this.nextTeamId(), null, 0, 0);
         team.setName(name);
-        first.setCurrentTeam(team);
+        this.addToTeam(team, first);
         if (second != null) this.addToTeam(team, second);
 
         this.teams.add(team);
@@ -359,7 +377,15 @@ public class TeamsManager implements Manager {
         }
     }
 
+    /** Leaves any team the player is already on first, so nobody is ever listed on two. */
     private void addToTeam(Team team, ForceItemPlayer player) {
+        Team previous = player.currentTeam();
+        if (previous == team) {
+            return;
+        }
+        if (previous != null) {
+            this.removeFromTeam(previous, player);
+        }
         team.addPlayer(player);
         player.setCurrentTeam(team);
     }

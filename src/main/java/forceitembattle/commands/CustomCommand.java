@@ -1,5 +1,6 @@
 package forceitembattle.commands;
 
+import forceitembattle.settings.GameSetting;
 import forceitembattle.util.Text;
 import java.util.List;
 import lombok.Getter;
@@ -44,6 +45,15 @@ public abstract class CustomCommand implements CommandExecutor {
     /** Reads the declaration from outside the subclass, for the pinned table in the tests. */
     final List<Precondition> declaredPreconditions() {
         return this.preconditions();
+    }
+
+    /** Whether a non-op would be refused right now. Subcommand gates via {@code requireOp} are not seen. */
+    public final boolean isOpOnly() {
+        return this.preconditions().stream().anyMatch(precondition ->
+                precondition.label().equals(Precondition.OP.label())
+                        || precondition.label().equals(Precondition.OP_WHEN_EVENT.label())
+                        && this.context != null
+                        && this.context.settingEnabled(GameSetting.EVENT));
     }
 
     final void setContext(CommandContext context) {

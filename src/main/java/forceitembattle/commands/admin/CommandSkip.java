@@ -56,7 +56,7 @@ public final class CommandSkip extends CustomCommand {
         }
 
         player.sendMessage(Text.of("<gray>Skipped this item for " + target.getName()));
-        this.assignment.skipAll(forceItemPlayer, this.settings.isSettingEnabled(GameSetting.RUN));
+        this.assignment.skipFor(forceItemPlayer,this.settings.isSettingEnabled(GameSetting.RUN));
 
 
     }

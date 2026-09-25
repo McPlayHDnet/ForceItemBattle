@@ -5,28 +5,38 @@ import forceitembattle.model.ForceItem;
 import forceitembattle.model.Rarity;
 import javax.annotation.Nullable;
 
-/** How long each item holds the spotlight. A rarer find is given longer to be read. */
+/** How long each item holds the spotlight. A rarer find is given longer; a longer list is dealt faster. */
 final class StageTimeline {
 
-    static final int NORMAL_GAP = 10;
-    static final int EVENT_GAP = 8;
+    static final int NORMAL_GAP = 8;
+    static final int EVENT_GAP = 7;
+    static final int FASTEST_GAP = 4;
+    /** Lists up to this long are dealt at the full gap. */
+    static final int UNHURRIED_ITEMS = 10;
+    /** Past that, every this many items take a tick off the gap. */
+    static final int ITEMS_PER_SPEEDUP = 8;
     static final int FLIGHT_TICKS = 6;
     /** The next item pops while this one is still flying, so the spotlight never sits empty. */
-    static final int OVERLAP = 4;
+    static final int OVERLAP = 3;
 
     private StageTimeline() {
     }
 
-    /** Ticks from this item popping up to the next one popping up. */
-    static int gapAfter(ForceItem item, boolean event) {
-        int base = event ? EVENT_GAP : NORMAL_GAP;
+    /** Ticks from this item popping up to the next one popping up, in a reveal of {@code count} items. */
+    static int gapAfter(ForceItem item, boolean event, int count) {
+        int base = baseGap(event, count);
         Rarity rarity = rarityOf(item);
         return rarity == null ? base : base + extraFor(rarity);
     }
 
     /** Ticks this item stays in the spotlight before flying to its slot. */
-    static int holdFor(ForceItem item, boolean event) {
-        return Math.max(1, gapAfter(item, event) - OVERLAP);
+    static int holdFor(ForceItem item, boolean event, int count) {
+        return Math.max(2, gapAfter(item, event, count) - OVERLAP);
+    }
+
+    static int baseGap(boolean event, int count) {
+        int speedup = Math.max(0, count - UNHURRIED_ITEMS) / ITEMS_PER_SPEEDUP;
+        return Math.max(FASTEST_GAP, (event ? EVENT_GAP : NORMAL_GAP) - speedup);
     }
 
     /** Rises from low to high across the reveal, so the pops build towards the name. */
@@ -48,10 +58,10 @@ final class StageTimeline {
 
     private static int extraFor(Rarity rarity) {
         return switch (rarity) {
-            case RARE -> 15;
-            case EPIC -> 20;
-            case LEGENDARY -> 30;
-            case RNGESUS, EXTRAORDINARY -> 45;
+            case RARE -> 10;
+            case EPIC -> 14;
+            case LEGENDARY -> 20;
+            case RNGESUS, EXTRAORDINARY -> 30;
         };
     }
 }
