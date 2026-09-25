@@ -216,7 +216,7 @@ public final class ResultStage implements Manager {
         podium.forEach(reveal -> byPlace.computeIfAbsent(reveal.place(), place -> new ArrayList<>())
                 .add(reveal.owner()));
 
-        this.playToAll(Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
+        this.playToAll(Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.35f, 1f);
 
         byPlace.forEach((place, owners) -> {
             if (place > 3) {
@@ -377,7 +377,7 @@ public final class ResultStage implements Manager {
 
         Location at = this.locationOf(new Point(x, top + 1, StageLayout.PODIUM_Z));
         this.world().spawnParticle(Particle.CLOUD, at, 30, 0.5, 0.8, 0.5, 0.02);
-        this.playToAll(Sound.ENTITY_PLAYER_LEVELUP, 1f, place == 1 ? 1.2f : 0.8f);
+        this.playToAll(Sound.ENTITY_PLAYER_LEVELUP, 0.5f, place == 1 ? 1.2f : 0.8f);
     }
 
     private void launchFireworks() {
