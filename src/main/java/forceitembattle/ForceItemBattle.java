@@ -303,8 +303,8 @@ public final class ForceItemBattle extends JavaPlugin {
                 new EventContext(this, this.roundPhase, this.settings,
                         this.itemDifficultiesManager, this.wanderingTraderManager),
                 this.roster, this.roundClock, this.settings));
-        this.backToBackManager = register(new BackToBackManager(this.settings, this.itemDifficultiesManager,
-                this.backpackManager, this.fibService));
+        this.backToBackManager = register(new BackToBackManager(this.settings, this.roundPhase,
+                this.itemDifficultiesManager, this.backpackManager, this.fibService));
 
         this.resultStage = register(new ResultStage(this.settings, new CushionSeats()));
         this.gamemanager = register(new Gamemanager(this, this.roster, this.roundPhase, this.settings,
