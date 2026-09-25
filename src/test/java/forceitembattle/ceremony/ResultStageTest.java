@@ -13,6 +13,7 @@ import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.Rarity;
 import forceitembattle.model.ResultCeremony.Reveal;
 import forceitembattle.model.ScoreOwner;
+import forceitembattle.model.Team;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Scheduler;
 import java.util.ArrayList;
@@ -358,10 +359,27 @@ class ResultStageTest {
                     .orElseThrow();
             assertEquals(first.getUniqueId(), winner.getProfile().uuid());
 
-            assertTrue(texts().stream().anyMatch(text -> text.startsWith("1. Understudy1")));
+            assertTrue(texts().contains("1. 3 Items\nUnderstudy1"));
             for (Player player : List.of(first, second, third, fourth)) {
                 assertFalse(player.isInsideVehicle(), player.getName() + " is free to move");
             }
+        }
+
+        /** A comma-joined team line ran wide enough to cover the neighbouring steps' labels. */
+        @Test
+        void anUnnamedTeamIsListedAMemberPerLine() {
+            PlayerMock alice = server.addPlayer("Alice");
+            PlayerMock bob = server.addPlayer("Bob");
+            open();
+
+            Team team = new Team(1, Material.STONE, 0, 0,
+                    new ForceItemPlayer(alice, Material.STONE, 0, 0),
+                    new ForceItemPlayer(bob, Material.STONE, 0, 0));
+            team.record(plain());
+            stage.finale(List.of(new Reveal(team, 1, true)));
+            tick(WHOLE_REVEAL);
+
+            assertTrue(texts().contains("1. 1 Items\nAlice\nBob"), texts().toString());
         }
     }
 

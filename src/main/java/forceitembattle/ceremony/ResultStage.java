@@ -12,6 +12,7 @@ import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.Rarity;
 import forceitembattle.model.ResultCeremony;
 import forceitembattle.model.ScoreOwner;
+import forceitembattle.model.Team;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Text;
@@ -60,7 +61,7 @@ public final class ResultStage implements Manager {
     private static final int SETTLE_TICKS = 3;
     private static final int CLEAR_TICKS = 5;
     private static final long FIRST_ITEM_DELAY = CLEAR_TICKS + 15;
-    private static final long DEALT_TO_NAME_TICKS = 60;
+    private static final long DEALT_TO_NAME_TICKS = 40;
     private static final long STEP_RISE_TICKS = 20;
     private static final long RELEASE_TICKS = 100;
 
@@ -186,16 +187,16 @@ public final class ResultStage implements Manager {
             ForceItem item = items.get(index);
             int position = index;
             this.cues.at(at, () -> this.present(owner, item, position, items.size(), layout, event));
-            dealtAt = at + StageTimeline.holdFor(item, event) + StageTimeline.FLIGHT_TICKS;
-            at += StageTimeline.gapAfter(item, event);
+            dealtAt = at + StageTimeline.holdFor(item, event, items.size()) + StageTimeline.FLIGHT_TICKS;
+            at += StageTimeline.gapAfter(item, event, items.size());
         }
         if (items.isEmpty()) {
-            this.cues.at(at, () -> this.showCard("<gray>No items found", null));
+            this.cues.at(at, () -> this.showCard("<gray>No items found"));
             dealtAt = at + 20;
         }
 
         this.cues.at(dealtAt, () -> {
-            this.showCard("", null);
+            this.showCard("");
             onDealt.run();
         });
         this.cues.at(dealtAt + DEALT_TO_NAME_TICKS, () -> {
@@ -272,10 +273,14 @@ public final class ResultStage implements Manager {
         });
         this.grid.add(display);
 
+        int hold = StageTimeline.holdFor(item, event, count);
         // A transformation set in the spawn tick is the client's starting point, not an animation.
         this.cues.at(1, () -> animate(display, facingViewer(StageLayout.SPOTLIGHT_SCALE * 1.15f), POP_TICKS));
-        this.cues.at(1 + POP_TICKS, () -> animate(display, facingViewer(StageLayout.SPOTLIGHT_SCALE), SETTLE_TICKS));
-        this.cues.at(StageTimeline.holdFor(item, event), () -> {
+        // At the fastest pace the item is already flying by then, and settling would blow it back up in its slot.
+        if (1 + POP_TICKS < hold) {
+            this.cues.at(1 + POP_TICKS, () -> animate(display, facingViewer(StageLayout.SPOTLIGHT_SCALE), SETTLE_TICKS));
+        }
+        this.cues.at(hold, () -> {
             Location target = this.locationOf(layout.slot(index));
             target.setYaw(StageLayout.ITEM_FACING.yaw());
             target.setPitch(StageLayout.ITEM_FACING.pitch());
@@ -283,7 +288,7 @@ public final class ResultStage implements Manager {
             animate(display, facingViewer(layout.itemScale()), StageTimeline.FLIGHT_TICKS);
         });
 
-        this.showCard(ItemCard.of(owner, item), glow);
+        this.showCard(ItemCard.of(owner, item));
         this.write(this.counter, "<gold>" + (index + 1) + " <gray>Items");
 
         this.playToAll(Sound.ENTITY_ITEM_PICKUP, 0.6f, StageTimeline.pitch(index, count));
@@ -362,12 +367,13 @@ public final class ResultStage implements Manager {
             }));
         }
 
-        String names = String.join("<gray>, <white>", owners.stream().map(ResultDisplay::nameOf).toList());
+        String names = String.join("\n", owners.stream().flatMap(owner -> podiumNamesOf(owner).stream())
+                .map(name -> "<white>" + name).toList());
         int items = owners.getFirst().foundItems().size();
-        TextDisplay label = this.text(new Point(x, top + 2.3, StageLayout.PODIUM_Z), 1.3f,
+        TextDisplay label = this.text(new Point(x, top + 2.3, StageLayout.PODIUM_Z), StageLayout.PODIUM_LABEL_SCALE,
                 Display.Billboard.VERTICAL, StagePalette.CARD);
-        this.write(label, Text.placeColor(place) + "<b>" + place + ".</b> <white>" + names
-                + "\n<gold>" + items + " Items");
+        label.setLineWidth(StageLayout.podiumLabelLineWidth());
+        this.write(label, Text.placeColor(place) + "<b>" + place + ".</b> <gold>" + items + " Items\n" + names);
 
         Location at = this.locationOf(new Point(x, top + 1, StageLayout.PODIUM_Z));
         this.world().spawnParticle(Particle.CLOUD, at, 30, 0.5, 0.8, 0.5, 0.02);
@@ -412,12 +418,7 @@ public final class ResultStage implements Manager {
         }));
     }
 
-    /** An empty card drops its backdrop too, or a small dark box would hang in the spotlight. */
-    private void showCard(String miniMessage, @Nullable Color glow) {
-        if (this.card == null) {
-            return;
-        }
-        this.card.setBackgroundColor(miniMessage.isEmpty() ? StagePalette.NONE : StagePalette.cardFor(glow));
+    private void showCard(String miniMessage) {
         this.write(this.card, miniMessage);
     }
 
@@ -458,6 +459,14 @@ public final class ResultStage implements Manager {
         return new Point(location.getX() - this.anchor.getX(),
                 location.getY() - this.anchor.getY(),
                 location.getZ() - this.anchor.getZ());
+    }
+
+    /** A team without a name is listed a member per line, not as one comma-joined line. */
+    private static List<String> podiumNamesOf(ScoreOwner owner) {
+        if (owner instanceof Team team && team.getName() == null) {
+            return team.getPlayers().stream().map(member -> member.player().getName()).toList();
+        }
+        return List.of(ResultDisplay.nameOf(owner));
     }
 
     private static ResolvableProfile profileOf(Player player) {

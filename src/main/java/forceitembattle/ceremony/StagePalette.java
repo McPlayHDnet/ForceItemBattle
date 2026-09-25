@@ -36,17 +36,6 @@ final class StagePalette {
         };
     }
 
-    /** The card's backdrop, tinted towards the glow so a rare find reads as rare before it is read. */
-    static Color cardFor(@Nullable Color glow) {
-        if (glow == null) {
-            return CARD;
-        }
-        return Color.fromARGB(CARD.getAlpha(),
-                mix(CARD.getRed(), glow.getRed()),
-                mix(CARD.getGreen(), glow.getGreen()),
-                mix(CARD.getBlue(), glow.getBlue()));
-    }
-
     static Material stepOf(int place) {
         return switch (place) {
             case 1 -> Material.GOLD_BLOCK;
@@ -61,9 +50,5 @@ final class StagePalette {
             case 2 -> Color.fromRGB(0xD0D0D0);
             default -> Color.fromRGB(0xC06040);
         };
-    }
-
-    private static int mix(int base, int tint) {
-        return (base * 2 + tint) / 3;
     }
 }

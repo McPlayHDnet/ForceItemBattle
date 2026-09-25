@@ -162,6 +162,20 @@ class StageLayoutTest {
         }
 
         @Test
+        void neighbouringLabelsNeverMeet() {
+            double widest = StageLayout.podiumLabelLineWidth() * StageLayout.TEXT_PIXEL * StageLayout.PODIUM_LABEL_SCALE;
+            double apart = StageLayout.podiumX(1) - StageLayout.podiumX(2);
+            assertTrue(widest < apart, "a label " + widest + " wide reaches the next step " + apart + " away");
+            assertEquals(apart, StageLayout.podiumX(3) - StageLayout.podiumX(1), EPSILON);
+        }
+
+        /** Sixteen of Minecraft's widest glyphs, the longest a player name gets, still fit on one line. */
+        @Test
+        void aFullLengthNameIsNotBroken() {
+            assertTrue(StageLayout.podiumLabelLineWidth() >= 16 * 6);
+        }
+
+        @Test
         void aTeamStandsSideBySideOnItsStep() {
             double half = StageLayout.STEP_WIDTH / 2;
             for (int members = 1; members <= 4; members++) {

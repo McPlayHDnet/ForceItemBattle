@@ -47,6 +47,10 @@ final class StageLayout {
     static final double PODIUM_Z = 2.0;
     static final double STEP_WIDTH = 2.2;
     static final double STEP_DEPTH = 2.2;
+    static final double STEP_GAP = 0.8;
+    static final float PODIUM_LABEL_SCALE = 1.0f;
+    /** A text display draws one pixel of its line width as this many blocks at scale 1. */
+    static final double TEXT_PIXEL = 0.025;
 
     private static final double CLEARANCE = 3;
 
@@ -124,9 +128,15 @@ final class StageLayout {
     static double podiumX(int place) {
         return switch (place) {
             case 1 -> 0;
-            case 2 -> -STEP_WIDTH - 0.2;
-            default -> STEP_WIDTH + 0.2;
+            case 2 -> -STEP_WIDTH - STEP_GAP;
+            default -> STEP_WIDTH + STEP_GAP;
         };
+    }
+
+    /** Wraps a step's label inside its own column, so neighbouring labels never meet. */
+    static int podiumLabelLineWidth() {
+        double column = STEP_WIDTH + STEP_GAP - 0.2;
+        return (int) (column / (TEXT_PIXEL * PODIUM_LABEL_SCALE));
     }
 
     static double podiumHeight(int place) {
