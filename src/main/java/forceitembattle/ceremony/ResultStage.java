@@ -63,7 +63,7 @@ public final class ResultStage implements Manager {
     private static final int SETTLE_TICKS = 3;
     private static final int CLEAR_TICKS = 5;
     private static final long FIRST_ITEM_DELAY = CLEAR_TICKS + 15;
-    private static final long DEALT_TO_NAME_TICKS = 40;
+    private static final long DEALT_TO_NAME_TICKS = 50;
     private static final long WINNER_TO_PODIUM_TICKS = 50;
     private static final long STEP_RISE_TICKS = 20;
     private static final long RELEASE_TICKS = 100;

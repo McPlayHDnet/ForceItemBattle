@@ -8,13 +8,13 @@ import javax.annotation.Nullable;
 /** How long each item holds the spotlight. A rarer find is given longer; a longer list is dealt faster. */
 final class StageTimeline {
 
-    static final int NORMAL_GAP = 8;
-    static final int EVENT_GAP = 7;
-    static final int FASTEST_GAP = 4;
+    static final int NORMAL_GAP = 9;
+    static final int EVENT_GAP = 8;
+    static final int FASTEST_GAP = 5;
     /** Lists up to this long are dealt at the full gap. */
-    static final int UNHURRIED_ITEMS = 10;
+    static final int UNHURRIED_ITEMS = 15;
     /** Past that, every this many items take a tick off the gap. */
-    static final int ITEMS_PER_SPEEDUP = 8;
+    static final int ITEMS_PER_SPEEDUP = 12;
     static final int FLIGHT_TICKS = 6;
     /** The next item pops while this one is still flying, so the spotlight never sits empty. */
     static final int OVERLAP = 3;
@@ -58,10 +58,10 @@ final class StageTimeline {
 
     private static int extraFor(Rarity rarity) {
         return switch (rarity) {
-            case RARE -> 10;
-            case EPIC -> 14;
-            case LEGENDARY -> 20;
-            case RNGESUS, EXTRAORDINARY -> 30;
+            case RARE -> 12;
+            case EPIC -> 17;
+            case LEGENDARY -> 25;
+            case RNGESUS, EXTRAORDINARY -> 38;
         };
     }
 }
