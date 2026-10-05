@@ -7,6 +7,7 @@ import forceitembattle.model.Locator;
 import forceitembattle.model.Roster;
 import forceitembattle.model.RoundPhase;
 import forceitembattle.model.TraderKind;
+import forceitembattle.util.GameBroadcast;
 import forceitembattle.util.LocationFormat;
 import forceitembattle.util.Prefix;
 import forceitembattle.util.Scheduler;
@@ -268,8 +269,7 @@ public class WanderingTraderManager implements Manager {
         });
 
         if (trader.getKind() == TraderKind.SPECIAL) {
-            Bukkit.getOnlinePlayers().forEach(players ->
-                    players.playSound(players.getLocation(), Sound.ENTITY_ILLUSIONER_CAST_SPELL, 1, 1));
+            GameBroadcast.playToAll(Sound.ENTITY_ILLUSIONER_CAST_SPELL, 1, 1);
         }
     }
 

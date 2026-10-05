@@ -17,6 +17,7 @@ import forceitembattle.model.RoundPhase;
 import forceitembattle.settings.GamePreset;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
+import forceitembattle.util.GameBroadcast;
 import forceitembattle.util.Scheduler;
 import forceitembattle.util.Text;
 import java.time.Duration;
@@ -140,9 +141,7 @@ public final class CommandStart extends CustomCommand implements CustomTabComple
                     return;
                 }
                 if (seconds < 6) {
-                    Bukkit.getOnlinePlayers().forEach(
-                            players -> players.playSound(players.getLocation(), Sound.BLOCK_NOTE_BLOCK_BANJO, 1, 1)
-                    );
+                    GameBroadcast.playToAll(Sound.BLOCK_NOTE_BLOCK_BANJO, 1, 1);
                 }
 
                 if (seconds == 10) {

@@ -1,12 +1,13 @@
 package forceitembattle.randomevents;
 
-import forceitembattle.model.Find;
 import forceitembattle.manager.ItemDifficultiesManager.State;
 import forceitembattle.manager.RoundSetup;
+import forceitembattle.model.Find;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.ScoreOwner;
 import forceitembattle.model.Team;
 import forceitembattle.settings.GameSetting;
+import forceitembattle.util.GameBroadcast;
 import forceitembattle.util.Prefix;
 import forceitembattle.util.Text;
 import forceitembattle.util.TimeFormat;
@@ -60,8 +61,7 @@ public class PointHunt implements RandomEvent {
                 : "<gray>The top scorer takes <yellow>" + SOLO_WHEELS + " Wheels of Fortune<gray>!";
         Bukkit.broadcast(Text.of(Prefix.RANDOM_EVENT + reward));
 
-        Bukkit.getOnlinePlayers().forEach(players ->
-                players.playSound(players.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1, 1.4f));
+        GameBroadcast.playToAll(Sound.BLOCK_NOTE_BLOCK_PLING, 1, 1.4f);
     }
 
     @Override
@@ -105,8 +105,7 @@ public class PointHunt implements RandomEvent {
     }
 
     private void conclude() {
-        Bukkit.getOnlinePlayers().forEach(players ->
-                players.playSound(players.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1, 1));
+        GameBroadcast.playToAll(Sound.ENTITY_PLAYER_LEVELUP, 1, 1);
 
         List<Map.Entry<ScoreOwner, Integer>> ranked = this.points.entrySet().stream()
                 .sorted(Map.Entry.<ScoreOwner, Integer>comparingByValue().reversed())

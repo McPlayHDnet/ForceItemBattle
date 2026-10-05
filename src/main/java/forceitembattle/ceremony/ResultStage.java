@@ -15,6 +15,7 @@ import forceitembattle.model.ScoreOwner;
 import forceitembattle.model.Team;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
+import forceitembattle.util.GameBroadcast;
 import forceitembattle.util.Text;
 import io.papermc.paper.datacomponent.item.ResolvableProfile;
 import java.time.Duration;
@@ -288,7 +289,7 @@ public final class ResultStage implements Manager {
             this.cues.at(1, () -> animate(display, facingViewer(layout.itemScale()), POP_TICKS));
         }
         this.describe(reveal);
-        this.playToAll(Sound.UI_BUTTON_CLICK, 0.4f, 1f);
+        GameBroadcast.playToAll(Sound.UI_BUTTON_CLICK, 0.4f, 1f);
     }
 
     private void describe(ResultCeremony.Reveal reveal) {
@@ -306,7 +307,7 @@ public final class ResultStage implements Manager {
         podium.forEach(reveal -> byPlace.computeIfAbsent(reveal.place(), place -> new ArrayList<>())
                 .add(reveal.owner()));
 
-        this.playToAll(Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.35f, 1f);
+        GameBroadcast.playToAll(Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.35f, 1f);
 
         byPlace.forEach((place, owners) -> {
             if (place > 3) {
@@ -369,7 +370,7 @@ public final class ResultStage implements Manager {
         this.showCard(ItemCard.of(owner, item));
         this.write(this.counter, "<gold>" + (index + 1) + " <gray>Items");
 
-        this.playToAll(Sound.ENTITY_ITEM_PICKUP, 0.6f, StageTimeline.pitch(index, count));
+        GameBroadcast.playToAll(Sound.ENTITY_ITEM_PICKUP, 0.6f, StageTimeline.pitch(index, count));
         Rarity rarity = StageTimeline.rarityOf(item);
         if (rarity != null) {
             Bukkit.getOnlinePlayers().forEach(rarity::playTo);
@@ -421,7 +422,7 @@ public final class ResultStage implements Manager {
             viewer.showTitle(shown);
             viewer.sendMessage(chatLine);
         }
-        this.playToAll(Sound.ENTITY_PLAYER_LEVELUP, 1f, 1f);
+        GameBroadcast.playToAll(Sound.ENTITY_PLAYER_LEVELUP, 1f, 1f);
     }
 
     private void clearGrid() {
@@ -476,7 +477,7 @@ public final class ResultStage implements Manager {
 
         Location at = this.locationOf(new Point(x, top + 1, StageLayout.PODIUM_Z));
         this.world().spawnParticle(Particle.CLOUD, at, 30, 0.5, 0.8, 0.5, 0.02);
-        this.playToAll(Sound.ENTITY_PLAYER_LEVELUP, 0.5f, place == 1 ? 1.2f : 0.8f);
+        GameBroadcast.playToAll(Sound.ENTITY_PLAYER_LEVELUP, 0.5f, place == 1 ? 1.2f : 0.8f);
     }
 
     private void launchFireworks() {
@@ -538,12 +539,6 @@ public final class ResultStage implements Manager {
     private <T extends Entity> T keep(T entity) {
         this.fixtures.add(entity);
         return entity;
-    }
-
-    private void playToAll(Sound sound, float volume, float pitch) {
-        for (Player viewer : Bukkit.getOnlinePlayers()) {
-            viewer.playSound(viewer.getLocation(), sound, volume, pitch);
-        }
     }
 
     private World world() {

@@ -1,6 +1,7 @@
 package forceitembattle.randomevents;
 
 import forceitembattle.model.Find;
+import forceitembattle.util.GameBroadcast;
 import forceitembattle.util.Prefix;
 import forceitembattle.util.Text;
 import java.util.concurrent.ThreadLocalRandom;
@@ -23,8 +24,7 @@ public class ItemHunt implements RandomEvent {
         Bukkit.broadcast(Text.of(Prefix.RANDOM_EVENT + "<gray>First to collect their current item <red>without skipping "
                 + "<gray>wins <yellow>" + MIN_WHEELS + "-" + MAX_WHEELS + " Wheels of Fortune<gray>!"));
 
-        Bukkit.getOnlinePlayers().forEach(players ->
-                players.playSound(players.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1, 1.4f));
+        GameBroadcast.playToAll(Sound.BLOCK_NOTE_BLOCK_PLING, 1, 1.4f);
     }
 
     @Override
@@ -42,8 +42,7 @@ public class ItemHunt implements RandomEvent {
                 + RandomEvents.ITEM_HUNT.coloredName() + " <gray>and receives <yellow>" + wheels
                 + (wheels == 1 ? " Wheel" : " Wheels") + " of Fortune<gray>!"));
 
-        Bukkit.getOnlinePlayers().forEach(players ->
-                players.playSound(players.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1, 1));
+        GameBroadcast.playToAll(Sound.ENTITY_PLAYER_LEVELUP, 1, 1);
 
         return true;
     }

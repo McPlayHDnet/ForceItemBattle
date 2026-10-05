@@ -4,6 +4,8 @@ import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameContext;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
+import org.bukkit.Sound;
+import org.bukkit.entity.Player;
 
 public final class GameBroadcast {
 
@@ -18,5 +20,12 @@ public final class GameBroadcast {
         }
 
         forceItemPlayer.squad().forEach(member -> member.player().sendMessage(message));
+    }
+
+    /** Played at each player's own position, so everyone hears it at full volume. */
+    public static void playToAll(Sound sound, float volume, float pitch) {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            player.playSound(player.getLocation(), sound, volume, pitch);
+        }
     }
 }
