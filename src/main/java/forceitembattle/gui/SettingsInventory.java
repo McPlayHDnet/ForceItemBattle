@@ -6,7 +6,6 @@ import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.settings.QuickieMode;
 import forceitembattle.util.Text;
-import java.util.Objects;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -108,40 +107,26 @@ public final class SettingsInventory extends InventoryBuilder {
 
             });
 
-            ItemBuilder itemBuilder = null;
+            ItemBuilder itemBuilder;
             String enabledPrefix = "<dark_gray>➟";
             if (gameSetting == GameSetting.QUICKIE) {
                 QuickieMode quickieMode = settings.getQuickieMode();
-                if (quickieMode.isEnabled()) {
-                    itemBuilder = new ItemBuilder(Material.LIME_DYE).setDisplayName(enabledPrefix + " <green>" + quickieMode.displayName() + " <dark_green>✔");
-                } else {
-                    itemBuilder = new ItemBuilder(Material.RED_DYE).setDisplayName(enabledPrefix + " <red>Disabled <dark_red>✘");
-                }
-            } else if (gamePreset != null) {
-                if (gamePreset.getGameSettings().contains(gameSetting)) {
-                    itemBuilder = new ItemBuilder(Material.LIME_DYE).setDisplayName(enabledPrefix + " <green>Enabled <dark_green>✔");
-                } else if (gameSetting.defaultValue() instanceof Integer) {
-                    int amount = 0;
-                    if (gameSetting == GameSetting.BACKPACKSIZE) {
-                        amount = gamePreset.getBackpackRows();
-                        itemBuilder = new ItemBuilder(Material.STONE_BUTTON).setAmount(amount).setDisplayName(enabledPrefix + " <yellow>" + amount + " <gray>" + (amount == 1 ? "row" : "rows"));
-                    }
-
-                } else {
-                    itemBuilder = new ItemBuilder(Material.RED_DYE).setDisplayName(enabledPrefix + " <red>Disabled <dark_red>✘");
-                }
+                itemBuilder = quickieMode.isEnabled()
+                        ? new ItemBuilder(Material.LIME_DYE).setDisplayName(enabledPrefix + " <green>" + quickieMode.displayName() + " <dark_green>✔")
+                        : new ItemBuilder(Material.RED_DYE).setDisplayName(enabledPrefix + " <red>Disabled <dark_red>✘");
+            } else if (gameSetting.defaultValue() instanceof Integer) {
+                // BACKPACKSIZE is the only numeric setting besides QUICKIE.
+                int amount = gamePreset != null ? gamePreset.getBackpackRows() : settings.getSettingValue(gameSetting);
+                itemBuilder = new ItemBuilder(Material.STONE_BUTTON).setAmount(amount).setDisplayName(enabledPrefix + " <yellow>" + amount + " <gray>" + (amount == 1 ? "row" : "rows"));
             } else {
-                if (settings.isSettingEnabled(gameSetting)) {
-                    itemBuilder = new ItemBuilder(Material.LIME_DYE).setDisplayName(enabledPrefix + " <green>Enabled <dark_green>✔");
-                } else if (gameSetting.defaultValue() instanceof Integer) {
-                    int amount = settings.getSettingValue(gameSetting);
-                    itemBuilder = new ItemBuilder(Material.STONE_BUTTON).setAmount(amount).setDisplayName(enabledPrefix + " <yellow>" + amount + " <gray>" + (amount == 1 ? "row" : "rows"));
-                } else {
-                    itemBuilder = new ItemBuilder(Material.RED_DYE).setDisplayName(enabledPrefix + " <red>Disabled <dark_red>✘");
-                }
+                boolean enabled = gamePreset != null
+                        ? gamePreset.getGameSettings().contains(gameSetting)
+                        : settings.isSettingEnabled(gameSetting);
+                itemBuilder = enabled
+                        ? new ItemBuilder(Material.LIME_DYE).setDisplayName(enabledPrefix + " <green>Enabled <dark_green>✔")
+                        : new ItemBuilder(Material.RED_DYE).setDisplayName(enabledPrefix + " <red>Disabled <dark_red>✘");
             }
 
-            Objects.requireNonNull(itemBuilder);
             this.setItem(slotIndex + 9, itemBuilder.getItemStack(), inventoryClickEvent -> {
                 if (inventoryClickEvent.getCurrentItem() == null) return;
 
