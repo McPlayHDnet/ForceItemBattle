@@ -109,34 +109,15 @@ public class Gamemanager implements Manager {
     }
 
     /** Null when the top score is shared. Spectators are skipped, or a spectator on 0 could create a phantom tie. */
-    private Object currentSoleLeader() {
-        Object best = null;
-        int bestScore = Integer.MIN_VALUE;
+    private ScoreOwner currentSoleLeader() {
+        ScoreOwner best = null;
         boolean tied = false;
-        if (this.settings.isSettingEnabled(GameSetting.TEAM)) {
-            for (Team team : this.teamManager.getTeams()) {
-                int score = team.getCurrentScore();
-                if (best == null || score > bestScore) {
-                    best = team.getTeamId();
-                    bestScore = score;
-                    tied = false;
-                } else if (score == bestScore) {
-                    tied = true;
-                }
-            }
-        } else {
-            for (ForceItemPlayer forceItemPlayer : this.roster.players().values()) {
-                if (forceItemPlayer.isSpectator()) {
-                    continue;
-                }
-                int score = forceItemPlayer.activeScore();
-                if (best == null || score > bestScore) {
-                    best = forceItemPlayer.player().getUniqueId();
-                    bestScore = score;
-                    tied = false;
-                } else if (score == bestScore) {
-                    tied = true;
-                }
+        for (ScoreOwner owner : this.roster.activeScoreOwners()) {
+            if (best == null || owner.score() > best.score()) {
+                best = owner;
+                tied = false;
+            } else if (owner.score() == best.score()) {
+                tied = true;
             }
         }
         return tied ? null : best;
