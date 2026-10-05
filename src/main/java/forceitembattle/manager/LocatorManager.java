@@ -128,7 +128,7 @@ public class LocatorManager implements Manager {
     private void locateStructure(Locator locator, Player player) {
         @Nullable Structure structure = RegistryAccess.registryAccess()
                 .getRegistry(RegistryKey.STRUCTURE)
-                .get(this.getNamespacedKey(locator.getStructureId()));
+                .get(NamespacedKey.fromString(locator.getStructureId()));
 
         if (structure == null) {
             player.sendMessage(Text.of(Prefix.LOCATOR + "<dark_aqua>" + locator.getStructureId() + " <red>is not loaded or could not be found, Fire fix!"));
@@ -190,7 +190,7 @@ public class LocatorManager implements Manager {
      * (noise only, free), then generate and scan chunks for an actual cavity.
      */
     private void locateBiome(Locator locator, Player player) {
-        Biome biome = BiomeSearch.resolve(this.getNamespacedKey(locator.getStructureId()));
+        Biome biome = BiomeSearch.resolve(NamespacedKey.fromString(locator.getStructureId()));
 
         if (biome == null) {
             player.sendMessage(Text.of(Prefix.LOCATOR + "<dark_aqua>" + locator.getStructureId() + " <red>is not loaded or could not be found, Fire fix!"));
@@ -474,10 +474,6 @@ public class LocatorManager implements Manager {
     public Locator randomLocator() {
         List<Locator> all = List.copyOf(this.locators.values());
         return all.isEmpty() ? null : all.get(ThreadLocalRandom.current().nextInt(all.size()));
-    }
-
-    private NamespacedKey getNamespacedKey(String structureId) {
-        return structureId.contains("fib:") ? NamespacedKey.fromString(structureId) : NamespacedKey.minecraft(structureId);
     }
 
     private boolean isAlreadyRevealed(String structureId, Location location) {
