@@ -23,7 +23,7 @@ public class ToolRecipe extends ShapelessRecipe {
     public ItemStack getStationDisplay() {
         return new ItemBuilder(this.stationDisplay.clone())
                 .addEnchantment(Enchantment.FORTUNE, 1)
-                .addItemFlag(ItemFlag.HIDE_ENCHANTS)
+                .addItemFlags(ItemFlag.HIDE_ENCHANTS)
                 .setDisplayNameLegacy("&fHow to get item:")
                 .setLoreLegacy(this.interactionLore)
                 .getItemStack();

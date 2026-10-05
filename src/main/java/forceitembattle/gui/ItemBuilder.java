@@ -3,8 +3,6 @@ package forceitembattle.gui;
 import com.destroystokyo.paper.profile.PlayerProfile;
 import com.destroystokyo.paper.profile.ProfileProperty;
 import forceitembattle.util.Text;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import lombok.Getter;
@@ -17,9 +15,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
-import org.bukkit.inventory.meta.components.CustomModelDataComponent;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.profile.PlayerTextures;
 
@@ -32,23 +28,12 @@ public class ItemBuilder {
         this.itemStack = itemStack;
     }
 
-
     public ItemBuilder(Material material) {
         this.itemStack = new ItemStack(material);
     }
 
-    public ItemBuilder addItemFlag(ItemFlag itemFlag) {
-        return addItemFlags(Collections.singletonList(itemFlag));
-    }
-
-    public ItemBuilder addItemFlags(List<ItemFlag> itemFlags) {
-        return addItemFlags(itemFlags.toArray(new ItemFlag[0]));
-    }
-
-    public ItemBuilder addItemFlags(ItemFlag[] itemFlags) {
-        ItemMeta itemMeta = this.itemStack.getItemMeta();
-        itemMeta.addItemFlags(itemFlags);
-        this.itemStack.setItemMeta(itemMeta);
+    public ItemBuilder addItemFlags(ItemFlag... itemFlags) {
+        this.itemStack.editMeta(meta -> meta.addItemFlags(itemFlags));
         return this;
     }
 
@@ -59,85 +44,52 @@ public class ItemBuilder {
 
     public ItemBuilder setGlowing() {
         this.itemStack.addUnsafeEnchantment(Enchantment.UNBREAKING, 1);
-        addItemFlag(ItemFlag.HIDE_ENCHANTS);
-        return this;
+        return addItemFlags(ItemFlag.HIDE_ENCHANTS);
     }
 
     public ItemBuilder setGlowing(boolean state) {
-        if (state) this.setGlowing();
-        return this;
+        return state ? this.setGlowing() : this;
     }
 
     public ItemBuilder setLore(List<String> loreLines) {
-        if (loreLines == null) return this;
-        ItemMeta itemMeta = getItemStack().getItemMeta();
-        List<Component> lore = new ArrayList<>();
-        for (String line : loreLines) {
-            lore.add(Text.of(line).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE));
+        if (loreLines != null) {
+            this.itemStack.editMeta(meta -> meta.lore(loreLines.stream().map(ItemBuilder::upright).toList()));
         }
-        itemMeta.lore(lore);
-        setItemMeta(itemMeta);
         return this;
     }
 
     public ItemBuilder setLoreLegacy(List<String> loreLines) {
-        if (loreLines == null) {
-            loreLines = new ArrayList<>();
-        }
-
-        ItemMeta itemMeta = getItemStack().getItemMeta();
-        List<String> lore = new ArrayList<>();
-        for (String line : loreLines) {
-            lore.add(line.replaceAll("&", "§"));
-        }
-
-        itemMeta.lore(lore.stream().map(LegacyComponentSerializer.legacySection()::deserialize).toList());
-        setItemMeta(itemMeta);
+        List<String> lines = loreLines == null ? List.of() : loreLines;
+        this.itemStack.editMeta(meta -> meta.lore(
+                lines.stream().map(LegacyComponentSerializer.legacyAmpersand()::deserialize).toList()));
         return this;
     }
 
     public ItemBuilder setDisplayName(String displayName) {
-        if (displayName == null) return this;
-        ItemMeta itemMeta = getItemStack().getItemMeta();
-        itemMeta.displayName(Text.of(displayName).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE));
-        setItemMeta(itemMeta);
+        if (displayName != null) {
+            this.itemStack.editMeta(meta -> meta.displayName(upright(displayName)));
+        }
         return this;
     }
 
     public ItemBuilder setDisplayNameLegacy(String displayName) {
-        ItemMeta itemMeta = getItemStack().getItemMeta();
-        itemMeta.displayName(LegacyComponentSerializer.legacyAmpersand().deserialize(displayName));
-        setItemMeta(itemMeta);
+        this.itemStack.editMeta(meta -> meta.displayName(LegacyComponentSerializer.legacyAmpersand().deserialize(displayName)));
         return this;
     }
 
     public ItemBuilder setSkullTexture(PlayerTextures playerTextures) {
-        SkullMeta skullMeta = (SkullMeta) this.itemStack.getItemMeta();
         PlayerProfile playerProfile = Bukkit.createProfile(UUID.randomUUID());
         playerProfile.setTextures(playerTextures);
-        skullMeta.setPlayerProfile(playerProfile);
-        setSkullMeta(skullMeta);
+        this.itemStack.editMeta(SkullMeta.class, meta -> meta.setPlayerProfile(playerProfile));
         return this;
     }
 
     public ItemBuilder setSkullTexture(String skinValue) {
         if (skinValue != null) {
-            SkullMeta skullMeta = (SkullMeta) this.itemStack.getItemMeta();
             PlayerProfile playerProfile = Bukkit.createProfile(UUID.randomUUID());
             playerProfile.setProperty(new ProfileProperty("textures", skinValue));
-            skullMeta.setPlayerProfile(playerProfile);
-            setSkullMeta(skullMeta);
+            this.itemStack.editMeta(SkullMeta.class, meta -> meta.setPlayerProfile(playerProfile));
         }
-        return this;
-    }
-
-    public ItemBuilder setItemMeta(ItemMeta itemMeta) {
-        this.itemStack.setItemMeta(itemMeta);
-        return this;
-    }
-
-    public ItemBuilder setSkullMeta(SkullMeta skullMeta) {
-        this.itemStack.setItemMeta((ItemMeta) skullMeta);
         return this;
     }
 
@@ -147,33 +99,32 @@ public class ItemBuilder {
     }
 
     public ItemBuilder setItemName(String itemName) {
-        if (itemName == null) return this;
-        ItemMeta itemMeta = getItemStack().getItemMeta();
-        itemMeta.itemName(Text.of(itemName).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE));
-        setItemMeta(itemMeta);
+        if (itemName != null) {
+            this.itemStack.editMeta(meta -> meta.itemName(upright(itemName)));
+        }
         return this;
     }
 
     public ItemBuilder setCustomModelDataStrings(List<String> strings) {
-        ItemMeta itemMeta = getItemStack().getItemMeta();
-        CustomModelDataComponent component = itemMeta.getCustomModelDataComponent();
-        component.setStrings(strings);
-        itemMeta.setCustomModelDataComponent(component);
-        setItemMeta(itemMeta);
+        this.itemStack.editMeta(meta -> {
+            var component = meta.getCustomModelDataComponent();
+            component.setStrings(strings);
+            meta.setCustomModelDataComponent(component);
+        });
         return this;
     }
 
     public ItemBuilder setItemModel(NamespacedKey itemModel) {
-        ItemMeta itemMeta = getItemStack().getItemMeta();
-        itemMeta.setItemModel(itemModel);
-        setItemMeta(itemMeta);
+        this.itemStack.editMeta(meta -> meta.setItemModel(itemModel));
         return this;
     }
 
     public <P, C> ItemBuilder setPersistentData(NamespacedKey key, PersistentDataType<P, C> type, C value) {
-        ItemMeta itemMeta = getItemStack().getItemMeta();
-        itemMeta.getPersistentDataContainer().set(key, type, value);
-        setItemMeta(itemMeta);
+        this.itemStack.editMeta(meta -> meta.getPersistentDataContainer().set(key, type, value));
         return this;
+    }
+
+    private static Component upright(String miniMessage) {
+        return Text.of(miniMessage).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE);
     }
 }
