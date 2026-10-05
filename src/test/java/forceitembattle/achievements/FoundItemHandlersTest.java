@@ -7,14 +7,12 @@ import static forceitembattle.achievements.Finds.skipped;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import forceitembattle.achievements.handlers.CountingAchievementHandler;
-import forceitembattle.achievements.handlers.ConsecutiveStoneAchievementHandler;
 import forceitembattle.achievements.handlers.CounterAchievementHandler;
-import forceitembattle.achievements.handlers.TallyAchievementHandler;
+import forceitembattle.achievements.handlers.CountingAchievementHandler;
 import forceitembattle.achievements.handlers.RepeatItemAchievementHandler;
 import forceitembattle.achievements.handlers.SameItemBackToBackAchievementHandler;
 import forceitembattle.achievements.handlers.SkipAchievementHandler;
-import forceitembattle.achievements.progress.ConsecutiveStoneAchievementProgress;
+import forceitembattle.achievements.handlers.TallyAchievementHandler;
 import forceitembattle.achievements.progress.CounterAchievementProgress;
 import forceitembattle.achievements.progress.ItemFrequencyAchievementProgress;
 import forceitembattle.achievements.progress.SameItemBackToBackAchievementProgress;
@@ -76,8 +74,8 @@ class FoundItemHandlersTest {
         @Test
         void countsAnUnbrokenRunOfStoneTypes() {
             ForceItemPlayer alice = participant("a");
-            ConsecutiveStoneAchievementHandler handler = new ConsecutiveStoneAchievementHandler(2);
-            ConsecutiveStoneAchievementProgress progress = handler.createProgress();
+            CounterAchievementHandler handler = CounterAchievementHandler.stoneRun(2);
+            CounterAchievementProgress progress = handler.createProgress();
             FakeAchievementWorld world = new FakeAchievementWorld();
 
             assertFalse(handler.check(found(alice, Material.STONE), progress, alice, world));
@@ -87,8 +85,8 @@ class FoundItemHandlersTest {
         @Test
         void aNonStoneItemBreaksTheRun() {
             ForceItemPlayer alice = participant("a");
-            ConsecutiveStoneAchievementHandler handler = new ConsecutiveStoneAchievementHandler(2);
-            ConsecutiveStoneAchievementProgress progress = handler.createProgress();
+            CounterAchievementHandler handler = CounterAchievementHandler.stoneRun(2);
+            CounterAchievementProgress progress = handler.createProgress();
             FakeAchievementWorld world = new FakeAchievementWorld();
 
             assertFalse(handler.check(found(alice, Material.STONE), progress, alice, world));
@@ -101,8 +99,8 @@ class FoundItemHandlersTest {
         @Test
         void aSkipBreaksTheRun() {
             ForceItemPlayer alice = participant("a");
-            ConsecutiveStoneAchievementHandler handler = new ConsecutiveStoneAchievementHandler(2);
-            ConsecutiveStoneAchievementProgress progress = handler.createProgress();
+            CounterAchievementHandler handler = CounterAchievementHandler.stoneRun(2);
+            CounterAchievementProgress progress = handler.createProgress();
             FakeAchievementWorld world = new FakeAchievementWorld();
 
             assertFalse(handler.check(found(alice, Material.STONE), progress, alice, world));

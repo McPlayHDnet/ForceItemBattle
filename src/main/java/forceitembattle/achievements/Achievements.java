@@ -6,7 +6,6 @@ import forceitembattle.achievements.handlers.AchievementHandler;
 import forceitembattle.achievements.handlers.BackToBackAchievementHandler;
 import forceitembattle.achievements.handlers.BeehiveAchievementHandler;
 import forceitembattle.achievements.handlers.CollectionAchievementHandler;
-import forceitembattle.achievements.handlers.ConsecutiveStoneAchievementHandler;
 import forceitembattle.achievements.handlers.CounterAchievementHandler;
 import forceitembattle.achievements.handlers.CountingAchievementHandler;
 import forceitembattle.achievements.handlers.DeathCounterAchievementHandler;
@@ -61,7 +60,7 @@ public enum Achievements {
             CollectionAchievementHandler.woodTypesHandler()),
 
     THATS_A_ROCK_JIM("That's a Rock, Jim", "Collect 3 stone-type items in a row",
-            new ConsecutiveStoneAchievementHandler(3)),
+            CounterAchievementHandler.stoneRun(3)),
 
     ONE_IN_A_MILLION("One in a Million", "Collect a very rare mob drop (Trident or Wither Skeleton Skull)",
             CountingAchievementHandler.rareMobDrops(1)),

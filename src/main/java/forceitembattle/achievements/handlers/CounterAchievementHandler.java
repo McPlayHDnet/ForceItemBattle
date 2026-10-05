@@ -3,6 +3,7 @@ package forceitembattle.achievements.handlers;
 import forceitembattle.achievements.AchievementWorld;
 import forceitembattle.achievements.Trigger;
 import forceitembattle.achievements.progress.CounterAchievementProgress;
+import forceitembattle.collection.MaterialCategory;
 import forceitembattle.event.FoundItemEvent;
 import forceitembattle.model.Dimension;
 import forceitembattle.model.ForceItemPlayer;
@@ -15,12 +16,22 @@ public class CounterAchievementHandler implements AchievementHandler<CounterAchi
     private final int targetAmount;
     private final boolean requireConsecutive;
     @Nullable
-    private final Dimension dimension;
+    private final ItemFilter filter;
 
     public CounterAchievementHandler(int targetAmount, boolean requireConsecutive, @Nullable Dimension dimension) {
+        this(dimension == null ? null : (world, material) -> world.itemsIn(dimension).contains(material),
+                targetAmount, requireConsecutive);
+    }
+
+    private CounterAchievementHandler(@Nullable ItemFilter filter, int targetAmount, boolean requireConsecutive) {
         this.targetAmount = targetAmount;
         this.requireConsecutive = requireConsecutive;
-        this.dimension = dimension;
+        this.filter = filter;
+    }
+
+    public static CounterAchievementHandler stoneRun(int targetAmount) {
+        return new CounterAchievementHandler((world, material) -> MaterialCategory.isStoneType(material),
+                targetAmount, true);
     }
 
     @Override
@@ -34,7 +45,7 @@ public class CounterAchievementHandler implements AchievementHandler<CounterAchi
             return false;
         }
 
-        if (!requireConsecutive && dimension == null) {
+        if (!requireConsecutive && filter == null) {
             progress.count++;
             return progress.count >= targetAmount;
         }
@@ -49,7 +60,7 @@ public class CounterAchievementHandler implements AchievementHandler<CounterAchi
 
         Material itemType = foundEvent.getFoundItem().getType();
 
-        if (dimension != null && !world.itemsIn(dimension).contains(itemType)) {
+        if (filter != null && !filter.accepts(world, itemType)) {
             if (requireConsecutive) {
                 progress.consecutiveCount = 0;
             }
@@ -69,5 +80,10 @@ public class CounterAchievementHandler implements AchievementHandler<CounterAchi
     @Override
     public CounterAchievementProgress createProgress() {
         return new CounterAchievementProgress();
+    }
+
+    @FunctionalInterface
+    private interface ItemFilter {
+        boolean accepts(AchievementWorld world, Material material);
     }
 }
