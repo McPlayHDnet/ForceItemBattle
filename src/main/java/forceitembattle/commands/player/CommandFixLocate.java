@@ -13,6 +13,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
+import org.bukkit.util.StringUtil;
 
 public final class CommandFixLocate extends CustomCommand implements TabCompleter {
 
@@ -92,20 +93,12 @@ public final class CommandFixLocate extends CustomCommand implements TabComplete
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        List<String> suggestions = new ArrayList<>();
         if (!(sender instanceof Player player) || args.length != 1) {
-            return suggestions;
+            return new ArrayList<>();
         }
 
-        String partial = args[0].toLowerCase();
-        for (String structureId : this.locatorManager.getActiveLocators(player).keySet()) {
-            if (structureId.toLowerCase().startsWith(partial)) {
-                suggestions.add(structureId);
-            }
-        }
-        if ("all".startsWith(partial)) {
-            suggestions.add("all");
-        }
-        return suggestions;
+        List<String> options = new ArrayList<>(this.locatorManager.getActiveLocators(player).keySet());
+        options.add("all");
+        return StringUtil.copyPartialMatches(args[0], options, new ArrayList<>());
     }
 }

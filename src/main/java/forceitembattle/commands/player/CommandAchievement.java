@@ -17,6 +17,7 @@ import javax.annotation.Nullable;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
+import org.bukkit.util.StringUtil;
 
 public final class CommandAchievement extends CustomCommand implements CustomTabCompleter {
 
@@ -246,8 +247,7 @@ public final class CommandAchievement extends CustomCommand implements CustomTab
     }
 
     private List<String> filter(List<String> options, String typed) {
-        String prefix = typed.toLowerCase();
-        return options.stream().filter(option -> option.toLowerCase().startsWith(prefix)).toList();
+        return StringUtil.copyPartialMatches(typed, options, new ArrayList<>());
     }
 
     private List<String> achievementNames() {

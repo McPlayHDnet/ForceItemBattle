@@ -16,11 +16,13 @@ import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Text;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.util.StringUtil;
 
 /** Dev/testing: force the assigned item, optionally queueing a whole row of upcoming items. */
 
@@ -97,17 +99,10 @@ public final class CommandForceItem extends CustomCommand implements CustomTabCo
             return new ArrayList<>();
         }
 
-        String prefix = args[args.length - 1].toLowerCase(Locale.ROOT);
-        List<String> suggestions = new ArrayList<>();
-        for (Material material : Material.values()) {
-            if (material.isLegacy() || !material.isItem()) {
-                continue;
-            }
-            String name = material.name().toLowerCase(Locale.ROOT);
-            if (name.startsWith(prefix)) {
-                suggestions.add(name);
-            }
-        }
-        return suggestions;
+        List<String> items = Arrays.stream(Material.values())
+                .filter(material -> !material.isLegacy() && material.isItem())
+                .map(material -> material.name().toLowerCase(Locale.ROOT))
+                .toList();
+        return StringUtil.copyPartialMatches(args[args.length - 1], items, new ArrayList<>());
     }
 }

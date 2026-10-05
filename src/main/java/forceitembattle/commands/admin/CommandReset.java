@@ -8,11 +8,13 @@ import forceitembattle.util.SeedPool;
 import forceitembattle.util.Text;
 import forceitembattle.util.WorldReset;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.util.StringUtil;
 
 public final class CommandReset extends CustomCommand implements CustomTabCompleter {
 
@@ -83,8 +85,7 @@ public final class CommandReset extends CustomCommand implements CustomTabComple
         SeedPool pool = this.seedPool;
         if (pool == null || !pool.isAvailable()) return Collections.emptyList();
 
-        String prefix = args[0].toLowerCase(Locale.ROOT);
-        return pool.groups().stream().filter(group -> group.startsWith(prefix)).toList();
+        return StringUtil.copyPartialMatches(args[0], pool.groups(), new ArrayList<>());
     }
 
     /** "old_growth_pine_taiga" -> "Old Growth Pine Taiga". */
