@@ -358,7 +358,7 @@ public class WanderingTraderManager implements Manager {
         List<MerchantRecipe> recipes = new ArrayList<>();
 
         for (int index = 0; index < templates.size(); index++) {
-            MerchantRecipe copy = this.copyOf(templates.get(index));
+            MerchantRecipe copy = new MerchantRecipe(templates.get(index));
             copy.setUses(trader.usesOf(player.getUniqueId(), index));
             recipes.add(copy);
         }
@@ -371,17 +371,6 @@ public class WanderingTraderManager implements Manager {
                 .merchant(merchant)
                 .title(Text.of("<dark_gray>» " + trader.getKind().coloredName()))
                 .build(player);
-    }
-
-    private MerchantRecipe copyOf(MerchantRecipe source) {
-        MerchantRecipe copy = new MerchantRecipe(source.getResult().clone(), source.getMaxUses());
-        for (ItemStack ingredient : source.getIngredients()) {
-            copy.addIngredient(ingredient.clone());
-        }
-        copy.setExperienceReward(source.hasExperienceReward());
-        copy.setVillagerExperience(source.getVillagerExperience());
-        copy.setPriceMultiplier(source.getPriceMultiplier());
-        return copy;
     }
 
     private Location findSolidSpawnLocation(Location center, int chunkRadius) {
