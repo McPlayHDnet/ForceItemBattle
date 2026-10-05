@@ -45,8 +45,8 @@ class PlayerStatsWriteTest {
 
     private void record(ForceItemPlayer forceItemPlayer) {
         PlayerStatsWrite.record(statistics, ALICE, forceItemPlayer,
-                () -> FIBServiceClient.soloUpdate().deathsAdd(1L),
-                () -> FIBServiceClient.memberUpdate().deathsAdd(1L));
+                () -> new FibSoloStatisticsUpdateRequestDto().deathsAdd(1L),
+                () -> new FibTeamMemberStatsUpdateRequestDto().deathsAdd(1L));
     }
 
     @Test
@@ -135,10 +135,10 @@ class PlayerStatsWriteTest {
         boolean[] memberBuilt = {false};
 
         PlayerStatsWrite.record(statistics, ALICE, player(ALICE),
-                () -> FIBServiceClient.soloUpdate().deathsAdd(1L),
+                () -> new FibSoloStatisticsUpdateRequestDto().deathsAdd(1L),
                 () -> {
                     memberBuilt[0] = true;
-                    return FIBServiceClient.memberUpdate();
+                    return new FibTeamMemberStatsUpdateRequestDto();
                 });
 
         org.junit.jupiter.api.Assertions.assertFalse(memberBuilt[0]);
