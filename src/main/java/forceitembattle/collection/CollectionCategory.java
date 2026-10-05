@@ -35,7 +35,7 @@ public enum CollectionCategory {
     STONE("Stone & Bricks", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvODNmYTBmYzA5OTZjZjc3MmQxZGJjMDUyYWEyNWIxMWRhYmFlOTc3ODIwYWY2NjNlZjAyMmQzY2UxZGI2MTEyMiJ9fX0=", CollectionCategory::isStoneItem),
     MOB_DROPS("Mob Drops", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZDIwMjUzZWNkYTc5OWFkN2Y0YzQzMjM1MmM3MGNjNzNkYjUxODBjNTgwNjIyMTRhMmY1ZjllODZiMjQ2NTEzZiJ9fX0=", CollectionCategory::isMobDrop),
     UTILITY("Utility", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYTgyNzBjOGFjMjVhMDdhZTJhNzFkYmQwNjFiNmRlZTEwNTZiZjYyNWY4Yjg4MWExZjJlZjQ2NGY3MDUzYWNhOCJ9fX0=", CollectionCategory::isUtility),
-    CUSTOM_ITEMS("Custom Items", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYTcwMjE2YmFmMWI5Njc1ZjgwNWRmZGY5NWRiMDQzYWZlNmY4ODFjODJiMjU5MzdlNDZiMTUwNjhlOGYzZTg4MiJ9fX0=", name -> CustomMaterials.byMaterialName(name) != null),
+    CUSTOM_ITEMS("Custom Items", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYTcwMjE2YmFmMWI5Njc1ZjgwNWRmZGY5NWRiMDQzYWZlNmY4ODFjODJiMjU5MzdlNDZiMTUwNjhlOGYzZTg4MiJ9fX0=", name -> false),
     OTHER("Other", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOWMwYjFjZmNhMmM2ZmJhZmI1NjNlZTdlYWI4NTVlNDhlNzNlZjk0MTU1ZTllMDczZmYzZTBhOTQ4NDBjMGYwNSJ9fX0=", name -> true);
 
     @Getter private final String displayName;
@@ -117,9 +117,7 @@ public enum CollectionCategory {
     }
 
     private static boolean isCandleOrHoney(String name) {
-        return name.contains("CANDLE") || name.contains("HONEY")
-                || name.equals("HONEYCOMB") || name.equals("HONEYCOMB_BLOCK")
-                || name.equals("BEEHIVE") || name.equals("BEE_NEST");
+        return name.contains("CANDLE") || name.contains("HONEY") || name.equals("BEEHIVE") || name.equals("BEE_NEST");
     }
 
     // Ores, raw drops, ingots/nuggets/gems, and mineral blocks. Copper is claimed earlier.
