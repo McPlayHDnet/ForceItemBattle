@@ -18,9 +18,9 @@ import java.util.function.Consumer;
 public class FoundItemsLoader {
 
     private final FIBServiceClient fibService;
-    private final FoundItemsCache cache;
+    private final Map<UUID, Map<String, CollectedItem>> cache;
 
-    public FoundItemsLoader(FIBServiceClient fibService, FoundItemsCache cache) {
+    public FoundItemsLoader(FIBServiceClient fibService, Map<UUID, Map<String, CollectedItem>> cache) {
         this.fibService = fibService;
         this.cache = cache;
     }

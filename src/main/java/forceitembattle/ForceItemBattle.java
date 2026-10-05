@@ -5,7 +5,7 @@ import forceitembattle.achievements.AchievementManager;
 import forceitembattle.achievements.AchievementStorage;
 import forceitembattle.achievements.PluginAchievementWorld;
 import forceitembattle.achievements.ServiceAchievementSink;
-import forceitembattle.achievements.global.GlobalStatsCache;
+import forceitembattle.achievements.global.GlobalStats;
 import forceitembattle.achievements.global.GlobalStatsLoader;
 import forceitembattle.ceremony.CushionSeatListener;
 import forceitembattle.ceremony.CushionSeats;
@@ -103,6 +103,9 @@ import forceitembattle.util.SeedPool;
 import forceitembattle.util.WorldReset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Bukkit;
@@ -138,11 +141,8 @@ public final class ForceItemBattle extends JavaPlugin {
     @Getter
     private final ResultCeremony resultCeremony = new ResultCeremony();
 
-    /**
-     * Held here rather than inside {@code AchievementManager} so the service client can be built
-     * before it — that ordering is what breaks the service/collection/achievement cycle.
-     */
-    private final GlobalStatsCache globalStatsCache = new GlobalStatsCache();
+    /** Held here rather than in AchievementManager so the service client can be built first, breaking the cycle. */
+    private final Map<UUID, GlobalStats> globalStatsCache = new ConcurrentHashMap<>();
 
     private final ModDetections modDetections = new ModDetections();
 

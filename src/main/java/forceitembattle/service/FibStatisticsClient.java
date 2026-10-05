@@ -13,12 +13,13 @@ import de.threeseconds.openapi.fibservice.client.model.FibTeamMemberStatsDto;
 import de.threeseconds.openapi.fibservice.client.model.FibTeamMemberStatsUpdateRequestDto;
 import de.threeseconds.openapi.fibservice.client.model.FibTeamStatisticsDto;
 import de.threeseconds.openapi.fibservice.client.model.FibTeamStatisticsUpdateRequestDto;
-import forceitembattle.achievements.global.GlobalStatsCache;
+import forceitembattle.achievements.global.GlobalStats;
 import forceitembattle.model.stats.DuoLeaderboardEntry;
 import forceitembattle.model.stats.GlobalPlayerStats;
 import forceitembattle.model.stats.LeaderboardEntry;
 import forceitembattle.model.stats.StatsView;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -52,14 +53,9 @@ public class FibStatisticsClient implements StatisticsSink {
     private final FibStatisticsControllerApi api;
     private final ApiExecutor executor;
 
-    /**
-     * The cache a write invalidates. Held directly rather than reached through
-     * {@code AchievementManager}, which would make the achievement subsystem look like a dependency
-     * of the stats transport.
-     */
-    private final GlobalStatsCache globalStats;
+    private final Map<UUID, GlobalStats> globalStats;
 
-    FibStatisticsClient(FibStatisticsControllerApi api, ApiExecutor executor, GlobalStatsCache globalStats) {
+    FibStatisticsClient(FibStatisticsControllerApi api, ApiExecutor executor, Map<UUID, GlobalStats> globalStats) {
         this.api = api;
         this.executor = executor;
         this.globalStats = globalStats;
@@ -91,7 +87,9 @@ public class FibStatisticsClient implements StatisticsSink {
 
     private void invalidateGlobal(UUID... playerUuids) {
         for (UUID playerUuid : playerUuids) {
-            this.globalStats.invalidate(playerUuid);
+            if (playerUuid != null) {
+                this.globalStats.remove(playerUuid);
+            }
         }
     }
 

@@ -7,19 +7,22 @@ import java.util.function.Consumer;
 
 public class ItemRarityLoader {
 
+    private static final long TTL_MS = 10 * 60 * 1000L;
+
     private final FIBServiceClient fibService;
-    private final ItemRarityCache cache;
     private final List<Consumer<ItemRarity>> pending = new ArrayList<>();
     private boolean loading;
 
-    public ItemRarityLoader(FIBServiceClient fibService, ItemRarityCache cache) {
+    private ItemRarity cached;
+    private long fetchedAt;
+
+    public ItemRarityLoader(FIBServiceClient fibService) {
         this.fibService = fibService;
-        this.cache = cache;
     }
 
     public void load(Consumer<ItemRarity> onLoaded) {
-        if (this.cache.isFresh()) {
-            onLoaded.accept(this.cache.get());
+        if (this.cached != null && System.currentTimeMillis() - this.fetchedAt < TTL_MS) {
+            onLoaded.accept(this.cached);
             return;
         }
 
@@ -31,13 +34,15 @@ public class ItemRarityLoader {
 
         this.fibService.matchHistory().itemRarity(
                 rarity -> {
-                    this.cache.put(rarity);
+                    this.cached = rarity;
+                    this.fetchedAt = System.currentTimeMillis();
                     deliver(rarity);
                 },
-                error -> {
-                    ItemRarity fallback = this.cache.get();
-                    deliver(fallback != null ? fallback : ItemRarity.empty());
-                });
+                error -> deliver(this.cached != null ? this.cached : ItemRarity.empty()));
+    }
+
+    public void clear() {
+        this.cached = null;
     }
 
     private void deliver(ItemRarity rarity) {
@@ -46,5 +51,4 @@ public class ItemRarityLoader {
         this.pending.clear();
         waiting.forEach(consumer -> consumer.accept(rarity));
     }
-
 }

@@ -5,10 +5,9 @@ import de.threeseconds.openapi.fibservice.client.invoker.ApiException;
 import de.threeseconds.openapi.fibservice.client.model.FibFoundItemStatsDto;
 import de.threeseconds.openapi.fibservice.client.model.FibMatchSubmitRequestDto;
 import forceitembattle.achievements.AchievementManager;
-import forceitembattle.achievements.global.GlobalStatsCache;
+import forceitembattle.achievements.global.GlobalStats;
 import forceitembattle.collection.CollectedItem;
 import forceitembattle.collection.CollectionManager;
-import forceitembattle.collection.FoundItemsCache;
 import forceitembattle.collection.ItemRarity;
 import java.util.List;
 import java.util.Map;
@@ -71,13 +70,13 @@ public class FibMatchHistoryClient implements MatchSink {
             return;
         }
         AchievementManager achievements = this.achievementManager.get();
-        GlobalStatsCache globalStats = achievements.getGlobalStatsCache();
-        FoundItemsCache foundItems = this.collection.get().getFoundItemsCache();
+        Map<UUID, GlobalStats> globalStats = achievements.getGlobalStatsCache();
+        Map<UUID, Map<String, CollectedItem>> foundItems = this.collection.get().getFoundItemsCache();
         request.getParticipants().forEach(participant -> {
             UUID playerUuid = participant.getPlayerUuid();
             if (playerUuid != null) {
-                globalStats.invalidate(playerUuid);
-                foundItems.invalidate(playerUuid);
+                globalStats.remove(playerUuid);
+                foundItems.remove(playerUuid);
             }
         });
     }

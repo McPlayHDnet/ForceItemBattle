@@ -1,6 +1,6 @@
 package forceitembattle.achievements;
 
-import forceitembattle.achievements.global.GlobalStatsCache;
+import forceitembattle.achievements.global.GlobalStats;
 import forceitembattle.achievements.global.GlobalStatsLoader;
 import forceitembattle.achievements.handlers.AchievementHandler;
 import forceitembattle.achievements.handlers.CollectionAchievementHandler;
@@ -54,7 +54,7 @@ public class AchievementManager implements Manager {
     private final Map<Team, Map<Achievements, AchievementProgressTracker>> teamProgress = new HashMap<>();
     private final AchievementStorage storage;
     @Getter
-    private final GlobalStatsCache globalStatsCache;
+    private final Map<UUID, GlobalStats> globalStatsCache;
     @Getter
     private final GlobalStatsLoader globalStatsLoader;
 
@@ -63,7 +63,7 @@ public class AchievementManager implements Manager {
 
     public AchievementManager(Roster roster, RoundPhase roundPhase, GameSettings settings,
                               CollectionManager collection, AchievementStorage storage,
-                              GlobalStatsCache globalStatsCache, GlobalStatsLoader globalStatsLoader,
+                              Map<UUID, GlobalStats> globalStatsCache, GlobalStatsLoader globalStatsLoader,
                               AchievementWorld world) {
         this.roster = roster;
         this.roundPhase = roundPhase;

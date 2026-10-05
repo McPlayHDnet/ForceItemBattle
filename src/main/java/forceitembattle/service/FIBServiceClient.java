@@ -8,10 +8,12 @@ import de.threeseconds.openapi.fibservice.client.invoker.ApiClient;
 import de.threeseconds.openapi.fibservice.client.model.FibSoloStatisticsUpdateRequestDto;
 import de.threeseconds.openapi.fibservice.client.model.FibTeamMemberStatsUpdateRequestDto;
 import forceitembattle.achievements.AchievementManager;
-import forceitembattle.achievements.global.GlobalStatsCache;
+import forceitembattle.achievements.global.GlobalStats;
 import forceitembattle.collection.CollectionManager;
 import forceitembattle.manager.Manager;
 import forceitembattle.util.Scheduler;
+import java.util.Map;
+import java.util.UUID;
 import java.util.function.Supplier;
 import org.bukkit.plugin.Plugin;
 
@@ -27,13 +29,13 @@ public class FIBServiceClient implements Manager {
     private final FibMatchHistoryClient matchHistory;
     private final FibCatalogueClient catalogue;
 
-    public FIBServiceClient(Plugin plugin, GlobalStatsCache globalStatsCache,
+    public FIBServiceClient(Plugin plugin, Map<UUID, GlobalStats> globalStatsCache,
                             Supplier<AchievementManager> achievementManager,
                             Supplier<CollectionManager> collection) {
         this(plugin, DEFAULT_BASE_URL, globalStatsCache, achievementManager, collection);
     }
 
-    public FIBServiceClient(Plugin plugin, String baseUrl, GlobalStatsCache globalStatsCache,
+    public FIBServiceClient(Plugin plugin, String baseUrl, Map<UUID, GlobalStats> globalStatsCache,
                             Supplier<AchievementManager> achievementManager,
                             Supplier<CollectionManager> collection) {
         ApiClient client = new ApiClient();

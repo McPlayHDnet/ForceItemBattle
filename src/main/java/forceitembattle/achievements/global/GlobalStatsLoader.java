@@ -5,6 +5,7 @@ import forceitembattle.model.stats.StatsView;
 import forceitembattle.service.FIBServiceClient;
 import forceitembattle.service.FibStatisticsClient;
 import forceitembattle.util.Scheduler;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -12,9 +13,9 @@ import java.util.function.Consumer;
 public class GlobalStatsLoader {
 
     private final FIBServiceClient fibService;
-    private final GlobalStatsCache cache;
+    private final Map<UUID, GlobalStats> cache;
 
-    public GlobalStatsLoader(FIBServiceClient fibService, GlobalStatsCache cache) {
+    public GlobalStatsLoader(FIBServiceClient fibService, Map<UUID, GlobalStats> cache) {
         this.fibService = fibService;
         this.cache = cache;
     }
