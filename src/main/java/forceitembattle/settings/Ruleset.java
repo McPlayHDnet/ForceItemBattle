@@ -59,14 +59,7 @@ public final class Ruleset {
         return this.config.getBoolean(pathIn(gamePreset, setting));
     }
 
-    public int valueIn(GamePreset gamePreset, GameSetting setting) {
-        return this.config.getInt(pathIn(gamePreset, setting));
-    }
-
-    /**
-     * Where this setting lives right now: under the active preset, or at the top level.
-     * Package-private so the tests can state the mapping outright.
-     */
+    /** Package-private so the tests can state the mapping outright. */
     String pathFor(GameSetting setting) {
         return this.preset == null ? setting.configPath() : pathIn(this.preset, setting);
     }

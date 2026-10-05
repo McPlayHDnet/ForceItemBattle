@@ -91,8 +91,4 @@ public class BackpackManager implements Manager {
     public void openPlayerBackpack(Player player) {
         player.openInventory(this.playerBackpack.get(player.getUniqueId()));
     }
-
-    public void openTeamBackpack(Team team, Player player) {
-        player.openInventory(this.teamBackpack.get(team));
-    }
 }
