@@ -1,29 +1,53 @@
 package forceitembattle.achievements.handlers;
 
-import forceitembattle.achievements.AchievementManager;
 import forceitembattle.achievements.AchievementWorld;
+import forceitembattle.achievements.Trigger;
+import forceitembattle.achievements.handlers.CountingAchievementHandler.Occurrence;
 import forceitembattle.achievements.progress.SimpleAchievementProgress;
+import forceitembattle.event.AntimatterTeleporterUseEvent;
+import forceitembattle.event.FoundItemEvent;
+import forceitembattle.model.Dimension;
 import forceitembattle.model.ForceItemPlayer;
 import org.bukkit.event.Event;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
 
-/**
- * "Finish the game without doing this." The subclass says only what counts as doing it; the tally is
- * read at game end by {@code AchievementManager.checkGameEndAchievements}, which unlocks when the
- * count is still zero.
- *
- * <p>{@link #check} is final and always returns false, which is the whole point: these can never
- * complete mid-game, because until the game is over there is always another chance to break the
- * streak. That rule used to live as a {@code // evaluated at game end} comment repeated next to
- * three identical {@code return false} statements; here it is the type.
- */
-public abstract class TallyAchievementHandler implements AchievementHandler<SimpleAchievementProgress> {
+/** "Finish the game without doing this." Never completes mid-game; unlocked at game end while the tally is zero. */
+public final class TallyAchievementHandler implements AchievementHandler<SimpleAchievementProgress> {
 
-    /** Whether this event is an occurrence of the thing that spoils the achievement. */
-    protected abstract boolean matches(Event event, ForceItemPlayer forceItemPlayer, AchievementWorld world);
+    private final Trigger trigger;
+    private final Occurrence occurrence;
+    private final boolean teamEligible;
+
+    private TallyAchievementHandler(Trigger trigger, boolean teamEligible, Occurrence occurrence) {
+        this.trigger = trigger;
+        this.teamEligible = teamEligible;
+        this.occurrence = occurrence;
+    }
+
+    public static TallyAchievementHandler noBackToBacks() {
+        return new TallyAchievementHandler(Trigger.BACK_TO_BACK, Trigger.BACK_TO_BACK.isAchieveableInTeams(),
+                (event, player, world) -> event instanceof FoundItemEvent found && found.isBackToBack());
+    }
+
+    public static TallyAchievementHandler noAntimatterTeleporter() {
+        return new TallyAchievementHandler(Trigger.ANTIMATTER_TELEPORTER, true,
+                (event, player, world) -> event instanceof AntimatterTeleporterUseEvent);
+    }
+
+    public static TallyAchievementHandler noOverworldExit() {
+        return new TallyAchievementHandler(Trigger.VISIT, true,
+                (event, player, world) -> event instanceof PlayerChangedWorldEvent change
+                        && !Dimension.isOverworld(change.getPlayer()));
+    }
 
     @Override
-    public final boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer, AchievementWorld world) {
-        if (matches(event, forceItemPlayer, world)) {
+    public Trigger getTrigger() {
+        return this.trigger;
+    }
+
+    @Override
+    public boolean check(Event event, SimpleAchievementProgress progress, ForceItemPlayer forceItemPlayer, AchievementWorld world) {
+        if (this.occurrence.test(event, forceItemPlayer, world)) {
             progress.count++;
         }
         return false;
@@ -32,5 +56,10 @@ public abstract class TallyAchievementHandler implements AchievementHandler<Simp
     @Override
     public SimpleAchievementProgress createProgress() {
         return new SimpleAchievementProgress();
+    }
+
+    @Override
+    public boolean isTeamEligible() {
+        return this.teamEligible;
     }
 }

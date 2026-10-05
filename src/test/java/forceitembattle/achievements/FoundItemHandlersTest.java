@@ -7,10 +7,10 @@ import static forceitembattle.achievements.Finds.skipped;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import forceitembattle.achievements.handlers.BackToBackCountAchievementHandler;
+import forceitembattle.achievements.handlers.CountingAchievementHandler;
 import forceitembattle.achievements.handlers.ConsecutiveStoneAchievementHandler;
 import forceitembattle.achievements.handlers.CounterAchievementHandler;
-import forceitembattle.achievements.handlers.NoBackToBackAchievementHandler;
+import forceitembattle.achievements.handlers.TallyAchievementHandler;
 import forceitembattle.achievements.handlers.RepeatItemAchievementHandler;
 import forceitembattle.achievements.handlers.SameItemBackToBackAchievementHandler;
 import forceitembattle.achievements.handlers.SkipAchievementHandler;
@@ -46,7 +46,7 @@ class FoundItemHandlersTest {
         @Test
         void countsOnlyBackToBacks() {
             ForceItemPlayer alice = participant("a");
-            BackToBackCountAchievementHandler handler = new BackToBackCountAchievementHandler(2);
+            CountingAchievementHandler handler = CountingAchievementHandler.backToBacks(2);
             SimpleAchievementProgress progress = handler.createProgress();
             FakeAchievementWorld world = new FakeAchievementWorld();
 
@@ -59,7 +59,7 @@ class FoundItemHandlersTest {
         @Test
         void anOrdinaryFindDoesNotResetTheTally() {
             ForceItemPlayer alice = participant("a");
-            BackToBackCountAchievementHandler handler = new BackToBackCountAchievementHandler(2);
+            CountingAchievementHandler handler = CountingAchievementHandler.backToBacks(2);
             SimpleAchievementProgress progress = handler.createProgress();
             FakeAchievementWorld world = new FakeAchievementWorld();
 
@@ -295,7 +295,7 @@ class FoundItemHandlersTest {
         @Test
         void noBackToBackAccumulatesButNeverGrants() {
             ForceItemPlayer alice = participant("a");
-            NoBackToBackAchievementHandler handler = new NoBackToBackAchievementHandler();
+            TallyAchievementHandler handler = TallyAchievementHandler.noBackToBacks();
             SimpleAchievementProgress progress = handler.createProgress();
             FakeAchievementWorld world = new FakeAchievementWorld();
 

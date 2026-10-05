@@ -7,13 +7,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import forceitembattle.achievements.handlers.AntimatterTeleporterUsesAchievementHandler;
+import forceitembattle.achievements.handlers.CountingAchievementHandler;
 import forceitembattle.achievements.handlers.DeathCounterAchievementHandler;
-import forceitembattle.achievements.handlers.NoAntimatterAchievementHandler;
-import forceitembattle.achievements.handlers.RareMobDropAchievementHandler;
-import forceitembattle.achievements.handlers.TradingAchievementHandler;
+import forceitembattle.achievements.handlers.TallyAchievementHandler;
 import forceitembattle.achievements.handlers.WheelOfFortuneAchievementHandler;
-import forceitembattle.achievements.handlers.WheelOfFortuneUsesAchievementHandler;
 import forceitembattle.achievements.progress.SimpleAchievementProgress;
 import forceitembattle.event.AntimatterTeleporterUseEvent;
 import forceitembattle.event.WheelOfFortuneWinEvent;
@@ -77,7 +74,7 @@ class EventHandlersTest {
         @Test
         void theUsesCounterCountsEverySpin() {
             ForceItemPlayer alice = participant("a");
-            WheelOfFortuneUsesAchievementHandler handler = new WheelOfFortuneUsesAchievementHandler(2);
+            CountingAchievementHandler handler = CountingAchievementHandler.wheelsOfFortune(2);
             SimpleAchievementProgress progress = handler.createProgress();
             FakeAchievementWorld world = new FakeAchievementWorld();
 
@@ -95,8 +92,8 @@ class EventHandlersTest {
         @Test
         void onlyANewTeleporterCounts() {
             ForceItemPlayer alice = participant("a");
-            AntimatterTeleporterUsesAchievementHandler handler =
-                    new AntimatterTeleporterUsesAchievementHandler(1);
+            CountingAchievementHandler handler =
+                    CountingAchievementHandler.newAntimatterTeleporters(1);
             FakeAchievementWorld world = new FakeAchievementWorld();
 
             assertFalse(handler.check(new AntimatterTeleporterUseEvent(alice.player(), false),
@@ -109,7 +106,7 @@ class EventHandlersTest {
         @Test
         void theAbstinenceCounterCountsEveryUseAndNeverGrants() {
             ForceItemPlayer alice = participant("a");
-            NoAntimatterAchievementHandler handler = new NoAntimatterAchievementHandler();
+            TallyAchievementHandler handler = TallyAchievementHandler.noAntimatterTeleporter();
             SimpleAchievementProgress progress = handler.createProgress();
             FakeAchievementWorld world = new FakeAchievementWorld();
 
@@ -130,7 +127,7 @@ class EventHandlersTest {
             List<ItemStack> drops = List.of(stack(Material.WITHER_SKELETON_SKULL));
             when(event.getDrops()).thenReturn(drops);
 
-            RareMobDropAchievementHandler handler = new RareMobDropAchievementHandler(1);
+            CountingAchievementHandler handler = CountingAchievementHandler.rareMobDrops(1);
             assertTrue(handler.check(event, handler.createProgress(), alice, new FakeAchievementWorld()));
         }
 
@@ -143,7 +140,7 @@ class EventHandlersTest {
             List<ItemStack> drops = List.of(stack(Material.BONE));
             when(event.getDrops()).thenReturn(drops);
 
-            RareMobDropAchievementHandler handler = new RareMobDropAchievementHandler(1);
+            CountingAchievementHandler handler = CountingAchievementHandler.rareMobDrops(1);
             assertFalse(handler.check(event, handler.createProgress(), alice, new FakeAchievementWorld()));
         }
 
@@ -155,7 +152,7 @@ class EventHandlersTest {
             List<ItemStack> drops = List.of(stack(Material.TRIDENT));
             when(event.getDrops()).thenReturn(drops);
 
-            RareMobDropAchievementHandler handler = new RareMobDropAchievementHandler(1);
+            CountingAchievementHandler handler = CountingAchievementHandler.rareMobDrops(1);
             assertTrue(handler.check(event, handler.createProgress(), alice, new FakeAchievementWorld()));
         }
 
@@ -166,7 +163,7 @@ class EventHandlersTest {
             EntityDeathEvent event = mock(EntityDeathEvent.class);
             when(event.getEntityType()).thenReturn(EntityType.ZOMBIE);
 
-            RareMobDropAchievementHandler handler = new RareMobDropAchievementHandler(1);
+            CountingAchievementHandler handler = CountingAchievementHandler.rareMobDrops(1);
             assertFalse(handler.check(event, handler.createProgress(), alice, new FakeAchievementWorld()));
         }
     }
@@ -199,7 +196,7 @@ class EventHandlersTest {
             PlayerPurchaseEvent event = mock(PlayerPurchaseEvent.class);
             when(event.getPlayer()).thenReturn(player);
 
-            TradingAchievementHandler handler = new TradingAchievementHandler(1);
+            CountingAchievementHandler handler = CountingAchievementHandler.trades(1);
             FakeAchievementWorld world = new FakeAchievementWorld().trading(player.getUniqueId());
 
             assertTrue(handler.check(event, handler.createProgress(), alice, world));
@@ -211,7 +208,7 @@ class EventHandlersTest {
             PlayerPurchaseEvent event = mock(PlayerPurchaseEvent.class);
             when(event.getPlayer()).thenReturn(alice.player());
 
-            TradingAchievementHandler handler = new TradingAchievementHandler(1);
+            CountingAchievementHandler handler = CountingAchievementHandler.trades(1);
 
             assertFalse(handler.check(event, handler.createProgress(), alice, new FakeAchievementWorld()),
                     "the world says nobody is mid-trade with a round trader");
@@ -228,8 +225,8 @@ class EventHandlersTest {
         FakeAchievementWorld world = new FakeAchievementWorld();
         WheelOfFortuneWinEvent wrongEvent = new WheelOfFortuneWinEvent(mockPlayer("b"), Material.DIRT);
 
-        RareMobDropAchievementHandler rareDrop = new RareMobDropAchievementHandler(1);
-        TradingAchievementHandler trading = new TradingAchievementHandler(1);
+        CountingAchievementHandler rareDrop = CountingAchievementHandler.rareMobDrops(1);
+        CountingAchievementHandler trading = CountingAchievementHandler.trades(1);
 
         assertFalse(rareDrop.check(wrongEvent, rareDrop.createProgress(), alice, world));
         assertFalse(trading.check(wrongEvent, trading.createProgress(), alice, world));
