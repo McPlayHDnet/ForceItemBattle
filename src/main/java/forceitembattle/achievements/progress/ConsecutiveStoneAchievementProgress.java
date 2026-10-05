@@ -1,5 +1,5 @@
 package forceitembattle.achievements.progress;
 
-public class ConsecutiveStoneAchievementProgress implements AchievementProgressTracker {
+public class ConsecutiveStoneAchievementProgress {
     public int consecutiveCount = 0;
 }

@@ -2,7 +2,6 @@ package forceitembattle.achievements.handlers;
 
 import forceitembattle.achievements.AchievementWorld;
 import forceitembattle.achievements.Trigger;
-import forceitembattle.achievements.progress.AchievementProgressTracker;
 import forceitembattle.model.ForceItemPlayer;
 import org.bukkit.event.Event;
 
@@ -17,7 +16,7 @@ import org.bukkit.event.Event;
  * interface every manager, and this parameter is what decides whether this package can be tested
  * without a running server. A rule that needs something new widens the world by one named question.
  */
-public interface AchievementHandler<P extends AchievementProgressTracker> {
+public interface AchievementHandler<P> {
 
     Trigger getTrigger();
 

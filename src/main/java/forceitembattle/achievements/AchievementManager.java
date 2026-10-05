@@ -4,7 +4,6 @@ import forceitembattle.achievements.global.GlobalStats;
 import forceitembattle.achievements.global.GlobalStatsLoader;
 import forceitembattle.achievements.handlers.AchievementHandler;
 import forceitembattle.achievements.handlers.CollectionAchievementHandler;
-import forceitembattle.achievements.progress.AchievementProgressTracker;
 import forceitembattle.achievements.progress.BackToBackAchievementProgress;
 import forceitembattle.achievements.progress.CollectionAchievementProgress;
 import forceitembattle.achievements.progress.ConsecutiveStoneAchievementProgress;
@@ -50,8 +49,8 @@ public class AchievementManager implements Manager {
      * only caller of {@code check}, and deliberately not the plugin: see {@link AchievementWorld}.
      */
     private final AchievementWorld world;
-    private final Map<UUID, Map<Achievements, AchievementProgressTracker>> playerProgress = new HashMap<>();
-    private final Map<Team, Map<Achievements, AchievementProgressTracker>> teamProgress = new HashMap<>();
+    private final Map<UUID, Map<Achievements, Object>> playerProgress = new HashMap<>();
+    private final Map<Team, Map<Achievements, Object>> teamProgress = new HashMap<>();
     private final AchievementStorage storage;
     @Getter
     private final Map<UUID, GlobalStats> globalStatsCache;
@@ -112,9 +111,9 @@ public class AchievementManager implements Manager {
             return;
         }
 
-        Map<Achievements, AchievementProgressTracker> progress = playerProgress.computeIfAbsent(uuid, key -> new HashMap<>());
+        Map<Achievements, Object> progress = playerProgress.computeIfAbsent(uuid, key -> new HashMap<>());
 
-        Map<Achievements, AchievementProgressTracker> teamProgressMap = null;
+        Map<Achievements, Object> teamProgressMap = null;
         Team team = null;
         if (forceItemPlayer.isInTeam()) {
             team = forceItemPlayer.currentTeam();
@@ -142,12 +141,12 @@ public class AchievementManager implements Manager {
                 }
             }
 
-            Map<Achievements, AchievementProgressTracker> progressMap = useTeamProgress ? teamProgressMap : progress;
-            AchievementProgressTracker tracker = progressMap.computeIfAbsent(achievement, key -> handler.createProgress());
+            Map<Achievements, Object> progressMap = useTeamProgress ? teamProgressMap : progress;
+            Object tracker = progressMap.computeIfAbsent(achievement, key -> handler.createProgress());
 
             @SuppressWarnings("unchecked")
-            AchievementHandler<AchievementProgressTracker> typedHandler =
-                    (AchievementHandler<AchievementProgressTracker>) handler;
+            AchievementHandler<Object> typedHandler =
+                    (AchievementHandler<Object>) handler;
 
             if (typedHandler.check(event, tracker, forceItemPlayer, this.world)) {
                 grantAchievement(player, achievement, useTeamProgress, forceItemPlayer);
@@ -335,9 +334,9 @@ public class AchievementManager implements Manager {
 
             // CHICOT — finish with no deaths.
             if (!storage.hasAchievement(uuid, Achievements.CHICOT)) {
-                Map<Achievements, AchievementProgressTracker> progress =
+                Map<Achievements, Object> progress =
                         playerProgress.computeIfAbsent(uuid, key -> new HashMap<>());
-                AchievementProgressTracker chicotProgress = progress.computeIfAbsent(
+                Object chicotProgress = progress.computeIfAbsent(
                         Achievements.CHICOT, key -> Achievements.CHICOT.getHandler().createProgress());
                 if (chicotProgress instanceof SimpleAchievementProgress simpleProgress
                         && simpleProgress.deathCount == 0) {
@@ -402,17 +401,17 @@ public class AchievementManager implements Manager {
     }
 
     /** Checks the player's own progress and, for team-shared achievements, the team's. */
-    public AchievementProgressTracker getProgress(UUID uuid, Achievements achievement) {
-        Map<Achievements, AchievementProgressTracker> playerMap = playerProgress.get(uuid);
+    public Object getProgress(UUID uuid, Achievements achievement) {
+        Map<Achievements, Object> playerMap = playerProgress.get(uuid);
         if (playerMap != null) {
-            AchievementProgressTracker tracker = playerMap.get(achievement);
+            Object tracker = playerMap.get(achievement);
             if (tracker != null) {
                 return tracker;
             }
         }
         ForceItemPlayer fip = this.roster.get(uuid);
         if (fip != null && fip.currentTeam() != null) {
-            Map<Achievements, AchievementProgressTracker> teamMap = teamProgress.get(fip.currentTeam());
+            Map<Achievements, Object> teamMap = teamProgress.get(fip.currentTeam());
             if (teamMap != null) {
                 return teamMap.get(achievement);
             }
@@ -422,7 +421,7 @@ public class AchievementManager implements Manager {
 
     /** Progress is in-memory and per-round, so this only reflects the current game. */
     public String describeProgress(UUID uuid, Achievements achievement) {
-        AchievementProgressTracker tracker = getProgress(uuid, achievement);
+        Object tracker = getProgress(uuid, achievement);
         if (tracker == null) {
             return "not started";
         }

@@ -1,6 +1,6 @@
 package forceitembattle.achievements.progress;
 
-public class CounterAchievementProgress implements AchievementProgressTracker {
+public class CounterAchievementProgress {
     public int count = 0;
     public int consecutiveCount = 0;
 }
