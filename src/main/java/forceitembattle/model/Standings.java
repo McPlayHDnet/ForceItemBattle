@@ -41,7 +41,7 @@ public final class Standings {
     }
 
     public static Map<Team, Integer> ofTeams(List<Team> teams) {
-        return of(teams, Team::getCurrentScore);
+        return of(teams, Team::score);
     }
 
     /**

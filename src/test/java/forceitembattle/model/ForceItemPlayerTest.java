@@ -172,13 +172,13 @@ class ForceItemPlayerTest {
 
             alice.recordFoundItem(item);
 
-            assertEquals(43, team.getCurrentScore());
+            assertEquals(43, team.score());
             assertEquals(43, alice.activeScore());
             assertEquals(43, bob.activeScore());
             // the player's own score and found-list stay empty; the team owns both
             assertEquals(7, alice.currentScore());
             assertTrue(alice.foundItems().isEmpty());
-            assertEquals(1, team.getFoundItems().size());
+            assertEquals(1, team.foundItems().size());
         }
 
         @Test
@@ -254,8 +254,8 @@ class ForceItemPlayerTest {
             assertEquals(OWN, player.activeMaterial());
             assertTrue(player.foundItems().isEmpty());
             // ...and the team kept everything it was credited with
-            assertEquals(43, team.getCurrentScore());
-            assertEquals(1, team.getFoundItems().size());
+            assertEquals(43, team.score());
+            assertEquals(1, team.foundItems().size());
         }
 
         /**

@@ -171,7 +171,7 @@ public class MatchHistoryReporter {
         List<FibMatchItemSubmitDto> items = new ArrayList<>();
         if (teamMode) {
             for (Team team : this.teamManager.getTeams()) {
-                appendItems(items, team.getFoundItems(), null, team.getTeamId());
+                appendItems(items, team.foundItems(), null, team.getTeamId());
             }
         } else {
             for (ForceItemPlayer forceItemPlayer : roster.values()) {
