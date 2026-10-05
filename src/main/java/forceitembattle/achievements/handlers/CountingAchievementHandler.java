@@ -10,9 +10,13 @@ import forceitembattle.event.WheelOfFortuneWinEvent;
 import forceitembattle.model.ForceItemPlayer;
 import io.papermc.paper.event.player.PlayerPurchaseEvent;
 import org.bukkit.Material;
+import org.bukkit.block.data.type.Beehive;
 import org.bukkit.event.Event;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
+import org.bukkit.inventory.EquipmentSlot;
 
 /** "Do this N times." Counting before comparing is what makes the last occurrence the one that unlocks. */
 public final class CountingAchievementHandler implements AchievementHandler<SimpleAchievementProgress> {
@@ -58,6 +62,18 @@ public final class CountingAchievementHandler implements AchievementHandler<Simp
         return new CountingAchievementHandler(Trigger.EATING, targetAmount, false,
                 (event, player, world) -> event instanceof PlayerItemConsumeEvent consume
                         && (requiredItem == null || requiredItem.matches(consume.getItem())));
+    }
+
+    /** Shearing a full hive. Main hand only: the event fires once per hand. */
+    public static CountingAchievementHandler beehiveHarvests(int targetAmount) {
+        return new CountingAchievementHandler(Trigger.BEEHIVE_HARVEST, targetAmount, false,
+                (event, player, world) -> event instanceof PlayerInteractEvent interact
+                        && interact.getHand() == EquipmentSlot.HAND
+                        && interact.getAction() == Action.RIGHT_CLICK_BLOCK
+                        && interact.getItem() != null && interact.getItem().getType() == Material.SHEARS
+                        && interact.getClickedBlock() != null
+                        && interact.getClickedBlock().getBlockData() instanceof Beehive hive
+                        && hive.getHoneyLevel() == hive.getMaximumHoneyLevel());
     }
 
     public static CountingAchievementHandler rareMobDrops(int targetAmount) {

@@ -4,7 +4,6 @@ import forceitembattle.achievements.global.GlobalRule;
 import forceitembattle.achievements.global.GlobalStat;
 import forceitembattle.achievements.handlers.AchievementHandler;
 import forceitembattle.achievements.handlers.BackToBackAchievementHandler;
-import forceitembattle.achievements.handlers.BeehiveAchievementHandler;
 import forceitembattle.achievements.handlers.CollectionAchievementHandler;
 import forceitembattle.achievements.handlers.CounterAchievementHandler;
 import forceitembattle.achievements.handlers.CountingAchievementHandler;
@@ -179,7 +178,7 @@ public enum Achievements {
             new InventoryFullAchievementHandler()),
 
     HONEY_HONEY("Honey, honey, how you thrill me, aha, honey honey", "Harvest 2 full beehives with shears",
-            new BeehiveAchievementHandler(2)),
+            CountingAchievementHandler.beehiveHarvests(2)),
 
     GOLD_GOLD_GOLD("Gold Gold Gold", "Use the Wheel of Fortune 15 times in one game",
             CountingAchievementHandler.wheelsOfFortune(15)),
