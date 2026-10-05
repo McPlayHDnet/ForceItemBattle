@@ -11,13 +11,10 @@ import forceitembattle.model.RoundClock;
 import forceitembattle.model.RoundPhase;
 import forceitembattle.randomevents.RandomEventManager;
 import forceitembattle.settings.GameSettings;
-import forceitembattle.util.FileLogger;
 import forceitembattle.util.Scheduler;
-import java.nio.file.Path;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 import org.mockbukkit.mockbukkit.MockBukkit;
 import org.mockbukkit.mockbukkit.ServerMock;
 
@@ -29,14 +26,10 @@ class TimerManagerTest {
     private Gamemanager gamemanager;
     private TimerManager timer;
 
-    @TempDir
-    Path logs;
-
     @BeforeEach
     void setUp() {
         this.server = MockBukkit.mock();
         Scheduler.init(MockBukkit.createMockPlugin());
-        FileLogger.init(this.logs.toFile());
 
         this.phase = new RoundPhase();
         this.clock = new RoundClock();

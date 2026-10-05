@@ -8,7 +8,6 @@ import forceitembattle.model.RoundPhase;
 import forceitembattle.randomevents.RandomEventManager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
-import forceitembattle.util.FileLogger;
 import forceitembattle.util.Scheduler;
 import forceitembattle.util.Text;
 import forceitembattle.util.TimeFormat;
@@ -200,7 +199,7 @@ public class TimerManager implements Manager {
                     announceRoundOver();
                     TimerManager.this.tabList.clearFooter();
                     TimerManager.this.gamemanager.finishGame();
-                    FileLogger.log("<< Force Item Battle is over >>");
+                    TimerManager.this.plugin.getLogger().info("<< Force Item Battle is over >>");
                 }
             }
         }, 20, 20);

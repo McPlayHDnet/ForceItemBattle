@@ -98,7 +98,6 @@ import forceitembattle.randomevents.RandomEventManager;
 import forceitembattle.service.FIBServiceClient;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
-import forceitembattle.util.FileLogger;
 import forceitembattle.util.Scheduler;
 import forceitembattle.util.SeedPool;
 import forceitembattle.util.WorldReset;
@@ -253,7 +252,6 @@ public final class ForceItemBattle extends JavaPlugin {
     @Override
     public void onEnable() {
         Scheduler.init(this);
-        FileLogger.init(getDataFolder());
         this.seedPool = new SeedPool(this);
         this.seedPool.load();
 
