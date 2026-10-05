@@ -1,5 +1,8 @@
 package forceitembattle.achievements.progress;
 
+import lombok.ToString;
+
+@ToString
 public class TimeAchievementProgress {
     public int count = 0;
     public int lastItemSecondsLeft = -1;

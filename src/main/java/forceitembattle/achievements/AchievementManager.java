@@ -4,14 +4,9 @@ import forceitembattle.achievements.global.GlobalStats;
 import forceitembattle.achievements.global.GlobalStatsLoader;
 import forceitembattle.achievements.handlers.AchievementHandler;
 import forceitembattle.achievements.handlers.CollectionAchievementHandler;
-import forceitembattle.achievements.progress.BackToBackAchievementProgress;
+import forceitembattle.achievements.handlers.TallyAchievementHandler;
 import forceitembattle.achievements.progress.CollectionAchievementProgress;
-import forceitembattle.achievements.progress.ConsecutiveStoneAchievementProgress;
-import forceitembattle.achievements.progress.CounterAchievementProgress;
-import forceitembattle.achievements.progress.ItemFrequencyAchievementProgress;
 import forceitembattle.achievements.progress.SimpleAchievementProgress;
-import forceitembattle.achievements.progress.SkipAchievementProgress;
-import forceitembattle.achievements.progress.TimeAchievementProgress;
 import forceitembattle.collection.CollectionManager;
 import forceitembattle.event.PlayerGrantAchievementEvent;
 import forceitembattle.manager.Manager;
@@ -272,7 +267,10 @@ public class AchievementManager implements Manager {
     /** A team player with no resolvable teammate is recorded as SOLO to keep the service data valid. */
     private void writeUnlock(UUID memberUuid, Player memberPlayer, Achievements achievement,
                              Team team) {
-        UUID teammate = teammateOf(memberUuid, team);
+        UUID teammate = team == null ? null : team.getPlayers().stream()
+                .map(member -> member.player().getUniqueId())
+                .filter(uuid -> !uuid.equals(memberUuid))
+                .findFirst().orElse(null);
         AchievementMode mode = teammate != null ? AchievementMode.TEAM : AchievementMode.SOLO;
 
         storage.addAchievement(memberUuid, achievement, mode, teammate);
@@ -280,20 +278,6 @@ public class AchievementManager implements Manager {
         if (memberPlayer != null && memberPlayer.isOnline()) {
             Bukkit.getPluginManager().callEvent(new PlayerGrantAchievementEvent(memberPlayer, achievement));
         }
-    }
-
-    /** The other member of a (two-player) team, or null if none can be resolved. */
-    private UUID teammateOf(UUID memberUuid, Team team) {
-        if (team == null) {
-            return null;
-        }
-        for (ForceItemPlayer p : team.getPlayers()) {
-            UUID uuid = p.player().getUniqueId();
-            if (!uuid.equals(memberUuid)) {
-                return uuid;
-            }
-        }
-        return null;
     }
 
     public void checkGameEndAchievements() {
@@ -326,29 +310,13 @@ public class AchievementManager implements Manager {
                 }
             }
 
-            // THE_HARD_WAY — finish the game without a single back-to-back.
-            if (!storage.hasAchievement(uuid, Achievements.THE_HARD_WAY)
-                    && !hadOccurrence(uuid, Achievements.THE_HARD_WAY)) {
-                writeUnlock(uuid, fip.player(), Achievements.THE_HARD_WAY, team);
-            }
-
-            // NO_HANDOUTS — win the game without a single back-to-back.
-            if (!storage.hasAchievement(uuid, Achievements.NO_HANDOUTS)
-                    && !hadOccurrence(uuid, Achievements.NO_HANDOUTS)
-                    && didWin(fip)) {
-                writeUnlock(uuid, fip.player(), Achievements.NO_HANDOUTS, team);
-            }
-
-            // NO_SHORTCUTS — finish without entering the Antimatter Teleporter.
-            if (!storage.hasAchievement(uuid, Achievements.NO_SHORTCUTS)
-                    && !hadOccurrence(uuid, Achievements.NO_SHORTCUTS)) {
-                writeUnlock(uuid, fip.player(), Achievements.NO_SHORTCUTS, team);
-            }
-
-            // IT_IS_BEAUTIFUL — finish without leaving the Overworld.
-            if (!storage.hasAchievement(uuid, Achievements.IT_IS_BEAUTIFUL)
-                    && !hadOccurrence(uuid, Achievements.IT_IS_BEAUTIFUL)) {
-                writeUnlock(uuid, fip.player(), Achievements.IT_IS_BEAUTIFUL, team);
+            for (Achievements achievement : Achievements.values()) {
+                if (achievement.getHandler() instanceof TallyAchievementHandler tally
+                        && !storage.hasAchievement(uuid, achievement)
+                        && !hadOccurrence(uuid, achievement)
+                        && (!tally.requiresWin() || didWin(fip))) {
+                    writeUnlock(uuid, fip.player(), achievement, team);
+                }
             }
         }
     }
@@ -416,29 +384,7 @@ public class AchievementManager implements Manager {
             }
             return collection.collected.size() + " collected: " + collection.collected;
         }
-        if (tracker instanceof CounterAchievementProgress counter) {
-            return "count=" + counter.count + ", consecutive=" + counter.consecutiveCount;
-        }
-        if (tracker instanceof ItemFrequencyAchievementProgress frequency) {
-            int highest = frequency.counts.values().stream().mapToInt(Integer::intValue).max().orElse(0);
-            return "highest same-item count=" + highest;
-        }
-        if (tracker instanceof TimeAchievementProgress time) {
-            return "count=" + time.count + ", hasSkipped=" + time.hasSkipped;
-        }
-        if (tracker instanceof SkipAchievementProgress skip) {
-            return "skips=" + skip.skipCount;
-        }
-        if (tracker instanceof BackToBackAchievementProgress backToBack) {
-            return "backToBack=" + backToBack.b2bCount;
-        }
-        if (tracker instanceof ConsecutiveStoneAchievementProgress stone) {
-            return "consecutiveStone=" + stone.consecutiveCount;
-        }
-        if (tracker instanceof SimpleAchievementProgress simple) {
-            return "count=" + simple.count + (simple.deathCount != 0 ? ", deaths=" + simple.deathCount : "");
-        }
-        return "in progress";
+        return tracker.toString();
     }
 
     public AchievementStorage getAchievementStorage() {

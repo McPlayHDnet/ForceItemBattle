@@ -3,19 +3,19 @@ package forceitembattle.achievements;
 import forceitembattle.achievements.global.GlobalRule;
 import forceitembattle.achievements.global.GlobalStat;
 import forceitembattle.achievements.handlers.AchievementHandler;
-import forceitembattle.achievements.handlers.CountingAchievementHandler;
 import forceitembattle.achievements.handlers.BackToBackAchievementHandler;
 import forceitembattle.achievements.handlers.BeehiveAchievementHandler;
 import forceitembattle.achievements.handlers.CollectionAchievementHandler;
 import forceitembattle.achievements.handlers.ConsecutiveStoneAchievementHandler;
 import forceitembattle.achievements.handlers.CounterAchievementHandler;
+import forceitembattle.achievements.handlers.CountingAchievementHandler;
 import forceitembattle.achievements.handlers.DeathCounterAchievementHandler;
 import forceitembattle.achievements.handlers.InventoryFullAchievementHandler;
 import forceitembattle.achievements.handlers.LootAchievementHandler;
-import forceitembattle.achievements.handlers.TallyAchievementHandler;
 import forceitembattle.achievements.handlers.RepeatItemAchievementHandler;
 import forceitembattle.achievements.handlers.SameItemBackToBackAchievementHandler;
 import forceitembattle.achievements.handlers.SkipAchievementHandler;
+import forceitembattle.achievements.handlers.TallyAchievementHandler;
 import forceitembattle.achievements.handlers.TimeBasedAchievementHandler;
 import forceitembattle.achievements.handlers.WheelOfFortuneAchievementHandler;
 import forceitembattle.model.Dimension;
@@ -132,7 +132,7 @@ public enum Achievements {
             TallyAchievementHandler.noBackToBacks()),
 
     NO_HANDOUTS("No Handouts", "Win a game without a single back-to-back",
-            TallyAchievementHandler.noBackToBacks()),
+            TallyAchievementHandler.noBackToBacks().requiringWin()),
 
     HIGH_ROLLER("High Roller", "Get 5 or more back-to-backs in a single game",
             CountingAchievementHandler.backToBacks(5)),

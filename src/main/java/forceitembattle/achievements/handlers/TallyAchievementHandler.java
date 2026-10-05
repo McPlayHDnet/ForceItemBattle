@@ -17,11 +17,26 @@ public final class TallyAchievementHandler implements AchievementHandler<SimpleA
     private final Trigger trigger;
     private final Occurrence occurrence;
     private final boolean teamEligible;
+    private final boolean requiresWin;
 
     private TallyAchievementHandler(Trigger trigger, boolean teamEligible, Occurrence occurrence) {
+        this(trigger, teamEligible, false, occurrence);
+    }
+
+    private TallyAchievementHandler(Trigger trigger, boolean teamEligible, boolean requiresWin, Occurrence occurrence) {
         this.trigger = trigger;
         this.teamEligible = teamEligible;
+        this.requiresWin = requiresWin;
         this.occurrence = occurrence;
+    }
+
+    /** The same tally, unlocked only by a player who also won. */
+    public TallyAchievementHandler requiringWin() {
+        return new TallyAchievementHandler(this.trigger, this.teamEligible, true, this.occurrence);
+    }
+
+    public boolean requiresWin() {
+        return this.requiresWin;
     }
 
     public static TallyAchievementHandler noBackToBacks() {
