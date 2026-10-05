@@ -1,8 +1,12 @@
 package forceitembattle.settings;
 
 import java.util.List;
+import lombok.Getter;
+import lombok.experimental.Accessors;
 import org.bukkit.Material;
 
+@Getter
+@Accessors(fluent = true)
 public enum GameSetting {
 
     TEAM("Teams", List.of("", "<gray>Toggle whether <dark_aqua>teams <gray>are allowed or not.", "<dark_gray><i>Only toggleable if 4 or more players are playing!</i>", ""), "isTeamGame", false, Material.RED_BED),
@@ -60,25 +64,5 @@ public enum GameSetting {
         this.configPath = "settings." + configPath;
         this.defaultValue = defaultValue;
         this.defaultMaterial = defaultMaterial;
-    }
-
-    public String displayName() {
-        return displayName;
-    }
-
-    public List<String> descriptionLore() {
-        return descriptionLore;
-    }
-
-    public String configPath() {
-        return configPath;
-    }
-
-    public Object defaultValue() {
-        return defaultValue;
-    }
-
-    public Material defaultMaterial() {
-        return defaultMaterial;
     }
 }
