@@ -6,8 +6,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.util.Collections;
 import java.util.Locale;
+import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ThreadLocalRandom;
@@ -42,31 +44,23 @@ public class SeedPool {
             return;
         }
 
-        String mc = null, flags = null, point = null;
-        Set<String> parsed = new TreeSet<>();
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(manifest))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                line = line.trim();
-                if (line.isEmpty() || line.startsWith("#")) continue;
-                int eq = line.indexOf('=');
-                if (eq < 0) continue;
-                String key = line.substring(0, eq).trim();
-                String val = line.substring(eq + 1).trim();
-                switch (key) {
-                    case "mc":        mc = val;    break;
-                    case "flags":     flags = val; break;
-                    case "point":     point = val; break;
-                    case "target":
-                    case "generated": break; // informational only
-                    default:          parsed.add(key.toLowerCase(Locale.ROOT)); // <name>=<count>
-                }
-            }
+        Properties properties = new Properties();
+        try (Reader reader = new FileReader(manifest)) {
+            properties.load(reader);
         } catch (IOException e) {
             this.plugin.getLogger().warning("[seeds] failed to read manifest: " + e.getMessage()
                     + " — /reset <biome> disabled.");
             return;
+        }
+
+        String mc = properties.getProperty("mc");
+        String flags = properties.getProperty("flags");
+        String point = properties.getProperty("point");
+        Set<String> parsed = new TreeSet<>();
+        for (String key : properties.stringPropertyNames()) {
+            if (!Set.of("mc", "flags", "point", "target", "generated").contains(key)) {
+                parsed.add(key.toLowerCase(Locale.ROOT)); // <name>=<count>
+            }
         }
 
         if (!EXPECTED_MC.equals(mc) || !EXPECTED_FLAGS.equals(flags) || !EXPECTED_POINT.equals(point)) {
