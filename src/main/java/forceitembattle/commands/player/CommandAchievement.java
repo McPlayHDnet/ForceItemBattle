@@ -58,48 +58,37 @@ public final class CommandAchievement extends CustomCommand implements CustomTab
         }
     }
 
-    private void handleListCommand(Player player, String[] args) {
-        UUID targetUUID;
-        String targetName;
+    private record Target(UUID uuid, String name) {
+    }
 
+    private static Target targetOf(Player player, String[] args) {
         if (args.length == 1) {
-            targetUUID = player.getUniqueId();
-            targetName = player.getName();
-        } else {
-            OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
-            targetUUID = target.getUniqueId();
-            targetName = target.getName() != null ? target.getName() : args[1];
+            return new Target(player.getUniqueId(), player.getName());
         }
+        OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
+        return new Target(target.getUniqueId(), target.getName() != null ? target.getName() : args[1]);
+    }
 
-        final String name = targetName;
+    private void handleListCommand(Player player, String[] args) {
+        Target target = targetOf(player, args);
 
-        this.achievementManager.getAchievementStorage().loadPlayer(targetUUID, () -> {
+        this.achievementManager.getAchievementStorage().loadPlayer(target.uuid(), () -> {
             if (!player.isOnline()) {
                 return;
             }
-            new AchievementCategoryInventory(this.gui, name, targetUUID).open(player);
+            new AchievementCategoryInventory(this.gui, target.name(), target.uuid()).open(player);
         });
     }
 
     private void handleGlobalCommand(Player player, String[] args) {
-        UUID targetUuid;
-        String targetName;
+        Target target = targetOf(player, args);
 
-        if (args.length == 1) {
-            targetUuid = player.getUniqueId();
-            targetName = player.getName();
-        } else {
-            OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
-            targetUuid = target.getUniqueId();
-            targetName = target.getName() != null ? target.getName() : args[1];
-        }
-
-        this.achievementManager.getGlobalStatsLoader().load(targetUuid, stats -> {
+        this.achievementManager.getGlobalStatsLoader().load(target.uuid(), stats -> {
             if (!player.isOnline()) {
                 return;
             }
             player.sendMessage(" ");
-            player.sendMessage(Text.of("<dark_gray>» <gold><b>Global Stats</b> <dark_gray>● <green>" + targetName + " <dark_gray>«"));
+            player.sendMessage(Text.of("<dark_gray>» <gold><b>Global Stats</b> <dark_gray>● <green>" + target.name() + " <dark_gray>«"));
             player.sendMessage(" ");
             for (GlobalStat stat : GlobalStat.values()) {
                 player.sendMessage(Text.of("  <dark_gray>● <gray>" + stat.getLabel()

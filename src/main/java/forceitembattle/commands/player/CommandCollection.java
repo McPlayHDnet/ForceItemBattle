@@ -8,8 +8,6 @@ import forceitembattle.gui.GuiContext;
 import forceitembattle.util.Text;
 import java.util.List;
 import java.util.UUID;
-import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
 public final class CommandCollection extends CustomCommand implements CustomTabCompleter {
@@ -43,19 +41,6 @@ public final class CommandCollection extends CustomCommand implements CustomTabC
         }
 
         new CollectionBookInventory(this.gui, args[0], targetUuid).open(player);
-    }
-
-    /** Not {@code Bukkit.getOfflinePlayer(name)}: that can block on a Mojang lookup for an unknown name. */
-    private UUID resolvePlayer(String name) {
-        Player online = Bukkit.getPlayerExact(name);
-        if (online != null) {
-            return online.getUniqueId();
-        }
-        OfflinePlayer offline = Bukkit.getOfflinePlayerIfCached(name);
-        if (offline != null) {
-            return offline.getUniqueId();
-        }
-        return null;
     }
 
     @Override

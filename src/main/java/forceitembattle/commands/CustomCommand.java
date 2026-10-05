@@ -3,7 +3,11 @@ package forceitembattle.commands;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.Text;
 import java.util.List;
+import java.util.UUID;
+import javax.annotation.Nullable;
 import lombok.Getter;
+import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -22,6 +26,13 @@ public abstract class CustomCommand implements CommandExecutor {
 
     public CustomCommand(String name) {
         this.name = name;
+    }
+
+    /** Not {@code Bukkit.getOfflinePlayer(name)}: that can block on a Mojang lookup for an unknown name. */
+    @Nullable
+    protected static UUID resolvePlayer(String name) {
+        OfflinePlayer cached = Bukkit.getOfflinePlayerIfCached(name);
+        return cached == null ? null : cached.getUniqueId();
     }
 
     /** Checked in order; the first failure is reported. Abstract so a forgotten gate can't look like "none". */

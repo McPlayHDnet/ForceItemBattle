@@ -20,9 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
 public final class CommandStats extends CustomCommand implements CustomTabCompleter {
@@ -274,18 +272,6 @@ public final class CommandStats extends CustomCommand implements CustomTabComple
                 player.sendMessage(Text.of("    <dark_gray>» " + rarity.displayName() + " <dark_gray>× <dark_aqua>" + count));
             }
         }
-    }
-
-    private UUID resolvePlayer(String name) {
-        Player online = Bukkit.getPlayerExact(name);
-        if (online != null) {
-            return online.getUniqueId();
-        }
-        OfflinePlayer offline = Bukkit.getOfflinePlayerIfCached(name);
-        if (offline != null) {
-            return offline.getUniqueId();
-        }
-        return null;
     }
 
 
