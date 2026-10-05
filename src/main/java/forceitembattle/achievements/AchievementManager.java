@@ -298,18 +298,6 @@ public class AchievementManager implements Manager {
 
             Team team = fip.currentTeam();
 
-            // CHICOT — finish with no deaths.
-            if (!storage.hasAchievement(uuid, Achievements.CHICOT)) {
-                Map<Achievements, Object> progress =
-                        playerProgress.computeIfAbsent(uuid, key -> new HashMap<>());
-                Object chicotProgress = progress.computeIfAbsent(
-                        Achievements.CHICOT, key -> Achievements.CHICOT.getHandler().createProgress());
-                if (chicotProgress instanceof SimpleAchievementProgress simpleProgress
-                        && simpleProgress.deathCount == 0) {
-                    writeUnlock(uuid, fip.player(), Achievements.CHICOT, team);
-                }
-            }
-
             for (Achievements achievement : Achievements.values()) {
                 if (achievement.getHandler() instanceof TallyAchievementHandler tally
                         && !storage.hasAchievement(uuid, achievement)

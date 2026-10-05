@@ -8,7 +8,6 @@ import forceitembattle.achievements.handlers.BeehiveAchievementHandler;
 import forceitembattle.achievements.handlers.CollectionAchievementHandler;
 import forceitembattle.achievements.handlers.CounterAchievementHandler;
 import forceitembattle.achievements.handlers.CountingAchievementHandler;
-import forceitembattle.achievements.handlers.DeathCounterAchievementHandler;
 import forceitembattle.achievements.handlers.InventoryFullAchievementHandler;
 import forceitembattle.achievements.handlers.LootAchievementHandler;
 import forceitembattle.achievements.handlers.RepeatItemAchievementHandler;
@@ -168,7 +167,7 @@ public enum Achievements {
 
     // ACTION achievements
     CHICOT("Chicot", "Complete a round without dying",
-            new DeathCounterAchievementHandler(0)),
+            TallyAchievementHandler.noDeaths()),
 
     CONNOISSEUR("Connoisseur", "Eat Cavendish",
             CountingAchievementHandler.eats(1, CustomItemSpec.ofModelData(Material.ENCHANTED_GOLDEN_APPLE, "cavendish"))),

@@ -9,6 +9,7 @@ import forceitembattle.event.FoundItemEvent;
 import forceitembattle.model.Dimension;
 import forceitembattle.model.ForceItemPlayer;
 import org.bukkit.event.Event;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 
 /** "Finish the game without doing this." Never completes mid-game; unlocked at game end while the tally is zero. */
@@ -47,6 +48,11 @@ public final class TallyAchievementHandler implements AchievementHandler<SimpleA
     public static TallyAchievementHandler noAntimatterTeleporter() {
         return new TallyAchievementHandler(Trigger.ANTIMATTER_TELEPORTER, true,
                 (event, player, world) -> event instanceof AntimatterTeleporterUseEvent);
+    }
+
+    public static TallyAchievementHandler noDeaths() {
+        return new TallyAchievementHandler(Trigger.DYING, Trigger.DYING.isAchieveableInTeams(),
+                (event, player, world) -> event instanceof PlayerDeathEvent);
     }
 
     public static TallyAchievementHandler noOverworldExit() {

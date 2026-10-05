@@ -8,7 +8,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import forceitembattle.achievements.handlers.CountingAchievementHandler;
-import forceitembattle.achievements.handlers.DeathCounterAchievementHandler;
 import forceitembattle.achievements.handlers.TallyAchievementHandler;
 import forceitembattle.achievements.handlers.WheelOfFortuneAchievementHandler;
 import forceitembattle.achievements.progress.SimpleAchievementProgress;
@@ -174,13 +173,13 @@ class EventHandlersTest {
         @Test
         void deathsAccumulateAndNeverGrantMidRound() {
             ForceItemPlayer alice = participant("a");
-            DeathCounterAchievementHandler handler = new DeathCounterAchievementHandler(0);
+            TallyAchievementHandler handler = TallyAchievementHandler.noDeaths();
             SimpleAchievementProgress progress = handler.createProgress();
             FakeAchievementWorld world = new FakeAchievementWorld();
 
             assertFalse(handler.check(mock(PlayerDeathEvent.class), progress, alice, world));
             assertFalse(handler.check(mock(PlayerDeathEvent.class), progress, alice, world));
-            assertTrue(progress.deathCount >= 2,
+            assertTrue(progress.count >= 2,
                     "CHICOT reads this at game end; the handler itself never grants");
         }
     }
