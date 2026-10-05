@@ -6,8 +6,7 @@ import forceitembattle.service.FIBServiceClient;
 import forceitembattle.service.FibStatisticsClient;
 import forceitembattle.util.Scheduler;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 public class GlobalStatsLoader {
@@ -29,59 +28,18 @@ public class GlobalStatsLoader {
 
         FibStatisticsClient statistics = this.fibService.statistics();
 
-        AtomicReference<StatsView> solo = new AtomicReference<>();
-        AtomicReference<StatsView> team = new AtomicReference<>();
-        AtomicReference<GlobalPlayerStats> player = new AtomicReference<>();
-        AtomicBoolean playerDone = new AtomicBoolean();
-        AtomicBoolean soloDone = new AtomicBoolean();
-        AtomicBoolean teamDone = new AtomicBoolean();
-        AtomicBoolean delivered = new AtomicBoolean();
+        // A failed source completes with null rather than holding up the other two.
+        CompletableFuture<StatsView> solo = new CompletableFuture<>();
+        CompletableFuture<StatsView> team = new CompletableFuture<>();
+        CompletableFuture<GlobalPlayerStats> player = new CompletableFuture<>();
+        statistics.soloStats(playerUuid, solo::complete, error -> solo.complete(null));
+        statistics.combinedTeamStats(playerUuid, team::complete, error -> team.complete(null));
+        statistics.playerStats(playerUuid, player::complete, error -> player.complete(null));
 
-        Runnable maybeDeliver = () -> {
-            // All three sources, player-stats included: drop one from this gate and a slow call
-            // delivers with its AtomicReference still null.
-            if (!soloDone.get() || !teamDone.get() || !playerDone.get()) {
-                return;
-            }
-            if (!delivered.compareAndSet(false, true)) {
-                return;
-            }
-            GlobalStats stats = GlobalStats.of(new GlobalStatSources(solo.get(), team.get(), player.get()));
+        CompletableFuture.allOf(solo, team, player).thenRun(() -> {
+            GlobalStats stats = GlobalStats.of(new GlobalStatSources(solo.join(), team.join(), player.join()));
             this.cache.put(playerUuid, stats);
             Scheduler.runSync(() -> onLoaded.accept(stats));
-        };
-
-        statistics.soloStats(playerUuid,
-                view -> {
-                    solo.set(view);
-                    soloDone.set(true);
-                    maybeDeliver.run();
-                },
-                error -> {
-                    soloDone.set(true);
-                    maybeDeliver.run();
-                });
-
-        statistics.combinedTeamStats(playerUuid,
-                view -> {
-                    team.set(view);
-                    teamDone.set(true);
-                    maybeDeliver.run();
-                },
-                error -> {
-                    teamDone.set(true);
-                    maybeDeliver.run();
-                });
-
-        statistics.playerStats(playerUuid,
-                stats -> {
-                    player.set(stats);
-                    playerDone.set(true);
-                    maybeDeliver.run();
-                },
-                error -> {
-                    playerDone.set(true);
-                    maybeDeliver.run();
-                });
+        });
     }
 }
