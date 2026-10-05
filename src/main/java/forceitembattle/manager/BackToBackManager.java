@@ -20,7 +20,6 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 /** The odds are computed once, after the streak bump, and the same figure is announced and recorded. */
@@ -69,10 +68,7 @@ public class BackToBackManager implements Manager {
         InventorySearch.collectUniqueMaterials(player.getInventory(), ownHalf);
 
         if (context.backpackEnabled()) {
-            Inventory backpack = context.teamGame()
-                    ? this.backpacks.getTeamBackpack(forceItemPlayer.currentTeam())
-                    : this.backpacks.getPlayerBackpack(player);
-            InventorySearch.collectUniqueMaterials(backpack, ownHalf);
+            InventorySearch.collectUniqueMaterials(this.backpacks.getBackpackForPlayer(player), ownHalf);
         }
 
         ForceItemPlayer teammate = forceItemPlayer.teammate().orElse(null);
