@@ -1,7 +1,9 @@
 package forceitembattle.util;
 
 import forceitembattle.model.GameItems;
+import java.util.Arrays;
 import java.util.Set;
+import java.util.stream.Stream;
 import org.bukkit.Material;
 import org.bukkit.Tag;
 import org.bukkit.block.ShulkerBox;
@@ -9,7 +11,6 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.BundleMeta;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.Nullable;
 
 public final class InventorySearch {
@@ -19,120 +20,33 @@ public final class InventorySearch {
 
     /** Includes the contents of shulker boxes and bundles. */
     public static boolean contains(@Nullable Inventory inventory, Material targetMaterial) {
-        if (inventory == null) {
-            return false;
-        }
-
-        for (ItemStack item : inventory.getContents()) {
-            if (containsMaterial(item, targetMaterial)) {
-                return true;
-            }
-        }
-
-        return false;
+        return inventory != null && items(inventory.getContents()).anyMatch(item -> item.getType() == targetMaterial);
     }
 
     /** Includes shulker and bundle contents, and accumulates across calls. */
     public static void collectUniqueMaterials(@Nullable Inventory inventory, Set<Material> into) {
-        if (inventory == null) {
-            return;
-        }
-
-        for (ItemStack item : inventory.getContents()) {
-            if (isPluginItem(item)) {
-                continue;
-            }
-
-            Material type = item.getType();
-            into.add(type);
-
-            if (Tag.SHULKER_BOXES.isTagged(type)) {
-                collectFromShulkerBox(item, into);
-            }
-
-            if (Tag.ITEMS_BUNDLES.isTagged(type)) {
-                collectFromBundle(item, into);
-            }
+        if (inventory != null) {
+            items(inventory.getContents()).forEach(item -> into.add(item.getType()));
         }
     }
 
-    private static boolean containsMaterial(@Nullable ItemStack item, Material targetMaterial) {
-        if (isPluginItem(item)) {
-            return false;
-        }
-
-        if (item.getType() == targetMaterial) {
-            return true;
-        }
-
-        ItemMeta meta = item.getItemMeta();
-        if (meta == null) {
-            return false;
-        }
-
-        if (meta instanceof BlockStateMeta blockStateMeta
-                && blockStateMeta.getBlockState() instanceof ShulkerBox shulkerBox) {
-            for (ItemStack shulkerItem : shulkerBox.getInventory().getContents()) {
-                if (containsMaterial(shulkerItem, targetMaterial)) {
-                    return true;
-                }
-            }
-        }
-
-        if (meta instanceof BundleMeta bundleMeta && bundleMeta.hasItems()) {
-            for (ItemStack bundleItem : bundleMeta.getItems()) {
-                if (containsMaterial(bundleItem, targetMaterial)) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
+    /** Every stack, containers' contents included; the plugin's own items never count. */
+    private static Stream<ItemStack> items(ItemStack[] stacks) {
+        return Arrays.stream(stacks)
+                .filter(item -> item != null && !GameItems.isJoker(item) && !GameItems.isBackpack(item))
+                .flatMap(item -> Stream.concat(Stream.of(item), items(contentsOf(item))));
     }
 
-    private static void collectFromShulkerBox(ItemStack shulkerBox, Set<Material> into) {
-        ItemMeta meta = shulkerBox.getItemMeta();
-        if (!(meta instanceof BlockStateMeta blockStateMeta)) {
-            return;
+    /** Tag first, so item meta is only read for actual containers. */
+    private static ItemStack[] contentsOf(ItemStack item) {
+        Material type = item.getType();
+        if (Tag.SHULKER_BOXES.isTagged(type) && item.getItemMeta() instanceof BlockStateMeta meta
+                && meta.getBlockState() instanceof ShulkerBox box) {
+            return box.getInventory().getContents();
         }
-        if (!(blockStateMeta.getBlockState() instanceof ShulkerBox box)) {
-            return;
+        if (Tag.ITEMS_BUNDLES.isTagged(type) && item.getItemMeta() instanceof BundleMeta meta) {
+            return meta.getItems().toArray(ItemStack[]::new);
         }
-
-        for (ItemStack item : box.getInventory().getContents()) {
-            if (isPluginItem(item)) {
-                continue;
-            }
-
-            Material type = item.getType();
-            into.add(type);
-
-            if (Tag.ITEMS_BUNDLES.isTagged(type)) {
-                collectFromBundle(item, into);
-            }
-        }
-    }
-
-    private static void collectFromBundle(ItemStack bundle, Set<Material> into) {
-        ItemMeta meta = bundle.getItemMeta();
-        if (!(meta instanceof BundleMeta bundleMeta)) {
-            return;
-        }
-        if (!bundleMeta.hasItems()) {
-            return;
-        }
-
-        for (ItemStack item : bundleMeta.getItems()) {
-            if (isPluginItem(item)) {
-                continue;
-            }
-
-            into.add(item.getType());
-        }
-    }
-
-    /** Null, or one of the plugin's own tool items — never counts as a found item. */
-    private static boolean isPluginItem(@Nullable ItemStack item) {
-        return item == null || GameItems.isJoker(item) || GameItems.isBackpack(item);
+        return new ItemStack[0];
     }
 }
