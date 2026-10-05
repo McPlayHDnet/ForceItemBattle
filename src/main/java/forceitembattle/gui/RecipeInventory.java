@@ -63,48 +63,10 @@ public final class RecipeInventory extends InventoryBuilder {
         recipes.closeHandlers.put(recipeViewer.uuid(), () -> recipes.ignoreCloseHandler.remove(player.getUniqueId()));
 
         this.addUpdateHandler(() -> {
-            this.setItem(PREVIOUS_RECIPE_ITEM_SLOT, GuiItems.previous("Previous Recipe"), event -> {
-                if (recipeViewer.pages() == 1) {
-                    return;
-                }
-
-                int currentRecipeIndex = recipeViewer.currentRecipeIndex();
-
-                if (currentRecipeIndex == 0) {
-                    player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
-                    return;
-                }
-
-                currentRecipeIndex--;
-                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
-
-                recipeViewer.setCurrentRecipeIndex(currentRecipeIndex);
-                recipeViewer.setRecipe(recipeViewer.recipes().get(recipeViewer.currentRecipeIndex()));
-
-                new RecipeInventory(recipes, recipeViewer, player).open(player);
-            });
-
-            this.setItem(NEXT_RECIPE_ITEM_SLOT, GuiItems.next("Next Recipe"), inventoryClickEvent -> {
-                if (recipeViewer.pages() == 1) {
-                    return;
-                }
-
-                int currentRecipeIndex = recipeViewer.currentRecipeIndex();
-
-                if (currentRecipeIndex == (recipeViewer.pages() - 1)) {
-                    player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
-                    return;
-                }
-
-                currentRecipeIndex++;
-
-                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
-
-                recipeViewer.setCurrentRecipeIndex(currentRecipeIndex);
-                recipeViewer.setRecipe(recipeViewer.recipes().get(recipeViewer.currentRecipeIndex()));
-
-                new RecipeInventory(recipes, recipeViewer, player).open(player);
-            });
+            this.setItem(PREVIOUS_RECIPE_ITEM_SLOT, GuiItems.previous("Previous Recipe"),
+                    event -> turnPage(recipes, recipeViewer, player, -1));
+            this.setItem(NEXT_RECIPE_ITEM_SLOT, GuiItems.next("Next Recipe"),
+                    event -> turnPage(recipes, recipeViewer, player, 1));
         });
 
         List<ItemStack> ingredients = new ArrayList<>();
@@ -215,12 +177,8 @@ public final class RecipeInventory extends InventoryBuilder {
                     player.sendMessage(Text.of("<red>There is no recipe for this item. Just find it lol"));
                     return;
                 }
-                recipeViewer.setCurrentRecipeIndex(0);
-                recipeViewer.setItemStack(itemStack);
-                // The index was just reset to 0, so the multi-recipe and single-recipe branches this
-                // replaces both selected the first one.
-                recipeViewer.setRecipe(itemRecipes.getFirst());
-                new RecipeInventory(recipes, recipeViewer, player).open(player);
+                new RecipeInventory(recipes, new RecipeViewer(player.getUniqueId(), itemStack, itemRecipes), player)
+                        .open(player);
 
             } else {
                 player.sendMessage(Text.of("<red>Sneak click to show recipe for this item!"));
@@ -277,6 +235,18 @@ public final class RecipeInventory extends InventoryBuilder {
             return new ItemStack(material.getChoices().get(0));
         }
         return new ItemStack(Material.AIR);
+    }
+
+    private static void turnPage(RecipeManager recipes, RecipeViewer recipeViewer, Player player, int delta) {
+        if (recipeViewer.pages() == 1) {
+            return;
+        }
+        if (!recipeViewer.turn(delta)) {
+            player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1, 1);
+            return;
+        }
+        player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1, 1);
+        new RecipeInventory(recipes, recipeViewer, player).open(player);
     }
 
     private ItemStack choiceWithLore(RecipeChoice.MaterialChoice materialChoice, RecipeViewer recipeViewer) {
