@@ -47,21 +47,18 @@ public class BackpackManager implements Manager {
     }
 
     public void createBackpack(ForceItemPlayer fibPlayer) {
-        this.playerBackpack.put(fibPlayer.player().getUniqueId(),
-                Bukkit.createInventory(
-                        null,
-                        this.plugin.getConfig().getInt("settings.backpackRows") * 9,
-                        Text.of("<dark_gray>» <gold>Backpack <dark_gray>● <gray>Menu")));
+        this.playerBackpack.put(fibPlayer.player().getUniqueId(), this.newBackpack());
         fibPlayer.player().getInventory().setItem(8, GameItems.backpack(fibPlayer));
     }
 
     public void createTeamBackpack(Team team, ForceItemPlayer fibPlayer) {
-        this.teamBackpack.put(team,
-                Bukkit.createInventory(
-                        null,
-                        this.plugin.getConfig().getInt("settings.backpackRows") * 9,
-                        Text.of("<dark_gray>» <gold>Backpack <dark_gray>● <gray>Menu")));
+        this.teamBackpack.put(team, this.newBackpack());
         fibPlayer.player().getInventory().setItem(8, GameItems.backpack(fibPlayer));
+    }
+
+    private Inventory newBackpack() {
+        return Bukkit.createInventory(null, this.plugin.getConfig().getInt("settings.backpackRows") * 9,
+                Text.of("<dark_gray>» <gold>Backpack <dark_gray>● <gray>Menu"));
     }
 
     /**
@@ -76,9 +73,5 @@ public class BackpackManager implements Manager {
         }
         player.openInventory(backpack);
         return true;
-    }
-
-    public void openPlayerBackpack(Player player) {
-        player.openInventory(this.playerBackpack.get(player.getUniqueId()));
     }
 }
