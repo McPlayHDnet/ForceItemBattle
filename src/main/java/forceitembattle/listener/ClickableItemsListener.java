@@ -259,11 +259,8 @@ public class ClickableItemsListener implements Listener {
         PlayerOutfitter.setJokerStack(player, spent.stackAmount());
 
         Material handedOver = spent.handedOver();
-        player.getInventory().addItem(CustomMaterials.itemStackOf(handedOver));
-        if (!player.getInventory().contains(handedOver)) {
-            player.getWorld().dropItemNaturally(player.getLocation(),
-                    CustomMaterials.itemStackOf(handedOver));
-        }
+        player.getInventory().addItem(CustomMaterials.itemStackOf(handedOver)).values()
+                .forEach(leftover -> player.getWorld().dropItemNaturally(player.getLocation(), leftover));
         this.timerManager.sendActionBar();
 
         FoundItemEvent foundItemEvent = new FoundItemEvent(player);
