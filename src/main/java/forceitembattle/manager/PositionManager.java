@@ -1,6 +1,5 @@
 package forceitembattle.manager;
 
-import forceitembattle.util.ParticleUtils;
 import forceitembattle.util.Scheduler;
 import java.util.HashMap;
 import java.util.Map;
@@ -12,6 +11,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 
 public class PositionManager implements Manager {
@@ -80,8 +80,9 @@ public class PositionManager implements Manager {
         Scheduler.runTimerSync(new BukkitRunnable() {
             private static final double SPACING = 0.5;
             private static final double FLOW_STEP = 0.25;
+            private static final int MAX_POINTS = 50;
             /** Horizontal distance within which the line reveals the target's depth. */
-            private static final double DEPTH_REVEAL_DISTANCE = 50 * SPACING;
+            private static final double DEPTH_REVEAL_DISTANCE = MAX_POINTS * SPACING;
             int current = 0;
 
             @Override
@@ -91,13 +92,22 @@ public class PositionManager implements Manager {
                 }
                 Location from = player.getLocation().add(0, 1.2, 0);
                 double phase = (current * FLOW_STEP) % SPACING;
-                ParticleUtils.drawLine(player, from, this.aim(from), Particle.DUST, new Particle.DustOptions(color, 1), 1, SPACING, 50, phase);
+                this.drawLine(from, this.aim(from), new Particle.DustOptions(color, 1), phase);
             }
 
-            /**
-             * Aims level while the target is still far below, so the line does not dip into the
-             * ground long before the dig spot; it only angles down once close.
-             */
+            private void drawLine(Location from, Location to, Particle.DustOptions dust, double phase) {
+                if (from.getWorld() != to.getWorld()) return;
+                double distance = from.distance(to);
+                Vector direction = to.toVector().subtract(from.toVector()).normalize();
+                for (int i = 0; i < MAX_POINTS; i++) {
+                    double along = phase + i * SPACING;
+                    if (along >= distance) break;
+                    Vector point = from.toVector().add(direction.clone().multiply(along));
+                    player.spawnParticle(Particle.DUST, point.getX(), point.getY(), point.getZ(), 1, dust);
+                }
+            }
+
+            /** Aims level while the target is far below, so the line doesn't dip into the ground long before the dig spot. */
             private Location aim(Location from) {
                 double dx = target.getX() - from.getX();
                 double dz = target.getZ() - from.getZ();
