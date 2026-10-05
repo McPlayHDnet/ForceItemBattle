@@ -101,8 +101,7 @@ public class SeedPool {
     }
 
     /**
-     * Returns a uniformly random seed from the group's file using reservoir
-     * sampling (single pass, O(1) memory — the files can hold a million lines).
+     * Reservoir sampling: one pass and O(1) memory, since a file can hold a million lines.
      *
      * @throws IOException if the file is missing, unreadable, or empty
      */

@@ -42,14 +42,7 @@ public enum BiomeGroup {
         this.biomes = List.of(biomes);
     }
 
-    /**
-     * Reverse index of {@link #biomes}. Built once, because the lookup below runs for every player on
-     * every block they walk into, where scanning all {@code values()} meant a fresh array clone and up
-     * to two dozen list scans per step.
-     *
-     * <p>{@code putIfAbsent} keeps declaration order authoritative, so a biome claimed by two groups
-     * resolves to the same one the old first-match loop returned.
-     */
+    /** {@code putIfAbsent} keeps declaration order authoritative for biomes claimed by two groups. */
     private static final Map<Biome, BiomeGroup> GROUP_OF = buildIndex();
 
     private static Map<Biome, BiomeGroup> buildIndex() {

@@ -32,9 +32,6 @@ public final class RecipeInventory extends InventoryBuilder {
     public static final int PREVIOUS_RECIPE_ITEM_SLOT = 0;
     private static final int RESULT_SLOT = 25;
     private static final int STATION_SLOT = 23;
-    /**
-     * Slots that contain recipe items, the station and result items.
-     */
     public static final List<Integer> SLOTS = List.of(
             10, 11, 12,
             19, 20, 21,
@@ -271,16 +268,7 @@ public final class RecipeInventory extends InventoryBuilder {
         return station == null ? null : new ItemStack(station);
     }
 
-    /**
-     * The stack a recipe choice is drawn as: its first alternative.
-     *
-     * <p>Replaces {@code RecipeChoice.getItemStack()}, which Paper deprecated "for compatibility
-     * only" — it is the same behaviour, spelled out. An {@code ExactChoice} carries stacks and hands
-     * back a clone of the first; a {@code MaterialChoice} carries materials and builds one. The
-     * deprecated method also stamped {@code Short.MAX_VALUE} durability on a multi-material choice,
-     * which is legacy damage-value signalling and does nothing here — every multi-material choice
-     * this GUI draws goes through choiceWithLore instead, which cycles the alternatives.
-     */
+    /** Replaces the deprecated {@code RecipeChoice.getItemStack()}: the first alternative of the choice. */
     private static ItemStack firstStackOf(RecipeChoice choice) {
         if (choice instanceof RecipeChoice.ExactChoice exact) {
             return exact.getChoices().get(0).clone();

@@ -47,10 +47,6 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Spawns and owns every trader in the round. The wandering trader arrives on its own timer;
- * the special trader is spawned by the random-event system. Both can be alive at once.
- */
 public class WanderingTraderManager implements Manager {
 
     private static final int SPAWN_CHUNK_RADIUS = 5;
@@ -225,11 +221,7 @@ public class WanderingTraderManager implements Manager {
         }, 0L, 20L);
     }
 
-    /**
-     * Replays the direction line for players who (re-)enter the spawn area, since the one-shot line
-     * on spawn is long gone by then. Zone membership is tracked continuously, so a trader spawning
-     * while a player already stands at spawn does not ping them twice.
-     */
+    /** Zone membership is tracked continuously, so a trader spawning while a player is at spawn pings them once. */
     private void rePingTradersNearSpawn() {
         World world = Dimension.OVERWORLD.world();
         if (world == null) return;
@@ -358,12 +350,7 @@ public class WanderingTraderManager implements Manager {
         return this.traders.values();
     }
 
-    /**
-     * This player's own view of {@code trader}, with their own use counts. Returns a view rather than
-     * a {@link Merchant} because the title belongs to the builder now, not to the deprecated
-     * {@code Bukkit.createMerchant}. The merchant is virtual — one per call, never shared — so
-     * {@code checkReachable} is left alone: Paper documents it as having no effect on those.
-     */
+    /** Per-player use counts. The merchant is virtual and never shared, so {@code checkReachable} has no effect. */
     public MerchantView createMerchantViewFor(Player player, ActiveTrader trader) {
         Merchant merchant = Bukkit.createMerchant();
 

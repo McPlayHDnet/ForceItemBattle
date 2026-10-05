@@ -14,16 +14,8 @@ import java.util.function.Supplier;
 import org.bukkit.plugin.Plugin;
 
 /**
- * Catalogue domain of FIBService: publishes what the game <em>defines</em>, so consumers can turn
- * "412 collected" into "412 of 900" without keeping their own copy of the item pool or achievement
- * list. The plugin stays the single source of truth for both; the service is only a mirror.
- *
- * <p>Neither list is rebuilt here — items come straight from
- * {@code CollectionManager#getCollectionCatalogue()} and achievements from the enum. Re-deriving
- * either creates a second definition that can silently disagree with what players see in game.
- *
- * <p>Pushed on enable and fire-and-forget: a failed publish leaves the previous catalogue in place,
- * and a stale denominator is cosmetic where a missing one breaks every completion percentage.
+ * Publishes the item pool and achievement list so consumers can show "412 of 900"; the plugin stays
+ * the source of truth. Fire-and-forget: a failed publish leaves the previous catalogue in place.
  */
 public class FibCatalogueClient {
 
@@ -31,10 +23,7 @@ public class FibCatalogueClient {
     private final ApiExecutor executor;
     private final Plugin plugin;
 
-    /**
-     * Late-bound: {@code CollectionManager} is constructed from this client, so it does not
-     * exist yet when this is built. Only ever read inside {@code publishAsync}, well after boot.
-     */
+    // Cycle: CollectionManager is built from this client; read only inside publishAsync.
     private final Supplier<CollectionManager> collection;
 
     FibCatalogueClient(FibCatalogueControllerApi api, ApiExecutor executor, Plugin plugin,

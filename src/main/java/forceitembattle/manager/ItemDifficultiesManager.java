@@ -57,11 +57,7 @@ public class ItemDifficultiesManager implements Manager {
     /** Materials per pool, derived from {@link #itemRegistry} once at enable. */
     private final Map<State, List<Material>> itemsByState = new EnumMap<>(State.class);
 
-    /**
-     * The generation pool for the current tick. Cached against {@link PoolKey} because a rebuild
-     * walks all ~1,367 registered items, while {@link #getAvailableItems()} is called once per
-     * candidate material when the /items menu paints — uncached that is an O(n²) scan per GUI open.
-     */
+    /** Cached: a rebuild walks every registered item, and /items asks once per material. */
     private List<Material> availablePool;
     private Set<Material> availablePoolIndex;
     private PoolKey availablePoolKey;
@@ -144,10 +140,7 @@ public class ItemDifficultiesManager implements Manager {
                 .toList();
     }
 
-    /**
-     * The pool (state) an item belongs to, or {@code null} for a material that isn't a pool item
-     * (a custom or unregistered material). The registry is the single source of truth for this.
-     */
+    /** Null for a material that isn't a pool item. */
     @Nullable
     public State getState(Material material) {
         ItemDefinition definition = this.itemRegistry.get(material);
@@ -174,11 +167,7 @@ public class ItemDifficultiesManager implements Manager {
         return new HashSet<>(itemRegistry.keySet());
     }
 
-    /**
-     * All registered items except EXTREME-tagged ones. Source for the collection book and the
-     * collection achievement: EXTREME items are excluded because they're unrealistic to obtain,
-     * so requiring them would make "collect everything" effectively uncompletable.
-     */
+    /** EXTREME items are excluded, or "collect everything" would be effectively uncompletable. */
     public Set<Material> getCollectableItems() {
         return itemRegistry.values().stream()
                 .filter(def -> !def.hasTag(ItemTag.EXTREME))
@@ -186,10 +175,7 @@ public class ItemDifficultiesManager implements Manager {
                 .collect(Collectors.toSet());
     }
 
-    /**
-     * The items a force item can currently be drawn from. Unmodifiable and shared: this is the live
-     * pool every other reader has this tick, so a caller that needs to sort or shuffle must copy.
-     */
+    /** Unmodifiable and shared; copy before sorting or shuffling. */
     public List<Material> getAvailableItems() {
         refreshAvailablePool();
         return this.availablePool;
@@ -225,18 +211,12 @@ public class ItemDifficultiesManager implements Manager {
         this.availablePoolKey = key;
     }
 
-    /**
-     * Drops the cached pool so the next read rebuilds it. Needed when something the {@link PoolKey}
-     * cannot see changes — the unlock schedule, or the registry itself.
-     */
+    /** For changes the {@link PoolKey} cannot see: the unlock schedule or the registry itself. */
     private void invalidateAvailablePool() {
         this.availablePoolKey = null;
     }
 
-    /**
-     * Pools that became available this tick and have not been announced yet. Each returned state is
-     * marked announced, so a pool is only ever reported once per game.
-     */
+    /** Each state is reported once per game. */
     public List<State> pollNewlyUnlockedStates() {
         announcedUnlockedStates.add(State.EARLY); // baseline pool, never announced
 
@@ -266,10 +246,7 @@ public class ItemDifficultiesManager implements Manager {
                 elapsedSeconds() / 60, roundSeconds(), this.settings.getQuickieMode());
     }
 
-    /**
-     * Seconds until the next pool unlocks, or {@code -1} when none remain. Reaches 0 on the same tick
-     * {@link #pollNewlyUnlockedStates()} announces that pool.
-     */
+    /** -1 when none remain; reaches 0 on the tick {@link #pollNewlyUnlockedStates()} announces it. */
     public int secondsUntilNextPool() {
         return this.unlockSchedule.secondsUntilNext(
                 elapsedSeconds(), roundSeconds(), this.settings.getQuickieMode());
@@ -325,10 +302,7 @@ public class ItemDifficultiesManager implements Manager {
         return this.descriptionItems.get(material) != null;
     }
 
-    /**
-     * {@code &}-prefixed colour codes to the section-sign form, as the deprecated
-     * {@code ChatColor.translateAlternateColorCodes} did. Stays a legacy string: both callers want one.
-     */
+    /** What the deprecated {@code ChatColor.translateAlternateColorCodes} did. */
     private static String translateAmpersandCodes(String line) {
         return LegacyComponentSerializer.legacySection()
                 .serialize(LegacyComponentSerializer.legacyAmpersand().deserialize(line));
@@ -1931,10 +1905,7 @@ public class ItemDifficultiesManager implements Manager {
         EXTREME
     }
 
-    /**
-     * The three item pools, in unlock order. A pool's contents and the point it opens at are
-     * per-game facts and stay on {@link ItemDifficultiesManager} — keep mutable state off these.
-     */
+    /** Keep mutable per-game state off these; it belongs on {@link ItemDifficultiesManager}. */
     @Getter
     public enum State {
         EARLY("Early", "green"),

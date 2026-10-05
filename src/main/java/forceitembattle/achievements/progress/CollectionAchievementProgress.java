@@ -7,9 +7,6 @@ public class CollectionAchievementProgress<T> {
     public final Set<T> collected = new HashSet<>();
     public LastCheckedPosition lastPosition = null;
 
-    /**
-     * Tracks the last block position checked to avoid redundant biome lookups
-     */
     public record LastCheckedPosition(int x, int y, int z) {
     }
 }

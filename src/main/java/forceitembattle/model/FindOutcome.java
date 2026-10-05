@@ -1,10 +1,6 @@
 package forceitembattle.model;
 
-/**
- * What a {@link Find} is worth. Pure: no Bukkit, no plugin, no side effects. Computed once at the top
- * of the pipeline, before anything advances, because two of the four decisions read state that
- * advancing destroys.
- */
+/** Pure. Computed before anything advances, because advancing destroys state two of its decisions read. */
 public record FindOutcome(boolean announces,
                           boolean scores,
                           boolean recordsStats,

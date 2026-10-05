@@ -4,7 +4,6 @@ import forceitembattle.gui.ItemBuilder;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameItems;
 import forceitembattle.model.GameState;
-import forceitembattle.model.JokerSpend;
 import forceitembattle.model.MenuItem;
 import java.util.List;
 import java.util.OptionalInt;
@@ -23,13 +22,7 @@ import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
-/**
- * Puts a player into one of the states a round holds them in.
- *
- * <p>The adapter half of {@link RoundSetup}: every number and material it writes was decided
- * elsewhere, which is why {@link #toResultScreen} is handed its destination rather than looking
- * one up.
- */
+/** Writes only what {@link RoundSetup} decided, which is why {@link #toResultScreen} is handed its destination. */
 public final class PlayerOutfitter {
 
     private static final int JOKER_SLOT = 4;
@@ -97,10 +90,7 @@ public final class PlayerOutfitter {
         List.copyOf(player.getPassengers()).forEach(Entity::remove);
     }
 
-    /**
-     * Also reached at {@code END_GAME}, which shares the LOBBY admission. The spectate button is
-     * answered only by the {@code PRE_GAME} handler, so there it is a dead button — left so on purpose.
-     */
+    /** Also reached at END_GAME; the spectate button is dead there on purpose, answered only in PRE_GAME. */
     public static void toLobby(Player player, GameState phase) {
         player.getInventory().clear();
         player.setLevel(0);
@@ -112,10 +102,7 @@ public final class PlayerOutfitter {
         giveOpeningBar(player, MenuItem.Menu.LOBBY, phase);
     }
 
-    /**
-     * Hands the backpack back after a respawn, unless they still hold one. Slot 8 only when it is
-     * free: with keepInventory on, whatever the player keeps there is theirs.
-     */
+    /** Slot 8 only when free: with keepInventory on, whatever the player keeps there is theirs. */
     public static void restoreBackpack(Player player, ForceItemPlayer forceItemPlayer) {
         PlayerInventory inventory = player.getInventory();
         for (ItemStack stack : inventory.getContents()) {
@@ -152,12 +139,7 @@ public final class PlayerOutfitter {
         player.getInventory().setItem(menuItem.slot(), buttonStack(menuItem));
     }
 
-    /**
-     * The single writer of the joker stack; zero removes it. {@link JokerSpend} decides the number.
-     *
-     * <p>Finds the stack rather than assuming slot 4, because players move it. Slot 4 is the
-     * fallback for someone holding none, which is what a fresh round-start write is.
-     */
+    /** The single writer of the joker stack; zero removes it. Found by item rather than slot 4, because players move it. */
     public static void setJokerStack(Player player, int amount) {
         PlayerInventory inventory = player.getInventory();
         int slot = inventory.first(GameItems.jokerMaterial());

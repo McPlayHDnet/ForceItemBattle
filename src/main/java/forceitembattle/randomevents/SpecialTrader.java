@@ -21,10 +21,7 @@ public class SpecialTrader implements RandomEvent {
         return true;
     }
 
-    /**
-     * An ocean start can leave no solid ground near spawn. Since this event fires at most once
-     * per round, a failed roll is worth retrying rather than writing off.
-     */
+    /** An ocean start can leave no ground near spawn, and the event fires at most once per round, so retry. */
     private void attemptSpawn(int attempt) {
         if (this.context.traders().spawnSpecialTrader()) {
             return;

@@ -22,10 +22,7 @@ import java.util.stream.Collectors;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
-/**
- * Dev/testing command: force the assigned item to a specific material, and
- * optionally queue a whole row of upcoming items.
-**/
+/** Dev/testing: force the assigned item, optionally queueing a whole row of upcoming items. */
 
 public final class CommandForceItem extends CustomCommand implements CustomTabCompleter {
 
@@ -75,10 +72,7 @@ public final class CommandForceItem extends CustomCommand implements CustomTabCo
         ForceItemPlayer forceItemPlayer =
                 this.roster.participant(player.getUniqueId()).orElseThrow();
 
-        // The whole row in one call: first item now, second queued behind it, the rest drained in
-        // order as they are found. The queue is the assignment module's, keyed by this owner --
-        // it used to be a server-wide deque this command reached into, so a row forced here was
-        // drained by whichever player found something next.
+        // The forced row is keyed by this owner, so it is drained only by their own finds.
         this.assignment.force(forceItemPlayer.scoreOwner(), row,
                 this.settings.isSettingEnabled(GameSetting.RUN));
 

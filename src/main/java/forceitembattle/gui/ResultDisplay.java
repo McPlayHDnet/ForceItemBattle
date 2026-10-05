@@ -6,13 +6,7 @@ import forceitembattle.model.Team;
 import java.util.stream.Collectors;
 import org.bukkit.entity.Player;
 
-/**
- * How a {@link ScoreOwner} is named on the result screens.
- *
- * <p>Presentation, so it lives here rather than on {@code ScoreOwner}, which is a scoring type — a
- * team's name and colour are its social half and have no solo counterpart, and giving the interface
- * a display name is how that split starts eroding.
- */
+/** Presentation, so it lives here rather than on the scoring type {@code ScoreOwner}. */
 public final class ResultDisplay {
 
     private ResultDisplay() {
@@ -44,10 +38,7 @@ public final class ResultDisplay {
         return owner.members().isEmpty() ? "" : owner.members().get(0).player().getUniqueId().toString();
     }
 
-    /**
-     * The member who handed this item in, or null when it cannot be attributed. Whether it is
-     * <em>shown</em> is {@link #attributesCollectors(ScoreOwner)}.
-     */
+    /** Null when it cannot be attributed; whether it is shown is {@link #attributesCollectors(ScoreOwner)}. */
     public static String collectorName(ScoreOwner owner, java.util.UUID collectedBy) {
         if (collectedBy == null) {
             return null;
@@ -60,10 +51,7 @@ public final class ResultDisplay {
                 .orElse(null);
     }
 
-    /**
-     * Whether the screen names who collected each item. More than one member is the actual condition,
-     * not "is this a team" — those coincide only while teams are the sole owner with members.
-     */
+    /** More than one member is the condition, not "is a team"; they only coincide today. */
     public static boolean attributesCollectors(ScoreOwner owner) {
         return owner.members().size() > 1;
     }

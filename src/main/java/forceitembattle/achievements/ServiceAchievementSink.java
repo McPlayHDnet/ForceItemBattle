@@ -8,12 +8,6 @@ import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import org.bukkit.plugin.Plugin;
 
-/**
- * {@link AchievementSink} over FIBService.
- *
- * <p>It holds the {@code Plugin} only to log a failed load, which is why the log lives here and not
- * in {@link AchievementStorage}: keeping it on this side is what leaves the storage headless.
- */
 public class ServiceAchievementSink implements AchievementSink {
 
     private final Plugin plugin;

@@ -18,16 +18,6 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 
-/**
- * The live {@link AchievementWorld}: the six questions an achievement rule may ask, answered out of
- * the running managers.
- *
- * <p>This is the only class that knows both that achievements exist and that a plugin does.
- * Every collaborator is named. It used to hold a {@code Supplier<TimerManager>} for the seconds
- * left, which cost a cycle — the timer needs the game manager, which needs the achievement
- * manager that owns this — and bought nothing: {@link RoundClock} is what the timer was asked for,
- * it is already held here for the round duration, and it depends on nothing.
- */
 @RequiredArgsConstructor
 public final class PluginAchievementWorld implements AchievementWorld {
 

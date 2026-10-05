@@ -63,10 +63,7 @@ public final class CommandStart extends CustomCommand implements CustomTabComple
         this.start(player, args);
     }
 
-    /**
-     * Starting a round needs no player: it acts on the roster, not on whoever asked. Overridden
-     * because the base class refuses console senders, which rules out the console, RCON and tests.
-     */
+    /** Overridden because the base class refuses console senders, which would rule out the console, RCON and tests. */
     @Override
     public void onConsoleCommand(CommandSender sender, String label, String[] args) {
         this.start(sender, args);
@@ -85,9 +82,7 @@ public final class CommandStart extends CustomCommand implements CustomTabComple
 
         } else if (args.length == 2) {
             try {
-                // Clears whatever the last round used. Without this `/start speedrun` followed by
-                // `/start 90 3` plays the second round on speedrun's settings — hidden in production
-                // only because scheduleReset restarts the JVM between rounds.
+                // Clears the last round's preset; otherwise `/start 90 3` after `/start speedrun` keeps speedrun's settings.
                 this.settings.getRuleset().usePreset(null);
                 this.performCommand(null, sender, args);
 
@@ -124,9 +119,7 @@ public final class CommandStart extends CustomCommand implements CustomTabComple
 
         this.roundClock.startRound(plan.durationSeconds());
         this.gamemanager.setJokerAmount(jokersAmount);
-        // Un-equip everyone before the draw, so applyStartSetup runs for them. Order matters only in
-        // that both must happen before STARTING; the flag reset is separate from the draw because the
-        // flag belongs to the outfitting half, which stayed on Gamemanager.
+        // Un-equip everyone before the draw so applyStartSetup runs for them.
         this.gamemanager.resetStartSetup();
         this.assignment.beginRound(this.settings.isSettingEnabled(GameSetting.RUN));
 

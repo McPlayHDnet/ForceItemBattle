@@ -243,10 +243,7 @@ public final class CommandAchievement extends CustomCommand implements CustomTab
         return List.of();
     }
 
-    /**
-     * The constant the argument names, or null after telling the player it does not exist. Every
-     * subcommand that takes an achievement argument refuses the same way.
-     */
+    /** Null after telling the player the achievement does not exist. */
     @Nullable
     private Achievements parseAchievement(Player player, String argument) {
         String achievementName = argument.toUpperCase();

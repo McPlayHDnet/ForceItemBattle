@@ -21,10 +21,6 @@ public interface CustomTabCompleter extends TabCompleter {
 
     List<String> onTabComplete(Player player, String label, String[] args);
 
-    /**
-     * The names of everyone online — by far the most common completion, and previously a private
-     * copy of this one expression in three separate commands.
-     */
     static List<String> onlinePlayerNames() {
         return Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();
     }

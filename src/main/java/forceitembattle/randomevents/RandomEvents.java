@@ -6,9 +6,6 @@ import java.util.function.Function;
 import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Every random event that can fire, how likely it is, and how to build one.
- */
 @Getter
 public enum RandomEvents {
 
@@ -19,22 +16,12 @@ public enum RandomEvents {
     private final String displayName;
     private final String color;
 
-    /**
-     * Relative pick weight among the events still eligible this game. Only meaningful
-     * against the other weights — a 10 next to a 2 is picked five times as often.
-     */
+    /** Relative pick weight among the events still eligible this game. */
     private final int weight;
 
-    /**
-     * When true, this event can fire at most once per round.
-     */
     private final boolean oncePerGame;
 
-    /**
-     * Clock an event needs left on the timer to be worth starting. A timed event that would be
-     * truncated by game end is filtered out of the pick until enough time remains; instant and
-     * find-resolved events leave this at 0.
-     */
+    /** Time a timed event needs left on the clock to be picked; 0 for instant and find-resolved events. */
     private final int minSecondsToRun;
 
     private final Function<EventContext, RandomEvent> factory;
@@ -53,9 +40,6 @@ public enum RandomEvents {
         return this.color + this.displayName;
     }
 
-    /**
-     * The /randomevent argument for this event, e.g. {@code item_hunt}.
-     */
     public String id() {
         return this.name().toLowerCase();
     }

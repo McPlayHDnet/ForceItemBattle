@@ -17,10 +17,7 @@ public final class InventorySearch {
     private InventorySearch() {
     }
 
-    /**
-     * Whether the inventory holds the material anywhere, including inside shulker
-     * boxes and bundles.
-     */
+    /** Includes the contents of shulker boxes and bundles. */
     public static boolean contains(@Nullable Inventory inventory, Material targetMaterial) {
         if (inventory == null) {
             return false;
@@ -35,11 +32,7 @@ public final class InventorySearch {
         return false;
     }
 
-    /**
-     * Adds every distinct material in the inventory to {@code into}, including the
-     * contents of shulker boxes and bundles. Accumulates across calls, so several
-     * inventories (players, team backpack) can be folded into one set.
-     */
+    /** Includes shulker and bundle contents, and accumulates across calls. */
     public static void collectUniqueMaterials(@Nullable Inventory inventory, Set<Material> into) {
         if (inventory == null) {
             return;

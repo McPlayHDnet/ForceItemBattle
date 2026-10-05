@@ -9,43 +9,12 @@ import org.bukkit.block.Biome;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Turns generated chunks into a dig spot that has actually been looked at.
- *
- * <p>{@link BiomeInterior} gets the locator into the middle of the biome, which is as far as the
- * noise oracle can take it — the biome is paint over whatever the carvers hollowed out, so it is no
- * promise of open air anywhere. Only real blocks settle that, and real blocks mean generating the
- * chunks. This is the only part of the locator that costs anything.
- *
- * <p>Two things are worth finding, in this order:
- *
- * <ol>
- *   <li><b>Sulfur reaching the surface.</b> Two different things put it there and both are the
- *       answer the locator wants. One is {@code minecraft:rooted_sulfur_spring}, a
- *       {@code root_system} feature that starts under a cave ceiling and grows a radius-3 column
- *       of {@code minecraft:sulfur} up to 184 blocks to the surface before placing one of the ten
- *       {@code spring/sulfur_spring_*} templates — so it is <em>wired</em> to the cave, and the
- *       column is a shaft someone already dug. The other is the cave system itself surfacing: the
- *       overworld surface rules paint {@code sulfur} and {@code cinnabar} as the walls of a sulfur
- *       cave (on a {@code sulfur_cave_gradient} noise), so wherever a ravine or a cliff cuts the
- *       biome open, those same blocks top the column with no spring anywhere near. Digging where
- *       the sulfur is works for both, which is why they share a find — but only one of them is a
- *       spring, so nothing here says the word.
- *   <li><b>Failing that, the roomiest cave air in the biome.</b> Still a real cavity at a real
- *       depth, which is all the old rim point never was.
- * </ol>
- *
- * <p>Takes snapshots rather than chunks because snapshots are safe to read off the main thread,
- * which is where the scanning belongs — and because an interface is something a test can hand a
- * hand-built world to.
+ * The only part of the locator that generates chunks. Prefers sulfur reaching the surface (a spring
+ * or the cave cut open, digging works for both), else the roomiest cave air. Reads snapshots, safe off-thread.
  */
 public final class CaveScan {
 
-    /**
-     * What a sulfur cave puts at the surface, whether by spring or by being cut open. All four
-     * occur down in the cave as well — they are its walls and its decoration — but nothing else
-     * in the overworld raises them into the top of a column, so at the surface they are a tell.
-     * Water and magma are in the spring templates too and are left out for the obvious reason.
-     */
+    /** Nothing else in the overworld raises these to the top of a column, so at the surface they are a tell. */
     private static final Set<Material> SURFACE_SULFUR = EnumSet.of(
             Material.SULFUR,
             Material.POTENT_SULFUR,
@@ -74,13 +43,7 @@ public final class CaveScan {
     public record Target(int x, int y, int z, Find find) {
     }
 
-    /**
-     * The best dig spot in these chunks, or {@code null} if none of them turned out to hold one.
-     *
-     * <p>Ties break towards {@code centre}: the locator has already been pointing the player
-     * somewhere for as long as the chunks took to generate, and a target that jumps 60 blocks
-     * sideways at the end reads as a bug even when it is a better hole.
-     */
+    /** Ties break towards {@code centre}, since a target jumping sideways at the end reads as a bug. */
     @Nullable
     public static Target scan(List<ChunkSnapshot> snapshots, Biome biome,
                               int centreX, int centreY, int centreZ, int minHeight, int maxHeight) {

@@ -1,17 +1,9 @@
 package forceitembattle.manager;
 
-/**
- * A stateful subsystem with a lifecycle, built in {@code ForceItemBattle.onEnable()}.
- *
- * <p>Construction order and lifecycle order are two different lists — see
- * {@code ForceItemBattle.lifecycleOrder()}.
- */
+/** Construction order and lifecycle order differ; see {@code ForceItemBattle.lifecycleOrder()}. */
 public interface Manager {
 
-    /**
-     * Called after all managers have been constructed. Safe to use any sibling here — this is the
-     * first point at which that is true.
-     */
+    /** Called once every manager is constructed, the first point at which any sibling is safe to use. */
     default void enable() {
     }
 

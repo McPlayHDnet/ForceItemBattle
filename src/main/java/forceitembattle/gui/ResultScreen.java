@@ -9,16 +9,7 @@ import javax.annotation.Nullable;
 import org.bukkit.Sound;
 import org.bukkit.inventory.ItemStack;
 
-/**
- * A result screen reopened after the fact, from pages the reveal already built.
- *
- * <p>The other half of what {@code FinishInventory} did behind its {@code firstTime} boolean. This
- * one builds nothing and deals nothing out: it renders pages it is handed, and pages them.
- *
- * <p>The pages arrive as a parameter rather than being fetched here. {@code FinishInventory} read
- * them out of {@code Gamemanager} itself, which is what made the archive reachable — and writable —
- * from inside a GUI.
- */
+/** A result screen reopened after the fact; renders pages it is handed rather than reaching into Gamemanager. */
 public final class ResultScreen extends InventoryBuilder {
 
     private static final int NEXT_PAGE_SLOT = 35;

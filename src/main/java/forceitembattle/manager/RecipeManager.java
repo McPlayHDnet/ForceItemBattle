@@ -98,15 +98,8 @@ public class RecipeManager implements Manager {
     }
 
     /**
-     * Registers a recipe, replacing any earlier one under the same key.
-     *
-     * <p>{@link #initRecipes()} runs from {@code startGame()} on every round, and
-     * {@code Bukkit.addRecipe} throws {@code Duplicate recipe ignored} for a key already registered
-     * — which aborts the second round of a server session before anything else happens. Production
-     * never sees it because {@code scheduleReset} restarts the JVM between rounds.
-     *
-     * <p>Removing rather than skipping is deliberate: the tracker shapes depend on the
-     * HARDER_TRACKERS setting, which can change between rounds, so they have to be rebuilt.
+     * initRecipes() runs every round, and {@code Bukkit.addRecipe} throws on a duplicate key. Removed
+     * rather than skipped because the tracker shapes depend on HARDER_TRACKERS, which can change.
      */
     private void reRegister(NamespacedKey key, Recipe recipe) {
         Bukkit.removeRecipe(key);

@@ -11,11 +11,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * A match spec for items this plugin does <i>not</i> create — datapack loot-table
- * items such as Cavendish, Gros Michel and the legendary template. Items the plugin
- * builds itself live in {@link forceitembattle.model.CustomMaterials} instead.
- */
+/** Matches datapack loot-table items the plugin does not create; plugin-built items are CustomMaterials. */
 
 @Getter
 public class CustomItemSpec {

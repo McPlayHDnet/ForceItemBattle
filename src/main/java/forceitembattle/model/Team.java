@@ -12,13 +12,7 @@ import org.bukkit.DyeColor;
 import org.bukkit.Material;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * A team of players sharing one item, score and joker pool.
- *
- * <p>Two roles: as a {@link ScoreOwner} it is interchangeable with a solo player, and as a team it is
- * a social unit with an id, colour, name and members that the tab list, team stat rows and match
- * submission care about. Only the first role is shared.
- */
+/** As a {@link ScoreOwner} it is interchangeable with a solo player; its id, colour and name are its own. */
 @Getter
 public class Team implements ScoreOwner {
 
@@ -52,10 +46,7 @@ public class Team implements ScoreOwner {
         players.addAll(Arrays.asList(teamPlayers));
     }
 
-    /**
-     * The team's label as MiniMessage — named or auto-generated teams have to render alike side by
-     * side in the tab list. Callers that need the raw name for storage use {@link #getName()}.
-     */
+    /** Raw name for storage is {@link #getName()}. */
     public String getTeamDisplay() {
         return "<color:" + colorToHex() + ">[" + (this.name != null ? this.name : "#" + this.teamId) + "]";
     }
@@ -91,12 +82,8 @@ public class Team implements ScoreOwner {
     }
 
     /**
-     * Whether {@code player} is the member responsible for this team's once-per-team writes. Both
-     * members write the same normalised team row, so a stat that counts rather than maxes
-     * (gamesPlayed, gamesWon) would be doubled if both sides sent it. Picking the lowest UUID is
-     * arbitrary but stable, and both members agree on the answer without coordinating.
-     *
-     * <p>Not for per-player stats: a win streak is owned by each member, so both report those.
+     * Both members write the same team row, so counting stats (gamesPlayed, gamesWon) are sent by the
+     * lowest UUID only. Not for per-player stats like win streaks, which both report.
      */
     public boolean isPrimaryWriter(ForceItemPlayer player) {
         if (player == null || player.player() == null) {

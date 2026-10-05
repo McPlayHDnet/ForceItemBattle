@@ -28,22 +28,12 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
-/**
- * Drives the round clock once a second and renders it.
- *
- * <p>Everything here is presentation or plumbing. The rule — how much is left, and which seconds are
- * worth announcing — is {@link RoundClock}, which knows nothing about Bukkit.
- */
+/** Drives and renders the round clock; the rules are {@link RoundClock}'s. */
 public class TimerManager implements Manager {
 
     private static final Title.Times TIMES =
             Title.Times.times(Duration.ofMillis(1000), Duration.ofMillis(1000), Duration.ofMillis(1000));
 
-    /**
-     * The paused-state title and action bar. Constant, and {@link #sendActionBar()} runs once a
-     * second for every online player, so building and re-parsing them per player was pure waste.
-     * Titles and Components are immutable, so one instance is safe to show to everybody.
-     */
     private static final Title PAUSED_TITLE = Title.title(
             Component.empty(),
             Text.of("<red>Game is paused!"),

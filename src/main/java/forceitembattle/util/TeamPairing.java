@@ -10,10 +10,7 @@ import java.util.UUID;
 /** Decides who plays with whom, avoiding pairings that already happened last round. */
 public final class TeamPairing {
 
-    /**
-     * Unreachable at realistic player counts; it is here so a pathological forbidden set degrades
-     * into an unavoidable repeat instead of hanging /start on the main thread.
-     */
+    /** Unreachable at realistic player counts; stops a pathological forbidden set hanging /start. */
     private static final int MAX_BRANCHES = 50_000;
 
     private TeamPairing() {
@@ -26,14 +23,7 @@ public final class TeamPairing {
         return a.compareTo(b) <= 0 ? a + "|" + b : b + "|" + a;
     }
 
-    /**
-     * Shuffles {@code ids} into an order whose consecutive pairs (indices 0-1, 2-3, …) contain no
-     * pairing listed in {@code forbidden}.
-     *
-     * <p>Falls back to a plain shuffle when no such order exists: some repeat can be unavoidable, and
-     * building teams anyway beats refusing to start the game. With an odd count the last entry is
-     * left over and becomes a one-player team.
-     */
+    /** Falls back to a plain shuffle when no such order exists. With an odd count the last entry is a one-player team. */
     public static List<UUID> orderAvoidingPairs(List<UUID> ids, Set<String> forbidden, Random random) {
         List<UUID> pool = new ArrayList<>(ids);
         Collections.shuffle(pool, random);
@@ -49,10 +39,7 @@ public final class TeamPairing {
         return pool;
     }
 
-    /**
-     * Pairs off {@code remaining} into {@code ordered}, undoing its own moves on the way back out so
-     * a failed branch leaves both lists exactly as it found them.
-     */
+    /** Undoes its own moves on the way out, so a failed branch leaves both lists as it found them. */
     private static boolean search(List<UUID> remaining, Set<String> forbidden, Random random,
                                   List<UUID> ordered, int[] budget) {
         if (remaining.size() < 2) {

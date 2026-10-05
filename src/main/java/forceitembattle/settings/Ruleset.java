@@ -2,14 +2,7 @@ package forceitembattle.settings;
 
 import javax.annotation.Nullable;
 
-/**
- * The settings in force for the round being played: it owns the active {@link GamePreset} and
- * therefore the config path every read and write resolves to.
- *
- * <p>Two rules, each got wrong once: reads go through to the {@link ConfigSource} every time rather
- * than being snapshotted at {@code /start}, and {@link #pathFor} is the only place a path is built,
- * for reads and writes alike.
- */
+/** Reads go through to the {@link ConfigSource} every time, and {@link #pathFor} is the only place a path is built. */
 public final class Ruleset {
 
     private final ConfigSource config;
@@ -22,11 +15,7 @@ public final class Ruleset {
         this.config = config;
     }
 
-    /**
-     * Called by {@code /start} on <em>every</em> run, including the ones that name no preset — that
-     * is what stops a preset outliving its round, which only a server playing two rounds in one
-     * session ever notices.
-     */
+    /** Called on every /start, including ones naming no preset, so a preset can't outlive its round. */
     public void usePreset(@Nullable GamePreset preset) {
         this.preset = preset;
     }

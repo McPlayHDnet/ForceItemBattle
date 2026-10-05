@@ -8,14 +8,7 @@ import javax.annotation.Nullable;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 
-/**
- * One button on a menu hotbar. Names actions, never performs them, which is what keeps
- * {@code ItemStack} and the plugin graph out of this file.
- *
- * <p><b>Where</b> a button sits belongs to its {@link Menu}; <b>when</b> it can be clicked belongs to
- * the phase. Hanging the slot off the phase breaks at {@code END_GAME}, which shares the LOBBY
- * admission with {@code PRE_GAME} and so is handed the lobby bar during the result screen.
- */
+/** Where a button sits belongs to its {@link Menu}; when it can be clicked belongs to the phase. */
 public enum MenuItem {
 
     COLLECTION(Material.WRITTEN_BOOK, "<dark_gray>» <dark_aqua>Collection",
@@ -34,11 +27,7 @@ public enum MenuItem {
     SPECTATE_ROUND(Material.ENDER_PEARL, "<dark_gray>» <gray>Spectate game",
             Menu.LOBBY, 8, EnumSet.of(GameState.PRE_GAME)),
 
-    /**
-     * What slot 8 becomes once a player has opted out. {@linkplain #isOpeningButton Not an opening
-     * button} — it shares slot 8 with {@link #SPECTATE_ROUND} because it is that button flipped over,
-     * and a bar derived from placement alone would let declaration order pick between them.
-     */
+    /** The spectate button flipped over, so it shares slot 8 and is not an opening button. */
     PLAY_ROUND(Material.ENDER_EYE, "<dark_gray>» <gray>Play game",
             Menu.LOBBY, 8, EnumSet.of(GameState.PRE_GAME), false),
 
@@ -51,10 +40,7 @@ public enum MenuItem {
     TO_NETHER(Material.NETHERRACK, "<dark_gray>» <red>Nether",
             Menu.RESULT, 6, EnumSet.of(GameState.END_GAME)),
 
-    /**
-     * Shares {@link Material#ENDER_EYE} with {@link #PLAY_ROUND} and means something unrelated.
-     * Harmless only because the reader dispatches on {@link #markerKey()}, never on the material.
-     */
+    /** Shares ENDER_EYE with {@link #PLAY_ROUND}; harmless because the reader dispatches on {@link #markerKey()}. */
     TO_END(Material.ENDER_EYE, "<dark_gray>» <dark_purple>End",
             Menu.RESULT, 7, EnumSet.of(GameState.END_GAME)),
 
@@ -66,10 +52,7 @@ public enum MenuItem {
         RESULT
     }
 
-    /**
-     * Stamped into every button, valued with the constant's {@link #name()}. The reader consults this
-     * and nothing else: dispatching on {@link Material} let a grass block teleport the player.
-     */
+    /** The only thing the reader consults: dispatching on Material let a grass block teleport the player. */
     private static final NamespacedKey MARKER_KEY = new NamespacedKey("fib", "menu_item");
 
     private final Material material;
@@ -118,10 +101,7 @@ public enum MenuItem {
         return this.livePhases.contains(state);
     }
 
-    /**
-     * Whether this is written when the bar is first laid out, as opposed to only ever replacing
-     * another button in place. False for exactly one constant, {@link #PLAY_ROUND}.
-     */
+    /** False for exactly one constant, {@link #PLAY_ROUND}, which only ever replaces another button. */
     public boolean isOpeningButton() {
         return this.openingButton;
     }

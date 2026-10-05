@@ -9,15 +9,7 @@ import java.util.Random;
 import java.util.UUID;
 import org.bukkit.Location;
 
-/**
- * Where a scatter sends a player, and where it has sent them before.
- *
- * <p>Owns the memory and the draw; {@code PortalListener} owns the world — grounding a destination,
- * laying a floor under it, and the teleport.
- *
- * <p>Nothing clears the memory, which is safe only because {@code scheduleReset} restarts the JVM
- * between rounds.
- */
+/** Nothing clears the memory, which is safe only because {@code scheduleReset} restarts the JVM between rounds. */
 public final class ScatterDestinations {
 
     /** Half the reuse radius, squared: a portal within 25 blocks counts as the same portal. */

@@ -67,10 +67,7 @@ public class Gamemanager implements Manager {
 
     private final RoundPhase roundPhase;
 
-    /**
-     * Jokers configured for the current round. Kept here rather than in /start's local scope because
-     * a player who reconnects after the countdown ended still has to be equipped.
-     */
+    /** Kept past /start so a player reconnecting after the countdown can still be equipped. */
     @Getter
     @Setter
     private int jokerAmount;
@@ -111,13 +108,7 @@ public class Gamemanager implements Manager {
         this.matchHistory.recordStandings(this.currentSoleLeader());
     }
 
-    /**
-     * Identity of the unique highest scorer, or null when the top score is shared. Team mode keys on
-     * team id, solo on player UUID; the two never mix within a game.
-     *
-     * <p>Spectators are skipped, matching who gets written as a participant at submit time —
-     * otherwise a spectator sitting on 0 could create a phantom tie in a one-player game.
-     */
+    /** Null when the top score is shared. Spectators are skipped, or a spectator on 0 could create a phantom tie. */
     private Object currentSoleLeader() {
         Object best = null;
         int bestScore = Integer.MIN_VALUE;
@@ -151,22 +142,12 @@ public class Gamemanager implements Manager {
         return tied ? null : best;
     }
 
-    /**
-     * Marks everyone un-equipped, so the next {@link #applyStartSetup} actually runs. Called by
-     * {@code /start} before the items are drawn.
-     *
-     * <p><b>Load-bearing from round two onwards, and invisible in round one.</b> Without it the flag
-     * is still set from the previous round, {@link #applyStartSetup} no-ops for everybody, and nobody
-     * leaves creative. Production is spared only because {@code scheduleReset} restarts the JVM.
-     */
+    /** Without this, from round two on applyStartSetup no-ops for everyone and nobody leaves creative. */
     public void resetStartSetup() {
         this.roster.players().values().forEach(forceItemPlayer -> forceItemPlayer.setStartSetupApplied(false));
     }
 
-    /**
-     * Applies one player's round setup; spectators go to spectator mode instead. Idempotent, which
-     * is what lets someone who disconnected during the countdown be set up on rejoin.
-     */
+    /** Idempotent, so someone who disconnected during the countdown can be set up on rejoin. */
     public void applyStartSetup(Player player) {
         ForceItemPlayer forceItemPlayer = this.roster.participant(player.getUniqueId()).orElse(null);
 
@@ -256,11 +237,7 @@ public class Gamemanager implements Manager {
         this.scoreboardManager.updateAllPlayers();
     }
 
-    /**
-     * Splits the round's joker pool across each team's members. The share is computed for the whole
-     * team either way, so the split stays stable; an offline member gets no stack here and is handed
-     * the team's remaining pool by {@link #applyStartSetup(Player)} on rejoin.
-     */
+    /** An offline member gets no stack here; applyStartSetup hands them the team's remaining pool on rejoin. */
     private void distributeTeamJokers(int jokersAmount) {
         this.teamManager.getTeams().forEach(team -> {
             team.setJokers(jokersAmount);
@@ -283,10 +260,7 @@ public class Gamemanager implements Manager {
         block.getRelative(BlockFace.UP).setType(Material.AIR);
     }
 
-    /**
-     * The reveal order, worst-placed first. Deliberately not a reuse of the stats standings: that one
-     * keeps spectators, leaves ties in map order, and is not computed at all when STATS is off.
-     */
+    /** Not the stats standings: those keep spectators, leave ties unordered, and are skipped when STATS is off. */
     private List<ResultCeremony.Reveal> revealOrder() {
         if (this.settings.isSettingEnabled(GameSetting.TEAM)) {
             return ResultCeremony.orderFrom(
@@ -397,10 +371,7 @@ public class Gamemanager implements Manager {
         }
     }
 
-    /**
-     * Blocks travelled this round, summed over every distance statistic Bukkit tracks (all in cm).
-     * A player who has left is read from their saved statistics, which the server writes on quit.
-     */
+    /** In blocks, from every distance statistic (cm). A player who left is read from the stats saved on quit. */
     private int calculateDistance(Player player) {
         OfflinePlayer source = player.isOnline() ? player : Bukkit.getOfflinePlayer(player.getUniqueId());
         int distance = Arrays.stream(Statistic.values())
@@ -411,10 +382,7 @@ public class Gamemanager implements Manager {
         return (int) Math.round((double) distance / 100);
     }
 
-    /**
-     * Called by /pause instead of setting the state directly, so the interval bookkeeping that
-     * {@link #resumeGame()} subtracts from item times cannot be bypassed.
-     */
+    /** Use this rather than setting the state, so the pause interval subtracted from item times is recorded. */
     public void pauseGame() {
         this.matchHistory.onPaused();
         this.roundPhase.moveTo(GameState.PAUSED_GAME);
@@ -423,10 +391,6 @@ public class Gamemanager implements Manager {
         Bukkit.getServerTickManager().setFrozen(true);
     }
 
-    /**
-     * Re-checks the collection achievement for every participant once the match is persisted, so it
-     * sees a found-set that includes the round just played rather than trailing it by a game.
-     */
     private void evaluateCollectionAchievements() {
         for (ForceItemPlayer participant : this.roster.players().values()) {
             if (participant.isSpectator()) {
@@ -439,11 +403,7 @@ public class Gamemanager implements Manager {
         }
     }
 
-    /**
-     * Drops every mob's aggro at the moment of pause. The entity-target listener stops mobs locking
-     * on <em>during</em> the pause, but one already chasing a player keeps its target and lands its
-     * hit the instant the game resumes. Both halves are needed.
-     */
+    /** A mob already chasing a player keeps its target through the pause; the target listener only stops new ones. */
     private void clearMobTargets() {
         Bukkit.getWorlds().forEach(world ->
                 world.getEntitiesByClass(Mob.class).forEach(mob -> {
@@ -453,10 +413,7 @@ public class Gamemanager implements Manager {
                 }));
     }
 
-    /**
-     * Closes the open pause interval. The closed [start, end] is kept so an item whose find-window
-     * straddled the pause has that span removed from its seconds_taken at submit time.
-     */
+    /** The closed interval is subtracted from the seconds_taken of any item whose find straddled the pause. */
     public void resumeGame() {
         this.matchHistory.onResumed();
         Bukkit.getServerTickManager().setFrozen(false);

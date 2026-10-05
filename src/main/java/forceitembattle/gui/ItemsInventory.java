@@ -50,10 +50,6 @@ public final class ItemsInventory extends InventoryBuilder {
             return this.test.test(items, material);
         }
 
-        /**
-         * Whether entries carry the "registered" glow and their description lore. Excluded items are
-         * by definition in neither, so they are drawn bare.
-         */
         boolean detailed() {
             return this != EXCLUDED;
         }

@@ -6,38 +6,10 @@ import java.util.List;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Finds the genuinely nearest structure by asking one region at a time and comparing real
- * distances, instead of trusting the order the server searches in.
- *
- * <p><b>The bug this exists for is <a href="https://bugs.mojang.com/browse/MC-138887">MC-138887</a>,
- * and it is still in 26.2.</b> {@code ChunkGenerator#getNearestGeneratedStructure} walks outward in
- * square rings of regions:
- *
- * <pre>{@code
- * for dx in -radius..radius:
- *     edge = (dx == -radius || dx == radius)
- *     for dz in -radius..radius step (edge ? 1 : 2*radius):
- *         hit = getStructureGeneratingAt(originChunk + spacing*dx, ...)
- *         if (hit != null) return hit          // first in iteration order, not the nearest
- * }</pre>
- *
- * <p>Two things go wrong there and both are early returns. The inner loop hands back whichever
- * cell of the ring it happens to visit first, and the outer search hands back the first ring that
- * produces anything at all — so a structure at the near corner of ring 1 loses to one at the far
- * corner of ring 0. Trial chambers and trail ruins both have {@code spacing: 34}, which makes one
- * grid step 544 blocks, and that is the size of the error: a chamber 300 blocks away routinely
- * loses to one at 700.
- *
- * <p>The fix falls out of the same loops. At {@code radius = 0} they run exactly once and probe
- * precisely the one region containing the origin chunk, which turns Bukkit's
- * {@code locateNearestStructure} into the "what is in <em>this</em> region" primitive the API
- * otherwise never offers. Sample a grid of origin chunks, probe each one, and keep the minimum by
- * <em>actual</em> distance. The ordering that was wrong is then ours, and it is right.
- *
- * <p>Samples are ordered nearest-first, which is what makes stopping early safe: probing is
- * budgeted across ticks, so a search cut short still holds the best answer from the closest ground.
- * Headless on purpose — the ordering and the picking are the parts worth testing, and neither
- * needs a server.
+ * Works around MC-138887, still in 26.2: the server's structure search returns the first hit in ring
+ * order, not the nearest, off by up to one grid step (544 blocks for spacing 34). Probing one region
+ * at a time with {@code radius = 0} and comparing real distances fixes the ordering. Samples run
+ * nearest-first, so a sweep cut short still holds the best answer from the closest ground.
  */
 public final class NearestOnGrid {
 
@@ -66,22 +38,15 @@ public final class NearestOnGrid {
     private long bestDistance = Long.MAX_VALUE;
 
     /**
-     * @param radiusBlocks   how far out to sweep before giving up
-     * @param spacingChunks  the structure set's {@code spacing}. Both the grid's pitch and the
-     *                       sweep's stopping rule come from it, so they cannot disagree. Sampling
-     *                       one chunk per spacing is exactly enough — {@code floorDiv(c + k*S, S)}
-     *                       is {@code floorDiv(c, S) + k}, so consecutive samples land in
-     *                       consecutive regions, every region gets one and none gets two. A value
-     *                       under the real spacing still works and merely costs repeat probes; a
-     *                       value over it steps across whole regions and never sees them.
+     * @param radiusBlocks  how far out to sweep before giving up
+     * @param spacingChunks the structure set's {@code spacing}; under the real value only repeats probes,
+     *                      over it skips whole regions
      */
     public NearestOnGrid(int originX, int originZ, int radiusBlocks, int spacingChunks) {
         this.originX = originX;
         this.originZ = originZ;
         this.samples = grid(originX, originZ, radiusBlocks, spacingChunks);
-        // How far a structure can sit from the sample that found it: the diagonal of its region,
-        // plus a chunk because the sample is measured from a chunk centre. Erring high only costs
-        // probes, so this rounds up.
+        // A structure's distance from its sample: the region diagonal plus a chunk. Erring high only costs probes.
         this.slack = spacingChunks * 16.0 * Math.sqrt(2.0) + 16.0;
     }
 
@@ -107,11 +72,7 @@ public final class NearestOnGrid {
         return samples;
     }
 
-    /**
-     * Probes at most {@code budget} more samples.
-     *
-     * @return whether the sweep is finished
-     */
+    /** @return whether the sweep is finished */
     public boolean advance(int budget, Probe probe) {
         int limit = Math.min(this.next + budget, this.samples.size());
 
@@ -138,15 +99,7 @@ public final class NearestOnGrid {
         return this.done();
     }
 
-    /**
-     * Whether nothing left to probe could beat what we already have, so the sweep can stop here.
-     *
-     * <p>Samples run nearest-first, so from this one outwards every region's sample is at least
-     * this far away, and the structure inside such a region is at least {@link #slack} nearer than
-     * its sample at worst. Once the best find beats that, the rest of the grid cannot hold
-     * anything closer and probing it is pure cost. This is what keeps a chamber 100 blocks away
-     * from paying for a sweep out to 2500.
-     */
+    /** Nearest-first samples plus {@link #slack} bound what's left, so a near find stops the sweep early. */
     private boolean settled(Sample sample) {
         if (this.best == null) {
             return false;

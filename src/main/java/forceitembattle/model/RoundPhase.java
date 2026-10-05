@@ -1,16 +1,6 @@
 package forceitembattle.model;
 
-/**
- * Where the round is, and nothing else.
- *
- * <p>Its own module because "is the round running?" is the most-asked question in the codebase, and
- * answering it from {@code Gamemanager} made almost every listener depend on the class that starts
- * and finishes rounds. Like {@link Roster}, this depends on nothing — no Bukkit, no plugin, no
- * managers — and that is load-bearing: a dependency added here reintroduces a cycle for every module
- * that asks what phase the round is in, which is most of them.
- *
- * <p>The phase predicates live on {@link GameState} itself; this holds the current one.
- */
+/** Depends on nothing, deliberately: almost every module asks for the phase, so a dependency here creates cycles. */
 public final class RoundPhase {
 
     private GameState state = GameState.PRE_GAME;
@@ -19,11 +9,7 @@ public final class RoundPhase {
         return this.state;
     }
 
-    /**
-     * Deliberately not {@code setState}: the transitions are not interchangeable writes. Moving to
-     * STARTING freezes the roster, a pause has bookkeeping on either side, and finishing is what the
-     * stats pipeline hangs off. Those effects belong to {@code Gamemanager}; this is only the flip.
-     */
+    /** Not a setter: STARTING freezes the roster and finishing drives stats, effects that belong to Gamemanager. */
     public void moveTo(GameState state) {
         this.state = state;
     }

@@ -49,13 +49,7 @@ public class CollectionManager implements Manager {
         return this.displayNames.computeIfAbsent(material, CustomMaterials::nameOf);
     }
 
-    /**
-     * Every collectable item's namespaced key — the target set the collection achievements are
-     * measured against, and the "everything" axis of the book.
-     *
-     * <p>Built lazily rather than in {@link #enable()} on purpose: it reads the item registry, so
-     * computing it on first use avoids depending on manager registration order.
-     */
+    /** Built lazily: it reads the item registry, so building it in enable() would depend on manager order. */
     public Set<String> getCollectionCatalogue() {
         if (this.collectionCatalogue == null) {
             this.collectionCatalogue = this.itemDifficultiesManager.getCollectableItems().stream()
@@ -65,10 +59,6 @@ public class CollectionManager implements Manager {
         return this.collectionCatalogue;
     }
 
-    /**
-     * The same catalogue, bucketed for display and sorted within each category. Built once and
-     * shared by the book and every category page, so nothing re-buckets per open.
-     */
     public Map<CollectionCategory, List<Material>> getCollectionBuckets() {
         if (this.collectionBuckets == null) {
             Map<CollectionCategory, List<Material>> buckets = new EnumMap<>(CollectionCategory.class);

@@ -61,11 +61,7 @@ public final class GuiItems {
         return pageHead(BACK, "<dark_red>« <red>Back", null);
     }
 
-    /**
-     * Page arrows as player heads, greyed when the move isn't available. Mind the texture
-     * constants: PREVIOUS_DISABLED and NEXT_ACTIVE are easy to mix up, and swapping them greys
-     * an arrow that still works.
-     */
+    // PREVIOUS_DISABLED and NEXT_ACTIVE are easy to mix up; swapping them greys an arrow that still works.
     public static ItemStack pageBack(boolean enabled) {
         return pageHead(enabled ? PREVIOUS_ACTIVE : PREVIOUS_DISABLED,
                 enabled ? "<dark_red>« <red>Previous page" : "<dark_gray>« <gray>Previous page",

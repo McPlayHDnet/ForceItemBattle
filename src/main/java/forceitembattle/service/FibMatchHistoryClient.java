@@ -15,12 +15,7 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-/**
- * Match-history domain of FIBService: submits one finished game (participants, teams, item
- * activity and the settings snapshot) as a single idempotent PUT keyed on matchId. Wraps
- * {@link FibMatchControllerApi} and shares transport/async plumbing via the {@link ApiExecutor}
- * handed in by the owning {@link FIBServiceClient}.
- */
+/** Submits one finished game as a single idempotent PUT keyed on matchId. */
 public class FibMatchHistoryClient implements MatchSink {
 
     private final FibMatchControllerApi api;
@@ -52,10 +47,8 @@ public class FibMatchHistoryClient implements MatchSink {
             api.submitMatch(matchId, request);
             return null;
         }, result -> {
-            // Invalidated after the write, not before: until the PUT lands the cached found-set still
-            // matches the DB, so clearing early only opens a window for an in-flight read to re-cache
-            // pre-match data with no invalidation left to follow it. Runs before onSuccess so the
-            // collection-achievement evaluation hanging off that callback reads through to fresh data.
+            // After the write, or an in-flight read could re-cache pre-match data; before onSuccess, so the
+            // collection achievement hanging off it reads fresh data.
             invalidateParticipants(request);
             onSuccess.run();
         }, onError);

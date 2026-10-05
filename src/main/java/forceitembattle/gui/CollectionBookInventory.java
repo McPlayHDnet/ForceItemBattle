@@ -12,13 +12,7 @@ import java.util.UUID;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 
-/**
- * Landing page of the collection book: one head per {@link CollectionCategory}, each showing how
- * much of that category the player has collected. Clicking a category opens its item grid.
- *
- * The collection is loaded once here (cached) and re-used for every category count; the category
- * page is a cache hit off the same load, so the whole book costs one read.
- */
+/** The collection is loaded once here; each category page is a cache hit off the same load. */
 public final class CollectionBookInventory extends InventoryBuilder {
 
     // Usable slots (rows 2-5), avoiding the top border row and the bottom control row.

@@ -20,13 +20,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
-/**
- * The chat and the clock around a {@link SkipVote}.
- *
- * <p>The tally, the quorum and the tie-break are the vote's; this broadcasts, runs the sixty-second
- * task, and applies what the vote decided — the joker charge and the skip. Splitting them is what
- * made the rules testable, and closed the spectator hole in the quorum on the way.
- */
+/** Broadcasts, runs the sixty-second task and applies the outcome; the rules are {@link SkipVote}'s. */
 public class VoteSkipManager implements Manager {
 
     private static final int VOTE_DURATION_SECONDS = 60;
@@ -66,9 +60,7 @@ public class VoteSkipManager implements Manager {
     public void startVoting(Player initiator) {
         ForceItemPlayer starter = this.roster.get(initiator.getUniqueId());
         if (starter == null) {
-            // Not in the round, so there is no item of theirs to vote on. /voteskip already
-            // refuses this; the guard is here because the vote state is set below and a throw
-            // half-way would leave the vote stuck open for the rest of the round.
+            // /voteskip already refuses this, but a throw after the vote state is set would leave the vote stuck open.
             return;
         }
 
@@ -111,10 +103,7 @@ public class VoteSkipManager implements Manager {
         }
     }
 
-    /**
-     * Who the vote belongs to: everyone playing when it opened. Spectators are excluded — they used
-     * to both inflate the quorum and be able to fill it.
-     */
+    /** Everyone playing when the vote opened; spectators must neither inflate nor fill the quorum. */
     private Set<UUID> participants() {
         return this.roster.players().entrySet().stream()
                 .filter(entry -> Roster.isPlaying(entry.getValue()))
@@ -177,9 +166,7 @@ public class VoteSkipManager implements Manager {
             player.sendMessage(" ");
         });
 
-        // The vote costs the initiator a joker whether or not it carried — and the button has to
-        // agree. It used to charge the pool and leave the stack alone, so the initiator's hotbar read
-        // one too high until /fixskips ran on their next respawn and quietly repaired it.
+        // The vote costs the initiator a joker whether or not it carried, and the hotbar stack has to agree.
         Player initiatorPlayer = this.initiator.player();
         PlayerOutfitter.setJokerStack(initiatorPlayer,
                 JokerSpend.charge(this.initiator, PlayerOutfitter.jokerStackIn(initiatorPlayer)));

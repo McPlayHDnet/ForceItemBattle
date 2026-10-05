@@ -1,28 +1,13 @@
 package forceitembattle.model;
 
 import forceitembattle.gui.ItemBuilder;
-import forceitembattle.manager.Gamemanager;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
-/**
- * The two items the game hands out — the joker stack and the backpack — and the questions asked
- * about them afterwards.
- *
- * <p>Builder and recogniser belong together, and the pairing is load-bearing rather than tidy: on
- * death {@code PlayerLifecycleListener} filters the drops with {@code removeIf(GameItems::isJoker)}
- * and {@code removeIf(GameItems::isBackpack)}, so a recogniser that stops matching what the builder
- * produces means players drop — and permanently lose — their jokers and backpack when they die.
- * {@code GameItemsTest} is the pin for exactly that.
- *
- * <p>These lived on {@code Gamemanager} as statics, which is why eight modules that have no interest
- * in the round loop — three listeners, {@code BackpackManager}, {@code PlayerOutfitter},
- * {@code InventorySearch} and two more — imported the round orchestrator to ask "is this a joker".
- * Nothing here knows what a round is.
- */
+/** Builder and recogniser stay together: death drops filter on the recognisers, so a mismatch loses jokers and backpacks. */
 public final class GameItems {
 
     public static final NamespacedKey BACKPACK_KEY = new NamespacedKey("fib", "backpack");

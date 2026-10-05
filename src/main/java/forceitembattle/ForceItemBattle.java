@@ -124,10 +124,7 @@ public final class ForceItemBattle extends JavaPlugin {
 
     /** The lifecycle order, resolved once at boot so disable() reverses exactly what enable() ran. */
     private List<Manager> lifecycle = List.of();
-    /**
-     * Who is in the round. Constructed before every manager and depending on none of them, which is
-     * what keeps the manager graph acyclic. The three fields below are here for the same reason.
-     */
+    /** Built before every manager and depending on none, which keeps the manager graph acyclic. */
     @Getter
     private final Roster roster = new Roster();
 
@@ -203,11 +200,7 @@ public final class ForceItemBattle extends JavaPlugin {
         return manager;
     }
 
-    /**
-     * The order managers are enabled in, and — reversed — disabled in. Load-bearing:
-     * {@code TimerManager} starting its task earlier or saving its config later are live behaviour
-     * changes no test would catch, so this is edited deliberately rather than following construction.
-     */
+    /** Enable order, reversed for disable. Edited deliberately: TimerManager's position changes live behaviour. */
     private List<Manager> lifecycleOrder() {
         return List.of(
                 this.gamemanager,
@@ -235,10 +228,6 @@ public final class ForceItemBattle extends JavaPlugin {
                 this.resultStage);
     }
 
-    /**
-     * A manager registered but left out of {@link #lifecycleOrder()} would never be enabled and
-     * nothing else would say so, hence the boot failure.
-     */
     private void verifyLifecycleCoversEveryManager(List<Manager> order) {
         if (order.size() != this.managers.size() || !order.containsAll(this.managers)) {
             List<Manager> missing = new ArrayList<>(this.managers);
@@ -255,11 +244,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.seedPool = new SeedPool(this);
         this.seedPool.load();
 
-        // Dependency order. Every manager takes what it needs by name, so this is a topological
-        // sort of the graph rather than a free choice — the two exceptions are the Suppliers
-        // below, which are the only genuine cycles left. TeamsManager used to be a third: it took
-        // a Supplier<ScoreboardManager> for a cycle that does not exist, since the scoreboard is
-        // built just above it and does not depend on it. Check for that before adding one.
+        // Dependency order: a topological sort, not a free choice. The Suppliers below are the only genuine cycles.
         this.itemDifficultiesManager = register(new ItemDifficultiesManager(this, this.roundClock, this.settings));
         this.customItemManager = register(new CustomItemManager(this));
         this.antimatterPortalManager = register(new AntimatterPortalManager(this));
@@ -272,9 +257,7 @@ public final class ForceItemBattle extends JavaPlugin {
         // early and five of its callers stop needing the round orchestrator entirely.
         this.forceItemAssignment = new ForceItemAssignment(this.roster, this.itemDifficultiesManager);
 
-        // The service client builds the match-history and catalogue clients, which read the
-        // collection and achievement managers — both built out of this one. Late-bound, and only
-        // ever dereferenced long after boot.
+        // Cycle: the match-history and catalogue clients read managers that are built out of this one.
         this.fibService = register(new FIBServiceClient(this, this.globalStatsCache,
                 () -> this.achievementManager, () -> this.collectionManager));
         this.collectionManager = register(
@@ -385,10 +368,7 @@ public final class ForceItemBattle extends JavaPlugin {
         }
     }
 
-    /**
-     * Delegates to {@link WorldReset}; kept here because every command reaches its collaborators
-     * through {@code this.plugin}. Drop it once {@code CommandReset} takes a {@code WorldReset}.
-     */
+    /** Delegates to {@link WorldReset}; drop once {@code CommandReset} takes a {@code WorldReset}. */
     public void scheduleReset(Long seed) {
         this.worldReset.scheduleReset(seed);
     }

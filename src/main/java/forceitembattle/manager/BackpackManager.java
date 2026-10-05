@@ -30,9 +30,7 @@ public class BackpackManager implements Manager {
     public Inventory getBackpackForPlayer(Player player) {
         ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());
 
-        // Whether this player has a team, not whether the round was configured for them: with the
-        // setting on and no team -- a spectator who joined during the countdown -- checking the
-        // setting dereferences a null team. No roster entry at all is the same answer.
+        // Whether this player has a team, not the setting: a spectator who joined during the countdown has none.
         if (forceItemPlayer != null && forceItemPlayer.isInTeam()) {
             return getTeamBackpack(forceItemPlayer.currentTeam());
         }
@@ -67,17 +65,9 @@ public class BackpackManager implements Manager {
     }
 
     /**
-     * Opens whichever backpack is this player's — the team's when they are in one, their own
-     * otherwise — resolved by the single rule in {@link #getBackpackForPlayer(Player)}.
+     * Every caller that opens a backpack goes through here, so solo and team resolve the same way.
      *
-     * <p>Every caller that opens a backpack goes through here. {@code /bp} used to call
-     * {@link #openPlayerBackpack(Player)} unconditionally, so in a team game it looked up the solo
-     * map, found nothing, and handed {@code null} to {@code openInventory} — the command failed with
-     * "An internal error occurred" for the whole round while the slot-8 item, which did branch,
-     * worked fine.
-     *
-     * @return false when there is no backpack to open, which is the case when BACKPACK was switched
-     *         on after the round had already started and none was ever created
+     * @return false when BACKPACK was switched on mid-round and none was ever created
      */
     public boolean openBackpackFor(Player player) {
         Inventory backpack = getBackpackForPlayer(player);

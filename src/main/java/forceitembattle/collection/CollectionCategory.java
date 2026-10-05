@@ -6,11 +6,7 @@ import java.util.function.Predicate;
 import lombok.Getter;
 import org.bukkit.Material;
 
-/**
- * Buckets for the collection book. Reuses {@link MaterialCategory} for the achievement-shared
- * predicates (tools/armor/wood/stone/food) and adds book-only predicates for the rest.
- * {@link #OTHER} is the fallback and MUST stay last.
- */
+/** {@link #OTHER} is the fallback and must stay last. */
 public enum CollectionCategory {
 
     TOOLS("Tools", "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvODM2MjQzOGZmNGVjZjhmNGEyY2FhMTI3NzU2MWM5NTEzYzlhOTg2ZGJlMzhhODBiOWJhZmNiZmVkOGIyYTljOCJ9fX0=", CollectionCategory::isToolItem),

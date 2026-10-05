@@ -51,12 +51,7 @@ import org.joml.AxisAngle4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
-/**
- * The end-of-round reveal, built in the sky near spawn: each owner's items pop up in a spotlight and
- * then settle into a grid floating in open air, an audience seated facing it, and a podium once the winner is out.
- *
- * <p>Every entity is non-persistent, so a crash or restart leaves nothing behind to sweep up.
- */
+/** The end-of-round reveal in the sky near spawn. Every entity is non-persistent, so a restart leaves nothing behind. */
 public final class ResultStage implements Manager {
 
     private static final int POP_TICKS = 3;
@@ -175,10 +170,7 @@ public final class ResultStage implements Manager {
     }
 
     /**
-     * Deals one owner's items into the grid.
-     *
-     * @param onDealt    runs the moment the last item lands, before the name goes out, so the
-     *                   {@code [Inventory]} link in the announcement never opens an empty archive
+     * @param onDealt    runs when the last item lands, before the announcement, so its [Inventory] link is never empty
      * @param onComplete runs once the name, title and chat line are out
      */
     public void reveal(ResultCeremony.Reveal reveal, Runnable onDealt, Runnable onComplete) {
@@ -219,9 +211,6 @@ public final class ResultStage implements Manager {
     }
 
     /**
-     * The winner's moment: the podium rises, the top three take their steps, the seats let go, and
-     * every result can be browsed.
-     *
      * @param standings    every owner, best first
      * @param secondsTaken the play time of each of an owner's finds, in order
      */
@@ -241,12 +230,7 @@ public final class ResultStage implements Manager {
         return !this.browsable.isEmpty();
     }
 
-    /**
-     * A click from anywhere in view: if the player is looking at a browse button, the grid switches
-     * for everyone.
-     *
-     * @return whether the click was spent on a button
-     */
+    /** @return whether the click was spent on a browse button */
     public boolean click(Player player) {
         if (!this.isBrowsing() || !player.getWorld().equals(this.world())) {
             return false;
@@ -610,11 +594,7 @@ public final class ResultStage implements Manager {
         return new Transformation(new Vector3f(), new AxisAngle4f(), new Vector3f(scale, scale, scale), new AxisAngle4f());
     }
 
-    /**
-     * The item renderer turns every item display half a turn on its own, so under a billboard the
-     * viewer saw the back of each item. Every item transformation carries this, or an animation
-     * between two of them would visibly turn the item round.
-     */
+    /** Item displays render half-turned, so every item transformation includes this or animations visibly spin. */
     private static Transformation facingViewer(float scale) {
         return new Transformation(new Vector3f(), new Quaternionf().rotateY((float) Math.PI),
                 new Vector3f(scale, scale, scale), new Quaternionf());

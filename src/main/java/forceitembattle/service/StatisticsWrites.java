@@ -13,13 +13,7 @@ import java.util.Map;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
-/**
- * Which row a statistics number belongs on.
- *
- * <p>A stat that <b>counts</b> rather than maxes would be doubled if both teammates sent it, so on a
- * team only the primary writer sends one; a stat that maxes is safe from either side. Leaving that
- * to the call sites is how {@code gamesPlayed} came to be counted twice.
- */
+/** Counting stats are sent by a team's primary writer only, or both teammates would double them. */
 public final class StatisticsWrites {
 
     private final StatisticsSink sink;
@@ -115,11 +109,7 @@ public final class StatisticsWrites {
         }
     }
 
-    /**
-     * One method rather than three, because the three numbers have three scopes: travel is the
-     * player's own, the score and the win belong to whoever owns the score, and the win/loss outcome
-     * is player-scoped and reported by <em>everyone</em> — a loss is what resets a streak.
-     */
+    /** Travel is the player's, score and win the owner's, and the outcome is reported by everyone since a loss resets a streak. */
     public void recordRoundFinished(ForceItemPlayer player, String playerName,
                                     int score, long blocksTravelled, boolean won) {
         UUID self = player.player().getUniqueId();

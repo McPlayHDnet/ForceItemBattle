@@ -25,9 +25,7 @@ public final class CommandSpectate extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        // The phase, not the clock. "After the game end" is a phase question, and the counter
-        // answered it by accident: it is loaded from config before a round has ever been played and
-        // frozen above zero during a pause, so it agreed only because nothing else set it to zero.
+        // The phase, not the clock: the counter is loaded from config and frozen during a pause.
         if (!this.roundPhase.isEndGame()) {
             player.sendMessage(Text.of("<red>This command can only be used after the game end."));
             return;

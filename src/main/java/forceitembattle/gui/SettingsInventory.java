@@ -184,21 +184,14 @@ public final class SettingsInventory extends InventoryBuilder {
         }
     }
 
-    /**
-     * Steps the quickie mode one place, backwards on a right click. Unlike every other setting this
-     * one cycles rather than toggles, and both the name row and the status row below it do it, so
-     * both call this.
-     */
+    /** Cycles rather than toggles, backwards on a right click. */
     private void cycleQuickie(InventoryClickEvent inventoryClickEvent) {
         QuickieMode current = settings.getQuickieMode();
         settings.setQuickieMode(inventoryClickEvent.isRightClick() ? current.previous() : current.next());
         this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
     }
 
-    /**
-     * Flips a boolean setting, on the preset being edited when there is one and on the live settings
-     * otherwise. Both the name row and the status row below it toggle, so both call this.
-     */
+    /** On the preset being edited when there is one, otherwise on the live settings. */
     private void toggleSetting(GamePreset gamePreset, GameSetting gameSetting) {
         if (gamePreset != null) {
             if (gamePreset.getGameSettings().contains(gameSetting)) {

@@ -104,10 +104,6 @@ public class InventoryBuilder implements InventoryHolder {
         this.updateHandlers.add(updateHandler);
     }
 
-    /**
-     * Update method called when inventory is opened or an item is clicked.
-     * Can be called externally to force an update.
-     */
     public void update() {
         this.updateHandlers.forEach(Runnable::run);
     }

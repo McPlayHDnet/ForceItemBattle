@@ -9,13 +9,8 @@ import org.bukkit.Material;
 import org.bukkit.event.Event;
 
 /**
- * "Get the same item N times in a single round" — unlocks when any single item
- * type has been assigned targetAmount times this round (not necessarily in a row).
- *
- * <p>Every assignment counts — found, skipped, or back-to-back — since each means
- * you had that item as your target. Team-eligible (OBTAIN_ITEM trigger), so the
- * tally is the shared team tracker: the team shares one assigned item, so this
- * counts the team's assignment sequence and is granted to both.
+ * Unlocks when any item has been assigned N times this round, consecutively or not. Every assignment
+ * counts, found or skipped; in a team the shared tracker counts the team's sequence.
  */
 public class RepeatItemAchievementHandler implements AchievementHandler<ItemFrequencyAchievementProgress> {
 

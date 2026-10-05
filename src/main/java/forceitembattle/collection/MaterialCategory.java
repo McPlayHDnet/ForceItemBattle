@@ -7,12 +7,7 @@ import org.bukkit.Material;
 /** Categorises materials by type, independently of the ItemDifficultiesManager's state system. */
 public class MaterialCategory {
 
-    /**
-     * Wood types, <b>longest first</b> — load-bearing. {@link #getWoodCategory} returns the first one
-     * the material's name contains, and {@code DARK_OAK_LOG} contains both {@code DARK_OAK} and
-     * {@code OAK}. A {@code Set} here randomises per JVM, so {@code DARK_OAK} stops being produced
-     * at all on some runs and the wood-collection achievement becomes uncompletable.
-     */
+    /** Longest first, load-bearing: DARK_OAK_LOG contains both DARK_OAK and OAK, and the first match wins. */
     private static final List<String> WOOD_TYPES = List.of(
             "DARK_OAK", "PALE_OAK", "MANGROVE",
             "CRIMSON",
@@ -21,10 +16,7 @@ public class MaterialCategory {
             "OAK"
     );
 
-    /**
-     * A specific wood type, not a generic "wooden" one: WOODEN_SWORD and friends are excluded
-     * because they don't say which wood they are made of.
-     */
+    /** WOODEN_SWORD and friends are excluded because they don't say which wood they are made of. */
     public static boolean isWoodType(Material material) {
         return isWoodType(material.name());
     }
@@ -128,10 +120,8 @@ public class MaterialCategory {
     }
 
     /**
-     * Edible materials by name, mirroring {@code Material.isEdible()} without needing the item
-     * registry. The fish buckets are deliberately absent: they carry {@code minecraft:food} but not
-     * {@code minecraft:consumable}, so they are not edible. Kept in sync by
-     * {@code MaterialCategoryTest.theFoodSetStillAgreesWithTheRegistry}.
+     * Mirrors {@code Material.isEdible()} without the registry. Fish buckets are absent on purpose (food but
+     * not consumable); kept in sync by {@code MaterialCategoryTest}.
      */
     private static final Set<String> EDIBLE = Set.of(
             "APPLE", "BAKED_POTATO", "BEEF", "BEETROOT",

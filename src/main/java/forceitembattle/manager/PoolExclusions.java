@@ -4,13 +4,8 @@ import forceitembattle.manager.ItemDifficultiesManager.ItemDefinition;
 import forceitembattle.manager.ItemDifficultiesManager.ItemTag;
 
 /**
- * Which registered items the current settings keep out of the generation pool.
- *
- * <p><b>HARD subsumes EXTREME.</b> Turning HARD off removes the nether items and the extreme ones
- * together, so the EXTREME setting only has anything left to decide while HARD is on.
- *
- * <p>The website mirrors this rule in {@code vendor-pool.mjs} so its item index matches the deployed
- * server. If the logic here changes, that changes too.
+ * HARD subsumes EXTREME: turning HARD off removes nether and extreme items together.
+ * The website mirrors this rule in {@code vendor-pool.mjs}; change both together.
  */
 final class PoolExclusions {
 
@@ -18,9 +13,7 @@ final class PoolExclusions {
     }
 
     /**
-     * @param hard    the HARD setting — off means no nether and no extreme items at all
-     * @param extreme the EXTREME setting — only consulted while {@code hard} is on
-     * @param end     the END setting — off means no end items
+     * @param extreme only consulted while {@code hard} is on
      * @return true when this item should be left out of the pool
      */
     static boolean isExcluded(ItemDefinition definition, boolean hard, boolean extreme, boolean end) {

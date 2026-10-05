@@ -30,13 +30,6 @@ import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
 
-/**
- * Adapter for the protection rules: cancels what {@link ProtectionManager} refuses, plays the
- * refusal sound, and tells the operators.
- *
- * <p>Nothing here decides anything: every handler asks a question, and the only judgement it makes is
- * how to word the answer.
- */
 @RequiredArgsConstructor
 public class ProtectionListener implements Listener {
     private final Roster roster;
@@ -52,11 +45,7 @@ public class ProtectionListener implements Listener {
         return this.protectionManager;
     }
 
-    /**
-     * Protection applies for as long as the round does, <b>pause included</b>. Asking
-     * {@code roundRunning} here would switch off every gate below the moment someone types
-     * {@code /pause}.
-     */
+    /** Includes pause: asking {@code roundRunning} would switch off every gate on /pause. */
     private boolean roundInProgress() {
         return this.roundPhase.roundInProgress();
     }

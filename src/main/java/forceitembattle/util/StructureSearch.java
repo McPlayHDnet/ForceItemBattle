@@ -6,34 +6,17 @@ import org.bukkit.generator.structure.Structure;
 import org.bukkit.util.StructureSearchResult;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * The Bukkit half of the structure search. {@link NearestOnGrid} owns the ordering; this owns the
- * one API call it rests on.
- */
 public final class StructureSearch {
 
-    /**
-     * How far the exhaustive sweep reaches. Beyond this the plugin falls back to the server's own
-     * wide search: the error MC-138887 causes is bounded by the structure set's spacing (544 blocks
-     * for trial chambers and trail ruins), which matters a great deal at 300 blocks and very little
-     * at eight thousand.
-     */
+    /** Beyond this the server's own search is used: MC-138887's error is bounded by spacing, negligible at this range. */
     public static final int PRECISE_RADIUS = 2500;
 
     private StructureSearch() {
     }
 
     /**
-     * A probe for one structure in one world.
-     *
-     * <p>{@code radius = 0} is the load-bearing argument. It makes the server's ring loops run
-     * exactly once, against the single region containing the chunk handed in, so this answers
-     * "what is in this region" rather than "what did the search stumble on first". Verified against
-     * 26.2: the radius reaches {@code findNearestMapStructure} unclamped, and both of its loops are
-     * {@code for (d = -radius; d <= radius; …)}.
-     *
-     * <p>Generates no chunks — {@code locateNearestStructure} is documented not to, and that is
-     * what keeps a few hundred of these affordable.
+     * {@code radius = 0} is load-bearing: the server's ring loops run once, against the region holding
+     * the given chunk (verified on 26.2). Generates no chunks, which keeps hundreds of probes affordable.
      */
     public static NearestOnGrid.Probe probe(World world, Structure structure, int originY) {
         return (chunkX, chunkZ) -> {

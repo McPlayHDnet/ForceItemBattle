@@ -6,19 +6,13 @@ import java.text.DecimalFormatSymbols;
 import java.util.Locale;
 
 /**
- * How unlikely a back-to-back chain was, as a percentage, a {@link Rarity} and a label to print.
- *
- * <p>Pure arithmetic: the caller counts what is owned, this decides what that is worth.
- *
  * @param percentage the odds as a percentage, so 0.05 means one in two thousand
  * @param formatted  the percentage and rarity label, ready to drop into a message
  */
 public record BackToBackProbability(double percentage, Rarity rarity, String formatted) {
 
     /**
-     * @param uniqueOwned      distinct materials this owner already holds, inventories and backpack
-     * @param poolSize         how many materials could currently be handed out
-     * @param streak           the chain length <em>after</em> this find, so a third owned item is 3
+     * @param streak           the chain length after this find, so a third owned item is 3
      * @param repeatOfPrevious the same item they were just handed, which {@link Rarity} ranks apart
      */
     public static BackToBackProbability of(int uniqueOwned, int poolSize, int streak,
@@ -41,13 +35,7 @@ public record BackToBackProbability(double percentage, Rarity rarity, String for
         return Math.pow(base, streak);
     }
 
-    /**
-     * Enough decimal places to show something: a long chain runs small enough that a fixed two places
-     * would print every one as "0%", so this keeps two significant digits past the leading zeros.
-     *
-     * <p><b>Pinned to {@link Locale#ROOT}</b>, or {@code DecimalFormat} follows the JVM default and
-     * prints "0,05%" in an English sentence on a European server.
-     */
+    /** Two significant digits past the leading zeros, in {@link Locale#ROOT} so it never prints "0,05%". */
     private static String formatPercent(double percent) {
         DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance(Locale.ROOT);
         DecimalFormat df;

@@ -7,13 +7,7 @@ import java.util.function.LongSupplier;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-/**
- * Tells the operators about something suspicious, without saying the same thing over and over.
- *
- * <p>A window rather than a set of everything ever sent: a repeat is suppressed for a minute and
- * then reported again. Messages carry player names and coordinates, so a permanent set both grows
- * unbounded and silently swallows the second occurrence of anything, rounds later included.
- */
+/** A repeat is suppressed for a minute, not forever: messages carry names and coordinates, so a permanent set grows unbounded. */
 public final class AdminNotifier {
 
     /** How long a repeat of the same message stays suppressed. */
@@ -31,10 +25,7 @@ public final class AdminNotifier {
         this.clock = clock;
     }
 
-    /**
-     * Whether this message should go out now, recording it as sent when so. Separate from the
-     * sending so the rule can be tested without a running server.
-     */
+    /** Records the message as sent when it returns true. */
     public boolean claim(String message) {
         long now = this.clock.getAsLong();
         this.pruneExpired(now);

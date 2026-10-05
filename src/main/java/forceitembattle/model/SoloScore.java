@@ -8,20 +8,9 @@ import lombok.AccessLevel;
 import lombok.Setter;
 import org.bukkit.Material;
 
-/**
- * A player's own item, score, jokers and found-list — the {@link ScoreOwner} in a solo game.
- *
- * <p>Every {@link ForceItemPlayer} holds one of these for their whole round, whether or not they
- * are on a team. That is not waste: it is what makes the plain accessors on {@code ForceItemPlayer}
- * keep working, and what lets a player leaving a team fall back to exactly the values they had
- * before joining it, which is what the previous field-based design did too.
- */
+/** Every player holds one all round, so leaving a team falls back to exactly the values they had before. */
 public class SoloScore implements ScoreOwner {
 
-    /**
-     * The player these values belong to. Held only so {@link #members()} can answer "just me"
-     * without the caller branching.
-     */
     private final ForceItemPlayer player;
 
     private final List<ForceItem> foundItems = new ArrayList<>();

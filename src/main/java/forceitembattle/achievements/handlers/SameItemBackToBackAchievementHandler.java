@@ -9,20 +9,8 @@ import org.bukkit.Material;
 import org.bukkit.event.Event;
 
 /**
- * "Get the same item as a back-to-back {@code targetAmount} times in a row."
- *
- * <p>Obtaining an item leaves it in the player's inventory, so if it keeps getting
- * reassigned it keeps auto-completing. With targetAmount=2 the qualifying sequence is
- * Egg &rarr; Egg (b2b) &rarr; Egg (b2b): the first Egg only has to be obtained, and it
- * makes no difference whether that came from a joker skip or a normal find — it is
- * never inspected. Only the back-to-backs are counted.
- *
- * <p>Any skip or non-back-to-back find breaks the run, as does a back-to-back landing
- * on a different material (which starts a fresh run for that material).
- *
- * <p>Distinct from {@link RepeatItemAchievementHandler}, which counts how often an item
- * is assigned across a whole round without requiring the assignments to be consecutive
- * or to be back-to-backs.
+ * Same item as a back-to-back N times in a row. The first assignment only has to be obtained; any
+ * skip, normal find or back-to-back on a different material breaks the run.
  */
 public class SameItemBackToBackAchievementHandler implements AchievementHandler<SameItemBackToBackAchievementProgress> {
 

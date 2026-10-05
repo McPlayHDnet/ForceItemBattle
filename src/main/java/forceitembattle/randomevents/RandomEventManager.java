@@ -127,9 +127,7 @@ public class RandomEventManager implements Manager {
         this.trigger(type);
     }
 
-    /**
-     * @return false if an event is already running.
-     */
+    /** @return false if an event is already running */
     public boolean trigger(RandomEvents type) {
         if (this.activeEvent != null) {
             return false;

@@ -129,12 +129,8 @@ public class AchievementListener implements Listener {
         ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());
         Achievements achievement = event.getAchievement();
 
-        // Deliberately not roster.participant(): this is the one site where "no entry" must NOT
-        // mean "not playing". A GLOBAL achievement is not round-scoped -- AchievementManager records
-        // those as SOLO with no teammate precisely because a lifetime stat spans both modes -- so a
-        // player who joined mid-round and unlocked one is still worth announcing. Only a known
-        // spectator is silenced. Migrating this to match the other twelve would read as consistency
-        // and be a regression.
+        // Not roster.participant(): a GLOBAL achievement is lifetime, not round-scoped, so a player who
+        // joined mid-round is still announced. Only a known spectator is silenced.
         if (forceItemPlayer == null || !forceItemPlayer.isSpectator()) {
             player.playSound(player, Sound.BLOCK_AMETHYST_BLOCK_RESONATE, 1, 1);
             Bukkit.getOnlinePlayers().forEach(players -> {

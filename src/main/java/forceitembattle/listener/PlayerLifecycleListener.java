@@ -69,9 +69,7 @@ public class PlayerLifecycleListener implements Listener {
             case RESULT_SCREEN -> this.showResultScreen(player);
             case LATE_SPECTATOR, COUNTDOWN_SPECTATOR -> PlayerOutfitter.toSpectator(player);
             case LOBBY -> PlayerOutfitter.toLobby(player, this.roundPhase.state());
-            // Nothing to write, deliberately: the only way here is to quit during the countdown and
-            // return before it ends, and applyStartSetup outfits them when it does. Lobby buttons
-            // would go to someone who is about to be a participant.
+            // Quit and rejoined during the countdown: applyStartSetup outfits them when it ends.
             case RECONNECTING_BEFORE_START -> { }
         }
 
@@ -87,11 +85,7 @@ public class PlayerLifecycleListener implements Listener {
         event.joinMessage(Text.of("<green>» <yellow>" + player.getName() + " <green>joined"));
     }
 
-    /**
-     * A participant rejoining a running round. {@code applyStartSetup} is a no-op for anyone who was
-     * online when the countdown ended and the full setup for anyone who was not, so it is safe here
-     * either way.
-     */
+    /** {@code applyStartSetup} is a no-op for anyone outfitted at the countdown, so it is safe either way. */
     private void restoreParticipant(Player player) {
         this.gamemanager.applyStartSetup(player);
 
@@ -104,14 +98,8 @@ public class PlayerLifecycleListener implements Listener {
     }
 
     /**
-     * They missed the result screen {@code finishGame()} handed out; give them the same one rather
-     * than resetting them to a lobby player and losing the score they are ranked on. Literally the
-     * same body — {@code finishGame} never touched them, so they still carry the health, mount, level
-     * and coloured tab name they disconnected with.
-     *
-     * <p>The destination is the world spawn, matching {@code finishGame} — not
-     * {@code ForceItemBattle.getSpawnLocation()}, a different configured place that would leave a
-     * rejoiner somewhere the rest of the room is not.
+     * Hands a rejoiner the result screen they missed instead of resetting them and losing their ranked
+     * score. World spawn, matching {@code finishGame}, not the configured lobby spawn.
      */
     private void showResultScreen(Player player) {
         World overworld = Dimension.OVERWORLD.world();

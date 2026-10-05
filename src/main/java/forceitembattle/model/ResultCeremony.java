@@ -12,15 +12,8 @@ import javax.annotation.Nullable;
 import org.bukkit.inventory.ItemStack;
 
 /**
- * The end-of-round reveal: who is shown next, and the screens already shown.
- *
- * <p>Depends on nothing — no Bukkit, no plugin, no managers. Page maps are opaque: stored, handed
- * back, never looked inside, so {@link ItemStack} appears in the signature and nowhere else.
- *
- * <p>The archive keys on the {@link ScoreOwner} <em>instance</em>, which holds only because an
- * existing roster entry always wins over every default — a player reconnecting at END_GAME gets their
- * original {@code ForceItemPlayer} back. If {@code Roster.admit} stops guaranteeing that, this breaks
- * quietly.
+ * The archive keys on the ScoreOwner instance, which holds only because Roster.admit always returns
+ * an existing entry to a reconnecting player.
  */
 public final class ResultCeremony {
 
@@ -33,12 +26,7 @@ public final class ResultCeremony {
     @Nullable
     private UUID matchId;
 
-    /**
-     * Starts the ceremony for a match, discarding anything left from the previous one.
-     *
-     * @param order worst-placed first. Spectators are already excluded and ties already broken by the
-     *              caller; this is deliberately not the ordering the stats write uses.
-     */
+    /** @param order worst-placed first, spectators excluded and ties already broken */
     public void beginFor(UUID matchId, List<Reveal> order) {
         this.matchId = matchId;
         this.order = List.copyOf(order);
@@ -80,11 +68,7 @@ public final class ResultCeremony {
         return owner == null ? Optional.empty() : Optional.ofNullable(this.pagesByOwner.get(owner));
     }
 
-    /**
-     * Builds the reveal order from the places, worst first. Takes places rather than computing them
-     * so this module stays free of the roster and team manager. The map is expected best-first,
-     * which is what {@link Standings} returns.
-     */
+    /** Expects the places best-first, as {@link Standings} returns them. */
     public static <T extends ScoreOwner> List<Reveal> orderFrom(Map<T, Integer> placesBestFirst) {
         List<Map.Entry<T, Integer>> entries = new ArrayList<>(placesBestFirst.entrySet());
         List<Reveal> reveals = new ArrayList<>(entries.size());
@@ -96,10 +80,7 @@ public final class ResultCeremony {
         return List.copyOf(reveals);
     }
 
-    /**
-     * @param last whether this is the winner — the reveal after which the stats link may go out. The
-     *             ceremony decides which turn that is; what happens then is the caller's.
-     */
+    /** @param last whether this is the winner, after which the stats link may go out */
     public record Reveal(ScoreOwner owner, int place, boolean last) {
 
         public Reveal {

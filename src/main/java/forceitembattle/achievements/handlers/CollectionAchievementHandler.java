@@ -26,11 +26,7 @@ public class CollectionAchievementHandler<T> implements AchievementHandler<Colle
         this.extractor = extractor;
     }
 
-    /**
-     * The biome the player just walked into, or null when this move did not cross a block boundary
-     * (or is not a move at all). Records the position it checked, so a biome lookup — far too hot to
-     * do per move event — happens at most once per block.
-     */
+    /** Null unless this move crossed a block boundary, so the biome lookup runs at most once per block. */
     private static Biome biomeAtNewBlock(Event event, CollectionAchievementProgress<?> progress) {
         if (!(event instanceof PlayerMoveEvent moveEvent)) {
             return null;
@@ -90,9 +86,6 @@ public class CollectionAchievementHandler<T> implements AchievementHandler<Colle
         return trigger;
     }
 
-    /**
-     * The set this achievement needs fully collected (used by progress inspection).
-     */
     public Set<T> getRequiredItems() {
         return requiredItems;
     }

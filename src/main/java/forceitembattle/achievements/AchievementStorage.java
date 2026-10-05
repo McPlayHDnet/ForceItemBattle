@@ -7,12 +7,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * The unlock cache, and the de-dup that keeps an achievement from being announced twice.
- *
- * <p>No transport: writes go to an {@link AchievementSink}, so this class and everything built on it
- * runs without a service.
- */
+/** The unlock cache, and the de-dup that keeps an achievement from being announced twice. */
 public class AchievementStorage {
 
     private final AchievementSink sink;
@@ -24,12 +19,7 @@ public class AchievementStorage {
         this.sink = sink;
     }
 
-    /**
-     * Ensures the player's achievements are loaded from the service, then runs
-     * {@code onLoaded} on the main thread (also runs it if already loaded). A load
-     * failure is logged by the sink; {@code onLoaded} still runs so callers don't hang,
-     * and the player stays unloaded so the next call tries again.
-     */
+    /** {@code onLoaded} runs even on failure so callers don't hang; the player stays unloaded so the next call retries. */
     public void loadPlayer(UUID playerUUID, Runnable onLoaded) {
         if (loaded.contains(playerUUID)) {
             if (onLoaded != null) {
@@ -72,19 +62,11 @@ public class AchievementStorage {
         return achievements != null ? achievements : Collections.emptySet();
     }
 
-    /**
-     * Grants an achievement recorded as SOLO with no teammate. Convenience for
-     * manual/admin grants that have no game context.
-     */
     public void addAchievement(UUID playerUUID, Achievements achievement) {
         addAchievement(playerUUID, achievement, AchievementMode.SOLO, null);
     }
 
-    /**
-     * Grants an achievement, recording the mode and (for TEAM) the teammate on
-     * the service. The cache only tracks the achievement id — mode is not part
-     * of the local de-dup.
-     */
+    /** The local de-dup tracks only the achievement id, not the mode. */
     public void addAchievement(UUID playerUUID, Achievements achievement, AchievementMode mode, UUID teammateUuid) {
         cache.computeIfAbsent(playerUUID, key -> ConcurrentHashMap.newKeySet()).add(achievement.name());
 

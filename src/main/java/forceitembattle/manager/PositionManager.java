@@ -130,8 +130,7 @@ public class PositionManager implements Manager {
     }
 
     /**
-     * A footprint trail that keeps redrawing until the returned task is cancelled. Re-anchored on the
-     * player each redraw, so it always leads away from where they are now.
+     * Re-anchored on the player each redraw, until the returned task is cancelled.
      *
      * @return the trail task, or null when the player is in another world
      */
@@ -162,12 +161,8 @@ public class PositionManager implements Manager {
     }
 
     /**
-     * One full trail of prints, from the player's feet towards the target. Each print snaps to
-     * whatever a walker would step on nearby rather than to the world surface — underground the
-     * surface is the roof of the cave, and the trail would be drawn in the ceiling.
-     *
-     * <p>Reads blocks, so main thread only: the async locator session schedules the task rather than
-     * drawing itself.
+     * Prints snap to what a walker would step on, not the world surface, which underground is the cave
+     * roof. Reads blocks, so main thread only.
      */
     private static void drawFootprintFrame(Player player, Location position, Particle.DustOptions dust) {
         Location from = player.getLocation();
@@ -218,20 +213,13 @@ public class PositionManager implements Manager {
         }
     }
 
-    /**
-     * A short-lived (~5s) beam with ground rings marking the spot to dig at. The location must be
-     * resolved upfront — this only spawns particles.
-     */
+    /** About 5s of beam and rings at an already-resolved spot. */
     public void playSurfaceMarker(@NonNull Player player, @NonNull Location surface, Color color) {
         if (player.getWorld() != surface.getWorld()) return;
         Scheduler.runTimerSync(this.createSurfaceMarker(player, surface, color, 10), 0L, 10L);
     }
 
-    /**
-     * A surface marker that keeps redrawing until the returned task is cancelled.
-     *
-     * @return the marker task, or null when the player is in another world
-     */
+    /** @return the marker task, cancelled by the caller, or null when the player is in another world */
     @Nullable
     public BukkitRunnable startSurfaceMarker(@NonNull Player player, @NonNull Location surface, Color color) {
         if (player.getWorld() != surface.getWorld()) return null;

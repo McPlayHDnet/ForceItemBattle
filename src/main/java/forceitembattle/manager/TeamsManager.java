@@ -28,11 +28,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class TeamsManager implements Manager {
 
-    /**
-     * Its own file rather than a key in config.yml: config.yml is a deployed artifact here — it ships
-     * from the website repo because it carries the item descriptions — so anything the plugin writes
-     * into it is overwritten by the next deploy, silently degrading the avoidance to a shuffle.
-     */
+    /** Not config.yml: that ships from the website repo, so anything written there is overwritten on deploy. */
     private static final String HISTORY_FILE = "team-history.yml";
     private static final String PAIRINGS_PATH = "lastPairings";
     private static final String LEGACY_CONFIG_PATH = "teams.lastPairings";
@@ -295,9 +291,7 @@ public class TeamsManager implements Manager {
         if (second != null) this.addToTeam(team, second);
 
         this.teams.add(team);
-        // Never set a playerListName here: the client only applies ScoreboardManager's team
-        // prefix/suffix to players who have no tab-list display name of their own, so naming one
-        // member makes the two halves of a team render differently.
+        // Never set a playerListName here: the client then skips the team prefix/suffix for that member.
         this.scoreboard.updateAllPlayers();
 
         String message = "<dark_aqua>You are now in team <green>" + name + " <dark_aqua>with <yellow>";

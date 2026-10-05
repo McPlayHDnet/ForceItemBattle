@@ -21,9 +21,7 @@ public final class BiomeNoteLocator {
         return biome != null ? BiomeSearch.nearest(origin, biome) : null;
     }
 
-    /**
-     * Eight-point compass bearing from origin to target, matching the datapack's sectors.
-     */
+    /** Eight-point bearing matching the datapack's sectors. */
     public static String direction(Location origin, Location target) {
         double dx = target.getX() - origin.getX();
         double dz = target.getZ() - origin.getZ();
@@ -33,9 +31,6 @@ public final class BiomeNoteLocator {
         return DIRECTIONS[sector];
     }
 
-    /**
-     * Horizontal distance, rounded to the nearest 100.
-     */
     public static int distance(Location origin, Location target) {
         double dx = target.getX() - origin.getX();
         double dz = target.getZ() - origin.getZ();

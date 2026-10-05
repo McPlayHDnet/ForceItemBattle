@@ -12,12 +12,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
-/**
- * Opens the collection book — your own, or another player's.
- *
- * <p>The book fills itself: {@link CollectionBookInventory} kicks off the read-through load and
- * repaints when it lands, so this just resolves the target and opens.
- */
 public final class CommandCollection extends CustomCommand implements CustomTabCompleter {
 
     private final GuiContext gui;
@@ -51,10 +45,7 @@ public final class CommandCollection extends CustomCommand implements CustomTabC
         new CollectionBookInventory(this.gui, args[0], targetUuid).open(player);
     }
 
-    /**
-     * Online exact match first, then the offline cache. Deliberately not
-     * {@code Bukkit.getOfflinePlayer(name)} — that can block on a Mojang lookup for an unknown name.
-     */
+    /** Not {@code Bukkit.getOfflinePlayer(name)}: that can block on a Mojang lookup for an unknown name. */
     private UUID resolvePlayer(String name) {
         Player online = Bukkit.getPlayerExact(name);
         if (online != null) {

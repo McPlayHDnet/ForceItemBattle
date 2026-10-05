@@ -68,10 +68,6 @@ public final class CommandStats extends CustomCommand implements CustomTabComple
         }
     }
 
-    /**
-     * Self or named target, for whichever scope was asked for. Solo and team differ only in the
-     * loader they call, the panel's title, and the noun in the two refusals.
-     */
     private void handleScope(Player player, String[] args, String title, String noun,
                              FibStatisticsClient.StatsLoader loader) {
         if (args.length == 1) {
@@ -204,10 +200,6 @@ public final class CommandStats extends CustomCommand implements CustomTabComple
         }
     }
 
-    /**
-     * The stats screen. Solo, team and duo all render through here — only the header,
-     * the score label and the optional "teams played with" line differ.
-     */
     private void sendStats(Player player, String title, String subject, StatsView view) {
         DecimalFormat df = new DecimalFormat("0.#");
 

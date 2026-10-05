@@ -9,10 +9,6 @@ public final class LocationFormat {
     private LocationFormat() {
     }
 
-    /**
-     * {@code x, y, z} — for locations we actually know all three coordinates of
-     * (saved positions, the wandering trader).
-     */
     public static String xyz(@Nullable Location location) {
         if (location == null || location.getWorld() == null) {
             return "<red>unknown location";
@@ -23,17 +19,8 @@ public final class LocationFormat {
     }
 
     /**
-     * {@code x, ?, z} — for structure and biome searches, which resolve a column
-     * rather than a point; the Y a {@code StructureSearchResult} carries is not
-     * the surface Y and would mislead.
-     * <p>
-     * The hidden Y is deliberate. Do not "unify" this with {@link #xyz}.
-     * <p>
-     * One case has since earned the Y back, and it is the exception that keeps the rule: the
-     * sulfur locator now generates the chunks and reads the blocks, so when {@code CaveScan}
-     * returns a target its Y is a cavity someone looked at rather than a search artefact. That
-     * path calls {@link #xyz} on purpose. Everything that has not been down there still calls
-     * this.
+     * For searches that resolve a column: their Y is not the surface and would mislead, so don't unify
+     * with {@link #xyz}. The sulfur locator uses xyz because its Y comes from scanned blocks.
      */
     public static String xz(@Nullable Location location) {
         if (location == null || location.getWorld() == null) {
@@ -44,10 +31,6 @@ public final class LocationFormat {
                 + "<gray>, <dark_aqua>" + location.getBlockZ();
     }
 
-    /**
-     * {@code (N blocks away)}, or {@code in the <nether>} when the target sits in
-     * another dimension.
-     */
     public static String distance(Location from, @Nullable Location to) {
         if (to == null || from.getWorld() == null || to.getWorld() == null) {
             return " <red>(unknown)";

@@ -19,12 +19,6 @@ import java.util.UUID;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 
-/**
- * One category's slice of the collection: found items glowing, missing ones plain, with a filter
- * (all / collected / missing) and a sort toggle. The item list comes from the memoized catalogue
- * buckets and the collection from the cached loader, so this can't disagree with the achievement
- * or with the book's counts.
- */
 public final class CollectionDexInventory extends InventoryBuilder {
 
     private static final DateTimeFormatter DATE_FORMAT =
@@ -140,10 +134,7 @@ public final class CollectionDexInventory extends InventoryBuilder {
         return visible;
     }
 
-    /**
-     * How rare this item is server-wide. Null while rarity is still loading or before anyone has
-     * played a recorded match -- a percentage with no denominator would read as a hard 0%.
-     */
+    /** Null while loading or before any recorded match, where a percentage would read as a hard 0%. */
     private String rarityLine(Material material) {
         if (this.rarity == null || this.rarity.totalPlayers() <= 0) {
             return null;
@@ -163,11 +154,7 @@ public final class CollectionDexInventory extends InventoryBuilder {
         return "<dark_gray>» <gray>Owned by <white>" + formatted + "%<gray> of players";
     }
 
-    /**
-     * Where an item comes from: which pool it unlocks in, and whether it needs another dimension.
-     * Straight off the item registry, which owns both facts -- so a retagged item updates here for
-     * free. EXTREME never appears: those items aren't in the catalogue at all.
-     */
+    /** EXTREME never appears: those items aren't in the catalogue at all. */
     private List<String> huntingHints(Material material) {
         ItemDifficultiesManager.ItemDefinition definition =
                 this.gui.items().getItemRegistry().get(material);

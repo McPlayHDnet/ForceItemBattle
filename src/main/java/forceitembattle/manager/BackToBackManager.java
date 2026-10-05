@@ -23,19 +23,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
-/**
- * Being handed an item you already own, and how unlikely that was.
- *
- * <p>The arithmetic is {@link BackToBackProbability}'s and the streak is the Score Owner's; what is
- * left here is gathering what a player holds and saying so.
- *
- * <p><b>One find, one number.</b> The odds are computed once — after the streak is bumped, over a
- * single snapshot of what is owned — and the same figure is announced and recorded. There used to be
- * two computations: {@code FoundItemResolver.score()} asked for one <em>before</em> the bump, and the
- * announcement asked again a tick later <em>after</em> it, so the percentage in a player's stats row
- * was systematically a chain shorter than the one they were shown. Three inventory walks became one
- * for the same reason.
- */
+/** The odds are computed once, after the streak bump, and the same figure is announced and recorded. */
 @RequiredArgsConstructor
 public class BackToBackManager implements Manager {
 
@@ -45,14 +33,7 @@ public class BackToBackManager implements Manager {
     private final BackpackManager backpacks;
     private final FIBServiceClient fibService;
 
-    /**
-     * Called after an item has been found <em>and the next one assigned</em>, since the chain is about
-     * the item just handed out.
-     *
-     * <p>Returns nothing on purpose. The odds belong to the find this schedules, not to the one that
-     * called in, so they are attached to that event rather than handed back — a caller holding them
-     * can only record them against the wrong item.
-     */
+    /** Runs after the next item is assigned; the odds are attached to that event, not returned. */
     public void handleAfterFind(ForceItemPlayer forceItemPlayer, GameContext context) {
         if (context.runMode()) {
             return;
@@ -65,9 +46,6 @@ public class BackToBackManager implements Manager {
             return;
         }
 
-        // One holder, so there is nothing to keep in step. This used to be three writes — the finder,
-        // whichever teammate happened to hold the item, and the team — mirrored by a reset that
-        // zeroed every member instead, and the two had already drifted.
         forceItemPlayer.scoreOwner().bumpStreak();
 
         BackToBackProbability probability = oddsFor(forceItemPlayer, owned);
@@ -78,22 +56,12 @@ public class BackToBackManager implements Manager {
         announce(forceItemPlayer, owned.teammateWhoHasIt(), probability, context);
     }
 
-    /**
-     * What this owner holds, and whether it includes the item they were just handed.
-     *
-     * @param teammateWhoHasIt set only when the teammate is the <em>only</em> holder — the message
-     *                         credits them, and crediting someone for an item the finder already had
-     *                         themselves would read as nonsense
-     */
+    /** @param teammateWhoHasIt set only when the teammate is the only holder, since the message credits them */
     private record Owned(Set<Material> materials, boolean hasBackToBack,
                          @Nullable ForceItemPlayer teammateWhoHasIt) {
     }
 
-    /**
-     * One pass over every inventory that counts. It was three: {@code check} walked them with
-     * {@code contains}, then the odds walked them again with {@code collectUniqueMaterials}, a tick
-     * later and so able to disagree about what was held.
-     */
+    /** One pass over every inventory that counts, so the check and the odds cannot disagree. */
     private Owned gather(ForceItemPlayer forceItemPlayer, Material target, GameContext context) {
         Player player = forceItemPlayer.player();
 
