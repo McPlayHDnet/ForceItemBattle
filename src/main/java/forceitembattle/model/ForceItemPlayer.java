@@ -42,49 +42,9 @@ public class ForceItemPlayer {
         return own.foundItems();
     }
 
-    // --- plain family: this player's own values, team or not -------------------------------
-
-    public Material currentMaterial() {
-        return own.material();
-    }
-
-    public Material nextMaterial() {
-        return own.nextMaterial();
-    }
-
-    @Nullable
-    public Material previousMaterial() {
-        return own.previousMaterial();
-    }
-
-    public int remainingJokers() {
-        return own.jokers();
-    }
-
-    public int currentScore() {
-        return own.score();
-    }
-
-    public long lastItemAssignedAt() {
-        return own.itemAssignedAt();
-    }
-
-    // Package-private on purpose: outside model/ everything addresses the ScoreOwner instead.
-
-    void setNextMaterial(Material nextMaterial) {
-        own.setNextMaterial(nextMaterial);
-    }
-
-    void setPreviousMaterial(Material previousMaterial) {
-        own.setPreviousMaterial(previousMaterial);
-    }
-
-    void setCurrentScore(int currentScore) {
-        own.setCurrentScore(currentScore);
-    }
-
-    void setLastItemAssignedAt(long lastItemAssignedAt) {
-        own.setLastItemAssignedAt(lastItemAssignedAt);
+    /** This player's own values, untouched while they are on a team. */
+    SoloScore own() {
+        return own;
     }
 
     // --- active family: whoever owns the score right now -----------------------------------

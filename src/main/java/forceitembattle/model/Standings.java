@@ -37,7 +37,7 @@ public final class Standings {
     }
 
     public static Map<ForceItemPlayer, Integer> ofPlayers(Map<UUID, ForceItemPlayer> playerMap) {
-        return of(new ArrayList<>(playerMap.values()), ForceItemPlayer::currentScore);
+        return of(new ArrayList<>(playerMap.values()), player -> player.own().score());
     }
 
     public static Map<Team, Integer> ofTeams(List<Team> teams) {
@@ -52,7 +52,7 @@ public final class Standings {
     public static Map<UUID, ForceItemPlayer> sortedByScore(Map<UUID, ForceItemPlayer> roster,
                                                            boolean ascending) {
         Comparator<Map.Entry<UUID, ForceItemPlayer>> comparator =
-                Comparator.comparingInt((Map.Entry<UUID, ForceItemPlayer> e) -> e.getValue().currentScore())
+                Comparator.comparingInt((Map.Entry<UUID, ForceItemPlayer> e) -> e.getValue().own().score())
                         .thenComparing(Map.Entry::getKey);
         if (!ascending) {
             comparator = comparator.reversed();
