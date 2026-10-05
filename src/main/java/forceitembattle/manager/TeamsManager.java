@@ -31,7 +31,7 @@ public class TeamsManager implements Manager {
     /** Not config.yml: that ships from the website repo, so anything written there is overwritten on deploy. */
     private static final String HISTORY_FILE = "team-history.yml";
     private static final String PAIRINGS_PATH = "lastPairings";
-    private static final String LEGACY_CONFIG_PATH = "teams.lastPairings";
+    private static final int TEAM_SIZE = 2;
 
     private final JavaPlugin plugin;
     private final Roster roster;
@@ -41,8 +41,6 @@ public class TeamsManager implements Manager {
     private final Map<ForceItemPlayer, Team> pendingInvite;
     @Getter
     private final List<Team> teams;
-    @Getter
-    private final int maxTeamSize;
     private final Set<String> previousPairings;
     private final Random random;
 
@@ -52,7 +50,6 @@ public class TeamsManager implements Manager {
         this.scoreboard = scoreboard;
         this.pendingInvite = new ConcurrentHashMap<>();
         this.teams = new ArrayList<>();
-        this.maxTeamSize = 2;
         this.previousPairings = new HashSet<>();
         this.random = new Random();
     }
@@ -66,13 +63,7 @@ public class TeamsManager implements Manager {
 
     private List<String> loadPairings() {
         File file = new File(this.plugin.getDataFolder(), HISTORY_FILE);
-        if (file.isFile()) {
-            return YamlConfiguration.loadConfiguration(file).getStringList(PAIRINGS_PATH);
-        }
-
-        // Migration off the config.yml key: useful only on the first boot after this change, but it
-        // costs one read and beats losing a round.
-        return this.plugin.getConfig().getStringList(LEGACY_CONFIG_PATH);
+        return file.isFile() ? YamlConfiguration.loadConfiguration(file).getStringList(PAIRINGS_PATH) : List.of();
     }
 
     public void autoTeams() {
@@ -88,12 +79,11 @@ public class TeamsManager implements Manager {
 
         List<ForceItemPlayer> ordered = this.orderAvoidingPreviousPairings(playersWithoutTeam);
 
-        int teamSizeLimit = this.getMaxTeamSize();
         int next = 0;
-        while (ordered.size() - next >= teamSizeLimit) {
+        while (ordered.size() - next >= TEAM_SIZE) {
             // Copied, not a subList view: Team holds on to what it is given.
-            List<ForceItemPlayer> teamPlayers = new ArrayList<>(ordered.subList(next, next + teamSizeLimit));
-            next += teamSizeLimit;
+            List<ForceItemPlayer> teamPlayers = new ArrayList<>(ordered.subList(next, next + TEAM_SIZE));
+            next += TEAM_SIZE;
 
             Team randomTeam = new Team(this.nextTeamId(), null, 0, 0, teamPlayers.toArray(new ForceItemPlayer[0]));
             this.teams.add(randomTeam);
@@ -127,8 +117,6 @@ public class TeamsManager implements Manager {
         String skipReason = null;
         if (this.previousPairings.isEmpty()) {
             skipReason = "no pairings recorded from a previous round";
-        } else if (this.getMaxTeamSize() != 2) {
-            skipReason = "team size is " + this.getMaxTeamSize() + ", not 2";
         } else if (byId.size() != players.size()) {
             skipReason = "roster holds " + players.size() + " entries but only " + byId.size() + " usable players";
         }
@@ -216,7 +204,7 @@ public class TeamsManager implements Manager {
     }
 
     public boolean isTeamFull(Team team) {
-        return team.getPlayers().size() >= this.getMaxTeamSize();
+        return team.getPlayers().size() >= TEAM_SIZE;
     }
 
     public void invite(ForceItemPlayer player, ForceItemPlayer target) {
