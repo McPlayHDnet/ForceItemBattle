@@ -25,7 +25,6 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import org.bukkit.Bukkit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -452,23 +451,17 @@ class CommandAchievementTest {
             assertNothingWasWritten();
         }
 
-        /**
-         * Current behaviour, recorded rather than endorsed. The write paths resolve their target
-         * with {@code Bukkit.getOfflinePlayer(String)}, which never returns null and never fails:
-         * a name nobody has ever used still yields a uuid, so a typo writes a row against a player
-         * who does not exist and the admin is told it worked. {@code /stats reset} does not have
-         * this shape — it resolves through {@code getOfflinePlayerIfCached} and refuses an unknown
-         * name. If that stricter form is adopted here, this test is the one to change.
-         */
+        /** A typo used to write a row against a player who never existed and report success. */
         @Test
-        void anUnknownTargetIsNotRefusedOnTheWritePaths() {
+        void anUnknownTargetIsRefusedOnTheWritePaths() {
             PlayerMock admin = joinOp("Admin");
 
             run(admin, "grant", "NobodyHasEverUsedThisName", "ITEM_COLLECTOR");
+            run(admin, "revoke", "NobodyHasEverUsedThisName", "ITEM_COLLECTOR");
+            run(admin, "reset", "NobodyHasEverUsedThisName");
 
-            verify(storage).addAchievement(
-                    eq(Bukkit.getOfflinePlayer("NobodyHasEverUsedThisName").getUniqueId()),
-                    eq(Achievements.ITEM_COLLECTOR));
+            assertSaid(admin, "was not found");
+            assertNothingWasWritten();
         }
     }
 
