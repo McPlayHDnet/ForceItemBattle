@@ -97,6 +97,11 @@ public class GameSettings {
         return preset != null ? preset.getBackpackRows() : this.getSettingValue(GameSetting.BACKPACKSIZE);
     }
 
+    /** Run Battle already shares one row, so it overrides Mirror Battle. */
+    public boolean isMirrorBattle() {
+        return this.isSettingEnabled(GameSetting.MIRROR) && !this.isSettingEnabled(GameSetting.RUN);
+    }
+
     public QuickieMode getQuickieMode() {
         return QuickieMode.fromOrdinal(this.getSettingValue(GameSetting.QUICKIE));
     }

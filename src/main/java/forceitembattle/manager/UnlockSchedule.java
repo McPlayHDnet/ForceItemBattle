@@ -24,6 +24,10 @@ public final class UnlockSchedule {
         this.percentages.put(State.LATE, late);
     }
 
+    public static UnlockSchedule allAtOnce() {
+        return new UnlockSchedule(0, 0, 0);
+    }
+
     /** For any round short enough that fixed minute marks would put a pool past the end of the game. */
     public static UnlockSchedule percentageBased() {
         return new UnlockSchedule(0, 11.11, 28.88);

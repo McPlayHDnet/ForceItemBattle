@@ -16,6 +16,15 @@ class UnlockScheduleTest {
         return m * 60;
     }
 
+    @Test
+    void allAtOnceOpensEveryPoolAtMinuteZero() {
+        UnlockSchedule schedule = UnlockSchedule.allAtOnce();
+
+        assertEquals(List.of(State.EARLY, State.MID, State.LATE), schedule.activeAt(0, minutes(60), QuickieMode.DISABLED));
+        assertNull(schedule.nextAfter(0, minutes(60), QuickieMode.DISABLED));
+        assertEquals(-1, schedule.secondsUntilNext(0, minutes(60), QuickieMode.DISABLED));
+    }
+
     @Nested
     class ShortRounds {
 

@@ -23,6 +23,7 @@ public enum GameSetting {
     POSITIONS("Positions - /pos", List.of("", "<gray>Toggle whether <dark_aqua>positions <gray>can be set.", ""), "positions", true, Material.LIME_WOOL),
     ELYTRA("Elytra gliding", List.of("", "<gray>Prevents gliding with an elytra<gray>.", ""), "elytraGliding", true, Material.ELYTRA),
     CHAIN("Force Chain", List.of("", "<gray>Shows the next forced item.", ""), "forceChain", false, Material.IRON_CHAIN),
+    MIRROR("Mirror Battle", List.of("", "<gray>Everyone hunts the <dark_aqua>same row of items<gray>.", "<dark_gray><i>Ignored in Run Battle.</i>", ""), "mirrorBattle", false, Material.GLASS),
     RUN("Run Battle", List.of("", "<gray>Only the first player to get the item gets the point.", ""), "runBattle", false, Material.CLOCK),
     STATS("Stats", List.of("", "<gray>Toggle whether this round is played with <dark_aqua>stats<gray>.", ""), "stats", true, Material.WRITABLE_BOOK),
     ACHIEVEMENTS("Achievements", List.of("", "<gray>Toggle whether this round is played with <dark_aqua>achievements<gray>.", ""), "achievements", true, Material.NETHER_STAR),

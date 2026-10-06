@@ -203,14 +203,14 @@ class CommandStartTest {
 
             InOrder inOrder = inOrder(gamemanager, assignment);
             inOrder.verify(gamemanager).resetStartSetup();
-            inOrder.verify(assignment).beginRound(anyBoolean());
+            inOrder.verify(assignment).beginRound(anyBoolean(), anyBoolean());
         }
 
         @Test
         void andTheRoundIsOpened() {
             startARound();
 
-            verify(assignment).beginRound(anyBoolean());
+            verify(assignment).beginRound(anyBoolean(), anyBoolean());
         }
     }
 

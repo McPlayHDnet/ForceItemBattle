@@ -4,6 +4,7 @@ import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.Roster;
 import forceitembattle.model.ScoreOwner;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
@@ -25,14 +26,20 @@ public final class ForceItemAssignment {
     /** The key every owner shares while the server is racing one seeded sequence. */
     private static final Object SHARED_QUEUE = new Object();
 
+    /** Mirror mode: one row every owner walks at their own pace; {@code null} when off. */
+    private List<Material> mirroredRow;
+    private final Map<ScoreOwner, Integer> mirrorCursors = new HashMap<>();
+
     public ForceItemAssignment(Roster roster, ItemDifficultiesManager items) {
         this.roster = roster;
         this.items = items;
     }
 
     /** Clears forced rows first: a row left over from last round would open the new one. */
-    public void beginRound(boolean runMode) {
+    public void beginRound(boolean runMode, boolean mirrored) {
         this.forcedRows.clear();
+        this.mirrorCursors.clear();
+        this.mirroredRow = mirrored ? new ArrayList<>() : null;
 
         long now = System.currentTimeMillis();
         Pair shared = runMode ? this.pairFor(null, true) : null;
@@ -113,6 +120,13 @@ public final class ForceItemAssignment {
         Material forced = this.queueFor(owner, runMode).poll();
         if (forced != null) {
             return forced;
+        }
+        if (this.mirroredRow != null && owner != null) {
+            int index = this.mirrorCursors.merge(owner, 1, Integer::sum) - 1;
+            while (this.mirroredRow.size() <= index) {
+                this.mirroredRow.add(this.items.generateRandomMaterial());
+            }
+            return this.mirroredRow.get(index);
         }
         return runMode
                 ? this.items.generateSeededRandomMaterial()

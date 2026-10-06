@@ -219,6 +219,9 @@ public class ItemDifficultiesManager implements Manager {
     /** Each state is reported once per game. */
     public List<State> pollNewlyUnlockedStates() {
         announcedUnlockedStates.add(State.EARLY); // baseline pool, never announced
+        if (this.settings.isMirrorBattle()) {
+            announcedUnlockedStates.addAll(getActiveStates());
+        }
 
         List<State> newlyUnlocked = new ArrayList<>();
         for (State state : getActiveStates()) {
@@ -236,20 +239,25 @@ public class ItemDifficultiesManager implements Manager {
 
     /** Pools active this tick, in unlock order (EARLY → LATE). */
     public List<State> getActiveStates() {
-        return this.unlockSchedule.activeAt(
+        return this.schedule().activeAt(
                 elapsedSeconds() / 60, roundSeconds(), this.settings.getQuickieMode());
     }
 
     /** The next pool to unlock, or {@code null} when every permitted pool is already active. */
     public State getNextState() {
-        return this.unlockSchedule.nextAfter(
+        return this.schedule().nextAfter(
                 elapsedSeconds() / 60, roundSeconds(), this.settings.getQuickieMode());
     }
 
     /** -1 when none remain; reaches 0 on the tick {@link #pollNewlyUnlockedStates()} announces it. */
     public int secondsUntilNextPool() {
-        return this.unlockSchedule.secondsUntilNext(
+        return this.schedule().secondsUntilNext(
                 elapsedSeconds(), roundSeconds(), this.settings.getQuickieMode());
+    }
+
+    /** Read per call because /start draws the opening pair before startGame configures the round. */
+    private UnlockSchedule schedule() {
+        return this.settings.isMirrorBattle() ? UnlockSchedule.allAtOnce() : this.unlockSchedule;
     }
 
     private int roundSeconds() {

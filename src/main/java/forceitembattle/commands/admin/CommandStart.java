@@ -122,7 +122,8 @@ public final class CommandStart extends CustomCommand implements CustomTabComple
         this.gamemanager.setJokerAmount(jokersAmount);
         // Un-equip everyone before the draw so applyStartSetup runs for them.
         this.gamemanager.resetStartSetup();
-        this.assignment.beginRound(this.settings.isSettingEnabled(GameSetting.RUN));
+        this.assignment.beginRound(this.settings.isSettingEnabled(GameSetting.RUN),
+                this.settings.isMirrorBattle());
 
         // Teams and force items are assigned by now, so the roster is frozen from here on.
         this.roundPhase.moveTo(GameState.STARTING);
