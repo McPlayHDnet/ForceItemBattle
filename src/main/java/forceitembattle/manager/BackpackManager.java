@@ -47,13 +47,20 @@ public class BackpackManager implements Manager {
     }
 
     public void createBackpack(ForceItemPlayer fibPlayer) {
-        this.playerBackpack.put(fibPlayer.player().getUniqueId(), this.newBackpack());
+        this.playerBackpack.computeIfAbsent(fibPlayer.player().getUniqueId(), uuid -> this.newBackpack());
         fibPlayer.player().getInventory().setItem(8, GameItems.backpack(fibPlayer));
     }
 
     public void createTeamBackpack(Team team, ForceItemPlayer fibPlayer) {
-        this.teamBackpack.put(team, this.newBackpack());
+        // Once per team: a member set up late, e.g. after rejoining, must not empty the shared one.
+        this.teamBackpack.computeIfAbsent(team, key -> this.newBackpack());
         fibPlayer.player().getInventory().setItem(8, GameItems.backpack(fibPlayer));
+    }
+
+    /** At round start, so a second round in the same session starts with empty backpacks. */
+    public void clear() {
+        this.playerBackpack.clear();
+        this.teamBackpack.clear();
     }
 
     private Inventory newBackpack() {

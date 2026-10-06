@@ -204,6 +204,7 @@ public class Gamemanager implements Manager {
 
         // Only the players online at this instant. Anyone who disconnected during the countdown
         // keeps their roster spot and is set up by the same call when they rejoin.
+        this.backpacks.clear();
         Bukkit.getOnlinePlayers().forEach(this::applyStartSetup);
 
         if (this.settings.isSettingEnabled(GameSetting.TEAM)) {
