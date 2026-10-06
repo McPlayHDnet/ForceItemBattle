@@ -30,9 +30,6 @@ public class GameSettings {
             this.plugin.getConfig().addDefault(gameSettings.configPath(), gameSettings.defaultValue());
         }
 
-        this.plugin.getConfig().addDefault("standard.countdown", 30);
-        this.plugin.getConfig().addDefault("standard.jokers", 3);
-
         if (!this.plugin.getConfig().isConfigurationSection("presets")) {
             this.plugin.getConfig().createSection("presets");
         }
