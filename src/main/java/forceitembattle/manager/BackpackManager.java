@@ -4,6 +4,7 @@ import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.GameItems;
 import forceitembattle.model.Roster;
 import forceitembattle.model.Team;
+import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Text;
 import java.util.HashMap;
 import java.util.Map;
@@ -11,17 +12,16 @@ import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.plugin.java.JavaPlugin;
 
 public class BackpackManager implements Manager {
 
-    private final JavaPlugin plugin;
+    private final GameSettings settings;
     private final Roster roster;
     private final Map<UUID, Inventory> playerBackpack;
     private final Map<Team, Inventory> teamBackpack;
 
-    public BackpackManager(JavaPlugin plugin, Roster roster) {
-        this.plugin = plugin;
+    public BackpackManager(GameSettings settings, Roster roster) {
+        this.settings = settings;
         this.roster = roster;
         this.playerBackpack = new HashMap<>();
         this.teamBackpack = new HashMap<>();
@@ -64,7 +64,7 @@ public class BackpackManager implements Manager {
     }
 
     private Inventory newBackpack() {
-        return Bukkit.createInventory(null, this.plugin.getConfig().getInt("settings.backpackRows") * 9,
+        return Bukkit.createInventory(null, this.settings.backpackRows() * 9,
                 Text.of("<dark_gray>» <gold>Backpack <dark_gray>● <gray>Menu"));
     }
 

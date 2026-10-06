@@ -250,7 +250,7 @@ public final class ForceItemBattle extends JavaPlugin {
         this.antimatterPortalManager = register(new AntimatterPortalManager(this));
         this.positionManager = register(new PositionManager());
         this.recipeManager = register(new RecipeManager(this, this.settings));
-        this.backpackManager = register(new BackpackManager(this, this.roster));
+        this.backpackManager = register(new BackpackManager(this.settings, this.roster));
         this.locatorManager = register(new LocatorManager(this.positionManager));
 
         // Who is hunting what. Depends on the roster and the pool and nothing else, so it is built

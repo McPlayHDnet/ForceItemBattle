@@ -45,7 +45,7 @@ public class GameSettings {
                 gamePreset.setPresetName(keys);
                 gamePreset.setCountdown(configurationSection.getInt("countdown"));
                 gamePreset.setJokers(configurationSection.getInt("jokers"));
-                gamePreset.setBackpackRows(configurationSection.getInt("backpackRows"));
+                gamePreset.setBackpackRows(configurationSection.getInt("backpackRows", 3));
 
                 // By configPath(), not the bare keys under `settings:` — those never match.
                 gamePreset.getGameSettings().clear();
@@ -91,6 +91,12 @@ public class GameSettings {
         return this.ruleset.value(gameSetting);
     }
 
+    /** The active preset's own row count wins; presets keep it outside the settings section. */
+    public int backpackRows() {
+        GamePreset preset = this.ruleset.preset();
+        return preset != null ? preset.getBackpackRows() : this.getSettingValue(GameSetting.BACKPACKSIZE);
+    }
+
     public QuickieMode getQuickieMode() {
         return QuickieMode.fromOrdinal(this.getSettingValue(GameSetting.QUICKIE));
     }
@@ -110,8 +116,11 @@ public class GameSettings {
             presetSection.set("jokers", gamePreset.getJokers());
             presetSection.set("backpackRows", gamePreset.getBackpackRows());
 
+            // Booleans only: the rows live under backpackRows, and writing false here would read back as 0.
             for (GameSetting gameSetting : GameSetting.values()) {
-                presetSection.set(gameSetting.configPath(), gamePreset.getGameSettings().contains(gameSetting));
+                if (gameSetting.defaultValue() instanceof Boolean) {
+                    presetSection.set(gameSetting.configPath(), gamePreset.getGameSettings().contains(gameSetting));
+                }
             }
         }
 

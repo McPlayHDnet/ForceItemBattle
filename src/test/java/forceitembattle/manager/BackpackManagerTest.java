@@ -1,6 +1,7 @@
 package forceitembattle.manager;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -11,6 +12,8 @@ import static org.mockito.Mockito.when;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.Roster;
 import forceitembattle.model.Team;
+import forceitembattle.settings.GamePreset;
+import forceitembattle.settings.GameSettings;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.Inventory;
@@ -37,6 +40,7 @@ class BackpackManagerTest {
 
     private ServerMock server;
     private Roster roster;
+    private GameSettings settings;
     private BackpackManager backpacks;
 
     @BeforeEach
@@ -49,7 +53,8 @@ class BackpackManagerTest {
         when(plugin.getConfig()).thenReturn(config);
 
         this.roster = new Roster();
-        this.backpacks = new BackpackManager(plugin, this.roster);
+        this.settings = new GameSettings(plugin);
+        this.backpacks = new BackpackManager(this.settings, this.roster);
     }
 
     @AfterEach
@@ -142,6 +147,31 @@ class BackpackManagerTest {
             backpacks.createTeamBackpack(team, alice);
 
             assertNotSame(previousRound, backpacks.getTeamBackpack(team));
+        }
+    }
+
+    @Nested
+    class Size {
+
+        @Test
+        void followsTheLiveSettingWithoutAPreset() {
+            ForceItemPlayer alice = join("Alice");
+            backpacks.createBackpack(alice);
+
+            assertEquals(27, backpacks.getPlayerBackpack(alice.player()).getSize());
+        }
+
+        /** Presets keep their rows outside the settings section, which the settings lookup used to read as 0. */
+        @Test
+        void followsTheActivePresetsOwnRows() {
+            GamePreset preset = new GamePreset();
+            preset.setBackpackRows(5);
+            settings.getRuleset().usePreset(preset);
+
+            ForceItemPlayer alice = join("Alice");
+            backpacks.createBackpack(alice);
+
+            assertEquals(45, backpacks.getPlayerBackpack(alice.player()).getSize());
         }
     }
 
