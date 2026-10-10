@@ -13,37 +13,23 @@ import de.threeseconds.openapi.fibservice.client.model.FibTeamMemberStatsDto;
 import de.threeseconds.openapi.fibservice.client.model.FibTeamMemberStatsUpdateRequestDto;
 import de.threeseconds.openapi.fibservice.client.model.FibTeamStatisticsDto;
 import de.threeseconds.openapi.fibservice.client.model.FibTeamStatisticsUpdateRequestDto;
-import forceitembattle.achievements.global.GlobalStatsCache;
+import forceitembattle.achievements.global.GlobalStats;
 import forceitembattle.model.stats.DuoLeaderboardEntry;
 import forceitembattle.model.stats.GlobalPlayerStats;
 import forceitembattle.model.stats.LeaderboardEntry;
 import forceitembattle.model.stats.StatsView;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
- * Statistics domain of FIBService: solo, team, member, combined, and leaderboard.
- *
- * <p>Transport only. This moves generated request types over HTTP and turns generated response types
- * into the read model; it decides nothing about which row a number belongs on. Those rules are
- * {@link StatisticsWrites}, which reaches this class through {@link StatisticsSink} and can
- * therefore be tested without a service. The split is what made them testable at all: while they
- * lived here the only stand-in for them was a mock of the class that owned them.
- *
- * <p>Nothing outside this package should be building a {@code Fib...RequestDto} - those types are
- * regenerated from the running service whenever a controller signature changes.
+ * Transport only; which row a number belongs on is {@link StatisticsWrites}. Nothing outside this
+ * package should build a {@code Fib...RequestDto}: they are regenerated with the service.
  */
 public class FibStatisticsClient implements StatisticsSink {
 
-    /**
-     * One of this client's player-scoped stats loaders. {@code soloStats} and {@code combinedTeamStats}
-     * share a shape, so a caller can pick between them at runtime — {@code /stats} does, to serve solo
-     * and team from one code path.
-     *
-     * <p>It lives here rather than at the call site so that {@link ApiException}, a generated-client
-     * type, stays inside this package like every other one.
-     */
+    /** Lets /stats pick soloStats or combinedTeamStats at runtime while keeping ApiException inside this package. */
     @FunctionalInterface
     public interface StatsLoader {
         void load(UUID playerUuid, Consumer<StatsView> onSuccess, Consumer<ApiException> onError);
@@ -52,14 +38,9 @@ public class FibStatisticsClient implements StatisticsSink {
     private final FibStatisticsControllerApi api;
     private final ApiExecutor executor;
 
-    /**
-     * The cache a write invalidates. Held directly rather than reached through
-     * {@code AchievementManager}, which would make the achievement subsystem look like a dependency
-     * of the stats transport.
-     */
-    private final GlobalStatsCache globalStats;
+    private final Map<UUID, GlobalStats> globalStats;
 
-    FibStatisticsClient(FibStatisticsControllerApi api, ApiExecutor executor, GlobalStatsCache globalStats) {
+    FibStatisticsClient(FibStatisticsControllerApi api, ApiExecutor executor, Map<UUID, GlobalStats> globalStats) {
         this.api = api;
         this.executor = executor;
         this.globalStats = globalStats;
@@ -91,7 +72,9 @@ public class FibStatisticsClient implements StatisticsSink {
 
     private void invalidateGlobal(UUID... playerUuids) {
         for (UUID playerUuid : playerUuids) {
-            this.globalStats.invalidate(playerUuid);
+            if (playerUuid != null) {
+                this.globalStats.remove(playerUuid);
+            }
         }
     }
 
@@ -178,9 +161,7 @@ public class FibStatisticsClient implements StatisticsSink {
         executor.runAsync(() -> api.recordGameOutcome(playerUuid, request), onSuccess, onError);
     }
 
-    // The read side, in the game's words. Everything above returns generated types and is reached
-    // only from inside service/; these return the domain read model and are what every GUI and
-    // command calls. A regenerated client changes the methods above and nothing else.
+    // Read side: returns the domain read model, so a regenerated client changes only the methods above.
 
     public void soloStats(UUID playerUuid, Consumer<StatsView> onSuccess, Consumer<ApiException> onError) {
         executor.runAsync(() -> api.getSoloStatistics(playerUuid),

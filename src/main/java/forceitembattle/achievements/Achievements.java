@@ -3,28 +3,18 @@ package forceitembattle.achievements;
 import forceitembattle.achievements.global.GlobalRule;
 import forceitembattle.achievements.global.GlobalStat;
 import forceitembattle.achievements.handlers.AchievementHandler;
-import forceitembattle.achievements.handlers.AntimatterTeleporterUsesAchievementHandler;
 import forceitembattle.achievements.handlers.BackToBackAchievementHandler;
-import forceitembattle.achievements.handlers.BackToBackCountAchievementHandler;
-import forceitembattle.achievements.handlers.BeehiveAchievementHandler;
 import forceitembattle.achievements.handlers.CollectionAchievementHandler;
-import forceitembattle.achievements.handlers.ConsecutiveStoneAchievementHandler;
 import forceitembattle.achievements.handlers.CounterAchievementHandler;
-import forceitembattle.achievements.handlers.DeathCounterAchievementHandler;
-import forceitembattle.achievements.handlers.EatingAchievementHandler;
+import forceitembattle.achievements.handlers.CountingAchievementHandler;
 import forceitembattle.achievements.handlers.InventoryFullAchievementHandler;
 import forceitembattle.achievements.handlers.LootAchievementHandler;
-import forceitembattle.achievements.handlers.NoAntimatterAchievementHandler;
-import forceitembattle.achievements.handlers.NoBackToBackAchievementHandler;
-import forceitembattle.achievements.handlers.NoOverworldExitAchievementHandler;
-import forceitembattle.achievements.handlers.RareMobDropAchievementHandler;
 import forceitembattle.achievements.handlers.RepeatItemAchievementHandler;
 import forceitembattle.achievements.handlers.SameItemBackToBackAchievementHandler;
 import forceitembattle.achievements.handlers.SkipAchievementHandler;
+import forceitembattle.achievements.handlers.TallyAchievementHandler;
 import forceitembattle.achievements.handlers.TimeBasedAchievementHandler;
-import forceitembattle.achievements.handlers.TradingAchievementHandler;
 import forceitembattle.achievements.handlers.WheelOfFortuneAchievementHandler;
-import forceitembattle.achievements.handlers.WheelOfFortuneUsesAchievementHandler;
 import forceitembattle.model.Dimension;
 import java.util.EnumSet;
 import java.util.Set;
@@ -68,10 +58,10 @@ public enum Achievements {
             CollectionAchievementHandler.woodTypesHandler()),
 
     THATS_A_ROCK_JIM("That's a Rock, Jim", "Collect 3 stone-type items in a row",
-            new ConsecutiveStoneAchievementHandler(3)),
+            CounterAchievementHandler.stoneRun(3)),
 
     ONE_IN_A_MILLION("One in a Million", "Collect a very rare mob drop (Trident or Wither Skeleton Skull)",
-            new RareMobDropAchievementHandler(1)),
+            CountingAchievementHandler.rareMobDrops(1)),
 
     LUCKY_ROW("Lucky Row", "Collect 10 items in a row without skipping any",
             new CounterAchievementHandler(10, true, null)),
@@ -136,16 +126,16 @@ public enum Achievements {
             new BackToBackAchievementHandler(1, false, true)),
 
     THE_HARD_WAY("The Hard Way", "Finish a game without a single back-to-back",
-            new NoBackToBackAchievementHandler()),
+            TallyAchievementHandler.noBackToBacks()),
 
     NO_HANDOUTS("No Handouts", "Win a game without a single back-to-back",
-            new NoBackToBackAchievementHandler()),
+            TallyAchievementHandler.noBackToBacks().requiringWin()),
 
     HIGH_ROLLER("High Roller", "Get 5 or more back-to-backs in a single game",
-            new BackToBackCountAchievementHandler(5)),
+            CountingAchievementHandler.backToBacks(5)),
 
     JACKPOT("Jackpot", "Get 10 or more back-to-backs in a single game",
-            new BackToBackCountAchievementHandler(10)),
+            CountingAchievementHandler.backToBacks(10)),
 
     // VISIT achievements
     BIOME_HOPPER("Biome Hopper", "Visit all basic overworld biomes in one round",
@@ -159,13 +149,13 @@ public enum Achievements {
             CollectionAchievementHandler.dimensionHandler(EnumSet.allOf(Dimension.class))),
 
     PALE_PLEASE("Pale Please", "Use 10 different antimatter teleporters in one game",
-            new AntimatterTeleporterUsesAchievementHandler(10)),
+            CountingAchievementHandler.newAntimatterTeleporters(10)),
 
     NO_SHORTCUTS("No Shortcuts", "Finish a game without entering the Antimatter Teleporter",
-            new NoAntimatterAchievementHandler()),
+            TallyAchievementHandler.noAntimatterTeleporter()),
 
     IT_IS_BEAUTIFUL("It is beautiful", "Finish a game without leaving the Overworld",
-            new NoOverworldExitAchievementHandler()),
+            TallyAchievementHandler.noOverworldExit()),
 
     // SKIP achievements
     UNLUCKY("Unlucky", "Skip 3 items in a row",
@@ -176,22 +166,22 @@ public enum Achievements {
 
     // ACTION achievements
     CHICOT("Chicot", "Complete a round without dying",
-            new DeathCounterAchievementHandler(0)),
+            TallyAchievementHandler.noDeaths()),
 
     CONNOISSEUR("Connoisseur", "Eat Cavendish",
-            new EatingAchievementHandler(1, CustomItemSpec.ofModelData(Material.ENCHANTED_GOLDEN_APPLE, "cavendish"))),
+            CountingAchievementHandler.eats(1, CustomItemSpec.ofModelData(Material.ENCHANTED_GOLDEN_APPLE, "cavendish"))),
 
     THANK_YOU("Thank you", "Trade with the wandering trader 10 times in one round",
-            new TradingAchievementHandler(10)),
+            CountingAchievementHandler.trades(10)),
 
     A_BALANCED_INVENTORY("A Balanced Inventory", "Fill every slot in your inventory (including backpack if enabled)",
             new InventoryFullAchievementHandler()),
 
     HONEY_HONEY("Honey, honey, how you thrill me, aha, honey honey", "Harvest 2 full beehives with shears",
-            new BeehiveAchievementHandler(2)),
+            CountingAchievementHandler.beehiveHarvests(2)),
 
     GOLD_GOLD_GOLD("Gold Gold Gold", "Use the Wheel of Fortune 15 times in one game",
-            new WheelOfFortuneUsesAchievementHandler(15)),
+            CountingAchievementHandler.wheelsOfFortune(15)),
 
     // LOOT achievements
     LEGENDARY("Legendary", "Find a Legendary item in the Antimatter Depths",

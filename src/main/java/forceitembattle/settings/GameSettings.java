@@ -8,21 +8,12 @@ import org.bukkit.GameRules;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.plugin.java.JavaPlugin;
 
-/**
- * The plugin's configuration: loading it, the preset catalogue, and the Bukkit side effects two
- * settings carry.
- *
- * <p>Which value a setting has is not decided here — that is {@link Ruleset}, which owns the active
- * preset and therefore the path every read and write resolves to.
- */
+/** Loading, the preset catalogue and the gamerule side effects; which value a setting has is {@link Ruleset}'s. */
 public class GameSettings {
 
     private final JavaPlugin plugin;
 
-    /**
-     * The settings in force for the current round. Public so {@code /start} can point it at a
-     * preset; everything else goes through the delegating accessors below.
-     */
+    /** Public so {@code /start} can point it at a preset. */
     @Getter
     private final Ruleset ruleset;
 
@@ -39,9 +30,6 @@ public class GameSettings {
             this.plugin.getConfig().addDefault(gameSettings.configPath(), gameSettings.defaultValue());
         }
 
-        this.plugin.getConfig().addDefault("standard.countdown", 30);
-        this.plugin.getConfig().addDefault("standard.jokers", 3);
-
         if (!this.plugin.getConfig().isConfigurationSection("presets")) {
             this.plugin.getConfig().createSection("presets");
         }
@@ -57,7 +45,7 @@ public class GameSettings {
                 gamePreset.setPresetName(keys);
                 gamePreset.setCountdown(configurationSection.getInt("countdown"));
                 gamePreset.setJokers(configurationSection.getInt("jokers"));
-                gamePreset.setBackpackRows(configurationSection.getInt("backpackRows"));
+                gamePreset.setBackpackRows(configurationSection.getInt("backpackRows", 3));
 
                 // By configPath(), not the bare keys under `settings:` — those never match.
                 gamePreset.getGameSettings().clear();
@@ -81,11 +69,7 @@ public class GameSettings {
         return this.ruleset.enabled(gameSetting);
     }
 
-    /**
-     * Writes a setting, and applies the two that are also world state. The gamerule side effects stay
-     * here rather than in {@link Ruleset}: keeping Bukkit out is what lets the value rules be read
-     * without a server.
-     */
+    /** Gamerule side effects stay here so {@link Ruleset} needs no server. */
     public void setSettingEnabled(GameSetting gameSetting, boolean enabled) {
         if (gameSetting == GameSetting.KEEP_INVENTORY)
             Bukkit.getWorlds().forEach(worlds -> worlds.setGameRule(GameRules.KEEP_INVENTORY, enabled));
@@ -107,6 +91,17 @@ public class GameSettings {
         return this.ruleset.value(gameSetting);
     }
 
+    /** The active preset's own row count wins; presets keep it outside the settings section. */
+    public int backpackRows() {
+        GamePreset preset = this.ruleset.preset();
+        return preset != null ? preset.getBackpackRows() : this.getSettingValue(GameSetting.BACKPACKSIZE);
+    }
+
+    /** Run Battle already shares one row, so it overrides Mirror Battle. */
+    public boolean isMirrorBattle() {
+        return this.isSettingEnabled(GameSetting.MIRROR) && !this.isSettingEnabled(GameSetting.RUN);
+    }
+
     public QuickieMode getQuickieMode() {
         return QuickieMode.fromOrdinal(this.getSettingValue(GameSetting.QUICKIE));
     }
@@ -126,8 +121,11 @@ public class GameSettings {
             presetSection.set("jokers", gamePreset.getJokers());
             presetSection.set("backpackRows", gamePreset.getBackpackRows());
 
+            // Booleans only: the rows live under backpackRows, and writing false here would read back as 0.
             for (GameSetting gameSetting : GameSetting.values()) {
-                presetSection.set(gameSetting.configPath(), gamePreset.getGameSettings().contains(gameSetting));
+                if (gameSetting.defaultValue() instanceof Boolean) {
+                    presetSection.set(gameSetting.configPath(), gamePreset.getGameSettings().contains(gameSetting));
+                }
             }
         }
 

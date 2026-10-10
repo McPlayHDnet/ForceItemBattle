@@ -17,6 +17,7 @@ import javax.annotation.Nullable;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
+import org.bukkit.util.StringUtil;
 
 public final class CommandAchievement extends CustomCommand implements CustomTabCompleter {
 
@@ -58,48 +59,51 @@ public final class CommandAchievement extends CustomCommand implements CustomTab
         }
     }
 
-    private void handleListCommand(Player player, String[] args) {
-        UUID targetUUID;
-        String targetName;
+    private record Target(UUID uuid, String name) {
+    }
 
-        if (args.length == 1) {
-            targetUUID = player.getUniqueId();
-            targetName = player.getName();
-        } else {
-            OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
-            targetUUID = target.getUniqueId();
-            targetName = target.getName() != null ? target.getName() : args[1];
+    @Nullable
+    private static Target targetOf(Player player, String[] args) {
+        return args.length == 1 ? new Target(player.getUniqueId(), player.getName()) : named(player, args[1]);
+    }
+
+    /** Null after saying so. Cached players only: {@code getOfflinePlayer(name)} can block on a Mojang lookup. */
+    @Nullable
+    private static Target named(Player player, String name) {
+        OfflinePlayer cached = Bukkit.getOfflinePlayerIfCached(name);
+        if (cached == null) {
+            player.sendMessage(Text.of("<yellow>" + name + " <red>was not found"));
+            return null;
+        }
+        return new Target(cached.getUniqueId(), cached.getName() != null ? cached.getName() : name);
+    }
+
+    private void handleListCommand(Player player, String[] args) {
+        Target target = targetOf(player, args);
+        if (target == null) {
+            return;
         }
 
-        final String name = targetName;
-
-        this.achievementManager.getAchievementStorage().loadPlayer(targetUUID, () -> {
+        this.achievementManager.getAchievementStorage().loadPlayer(target.uuid(), () -> {
             if (!player.isOnline()) {
                 return;
             }
-            new AchievementCategoryInventory(this.gui, name, targetUUID).open(player);
+            new AchievementCategoryInventory(this.gui, target.name(), target.uuid()).open(player);
         });
     }
 
     private void handleGlobalCommand(Player player, String[] args) {
-        UUID targetUuid;
-        String targetName;
-
-        if (args.length == 1) {
-            targetUuid = player.getUniqueId();
-            targetName = player.getName();
-        } else {
-            OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
-            targetUuid = target.getUniqueId();
-            targetName = target.getName() != null ? target.getName() : args[1];
+        Target target = targetOf(player, args);
+        if (target == null) {
+            return;
         }
 
-        this.achievementManager.getGlobalStatsLoader().load(targetUuid, stats -> {
+        this.achievementManager.getGlobalStatsLoader().load(target.uuid(), stats -> {
             if (!player.isOnline()) {
                 return;
             }
             player.sendMessage(" ");
-            player.sendMessage(Text.of("<dark_gray>» <gold><b>Global Stats</b> <dark_gray>● <green>" + targetName + " <dark_gray>«"));
+            player.sendMessage(Text.of("<dark_gray>» <gold><b>Global Stats</b> <dark_gray>● <green>" + target.name() + " <dark_gray>«"));
             player.sendMessage(" ");
             for (GlobalStat stat : GlobalStat.values()) {
                 player.sendMessage(Text.of("  <dark_gray>● <gray>" + stat.getLabel()
@@ -116,17 +120,20 @@ public final class CommandAchievement extends CustomCommand implements CustomTab
             return;
         }
 
-        OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
+        Target target = named(player, args[1]);
+        if (target == null) {
+            return;
+        }
 
         Achievements achievement = parseAchievement(player, args[2]);
         if (achievement == null) {
             return;
         }
 
-        this.achievementManager.getAchievementStorage().addAchievement(target.getUniqueId(), achievement);
+        this.achievementManager.getAchievementStorage().addAchievement(target.uuid(), achievement);
 
         player.sendMessage(Text.of(
-                "<green>Successfully granted <yellow>" + achievement.getTitle() + " <green>to <yellow>" + target.getName()));
+                "<green>Successfully granted <yellow>" + achievement.getTitle() + " <green>to <yellow>" + target.name()));
     }
 
     private void handleRevokeCommand(Player player, String[] args) {
@@ -136,17 +143,20 @@ public final class CommandAchievement extends CustomCommand implements CustomTab
             return;
         }
 
-        OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
+        Target target = named(player, args[1]);
+        if (target == null) {
+            return;
+        }
 
         Achievements achievement = parseAchievement(player, args[2]);
         if (achievement == null) {
             return;
         }
 
-        this.achievementManager.getAchievementStorage().removeAchievement(target.getUniqueId(), achievement);
+        this.achievementManager.getAchievementStorage().removeAchievement(target.uuid(), achievement);
 
         player.sendMessage(Text.of(
-                "<green>Successfully revoked <yellow>" + achievement.getTitle() + " <green>from <yellow>" + target.getName()));
+                "<green>Successfully revoked <yellow>" + achievement.getTitle() + " <green>from <yellow>" + target.name()));
     }
 
     private void handleResetCommand(Player player, String[] args) {
@@ -156,12 +166,15 @@ public final class CommandAchievement extends CustomCommand implements CustomTab
             return;
         }
 
-        OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
+        Target target = named(player, args[1]);
+        if (target == null) {
+            return;
+        }
 
-        this.achievementManager.getAchievementStorage().resetPlayerAchievements(target.getUniqueId());
+        this.achievementManager.getAchievementStorage().resetPlayerAchievements(target.uuid());
 
         player.sendMessage(Text.of(
-                "<green>Successfully reset all achievements for <yellow>" + target.getName()));
+                "<green>Successfully reset all achievements for <yellow>" + target.name()));
     }
 
     private void handleProgressCommand(Player player, String[] args) {
@@ -243,10 +256,7 @@ public final class CommandAchievement extends CustomCommand implements CustomTab
         return List.of();
     }
 
-    /**
-     * The constant the argument names, or null after telling the player it does not exist. Every
-     * subcommand that takes an achievement argument refuses the same way.
-     */
+    /** Null after telling the player the achievement does not exist. */
     @Nullable
     private Achievements parseAchievement(Player player, String argument) {
         String achievementName = argument.toUpperCase();
@@ -260,8 +270,7 @@ public final class CommandAchievement extends CustomCommand implements CustomTab
     }
 
     private List<String> filter(List<String> options, String typed) {
-        String prefix = typed.toLowerCase();
-        return options.stream().filter(option -> option.toLowerCase().startsWith(prefix)).toList();
+        return StringUtil.copyPartialMatches(typed, options, new ArrayList<>());
     }
 
     private List<String> achievementNames() {

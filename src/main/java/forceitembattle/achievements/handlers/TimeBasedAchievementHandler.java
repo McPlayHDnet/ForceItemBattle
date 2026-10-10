@@ -1,6 +1,5 @@
 package forceitembattle.achievements.handlers;
 
-import forceitembattle.achievements.AchievementListener;
 import forceitembattle.achievements.AchievementWorld;
 import forceitembattle.achievements.Trigger;
 import forceitembattle.achievements.progress.TimeAchievementProgress;
@@ -122,10 +121,8 @@ public class TimeBasedAchievementHandler implements AchievementHandler<TimeAchie
                 return false;
             }
 
-            // Nobody else has a real find yet, and this player's owner has exactly the one just
-            // recorded. The find lands before this runs -- FoundItemListener is registered ahead of
-            // AchievementListener on the same event -- which is why the owner's own count may be 1.
-            // Skips are filtered out: a rival who merely skipped an item must not block this.
+            // The find is recorded before this runs (FoundItemListener is registered first), so the owner's
+            // own count may be 1. Skips don't count: a rival who only skipped must not block this.
             ScoreOwner own = forceItemPlayer.scoreOwner();
             boolean isFirstGlobally = world.scoreOwners().stream().allMatch(owner -> {
                 long collected = owner.foundItems().stream()

@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import forceitembattle.achievements.global.GlobalStatsCache;
 import forceitembattle.collection.CollectionManager;
 import forceitembattle.event.AntimatterTeleporterUseEvent;
 import forceitembattle.model.ForceItemPlayer;
@@ -19,6 +18,7 @@ import forceitembattle.settings.GameSettings;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Material;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.junit.jupiter.api.BeforeEach;
@@ -65,7 +65,7 @@ class AchievementManagerTest {
         // The stats loader is only reached by evaluateGlobalAchievements, which these tests do not
         // exercise: it needs a service to answer.
         manager = new AchievementManager(roster, phase, settings, mock(CollectionManager.class),
-                storage, new GlobalStatsCache(), null, new FakeAchievementWorld());
+                storage, new ConcurrentHashMap<>(), null, new FakeAchievementWorld());
     }
 
     private ForceItemPlayer join(String seed, int score) {

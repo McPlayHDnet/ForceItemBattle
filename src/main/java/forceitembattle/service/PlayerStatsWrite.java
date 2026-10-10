@@ -9,19 +9,8 @@ import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 /**
- * Routes a stat that belongs to <em>one player's own contribution</em> to whichever row records it:
- * their solo stats in a solo game, their member row inside the team in a team game.
- *
- * <p>Two suppliers rather than one value because the generated client has separate builders for solo
- * and member updates with no common supertype. Only the branch that runs is built.
- *
- * <p>Deliberately not for shared team stats (highest score, longest streak): those live on the team
- * row, are written once per team, and go through {@code StatisticsSink#updateTeam} guarded by
- * {@link forceitembattle.model.Team#isPrimaryWriter(ForceItemPlayer)}.
- *
- * <p><b>Who counts as a participant is decided here, not at the call sites</b>, so the next caller
- * cannot forget it. Leaving it to each site put a spectator's teleporter use on their solo row,
- * surfacing on the stats page as a player whose entire career is one teleporter use.
+ * One player's own contribution, to their solo row or their team member row. Shared team stats go
+ * through {@code updateTeam} instead. Participation is checked here so no caller can forget it.
  */
 public final class PlayerStatsWrite {
 
@@ -29,8 +18,7 @@ public final class PlayerStatsWrite {
     }
 
     /**
-     * @param self           the acting player's UUID — passed separately because it addresses the
-     *                       row, and the roster entry is consulted only to decide which row
+     * @param self            addresses the row; the roster entry only decides which one
      * @param forceItemPlayer the acting player's roster entry, or {@code null} if they have none
      */
     public static void record(StatisticsSink sink,

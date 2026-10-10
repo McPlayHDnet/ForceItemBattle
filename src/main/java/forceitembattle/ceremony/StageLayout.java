@@ -2,12 +2,7 @@ package forceitembattle.ceremony;
 
 import java.util.function.IntBinaryOperator;
 
-/**
- * Where everything on the result stage sits, in stage space: x to the audience's right, y up, z
- * towards the audience. The canvas is nothing built: it is the plane z = 0 the grid is laid out
- * on, in open sky. The audience sits at +z facing north, so stage space is world space shifted by the anchor,
- * with no rotation.
- */
+/** Stage space: x to the audience's right, y up, z towards the audience; world space shifted by the anchor, unrotated. */
 final class StageLayout {
 
     static final double CANVAS_WIDTH = 16.0;
@@ -152,10 +147,7 @@ final class StageLayout {
         return (int) (column / (TEXT_PIXEL * PODIUM_LABEL_SCALE));
     }
 
-    /**
-     * Whether a look from {@code eye} along {@code direction} passes through a button facing the
-     * audience. Vanilla only lets an entity be clicked from about three blocks, and the seats are ten out.
-     */
+    /** Vanilla only allows clicking an entity from about three blocks, and the seats are ten out. */
     static boolean hits(Point eye, Point direction, Point button) {
         if (direction.z() >= 0) {
             return false;
@@ -188,12 +180,7 @@ final class StageLayout {
         return (member - (members - 1) / 2.0) * spacing;
     }
 
-    /**
-     * The anchor height: clear of all terrain under the stage's footprint, but low enough that the
-     * canvas stays under the build limit.
-     *
-     * @param heightAt the highest block at a stage-space (x, z) offset from the anchor
-     */
+    /** @param heightAt the highest block at a stage-space (x, z) offset from the anchor */
     static int anchorY(IntBinaryOperator heightAt, int maxHeight) {
         int highest = Integer.MIN_VALUE;
         int back = (int) Math.ceil(SEAT_DISTANCE + 4 * ROW_DEPTH);

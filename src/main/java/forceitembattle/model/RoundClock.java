@@ -3,11 +3,7 @@ package forceitembattle.model;
 import java.util.OptionalInt;
 import java.util.Set;
 
-/**
- * How much of the round is left, and which seconds are worth announcing. Nothing here touches
- * Bukkit; {@code TimerManager} drives it once a second and renders whatever it reports. Not
- * thread-safe and does not need to be — the timer task is synchronous.
- */
+/** Not thread-safe; the timer task is synchronous. */
 public final class RoundClock {
 
     /** The seconds that get a title and a sound. */
@@ -44,10 +40,7 @@ public final class RoundClock {
         return this.secondsLeft <= 0;
     }
 
-    /**
-     * @return the second reached, when it is one worth announcing; empty otherwise. Expiry is not a
-     *         milestone, so the caller asks {@link #expired()} separately.
-     */
+    /** @return the second reached when worth announcing; expiry is not a milestone, see {@link #expired()} */
     public OptionalInt tick() {
         this.secondsLeft--;
 

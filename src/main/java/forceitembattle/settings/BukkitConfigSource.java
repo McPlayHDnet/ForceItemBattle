@@ -3,12 +3,6 @@ package forceitembattle.settings;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.plugin.java.JavaPlugin;
 
-/**
- * The live {@link ConfigSource}: the plugin's own {@code config.yml}.
- *
- * <p>Deliberately thin. Everything interesting about a setting — which path it lives at, and
- * therefore whether a preset is in force — is {@link Ruleset}'s job, and none of it needs a plugin.
- */
 @RequiredArgsConstructor
 public final class BukkitConfigSource implements ConfigSource {
 

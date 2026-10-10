@@ -37,10 +37,6 @@ public class PortalListener implements Listener {
     private final FIBServiceClient fibService;
     private final RoundPhase roundPhase;
     private final GameSettings settings;
-    /**
-     * Where each player's scatters have already sent them. The rule and the memory live there; this
-     * listener grounds a destination and moves the player, which is the half that needs a world.
-     */
     private final ScatterDestinations destinations;
 
     @EventHandler
@@ -51,9 +47,7 @@ public class PortalListener implements Listener {
             return;
         }
         Location playerLocation = player.getLocation();
-        // Chunk-local rather than a whole-world scan: this runs on every move packet of every
-        // player, and the teleporter markers themselves accumulate armour stands. 1.5 is a safe
-        // superset of the 1.0 detection radius re-checked below, so the verdict is unchanged.
+        // Chunk-local rather than a world scan: this runs on every move packet. 1.5 is a superset of the 1.0 radius below.
         Collection<ArmorStand> armorStands =
                 playerLocation.getWorld().getNearbyEntitiesByType(ArmorStand.class, playerLocation, 1.5);
         for (ArmorStand armorStand : armorStands) {

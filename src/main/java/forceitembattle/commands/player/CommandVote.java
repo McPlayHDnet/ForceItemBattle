@@ -7,10 +7,12 @@ import forceitembattle.commands.Precondition;
 import forceitembattle.manager.VoteSkipManager;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.Text;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.util.StringUtil;
 
 public final class CommandVote extends CustomCommand implements CustomTabCompleter {
 
@@ -65,9 +67,7 @@ public final class CommandVote extends CustomCommand implements CustomTabComplet
                     ? Arrays.asList("yes", "no", "cancel")
                     : Arrays.asList("yes", "no");
 
-            return options.stream()
-                    .filter(opt -> opt.startsWith(args[0].toLowerCase()))
-                    .toList();
+            return StringUtil.copyPartialMatches(args[0], options, new ArrayList<>());
         }
         return List.of();
     }

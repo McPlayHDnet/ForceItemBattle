@@ -26,7 +26,7 @@ class FindOutcomeTest {
 
     private static ForceItemPlayer finder(long assignedAt, int itemStreak) {
         ForceItemPlayer player = new ForceItemPlayer(Players.mockPlayer("a"), Material.DIRT, 3, 0);
-        player.setLastItemAssignedAt(assignedAt);
+        player.own().setLastItemAssignedAt(assignedAt);
         player.setItemStreak(itemStreak);
         return player;
     }

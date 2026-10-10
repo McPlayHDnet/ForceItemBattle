@@ -2,11 +2,7 @@ package forceitembattle.commands.admin;
 
 import forceitembattle.settings.GamePreset;
 
-/**
- * What a round is going to be, decided before anything is written: duration, jokers, and what has to
- * happen to teams — or a refusal naming which rule refused. Decides in numbers and names; one adapter
- * turns them into effects. Nothing here touches Bukkit, the plugin, the settings or the team manager.
- */
+/** What a round will be, decided before anything is written, or a refusal naming the rule that refused. */
 public sealed interface RoundStart {
 
     /** The most jokers a round may be started with by hand. */
@@ -35,10 +31,7 @@ public sealed interface RoundStart {
 
         BUILD,
 
-        /**
-         * Too few players. The setting is turned <em>off</em> and any teams cleared — load-bearing
-         * rather than tidiness, and the reason a round writes to config.
-         */
+        /** The setting is turned off and teams cleared, which is why a round writes to config. */
         TOO_FEW_PLAYERS
     }
 

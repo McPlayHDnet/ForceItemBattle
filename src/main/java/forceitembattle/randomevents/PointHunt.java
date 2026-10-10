@@ -1,12 +1,13 @@
 package forceitembattle.randomevents;
 
-import forceitembattle.model.Find;
 import forceitembattle.manager.ItemDifficultiesManager.State;
 import forceitembattle.manager.RoundSetup;
+import forceitembattle.model.Find;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.ScoreOwner;
 import forceitembattle.model.Team;
 import forceitembattle.settings.GameSetting;
+import forceitembattle.util.GameBroadcast;
 import forceitembattle.util.Prefix;
 import forceitembattle.util.Text;
 import forceitembattle.util.TimeFormat;
@@ -16,15 +17,10 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
-import org.bukkit.entity.Player;
 
 /**
- * A ten-minute scoring race. Every non-skipped find (back-to-backs included) scores by pool tier
- * — Early 1, Mid 2, Late 3 — and the top scorer at the end takes the Wheels.
- *
- * <p>Unlike the other events it resolves on its own clock rather than on a find, so it holds the
- * active slot the whole time and concludes from {@link #tick()}. That countdown is driven by the
- * manager's mid-game-only tick, so it freezes during a pause.
+ * Ten-minute race scored by pool tier (Early 1, Mid 2, Late 3). Resolves on its own clock from
+ * {@link #tick()}, which is mid-game only, so it freezes during a pause.
  */
 @RequiredArgsConstructor
 public class PointHunt implements RandomEvent {
@@ -46,11 +42,7 @@ public class PointHunt implements RandomEvent {
 
     private final EventContext context;
 
-    /**
-     * Keyed by {@link ScoreOwner}, so teammates share a tally and a solo player has their own.
-     * Identity keys: an owner is the live per-round instance and neither implementation overrides
-     * equals.
-     */
+    /** Identity keys: an owner is the live per-round instance and neither implementation overrides equals. */
     private final Map<ScoreOwner, Integer> points = new LinkedHashMap<>();
 
     private int secondsLeft = DURATION_SECONDS;
@@ -69,8 +61,7 @@ public class PointHunt implements RandomEvent {
                 : "<gray>The top scorer takes <yellow>" + SOLO_WHEELS + " Wheels of Fortune<gray>!";
         Bukkit.broadcast(Text.of(Prefix.RANDOM_EVENT + reward));
 
-        Bukkit.getOnlinePlayers().forEach(players ->
-                players.playSound(players.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1, 1.4f));
+        GameBroadcast.playToAll(Sound.BLOCK_NOTE_BLOCK_PLING, 1, 1.4f);
     }
 
     @Override
@@ -101,10 +92,7 @@ public class PointHunt implements RandomEvent {
         return true;
     }
 
-    /**
-     * Time only. Scores are deliberately not shown: the hunt is a race you play by finding items
-     * faster, not by watching a board.
-     */
+    /** Time only; scores are deliberately hidden. */
     @Override
     public String tabFooterBlock() {
         return "\n\n<b>" + RandomEvents.POINT_HUNT.coloredName() + "</b> <dark_gray>· "
@@ -117,8 +105,7 @@ public class PointHunt implements RandomEvent {
     }
 
     private void conclude() {
-        Bukkit.getOnlinePlayers().forEach(players ->
-                players.playSound(players.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1, 1));
+        GameBroadcast.playToAll(Sound.ENTITY_PLAYER_LEVELUP, 1, 1);
 
         List<Map.Entry<ScoreOwner, Integer>> ranked = this.points.entrySet().stream()
                 .sorted(Map.Entry.<ScoreOwner, Integer>comparingByValue().reversed())

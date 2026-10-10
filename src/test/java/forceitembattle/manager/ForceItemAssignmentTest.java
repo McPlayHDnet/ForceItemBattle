@@ -104,7 +104,7 @@ class ForceItemAssignmentTest {
             ForceItemPlayer one = joinPlaying("Understudy1");
             ForceItemPlayer two = joinPlaying("Understudy2");
 
-            assignment.beginRound(false);
+            assignment.beginRound(false, false);
 
             assertNotEquals(Material.BEDROCK, one.activeMaterial());
             assertNotEquals(Material.BEDROCK, two.activeMaterial());
@@ -115,7 +115,7 @@ class ForceItemAssignmentTest {
             ForceItemPlayer one = joinPlaying("Understudy1");
             ForceItemPlayer two = joinPlaying("Understudy2");
 
-            assignment.beginRound(false);
+            assignment.beginRound(false, false);
 
             assertNotEquals(one.activeMaterial(), two.activeMaterial(),
                     "outside run mode each owner hunts their own item");
@@ -133,7 +133,7 @@ class ForceItemAssignmentTest {
             ForceItemPlayer two = joinPlaying("Understudy2");
             pairUp(one, two);
 
-            assignment.beginRound(false);
+            assignment.beginRound(false, false);
 
             assertEquals(2, pool.randomDraws, "one owner, so one current and one next");
             assertEquals(one.activeMaterial(), two.activeMaterial(),
@@ -144,7 +144,7 @@ class ForceItemAssignmentTest {
         void spectatorsAreNotHandedAnything() {
             joinSpectating("Understudy1");
 
-            assignment.beginRound(false);
+            assignment.beginRound(false, false);
 
             assertEquals(0, pool.randomDraws);
         }
@@ -155,12 +155,37 @@ class ForceItemAssignmentTest {
             ForceItemPlayer one = joinPlaying("Understudy1");
             ForceItemPlayer two = joinPlaying("Understudy2");
 
-            assignment.beginRound(true);
+            assignment.beginRound(true, false);
 
             assertEquals(one.activeMaterial(), two.activeMaterial());
             assertEquals(one.activeNextMaterial(), two.activeNextMaterial());
             assertEquals(2, pool.seededDraws, "one pair for the server, drawn from the seeded pool");
             assertEquals(0, pool.randomDraws);
+        }
+    }
+
+    @Nested
+    class Mirrored {
+
+        @Test
+        @DisplayName("every owner walks the same row at their own pace")
+        void ownersWalkTheSameRowIndependently() {
+            ForceItemPlayer ahead = joinPlaying("Understudy1");
+            ForceItemPlayer behind = joinPlaying("Understudy2");
+            assignment.beginRound(false, true);
+
+            assertEquals(ahead.activeMaterial(), behind.activeMaterial());
+            assertEquals(2, pool.randomDraws, "the second owner reads the row, it does not draw");
+
+            assignment.advanceFor(ahead, false);
+            assignment.skipFor(ahead, false);
+            Material aheadsThird = ahead.activeMaterial();
+            assertEquals(Material.DIAMOND, behind.activeMaterial(), "someone else's progress is not mine");
+
+            assignment.advanceFor(behind, false);
+            assignment.advanceFor(behind, false);
+            assertEquals(aheadsThird, behind.activeMaterial());
+            assertEquals(4, pool.randomDraws, "catching up reads what the leader already drew");
         }
     }
 
@@ -171,7 +196,7 @@ class ForceItemAssignmentTest {
         void onlyTheFindersOwnerMoves() {
             ForceItemPlayer finder = joinPlaying("Understudy1");
             ForceItemPlayer other = joinPlaying("Understudy2");
-            assignment.beginRound(false);
+            assignment.beginRound(false, false);
             Material othersItem = other.activeMaterial();
 
             assignment.advanceFor(finder, false);
@@ -184,7 +209,7 @@ class ForceItemAssignmentTest {
         void runModeAdvancesEveryone() {
             ForceItemPlayer finder = joinPlaying("Understudy1");
             ForceItemPlayer other = joinPlaying("Understudy2");
-            assignment.beginRound(true);
+            assignment.beginRound(true, false);
             int drawsAfterStart = pool.seededDraws;
 
             assignment.advanceFor(finder, true);
@@ -203,7 +228,7 @@ class ForceItemAssignmentTest {
             ForceItemPlayer one = joinPlaying("Understudy1");
             ForceItemPlayer two = joinPlaying("Understudy2");
             pairUp(one, two);
-            assignment.beginRound(false);
+            assignment.beginRound(false, false);
             Material queued = one.activeNextMaterial();
 
             assignment.advanceFor(one, false);
@@ -221,7 +246,7 @@ class ForceItemAssignmentTest {
         void everyOwnerGetsTheSameNewPair() {
             ForceItemPlayer one = joinPlaying("Understudy1");
             ForceItemPlayer two = joinPlaying("Understudy2");
-            assignment.beginRound(false);
+            assignment.beginRound(false, false);
 
             assignment.skipAll(one, false);
 
@@ -232,7 +257,7 @@ class ForceItemAssignmentTest {
         @Test
         void someoneNotInTheRoundSkipsNothing() {
             ForceItemPlayer inRound = joinPlaying("Understudy1");
-            assignment.beginRound(false);
+            assignment.beginRound(false, false);
             Material before = inRound.activeMaterial();
 
             Player stranger = mock(Player.class);
@@ -246,7 +271,7 @@ class ForceItemAssignmentTest {
         @Test
         void aSkipLeavesTheFindClockAlone() {
             ForceItemPlayer one = joinPlaying("Understudy1");
-            assignment.beginRound(false);
+            assignment.beginRound(false, false);
             long assignedAt = one.scoreOwner().itemAssignedAt();
 
             assignment.skipAll(one, false);
@@ -257,7 +282,7 @@ class ForceItemAssignmentTest {
         @Test
         void andLeavesTheScoreAlone() {
             ForceItemPlayer one = joinPlaying("Understudy1");
-            assignment.beginRound(false);
+            assignment.beginRound(false, false);
             int score = one.scoreOwner().score();
 
             assignment.skipAll(one, false);
@@ -274,7 +299,7 @@ class ForceItemAssignmentTest {
         void onlyTheTargetMoves() {
             ForceItemPlayer target = joinPlaying("Understudy1");
             ForceItemPlayer other = joinPlaying("Understudy2");
-            assignment.beginRound(false);
+            assignment.beginRound(false, false);
             Material othersItem = other.activeMaterial();
             Material othersNext = other.activeNextMaterial();
             Material queued = target.activeNextMaterial();
@@ -290,7 +315,7 @@ class ForceItemAssignmentTest {
         @Test
         void theFindClockIsLeftAlone() {
             ForceItemPlayer target = joinPlaying("Understudy1");
-            assignment.beginRound(false);
+            assignment.beginRound(false, false);
             long assignedAt = target.scoreOwner().itemAssignedAt();
 
             assignment.skipFor(target, false);
@@ -301,7 +326,7 @@ class ForceItemAssignmentTest {
         @Test
         void aSpectatorIsNotSkipped() {
             ForceItemPlayer spectator = joinPlaying("Understudy1");
-            assignment.beginRound(false);
+            assignment.beginRound(false, false);
             spectator.setSpectator(true);
             Material before = spectator.activeMaterial();
 
@@ -315,7 +340,7 @@ class ForceItemAssignmentTest {
         void runModeSkipsTheSharedItem() {
             ForceItemPlayer target = joinPlaying("Understudy1");
             ForceItemPlayer other = joinPlaying("Understudy2");
-            assignment.beginRound(true);
+            assignment.beginRound(true, false);
             Material shared = target.activeMaterial();
 
             assignment.skipFor(target, true);
@@ -384,7 +409,7 @@ class ForceItemAssignmentTest {
         void aForcedRowStaysWithItsOwner() {
             ForceItemPlayer admin = joinPlaying("Admin");
             ForceItemPlayer bystander = joinPlaying("Understudy1");
-            assignment.beginRound(false);
+            assignment.beginRound(false, false);
 
             assignment.force(admin.scoreOwner(),
                     List.of(Material.CAKE, Material.TORCH, Material.ANVIL), false);
@@ -419,7 +444,7 @@ class ForceItemAssignmentTest {
         void runModeSharesTheForcedRowToo() {
             ForceItemPlayer admin = joinPlaying("Admin");
             ForceItemPlayer other = joinPlaying("Understudy1");
-            assignment.beginRound(true);
+            assignment.beginRound(true, false);
 
             assignment.force(admin.scoreOwner(),
                     List.of(Material.CAKE, Material.TORCH, Material.ANVIL), true);
@@ -435,7 +460,7 @@ class ForceItemAssignmentTest {
             assignment.force(one.scoreOwner(),
                     List.of(Material.CAKE, Material.TORCH, Material.ANVIL), false);
 
-            assignment.beginRound(false);
+            assignment.beginRound(false, false);
 
             assertTrue(one.activeMaterial() != Material.ANVIL && one.activeNextMaterial() != Material.ANVIL,
                     "a row queued before the round must not open the next one");

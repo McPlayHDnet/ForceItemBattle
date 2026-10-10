@@ -17,13 +17,8 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 
 /**
- * The single writer of the player-list footer; {@link WanderingTraderManager} and the random events
- * only expose state and never touch it.
- *
- * <p>Refreshed once per second from {@link TimerManager}'s tick, <em>after</em> the pool-unlock poll
- * and after the event clock advances. That ordering is what makes the pool countdown flip to
- * "active" on the exact tick the unlock is announced, and a concluding event's block disappear on
- * the tick its winner is.
+ * The single writer of the player-list footer. Refreshed from TimerManager's tick after the pool poll
+ * and event clock, so a countdown flips on the same tick its unlock is announced.
  */
 public class TabListManager implements Manager {
     private final Roster roster;
@@ -86,10 +81,7 @@ public class TabListManager implements Manager {
         return line.toString();
     }
 
-    /**
-     * Always the overworld, whichever dimension the reader is standing in: the nether and end have no
-     * day cycle, so a player checking whether it is safe to go back up wants the surface clock.
-     */
+    /** Always the overworld: the nether and end have no day cycle. */
     private String buildTimeLine() {
         World world = Dimension.OVERWORLD.world();
         if (world == null) {
@@ -103,10 +95,7 @@ public class TabListManager implements Manager {
                 + " <dark_gray>(<gray>" + (day ? "Day" : "Night") + "<dark_gray>)";
     }
 
-    /**
-     * Nothing when the icon map is missing: {@code getUnicodeFromMaterial} falls back to the literal
-     * string "NULL", which would sit in everyone's tab list forever.
-     */
+    /** Empty when the icon map is missing, since {@code getUnicodeFromMaterial} falls back to the literal "NULL". */
     private String clockIcon() {
         String icon = this.itemDifficultiesManager
                 .getUnicodeFromMaterial(true, Material.CLOCK);

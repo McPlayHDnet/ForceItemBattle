@@ -113,7 +113,7 @@ class ItemBuilderTest {
     @Test
     void itemFlagsAreApplied() {
         ItemStack stack = new ItemBuilder(Material.DIAMOND_SWORD)
-                .addItemFlag(ItemFlag.HIDE_ATTRIBUTES)
+                .addItemFlags(ItemFlag.HIDE_ATTRIBUTES)
                 .getItemStack();
 
         assertTrue(stack.getItemMeta().hasItemFlag(ItemFlag.HIDE_ATTRIBUTES));

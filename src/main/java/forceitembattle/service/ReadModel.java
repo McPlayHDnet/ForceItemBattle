@@ -35,23 +35,12 @@ import java.util.Set;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 
-/**
- * The one place that speaks both the vendor's vocabulary and the game's, so a regenerated client
- * cannot reach into GUIs, commands and the achievement package.
- *
- * <p>Everything here is a translation and nothing here is a rule. Null-tolerance is the exception:
- * every generated field is boxed and can arrive null, and deciding that an absent count is zero is
- * a translation decision, made once here rather than at forty call sites.
- */
+/** The only class that speaks both the generated vocabulary and the game's. Absent counts become zero here. */
 final class ReadModel {
 
     private ReadModel() {
     }
 
-    /**
-     * Every list the vendor hands back is nullable and every one of them maps element-wise onto a
-     * game-side record, so the null-to-empty decision lives here rather than once per translation.
-     */
     private static <D, T> List<T> mapped(@Nullable List<D> dtos, Function<D, T> mapper) {
         return dtos == null ? List.of() : dtos.stream().map(mapper).toList();
     }
@@ -107,11 +96,7 @@ final class ReadModel {
                 null, List.of());
     }
 
-    /**
-     * Rarities come from {@code getTeamRarities()}, not {@code getRarities()}: a back-to-back in a
-     * team game belongs to the team. Keying the per-rarity tally to whoever held the item makes the
-     * global rarity achievements fill up for one member and stall for the other.
-     */
+    /** Team rarities, not personal ones: a team back-to-back belongs to the team, or one member's achievements stall. */
     static StatsView combinedTeamStats(FibPlayerCombinedTeamStatsDto stats) {
         return new StatsView(
                 value(stats.getTotalGamesPlayed()), value(stats.getTotalGamesWon()),

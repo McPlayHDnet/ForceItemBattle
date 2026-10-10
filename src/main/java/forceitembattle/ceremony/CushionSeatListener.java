@@ -5,10 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
-/**
- * A cushion is block-attached: with nothing under it, it breaks and drops itself at the next
- * physics check. The stage's cushions float by design, so they are held together here.
- */
+/** Cushions are block-attached and break when floating; the stage's cushions float, so they are held here. */
 @RequiredArgsConstructor
 public class CushionSeatListener implements Listener {
     private final ResultStage stage;

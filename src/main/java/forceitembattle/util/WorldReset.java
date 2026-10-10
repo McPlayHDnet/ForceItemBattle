@@ -11,17 +11,7 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.bukkit.Bukkit;
 
-/**
- * Wiping the world and restarting the server onto a fresh one.
- *
- * <p>None of this runs inline: the world directory cannot be deleted while the server still holds
- * it open, so {@link #scheduleReset} resets nothing itself — it registers a shutdown hook and asks
- * the server to restart, and the work happens on the way down.
- *
- * <p>Split out of {@code ForceItemBattle} because none of it is composition. It is file and process
- * work that merely happens to be reachable from a command, and it was the largest thing in that
- * class with nothing to do with wiring managers together.
- */
+/** The world can't be deleted while the server holds it, so the work runs from a shutdown hook during restart. */
 public final class WorldReset {
 
     /** Where the datapack zip ships, i.e. the plugin's own data folder. */
@@ -31,12 +21,7 @@ public final class WorldReset {
         this.dataFolder = dataFolder;
     }
 
-    /**
-     * Deletes the world and restarts onto {@code seed}, or onto a random one when it is null.
-     *
-     * <p>The seed is written before the delete, so a failure there still leaves a server that boots
-     * — on the old seed rather than on none.
-     */
+    /** The seed is written before the delete, so a failed delete still boots, on the old seed. */
     public void scheduleReset(Long seed) {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {

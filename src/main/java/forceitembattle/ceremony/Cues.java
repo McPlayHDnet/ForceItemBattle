@@ -11,10 +11,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
-/**
- * One timer for the whole stage, so tearing it down cancels every pending step at once rather than
- * leaving dozens of delayed tasks to fire into removed entities.
- */
+/** One timer for the whole stage, so teardown cancels every pending step at once. */
 final class Cues {
 
     private final NavigableMap<Long, List<Runnable>> byTick = new TreeMap<>();

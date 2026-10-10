@@ -10,6 +10,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -20,9 +21,8 @@ public class CollectionManager implements Manager {
 
     private final ItemDifficultiesManager itemDifficultiesManager;
 
-    private final FoundItemsCache foundItemsCache;
+    private final Map<UUID, Map<String, CollectedItem>> foundItemsCache = new ConcurrentHashMap<>();
     private final FoundItemsLoader foundItemsLoader;
-    private final ItemRarityCache itemRarityCache;
     private final ItemRarityLoader itemRarityLoader;
     
     private final Map<Material, String> displayNames = new ConcurrentHashMap<>();
@@ -35,29 +35,21 @@ public class CollectionManager implements Manager {
 
     public CollectionManager(ItemDifficultiesManager itemDifficultiesManager, FIBServiceClient fibService) {
         this.itemDifficultiesManager = itemDifficultiesManager;
-        this.foundItemsCache = new FoundItemsCache();
         this.foundItemsLoader = new FoundItemsLoader(fibService, this.foundItemsCache);
-        this.itemRarityCache = new ItemRarityCache();
-        this.itemRarityLoader = new ItemRarityLoader(fibService, this.itemRarityCache);
+        this.itemRarityLoader = new ItemRarityLoader(fibService);
     }
 
     @Override
     public void disable() {
         this.foundItemsCache.clear();
-        this.itemRarityCache.clear();
+        this.itemRarityLoader.clear();
     }
 
     public String displayNameOf(Material material) {
         return this.displayNames.computeIfAbsent(material, CustomMaterials::nameOf);
     }
 
-    /**
-     * Every collectable item's namespaced key — the target set the collection achievements are
-     * measured against, and the "everything" axis of the book.
-     *
-     * <p>Built lazily rather than in {@link #enable()} on purpose: it reads the item registry, so
-     * computing it on first use avoids depending on manager registration order.
-     */
+    /** Built lazily: it reads the item registry, so building it in enable() would depend on manager order. */
     public Set<String> getCollectionCatalogue() {
         if (this.collectionCatalogue == null) {
             this.collectionCatalogue = this.itemDifficultiesManager.getCollectableItems().stream()
@@ -67,10 +59,6 @@ public class CollectionManager implements Manager {
         return this.collectionCatalogue;
     }
 
-    /**
-     * The same catalogue, bucketed for display and sorted within each category. Built once and
-     * shared by the book and every category page, so nothing re-buckets per open.
-     */
     public Map<CollectionCategory, List<Material>> getCollectionBuckets() {
         if (this.collectionBuckets == null) {
             Map<CollectionCategory, List<Material>> buckets = new EnumMap<>(CollectionCategory.class);

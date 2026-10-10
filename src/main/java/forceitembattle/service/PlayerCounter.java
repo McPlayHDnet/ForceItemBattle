@@ -4,14 +4,7 @@ import de.threeseconds.openapi.fibservice.client.model.FibSoloStatisticsUpdateRe
 import de.threeseconds.openapi.fibservice.client.model.FibTeamMemberStatsUpdateRequestDto;
 import java.util.function.BiFunction;
 
-/**
- * A running total the game keeps about one player's own doing, named in the game's words rather than
- * the generated client's.
- *
- * <p>Each is stored twice — on a player's solo row and on their member row inside a team — and the
- * two builders have no common supertype. Pairing them once here leaves the caller naming a counter
- * and an amount, and puts the only place the two halves can drift behind the seam.
- */
+/** Each counter is stored on the solo row and the member row, whose builders share no supertype. */
 public enum PlayerCounter {
 
     DEATHS(

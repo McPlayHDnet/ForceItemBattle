@@ -50,21 +50,11 @@ public class ScoreboardManager implements Manager {
         updateForPlayer(viewer, buildNameplates());
     }
 
-    /**
-     * One rostered player's row, as it appears on <em>every</em> board: none of it depends on who is
-     * looking.
-     */
+    /** Independent of the viewer, so one instance is shared by every board. */
     private record Nameplate(String teamName, Component prefix, Component suffix, Player target) {
     }
 
-    /**
-     * Builds every row once.
-     *
-     * <p>This used to happen inside {@link #updateForPlayer(Player)}, which meant one sort and two
-     * MiniMessage parses per rostered player <em>per viewer</em> — quadratic in the player count, on
-     * a method called on every find. Components are immutable, so a single instance is safe to hand
-     * to every board.
-     */
+    /** Built once per update rather than per viewer, which was quadratic on every find. */
     private List<Nameplate> buildNameplates() {
         List<Nameplate> nameplates = new ArrayList<>();
 

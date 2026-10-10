@@ -3,13 +3,7 @@ package forceitembattle.model.stats;
 import java.time.OffsetDateTime;
 import javax.annotation.Nullable;
 
-/**
- * One record of a player unlocking an achievement: which one, whether they were solo or in a team,
- * with whom, and when.
- *
- * <p>An achievement can be unlocked more than once — once solo and once per teammate — which is why
- * the GUI holds a list per achievement id rather than a flag.
- */
+/** Can be unlocked more than once (solo and per teammate), so the GUI holds a list per id. */
 public record AchievementUnlock(String achievementId, @Nullable String mode,
                                 @Nullable PlayerIdentity teammate,
                                 @Nullable OffsetDateTime unlockedAt) {

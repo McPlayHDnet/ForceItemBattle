@@ -20,17 +20,10 @@ public class ActiveTrader {
     /** The offers this trader was spawned with, copied per player into their own merchant. */
     private final List<MerchantRecipe> recipes;
 
-    /**
-     * One wheel purchase per player per spawn. Only the wandering trader enforces this — its
-     * wheel offer has unlimited uses, whereas the special trader's offers are capped at one each.
-     */
+    /** Only the wandering trader needs this: its wheel offer has unlimited uses. */
     private final Map<UUID, Boolean> canBuyWheel = new HashMap<>();
 
-    /**
-     * Per-player use counts, keyed by recipe index. Merchants are rebuilt from the templates on
-     * every open, and a fresh MerchantRecipe starts at zero uses — so the count has to live here,
-     * on the trader, or players could reset their own limits by closing and reopening.
-     */
+    /** Lives on the trader because merchants are rebuilt on every open, which would reset the counts. */
     private final Map<UUID, Map<Integer, Integer>> uses = new HashMap<>();
 
     public int usesOf(UUID playerUuid, int recipeIndex) {

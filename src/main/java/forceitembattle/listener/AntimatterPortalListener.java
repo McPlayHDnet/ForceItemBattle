@@ -28,12 +28,8 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 
 /**
- * Turns a Totem of Antimatter placed in an Antimatter Depths portal vault into an open portal, and
- * walks its owner through when they step into it.
- *
- * <p>The vanilla vault interaction is cancelled rather than used: a vault has no "unlocked" hook to
- * hang the portal off, and letting it run would put its own per-player unlock bookkeeping in charge
- * of who may open a portal, on top of ours.
+ * The vanilla vault interaction is cancelled: a vault has no "unlocked" hook, and its per-player
+ * unlock bookkeeping would otherwise decide who may open a portal.
  */
 @RequiredArgsConstructor
 public class AntimatterPortalListener implements Listener {
@@ -79,11 +75,7 @@ public class AntimatterPortalListener implements Listener {
         }
     }
 
-    /**
-     * Writes the reduced stack back explicitly rather than mutating the one the event handed us:
-     * whether that is a live mirror of the slot or a copy is an implementation detail, and a totem
-     * surviving its own portal is an easy exploit.
-     */
+    /** Writes the reduced stack back explicitly: the event's stack may be a copy, and a surviving totem is an exploit. */
     private void consumeOneFromMainHand(Player player) {
         ItemStack hand = player.getInventory().getItemInMainHand();
         int left = hand.getAmount() - 1;
@@ -119,10 +111,7 @@ public class AntimatterPortalListener implements Listener {
         }
     }
 
-    /**
-     * Flags the player, so the move events the teleport itself generates cannot re-enter and bounce
-     * them straight back out.
-     */
+    /** Flags the player so the teleport's own move events cannot bounce them straight back out. */
     private void travel(Player player, java.util.function.Consumer<Player> destination) {
         this.travelling.add(player.getUniqueId());
         try {

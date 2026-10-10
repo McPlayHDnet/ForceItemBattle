@@ -78,11 +78,11 @@ class TeamTest {
     @Test
     void foundItemsAreExposedButNotMutable() {
         Team team = team(player("a"));
-        team.addFoundItemToList(null); // nulls are ignored rather than stored
+        team.addFoundItem(null); // nulls are ignored rather than stored
 
-        assertEquals(0, team.getFoundItems().size());
+        assertEquals(0, team.foundItems().size());
         org.junit.jupiter.api.Assertions.assertThrows(UnsupportedOperationException.class,
-                () -> team.getFoundItems().add(null));
+                () -> team.foundItems().add(null));
     }
 
     @Test

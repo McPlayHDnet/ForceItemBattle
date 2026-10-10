@@ -6,16 +6,8 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
 /**
- * The plugin's entry point to the Bukkit scheduler.
- *
- * <p>The repeating pair takes a {@link BukkitRunnable}, not a {@link Runnable}, and that is
- * load-bearing: nine repeating bodies end with {@code this.cancel()} and three more are cancelled
- * from outside through the returned {@link BukkitTask}. Bukkit's {@code Consumer<BukkitTask>}
- * overload serves the first group but returns void, so it cannot serve the second.
- *
- * <p><b>Deliberately static</b> — the one module exempt from the rule {@code NoServiceLocatorTest}
- * pins, because injecting a stateless facility with no alternative implementation would put a
- * constructor parameter on every class that schedules.
+ * Static on purpose, the one exemption from {@code NoServiceLocatorTest}. The repeating pair takes a
+ * {@link BukkitRunnable} so bodies can {@code cancel()} themselves and still return a {@link BukkitTask}.
  */
 public final class Scheduler {
 
@@ -28,11 +20,7 @@ public final class Scheduler {
         Scheduler.plugin = plugin;
     }
 
-    /**
-     * For tests, from {@code @AfterEach} beside {@code unmock()}. This field is static and outlives
-     * the server a test class mocks, so without it the next class to schedule hands work to a
-     * torn-down plugin and passes or fails on class ordering.
-     */
+    /** For tests' {@code @AfterEach}: the static field outlives the mocked server, which leaks between test classes. */
     public static void reset() {
         Scheduler.plugin = null;
     }
@@ -43,10 +31,6 @@ public final class Scheduler {
 
     public static BukkitTask runSync(Runnable runnable) {
         return Bukkit.getScheduler().runTask(plugin, runnable);
-    }
-
-    public static BukkitTask runLaterAsync(Runnable runnable, long delay) {
-        return Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, runnable, delay);
     }
 
     public static BukkitTask runLaterSync(Runnable runnable, long delay) {

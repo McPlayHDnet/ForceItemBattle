@@ -2,30 +2,30 @@ package forceitembattle.gui;
 
 import java.util.List;
 import java.util.UUID;
-import lombok.Setter;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
 
 public class RecipeViewer {
 
-    private final int pages;
+    private final UUID uuid;
+    private final ItemStack itemStack;
     private final List<Recipe> recipes;
-    @Setter
-    private UUID uuid;
-    @Setter
-    private ItemStack itemStack;
-    @Setter
-    private Recipe recipe;
-    @Setter
     private int currentRecipeIndex;
 
-    public RecipeViewer(List<Recipe> recipes) {
+    public RecipeViewer(UUID uuid, ItemStack itemStack, List<Recipe> recipes) {
+        this.uuid = uuid;
+        this.itemStack = itemStack;
         this.recipes = recipes;
-        this.pages = recipes.size();
     }
 
-    public List<Recipe> recipes() {
-        return recipes;
+    /** Moves by {@code delta} pages; false, and nothing moves, when that would run off either end. */
+    public boolean turn(int delta) {
+        int next = this.currentRecipeIndex + delta;
+        if (next < 0 || next >= this.pages()) {
+            return false;
+        }
+        this.currentRecipeIndex = next;
+        return true;
     }
 
     public UUID uuid() {
@@ -37,7 +37,7 @@ public class RecipeViewer {
     }
 
     public Recipe recipe() {
-        return recipe;
+        return recipes.get(currentRecipeIndex);
     }
 
     public int currentRecipeIndex() {
@@ -45,6 +45,6 @@ public class RecipeViewer {
     }
 
     public int pages() {
-        return pages;
+        return recipes.size();
     }
 }

@@ -4,10 +4,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 import org.bukkit.Material;
 
-/**
- * Whoever owns the score a find is credited to: the {@link Team} in a team game, the player
- * themselves when solo. Every value it holds is shared when a team shares it.
- */
+/** The {@link Team} in a team game, the player when solo. */
 public interface ScoreOwner {
 
     Material material();

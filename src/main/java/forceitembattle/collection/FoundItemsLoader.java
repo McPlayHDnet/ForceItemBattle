@@ -5,22 +5,13 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-/**
- * Read-through for {@link FoundItemsCache}: a cache hit delivers immediately; a miss fetches the
- * player's collection from match history — already as {@link CollectedItem}, the conversion having
- * moved behind the service seam — caches it, and delivers. Single source, so there is no fan-in gate (unlike GlobalStatsLoader).
- * The client's async callbacks are already dispatched on the main thread by ApiExecutor.
- *
- * On error we deliver an empty map but do NOT cache it: an empty collection has real meaning
- * ("collected nothing"), so caching a transient failure would wrongly stall achievement progress
- * until the next match. Not caching lets the next load retry.
- */
+/** An error delivers an empty map but is not cached: an empty collection is a real answer, so the next load retries. */
 public class FoundItemsLoader {
 
     private final FIBServiceClient fibService;
-    private final FoundItemsCache cache;
+    private final Map<UUID, Map<String, CollectedItem>> cache;
 
-    public FoundItemsLoader(FIBServiceClient fibService, FoundItemsCache cache) {
+    public FoundItemsLoader(FIBServiceClient fibService, Map<UUID, Map<String, CollectedItem>> cache) {
         this.fibService = fibService;
         this.cache = cache;
     }

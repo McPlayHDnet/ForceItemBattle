@@ -24,13 +24,7 @@ import java.util.UUID;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 
-/**
- * Assembles and submits one round's match history to FIBService, then broadcasts the link to it.
- *
- * <p>Telemetry, not game loop: it observes a round and produces a payload. The game loop tells it
- * when the round starts, pauses, moves in the standings and ends, and otherwise does not know it
- * exists. All state here is per-match and reset by {@link #beginMatch(UUID)}.
- */
+/** Telemetry, not game loop. All state is per-match and reset by {@link #beginMatch(UUID)}. */
 public class MatchHistoryReporter {
 
     private static final String MATCH_STATS_URL = "https://forceitembattle.net/stats?view=match&id=";
@@ -50,10 +44,7 @@ public class MatchHistoryReporter {
     /** Guard so the stats link is broadcast exactly once per match. */
     private boolean linkShared;
 
-    /**
-     * Closed [start, end] millis pairs, so submit time can subtract the pause overlap from each
-     * item's window and {@code seconds_taken} reflects play time rather than wall time.
-     */
+    /** Closed [start, end] millis pairs, subtracted at submit so seconds_taken is play time, not wall time. */
     private final List<long[]> pauseIntervals = new ArrayList<>();
 
     /** Wall-clock millis when the current pause began, or 0 when the game is not paused. */
@@ -105,11 +96,7 @@ public class MatchHistoryReporter {
         this.tryShareLink();
     }
 
-    /**
-     * @param onPersisted runs once the PUT lands, before the link is shared — the game loop uses it to
-     *                    evaluate collection achievements against a match the service now knows about,
-     *                    rather than a game late
-     */
+    /** @param onPersisted runs once the PUT lands, so collection achievements see this match */
     public void submit(Map<ForceItemPlayer, Integer> placesMap,
                        Map<Team, Integer> teamPlaces,
                        int durationSeconds,
@@ -184,7 +171,7 @@ public class MatchHistoryReporter {
         List<FibMatchItemSubmitDto> items = new ArrayList<>();
         if (teamMode) {
             for (Team team : this.teamManager.getTeams()) {
-                appendItems(items, team.getFoundItems(), null, team.getTeamId());
+                appendItems(items, team.foundItems(), null, team.getTeamId());
             }
         } else {
             for (ForceItemPlayer forceItemPlayer : roster.values()) {
@@ -219,11 +206,7 @@ public class MatchHistoryReporter {
         }
     }
 
-    /**
-     * The play time each of one owner's finds took, in order. The first is measured from the match
-     * start, every later one from the owner's previous hand-in; from timestamps, because
-     * {@code ForceItem.timeNeeded} is the clock's display string, not a duration.
-     */
+    /** From timestamps, since {@code ForceItem.timeNeeded} is a display string, not a duration. */
     public List<Long> secondsTaken(List<ForceItem> found) {
         List<Long> seconds = new ArrayList<>(found.size());
         long previousMillis = this.startedAtMillis;
@@ -241,10 +224,6 @@ public class MatchHistoryReporter {
         return pausedMillisWithin(this.pauseIntervals, fromMillis, toMillis);
     }
 
-    /**
-     * The milliseconds of pause overlapping [fromMillis, toMillis]. Static and taking the intervals
-     * rather than reading the field, so the arithmetic can be tested against hand-built intervals.
-     */
     static long pausedMillisWithin(List<long[]> intervals, long fromMillis, long toMillis) {
         long paused = 0L;
         for (long[] interval : intervals) {
@@ -257,10 +236,7 @@ public class MatchHistoryReporter {
         return paused;
     }
 
-    /**
-     * Only once the match is persisted (so the page exists) and the full /result reveal has finished
-     * — any earlier and the link spoils the winner.
-     */
+    /** Only once the match is persisted and the /result reveal is over; earlier would spoil the winner. */
     private void tryShareLink() {
         if (!this.linkReady || !this.resultsRevealed || this.linkShared) {
             return;

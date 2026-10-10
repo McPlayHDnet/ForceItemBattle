@@ -3,13 +3,14 @@ package forceitembattle.commands.player;
 import forceitembattle.commands.CustomCommand;
 import forceitembattle.commands.CustomTabCompleter;
 import forceitembattle.commands.Precondition;
-import forceitembattle.model.stats.DuoLeaderboardEntry;
 import forceitembattle.model.stats.LeaderboardEntry;
 import forceitembattle.model.stats.PlayerIdentity;
 import forceitembattle.service.FIBServiceClient;
 import forceitembattle.service.FibStatisticsClient;
 import forceitembattle.util.Text;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import org.bukkit.entity.Player;
 
 public final class CommandLeaderboard extends CustomCommand implements CustomTabCompleter {
@@ -54,7 +55,9 @@ public final class CommandLeaderboard extends CustomCommand implements CustomTab
 
         // "achievements" ranks by achievement count and takes no category argument.
         if (scope.equals("achievements")) {
-            showAchievementLeaderboard(player);
+            this.fibService.achievements().achievementLeaderboard(TOP_LIMIT,
+                    board(player, header("Leaderboard", "Achievements"), entry -> row(entry, "")),
+                    error -> sendError(player));
             return;
         }
 
@@ -64,111 +67,49 @@ public final class CommandLeaderboard extends CustomCommand implements CustomTab
             return;
         }
 
+        String suffix = category.equals("blocks_travelled") ? " blocks" : "";
+        String categoryName = formatCategoryName(category);
+
         switch (scope) {
-            case "duo" -> showDuoLeaderboard(player, helper, category);
-            case "teams" -> showTeamsLeaderboard(player, helper, category);
-            default -> showSoloLeaderboard(player, helper, category);
+            case "duo" -> helper.duoLeaderboard(category, TOP_LIMIT,
+                    board(player, header("Duo Leaderboard", categoryName), entry -> row(entry.rank(),
+                            PlayerIdentity.displayName(entry.player1(), "?") + " <dark_gray>& <green>"
+                                    + PlayerIdentity.displayName(entry.player2(), "?"),
+                            entry.value(), suffix)),
+                    error -> sendError(player));
+            case "teams" -> helper.combinedTeamLeaderboard(category, TOP_LIMIT,
+                    board(player, header("Teams Leaderboard", categoryName), entry -> row(entry, suffix)),
+                    error -> sendError(player));
+            default -> helper.soloLeaderboard(category, TOP_LIMIT,
+                    board(player, header("Leaderboard", categoryName), entry -> row(entry, suffix)),
+                    error -> sendError(player));
         }
     }
 
-    private void showSoloLeaderboard(Player player, FibStatisticsClient helper, String category) {
-        helper.soloLeaderboard(category, TOP_LIMIT, entries -> {
-            sendHeader(player, "Leaderboard", category);
+    private static <T> Consumer<List<T>> board(Player player, String header, Function<T, String> row) {
+        return entries -> {
+            player.sendMessage(" ");
+            player.sendMessage(Text.of(header));
+            player.sendMessage(" ");
             if (entries.isEmpty()) {
-                sendEmpty(player);
-                player.sendMessage(" ");
-                return;
+                player.sendMessage(Text.of("  <gray>No entries yet."));
             }
-
-            // Names arrive inside each entry now, so there is no lookup to do -- the row renders
-            // straight from the payload.
-            for (LeaderboardEntry entry : entries) {
-                sendRow(player, entry.rank(), PlayerIdentity.displayName(entry.player(), "?"),
-                        entry.value(), suffixFor(category));
-            }
+            entries.forEach(entry -> player.sendMessage(Text.of(row.apply(entry))));
             player.sendMessage(" ");
-        }, error -> sendError(player));
-    }
-
-    private void showTeamsLeaderboard(Player player, FibStatisticsClient helper, String category) {
-        helper.combinedTeamLeaderboard(category, TOP_LIMIT, entries -> {
-            sendHeader(player, "Teams Leaderboard", category);
-            if (entries.isEmpty()) {
-                sendEmpty(player);
-                player.sendMessage(" ");
-                return;
-            }
-
-            for (LeaderboardEntry entry : entries) {
-                sendRow(player, entry.rank(), PlayerIdentity.displayName(entry.player(), "?"),
-                        entry.value(), suffixFor(category));
-            }
-            player.sendMessage(" ");
-        }, error -> sendError(player));
-    }
-
-    private void showDuoLeaderboard(Player player, FibStatisticsClient helper, String category) {
-        helper.duoLeaderboard(category, TOP_LIMIT, entries -> {
-            sendHeader(player, "Duo Leaderboard", category);
-            if (entries.isEmpty()) {
-                sendEmpty(player);
-                player.sendMessage(" ");
-                return;
-            }
-
-            for (DuoLeaderboardEntry entry : entries) {
-                String pair = PlayerIdentity.displayName(entry.player1(), "?")
-                        + " <dark_gray>& <green>" + PlayerIdentity.displayName(entry.player2(), "?");
-                sendRow(player, entry.rank(), pair, entry.value(), suffixFor(category));
-            }
-            player.sendMessage(" ");
-        }, error -> sendError(player));
-    }
-
-    private void showAchievementLeaderboard(Player player) {
-        this.fibService.achievements().achievementLeaderboard(TOP_LIMIT, entries -> {
-            player.sendMessage(" ");
-            player.sendMessage(Text.of("<dark_gray>» <gold><b>Leaderboard</b> <dark_gray>● <green>Achievements <dark_gray>«"));
-            player.sendMessage(" ");
-
-            if (entries.isEmpty()) {
-                sendEmpty(player);
-                player.sendMessage(" ");
-                return;
-            }
-
-            for (LeaderboardEntry entry : entries) {
-                sendRow(player, entry.rank(), PlayerIdentity.displayName(entry.player(), "?"),
-                        entry.value(), "");
-            }
-            player.sendMessage(" ");
-        }, error -> sendError(player));
-    }
-
-    private void sendHeader(Player player, String title, String category) {
-        player.sendMessage(" ");
-        player.sendMessage(Text.of("<dark_gray>» <gold><b>" + title + "</b> <dark_gray>● <green>"
-                + formatCategoryName(category) + " <dark_gray>«"));
-        player.sendMessage(" ");
-    }
-
-    private void sendRow(Player player, int rank, String name, long value, String suffix) {
-        String color = switch (rank) {
-            case 1 -> "<gold>";
-            case 2 -> "<gray>";
-            case 3 -> "<dark_gray>";
-            default -> "<white>";
         };
-        player.sendMessage(Text.of("  <dark_gray>● " + color + rank + "<white>. <green>"
-                + name + " <dark_gray>» <dark_aqua>" + value + suffix));
     }
 
-    private String suffixFor(String category) {
-        return category.equals("blocks_travelled") ? " blocks" : "";
+    private static String header(String title, String label) {
+        return "<dark_gray>» <gold><b>" + title + "</b> <dark_gray>● <green>" + label + " <dark_gray>«";
     }
 
-    private void sendEmpty(Player player) {
-        player.sendMessage(Text.of("  <gray>No entries yet."));
+    private static String row(LeaderboardEntry entry, String suffix) {
+        return row(entry.rank(), PlayerIdentity.displayName(entry.player(), "?"), entry.value(), suffix);
+    }
+
+    private static String row(int rank, String name, long value, String suffix) {
+        return "  <dark_gray>● " + Text.placeColor(rank) + rank + "<white>. <green>"
+                + name + " <dark_gray>» <dark_aqua>" + value + suffix;
     }
 
     private void sendError(Player player) {

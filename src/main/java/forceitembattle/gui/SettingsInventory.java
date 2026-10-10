@@ -6,7 +6,6 @@ import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.settings.QuickieMode;
 import forceitembattle.util.Text;
-import java.util.Objects;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -108,40 +107,26 @@ public final class SettingsInventory extends InventoryBuilder {
 
             });
 
-            ItemBuilder itemBuilder = null;
+            ItemBuilder itemBuilder;
             String enabledPrefix = "<dark_gray>➟";
             if (gameSetting == GameSetting.QUICKIE) {
                 QuickieMode quickieMode = settings.getQuickieMode();
-                if (quickieMode.isEnabled()) {
-                    itemBuilder = new ItemBuilder(Material.LIME_DYE).setDisplayName(enabledPrefix + " <green>" + quickieMode.displayName() + " <dark_green>✔");
-                } else {
-                    itemBuilder = new ItemBuilder(Material.RED_DYE).setDisplayName(enabledPrefix + " <red>Disabled <dark_red>✘");
-                }
-            } else if (gamePreset != null) {
-                if (gamePreset.getGameSettings().contains(gameSetting)) {
-                    itemBuilder = new ItemBuilder(Material.LIME_DYE).setDisplayName(enabledPrefix + " <green>Enabled <dark_green>✔");
-                } else if (gameSetting.defaultValue() instanceof Integer) {
-                    int amount = 0;
-                    if (gameSetting == GameSetting.BACKPACKSIZE) {
-                        amount = gamePreset.getBackpackRows();
-                        itemBuilder = new ItemBuilder(Material.STONE_BUTTON).setAmount(amount).setDisplayName(enabledPrefix + " <yellow>" + amount + " <gray>" + (amount == 1 ? "row" : "rows"));
-                    }
-
-                } else {
-                    itemBuilder = new ItemBuilder(Material.RED_DYE).setDisplayName(enabledPrefix + " <red>Disabled <dark_red>✘");
-                }
+                itemBuilder = quickieMode.isEnabled()
+                        ? new ItemBuilder(Material.LIME_DYE).setDisplayName(enabledPrefix + " <green>" + quickieMode.displayName() + " <dark_green>✔")
+                        : new ItemBuilder(Material.RED_DYE).setDisplayName(enabledPrefix + " <red>Disabled <dark_red>✘");
+            } else if (gameSetting.defaultValue() instanceof Integer) {
+                // BACKPACKSIZE is the only numeric setting besides QUICKIE.
+                int amount = gamePreset != null ? gamePreset.getBackpackRows() : settings.getSettingValue(gameSetting);
+                itemBuilder = new ItemBuilder(Material.STONE_BUTTON).setAmount(amount).setDisplayName(enabledPrefix + " <yellow>" + amount + " <gray>" + (amount == 1 ? "row" : "rows"));
             } else {
-                if (settings.isSettingEnabled(gameSetting)) {
-                    itemBuilder = new ItemBuilder(Material.LIME_DYE).setDisplayName(enabledPrefix + " <green>Enabled <dark_green>✔");
-                } else if (gameSetting.defaultValue() instanceof Integer) {
-                    int amount = settings.getSettingValue(gameSetting);
-                    itemBuilder = new ItemBuilder(Material.STONE_BUTTON).setAmount(amount).setDisplayName(enabledPrefix + " <yellow>" + amount + " <gray>" + (amount == 1 ? "row" : "rows"));
-                } else {
-                    itemBuilder = new ItemBuilder(Material.RED_DYE).setDisplayName(enabledPrefix + " <red>Disabled <dark_red>✘");
-                }
+                boolean enabled = gamePreset != null
+                        ? gamePreset.getGameSettings().contains(gameSetting)
+                        : settings.isSettingEnabled(gameSetting);
+                itemBuilder = enabled
+                        ? new ItemBuilder(Material.LIME_DYE).setDisplayName(enabledPrefix + " <green>Enabled <dark_green>✔")
+                        : new ItemBuilder(Material.RED_DYE).setDisplayName(enabledPrefix + " <red>Disabled <dark_red>✘");
             }
 
-            Objects.requireNonNull(itemBuilder);
             this.setItem(slotIndex + 9, itemBuilder.getItemStack(), inventoryClickEvent -> {
                 if (inventoryClickEvent.getCurrentItem() == null) return;
 
@@ -184,21 +169,14 @@ public final class SettingsInventory extends InventoryBuilder {
         }
     }
 
-    /**
-     * Steps the quickie mode one place, backwards on a right click. Unlike every other setting this
-     * one cycles rather than toggles, and both the name row and the status row below it do it, so
-     * both call this.
-     */
+    /** Cycles rather than toggles, backwards on a right click. */
     private void cycleQuickie(InventoryClickEvent inventoryClickEvent) {
         QuickieMode current = settings.getQuickieMode();
         settings.setQuickieMode(inventoryClickEvent.isRightClick() ? current.previous() : current.next());
         this.getPlayer().playSound(this.getPlayer(), Sound.ENTITY_ITEM_PICKUP, 1, 1);
     }
 
-    /**
-     * Flips a boolean setting, on the preset being edited when there is one and on the live settings
-     * otherwise. Both the name row and the status row below it toggle, so both call this.
-     */
+    /** On the preset being edited when there is one, otherwise on the live settings. */
     private void toggleSetting(GamePreset gamePreset, GameSetting gameSetting) {
         if (gamePreset != null) {
             if (gamePreset.getGameSettings().contains(gameSetting)) {

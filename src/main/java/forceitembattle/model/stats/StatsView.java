@@ -6,13 +6,9 @@ import java.util.List;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * One stats screen, in the game's own words.
+ * Mapped from the generated types in {@code service/ReadModel}, so regenerating the client can't reach a renderer.
  *
- * <p>Three generated shapes reach this — solo, team and a player's combined team totals — and the
- * mapping from each lives behind the seam in {@code service/ReadModel}. Nothing about this record
- * knows the service exists, which is the point: regenerating the client cannot reach a renderer.
- *
- * @param memberStats per-member contributions; only a duo view has them, the others are empty
+ * @param memberStats per-member contributions; only a duo view has them
  */
 public record StatsView(
         long gamesPlayed,

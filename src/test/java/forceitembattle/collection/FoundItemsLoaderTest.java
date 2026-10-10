@@ -18,6 +18,7 @@ import forceitembattle.service.FibMatchHistoryClient;
 import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,7 +38,7 @@ class FoundItemsLoaderTest {
 
     private FIBServiceClient service;
     private FibMatchHistoryClient matchHistory;
-    private FoundItemsCache cache;
+    private Map<UUID, Map<String, CollectedItem>> cache;
     private FoundItemsLoader loader;
 
     @BeforeEach
@@ -45,7 +46,7 @@ class FoundItemsLoaderTest {
         this.service = mock(FIBServiceClient.class);
         this.matchHistory = mock(FibMatchHistoryClient.class);
         when(this.service.matchHistory()).thenReturn(this.matchHistory);
-        this.cache = new FoundItemsCache();
+        this.cache = new ConcurrentHashMap<>();
         this.loader = new FoundItemsLoader(this.service, this.cache);
     }
 
@@ -151,7 +152,7 @@ class FoundItemsLoaderTest {
     void invalidatingForcesAReFetch() {
         serviceReturns(collection());
         this.loader.load(PLAYER, loaded -> { });
-        this.cache.invalidate(PLAYER);
+        this.cache.remove(PLAYER);
 
         assertNull(this.cache.get(PLAYER));
     }

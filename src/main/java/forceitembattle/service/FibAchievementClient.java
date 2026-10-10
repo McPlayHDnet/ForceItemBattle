@@ -13,11 +13,6 @@ import forceitembattle.model.stats.AchievementUnlock;
 import forceitembattle.model.stats.LeaderboardEntry;
 import java.util.Set;
 
-/**
- * Achievement domain of FIBService. Wraps {@link FibAchievementControllerApi} and
- * shares transport/async plumbing via the {@link ApiExecutor} handed in by the
- * owning {@link FIBServiceClient}.
- */
 public class FibAchievementClient {
 
     private final FibAchievementControllerApi achievementApi;
@@ -33,10 +28,6 @@ public class FibAchievementClient {
         }, executor::logError);
     }
 
-    /**
-     * Unlocks an achievement in the game's own terms, so the caller does not have to know that the
-     * generated request carries its own mode enum and wants the teammate only on a team unlock.
-     */
     public void unlockAsync(UUID playerUuid, String achievementId, AchievementMode mode,
                             @Nullable UUID teammateUuid) {
         boolean team = mode == AchievementMode.TEAM;

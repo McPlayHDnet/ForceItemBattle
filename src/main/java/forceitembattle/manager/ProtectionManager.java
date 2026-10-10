@@ -17,11 +17,6 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * What may be broken, placed and opened during a round, and who was standing nearby when something
- * tried not to be. These are the rules; {@code ProtectionListener} is the adapter that cancels
- * events and says so.
- */
 public class ProtectionManager implements Manager {
 
     /** 15 blocks, squared. Anyone inside this is named in the operator notification. */
@@ -76,23 +71,14 @@ public class ProtectionManager implements Manager {
         return this.areTeammates(player, owner);
     }
 
-    /**
-     * The score owner's membership and nothing else. Checking the TEAM setting and then reading
-     * {@code currentTeam().getPlayers()} throws whenever the setting is on and the breaker has no
-     * team — the mismatch between "team mode" and "on a team" that the score owner settles.
-     */
+    /** Membership only: reading the TEAM setting then {@code currentTeam()} throws for a teamless breaker. */
     public boolean areTeammates(ForceItemPlayer breaker, ForceItemPlayer owner) {
         return breaker.squad().contains(owner);
     }
 
     /**
-     * Whether this may be broken. Pass {@code null} for both actors when nothing is behind the break
-     * — fire, lava, an explosion — which owns nothing and is refused by every rule.
-     *
-     * <p>Two actors, on purpose: the bed rule keys on the {@link Player} because it compares respawn
-     * locations and must not protect you from your own bed, while the container rule keys on the
-     * roster entry because ownership is a score-owner question. Both are not always known — someone
-     * with no roster entry still has a respawn point.
+     * Pass null for both when nothing is behind the break (fire, lava, explosion). Two actors because the
+     * bed rule compares respawn points while the container rule is a score-owner question.
      */
     public ProtectionVerdict mayBreak(@Nullable Player actor, @Nullable ForceItemPlayer breaker, Block block) {
         if (this.isNearProtectedBed(actor, block.getLocation())) {
@@ -104,10 +90,7 @@ public class ProtectionManager implements Manager {
         return ProtectionVerdict.ALLOWED;
     }
 
-    /**
-     * The hopper rule is a container rule wearing a different hat: a hopper under someone else's
-     * chest drains it, so placing one is refused exactly where breaking the chest above would be.
-     */
+    /** A hopper under someone else's chest drains it, so placing one is refused where breaking the chest would be. */
     public ProtectionVerdict mayPlace(@Nullable Player actor, @Nullable ForceItemPlayer placer, Block block) {
         if (this.isNearProtectedBed(actor, block.getLocation())) {
             return ProtectionVerdict.NEAR_BED;
@@ -123,10 +106,7 @@ public class ProtectionManager implements Manager {
         return this.mayBreak(null, null, block).denied();
     }
 
-    /**
-     * Everyone close enough to have caused what happened there, for the operator notification. The
-     * radius is generous on purpose: it names suspects, it does not prove anything.
-     */
+    /** Generous radius on purpose: it names suspects for the operator notification, it proves nothing. */
     public List<Player> witnesses(Location location) {
         List<Player> nearby = new ArrayList<>();
 

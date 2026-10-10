@@ -39,23 +39,12 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 /**
- * Owns the Antimatter Depths portals: the one in the overworld ruin that a player opens with a
- * Totem of Antimatter, and the private Depths it drops them into.
- *
- * <p>A portal belongs to whoever opened it — the Depths behind it is a loot dungeon, so a shared
- * portal would mean the first player through empties it for everyone. Ownership is enforced twice
- * over: the surface is an {@link ItemDisplay} hidden from every player but its owner, and the
- * walk-in check only ever runs against portals that player opened.
- *
- * <p>One scaled item display rather than a grid of armour-stand markers: armour stands cannot be
- * scaled, and ones carrying a real helmet item cannot be hidden per-player.
+ * A portal belongs to whoever opened it, since the Depths is a loot dungeon. One scaled item display
+ * hidden per-player, because armour stands can neither be scaled nor hidden per-player with a helmet.
  */
 public class AntimatterPortalManager implements Manager {
 
-    /**
-     * Marks portal surfaces so a restart can sweep up displays whose owner map did not survive — the
-     * per-player hide state lives only in memory, so a stale portal would be visible to everyone.
-     */
+    /** Lets a restart sweep stale surfaces: hide state is in memory, so a leftover would be visible to everyone. */
     private static final String PORTAL_TAG = "fib_antimatter_portal";
 
     /** Looked up per call rather than held in a field: a manager is constructed before the server is up. */
@@ -72,10 +61,7 @@ public class AntimatterPortalManager implements Manager {
     private static final float PORTAL_WIDTH = 3.0f;
     private static final float PORTAL_HEIGHT = 4.0f;
 
-    /**
-     * Where the portal sits relative to the vault that opens it. Derived from the vault rather than
-     * hardcoded structure coordinates, so it survives the structure being rotated on placement.
-     */
+    /** Relative to the vault rather than hardcoded, so it survives the structure being rotated. */
     private static final int PLANE_OFFSET = 2;
     private static final double OPENING_RISE = 3.5;
 
@@ -91,12 +77,7 @@ public class AntimatterPortalManager implements Manager {
     private final Plugin plugin;
     private final Map<UUID, List<ActivePortal>> portalsByOwner = new HashMap<>();
 
-    /**
-     * Frames a player has already paid for but whose surface has not been spawned yet. The totem is
-     * taken when the vault is clicked and the portal appears {@value #REVEAL_DELAY} ticks later, so
-     * for that window {@link #portalsByOwner} has no record of it and a second click would pass the
-     * duplicate check and cost a second totem.
-     */
+    /** Paid-for frames whose surface is not spawned yet, so a second click in the reveal delay can't cost a second totem. */
     private final Map<UUID, List<Location>> openingByOwner = new HashMap<>();
     private final Map<UUID, Location> depthsByPlayer = new HashMap<>();
     private final Map<UUID, Location> returnByPlayer = new HashMap<>();
@@ -135,10 +116,7 @@ public class AntimatterPortalManager implements Manager {
         this.returnPortalByPlayer.clear();
     }
 
-    /**
-     * Asks the vault what key item it takes rather than sniffing the blocks around it: that is what
-     * distinguishes it from the antimatter teleporter's nether-star vaults and from trial chambers'.
-     */
+    /** By key item, which distinguishes it from the teleporter's nether-star vaults and from trial chambers'. */
     public boolean isPortalVault(Block block) {
         if (block.getType() != Material.VAULT) {
             return false;
@@ -147,11 +125,7 @@ public class AntimatterPortalManager implements Manager {
                 && CustomMaterials.TOTEM_OF_ANTIMATTER.matches(vault.getKeyItem());
     }
 
-    /**
-     * Opens the portal in front of {@code vaultBlock} for {@code player}, consuming one totem.
-     * Returns false when the player already has this portal open, so the caller can leave the
-     * totem in their hand.
-     */
+    /** Returns false when this portal is already open, so the caller can leave the totem in hand. */
     public boolean activate(Player player, Block vaultBlock) {
         Frame frame = frameOf(vaultBlock);
         if (frame == null) {
@@ -225,10 +199,7 @@ public class AntimatterPortalManager implements Manager {
         return world.getKey().equals(ANTIMATTER_DIMENSION);
     }
 
-    /**
-     * Hides every open portal from a player who did not open it. Called on join, because
-     * {@link Player#hideEntity} only applies to players who were online when the portal was spawned.
-     */
+    /** On join, because {@link Player#hideEntity} only applies to players online when the portal spawned. */
     public void hideForeignPortals(Player player) {
         this.portalsByOwner.forEach((owner, portals) -> {
             if (owner.equals(player.getUniqueId())) {
@@ -244,10 +215,7 @@ public class AntimatterPortalManager implements Manager {
         });
     }
 
-    /**
-     * This player's own Depths, picked once and kept for the round so going back through the portal
-     * returns them to the same dungeon rather than a fresh one.
-     */
+    /** Kept for the round, so going back through returns them to the same dungeon. */
     @Nullable
     public Location depthsFor(Player player) {
         Location known = this.depthsByPlayer.get(player.getUniqueId());
@@ -268,11 +236,8 @@ public class AntimatterPortalManager implements Manager {
             return null;
         }
 
-        // Scatter the search origin, then take the nearest Depths nobody has been given yet. The
-        // scatter alone is not enough — the structure set spaces these 156 chunks apart, so a 20k box
-        // holds only ~256 and two uniform draws collide about one game in ten at eight players. The
-        // unexplored flag is what makes it exclusive: locating with it marks the structure referenced
-        // so later searches skip it, and that persists in chunk data across reloads.
+        // Scatter alone collides about one game in ten (structures are 156 chunks apart). Locating with the
+        // unexplored flag marks the structure referenced, which makes it exclusive and persists across reloads.
         Location origin = new Location(antimatter,
                 this.random.nextInt(-DEPTHS_SCATTER, DEPTHS_SCATTER), 64,
                 this.random.nextInt(-DEPTHS_SCATTER, DEPTHS_SCATTER));
@@ -295,12 +260,8 @@ public class AntimatterPortalManager implements Manager {
     }
 
     /**
-     * Where to put a player arriving in this Depths, or null if this one cannot take them.
-     *
-     * <p>Refusing is the only safe answer when the return frame cannot be found: the Depths is a void
-     * dimension and that frame is the way out, so without one {@link #isInReturnPortal} has nothing
-     * to match and dying is the only exit. A refusal only costs a walk back into the portal — the
-     * search above has already claimed this Depths, so stepping through again rolls a different one.
+     * Null when the return frame can't be found: the Depths is a void dimension and that frame is the
+     * only exit. Stepping through again rolls a different Depths.
      */
     @Nullable
     private Location arrivalAtReturnPortal(Player player, World world, Location structureLocation) {
@@ -327,12 +288,8 @@ public class AntimatterPortalManager implements Manager {
     }
 
     /**
-     * The reinforced deepslate frame of the Depths' return portal, in the start room.
-     *
-     * <p>Looks for the frame, not for portal blocks inside it: vanilla breaks a nether portal whose
-     * frame is not obsidian, so the deepslate ring is the durable landmark and the surface filling it
-     * is ours to draw. The start room is found by its 48x19x19 footprint, unique in the pool, which
-     * confines the search to one piece — sweeping chunks outward from the root cost ~5s in loads.
+     * Looks for the reinforced deepslate frame, not portal blocks: vanilla breaks a non-obsidian portal.
+     * The start room is found by its unique 48x19x19 footprint; sweeping chunks cost ~5s in loads.
      */
     @Nullable
     private Frame findReturnFrame(World world, Location structureLocation) {
@@ -373,11 +330,7 @@ public class AntimatterPortalManager implements Manager {
         return true;
     }
 
-    /**
-     * Derives the portal opening from the ring of reinforced deepslate inside {@code box} — the only
-     * such blocks in the start room, so its bounds give the frame: the opening is the interior, and
-     * whichever axis the ring is flat on is the plane.
-     */
+    /** The deepslate ring's bounds give the frame: the interior is the opening, the flat axis the plane. */
     @Nullable
     private Frame frameFromRing(World world, BoundingBox box) {
         int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
@@ -418,10 +371,7 @@ public class AntimatterPortalManager implements Manager {
         return new Frame(centre, region, acrossX ? 0.0f : 90.0f, width, height);
     }
 
-    /**
-     * Where to put a player arriving at {@code frame}. Which side is the room and which is the wall
-     * behind it is decided by looking rather than assumed: only one side has standable floor.
-     */
+    /** The room side is found by looking for standable floor, not assumed. */
     @Nullable
     private Location arrivalInFrontOf(Frame frame) {
         World world = frame.centre().getWorld();

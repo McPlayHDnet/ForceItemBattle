@@ -1,7 +1,9 @@
 package forceitembattle.manager;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -10,9 +12,12 @@ import static org.mockito.Mockito.when;
 import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.Roster;
 import forceitembattle.model.Team;
+import forceitembattle.settings.GamePreset;
+import forceitembattle.settings.GameSettings;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,6 +40,7 @@ class BackpackManagerTest {
 
     private ServerMock server;
     private Roster roster;
+    private GameSettings settings;
     private BackpackManager backpacks;
 
     @BeforeEach
@@ -47,7 +53,8 @@ class BackpackManagerTest {
         when(plugin.getConfig()).thenReturn(config);
 
         this.roster = new Roster();
-        this.backpacks = new BackpackManager(plugin, this.roster);
+        this.settings = new GameSettings(plugin);
+        this.backpacks = new BackpackManager(this.settings, this.roster);
     }
 
     @AfterEach
@@ -107,6 +114,64 @@ class BackpackManagerTest {
             backpacks.createTeamBackpack(team, alice);
 
             assertSame(backpacks.getTeamBackpack(team), backpacks.getBackpackForPlayer(alice.player()));
+        }
+
+        /** A teammate set up late, e.g. after rejoining mid-round, used to replace the shared backpack. */
+        @Test
+        void aLateTeammateKeepsTheSharedBackpackAndItsContents() {
+            ForceItemPlayer alice = join("Alice");
+            ForceItemPlayer bob = join("Bob");
+            Team team = new Team(1, null, 0, 0, alice, bob);
+            alice.setCurrentTeam(team);
+            bob.setCurrentTeam(team);
+
+            backpacks.createTeamBackpack(team, alice);
+            Inventory shared = backpacks.getTeamBackpack(team);
+            shared.addItem(new ItemStack(Material.DIAMOND));
+
+            backpacks.createTeamBackpack(team, bob);
+
+            assertSame(shared, backpacks.getTeamBackpack(team));
+            assertTrue(shared.contains(Material.DIAMOND));
+        }
+
+        @Test
+        void clearingStartsTheNextRoundWithANewBackpack() {
+            ForceItemPlayer alice = join("Alice");
+            Team team = new Team(1, null, 0, 0, alice);
+            alice.setCurrentTeam(team);
+            backpacks.createTeamBackpack(team, alice);
+            Inventory previousRound = backpacks.getTeamBackpack(team);
+
+            backpacks.clear();
+            backpacks.createTeamBackpack(team, alice);
+
+            assertNotSame(previousRound, backpacks.getTeamBackpack(team));
+        }
+    }
+
+    @Nested
+    class Size {
+
+        @Test
+        void followsTheLiveSettingWithoutAPreset() {
+            ForceItemPlayer alice = join("Alice");
+            backpacks.createBackpack(alice);
+
+            assertEquals(27, backpacks.getPlayerBackpack(alice.player()).getSize());
+        }
+
+        /** Presets keep their rows outside the settings section, which the settings lookup used to read as 0. */
+        @Test
+        void followsTheActivePresetsOwnRows() {
+            GamePreset preset = new GamePreset();
+            preset.setBackpackRows(5);
+            settings.getRuleset().usePreset(preset);
+
+            ForceItemPlayer alice = join("Alice");
+            backpacks.createBackpack(alice);
+
+            assertEquals(45, backpacks.getPlayerBackpack(alice.player()).getSize());
         }
     }
 

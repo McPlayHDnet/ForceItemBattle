@@ -8,13 +8,7 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 import org.bukkit.Material;
 
-/**
- * One skip vote: who may vote, who has, and what the result is.
- *
- * <p><b>The eligible voters are handed in at {@link #open}</b>, not counted from the live roster on
- * each cast. Counting live let a spectator both inflate the quorum and fill it, and left a quorum
- * nobody could reach when a participant disconnected mid-vote.
- */
+/** Eligible voters are fixed at {@link #open}, so spectators can't inflate the quorum and a disconnect can't strand it. */
 public final class SkipVote {
 
     public enum Cast {
@@ -48,11 +42,7 @@ public final class SkipVote {
         this(new Random());
     }
 
-    /**
-     * Opens a vote on {@code material}, with the initiator's own YES already cast. Deliberately does
-     * not close itself when they are the only eligible voter: a vote of one would resolve before
-     * anyone could read the message announcing it.
-     */
+    /** Doesn't close itself for a lone voter, or the vote would resolve before anyone read the announcement. */
     public void open(UUID initiator, Material material, Collection<UUID> eligible) {
         this.eligible.clear();
         this.eligible.addAll(eligible);

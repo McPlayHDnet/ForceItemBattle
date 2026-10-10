@@ -41,10 +41,7 @@ public class VillagerTradeListener implements Listener {
         Scheduler.runLaterSync(() -> this.rollCartographerTrade(villager), 1L);
     }
 
-    /**
-     * Fires while a villager generates the offers for the level it just reached — the moment to
-     * append ours. A tick later, so vanilla is done writing the list we are about to replace.
-     */
+    /** A tick later, so vanilla has finished writing the offer list we replace. */
     @EventHandler
     public void onAcquireTrade(VillagerAcquireTradeEvent event) {
         if (!(event.getEntity() instanceof Villager villager)) return;
@@ -86,12 +83,7 @@ public class VillagerTradeListener implements Listener {
         villager.setRecipes(updated);
     }
 
-    /**
-     * Appends the Eye of Antimatter offer, once the cleric is apprentice or better. Whether it is
-     * already there is read off the offer list rather than a marker on the villager: a cured or
-     * re-professioned villager regenerates its trades, and a marker would leave it without the
-     * offer forever.
-     */
+    /** Checked off the offer list, not a marker: a cured or re-professioned villager regenerates its trades. */
     private void addClericTrade(Villager villager) {
         if (!villager.isValid()) return;
         if (villager.getProfession() != Villager.Profession.CLERIC) return;

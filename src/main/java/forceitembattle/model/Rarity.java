@@ -86,10 +86,6 @@ public enum Rarity {
         listener.playSound(listener.getLocation(), sound, volume, pitch);
     }
 
-    /**
-     * One of this rarity, for the stats writer to add. Turning the delta into the request the service
-     * wants is {@code FibStatisticsClient}'s job, behind the seam.
-     */
     public RarityCounts asIncrement() {
         return increment;
     }

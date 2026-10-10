@@ -4,6 +4,7 @@ import forceitembattle.model.ForceItemPlayer;
 import forceitembattle.model.Roster;
 import forceitembattle.model.ScoreOwner;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
@@ -11,12 +12,8 @@ import java.util.Map;
 import org.bukkit.Material;
 
 /**
- * Who is hunting what, and what they hunt next.
- *
- * <p>Two rules run through all of it. <b>Run mode</b> is the axis: there the whole server races one
- * seeded sequence, so a single draw serves every owner and one find advances all of them; otherwise
- * each owner draws privately. And every loop walks {@link Roster#activeScoreOwners()} — <b>once per
- * owner, never once per member</b>, or a two-player team takes two draws to show one item.
+ * In run mode one seeded sequence serves every owner; otherwise each owner draws privately. Loops
+ * walk owners, never members, or a two-player team takes two draws to show one item.
  */
 public final class ForceItemAssignment {
 
@@ -29,14 +26,20 @@ public final class ForceItemAssignment {
     /** The key every owner shares while the server is racing one seeded sequence. */
     private static final Object SHARED_QUEUE = new Object();
 
+    /** Mirror mode: one row every owner walks at their own pace; {@code null} when off. */
+    private List<Material> mirroredRow;
+    private final Map<ScoreOwner, Integer> mirrorCursors = new HashMap<>();
+
     public ForceItemAssignment(Roster roster, ItemDifficultiesManager items) {
         this.roster = roster;
         this.items = items;
     }
 
     /** Clears forced rows first: a row left over from last round would open the new one. */
-    public void beginRound(boolean runMode) {
+    public void beginRound(boolean runMode, boolean mirrored) {
         this.forcedRows.clear();
+        this.mirrorCursors.clear();
+        this.mirroredRow = mirrored ? new ArrayList<>() : null;
 
         long now = System.currentTimeMillis();
         Pair shared = runMode ? this.pairFor(null, true) : null;
@@ -61,12 +64,7 @@ public final class ForceItemAssignment {
         owner.advance(this.draw(owner, false), now);
     }
 
-    /**
-     * Replaces the current item for the whole server — a carried {@code /voteskip}, or {@code /skip}.
-     *
-     * <p><b>Do not charge a joker in the loop below:</b> it runs once per owner, so the initiator
-     * would pay one for each of them. The only caller that costs a joker spends it itself.
-     */
+    /** Do not charge a joker in the loop: it runs once per owner. The only caller that costs a joker spends it itself. */
     public void skipAll(ForceItemPlayer requester, boolean runMode) {
         if (!this.roster.contains(requester.player().getUniqueId())) {
             return;
@@ -80,10 +78,7 @@ public final class ForceItemAssignment {
                 .forEach(owner -> owner.assignMaterials(pair.current(), pair.next()));
     }
 
-    /**
-     * Replaces one player's current item — {@code /skip}. Their queued item moves up, as it would on
-     * a find. In run mode everyone hunts the same item, so there it is a skip for the whole server.
-     */
+    /** In run mode everyone hunts the same item, so this skips for the whole server. */
     public void skipFor(ForceItemPlayer target, boolean runMode) {
         if (runMode) {
             this.skipAll(target, true);
@@ -98,8 +93,7 @@ public final class ForceItemAssignment {
     }
 
     /**
-     * Hands an owner an explicit row: the first item now, the second queued, the rest drained in
-     * order. A row of one takes a drawn item as its second so the chain display has something to show.
+     * A row of one takes a drawn item as its second so the chain display has something to show.
      *
      * @param row at least one material; anything past the second is queued
      */
@@ -126,6 +120,13 @@ public final class ForceItemAssignment {
         Material forced = this.queueFor(owner, runMode).poll();
         if (forced != null) {
             return forced;
+        }
+        if (this.mirroredRow != null && owner != null) {
+            int index = this.mirrorCursors.merge(owner, 1, Integer::sum) - 1;
+            while (this.mirroredRow.size() <= index) {
+                this.mirroredRow.add(this.items.generateRandomMaterial());
+            }
+            return this.mirroredRow.get(index);
         }
         return runMode
                 ? this.items.generateSeededRandomMaterial()

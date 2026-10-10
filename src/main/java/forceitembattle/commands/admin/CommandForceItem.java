@@ -16,16 +16,15 @@ import forceitembattle.settings.GameSetting;
 import forceitembattle.settings.GameSettings;
 import forceitembattle.util.Text;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.util.StringUtil;
 
-/**
- * Dev/testing command: force the assigned item to a specific material, and
- * optionally queue a whole row of upcoming items.
-**/
+/** Dev/testing: force the assigned item, optionally queueing a whole row of upcoming items. */
 
 public final class CommandForceItem extends CustomCommand implements CustomTabCompleter {
 
@@ -75,10 +74,7 @@ public final class CommandForceItem extends CustomCommand implements CustomTabCo
         ForceItemPlayer forceItemPlayer =
                 this.roster.participant(player.getUniqueId()).orElseThrow();
 
-        // The whole row in one call: first item now, second queued behind it, the rest drained in
-        // order as they are found. The queue is the assignment module's, keyed by this owner --
-        // it used to be a server-wide deque this command reached into, so a row forced here was
-        // drained by whichever player found something next.
+        // The forced row is keyed by this owner, so it is drained only by their own finds.
         this.assignment.force(forceItemPlayer.scoreOwner(), row,
                 this.settings.isSettingEnabled(GameSetting.RUN));
 
@@ -103,17 +99,10 @@ public final class CommandForceItem extends CustomCommand implements CustomTabCo
             return new ArrayList<>();
         }
 
-        String prefix = args[args.length - 1].toLowerCase(Locale.ROOT);
-        List<String> suggestions = new ArrayList<>();
-        for (Material material : Material.values()) {
-            if (material.isLegacy() || !material.isItem()) {
-                continue;
-            }
-            String name = material.name().toLowerCase(Locale.ROOT);
-            if (name.startsWith(prefix)) {
-                suggestions.add(name);
-            }
-        }
-        return suggestions;
+        List<String> items = Arrays.stream(Material.values())
+                .filter(material -> !material.isLegacy() && material.isItem())
+                .map(material -> material.name().toLowerCase(Locale.ROOT))
+                .toList();
+        return StringUtil.copyPartialMatches(args[args.length - 1], items, new ArrayList<>());
     }
 }

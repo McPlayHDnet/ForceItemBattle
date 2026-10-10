@@ -136,6 +136,27 @@ class ItemPoolTest {
     }
 
     @Test
+    void mirrorBattleOpensEveryPoolFromTheStartAndAnnouncesNone() {
+        items.configureUnlockSchedule(60);
+        clock(60, 0);
+        when(settings.isMirrorBattle()).thenReturn(true);
+
+        assertEquals(List.of(State.EARLY, State.MID, State.LATE), items.getActiveStates());
+        assertEquals(null, items.getNextState());
+        assertEquals(-1, items.secondsUntilNextPool());
+        assertEquals(List.of(), items.pollNewlyUnlockedStates());
+    }
+
+    @Test
+    void mirrorBattleStillRespectsQuickie() {
+        clock(60, 0);
+        when(settings.isMirrorBattle()).thenReturn(true);
+        when(settings.getQuickieMode()).thenReturn(QuickieMode.EARLY);
+
+        assertEquals(List.of(State.EARLY), items.getActiveStates());
+    }
+
+    @Test
     void repeatedReadsReuseTheCachedPool() {
         items.configureUnlockSchedule(60);
         clock(60, 0);

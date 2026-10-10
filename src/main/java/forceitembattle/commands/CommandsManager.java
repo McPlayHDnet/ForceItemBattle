@@ -48,13 +48,8 @@ public class CommandsManager implements Manager {
     }
 
     /**
-     * Warns about commands declared in the generated plugin.yml that no {@link CustomCommand} ever
-     * claimed. Call once, after every command has been registered.
-     *
-     * <p>The list is maintained twice — the {@code bukkitPluginYaml} block in build.gradle.kts and
-     * {@code initCommands()} — and only one direction of drift throws: registering an executor for an
-     * undeclared name. The other is silent, and a declared command with no executor still exists to
-     * the server, tab-completing and passing the "unknown command" check before doing nothing.
+     * Warns about plugin.yml commands no {@link CustomCommand} claimed. That drift direction is silent:
+     * the command still tab-completes and passes "unknown command" before doing nothing.
      */
     public void warnAboutUnboundCommands() {
         for (String name : this.plugin.getDescription().getCommands().keySet()) {

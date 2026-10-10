@@ -69,7 +69,7 @@ class NoPluginForSchedulingTest {
 
         assertTrue(offenders.isEmpty(),
                 "These schedule without going through Scheduler, which is the only class that may. "
-                        + "Use Scheduler.runSync/runAsync/runLaterSync/runLaterAsync/runTimerSync/"
+                        + "Use Scheduler.runSync/runAsync/runLaterSync/runTimerSync/"
                         + "runTimerAsync instead: " + offenders);
     }
 

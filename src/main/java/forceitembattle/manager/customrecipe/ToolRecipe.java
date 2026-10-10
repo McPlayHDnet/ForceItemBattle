@@ -1,7 +1,6 @@
 package forceitembattle.manager.customrecipe;
 
 import forceitembattle.gui.ItemBuilder;
-import java.util.ArrayList;
 import java.util.List;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -12,34 +11,21 @@ import org.bukkit.inventory.ShapelessRecipe;
 
 public class ToolRecipe extends ShapelessRecipe {
 
-    private final List<String> interactionLore = new ArrayList<>();
-    private ItemStack stationDisplay;
+    private final ItemStack stationDisplay;
+    private final List<String> interactionLore;
 
-    public ToolRecipe(NamespacedKey key, ItemStack result) {
+    public ToolRecipe(NamespacedKey key, ItemStack result, Material station, String... interactionLore) {
         super(key, result);
-    }
-
-    public void addInteractionLore(String... lore) {
-        interactionLore.addAll(List.of(lore));
+        this.stationDisplay = new ItemStack(station);
+        this.interactionLore = List.of(interactionLore);
     }
 
     public ItemStack getStationDisplay() {
-        ItemStack base = stationDisplay != null ? stationDisplay.clone() : new ItemStack(Material.STONE_PICKAXE);
-
-        return new ItemBuilder(base)
+        return new ItemBuilder(this.stationDisplay.clone())
                 .addEnchantment(Enchantment.FORTUNE, 1)
-                .addItemFlag(ItemFlag.HIDE_ENCHANTS)
+                .addItemFlags(ItemFlag.HIDE_ENCHANTS)
                 .setDisplayNameLegacy("&fHow to get item:")
-                .setLoreLegacy(getInteractionLore())
+                .setLoreLegacy(this.interactionLore)
                 .getItemStack();
     }
-
-    public void setStationDisplay(ItemStack stationDisplay) {
-        this.stationDisplay = stationDisplay;
-    }
-
-    public List<String> getInteractionLore() {
-        return interactionLore;
-    }
-
 }

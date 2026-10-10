@@ -36,9 +36,7 @@ public final class CommandTeams extends CustomCommand {
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
-        // Resolved once, and required. Everything below hands it to TeamsManager, which
-        // dereferences it without checking -- and a player with no roster entry is possible even
-        // in PRE_GAME if the roster has not caught up with them yet.
+        // Required: TeamsManager dereferences it unchecked, and a player can lack a roster entry even in PRE_GAME.
         ForceItemPlayer self = this.roster.get(player.getUniqueId());
         if (self == null) {
             player.sendMessage(Text.of("<red>You are not in this round."));

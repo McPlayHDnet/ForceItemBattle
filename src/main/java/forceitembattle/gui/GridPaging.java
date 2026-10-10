@@ -2,13 +2,7 @@ package forceitembattle.gui;
 
 import org.bukkit.Sound;
 
-/**
- * Paging for the six-row collection grids: the cursor, the arithmetic, and the two page heads.
- *
- * <p>Deliberately not general — the layout is fixed at 36 entries per page, content from slot 9,
- * back at 45, forward at 53. A second layout should add a factory here, not four constructor
- * arguments. It does not own re-rendering either: the menu hands in its own {@code updateInventory}.
- */
+/** Fixed layout: 36 entries per page from slot 9, back at 45, forward at 53. */
 final class GridPaging {
 
     static final int ENTRIES_PER_PAGE = 36;
@@ -37,12 +31,7 @@ final class GridPaging {
         return Math.max(1, (int) Math.ceil((double) total / ENTRIES_PER_PAGE));
     }
 
-    /**
-     * Visits every entry belonging to the current page. The slot mapping is applied rather than
-     * handed back, so a menu can only ask what goes in a slot.
-     *
-     * @param visit receives the index into the caller's list, and the slot to draw it in
-     */
+    /** @param visit receives the index into the caller's list, and the slot to draw it in */
     void forEachOnPage(int total, SlotVisitor visit) {
         int startIndex = this.currentPage * ENTRIES_PER_PAGE;
         int endIndex = Math.min(startIndex + ENTRIES_PER_PAGE, total);
@@ -52,12 +41,7 @@ final class GridPaging {
         }
     }
 
-    /**
-     * Draws the two page heads, or nothing when everything fits on one page. Both are always drawn
-     * together: the one that cannot be used shows disabled and buzzes rather than disappearing.
-     *
-     * @param onPageChanged the menu's own redraw, run after the cursor moves
-     */
+    /** Both heads always drawn; an unusable one shows disabled. @param onPageChanged the menu's redraw */
     void draw(InventoryBuilder inventory, int total, Runnable onPageChanged) {
         if (pageCount(total) <= 1) {
             return;

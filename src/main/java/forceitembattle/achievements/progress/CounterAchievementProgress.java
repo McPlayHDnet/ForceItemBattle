@@ -1,6 +1,9 @@
 package forceitembattle.achievements.progress;
 
-public class CounterAchievementProgress implements AchievementProgressTracker {
+import lombok.ToString;
+
+@ToString
+public class CounterAchievementProgress {
     public int count = 0;
     public int consecutiveCount = 0;
 }

@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import forceitembattle.ForceItemBattle;
 import forceitembattle.achievements.handlers.AchievementHandler;
 import forceitembattle.achievements.handlers.BackToBackAchievementHandler;
-import forceitembattle.achievements.handlers.TradingAchievementHandler;
+import forceitembattle.achievements.handlers.CountingAchievementHandler;
 import forceitembattle.achievements.progress.BackToBackAchievementProgress;
 import forceitembattle.model.ForceItemPlayer;
 import java.lang.reflect.Method;
@@ -78,7 +78,7 @@ class AchievementSeamTest {
     @Test
     void tradingAsksTheWorldWhoIsTrading() {
         ForceItemPlayer alice = participant("a");
-        TradingAchievementHandler handler = new TradingAchievementHandler(1);
+        CountingAchievementHandler handler = CountingAchievementHandler.trades(1);
         FakeAchievementWorld world = new FakeAchievementWorld();
 
         assertFalse(world.isTrading(alice.player().getUniqueId()));

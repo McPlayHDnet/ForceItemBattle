@@ -6,21 +6,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 /**
- * Something that must hold before a {@link CustomCommand}'s body runs. A command declares these in
- * {@code preconditions()} and is only invoked when they all hold.
- *
- * <ul>
- *   <li><b>The console.</b> {@link #OP} and {@link #OP_WHEN_EVENT} pass automatically for a
- *       non-player sender, because the console is implicitly op. Phase and setting gates evaluate
- *       normally. {@link #PARTICIPANT} refuses: the console holds no roster entry.</li>
- *   <li><b>Order matters.</b> The list is evaluated in order and the <em>first</em> failure is what
- *       the sender is told.</li>
- *   <li><b>Subcommand gates are not here.</b> {@code CommandAchievement} and {@code CommandStats}
- *       gate individual subcommands off {@code args[0]}, which a command-level declaration cannot
- *       express; they use {@link CustomCommand#requireOp(Player, Runnable)} instead.</li>
- * </ul>
- *
- * @see CommandContext
+ * Must hold before a {@link CustomCommand}'s body runs; evaluated in order, first failure reported.
+ * OP gates pass for the console; PARTICIPANT refuses it, since the console holds no roster entry.
  */
 public sealed interface Precondition {
 
@@ -82,10 +69,7 @@ public sealed interface Precondition {
             (sender, context) -> context.roundPhase().isPausedGame(),
             "<red>The game is not paused.");
 
-    /**
-     * The sender holds a place in this round and is not spectating. Absent and spectating are one
-     * answer: someone who joined mid-round holds no roster entry at all.
-     */
+    /** Absent and spectating are one answer: someone who joined mid-round holds no roster entry. */
     Precondition PARTICIPANT = new Named(
             "PARTICIPANT",
             (sender, context) -> {

@@ -16,10 +16,7 @@ public enum TraderKind {
     /** Colour of the particle line drawn to this trader on spawn. */
     private final Color particleColor;
 
-    /**
-     * Outline colour of this trader's glow. Read off the scoreboard team the entity sits on, so it
-     * must be one of the sixteen named colours — arbitrary RGB isn't available for living entities.
-     */
+    /** Must be a named colour: glow comes from the scoreboard team, and living entities can't use RGB. */
     private final NamedTextColor glowColor;
 
     TraderKind(String color, String displayName, Color particleColor, NamedTextColor glowColor) {

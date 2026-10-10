@@ -10,10 +10,7 @@ public record CollectionRule(double requiredFraction) {
         }
     }
 
-    /**
-     * Items needed against the current catalogue. Rounded up, so a tier always demands strictly
-     * more than the fraction rather than less, and 100% means every single item.
-     */
+    /** Rounded up, so 100% means every single item. */
     public int requiredCount(int catalogueSize) {
         return (int) Math.ceil(catalogueSize * this.requiredFraction);
     }

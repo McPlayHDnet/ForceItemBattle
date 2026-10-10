@@ -21,18 +21,8 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.Sound;
 
 /**
- * What happens when a player obtains their force item. {@code FoundItemListener} is the adapter that
- * unwraps a Bukkit event into a {@link Find}; everything a find <em>means</em> is here.
- *
- * <p>The order in {@link #resolve} is load-bearing. Two constraints hold it in place:
- *
- * <ul>
- *   <li>{@link FindOutcome} is computed <b>first</b>, because it measures how long the item took and
- *       the advance overwrites the assignment stamp it reads.</li>
- *   <li>The back-to-back check runs <b>after</b> the advance, because it asks whether the
- *       <em>new</em> item is already owned. Earlier, it inspects the item just found — owned by
- *       definition — and every find becomes a chain.</li>
- * </ul>
+ * The order in {@link #resolve} is load-bearing: {@link FindOutcome} first, because the advance
+ * overwrites the stamp it reads; the back-to-back check after, because it asks about the new item.
  */
 @RequiredArgsConstructor
 public class FoundItemResolver implements Manager {
@@ -47,10 +37,7 @@ public class FoundItemResolver implements Manager {
     private final ItemDifficultiesManager itemDifficultiesManager;
     private final FIBServiceClient fibService;
 
-    /**
-     * Re-entrant by design: the back-to-back check can schedule another find a tick later when the
-     * next item is already owned, which is how a chain runs.
-     */
+    /** Re-entrant: the back-to-back check can schedule another find a tick later, which is how a chain runs. */
     public void resolve(Find find) {
         // The event permits a find with no stack, which Find carries through as a null material.
         // Nothing below can do anything with one — an item is announced and recorded by name.
@@ -68,10 +55,8 @@ public class FoundItemResolver implements Manager {
 
         this.assignment.advanceFor(finder, context.runMode());
 
-        // After the advance, because a chain is about the item just handed out. It returns nothing:
-        // the odds it computes describe the item it has just detected, which is recorded by the find
-        // it schedules a tick from now, not by this one. Taking them here and passing them to score()
-        // is exactly how each item ended up wearing the previous item's rarity.
+        // The odds it computes belong to the find it schedules, not this one; passing them to score() is
+        // how each item ended up wearing the previous item's rarity.
         this.backToBackManager.handleAfterFind(finder, context);
 
         if (outcome.scores()) {

@@ -1,6 +1,9 @@
 package forceitembattle.achievements.progress;
 
-public class TimeAchievementProgress implements AchievementProgressTracker {
+import lombok.ToString;
+
+@ToString
+public class TimeAchievementProgress {
     public int count = 0;
     public int lastItemSecondsLeft = -1;
     public int itemReceivedSecondsLeft = -1;

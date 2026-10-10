@@ -8,12 +8,7 @@ import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
-/**
- * Who holds a place in the current round, and the rules for arriving and leaving.
- *
- * <p><b>Depends on nothing</b> — no Bukkit, no plugin, no managers. That is what keeps the manager
- * graph acyclic; keep it that way.
- */
+/** Depends on nothing, which keeps the manager graph acyclic. */
 public final class Roster {
 
     private final Map<UUID, ForceItemPlayer> players = new HashMap<>();
@@ -28,10 +23,7 @@ public final class Roster {
         return this.players.containsKey(uuid);
     }
 
-    /**
-     * Whoever is <em>playing</em> under this UUID. Empty covers both shapes of watching rather than
-     * playing: the spectate toggle keeps a roster entry, a late joiner has none.
-     */
+    /** Empty for both a spectate-toggle entry and a late joiner with none. */
     public Optional<ForceItemPlayer> participant(UUID uuid) {
         return Optional.ofNullable(this.players.get(uuid)).filter(Roster::isPlaying);
     }
@@ -54,10 +46,7 @@ public final class Roster {
         this.players.remove(uuid);
     }
 
-    /**
-     * Every score owner playing, each once: one per solo player, one per team. The de-duplication is
-     * the point — the roster holds an entry per player, and owner-level work must run once per owner.
-     */
+    /** One per solo player, one per team: owner-level work must run once per owner. */
     public List<ScoreOwner> activeScoreOwners() {
         return this.players.values().stream()
                 .filter(forceItemPlayer -> !forceItemPlayer.isSpectator())
@@ -66,12 +55,7 @@ public final class Roster {
                 .toList();
     }
 
-    /**
-     * What an arriving player becomes. An existing roster entry always wins over every default.
-     *
-     * @param onRoster whether this player already holds a place in the current round
-     * @param state    where the round is
-     */
+    /** An existing roster entry always wins over every default. */
     public static Admission admit(boolean onRoster, GameState state) {
         if (onRoster) {
             return switch (state) {

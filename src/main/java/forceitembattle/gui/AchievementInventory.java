@@ -56,9 +56,7 @@ public final class AchievementInventory extends InventoryBuilder {
 
         this.addUpdateHandler(this::updateInventory);
 
-        // Pull the full unlock records (mode + teammate + unlockedAt) from the service — the local
-        // cache only holds ids — and refresh once they arrive. Each record carries its teammate's
-        // name, so this one round trip is everything the menu needs.
+        // The local cache only holds ids; the full records (mode, teammate, date) come from the service.
         this.gui.service().achievements().unlocks(playerUUID,
                 loaded -> {
                     this.unlocks = indexByAchievementId(loaded);
@@ -182,14 +180,7 @@ public final class AchievementInventory extends InventoryBuilder {
         return (records != null && !records.isEmpty()) || cachedIds.contains(achievement.name());
     }
 
-    /**
-     * Progress toward a locked achievement, where that is a meaningful thing to show.
-     *
-     * <p>GLOBAL reads its current value off the fetched stats and its target off the rule — the
-     * same rule the unlock check uses, so the bar cannot disagree with reality. META counts its
-     * required achievements locally. ROUND gets nothing: its progress only exists in memory
-     * during a round, and showing a stale zero would be worse than showing nothing.
-     */
+    /** ROUND achievements show nothing: their progress lives only in memory during a round. */
     private List<String> progressLore(Achievements achievement, Set<String> cachedIds) {
         List<String> lore = new ArrayList<>();
 

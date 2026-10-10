@@ -1,8 +1,12 @@
 package forceitembattle.settings;
 
 import java.util.List;
+import lombok.Getter;
+import lombok.experimental.Accessors;
 import org.bukkit.Material;
 
+@Getter
+@Accessors(fluent = true)
 public enum GameSetting {
 
     TEAM("Teams", List.of("", "<gray>Toggle whether <dark_aqua>teams <gray>are allowed or not.", "<dark_gray><i>Only toggleable if 4 or more players are playing!</i>", ""), "isTeamGame", false, Material.RED_BED),
@@ -19,6 +23,7 @@ public enum GameSetting {
     POSITIONS("Positions - /pos", List.of("", "<gray>Toggle whether <dark_aqua>positions <gray>can be set.", ""), "positions", true, Material.LIME_WOOL),
     ELYTRA("Elytra gliding", List.of("", "<gray>Prevents gliding with an elytra<gray>.", ""), "elytraGliding", true, Material.ELYTRA),
     CHAIN("Force Chain", List.of("", "<gray>Shows the next forced item.", ""), "forceChain", false, Material.IRON_CHAIN),
+    MIRROR("Mirror Battle", List.of("", "<gray>Everyone hunts the <dark_aqua>same row of items<gray>.", "<dark_gray><i>Ignored in Run Battle.</i>", ""), "mirrorBattle", false, Material.GLASS),
     RUN("Run Battle", List.of("", "<gray>Only the first player to get the item gets the point.", ""), "runBattle", false, Material.CLOCK),
     STATS("Stats", List.of("", "<gray>Toggle whether this round is played with <dark_aqua>stats<gray>.", ""), "stats", true, Material.WRITABLE_BOOK),
     ACHIEVEMENTS("Achievements", List.of("", "<gray>Toggle whether this round is played with <dark_aqua>achievements<gray>.", ""), "achievements", true, Material.NETHER_STAR),
@@ -60,25 +65,5 @@ public enum GameSetting {
         this.configPath = "settings." + configPath;
         this.defaultValue = defaultValue;
         this.defaultMaterial = defaultMaterial;
-    }
-
-    public String displayName() {
-        return displayName;
-    }
-
-    public List<String> descriptionLore() {
-        return descriptionLore;
-    }
-
-    public String configPath() {
-        return configPath;
-    }
-
-    public Object defaultValue() {
-        return defaultValue;
-    }
-
-    public Material defaultMaterial() {
-        return defaultMaterial;
     }
 }

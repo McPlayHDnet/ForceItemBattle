@@ -24,15 +24,7 @@ import org.bukkit.inventory.CraftingInventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.SmithingInventory;
 
-/**
- * The eight ways an item can reach a player's hands.
- *
- * <p>Adapter only. Each handler decides whether <em>this kind of event</em> is one that counts —
- * a right-click rather than a left, a real craft rather than a preview, an inventory that is not a
- * menu — and then asks {@link FindDetection} whether what it is holding is a find. Whether the
- * round is running, whether this player is playing it and whether the item matches is one decision
- * in one place; it used to be three lines repeated eight times here, and it was where the bugs were.
- */
+/** Each handler decides only whether its kind of event counts, then asks {@link FindDetection}. */
 @RequiredArgsConstructor
 public class ItemsListener implements Listener {
 

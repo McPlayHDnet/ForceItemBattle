@@ -1,8 +1,10 @@
 package forceitembattle.achievements.progress;
 
+import lombok.ToString;
 import org.bukkit.Material;
 
-public class SameItemBackToBackAchievementProgress implements AchievementProgressTracker {
+@ToString
+public class SameItemBackToBackAchievementProgress {
 
     public Material lastBackToBackItem = null;
 

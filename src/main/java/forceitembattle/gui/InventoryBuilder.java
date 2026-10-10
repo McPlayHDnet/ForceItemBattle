@@ -4,9 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import javax.annotation.Nonnull;
 import lombok.Getter;
@@ -16,26 +14,19 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.event.inventory.InventoryDragEvent;
-import org.bukkit.event.inventory.InventoryOpenEvent;
-import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 
-@SuppressWarnings("unused")
 public class InventoryBuilder implements InventoryHolder {
 
     private final Map<Integer, Consumer<InventoryClickEvent>> itemHandlers = new HashMap<>();
-    private final List<Consumer<InventoryOpenEvent>> openHandlers = new ArrayList<>();
     private final List<Consumer<InventoryCloseEvent>> closeHandlers = new ArrayList<>();
     private final List<Consumer<InventoryClickEvent>> clickHandlers = new ArrayList<>();
-    private final List<Consumer<InventoryDragEvent>> dragHandlers = new ArrayList<>();
 
     private final List<Runnable> updateHandlers = new ArrayList<>();
 
     private final Inventory inventory;
-    private String title;
 
     @Setter
     private Predicate<Player> closeFilter;
@@ -44,37 +35,11 @@ public class InventoryBuilder implements InventoryHolder {
     private Player player;
 
     public InventoryBuilder(int size) {
-        this(owner -> Bukkit.createInventory(owner, size));
+        this.inventory = Bukkit.createInventory(this, size);
     }
 
     public InventoryBuilder(int size, Component title) {
-        this(owner -> Bukkit.createInventory(owner, size, title));
-    }
-
-    public InventoryBuilder(InventoryType type) {
-        this(owner -> Bukkit.createInventory(owner, type));
-    }
-
-    public InventoryBuilder(InventoryType type, Component title) {
-        this(owner -> Bukkit.createInventory(owner, type, title));
-    }
-
-    public InventoryBuilder(Function<InventoryHolder, Inventory> inventoryFunction) {
-        Objects.requireNonNull(inventoryFunction, "inventoryFunction");
-
-        this.inventory = inventoryFunction.apply(this);
-    }
-
-    protected void onOpen(InventoryOpenEvent event) {
-    }
-
-    protected void onClick(InventoryClickEvent event) {
-    }
-
-    protected void onClose(InventoryCloseEvent event) {
-    }
-
-    protected void onDrag(InventoryDragEvent event) {
+        this.inventory = Bukkit.createInventory(this, size, title);
     }
 
     public void addItem(ItemStack item) {
@@ -127,16 +92,6 @@ public class InventoryBuilder implements InventoryHolder {
         this.itemHandlers.remove(slot);
     }
 
-    public void removeItems(int... slots) {
-        for (int slot : slots) {
-            removeItem(slot);
-        }
-    }
-
-    public void addOpenHandler(Consumer<InventoryOpenEvent> openHandler) {
-        this.openHandlers.add(openHandler);
-    }
-
     public void addCloseHandler(Consumer<InventoryCloseEvent> closeHandler) {
         this.closeHandlers.add(closeHandler);
     }
@@ -145,24 +100,12 @@ public class InventoryBuilder implements InventoryHolder {
         this.clickHandlers.add(clickHandler);
     }
 
-    public void addDragHandler(Consumer<InventoryDragEvent> dragHandler) {
-        this.dragHandlers.add(dragHandler);
-    }
-
     public void addUpdateHandler(Runnable updateHandler) {
         this.updateHandlers.add(updateHandler);
     }
 
-    /**
-     * Update method called when inventory is opened or an item is clicked.
-     * Can be called externally to force an update.
-     */
     public void update() {
         this.updateHandlers.forEach(Runnable::run);
-    }
-
-    public void clearCloseHandlers() {
-        this.closeHandlers.clear();
     }
 
     public void open(Player player) {
@@ -176,23 +119,13 @@ public class InventoryBuilder implements InventoryHolder {
         return this.inventory;
     }
 
-    public void handleOpen(InventoryOpenEvent e) {
-        onOpen(e);
-
-        this.openHandlers.forEach(c -> c.accept(e));
-    }
-
     public boolean handleClose(InventoryCloseEvent e) {
-        onClose(e);
-
         this.closeHandlers.forEach(c -> c.accept(e));
 
         return this.closeFilter != null && this.closeFilter.test((Player) e.getPlayer());
     }
 
     public void handleClick(InventoryClickEvent e) {
-        onClick(e);
-
         this.clickHandlers.forEach(c -> c.accept(e));
 
         Consumer<InventoryClickEvent> clickConsumer = this.itemHandlers.get(e.getRawSlot());
@@ -201,11 +134,5 @@ public class InventoryBuilder implements InventoryHolder {
             clickConsumer.accept(e);
             update();
         }
-    }
-
-    public void handleDrag(InventoryDragEvent e) {
-        onDrag(e);
-
-        this.dragHandlers.forEach(c -> c.accept(e));
     }
 }

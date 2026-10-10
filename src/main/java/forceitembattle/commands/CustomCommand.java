@@ -3,19 +3,17 @@ package forceitembattle.commands;
 import forceitembattle.settings.GameSetting;
 import forceitembattle.util.Text;
 import java.util.List;
+import java.util.UUID;
+import javax.annotation.Nullable;
 import lombok.Getter;
+import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-/**
- * Command that is specified in plugin.yml. Constructing one does not register it: that happens
- * through {@link CommandsManager#registerCommand(CustomCommand)} during bootstrap.
- *
- * <p>A command <b>declares</b> what it requires in {@link #preconditions()} and is invoked only once
- * those hold — it does not check for itself. See {@link Precondition}.
- */
+/** Registered via {@link CommandsManager#registerCommand}; runs only once its {@link #preconditions()} hold. */
 @Getter
 public abstract class CustomCommand implements CommandExecutor {
 
@@ -23,23 +21,21 @@ public abstract class CustomCommand implements CommandExecutor {
     private String usage;
     private String description;
 
-    /**
-     * Set by {@link CommandsManager#registerCommand} at bootstrap, and by tests directly. Not a
-     * constructor parameter: that would thread it through 34 subclass constructors.
-     */
+    /** Set at registration rather than in the constructor, to avoid threading it through every subclass. */
     private CommandContext context;
 
     public CustomCommand(String name) {
         this.name = name;
     }
 
-    /**
-     * What must hold before this command's body runs, in the order it is checked — the first failure
-     * is what the sender is told. Return {@link List#of()} for a command with no gates.
-     *
-     * <p>Abstract on purpose: a default would make declaring optional, and "forgot to declare a gate"
-     * would look exactly like "correctly has none".
-     */
+    /** Not {@code Bukkit.getOfflinePlayer(name)}: that can block on a Mojang lookup for an unknown name. */
+    @Nullable
+    protected static UUID resolvePlayer(String name) {
+        OfflinePlayer cached = Bukkit.getOfflinePlayerIfCached(name);
+        return cached == null ? null : cached.getUniqueId();
+    }
+
+    /** Checked in order; the first failure is reported. Abstract so a forgotten gate can't look like "none". */
     protected abstract List<Precondition> preconditions();
 
     /** Reads the declaration from outside the subclass, for the pinned table in the tests. */
@@ -99,12 +95,7 @@ public abstract class CustomCommand implements CommandExecutor {
         sender.sendMessage("This command can only be executed by a player");
     }
 
-    /**
-     * <b>For subcommand gates only</b> — {@code CommandAchievement} and {@code CommandStats}, where
-     * the gate hangs off {@code args[0]} and a command-level declaration cannot reach it. Everything
-     * else declares {@link Precondition#OP}. Takes the body rather than returning a boolean, because
-     * a boolean exists to be put in an {@code if} and inverted by mistake.
-     */
+    /** For subcommand gates only, where a command-level {@link Precondition#OP} cannot reach {@code args[0]}. */
     protected final void requireOp(Player player, Runnable action) {
         if (!player.isOp()) {
             player.sendMessage(Text.of(Precondition.NO_PERMISSION));

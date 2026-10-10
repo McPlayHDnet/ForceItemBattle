@@ -1,18 +1,12 @@
 package forceitembattle.achievements;
 
-import forceitembattle.achievements.global.GlobalStatsCache;
+import forceitembattle.achievements.global.GlobalStats;
 import forceitembattle.achievements.global.GlobalStatsLoader;
 import forceitembattle.achievements.handlers.AchievementHandler;
 import forceitembattle.achievements.handlers.CollectionAchievementHandler;
-import forceitembattle.achievements.progress.AchievementProgressTracker;
-import forceitembattle.achievements.progress.BackToBackAchievementProgress;
+import forceitembattle.achievements.handlers.TallyAchievementHandler;
 import forceitembattle.achievements.progress.CollectionAchievementProgress;
-import forceitembattle.achievements.progress.ConsecutiveStoneAchievementProgress;
-import forceitembattle.achievements.progress.CounterAchievementProgress;
-import forceitembattle.achievements.progress.ItemFrequencyAchievementProgress;
 import forceitembattle.achievements.progress.SimpleAchievementProgress;
-import forceitembattle.achievements.progress.SkipAchievementProgress;
-import forceitembattle.achievements.progress.TimeAchievementProgress;
 import forceitembattle.collection.CollectionManager;
 import forceitembattle.event.PlayerGrantAchievementEvent;
 import forceitembattle.manager.Manager;
@@ -45,16 +39,12 @@ public class AchievementManager implements Manager {
     private final GameSettings settings;
     private final CollectionManager collection;
 
-    /**
-     * What a handler is allowed to ask about the round. Built once here because this manager is the
-     * only caller of {@code check}, and deliberately not the plugin: see {@link AchievementWorld}.
-     */
     private final AchievementWorld world;
-    private final Map<UUID, Map<Achievements, AchievementProgressTracker>> playerProgress = new HashMap<>();
-    private final Map<Team, Map<Achievements, AchievementProgressTracker>> teamProgress = new HashMap<>();
+    private final Map<UUID, Map<Achievements, Object>> playerProgress = new HashMap<>();
+    private final Map<Team, Map<Achievements, Object>> teamProgress = new HashMap<>();
     private final AchievementStorage storage;
     @Getter
-    private final GlobalStatsCache globalStatsCache;
+    private final Map<UUID, GlobalStats> globalStatsCache;
     @Getter
     private final GlobalStatsLoader globalStatsLoader;
 
@@ -63,7 +53,7 @@ public class AchievementManager implements Manager {
 
     public AchievementManager(Roster roster, RoundPhase roundPhase, GameSettings settings,
                               CollectionManager collection, AchievementStorage storage,
-                              GlobalStatsCache globalStatsCache, GlobalStatsLoader globalStatsLoader,
+                              Map<UUID, GlobalStats> globalStatsCache, GlobalStatsLoader globalStatsLoader,
                               AchievementWorld world) {
         this.roster = roster;
         this.roundPhase = roundPhase;
@@ -112,9 +102,9 @@ public class AchievementManager implements Manager {
             return;
         }
 
-        Map<Achievements, AchievementProgressTracker> progress = playerProgress.computeIfAbsent(uuid, key -> new HashMap<>());
+        Map<Achievements, Object> progress = playerProgress.computeIfAbsent(uuid, key -> new HashMap<>());
 
-        Map<Achievements, AchievementProgressTracker> teamProgressMap = null;
+        Map<Achievements, Object> teamProgressMap = null;
         Team team = null;
         if (forceItemPlayer.isInTeam()) {
             team = forceItemPlayer.currentTeam();
@@ -142,12 +132,12 @@ public class AchievementManager implements Manager {
                 }
             }
 
-            Map<Achievements, AchievementProgressTracker> progressMap = useTeamProgress ? teamProgressMap : progress;
-            AchievementProgressTracker tracker = progressMap.computeIfAbsent(achievement, key -> handler.createProgress());
+            Map<Achievements, Object> progressMap = useTeamProgress ? teamProgressMap : progress;
+            Object tracker = progressMap.computeIfAbsent(achievement, key -> handler.createProgress());
 
             @SuppressWarnings("unchecked")
-            AchievementHandler<AchievementProgressTracker> typedHandler =
-                    (AchievementHandler<AchievementProgressTracker>) handler;
+            AchievementHandler<Object> typedHandler =
+                    (AchievementHandler<Object>) handler;
 
             if (typedHandler.check(event, tracker, forceItemPlayer, this.world)) {
                 grantAchievement(player, achievement, useTeamProgress, forceItemPlayer);
@@ -185,14 +175,7 @@ public class AchievementManager implements Manager {
         checkMetaTiers(playerUuid, player, null);
     }
 
-    /**
-     * Grants every Completionist tier the player has just become eligible for.
-     *
-     * <p>One pass is enough, and provably so: {@link CompletionistRule}'s constructor rejects a rule
-     * that requires META achievements, so unlocking a tier here can never satisfy another one. This
-     * used to be a {@code while (grantedAny)} fixpoint, whose second pass could only ever grant
-     * nothing — pinned by {@code CompletionistRuleTest}, which is the guard that keeps this true.
-     */
+    /** One pass suffices: CompletionistRule rejects rules requiring META achievements, so no tier unlocks another. */
     public void checkMetaTiers(UUID playerUuid, Player player, Team team) {
         for (Achievements achievement : Achievements.values()) {
             if (achievement.getScope() != AchievementScope.META) {
@@ -248,10 +231,7 @@ public class AchievementManager implements Manager {
         });
     }
 
-    /**
-     * Called from the match submit's success callback, so the just-finished game is already in the
-     * DB and the achievement fills at conclusion rather than a game late.
-     */
+    /** Runs from the match submit's success callback, so the just-finished game is already counted. */
     public void evaluateCollectionAchievement(Player player) {
         UUID uuid = player.getUniqueId();
 
@@ -284,14 +264,13 @@ public class AchievementManager implements Manager {
         });
     }
 
-    /**
-     * Persists one unlock and, if the player is online, fires the grant event so announcements and
-     * Completionist run. A team player with no resolvable teammate is recorded as SOLO, to keep the
-     * service data valid.
-     */
+    /** A team player with no resolvable teammate is recorded as SOLO to keep the service data valid. */
     private void writeUnlock(UUID memberUuid, Player memberPlayer, Achievements achievement,
                              Team team) {
-        UUID teammate = teammateOf(memberUuid, team);
+        UUID teammate = team == null ? null : team.getPlayers().stream()
+                .map(member -> member.player().getUniqueId())
+                .filter(uuid -> !uuid.equals(memberUuid))
+                .findFirst().orElse(null);
         AchievementMode mode = teammate != null ? AchievementMode.TEAM : AchievementMode.SOLO;
 
         storage.addAchievement(memberUuid, achievement, mode, teammate);
@@ -299,20 +278,6 @@ public class AchievementManager implements Manager {
         if (memberPlayer != null && memberPlayer.isOnline()) {
             Bukkit.getPluginManager().callEvent(new PlayerGrantAchievementEvent(memberPlayer, achievement));
         }
-    }
-
-    /** The other member of a (two-player) team, or null if none can be resolved. */
-    private UUID teammateOf(UUID memberUuid, Team team) {
-        if (team == null) {
-            return null;
-        }
-        for (ForceItemPlayer p : team.getPlayers()) {
-            UUID uuid = p.player().getUniqueId();
-            if (!uuid.equals(memberUuid)) {
-                return uuid;
-            }
-        }
-        return null;
     }
 
     public void checkGameEndAchievements() {
@@ -333,49 +298,18 @@ public class AchievementManager implements Manager {
 
             Team team = fip.currentTeam();
 
-            // CHICOT — finish with no deaths.
-            if (!storage.hasAchievement(uuid, Achievements.CHICOT)) {
-                Map<Achievements, AchievementProgressTracker> progress =
-                        playerProgress.computeIfAbsent(uuid, key -> new HashMap<>());
-                AchievementProgressTracker chicotProgress = progress.computeIfAbsent(
-                        Achievements.CHICOT, key -> Achievements.CHICOT.getHandler().createProgress());
-                if (chicotProgress instanceof SimpleAchievementProgress simpleProgress
-                        && simpleProgress.deathCount == 0) {
-                    writeUnlock(uuid, fip.player(), Achievements.CHICOT, team);
+            for (Achievements achievement : Achievements.values()) {
+                if (achievement.getHandler() instanceof TallyAchievementHandler tally
+                        && !storage.hasAchievement(uuid, achievement)
+                        && !hadOccurrence(uuid, achievement)
+                        && (!tally.requiresWin() || didWin(fip))) {
+                    writeUnlock(uuid, fip.player(), achievement, team);
                 }
-            }
-
-            // THE_HARD_WAY — finish the game without a single back-to-back.
-            if (!storage.hasAchievement(uuid, Achievements.THE_HARD_WAY)
-                    && !hadOccurrence(uuid, Achievements.THE_HARD_WAY)) {
-                writeUnlock(uuid, fip.player(), Achievements.THE_HARD_WAY, team);
-            }
-
-            // NO_HANDOUTS — win the game without a single back-to-back.
-            if (!storage.hasAchievement(uuid, Achievements.NO_HANDOUTS)
-                    && !hadOccurrence(uuid, Achievements.NO_HANDOUTS)
-                    && didWin(fip)) {
-                writeUnlock(uuid, fip.player(), Achievements.NO_HANDOUTS, team);
-            }
-
-            // NO_SHORTCUTS — finish without entering the Antimatter Teleporter.
-            if (!storage.hasAchievement(uuid, Achievements.NO_SHORTCUTS)
-                    && !hadOccurrence(uuid, Achievements.NO_SHORTCUTS)) {
-                writeUnlock(uuid, fip.player(), Achievements.NO_SHORTCUTS, team);
-            }
-
-            // IT_IS_BEAUTIFUL — finish without leaving the Overworld.
-            if (!storage.hasAchievement(uuid, Achievements.IT_IS_BEAUTIFUL)
-                    && !hadOccurrence(uuid, Achievements.IT_IS_BEAUTIFUL)) {
-                writeUnlock(uuid, fip.player(), Achievements.IT_IS_BEAUTIFUL, team);
             }
         }
     }
 
-    /**
-     * For team-eligible achievements the tracker is the shared team one, so this reflects whether
-     * either teammate triggered it. A missing tracker means it never fired.
-     */
+    /** Team-eligible achievements use the shared team tracker, so this covers either teammate. */
     private boolean hadOccurrence(UUID uuid, Achievements achievement) {
         return getProgress(uuid, achievement) instanceof SimpleAchievementProgress simpleProgress
                 && simpleProgress.count > 0;
@@ -402,17 +336,17 @@ public class AchievementManager implements Manager {
     }
 
     /** Checks the player's own progress and, for team-shared achievements, the team's. */
-    public AchievementProgressTracker getProgress(UUID uuid, Achievements achievement) {
-        Map<Achievements, AchievementProgressTracker> playerMap = playerProgress.get(uuid);
+    public Object getProgress(UUID uuid, Achievements achievement) {
+        Map<Achievements, Object> playerMap = playerProgress.get(uuid);
         if (playerMap != null) {
-            AchievementProgressTracker tracker = playerMap.get(achievement);
+            Object tracker = playerMap.get(achievement);
             if (tracker != null) {
                 return tracker;
             }
         }
         ForceItemPlayer fip = this.roster.get(uuid);
         if (fip != null && fip.currentTeam() != null) {
-            Map<Achievements, AchievementProgressTracker> teamMap = teamProgress.get(fip.currentTeam());
+            Map<Achievements, Object> teamMap = teamProgress.get(fip.currentTeam());
             if (teamMap != null) {
                 return teamMap.get(achievement);
             }
@@ -422,7 +356,7 @@ public class AchievementManager implements Manager {
 
     /** Progress is in-memory and per-round, so this only reflects the current game. */
     public String describeProgress(UUID uuid, Achievements achievement) {
-        AchievementProgressTracker tracker = getProgress(uuid, achievement);
+        Object tracker = getProgress(uuid, achievement);
         if (tracker == null) {
             return "not started";
         }
@@ -438,29 +372,7 @@ public class AchievementManager implements Manager {
             }
             return collection.collected.size() + " collected: " + collection.collected;
         }
-        if (tracker instanceof CounterAchievementProgress counter) {
-            return "count=" + counter.count + ", consecutive=" + counter.consecutiveCount;
-        }
-        if (tracker instanceof ItemFrequencyAchievementProgress frequency) {
-            int highest = frequency.counts.values().stream().mapToInt(Integer::intValue).max().orElse(0);
-            return "highest same-item count=" + highest;
-        }
-        if (tracker instanceof TimeAchievementProgress time) {
-            return "count=" + time.count + ", hasSkipped=" + time.hasSkipped;
-        }
-        if (tracker instanceof SkipAchievementProgress skip) {
-            return "skips=" + skip.skipCount;
-        }
-        if (tracker instanceof BackToBackAchievementProgress backToBack) {
-            return "backToBack=" + backToBack.b2bCount;
-        }
-        if (tracker instanceof ConsecutiveStoneAchievementProgress stone) {
-            return "consecutiveStone=" + stone.consecutiveCount;
-        }
-        if (tracker instanceof SimpleAchievementProgress simple) {
-            return "count=" + simple.count + (simple.deathCount != 0 ? ", deaths=" + simple.deathCount : "");
-        }
-        return "in progress";
+        return tracker.toString();
     }
 
     public AchievementStorage getAchievementStorage() {

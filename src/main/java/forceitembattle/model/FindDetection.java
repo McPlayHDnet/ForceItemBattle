@@ -6,11 +6,6 @@ import lombok.RequiredArgsConstructor;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-/**
- * Whether an item that passed through someone's hands is a find.
- *
- * <p>{@link FindOutcome} answers what a find is worth; this answers whether there is one.
- */
 @RequiredArgsConstructor
 public final class FindDetection {
 
@@ -29,12 +24,8 @@ public final class FindDetection {
         // participant(), not get(): a spectator keeps the item they were hunting when they stopped.
         return this.roster.participant(player.getUniqueId())
                 .filter(participant -> stack.getType() == participant.activeMaterial())
-                // The backpack is a bundle, so a round whose force item is one would otherwise be
-                // completed by opening the backpack every player is handed at the start.
-                //
-                // Tested last on purpose: it is the only check here that reads item meta, which
-                // CraftBukkit deep-copies on every call. Behind the material match it runs a
-                // handful of times a round rather than on every click, pickup, craft and consume.
+                // The backpack is a bundle, so it would complete a bundle round. Checked last because reading item
+                // meta deep-copies it.
                 .filter(participant -> !GameItems.isBackpack(stack));
     }
 }

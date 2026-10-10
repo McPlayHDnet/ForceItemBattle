@@ -49,12 +49,7 @@ public class LocatorManager implements Manager {
     /** Close enough to spot something standing at the surface. */
     private static final int SURFACE_ARRIVAL_RADIUS = 70;   // blocks
 
-    /**
-     * Region probes per tick while sweeping for a structure. Low on purpose: a probe that lands on
-     * a chunk already on disk makes the server read and parse it, and those are the probes nearest
-     * the player — so the cheap-looking ones are the expensive ones. A near find now settles in
-     * two or three ticks anyway.
-     */
+    /** Low on purpose: probes nearest the player hit chunks on disk, which the server must read and parse. */
     private static final int PROBES_PER_TICK = 12;
 
     /** Chunks each way around the biome's middle that get generated and read. 5×5 in all. */
@@ -68,10 +63,7 @@ public class LocatorManager implements Manager {
     private final Map<String, Location> locatedStructures;
     private final Map<UUID, Map<String, ActiveLocator>> activeLocators;
 
-    /**
-     * Who is mid-sweep. Neither kind of locate comes back instantly any more, and without this a
-     * second right-click during that moment starts a second sweep and spends a second locator.
-     */
+    /** Without this a second right-click mid-sweep starts another sweep and spends a second locator. */
     private final Set<UUID> sounding;
 
     public LocatorManager(PositionManager positionManager) {
@@ -130,18 +122,13 @@ public class LocatorManager implements Manager {
     }
 
     /**
-     * Sweeps region by region and keeps the nearest by real distance, because the server's own
-     * search does not — see {@link NearestOnGrid} for MC-138887 and why {@code radius = 0} is the
-     * way out of it.
-     *
-     * <p>Budgeted across ticks rather than run in one go: most probes are cheap, but the ones that
-     * land on chunks already on disk make the server read them, and a few hundred of those in a
-     * single tick is exactly the stall this is supposed to be an improvement on.
+     * Keeps the nearest by real distance, which the server's search does not (MC-138887, see
+     * {@link NearestOnGrid}). Budgeted across ticks so on-disk chunk reads don't stall one tick.
      */
     private void locateStructure(Locator locator, Player player) {
         @Nullable Structure structure = RegistryAccess.registryAccess()
                 .getRegistry(RegistryKey.STRUCTURE)
-                .get(this.getNamespacedKey(locator.getStructureId()));
+                .get(NamespacedKey.fromString(locator.getStructureId()));
 
         if (structure == null) {
             player.sendMessage(Text.of(Prefix.LOCATOR + "<dark_aqua>" + locator.getStructureId() + " <red>is not loaded or could not be found, Fire fix!"));
@@ -199,22 +186,11 @@ public class LocatorManager implements Manager {
     }
 
     /**
-     * Three steps, because the biome search alone has never been enough for an underground biome.
-     *
-     * <ol>
-     *   <li>{@code nearest} for a point on the region's rim — cheap, wide, and the only step that
-     *       can say "not around here".
-     *   <li>{@link BiomeSearch#interior} to walk in from that rim. Still free: noise samples, no
-     *       chunks.
-     *   <li>{@link #soundOut} to generate what is actually there and look at it, because a cave
-     *       biome is paint over the carvers' work and promises no cavity anywhere.
-     * </ol>
-     *
-     * <p>Only the third step costs anything, and it is what turns "somewhere over there, good
-     * luck" into a spot someone has looked at.
+     * The biome search alone can't find an underground biome: find the rim, walk into the interior
+     * (noise only, free), then generate and scan chunks for an actual cavity.
      */
     private void locateBiome(Locator locator, Player player) {
-        Biome biome = BiomeSearch.resolve(this.getNamespacedKey(locator.getStructureId()));
+        Biome biome = BiomeSearch.resolve(NamespacedKey.fromString(locator.getStructureId()));
 
         if (biome == null) {
             player.sendMessage(Text.of(Prefix.LOCATOR + "<dark_aqua>" + locator.getStructureId() + " <red>is not loaded or could not be found, Fire fix!"));
@@ -240,13 +216,8 @@ public class LocatorManager implements Manager {
     }
 
     /**
-     * Generates the chunks around the middle of the biome and reads them for a dig spot.
-     *
-     * <p>The threading is the fiddly part and it is deliberate: {@code getChunkAtAsync} completes
-     * on the main thread, which is where a snapshot has to be taken, so the snapshot is taken in
-     * the future's own callback. Only the scanning — a quarter of a million palette lookups —
-     * moves off the main thread, and it reads snapshots precisely because those are safe to read
-     * there. Everything that touches a player is hopped back with {@code Scheduler.runSync}.
+     * {@code getChunkAtAsync} completes on the main thread, where snapshots must be taken; only the
+     * scan of those snapshots runs async, and anything touching a player hops back with runSync.
      */
     private void soundOut(Locator locator, Player player, Biome biome, Location interior) {
         World world = interior.getWorld();
@@ -316,10 +287,7 @@ public class LocatorManager implements Manager {
         this.reveal(locator, player, located, target.find());
     }
 
-    /**
-     * @param find what the chunks turned out to hold, or {@code null} when nothing looked at the
-     *             blocks — a structure search, or a biome sweep that came back empty-handed.
-     */
+    /** @param find what the chunks held, or null when no blocks were read (structure search or empty biome sweep) */
     private void reveal(Locator locator, Player player, Location targetLocation, @Nullable CaveScan.Find find) {
         // Resolved here on the main thread; the async session task must not touch the world.
         Location digSpot = this.surfaceDigSpot(targetLocation);
@@ -352,9 +320,7 @@ public class LocatorManager implements Manager {
             return "";
         }
         return switch (find) {
-            // Deliberately does not say "spring". Sulfur tops a column either because a spring grew
-            // its root system up to it or because the cave itself has been cut open there, and the
-            // scan cannot tell which — but "dig where the sulfur is" is the right move for both.
+            // Not "spring": the scan can't tell a spring's root system from a cut-open cave, and digging is right for both.
             case SURFACE -> "\n" + Prefix.LOCATOR + "<gray>There is <yellow>sulfur <gray>at the surface there. "
                     + "Dig where it breaks through and it takes you into the cave.";
             case CAVE -> "\n" + Prefix.LOCATOR + "<gray>Open cave at <dark_aqua>y=" + targetLocation.getBlockY()
@@ -383,11 +349,7 @@ public class LocatorManager implements Manager {
                 targetLocation.getBlockZ() + 0.5);
     }
 
-    /**
-     * @param coordinates the target's position, already formatted — {@code x, ?, z} for a search
-     *                    that only resolved a column, {@code x, y, z} once the chunks have been
-     *                    read and the depth is a real one. See {@link LocationFormat#xz}.
-     */
+    /** @param coordinates {@code x, ?, z} while only the column is known, {@code x, y, z} once the depth is real */
     private void startLocatorSession(Locator locator, Player player, Location targetLocation, Location digSpot,
                                      String coordinates) {
         UUID playerId = player.getUniqueId();
@@ -499,10 +461,7 @@ public class LocatorManager implements Manager {
         return byStructure.size();
     }
 
-    /**
-     * The locator this stack is the item for, or null. Matching on the stack rather than the material
-     * is what keeps a plain brush from working as the Trail Ruins locator.
-     */
+    /** Matches the stack, not the material, so a plain brush doesn't work as the Trail Ruins locator. */
     @Nullable
     public Locator getLocatorByItem(ItemStack itemStack) {
         return this.locators.values().stream()
@@ -515,10 +474,6 @@ public class LocatorManager implements Manager {
     public Locator randomLocator() {
         List<Locator> all = List.copyOf(this.locators.values());
         return all.isEmpty() ? null : all.get(ThreadLocalRandom.current().nextInt(all.size()));
-    }
-
-    private NamespacedKey getNamespacedKey(String structureId) {
-        return structureId.contains("fib:") ? NamespacedKey.fromString(structureId) : NamespacedKey.minecraft(structureId);
     }
 
     private boolean isAlreadyRevealed(String structureId, Location location) {

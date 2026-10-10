@@ -32,19 +32,14 @@ public enum CustomMaterials {
             "wheel", "<yellow><b>Wheel of Fortune", null),
     KILN_FIRED_BRUSH(Material.BRUSH, "kiln_fired_brush", "Kiln-Fired Brush", "<#c77b3e>", null, null,
             "kiln_fired_brush", null, new NamespacedKey("fib", "kiln_fired_brush")),
-    // Built from its loot table rather than renamed here, because the portal vault matches its key
-    // by exact components: a plugin-built copy has to be byte-identical to the datapack one or the
-    // vault silently refuses it.
+    // From its loot table, because the portal vault matches its key by exact components.
     TOTEM_OF_ANTIMATTER(Material.TOTEM_OF_UNDYING, "totem_of_antimatter", "Totem of Antimatter", null,
             new NamespacedKey("fib", "items/totem_of_antimatter"), null,
             "totem_of_antimatter", null, null);
 
     /**
-     * Custom items that must not answer for their bare material. Both sit on a real force item —
-     * BRUSH is EARLY, TOTEM_OF_UNDYING is LATE/EXTREME — so {@code nameOf} has to keep saying the
-     * vanilla name and a joker skip has to hand out the plain item, not a free locator or portal
-     * key. They stay reachable by id and recognised by {@link #matches}, which is all the locators
-     * need. The other entries sit on materials the pool never asks for on their own.
+     * These sit on real force items, so {@code nameOf} keeps the vanilla name and a joker skip hands out
+     * the plain item, not a free locator or portal key.
      */
     private static final Set<CustomMaterials> SHARES_MATERIAL_WITH_POOL_ITEM =
             Set.of(KILN_FIRED_BRUSH, TOTEM_OF_ANTIMATTER);
@@ -80,11 +75,7 @@ public enum CustomMaterials {
     @Nullable
     private final String customModelDataString;
 
-    /**
-     * Replaces the model the material would use. Null for most custom items, which are told apart by
-     * {@link #customModelDataString} in a select on the vanilla item instead — the brush cannot be,
-     * since its item definition drives the brushing animation.
-     */
+    /** Null for most; the brush can't use custom-model-data selection because its item definition drives the brushing animation. */
     @Nullable
     private final NamespacedKey itemModel;
 
@@ -144,10 +135,6 @@ public enum CustomMaterials {
         return itemStack;
     }
 
-    /**
-     * Entries that own their material outright need no further check; the rest are told apart by a
-     * PDC marker or a custom-model-data string.
-     */
     public boolean matches(@Nullable ItemStack itemStack) {
         if (itemStack == null || itemStack.getType() != this.material) {
             return false;
@@ -174,10 +161,7 @@ public enum CustomMaterials {
         return true;
     }
 
-    /**
-     * The custom item for this material if there is one, a plain stack otherwise.
-     * The single entry point for handing a force item to a player.
-     */
+    /** The single entry point for handing a force item to a player. */
     public static ItemStack itemStackOf(Material material) {
         CustomMaterials custom = byMaterial(material);
         return custom != null ? custom.itemStack() : new ItemStack(material);
@@ -212,12 +196,7 @@ public enum CustomMaterials {
         return custom != null ? custom.getId() : material.name().toLowerCase();
     }
 
-    /**
-     * The minecraft.wiki page slug for a material, e.g. {@code Heart_of_the_Sea}. The wiki
-     * title-cases every word except a handful of joining words, and a joining word never leads a
-     * title — hence the {@code index > 0}. Match those words whole: a substring replace over the
-     * finished slug lowercases the A inside Axe, Apple and Amethyst, and the "With" inside Wither.
-     */
+    /** Joining words are matched whole, or the A in Axe and the "With" in Wither would be lowercased. */
     public static String wikiSlugOf(Material material) {
         String[] words = material.name().toLowerCase().split("_");
         StringBuilder slug = new StringBuilder(material.name().length());

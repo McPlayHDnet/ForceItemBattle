@@ -10,7 +10,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import forceitembattle.achievements.handlers.AchievementHandler;
-import forceitembattle.achievements.progress.AchievementProgressTracker;
 import forceitembattle.event.AntimatterTeleporterUseEvent;
 import forceitembattle.event.WheelOfFortuneWinEvent;
 import forceitembattle.model.ForceItemPlayer;
@@ -19,18 +18,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.EntityType;
 import org.bukkit.event.Event;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.world.LootGenerateEvent;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
-import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.loot.LootTable;
@@ -46,7 +45,7 @@ import org.mockbukkit.mockbukkit.world.WorldMock;
 /**
  * The {@link Achievements} table itself — 80 constants and the unchecked cast that drives them.
  *
- * <p>{@code AchievementManager} casts each handler to {@code AchievementHandler<AchievementProgressTracker>}
+ * <p>{@code AchievementManager} casts each handler to {@code AchievementHandler<Object>}
  * and hands it a tracker from that same handler's {@code createProgress()}. A handler that disagrees
  * with itself about its progress type throws {@code ClassCastException} mid-round, for one
  * achievement, whenever its trigger first fires. So every ROUND constant is driven here instead.
@@ -155,8 +154,8 @@ class AchievementsTest {
 
             try {
                 @SuppressWarnings("unchecked")
-                AchievementHandler<AchievementProgressTracker> typed =
-                        (AchievementHandler<AchievementProgressTracker>) handler;
+                AchievementHandler<Object> typed =
+                        (AchievementHandler<Object>) handler;
                 typed.check(event, handler.createProgress(), this.participant, this.achievementWorld);
             } catch (ClassCastException e) {
                 failures.add(achievement + " (" + handler.getClass().getSimpleName()
@@ -180,9 +179,9 @@ class AchievementsTest {
                 }
                 AchievementHandler<?> handler = achievement.getHandler();
                 @SuppressWarnings("unchecked")
-                AchievementHandler<AchievementProgressTracker> typed =
-                        (AchievementHandler<AchievementProgressTracker>) handler;
-                AchievementProgressTracker progress = handler.createProgress();
+                AchievementHandler<Object> typed =
+                        (AchievementHandler<Object>) handler;
+                Object progress = handler.createProgress();
                 Event event = eventFor(handler.getTrigger());
 
                 for (int i = 0; i < 3; i++) {
@@ -287,8 +286,8 @@ class AchievementsTest {
         when(event.getLootTable()).thenReturn(table);
         when(event.getLoot()).thenReturn(new ArrayList<>(List.of(loot)));
 
-        AchievementHandler<AchievementProgressTracker> handler =
-                (AchievementHandler<AchievementProgressTracker>) achievement.getHandler();
+        AchievementHandler<Object> handler =
+                (AchievementHandler<Object>) achievement.getHandler();
         return handler.check(event, handler.createProgress(), this.participant, this.achievementWorld);
     }
 

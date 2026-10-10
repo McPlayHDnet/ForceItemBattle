@@ -54,10 +54,7 @@ import org.bukkit.inventory.ItemStack;
 @RequiredArgsConstructor
 public class ClickableItemsListener implements Listener {
 
-    /**
-     * Brushing is a hold-to-use action, and a failed sweep does not use the brush up, so a player
-     * leaning on the button could otherwise fire one blocking structure search after another.
-     */
+    /** A failed sweep doesn't use the brush up, so holding the button would chain blocking structure searches. */
     private static final long BRUSH_SWEEP_COOLDOWN_MS = 1500L;
 
     /** Ground loose enough to sweep. Both snows count: a layer of it covers ground you would stand on. */
@@ -93,11 +90,7 @@ public class ClickableItemsListener implements Listener {
         return action == Action.RIGHT_CLICK_BLOCK || action == Action.RIGHT_CLICK_AIR;
     }
 
-    /**
-     * Every menu button, in every phase. Identification is by marker and never consults the material,
-     * so an item that merely looks like a button is not one. The phase check belongs to the table:
-     * a button not live in the current phase is not a button right now.
-     */
+    /** Identified by marker, never by material, so an item that merely looks like a button is not one. */
     @EventHandler(priority = EventPriority.HIGH)
     public void onMenuButton(PlayerInteractEvent e) {
         Player player = e.getPlayer();
@@ -141,11 +134,6 @@ public class ClickableItemsListener implements Listener {
         }
     }
 
-    /**
-     * Opting into or out of the round about to start, and flipping slot 8 to the other button. The
-     * roster entry is fetched here rather than gated on by the table: this is the only pair of
-     * buttons that needs one.
-     */
     private void setPlaying(Player player, boolean playing) {
         ForceItemPlayer forceItemPlayer = this.roster.get(player.getUniqueId());
         if (forceItemPlayer == null) {
@@ -271,11 +259,8 @@ public class ClickableItemsListener implements Listener {
         PlayerOutfitter.setJokerStack(player, spent.stackAmount());
 
         Material handedOver = spent.handedOver();
-        player.getInventory().addItem(CustomMaterials.itemStackOf(handedOver));
-        if (!player.getInventory().contains(handedOver)) {
-            player.getWorld().dropItemNaturally(player.getLocation(),
-                    CustomMaterials.itemStackOf(handedOver));
-        }
+        player.getInventory().addItem(CustomMaterials.itemStackOf(handedOver)).values()
+                .forEach(leftover -> player.getWorld().dropItemNaturally(player.getLocation(), leftover));
         this.timerManager.sendActionBar();
 
         FoundItemEvent foundItemEvent = new FoundItemEvent(player);

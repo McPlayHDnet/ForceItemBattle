@@ -20,9 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
 public final class CommandStats extends CustomCommand implements CustomTabCompleter {
@@ -68,10 +66,6 @@ public final class CommandStats extends CustomCommand implements CustomTabComple
         }
     }
 
-    /**
-     * Self or named target, for whichever scope was asked for. Solo and team differ only in the
-     * loader they call, the panel's title, and the noun in the two refusals.
-     */
     private void handleScope(Player player, String[] args, String title, String noun,
                              FibStatisticsClient.StatsLoader loader) {
         if (args.length == 1) {
@@ -204,10 +198,6 @@ public final class CommandStats extends CustomCommand implements CustomTabComple
         }
     }
 
-    /**
-     * The stats screen. Solo, team and duo all render through here — only the header,
-     * the score label and the optional "teams played with" line differ.
-     */
     private void sendStats(Player player, String title, String subject, StatsView view) {
         DecimalFormat df = new DecimalFormat("0.#");
 
@@ -282,18 +272,6 @@ public final class CommandStats extends CustomCommand implements CustomTabComple
                 player.sendMessage(Text.of("    <dark_gray>» " + rarity.displayName() + " <dark_gray>× <dark_aqua>" + count));
             }
         }
-    }
-
-    private UUID resolvePlayer(String name) {
-        Player online = Bukkit.getPlayerExact(name);
-        if (online != null) {
-            return online.getUniqueId();
-        }
-        OfflinePlayer offline = Bukkit.getOfflinePlayerIfCached(name);
-        if (offline != null) {
-            return offline.getUniqueId();
-        }
-        return null;
     }
 
 

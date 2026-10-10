@@ -9,19 +9,13 @@ import java.util.UUID;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 
-/**
- * Who finished where. Feeds both the {@code /result} reveal and the {@code placement} / {@code won}
- * fields written to match history, so a tie handled wrongly here shows up as a wrong winner.
- */
+/** Feeds both the /result reveal and the placement/won fields in match history. */
 public final class Standings {
 
     private Standings() {
     }
 
-    /**
-     * Places, densely ranked: equal scores share a place and the next distinct score takes the
-     * next one, so two players tied at the top are both first and the third is second.
-     */
+    /** Dense ranking: two tied at the top are both first and the next is second. */
     public static <T> Map<T, Integer> of(List<T> entities, ToIntFunction<T> score) {
         List<T> sorted = entities.stream()
                 .sorted(Comparator.comparingInt(score).reversed())
@@ -43,23 +37,22 @@ public final class Standings {
     }
 
     public static Map<ForceItemPlayer, Integer> ofPlayers(Map<UUID, ForceItemPlayer> playerMap) {
-        return of(new ArrayList<>(playerMap.values()), ForceItemPlayer::currentScore);
+        return of(new ArrayList<>(playerMap.values()), player -> player.own().score());
     }
 
     public static Map<Team, Integer> ofTeams(List<Team> teams) {
-        return of(teams, Team::getCurrentScore);
+        return of(teams, Team::score);
     }
 
     /**
-     * The roster ordered by score. Ties break on UUID so the order is stable between calls —
-     * otherwise the result screen deals two tied players out differently each time it is opened.
+     * Ties break on UUID, so the result screen deals tied players out the same way every time.
      *
      * @param ascending lowest score first when true
      */
     public static Map<UUID, ForceItemPlayer> sortedByScore(Map<UUID, ForceItemPlayer> roster,
                                                            boolean ascending) {
         Comparator<Map.Entry<UUID, ForceItemPlayer>> comparator =
-                Comparator.comparingInt((Map.Entry<UUID, ForceItemPlayer> e) -> e.getValue().currentScore())
+                Comparator.comparingInt((Map.Entry<UUID, ForceItemPlayer> e) -> e.getValue().own().score())
                         .thenComparing(Map.Entry::getKey);
         if (!ascending) {
             comparator = comparator.reversed();

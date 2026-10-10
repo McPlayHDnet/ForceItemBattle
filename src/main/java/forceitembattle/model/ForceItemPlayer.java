@@ -7,13 +7,7 @@ import lombok.Setter;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
-/**
- * One participant in the current round. Two accessor families: {@code active*} reads through the
- * current {@link ScoreOwner} — the team's in a team game — and is what callers want in nearly every
- * case; the plain ones ({@code currentMaterial()}, {@code currentScore()}) read this player's own
- * values and are correct only where the team has been ruled out.
- * {@link #setCurrentTeam(Team)} is the one place the choice is made.
- */
+/** {@code active*} accessors read through the current {@link ScoreOwner}; the plain ones only this player's own values. */
 public class ForceItemPlayer {
 
     @Setter
@@ -48,49 +42,9 @@ public class ForceItemPlayer {
         return own.foundItems();
     }
 
-    // --- plain family: this player's own values, team or not -------------------------------
-
-    public Material currentMaterial() {
-        return own.material();
-    }
-
-    public Material nextMaterial() {
-        return own.nextMaterial();
-    }
-
-    @Nullable
-    public Material previousMaterial() {
-        return own.previousMaterial();
-    }
-
-    public int remainingJokers() {
-        return own.jokers();
-    }
-
-    public int currentScore() {
-        return own.score();
-    }
-
-    public long lastItemAssignedAt() {
-        return own.itemAssignedAt();
-    }
-
-    // Package-private on purpose: outside model/ everything addresses the ScoreOwner instead.
-
-    void setNextMaterial(Material nextMaterial) {
-        own.setNextMaterial(nextMaterial);
-    }
-
-    void setPreviousMaterial(Material previousMaterial) {
-        own.setPreviousMaterial(previousMaterial);
-    }
-
-    void setCurrentScore(int currentScore) {
-        own.setCurrentScore(currentScore);
-    }
-
-    void setLastItemAssignedAt(long lastItemAssignedAt) {
-        own.setLastItemAssignedAt(lastItemAssignedAt);
+    /** This player's own values, untouched while they are on a team. */
+    SoloScore own() {
+        return own;
     }
 
     // --- active family: whoever owns the score right now -----------------------------------
@@ -130,10 +84,7 @@ public class ForceItemPlayer {
         return currentTeam;
     }
 
-    /**
-     * Joins or leaves a team, repointing the score owner with it. Passing {@code null} restores this
-     * player's own values, which are still exactly where they were before the team was assigned.
-     */
+    /** Passing null restores this player's own values, untouched while they were on the team. */
     public void setCurrentTeam(Team currentTeam) {
         this.currentTeam = currentTeam;
         this.scoreOwner = currentTeam != null ? currentTeam : this.own;

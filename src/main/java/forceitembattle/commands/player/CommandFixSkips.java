@@ -54,10 +54,8 @@ public final class CommandFixSkips extends CustomCommand {
 
         backpack.remove(GameItems.jokerMaterial());
 
-        // Everyone the joker pool belongs to: the team in a team game, just this player otherwise.
-        // The branch this replaces asked the TEAM setting and then dereferenced currentTeam(), so
-        // a player with no team in a round configured for teams NPE'd here -- and onRespawn runs
-        // "/fixskips -silent", which made it a crash on respawn rather than on a command.
+        // Everyone the joker pool belongs to. squad() never NPEs for a teamless player, which matters
+        // because onRespawn runs "/fixskips -silent".
         for (ForceItemPlayer member : forceItemPlayer.squad()) {
             member.player().getInventory().remove(GameItems.jokerMaterial());
         }
