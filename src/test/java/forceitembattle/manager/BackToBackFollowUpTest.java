@@ -30,7 +30,7 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
 /** The back-to-back find is credited a tick after it is detected; what may happen in that tick. */
 class BackToBackFollowUpTest {
 
-    private static final GameContext SOLO = new GameContext(false, false, true, false, false);
+    private static final GameContext SOLO = new GameContext(false, false, true, false, false, false);
 
     private ServerMock server;
     private RoundPhase phase;

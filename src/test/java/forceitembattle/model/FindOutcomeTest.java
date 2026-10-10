@@ -21,7 +21,7 @@ class FindOutcomeTest {
     private static final long NOW = 100_000L;
 
     private static GameContext context(boolean runMode, boolean statsEnabled) {
-        return new GameContext(false, runMode, false, statsEnabled, false);
+        return new GameContext(false, runMode, false, statsEnabled, false, false);
     }
 
     private static ForceItemPlayer finder(long assignedAt, int itemStreak) {

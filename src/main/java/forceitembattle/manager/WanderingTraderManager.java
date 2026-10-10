@@ -275,13 +275,14 @@ public class WanderingTraderManager implements Manager {
 
     /** Vanilla's offers, normalised to a single-item price and unlimited uses, plus the wheel. */
     private List<MerchantRecipe> wanderingRecipes(WanderingTrader entity) {
-        List<MerchantRecipe> recipes = new ArrayList<>(entity.getRecipes());
+        List<MerchantRecipe> recipes = new ArrayList<>();
 
-        recipes.forEach(recipe -> {
-            List<ItemStack> ingredients = recipe.getIngredients();
-            ingredients.forEach(ingredient -> ingredient.setAmount(1));
-            recipe.setIngredients(ingredients);
-        });
+        for (MerchantRecipe vanilla : entity.getRecipes()) {
+            MerchantRecipe recipe = new MerchantRecipe(vanilla.getResult(), 0, vanilla.getMaxUses(),
+                    vanilla.hasExperienceReward(), vanilla.getVillagerExperience(), vanilla.getPriceMultiplier());
+            vanilla.getIngredients().forEach(ingredient -> recipe.addIngredient(ingredient.asQuantity(1)));
+            recipes.add(recipe);
+        }
 
         MerchantRecipe wheel = new MerchantRecipe(CustomMaterials.WHEEL_OF_FORTUNE.itemStack(), Integer.MAX_VALUE);
         wheel.addIngredient(new ItemStack(Material.EMERALD, 1));
