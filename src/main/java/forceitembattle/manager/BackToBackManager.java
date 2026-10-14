@@ -66,6 +66,8 @@ public class BackToBackManager implements Manager {
 
         Set<Material> ownHalf = new HashSet<>();
         InventorySearch.collectUniqueMaterials(player.getInventory(), ownHalf);
+        // The check runs inside the click that made the find, so a bundle held on the cursor to scoop it up is not in the inventory.
+        InventorySearch.collectUniqueMaterials(player.getItemOnCursor(), ownHalf);
 
         if (context.backpackEnabled()) {
             InventorySearch.collectUniqueMaterials(this.backpacks.getBackpackForPlayer(player), ownHalf);
@@ -75,6 +77,7 @@ public class BackToBackManager implements Manager {
         Set<Material> teammateHalf = new HashSet<>();
         if (teammate != null) {
             InventorySearch.collectUniqueMaterials(teammate.player().getInventory(), teammateHalf);
+            InventorySearch.collectUniqueMaterials(teammate.player().getItemOnCursor(), teammateHalf);
         }
 
         boolean selfHasIt = forceItemPlayer.activePreviousMaterial() == target

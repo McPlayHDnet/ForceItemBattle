@@ -20,6 +20,7 @@ import org.bukkit.Material;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BundleMeta;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -105,6 +106,19 @@ class BackToBackFollowUpTest {
         this.server.getScheduler().performTicks(1);
 
         assertTrue(this.credited.isEmpty());
+    }
+
+    @Test
+    void aBundleHeldOnTheCursorCounts() {
+        PlayerMock player = this.server.addPlayer("Understudy1");
+        ItemStack bundle = new ItemStack(Material.BUNDLE);
+        bundle.editMeta(BundleMeta.class, meta -> meta.addItem(new ItemStack(Material.DIRT)));
+        player.setItemOnCursor(bundle);
+
+        this.backToBack.handleAfterFind(new ForceItemPlayer(player, Material.DIRT, 0, 0), SOLO);
+        this.server.getScheduler().performTicks(1);
+
+        assertEquals(1, this.credited.size());
     }
 
     /** Found by hand first: the chain must not credit whatever item replaced it. */
