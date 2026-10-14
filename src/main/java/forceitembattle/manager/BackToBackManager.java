@@ -66,6 +66,8 @@ public class BackToBackManager implements Manager {
 
         Set<Material> ownHalf = new HashSet<>();
         InventorySearch.collectUniqueMaterials(player.getInventory(), ownHalf);
+        // The check runs inside the click that made the find, so a bundle held on the cursor to scoop it up is not in the inventory.
+        InventorySearch.collectUniqueMaterials(player.getItemOnCursor(), ownHalf);
 
         if (context.backpackEnabled()) {
             InventorySearch.collectUniqueMaterials(this.backpacks.getBackpackForPlayer(player), ownHalf);
@@ -75,6 +77,7 @@ public class BackToBackManager implements Manager {
         Set<Material> teammateHalf = new HashSet<>();
         if (teammate != null) {
             InventorySearch.collectUniqueMaterials(teammate.player().getInventory(), teammateHalf);
+            InventorySearch.collectUniqueMaterials(teammate.player().getItemOnCursor(), teammateHalf);
         }
 
         boolean selfHasIt = forceItemPlayer.activePreviousMaterial() == target
@@ -124,21 +127,18 @@ public class BackToBackManager implements Manager {
             String unicode = this.items.getUnicodeFromMaterial(true, foundItem.getType());
             String materialName = CustomMaterials.nameOf(foundItem.getType());
 
-            Component message;
-            if (teammate != null) {
-                message = Text.of(String.format(
-                        "<green>%s <gray>was lucky that <green>%s <gray>already owns <reset>%s <gold>%s <dark_gray>» <aqua>%s",
-                        player.getName(), teammate.player().getName(), unicode, materialName,
-                        probability.formatted()));
-            } else {
-                message = Text.of(String.format(
-                        "<green>%s <gray>was lucky to already own <reset>%s <gold>%s <dark_gray>» <aqua>%s",
-                        player.getName(), unicode, materialName, probability.formatted()));
-            }
+            String lead = teammate != null
+                    ? "<green>" + player.getName() + " <gray>was lucky that <green>" + teammate.player().getName()
+                            + " <gray>already owns "
+                    : "<green>" + player.getName() + " <gray>was lucky to already own ";
+            String odds = " <dark_gray>» <aqua>" + probability.formatted();
+
+            Component message = Text.of(lead + "<reset>" + unicode + " <gold>" + materialName + odds);
+            Component redacted = Text.of(lead + "an item" + odds);
 
             probability.rarity().playSound(player);
 
-            GameBroadcast.announce(message, forceItemPlayer, context);
+            GameBroadcast.announce(message, redacted, forceItemPlayer, context);
             Bukkit.getPluginManager().callEvent(foundNextItemEvent);
         }, 1L);
     }

@@ -76,7 +76,7 @@ public class ScoreboardManager implements Manager {
 
             Material mat = fibPlayer.activeMaterial();
             Component suffix;
-            if (mat != null) {
+            if (mat != null && !this.settings.isMirrorBattle()) {
                 String itemIcon = this.itemDifficultiesManager
                         .getUnicodeFromMaterial(true, mat);
 

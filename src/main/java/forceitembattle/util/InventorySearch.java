@@ -30,6 +30,10 @@ public final class InventorySearch {
         }
     }
 
+    public static void collectUniqueMaterials(@Nullable ItemStack stack, Set<Material> into) {
+        items(new ItemStack[]{stack}).forEach(item -> into.add(item.getType()));
+    }
+
     /** Every stack, containers' contents included; the plugin's own items never count. */
     private static Stream<ItemStack> items(ItemStack[] stacks) {
         return Arrays.stream(stacks)

@@ -78,8 +78,9 @@ public class FoundItemResolver implements Manager {
         Component message = Text.of(String.format(
                 "<green>%s <gray>%s <reset><shadow:black:0.4>%s</shadow> <gold>%s",
                 find.player().getName(), action, unicode, CustomMaterials.nameOf(find.material())));
+        Component redacted = Text.of("<green>" + find.player().getName() + " <gray>" + action + " an item");
 
-        GameBroadcast.announce(message, find.finder(), context);
+        GameBroadcast.announce(message, redacted, find.finder(), context);
     }
 
     private void score(Find find, GameContext context) {

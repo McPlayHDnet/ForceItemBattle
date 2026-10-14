@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 class RoundSetupTest {
 
     private static GameContext context(boolean runMode) {
-        return new GameContext(false, runMode, false, true, false);
+        return new GameContext(false, runMode, false, true, false, false);
     }
 
     private static ForceItemPlayer player() {
