@@ -7,6 +7,15 @@ Recommended Minecraft Version: 26.2
 
 Originally based on https://github.com/170yt/ForceItemBattle, but extensively rewritten over time and now maintained independently.
 
+## Self-hosting
+
+The plugin runs on its own. Stats, achievements, the collection and leaderboards are stored by a separate stats service, which is not included. Without one the plugin runs in offline mode: the game is unaffected and those features are disabled. To connect a service, set its address in `plugins/ForceItemBattle/config.yml`:
+
+```yaml
+fib-service:
+  url: 'http://127.0.0.1:29708'
+```
+
 ## Commands & Settings
 
 ### Player Commands

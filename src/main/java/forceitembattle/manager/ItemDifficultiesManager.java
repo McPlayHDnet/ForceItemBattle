@@ -11,7 +11,11 @@ import forceitembattle.settings.QuickieMode;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.UncheckedIOException;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -29,11 +33,14 @@ import lombok.Getter;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class ItemDifficultiesManager implements Manager {
 
     private static final Random RANDOM = new Random();
+
+    private static final String DESCRIPTIONS_RESOURCE = "descriptions.yml";
 
     private final JavaPlugin plugin;
     private final RoundClock roundClock;
@@ -99,13 +106,23 @@ public class ItemDifficultiesManager implements Manager {
         invalidateAvailablePool();
     }
 
+    /** Bundled first, so a {@code descriptions:} section in config.yml overrides per item. */
     private void loadDescriptions() {
-        if (!this.plugin.getConfig().isConfigurationSection("descriptions")) {
-            return;
+        try (InputStream bundled = this.plugin.getResource(DESCRIPTIONS_RESOURCE)) {
+            if (bundled != null) {
+                readDescriptions(YamlConfiguration.loadConfiguration(
+                        new InputStreamReader(bundled, StandardCharsets.UTF_8)));
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
-        ConfigurationSection section = this.plugin.getConfig().getConfigurationSection("descriptions");
+        readDescriptions(this.plugin.getConfig());
+    }
+
+    private void readDescriptions(ConfigurationSection source) {
+        ConfigurationSection section = source.getConfigurationSection("descriptions");
         if (section == null) {
-            throw new NullPointerException("'descriptions' does not exist in the config.yml");
+            return;
         }
         for (String key : section.getKeys(false)) {
             List<String> descriptions = section.getStringList(key);

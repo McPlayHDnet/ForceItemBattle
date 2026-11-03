@@ -41,6 +41,7 @@ class CrossRepoContractTest {
     /** The exact paths {@code vendor-pool.mjs} builds its raw.githubusercontent URLs from. */
     private static final Path ITEM_MANAGER =
             Path.of("src/main/java/forceitembattle/manager/ItemDifficultiesManager.java");
+    private static final Path DESCRIPTIONS = Path.of("src/main/resources/descriptions.yml");
     private static final Path CUSTOM_MATERIALS =
             Path.of("src/main/java/forceitembattle/model/CustomMaterials.java");
 
@@ -66,6 +67,16 @@ class CrossRepoContractTest {
     @Test
     void theItemPoolSourceIsWhereTheWebsiteLooksForIt() throws IOException {
         assertFalse(read(ITEM_MANAGER).isBlank());
+    }
+
+    /** The website's /info samples and description editor read this file in this shape. */
+    @Test
+    void theDescriptionsAreInTheShapeTheWebsiteCanRead() throws IOException {
+        String yaml = read(DESCRIPTIONS).replace("\r\n", "\n");
+
+        assertTrue(Pattern.compile("^descriptions:\\s*$", Pattern.MULTILINE).matcher(yaml).find());
+        assertTrue(Pattern.compile("^ {2}[A-Z0-9_]+:\n(?: {4}- \".*\"\n)+", Pattern.MULTILINE)
+                .matcher(yaml).find());
     }
 
     @Test

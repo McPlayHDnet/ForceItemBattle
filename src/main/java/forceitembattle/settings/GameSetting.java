@@ -17,7 +17,7 @@ public enum GameSetting {
     BACKPACKSIZE("Backpack rows", List.of("", "<gray>Changes size of <dark_aqua>backpack<gray>.", ""), "backpackRows", 3, Material.BUNDLE),
     PVP("PvP", List.of("", "<gray>Toggle whether <dark_aqua>PvP <gray>should be enabled or not.", ""), "pvp", false, Material.IRON_SWORD),
     HARD("Hard", List.of("", "<gray>Toggle whether <dark_aqua>hard items & nether <gray>should be enabled.", ""), "hard", true, Material.NETHERRACK),
-    EXTREME("Extreme", List.of("", "<gray>Toggle whether the <dark_aqua>extreme version <gray>should be played.", ""), "extreme", true, Material.BEACON),
+    EXTREME("Extreme", List.of("", "<gray>Toggle whether the <dark_aqua>extreme version <gray>should be played.", ""), "extreme", false, Material.BEACON),
     END("End", List.of("", "<gray>Toggle whether <dark_aqua>end <gray>should be accessible.", ""), "end", true, Material.END_STONE),
     FASTER_RANDOM_TICK("Faster plants growth & decay", null, "fasterRandomTick", false, Material.CACTUS),
     POSITIONS("Positions - /pos", List.of("", "<gray>Toggle whether <dark_aqua>positions <gray>can be set.", ""), "positions", true, Material.LIME_WOOL),
