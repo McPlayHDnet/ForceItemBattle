@@ -36,11 +36,11 @@ class AchievementManagerTest {
 
     /** The five unlocks {@code checkGameEndAchievements} can produce, in the order it tries them. */
     private static final List<Achievements> END_OF_ROUND = List.of(
-            Achievements.CHICOT,
             Achievements.THE_HARD_WAY,
             Achievements.NO_HANDOUTS,
             Achievements.NO_SHORTCUTS,
-            Achievements.IT_IS_BEAUTIFUL);
+            Achievements.IT_IS_BEAUTIFUL,
+            Achievements.CHICOT);
 
     private static final UUID ALICE = UUID.fromString("00000000-0000-0000-0000-00000000000a");
 

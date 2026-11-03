@@ -5,7 +5,6 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import org.bukkit.Location;
 import org.bukkit.WorldCreator;
-import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.ItemDisplay;
@@ -26,9 +25,6 @@ import org.mockbukkit.mockbukkit.world.WorldMock;
  * {@code MannequinMock} throws on {@code setProfile}.
  */
 public final class StageWorldMock extends WorldMock {
-
-    /** Stands in for cushions, which the 26.2 test API does not have. */
-    public static final SeatSpawner SEATS = at -> at.getWorld().spawn(at, ArmorStand.class);
 
     private final ServerMock server;
 

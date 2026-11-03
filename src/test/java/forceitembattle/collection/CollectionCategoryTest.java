@@ -153,45 +153,48 @@ class CollectionCategoryTest {
     /** Maps must beat two earlier claims: Utility takes {@code MAP}, and Wood takes "JUNGLE". */
     @Test
     void explorerMapsAreTheirOwnCategory() {
-        assertCategory(CollectionCategory.MAPS, "MAP", "FILLED_MAP", "BURIED_TREASURE_MAP",
-                "WOODLAND_MANSION_MAP", "PLAINS_VILLAGE_MAP", "ABANDONED_CAMP_MAP",
-                "JUNGLE_PYRAMID_MAP");
+        assertCategory(CollectionCategory.MAPS,
+                Material.MAP, Material.FILLED_MAP, Material.BURIED_TREASURE_MAP,
+                Material.WOODLAND_MANSION_MAP, Material.PLAINS_VILLAGE_MAP,
+                Material.ABANDONED_CAMP_MAP, Material.JUNGLE_PYRAMID_MAP);
     }
 
     /** The variants carry _WOOL as an infix, not a suffix, and cushions carry it not at all. */
     @Test
     void woolVariantsAndCushionsAreFabric() {
-        assertCategory(CollectionCategory.WOOL_AND_FABRIC, "RED_WOOL", "RED_WOOL_SLAB",
-                "RED_WOOL_STAIRS", "RED_CUSHION", "STRAW_BED");
+        assertCategory(CollectionCategory.WOOL_AND_FABRIC,
+                Material.RED_WOOL, Material.RED_WOOL_SLAB, Material.RED_WOOL_STAIRS,
+                Material.RED_CUSHION, Material.STRAW_BED);
     }
 
     /** Without POPLAR in {@code WOOD_TYPES} the button and pressure plate fall through to Redstone. */
     @Test
     void poplarIsWood() {
-        assertCategory(CollectionCategory.WOOD, "POPLAR_LOG", "POPLAR_PLANKS", "POPLAR_DOOR",
-                "POPLAR_BUTTON", "POPLAR_PRESSURE_PLATE", "POPLAR_SHELF", "STRIPPED_POPLAR_WOOD",
-                "POPLAR_BOAT");
+        assertCategory(CollectionCategory.WOOD,
+                Material.POPLAR_LOG, Material.POPLAR_PLANKS, Material.POPLAR_DOOR,
+                Material.POPLAR_BUTTON, Material.POPLAR_PRESSURE_PLATE, Material.POPLAR_SHELF,
+                Material.STRIPPED_POPLAR_WOOD, Material.POPLAR_BOAT);
         assertEquals("POPLAR", MaterialCategory.getWoodCategory("POPLAR_LOG"));
     }
 
     /** Leaves and saplings stay plants whatever wood they belong to — Flowers is declared before Wood. */
     @Test
     void poplarLeavesAndSaplingsStayPlants() {
-        assertCategory(CollectionCategory.FLOWERS_AND_PLANTS, "POPLAR_SAPLING", "RED_POPLAR_LEAVES",
-                "ORANGE_POPLAR_LEAVES", "YELLOW_POPLAR_LEAVES", "RED_SHRUB", "SHELF_MUSHROOM");
+        assertCategory(CollectionCategory.FLOWERS_AND_PLANTS,
+                Material.POPLAR_SAPLING, Material.RED_POPLAR_LEAVES, Material.ORANGE_POPLAR_LEAVES,
+                Material.YELLOW_POPLAR_LEAVES, Material.RED_SHRUB, Material.SHELF_MUSHROOM);
     }
 
     /** Slab and stair variants follow the block they are cut from, not the Utility catch-all. */
     @Test
     void concreteVariantsStayWithConcrete() {
-        assertCategory(CollectionCategory.CLAY_BLOCKS, "CYAN_CONCRETE", "CYAN_CONCRETE_SLAB",
-                "CYAN_CONCRETE_STAIRS");
+        assertCategory(CollectionCategory.CLAY_BLOCKS,
+                Material.CYAN_CONCRETE, Material.CYAN_CONCRETE_SLAB, Material.CYAN_CONCRETE_STAIRS);
     }
 
-    /** By name, so 26.3 materials can be asserted while the test classpath is still on 26.2. */
-    private static void assertCategory(CollectionCategory expected, String... names) {
-        for (String name : names) {
-            assertEquals(expected, CollectionCategory.categoryOf(name), name);
+    private static void assertCategory(CollectionCategory expected, Material... materials) {
+        for (Material material : materials) {
+            assertEquals(expected, CollectionCategory.categoryOf(material), material.name());
         }
     }
 }

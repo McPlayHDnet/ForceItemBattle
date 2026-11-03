@@ -20,7 +20,7 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
  * attribute registry, which only a running server has; MockBukkit provides one.
  *
  * <p>The artifact is named after the exact Paper API version —
- * {@code mockbukkit-v26.2} — which is the thing to check first when this stops resolving after a
+ * {@code mockbukkit-v26.3} — which is the thing to check first when this stops resolving after a
  * Paper bump: a matching MockBukkit has to exist for the new version.
  */
 class MockBukkitSmokeTest {

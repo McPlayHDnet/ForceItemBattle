@@ -63,7 +63,7 @@ class ResultStageTest {
         this.world = new StageWorldMock(this.server, "world");
         this.server.addWorld(this.world);
         Scheduler.init(MockBukkit.createMockPlugin());
-        this.stage = new ResultStage(mock(GameSettings.class), StageWorldMock.SEATS);
+        this.stage = new ResultStage(mock(GameSettings.class), new CushionSeats());
     }
 
     @AfterEach
