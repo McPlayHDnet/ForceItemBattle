@@ -52,6 +52,10 @@ public final class CommandStats extends CustomCommand implements CustomTabComple
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
+        if (!this.fibService.isOnline()) {
+            player.sendMessage(Text.of("<red>Stats are not available on this server."));
+            return;
+        }
         if (args.length == 0) {
             sendUsage(player);
             return;

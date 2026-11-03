@@ -144,6 +144,21 @@ function Set-TeamSetting([bool]$Enabled) {
     return $true
 }
 
+# The plugin runs offline unless fib-service.url is set, and every service assertion needs it on.
+function Set-ServiceUrlSetting([string]$Url) {
+    $cfg = Join-Path $pluginRoot "run\plugins\ForceItemBattle\config.yml"
+    if (-not (Test-Path $cfg)) { return }
+    $text = [System.IO.File]::ReadAllText($cfg, [System.Text.Encoding]::UTF8)
+    $line = "  url: '$Url'"
+    $pattern = '(?m)^(fib-service:\r?\n)  url:[^\r\n]*'
+    $updated = if ([regex]::IsMatch($text, $pattern)) {
+        [regex]::Replace($text, $pattern, { param($m) $m.Groups[1].Value + $line }, 1)
+    } else {
+        $text.TrimEnd() + "`nfib-service:`n$line`n"
+    }
+    [System.IO.File]::WriteAllText($cfg, $updated, (New-Object System.Text.UTF8Encoding($false)))
+}
+
 # Reads settings.isTeamGame back, so a silently-failed edit shows up as a failed assertion rather
 # than as a confusing SOLO match at the end of a team run.
 function Get-TeamSetting {
@@ -227,6 +242,7 @@ try {
 
     $teamWanted = ($Mode -eq "team")
     Set-TeamSetting $teamWanted | Out-Null
+    Set-ServiceUrlSetting $ServiceUrl
     $actualSetting = Get-TeamSetting
     Assert-That "settings.isTeamGame is $teamWanted before boot" ($actualSetting -eq $teamWanted) "config reads '$actualSetting'"
 

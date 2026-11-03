@@ -65,7 +65,7 @@ class AchievementManagerTest {
         // The stats loader is only reached by evaluateGlobalAchievements, which these tests do not
         // exercise: it needs a service to answer.
         manager = new AchievementManager(roster, phase, settings, mock(CollectionManager.class),
-                storage, new ConcurrentHashMap<>(), null, new FakeAchievementWorld());
+                storage, new ConcurrentHashMap<>(), null, new FakeAchievementWorld(), true);
     }
 
     private ForceItemPlayer join(String seed, int score) {

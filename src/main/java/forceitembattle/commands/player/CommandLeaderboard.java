@@ -43,6 +43,10 @@ public final class CommandLeaderboard extends CustomCommand implements CustomTab
 
     @Override
     public void onPlayerCommand(Player player, String label, String[] args) {
+        if (!this.fibService.isOnline()) {
+            player.sendMessage(Text.of("<red>Stats are not available on this server."));
+            return;
+        }
         FibStatisticsClient helper = this.fibService.statistics();
 
         // The first argument is always the scope: solo, duo or teams. Omitting it

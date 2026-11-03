@@ -40,6 +40,7 @@ public class AchievementManager implements Manager {
     private final CollectionManager collection;
 
     private final AchievementWorld world;
+    private final boolean persisted;
     private final Map<UUID, Map<Achievements, Object>> playerProgress = new HashMap<>();
     private final Map<Team, Map<Achievements, Object>> teamProgress = new HashMap<>();
     private final AchievementStorage storage;
@@ -54,7 +55,8 @@ public class AchievementManager implements Manager {
     public AchievementManager(Roster roster, RoundPhase roundPhase, GameSettings settings,
                               CollectionManager collection, AchievementStorage storage,
                               Map<UUID, GlobalStats> globalStatsCache, GlobalStatsLoader globalStatsLoader,
-                              AchievementWorld world) {
+                              AchievementWorld world, boolean persisted) {
+        this.persisted = persisted;
         this.roster = roster;
         this.roundPhase = roundPhase;
         this.settings = settings;
@@ -64,6 +66,11 @@ public class AchievementManager implements Manager {
         this.globalStatsCache = globalStatsCache;
         this.globalStatsLoader = globalStatsLoader;
         this.achievementsByTrigger = buildTriggerMap();
+    }
+
+    /** Unpersisted unlocks would be announced again every round, since each round restarts the server. */
+    private boolean active() {
+        return this.persisted && this.settings.isSettingEnabled(GameSetting.ACHIEVEMENTS);
     }
 
     private Map<Trigger, List<Achievements>> buildTriggerMap() {
@@ -93,7 +100,7 @@ public class AchievementManager implements Manager {
             return;
         }
 
-        if (!this.settings.isSettingEnabled(GameSetting.ACHIEVEMENTS)) {
+        if (!active()) {
             return;
         }
 
@@ -193,7 +200,7 @@ public class AchievementManager implements Manager {
     }
 
     public void evaluateGlobalAchievements(Player player) {
-        if (!this.settings.isSettingEnabled(GameSetting.ACHIEVEMENTS)) {
+        if (!active()) {
             return;
         }
 
@@ -285,7 +292,7 @@ public class AchievementManager implements Manager {
             return;
         }
 
-        if (!this.settings.isSettingEnabled(GameSetting.ACHIEVEMENTS)) {
+        if (!active()) {
             return;
         }
 
