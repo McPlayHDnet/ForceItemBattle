@@ -23,6 +23,7 @@ public final class WorldReset {
 
     /** The seed is written before the delete, so a failed delete still boots, on the old seed. */
     public void scheduleReset(Long seed) {
+        File world = Bukkit.getWorlds().getFirst().getWorldFolder().toPath().normalize().toFile();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
                 writeLevelSeed(seed == null ? "" : Long.toString(seed));
@@ -32,7 +33,6 @@ public final class WorldReset {
             }
 
             try {
-                File world = new File(Bukkit.getWorldContainer(), "world").toPath().normalize().toFile();
                 if (world.exists()) {
                     FileUtils.deleteDirectory(world);
                     System.out.println("[FIB] World deleted successfully.");
@@ -40,7 +40,7 @@ public final class WorldReset {
 
                 world.mkdirs();
                 new File(world, "datapacks").mkdirs();
-                this.copyDatapack("FIB_Worldgen");
+                this.copyDatapack(world, "FIB_Worldgen");
                 System.out.println("[FIB] Datapack copied.");
             } catch (IOException e) {
                 e.printStackTrace();
@@ -50,9 +50,7 @@ public final class WorldReset {
         Bukkit.restart();
     }
 
-    private void copyDatapack(String datapackName) {
-        File world = new File(Bukkit.getWorldContainer(), "world");
-
+    private void copyDatapack(File world, String datapackName) {
         try {
             Path sourceDirectory = Paths.get(this.dataFolder + "/" + datapackName + ".zip");
             Path destinationDirectory = Paths.get(world + "/datapacks/" + datapackName + ".zip");

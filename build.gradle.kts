@@ -65,10 +65,10 @@ dependencies {
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.3")
     testImplementation("org.mockito:mockito-core:5.14.2")
-    testImplementation("org.mockbukkit.mockbukkit:mockbukkit-v26.2:4.116.1")
+    testImplementation("org.mockbukkit.mockbukkit:mockbukkit-v26.3:4.119.0")
     // MockBukkit's POM declares no Paper API -- the consumer supplies it. paperweight now puts the
     // server artifact on compileOnly only (see the paperweight block above), so tests need this.
-    testImplementation("io.papermc.paper:paper-api:26.2.build.111-stable")
+    testImplementation("io.papermc.paper:paper-api:26.3.build.238-stable")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

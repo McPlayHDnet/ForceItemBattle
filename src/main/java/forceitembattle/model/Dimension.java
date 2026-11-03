@@ -9,18 +9,16 @@ import org.jetbrains.annotations.Nullable;
 @Getter
 public enum Dimension {
 
-    OVERWORLD(World.Environment.NORMAL, "world", "overworld", "<green>"),
-    NETHER(World.Environment.NETHER, "world_nether", "nether", "<red>"),
-    END(World.Environment.THE_END, "world_the_end", "end", "<dark_purple>");
+    OVERWORLD(World.Environment.NORMAL, "overworld", "<green>"),
+    NETHER(World.Environment.NETHER, "nether", "<red>"),
+    END(World.Environment.THE_END, "end", "<dark_purple>");
 
     private final World.Environment environment;
-    private final String worldName;
     private final String displayName;
     private final String color;
 
-    Dimension(World.Environment environment, String worldName, String displayName, String color) {
+    Dimension(World.Environment environment, String displayName, String color) {
         this.environment = environment;
-        this.worldName = worldName;
         this.displayName = displayName;
         this.color = color;
     }
@@ -29,9 +27,13 @@ public enum Dimension {
         return this.color + this.displayName;
     }
 
+    /** By environment, not name: level-name is server-configurable. The default worlds are listed first. */
     @Nullable
     public World world() {
-        return Bukkit.getWorld(this.worldName);
+        return Bukkit.getWorlds().stream()
+                .filter(world -> world.getEnvironment() == this.environment)
+                .findFirst()
+                .orElse(null);
     }
 
     public boolean isOverworld() {
