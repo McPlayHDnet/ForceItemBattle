@@ -62,15 +62,15 @@ We recommend to enable the Extreme settting only in rounds longer than 45 minute
 
 Settings Menu
 
-![Settings Menu](https://github.com/btlmt-de/FIB/assets/77849496/e8c586d1-908b-4a14-8bfe-2741758814a7)
+![Settings Menu](https://github.com/eltobit0/fib-website/assets/77849496/e8c586d1-908b-4a14-8bfe-2741758814a7)
 
 Preset Menu
 
-![Preset Menu](https://github.com/btlmt-de/FIB/assets/77849496/7fdc1752-60db-471e-83f6-0b6d47de595d)
+![Preset Menu](https://github.com/eltobit0/fib-website/assets/77849496/7fdc1752-60db-471e-83f6-0b6d47de595d)
 
 Crafting Recipe
 
-![Crafting Recipe](https://github.com/btlmt-de/FIB/assets/77849496/bfadbcda-ee08-4fb3-a6fd-7eec51c4c6c1)
+![Crafting Recipe](https://github.com/eltobit0/fib-website/assets/77849496/bfadbcda-ee08-4fb3-a6fd-7eec51c4c6c1)
 
 Item Display
 
@@ -82,7 +82,7 @@ To display all items you need to use [this resourcepack](https://github.com/elto
 
 Item Description
 
-![Item Description](https://github.com/btlmt-de/FIB/assets/77849496/1b719e82-475a-4962-91e3-f9d719373be9)
+![Item Description](https://github.com/eltobit0/fib-website/assets/77849496/1b719e82-475a-4962-91e3-f9d719373be9)
 
 Saved Positions
 
