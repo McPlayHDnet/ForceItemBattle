@@ -48,7 +48,6 @@ class CommandPauseTest {
     @BeforeEach
     void setUp() {
         this.server = MockBukkit.mock();
-        // Dimension.OVERWORLD resolves by name, so the world has to be called "world".
         this.overworld = this.server.addSimpleWorld("world");
 
         JavaPlugin plugin = mock(JavaPlugin.class);

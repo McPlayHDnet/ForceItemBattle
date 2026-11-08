@@ -25,8 +25,10 @@ public class ServiceAchievementSink implements AchievementSink {
     @Override
     public void load(UUID playerUuid, Consumer<Set<String>> onLoaded, Runnable onFailure) {
         achievements().unlockedIds(playerUuid, onLoaded, error -> {
-            this.plugin.getLogger().warning("Failed to load achievements for " + playerUuid
-                    + " (HTTP " + error.getCode() + "): " + error.getMessage());
+            if (this.fibService.isOnline()) {
+                this.plugin.getLogger().warning("Failed to load achievements for " + playerUuid
+                        + " (HTTP " + error.getCode() + "): " + error.getMessage());
+            }
             onFailure.run();
         });
     }

@@ -47,6 +47,7 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
 class CommandStatsTest {
 
     private ServerMock server;
+    private FIBServiceClient service;
     private FibStatisticsClient helper;
     private CommandStats command;
 
@@ -54,10 +55,11 @@ class CommandStatsTest {
     void setUp() {
         this.server = MockBukkit.mock();
 
-        FIBServiceClient service = mock(FIBServiceClient.class);
+        this.service = mock(FIBServiceClient.class);
         this.helper = mock(FibStatisticsClient.class);
         ItemDifficultiesManager items = mock(ItemDifficultiesManager.class);
 
+        when(service.isOnline()).thenReturn(true);
         when(service.statistics()).thenReturn(this.helper);
         when(items.getUnicodeFromMaterial(anyBoolean(), any())).thenReturn("?");
 
@@ -146,6 +148,17 @@ class CommandStatsTest {
 
     @Nested
     class Usage {
+
+        @Test
+        void offlineSaysStatsAreUnavailable() {
+            when(service.isOnline()).thenReturn(false);
+            PlayerMock player = join("Understudy1");
+
+            run(player, "solo");
+
+            assertSaid(player, "Stats are not available on this server.");
+            verifyNoInteractions(helper);
+        }
 
         @Test
         void noArgumentsListsTheSubcommands() {

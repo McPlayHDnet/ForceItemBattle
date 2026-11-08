@@ -3,7 +3,7 @@
 
 ForceItemBattle is a gamemode where players compete to collect specific items as quickly as possible. When the game starts, each player is assigned a random item to find. Once a player collects their assigned item, they immediately receive a new one to search for. The goal is to collect as many items as possible within the time limit. The player with the most items found when time runs out wins the battle.
 
-Recommended Minecraft Version: 26.2
+Recommended Minecraft Version: 26.3
 
 Originally based on https://github.com/170yt/ForceItemBattle, but extensively rewritten over time and now maintained independently.
 
@@ -27,7 +27,7 @@ Originally based on https://github.com/170yt/ForceItemBattle, but extensively re
 | `/shout` | `send global message when team chat is enabled` |
 | `/spectate` | `toggle gamemode spectator after round has ended` |
 
-If you want to have item descriptions (useful in case items don't have a crafting recipe), you can use [this config](https://github.com/btlmt-de/FIB).
+Item descriptions (useful in case items don't have a crafting recipe) are included in the plugin.
 
 ### OP Commands
 | Command | Description     |

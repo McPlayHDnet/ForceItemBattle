@@ -13,13 +13,13 @@ import forceitembattle.util.Scheduler;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Supplier;
+import javax.annotation.Nullable;
 import org.bukkit.plugin.Plugin;
 
 public class FIBServiceClient implements Manager {
 
-    private static final String BASE_URL = "http://127.0.0.7:29708";
-
     private final ApiClient apiClient;
+    private final boolean online;
     private final ApiExecutor executor;
     private final FibStatisticsClient statistics;
     private final StatisticsWrites statisticsWrites;
@@ -27,14 +27,18 @@ public class FIBServiceClient implements Manager {
     private final FibMatchHistoryClient matchHistory;
     private final FibCatalogueClient catalogue;
 
-    public FIBServiceClient(Plugin plugin, Map<UUID, GlobalStats> globalStatsCache,
+    /** A blank {@code baseUrl} is offline mode: nothing is sent and nothing is logged per call. */
+    public FIBServiceClient(Plugin plugin, @Nullable String baseUrl, Map<UUID, GlobalStats> globalStatsCache,
                             Supplier<AchievementManager> achievementManager,
                             Supplier<CollectionManager> collection) {
+        this.online = baseUrl != null && !baseUrl.isBlank();
         ApiClient client = new ApiClient();
-        client.setBasePath(BASE_URL);
+        if (this.online) {
+            client.setBasePath(baseUrl.strip());
+        }
         this.apiClient = client;
 
-        this.executor = new ApiExecutor(plugin);
+        this.executor = new ApiExecutor(plugin, this.online);
         this.statistics = new FibStatisticsClient(new FibStatisticsControllerApi(client), executor,
                 globalStatsCache);
         this.statisticsWrites = new StatisticsWrites(this.statistics);
@@ -46,7 +50,14 @@ public class FIBServiceClient implements Manager {
 
     @Override
     public void enable() {
+        if (!this.online) {
+            return;
+        }
         Scheduler.runLaterSync(() -> this.catalogue.publishAsync(), 1L);
+    }
+
+    public boolean isOnline() {
+        return online;
     }
 
     public FibStatisticsClient statistics() {

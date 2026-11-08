@@ -36,11 +36,11 @@ class AchievementManagerTest {
 
     /** The five unlocks {@code checkGameEndAchievements} can produce, in the order it tries them. */
     private static final List<Achievements> END_OF_ROUND = List.of(
-            Achievements.CHICOT,
             Achievements.THE_HARD_WAY,
             Achievements.NO_HANDOUTS,
             Achievements.NO_SHORTCUTS,
-            Achievements.IT_IS_BEAUTIFUL);
+            Achievements.IT_IS_BEAUTIFUL,
+            Achievements.CHICOT);
 
     private static final UUID ALICE = UUID.fromString("00000000-0000-0000-0000-00000000000a");
 
@@ -65,7 +65,7 @@ class AchievementManagerTest {
         // The stats loader is only reached by evaluateGlobalAchievements, which these tests do not
         // exercise: it needs a service to answer.
         manager = new AchievementManager(roster, phase, settings, mock(CollectionManager.class),
-                storage, new ConcurrentHashMap<>(), null, new FakeAchievementWorld());
+                storage, new ConcurrentHashMap<>(), null, new FakeAchievementWorld(), true);
     }
 
     private ForceItemPlayer join(String seed, int score) {

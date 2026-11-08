@@ -63,8 +63,10 @@ public final class AchievementInventory extends InventoryBuilder {
                     this.updateInventory();
                 },
                 error -> {
-                    this.gui.plugin().getLogger().warning("Failed to load achievement details for "
-                            + playerUUID + " (HTTP " + error.getCode() + "): " + error.getMessage());
+                    if (this.gui.service().isOnline()) {
+                        this.gui.plugin().getLogger().warning("Failed to load achievement details for "
+                                + playerUUID + " (HTTP " + error.getCode() + "): " + error.getMessage());
+                    }
                     this.updateInventory();
                 });
 

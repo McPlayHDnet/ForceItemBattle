@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import forceitembattle.ceremony.CushionSeats;
 import forceitembattle.ceremony.ResultStage;
 import forceitembattle.ceremony.StageWorldMock;
 import forceitembattle.manager.Gamemanager;
@@ -45,7 +46,7 @@ class PlayerLifecycleListenerTest extends ListenerTestBase {
     private Roster roster;
     private Gamemanager gamemanager;
     private PlayerLifecycleListener listener;
-    private final ResultStage resultStage = new ResultStage(mock(GameSettings.class), StageWorldMock.SEATS);
+    private final ResultStage resultStage = new ResultStage(mock(GameSettings.class), new CushionSeats());
 
     @BeforeEach
     void setUpListener() {

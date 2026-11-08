@@ -119,6 +119,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public final class ForceItemBattle extends JavaPlugin {
 
+    private static final String SERVICE_URL_PATH = "fib-service.url";
+
     /** Every manager, in construction order. Membership only — see {@link #lifecycleOrder()}. */
     private final List<Manager> managers = new ArrayList<>();
 
@@ -190,6 +192,9 @@ public final class ForceItemBattle extends JavaPlugin {
 
         this.worldReset = new WorldReset(getDataFolder());
         this.settings = new GameSettings(this);
+        if (!getConfig().isSet(SERVICE_URL_PATH)) {
+            getConfig().set(SERVICE_URL_PATH, "");
+        }
 
         saveConfig();
     }
@@ -258,8 +263,12 @@ public final class ForceItemBattle extends JavaPlugin {
         this.forceItemAssignment = new ForceItemAssignment(this.roster, this.itemDifficultiesManager);
 
         // Cycle: the match-history and catalogue clients read managers that are built out of this one.
-        this.fibService = register(new FIBServiceClient(this, this.globalStatsCache,
-                () -> this.achievementManager, () -> this.collectionManager));
+        this.fibService = register(new FIBServiceClient(this, getConfig().getString(SERVICE_URL_PATH),
+                this.globalStatsCache, () -> this.achievementManager, () -> this.collectionManager));
+        if (!this.fibService.isOnline()) {
+            getLogger().info("No stats service configured (" + SERVICE_URL_PATH + " in config.yml): "
+                    + "stats, achievements, the collection and leaderboards are disabled.");
+        }
         this.collectionManager = register(
                 new CollectionManager(this.itemDifficultiesManager, this.fibService));
 
@@ -278,7 +287,8 @@ public final class ForceItemBattle extends JavaPlugin {
                 new GlobalStatsLoader(this.fibService, this.globalStatsCache),
                 new PluginAchievementWorld(this.roster, this.roundClock, this.settings,
                         this.itemDifficultiesManager, this.backpackManager,
-                        this.wanderingTraderManager)));
+                        this.wanderingTraderManager),
+                this.fibService.isOnline()));
 
         this.randomEventManager = register(new RandomEventManager(
                 new EventContext(this, this.roundPhase, this.settings,

@@ -57,6 +57,7 @@ class CommandLeaderboardTest {
         this.statistics = mock(FibStatisticsClient.class);
         this.achievements = mock(FibAchievementClient.class);
 
+        when(service.isOnline()).thenReturn(true);
         when(service.statistics()).thenReturn(this.statistics);
         when(service.achievements()).thenReturn(this.achievements);
 
